@@ -1,0 +1,1177 @@
+{
+  "category": {
+    "id": "equipment",
+    "name": "تجهیزات",
+    "englishName": "Equipment",
+    "description": "تجهیزات نظامی شامل سلاح‌ها، خودروها، هواپیماها و تجهیزات ارتباطی",
+    "icon": "🚗",
+    "color": "#F59E0B",
+    "maxLevels": 6,
+    "isActive": true,
+    "order": 4,
+    "type": "EQUIPMENT"
+  },
+  "levels": [
+    {
+      "id": "1",
+      "name": "دسته تجهیزات",
+      "englishName": "Equipment Category",
+      "description": "دسته‌بندی اصلی تجهیزات",
+      "level": 1,
+      "order": 1,
+      "icon": "📦",
+      "standardCode": "EQ-CAT",
+      "personnelRange": "1-1000"
+    },
+    {
+      "id": "2",
+      "name": "نوع تجهیزات",
+      "englishName": "Equipment Type",
+      "description": "نوع خاص تجهیزات",
+      "level": 2,
+      "order": 2,
+      "icon": "🔧",
+      "standardCode": "EQ-TYPE",
+      "personnelRange": "1-500"
+    },
+    {
+      "id": "3",
+      "name": "کلاس تجهیزات",
+      "englishName": "Equipment Class",
+      "description": "کلاس تجهیزات",
+      "level": 3,
+      "order": 3,
+      "icon": "⚙️",
+      "standardCode": "EQ-CLASS",
+      "personnelRange": "1-200"
+    },
+    {
+      "id": "4",
+      "name": "مدل تجهیزات",
+      "englishName": "Equipment Model",
+      "description": "مدل خاص تجهیزات",
+      "level": 4,
+      "order": 4,
+      "icon": "🏷️",
+      "standardCode": "EQ-MODEL",
+      "personnelRange": "1-100"
+    },
+    {
+      "id": "5",
+      "name": "نسخه تجهیزات",
+      "englishName": "Equipment Version",
+      "description": "نسخه خاص تجهیزات",
+      "level": 5,
+      "order": 5,
+      "icon": "📋",
+      "standardCode": "EQ-VERSION",
+      "personnelRange": "1-50"
+    },
+    {
+      "id": "6",
+      "name": "واحد تجهیزات",
+      "englishName": "Equipment Unit",
+      "description": "واحد خاص تجهیزات",
+      "level": 6,
+      "order": 6,
+      "icon": "🎯",
+      "standardCode": "EQ-UNIT",
+      "personnelRange": "1-10"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "1",
+      "name": "تسلیحات",
+      "englishName": "Weapons",
+      "description": "انواع سلاح‌های سبک و سنگین",
+      "level": 1,
+      "parentId": null,
+      "order": 1,
+      "icon": "🗡️",
+      "children": [
+        {
+          "id": "firearms",
+          "name": "سلاح گرم",
+          "englishName": "Firearms",
+          "order": 1,
+          "level": 2,
+          "isRequired": true,
+          "isActive": true,
+          "children": [
+            {
+              "id": "light-weapons",
+              "name": "سلاح‌های سبک",
+              "englishName": "Light Weapons",
+              "order": 1,
+              "level": 3,
+              "isRequired": true,
+              "isActive": true,
+              "children": [
+                {
+                  "id": "individual-weapons",
+                  "name": "سلاح‌های فردی",
+                  "englishName": "Individual Weapons",
+                  "order": 1,
+                  "level": 4,
+                  "isRequired": true,
+                  "isActive": true,
+                  "children": [
+                    {
+                      "id": "semi-auto-pistols",
+                      "name": "پیستول‌های نیمه‌اتوماتیک",
+                      "englishName": "Semi-Automatic Pistols",
+                  "order": 1,
+                      "level": 5,
+                      "isRequired": true,
+                      "isActive": true,
+                      "children": [
+                        {
+                          "id": "colt-types",
+                          "name": "انواع کلت‌ها",
+                          "englishName": "Colt Types",
+                          "order": 1,
+                          "level": 6,
+                          "isRequired": true,
+                          "isActive": true,
+                          "children": [],
+                          "customFields": [
+                            { "id": "weaponName", "name": "نام اسلحه", "englishName": "weaponName", "type": "text", "isRequired": true, "order": 1 },
+                            { "id": "caliber", "name": "کالیبر", "englishName": "caliber", "type": "text", "isRequired": true, "order": 2 },
+                            { "id": "effectiveRange", "name": "برد مؤثر", "englishName": "effectiveRange", "type": "number", "unit": "m", "isRequired": false, "order": 3 },
+                            { "id": "ammoType", "name": "نوع مهمات", "englishName": "ammoType", "type": "text", "isRequired": false, "order": 4 },
+                            { "id": "weight", "name": "وزن", "englishName": "weight", "type": "number", "unit": "kg", "isRequired": false, "order": 5 },
+                            { "id": "rateOfFire", "name": "نرخ آتش", "englishName": "rateOfFire", "type": "number", "unit": "rpm", "isRequired": false, "order": 6 },
+                            { "id": "weaponLength", "name": "طول اسلحه", "englishName": "weaponLength", "type": "number", "unit": "mm", "isRequired": false, "order": 7 },
+                            { "id": "weaponHeight", "name": "ارتفاع اسلحه", "englishName": "weaponHeight", "type": "number", "unit": "mm", "isRequired": false, "order": 8 },
+                            { "id": "barrelLength", "name": "طول لوله", "englishName": "barrelLength", "type": "number", "unit": "mm", "isRequired": false, "order": 9 },
+                            { "id": "barrelDiameter", "name": "قطر لوله", "englishName": "barrelDiameter", "type": "number", "unit": "mm", "isRequired": false, "order": 10 },
+                            { "id": "magazineCapacity", "name": "ظرفیت خشاب", "englishName": "magazineCapacity", "type": "number", "unit": "rounds", "isRequired": false, "order": 11 },
+                            { "id": "magazineType", "name": "نوع خشاب", "englishName": "magazineType", "type": "text", "isRequired": false, "order": 12 },
+                            { "id": "safeties", "name": "انواع ضامن", "englishName": "safeties", "type": "multiselect", "options": ["ضامن دستی", "ضامن ماشه", "ضامن کف‌دست"], "isRequired": false, "order": 13 },
+                            { "id": "sights", "name": "نشانه‌گیرها", "englishName": "sights", "type": "multiselect", "options": ["مکانیکی", "اپتیکی", "رد دات"], "isRequired": false, "order": 14 },
+                            { "id": "manufacturerCountry", "name": "کشور سازنده", "englishName": "manufacturerCountry", "type": "text", "isRequired": false, "order": 15 },
+                            { "id": "productionDate", "name": "تاریخ تولید", "englishName": "productionDate", "type": "date", "isRequired": false, "order": 16 },
+                            { "id": "unitPrice", "name": "قیمت واحد", "englishName": "unitPrice", "type": "number", "unit": "USD", "isRequired": false, "order": 17 },
+                            { "id": "designer", "name": "طراح", "englishName": "designer", "type": "text", "isRequired": false, "order": 18 },
+                            { "id": "manufacturer", "name": "سازنده", "englishName": "manufacturer", "type": "text", "isRequired": false, "order": 19 },
+                            { "id": "usedByCountries", "name": "استفاده‌شده توسط", "englishName": "usedByCountries", "type": "multiselect", "options": ["ایران", "روسیه", "آمریکا", "چین", "بریتانیا", "فرانسه", "آلمان"], "isRequired": false, "order": 20 }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "id": "revolvers",
+                      "name": "تپانچه‌های رولور",
+                      "englishName": "Revolvers",
+                      "order": 2,
+                      "level": 5,
+                      "isRequired": true,
+                      "isActive": true,
+                  "children": [
+                    {
+                          "id": "revolver-types",
+                          "name": "انواع رولورها",
+                          "englishName": "Revolver Types",
+                          "order": 1,
+                          "level": 6,
+                          "isRequired": true,
+                          "isActive": true,
+                          "children": []
+                        }
+                      ]
+                    },
+                    {
+                      "id": "assault-rifles",
+                      "name": "تفنگ‌های تهاجمی",
+                      "englishName": "Assault Rifles",
+                      "order": 3,
+                      "level": 5,
+                      "isRequired": true,
+                      "isActive": true,
+                      "children": [
+                        {
+                          "id": "assault-rifle-types",
+                          "name": "انواع تفنگ تهاجمی",
+                          "englishName": "Assault Rifle Types",
+                      "order": 1,
+                          "level": 6,
+                          "isRequired": true,
+                          "isActive": true,
+                          "children": []
+                        }
+                      ]
+                    },
+                    {
+                      "id": "sniper-rifles",
+                      "name": "تفنگ‌های تک‌تیرانداز",
+                      "englishName": "Sniper Rifles",
+                      "order": 4,
+                      "level": 5,
+                      "isRequired": true,
+                      "isActive": true,
+                      "children": [
+                        {
+                          "id": "sniper-rifle-types",
+                          "name": "انواع تک‌تیراندازها",
+                          "englishName": "Sniper Rifle Types",
+                          "order": 1,
+                          "level": 6,
+                          "isRequired": true,
+                          "isActive": true,
+                          "children": []
+                        }
+                      ]
+                    },
+                    {
+                      "id": "shotguns",
+                      "name": "شات‌گان‌ها",
+                      "englishName": "Shotguns",
+                      "order": 5,
+                      "level": 5,
+                      "isRequired": true,
+                      "isActive": true,
+                      "children": [
+                        {
+                          "id": "shotgun-types",
+                          "name": "انواع شات‌گان",
+                          "englishName": "Shotgun Types",
+                          "order": 1,
+                          "level": 6,
+                          "isRequired": true,
+                          "isActive": true,
+                          "children": []
+                        }
+                      ]
+                    },
+                    {
+                      "id": "smg",
+                      "name": "مسلسل‌های دستی (SMG)",
+                      "englishName": "Submachine Guns (SMG)",
+                      "order": 6,
+                      "level": 5,
+                      "isRequired": true,
+                      "isActive": true,
+                      "children": [
+                        {
+                          "id": "smg-types",
+                          "name": "انواع SMG",
+                          "englishName": "SMG Types",
+                          "order": 1,
+                          "level": 6,
+                          "isRequired": true,
+                          "isActive": true,
+                          "children": []
+                        }
+                      ]
+                    },
+                    {
+                      "id": "carbines",
+                      "name": "کربین‌ها (Carbine)",
+                      "englishName": "Carbines",
+                      "order": 7,
+                      "level": 5,
+                      "isRequired": true,
+                      "isActive": true,
+                      "children": [
+                        {
+                          "id": "carbine-types",
+                          "name": "انواع کربین",
+                          "englishName": "Carbine Types",
+                          "order": 1,
+                          "level": 6,
+                          "isRequired": true,
+                          "isActive": true,
+                          "children": []
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+            },
+            {
+              "id": "heavy-weapons",
+              "name": "سلاح‌های سنگین",
+              "englishName": "Heavy Weapons",
+              "order": 2,
+              "level": 3,
+              "isRequired": true,
+              "isActive": true,
+              "children": [
+                {
+                  "id": "machine-guns",
+                  "name": "تیربارها",
+                  "englishName": "Machine Guns",
+                  "order": 1,
+                  "level": 4,
+                  "isRequired": true,
+                  "isActive": true,
+                  "children": [
+                    {
+                      "id": "machine-gun-types",
+                      "name": "انواع تیربار",
+                      "englishName": "Machine Gun Types",
+                      "order": 1,
+                      "level": 5,
+                      "isRequired": true,
+                      "isActive": true,
+                      "children": []
+        }
+      ]
+    },
+    {
+                  "id": "mortars",
+                  "name": "خمپاره‌اندازها",
+                  "englishName": "Mortars",
+      "order": 2,
+                  "level": 4,
+                  "isRequired": true,
+                  "isActive": true,
+                  "children": [
+                    {
+                      "id": "mortar-types",
+                      "name": "انواع خمپاره‌انداز",
+                      "englishName": "Mortar Types",
+                      "order": 1,
+                      "level": 5,
+                      "isRequired": true,
+                      "isActive": true,
+                      "children": []
+                    }
+                  ]
+                },
+                {
+                  "id": "light-artillery",
+                  "name": "توپ‌های سبک",
+                  "englishName": "Light Artillery",
+                  "order": 3,
+                  "level": 4,
+                  "isRequired": true,
+                  "isActive": true,
+      "children": [
+        {
+                      "id": "light-artillery-types",
+                      "name": "انواع توپ سبک",
+                      "englishName": "Light Artillery Types",
+          "order": 1,
+                      "level": 5,
+                      "isRequired": true,
+                      "isActive": true,
+                      "children": []
+                    }
+                  ]
+                },
+                {
+                  "id": "light-rocket-launchers",
+                  "name": "راکت‌اندازهای سبک",
+                  "englishName": "Light Rocket Launchers",
+                  "order": 4,
+                  "level": 4,
+                  "isRequired": true,
+                  "isActive": true,
+          "children": [
+            {
+                      "id": "light-rocket-launcher-types",
+                      "name": "انواع راکت‌انداز سبک",
+                      "englishName": "Light Rocket Launcher Types",
+              "order": 1,
+                      "level": 5,
+                      "isRequired": true,
+                      "isActive": true,
+                      "children": []
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "infantry-support",
+              "name": "پشتیبانی پیاده‌نظام",
+              "englishName": "Infantry Support",
+              "order": 3,
+              "level": 3,
+              "isRequired": true,
+              "isActive": true,
+              "children": [
+                {
+                  "id": "grenade-launchers",
+                  "name": "نارنجک‌اندازها",
+                  "englishName": "Grenade Launchers",
+                  "order": 1,
+                  "level": 4,
+                  "isRequired": true,
+                  "isActive": true,
+                  "children": [
+                    {
+                      "id": "grenade-launcher-types",
+                      "name": "انواع نارنجک‌انداز",
+                      "englishName": "Grenade Launcher Types",
+                  "order": 1,
+                      "level": 5,
+                      "isRequired": true,
+                      "isActive": true,
+                      "children": []
+                    }
+                  ]
+                },
+                {
+                  "id": "medium-machine-guns",
+                  "name": "تیربارهای میانه",
+                  "englishName": "Medium Machine Guns",
+                  "order": 2,
+                  "level": 4,
+                  "isRequired": true,
+                  "isActive": true,
+                  "children": [
+                    {
+                      "id": "medium-machine-gun-types",
+                      "name": "انواع تیربار میانه",
+                      "englishName": "Medium Machine Gun Types",
+                      "order": 1,
+                      "level": 5,
+                      "isRequired": true,
+                      "isActive": true,
+                      "children": []
+                    }
+                  ]
+                },
+                {
+                  "id": "portable-anti-armor",
+                  "name": "ضد زره قابل حمل",
+                  "englishName": "Portable Anti-Armor",
+                  "order": 3,
+                  "level": 4,
+                  "isRequired": true,
+                  "isActive": true,
+                      "children": [
+                        {
+                      "id": "portable-anti-armor-types",
+                      "name": "انواع ضد زره سبک",
+                      "englishName": "Portable Anti-Armor Types",
+                          "order": 1,
+                      "level": 5,
+                      "isRequired": true,
+                      "isActive": true,
+                          "children": []
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+        },
+        {
+          "id": "missile-weapons",
+          "name": "سلاح موشکی",
+          "englishName": "Missile Weapons",
+          "order": 2,
+          "level": 2,
+          "isRequired": true,
+          "isActive": true,
+          "children": [
+            {
+              "id": "surface-to-surface",
+              "name": "موشک‌های زمین‌به‌زمین",
+              "englishName": "Surface-to-Surface Missiles",
+              "order": 1,
+              "level": 3,
+              "isRequired": true,
+              "isActive": true,
+              "children": [
+                {
+                  "id": "short-range-ssm",
+                  "name": "کوتاه‌برد",
+                  "englishName": "Short Range",
+                  "order": 1,
+                  "level": 4,
+                  "isRequired": true,
+                  "isActive": true,
+                  "children": [
+                    {
+                      "id": "short-range-ssm-types",
+                      "name": "انواع موشک کوتاه‌برد",
+                      "englishName": "Short Range SSM Types",
+                      "order": 1,
+                      "level": 5,
+                      "isRequired": true,
+                      "isActive": true,
+                      "children": []
+                    }
+                  ]
+                },
+                {
+                  "id": "medium-range-ssm",
+                  "name": "میان‌برد",
+                  "englishName": "Medium Range",
+                  "order": 2,
+                  "level": 4,
+                  "isRequired": true,
+                  "isActive": true,
+                  "children": [
+                    {
+                      "id": "medium-range-ssm-types",
+                      "name": "انواع موشک میان‌برد",
+                      "englishName": "Medium Range SSM Types",
+                      "order": 1,
+                      "level": 5,
+                      "isRequired": true,
+                      "isActive": true,
+                      "children": []
+        }
+      ]
+    },
+    {
+                  "id": "long-range-ssm",
+                  "name": "بلندبرد",
+                  "englishName": "Long Range",
+      "order": 3,
+                  "level": 4,
+                  "isRequired": true,
+                  "isActive": true,
+                  "children": [
+                    {
+                      "id": "long-range-ssm-types",
+                      "name": "انواع موشک بلندبرد",
+                      "englishName": "Long Range SSM Types",
+                      "order": 1,
+                      "level": 5,
+                      "isRequired": true,
+                      "isActive": true,
+                      "children": []
+                    }
+                  ]
+                },
+                {
+                  "id": "cruise-missiles",
+                  "name": "کروز",
+                  "englishName": "Cruise Missiles",
+                  "order": 4,
+                  "level": 4,
+                  "isRequired": true,
+                  "isActive": true,
+      "children": [
+        {
+                      "id": "cruise-missile-types",
+                      "name": "انواع موشک کروز",
+                      "englishName": "Cruise Missile Types",
+          "order": 1,
+                      "level": 5,
+                      "isRequired": true,
+                      "isActive": true,
+                      "children": []
+                    }
+                  ]
+                },
+                {
+                  "id": "hypersonic-missiles",
+                  "name": "هایپرسونیک",
+                  "englishName": "Hypersonic Missiles",
+                  "order": 5,
+                  "level": 4,
+                  "isRequired": true,
+                  "isActive": true,
+          "children": [
+            {
+                      "id": "hypersonic-missile-types",
+                      "name": "انواع هایپرسونیک",
+                      "englishName": "Hypersonic Missile Types",
+              "order": 1,
+                      "level": 5,
+                      "isRequired": true,
+                      "isActive": true,
+                      "children": []
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "surface-to-air",
+              "name": "موشک‌های زمین‌به‌هوا",
+              "englishName": "Surface-to-Air Missiles",
+              "order": 2,
+              "level": 3,
+              "isRequired": true,
+              "isActive": true,
+              "children": [
+                {
+                  "id": "manpads",
+                  "name": "دوش‌پرتاب",
+                  "englishName": "Man-Portable Air Defense Systems",
+                  "order": 1,
+                  "level": 4,
+                  "isRequired": true,
+                  "isActive": true,
+                  "children": [
+                    {
+                      "id": "manpad-types",
+                      "name": "انواع دوش‌پرتاب",
+                      "englishName": "MANPADS Types",
+                  "order": 1,
+                      "level": 5,
+                      "isRequired": true,
+                      "isActive": true,
+                      "children": []
+                    }
+                  ]
+                },
+                {
+                  "id": "medium-range-sam",
+                  "name": "میان‌برد",
+                  "englishName": "Medium Range",
+                  "order": 2,
+                  "level": 4,
+                  "isRequired": true,
+                  "isActive": true,
+                  "children": [
+                    {
+                      "id": "medium-range-sam-types",
+                      "name": "انواع میان‌برد",
+                      "englishName": "Medium Range SAM Types",
+                      "order": 1,
+                      "level": 5,
+                      "isRequired": true,
+                      "isActive": true,
+                      "children": []
+                    }
+                  ]
+                },
+                {
+                  "id": "long-range-sam",
+                  "name": "بلندبرد",
+                  "englishName": "Long Range",
+                  "order": 3,
+                  "level": 4,
+                  "isRequired": true,
+                  "isActive": true,
+                      "children": [
+                        {
+                      "id": "long-range-sam-types",
+                      "name": "انواع بلندبرد",
+                      "englishName": "Long Range SAM Types",
+                          "order": 1,
+                      "level": 5,
+                      "isRequired": true,
+                      "isActive": true,
+                          "children": []
+                        }
+                      ]
+                    }
+                  ]
+            },
+            {
+              "id": "air-to-surface",
+              "name": "موشک‌های هوا‌به‌زمین",
+              "englishName": "Air-to-Surface Missiles",
+              "order": 3,
+              "level": 3,
+              "isRequired": true,
+              "isActive": true,
+              "children": [
+                {
+                  "id": "guided-tactical",
+                  "name": "تاکتیکی هدایت‌شونده",
+                  "englishName": "Guided Tactical",
+                  "order": 1,
+                  "level": 4,
+                  "isRequired": true,
+                  "isActive": true,
+                  "children": [
+                    {
+                      "id": "guided-tactical-types",
+                      "name": "انواع تاکتیکی",
+                      "englishName": "Guided Tactical Types",
+                      "order": 1,
+                      "level": 5,
+                      "isRequired": true,
+                      "isActive": true,
+                      "children": []
+                    }
+                  ]
+                },
+                {
+                  "id": "anti-radar",
+                  "name": "ضدرادار",
+                  "englishName": "Anti-Radar",
+                  "order": 2,
+                  "level": 4,
+                  "isRequired": true,
+                  "isActive": true,
+                  "children": [
+                    {
+                      "id": "anti-radar-types",
+                      "name": "انواع ضد رادار",
+                      "englishName": "Anti-Radar Types",
+                      "order": 1,
+                      "level": 5,
+                      "isRequired": true,
+                      "isActive": true,
+                      "children": []
+                    }
+                  ]
+                },
+                {
+                  "id": "standoff",
+                  "name": "دورایستا",
+                  "englishName": "Standoff",
+                  "order": 3,
+                  "level": 4,
+                  "isRequired": true,
+                  "isActive": true,
+                  "children": [
+                    {
+                      "id": "standoff-types",
+                      "name": "انواع دورایستا",
+                      "englishName": "Standoff Types",
+                      "order": 1,
+                      "level": 5,
+                      "isRequired": true,
+                      "isActive": true,
+                      "children": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+              "id": "air-to-air",
+              "name": "موشک‌های هوا‌به‌هوا",
+              "englishName": "Air-to-Air Missiles",
+      "order": 4,
+              "level": 3,
+              "isRequired": true,
+              "isActive": true,
+              "children": [
+                {
+                  "id": "short-range-aam",
+                  "name": "کوتاه‌برد",
+                  "englishName": "Short Range",
+                  "order": 1,
+                  "level": 4,
+                  "isRequired": true,
+                  "isActive": true,
+                  "children": [
+                    {
+                      "id": "short-range-aam-types",
+                      "name": "انواع کوتاه‌برد",
+                      "englishName": "Short Range AAM Types",
+                      "order": 1,
+                      "level": 5,
+                      "isRequired": true,
+                      "isActive": true,
+                      "children": []
+                    }
+                  ]
+                },
+                {
+                  "id": "medium-range-aam",
+                  "name": "میان‌برد",
+                  "englishName": "Medium Range",
+                  "order": 2,
+                  "level": 4,
+                  "isRequired": true,
+                  "isActive": true,
+      "children": [
+        {
+                      "id": "medium-range-aam-types",
+                      "name": "انواع میان‌برد",
+                      "englishName": "Medium Range AAM Types",
+          "order": 1,
+                      "level": 5,
+                      "isRequired": true,
+                      "isActive": true,
+                      "children": []
+                    }
+                  ]
+                },
+                {
+                  "id": "long-range-aam",
+                  "name": "بلندبرد",
+                  "englishName": "Long Range",
+                  "order": 3,
+                  "level": 4,
+                  "isRequired": true,
+                  "isActive": true,
+          "children": [
+            {
+                      "id": "long-range-aam-types",
+                      "name": "انواع بلندبرد",
+                      "englishName": "Long Range AAM Types",
+              "order": 1,
+                      "level": 5,
+                      "isRequired": true,
+                      "isActive": true,
+                      "children": []
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "anti-tank-missiles",
+              "name": "موشک‌های ضد زره",
+              "englishName": "Anti-Tank Missiles",
+              "order": 5,
+              "level": 3,
+              "isRequired": true,
+              "isActive": true,
+              "children": [
+                {
+                  "id": "wire-guided",
+                  "name": "هدایت سیمی",
+                  "englishName": "Wire Guided",
+                  "order": 1,
+                  "level": 4,
+                  "isRequired": true,
+                  "isActive": true,
+                  "children": [
+                    {
+                      "id": "wire-guided-types",
+                      "name": "انواع هدایت سیمی",
+                      "englishName": "Wire Guided Types",
+                  "order": 1,
+                      "level": 5,
+                      "isRequired": true,
+                      "isActive": true,
+                      "children": []
+                    }
+                  ]
+                },
+                {
+                  "id": "laser-guided",
+                  "name": "هدایت لیزری",
+                  "englishName": "Laser Guided",
+                  "order": 2,
+                  "level": 4,
+                  "isRequired": true,
+                  "isActive": true,
+                  "children": [
+                    {
+                      "id": "laser-guided-types",
+                      "name": "انواع هدایت لیزری",
+                      "englishName": "Laser Guided Types",
+                      "order": 1,
+                      "level": 5,
+                      "isRequired": true,
+                      "isActive": true,
+                      "children": []
+                    }
+                  ]
+                },
+                {
+                  "id": "man-portable-atgm",
+                  "name": "دوش‌پرتاب",
+                  "englishName": "Man-Portable ATGM",
+                  "order": 3,
+                  "level": 4,
+                  "isRequired": true,
+                  "isActive": true,
+                      "children": [
+                        {
+                      "id": "man-portable-atgm-types",
+                      "name": "انواع دوش‌پرتاب",
+                      "englishName": "Man-Portable ATGM Types",
+                          "order": 1,
+                      "level": 5,
+                      "isRequired": true,
+                      "isActive": true,
+                          "children": []
+                        }
+                      ]
+                    }
+                  ]
+                }
+          ]
+        },
+        {
+          "id": "non-lethal-weapons",
+          "name": "سلاح‌های غیرکشنده",
+          "englishName": "Non-Lethal Weapons",
+          "order": 3,
+          "level": 2,
+          "isRequired": true,
+          "isActive": true,
+          "children": [
+            {
+              "id": "crowd-control",
+              "name": "کنترل جمعیت",
+              "englishName": "Crowd Control",
+              "order": 1,
+              "level": 3,
+              "isRequired": true,
+              "isActive": true,
+              "children": [
+                { "id": "pepper-spray", "name": "اسپری فلفل", "englishName": "Pepper Spray", "order": 1, "level": 4, "isRequired": true, "isActive": true, "children": [] },
+                { "id": "taser", "name": "شوکر برقی", "englishName": "Taser", "order": 2, "level": 4, "isRequired": true, "isActive": true, "children": [] },
+                { "id": "smoke-grenade", "name": "نارنجک دودزا", "englishName": "Smoke Grenade", "order": 3, "level": 4, "isRequired": true, "isActive": true, "children": [] }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "ammunition-equipment",
+          "name": "مهمات و ادوات",
+          "englishName": "Ammunition and Equipment",
+          "order": 4,
+          "level": 2,
+          "isRequired": true,
+          "isActive": true,
+          "children": [
+            {
+              "id": "light-ammunition",
+              "name": "مهمات سلاح سبک",
+              "englishName": "Light Weapon Ammunition",
+              "order": 1,
+              "level": 3,
+              "isRequired": true,
+              "isActive": true,
+              "children": [
+                { "id": "556mm-ammo", "name": "گلوله ۵.۵۶mm", "englishName": "5.56mm Ammunition", "order": 1, "level": 4, "isRequired": true, "isActive": true, "children": [] }
+              ]
+            },
+            {
+              "id": "heavy-ammunition",
+              "name": "مهمات سلاح سنگین",
+              "englishName": "Heavy Weapon Ammunition",
+              "order": 2,
+              "level": 3,
+              "isRequired": true,
+              "isActive": true,
+              "children": [
+                { "id": "762mm-ammo", "name": "گلوله ۷.۶۲mm", "englishName": "7.62mm Ammunition", "order": 1, "level": 4, "isRequired": true, "isActive": true, "children": [] }
+              ]
+            },
+            {
+              "id": "missile-ammunition",
+              "name": "مهمات موشک",
+              "englishName": "Missile Ammunition",
+              "order": 3,
+              "level": 3,
+              "isRequired": true,
+              "isActive": true,
+              "children": [
+                { "id": "training-missiles", "name": "موشک آموزشی", "englishName": "Training Missiles", "order": 1, "level": 4, "isRequired": true, "isActive": true, "children": [] }
+              ]
+            },
+            {
+              "id": "accessories",
+              "name": "لوازم جانبی",
+              "englishName": "Accessories",
+              "order": 4,
+              "level": 3,
+              "isRequired": true,
+              "isActive": true,
+              "children": [
+                { "id": "magazines-belts-fuzes", "name": "خشاب، تسمه، فیوز", "englishName": "Magazines, Belts, Fuzes", "order": 1, "level": 4, "isRequired": true, "isActive": true, "children": [] }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "2",
+      "name": "وسایل نقلیه",
+      "englishName": "Vehicles",
+      "description": "خودروها و ادوات متحرک زمینی",
+      "level": 1,
+      "parentId": null,
+      "order": 2,
+      "icon": "🚚",
+      "children": [
+        {
+          "id": "armored-vehicles",
+          "name": "خودروهای زرهی",
+          "englishName": "Armored Vehicles",
+          "order": 1,
+          "level": 2,
+          "isRequired": true,
+          "isActive": true,
+          "children": [
+            { "id": "apc", "name": "نفربر زرهی", "englishName": "APC", "order": 1, "level": 3, "isRequired": true, "isActive": true, "children": [] },
+            { "id": "ifv", "name": "خودروی رزمی پیاده", "englishName": "IFV", "order": 2, "level": 3, "isRequired": true, "isActive": true, "children": [] },
+            { "id": "mbt", "name": "تانک اصلی نبرد", "englishName": "MBT", "order": 3, "level": 3, "isRequired": true, "isActive": true, "children": [] }
+          ]
+        },
+        {
+          "id": "tactical-vehicles",
+          "name": "خودروهای تاکتیکی",
+          "englishName": "Tactical Vehicles",
+          "order": 2,
+          "level": 2,
+          "isRequired": true,
+          "isActive": true,
+          "children": [
+            { "id": "light-utility", "name": "خودروی سبک تاکتیکی", "englishName": "Light Utility", "order": 1, "level": 3, "isRequired": true, "isActive": true, "children": [] },
+            { "id": "medium-truck", "name": "کامیون میانه", "englishName": "Medium Truck", "order": 2, "level": 3, "isRequired": true, "isActive": true, "children": [] },
+            { "id": "heavy-truck", "name": "کامیون سنگین", "englishName": "Heavy Truck", "order": 3, "level": 3, "isRequired": true, "isActive": true, "children": [] }
+          ]
+        },
+        {
+          "id": "special-purpose",
+          "name": "خودروهای تخصصی",
+          "englishName": "Special Purpose Vehicles",
+          "order": 3,
+          "level": 2,
+          "isRequired": true,
+          "isActive": true,
+          "children": [
+            { "id": "ambulance-vehicle", "name": "آمبولانس میدانی", "englishName": "Field Ambulance", "order": 1, "level": 3, "isRequired": true, "isActive": true, "children": [] },
+            { "id": "recovery-vehicle", "name": "خودروی ریکاوری", "englishName": "Recovery Vehicle", "order": 2, "level": 3, "isRequired": true, "isActive": true, "children": [] },
+            { "id": "fuel-tanker", "name": "تانکر سوخت", "englishName": "Fuel Tanker", "order": 3, "level": 3, "isRequired": true, "isActive": true, "children": [] }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "3",
+      "name": "سامانه‌های الکترونیک",
+      "englishName": "Electronics",
+      "description": "سامانه‌ها و تجهیزات الکترونیکی",
+      "level": 1,
+      "parentId": null,
+      "order": 3,
+      "icon": "💡",
+      "children": [
+        {
+          "id": "sensors",
+          "name": "حسگرها و اپتیک",
+          "englishName": "Sensors & Optics",
+          "order": 1,
+          "level": 2,
+          "isRequired": true,
+          "isActive": true,
+          "children": [
+            { "id": "night-vision", "name": "دید در شب", "englishName": "Night Vision", "order": 1, "level": 3, "isRequired": true, "isActive": true, "children": [] },
+            { "id": "thermal", "name": "حرارتی", "englishName": "Thermal Imaging", "order": 2, "level": 3, "isRequired": true, "isActive": true, "children": [] }
+          ]
+        },
+        {
+          "id": "ew",
+          "name": "جنگ الکترونیک",
+          "englishName": "Electronic Warfare",
+          "order": 2,
+          "level": 2,
+          "isRequired": true,
+          "isActive": true,
+          "children": [
+            { "id": "jamming", "name": "اخلال", "englishName": "Jamming", "order": 1, "level": 3, "isRequired": true, "isActive": true, "children": [] },
+            { "id": "sigint", "name": "شنود سیگنال", "englishName": "SIGINT", "order": 2, "level": 3, "isRequired": true, "isActive": true, "children": [] }
+          ]
+        },
+        {
+          "id": "computing",
+          "name": "محاسبات و کنترل",
+          "englishName": "Computing & Control",
+          "order": 3,
+          "level": 2,
+          "isRequired": true,
+          "isActive": true,
+          "children": [
+            { "id": "mission-computers", "name": "کامپیوتر ماموریت", "englishName": "Mission Computers", "order": 1, "level": 3, "isRequired": true, "isActive": true, "children": [] },
+            { "id": "fire-control", "name": "کنترل آتش", "englishName": "Fire Control", "order": 2, "level": 3, "isRequired": true, "isActive": true, "children": [] }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "4",
+      "name": "تجهیزات پشتیبانی",
+      "englishName": "Support Equipment",
+      "description": "تجهیزات پشتیبانی رزمی و عمومی",
+      "level": 1,
+      "parentId": null,
+      "order": 4,
+      "icon": "🧰",
+      "children": [
+        { "id": "generators", "name": "ژنراتورهای برق", "englishName": "Power Generators", "order": 1, "level": 2, "isRequired": true, "isActive": true, "children": [] },
+        { "id": "workshops", "name": "کارگاه و ابزار", "englishName": "Workshops & Tools", "order": 2, "level": 2, "isRequired": true, "isActive": true, "children": [] },
+        { "id": "field-kitchen", "name": "آشپزخانه صحرایی", "englishName": "Field Kitchen", "order": 3, "level": 2, "isRequired": true, "isActive": true, "children": [] },
+        { "id": "tents", "name": "چادر و اسکان", "englishName": "Tents & Shelter", "order": 4, "level": 2, "isRequired": true, "isActive": true, "children": [] }
+      ]
+    },
+    {
+      "id": "5",
+      "name": "لجستیک",
+      "englishName": "Logistics",
+      "description": "تجهیزات و سامانه‌های لجستیکی",
+      "level": 1,
+      "parentId": null,
+      "order": 5,
+      "icon": "📦",
+      "children": [
+        { "id": "transport", "name": "حمل و نقل", "englishName": "Transport", "order": 1, "level": 2, "isRequired": true, "isActive": true, "children": [] },
+        { "id": "supply", "name": "تأمین", "englishName": "Supply", "order": 2, "level": 2, "isRequired": true, "isActive": true, "children": [] },
+        { "id": "fuel", "name": "سوخت‌رسانی", "englishName": "Fuel", "order": 3, "level": 2, "isRequired": true, "isActive": true, "children": [] },
+        { "id": "storage", "name": "انبارداری", "englishName": "Storage", "order": 4, "level": 2, "isRequired": true, "isActive": true, "children": [] }
+      ]
+    },
+    {
+      "id": "6",
+      "name": "پزشکی",
+      "englishName": "Medical",
+      "description": "تجهیزات پزشکی و امدادی",
+      "level": 1,
+      "parentId": null,
+      "order": 6,
+      "icon": "🩺",
+      "children": [
+        { "id": "field-hospitals", "name": "بیمارستان صحرایی", "englishName": "Field Hospitals", "order": 1, "level": 2, "isRequired": true, "isActive": true, "children": [] },
+        { "id": "ambulances", "name": "آمبولانس", "englishName": "Ambulances", "order": 2, "level": 2, "isRequired": true, "isActive": true, "children": [] },
+        { "id": "medical-kits", "name": "کیت‌های پزشکی", "englishName": "Medical Kits", "order": 3, "level": 2, "isRequired": true, "isActive": true, "children": [] }
+      ]
+    },
+    {
+      "id": "7",
+      "name": "ساختمانی / مهندسی",
+      "englishName": "Engineering",
+      "description": "تجهیزات عمرانی و مهندسی رزمی",
+      "level": 1,
+      "parentId": null,
+      "order": 7,
+      "icon": "🏗️",
+      "children": [
+        { "id": "construction", "name": "ماشین‌آلات عمرانی", "englishName": "Construction Machinery", "order": 1, "level": 2, "isRequired": true, "isActive": true, "children": [
+          { "id": "bulldozers", "name": "بولدوزر", "englishName": "Bulldozers", "order": 1, "level": 3, "isRequired": true, "isActive": true, "children": [] },
+          { "id": "excavators", "name": "بیل مکانیکی", "englishName": "Excavators", "order": 2, "level": 3, "isRequired": true, "isActive": true, "children": [] }
+        ] },
+        { "id": "bridging", "name": "پل‌سازی", "englishName": "Bridging", "order": 2, "level": 2, "isRequired": true, "isActive": true, "children": [] },
+        { "id": "demining", "name": "مین‌زدایی", "englishName": "Demining", "order": 3, "level": 2, "isRequired": true, "isActive": true, "children": [] }
+      ]
+    },
+    {
+      "id": "8",
+      "name": "ابزار ارتباطی",
+      "englishName": "Comms",
+      "description": "سامانه‌ها و ادوات ارتباطی",
+      "level": 1,
+      "parentId": null,
+      "order": 8,
+      "icon": "📡",
+      "children": [
+        { "id": "radios", "name": "رادیوها", "englishName": "Radios", "order": 1, "level": 2, "isRequired": true, "isActive": true, "children": [
+          { "id": "hf", "name": "HF", "englishName": "HF", "order": 1, "level": 3, "isRequired": true, "isActive": true, "children": [] },
+          { "id": "vhf-uhf", "name": "VHF/UHF", "englishName": "VHF/UHF", "order": 2, "level": 3, "isRequired": true, "isActive": true, "children": [] }
+        ] },
+        { "id": "satcom", "name": "ارتباطات ماهواره‌ای", "englishName": "SATCOM", "order": 2, "level": 2, "isRequired": true, "isActive": true, "children": [] },
+        { "id": "datalink", "name": "لینک داده", "englishName": "Data Links", "order": 3, "level": 2, "isRequired": true, "isActive": true, "children": [] }
+      ]
+    },
+    {
+      "id": "9",
+      "name": "ش.م.ه",
+      "englishName": "NBC - Nuclear, Bio, Chem",
+      "description": "تجهیزات هسته‌ای، بیولوژیکی و شیمیایی",
+      "level": 1,
+      "parentId": null,
+      "order": 9,
+      "icon": "☢️",
+      "children": [
+        { "id": "detection", "name": "کشف و تشخیص", "englishName": "Detection", "order": 1, "level": 2, "isRequired": true, "isActive": true, "children": [] },
+        { "id": "protection", "name": "حفاظت فردی/جمعی", "englishName": "Protection", "order": 2, "level": 2, "isRequired": true, "isActive": true, "children": [] },
+        { "id": "decontamination", "name": "رفع آلودگی", "englishName": "Decontamination", "order": 3, "level": 2, "isRequired": true, "isActive": true, "children": [] }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,227 @@
+[
+  {
+    "symbolSet": "01",
+    "name": "هوایی",
+    "nameEn": "Air",
+    "modifiers": {
+      "modifierOne": [
+        { "value": "00", "label": "بدون تغییر", "labelEn": "Unspecified" },
+        { "value": "01", "label": "تاکتیکی", "labelEn": "Tactical" },
+        { "value": "02", "label": "استراتژیک", "labelEn": "Strategic" },
+        { "value": "03", "label": "اکتشاف", "labelEn": "Reconnaissance" },
+        { "value": "04", "label": "آموزشی", "labelEn": "Training" }
+      ],
+      "modifierTwo": [
+        { "value": "00", "label": "بدون تغییر", "labelEn": "Unspecified" },
+        { "value": "01", "label": "سوخت‌رسان", "labelEn": "Tanker" },
+        { "value": "02", "label": "اطلاعاتی", "labelEn": "Intelligence" },
+        { "value": "03", "label": "مسافربری", "labelEn": "Passenger" },
+        { "value": "04", "label": "فرماندهی و کنترل", "labelEn": "Command and Control" }
+      ]
+    }
+  },
+  {
+    "symbolSet": "05",
+    "name": "فضایی",
+    "nameEn": "Space",
+    "modifiers": {
+      "modifierOne": [
+        { "value": "00", "label": "بدون تغییر", "labelEn": "Unspecified" },
+        { "value": "01", "label": "نظامی", "labelEn": "Military" },
+        { "value": "02", "label": "غیرنظامی", "labelEn": "Civilian" },
+        { "value": "03", "label": "تحقیقاتی", "labelEn": "Research" }
+      ],
+      "modifierTwo": [
+        { "value": "00", "label": "بدون تغییر", "labelEn": "Unspecified" },
+        { "value": "01", "label": "مداری", "labelEn": "Orbital" },
+        { "value": "02", "label": "ژئوسنکرون", "labelEn": "Geosynchronous" }
+      ]
+    }
+  },
+  {
+    "symbolSet": "10",
+    "name": "زمینی",
+    "nameEn": "Land",
+    "modifiers": {
+      "modifierOne": [
+        { "value": "00", "label": "بدون تغییر", "labelEn": "Unspecified" },
+        { "value": "01", "label": "سبک", "labelEn": "Light" },
+        { "value": "02", "label": "متوسط", "labelEn": "Medium" },
+        { "value": "03", "label": "سنگین", "labelEn": "Heavy" },
+        { "value": "04", "label": "کوهستانی", "labelEn": "Mountain" }
+      ],
+      "modifierTwo": [
+        { "value": "00", "label": "بدون تغییر", "labelEn": "Unspecified" },
+        { "value": "01", "label": "آبی‌خاکی", "labelEn": "Amphibious" },
+        { "value": "02", "label": "پیاده", "labelEn": "Foot" },
+        { "value": "03", "label": "چتربازی", "labelEn": "Airborne" },
+        { "value": "04", "label": "هوابرد", "labelEn": "Air Assault" },
+        { "value": "05", "label": "زرهی", "labelEn": "Armored" },
+        { "value": "06", "label": "مکانیزه", "labelEn": "Mechanized" },
+        { "value": "07", "label": "موتوریزه", "labelEn": "Motorized" }
+      ]
+    }
+  },
+  {
+    "symbolSet": "15",
+    "name": "تجهیزات زمینی",
+    "nameEn": "Land Equipment",
+    "modifiers": {
+      "modifierOne": [
+        { "value": "00", "label": "بدون تغییر", "labelEn": "Unspecified" },
+        { "value": "01", "label": "سبک", "labelEn": "Light" },
+        { "value": "02", "label": "متوسط", "labelEn": "Medium" },
+        { "value": "03", "label": "سنگین", "labelEn": "Heavy" },
+        { "value": "04", "label": "آبی‌خاکی", "labelEn": "Amphibious" }
+      ],
+      "modifierTwo": [
+        { "value": "00", "label": "بدون تغییر", "labelEn": "Unspecified" },
+        { "value": "01", "label": "چرخ‌دار", "labelEn": "Wheeled" },
+        { "value": "02", "label": "زنجیری", "labelEn": "Tracked" },
+        { "value": "03", "label": "نیمه‌زنجیری", "labelEn": "Half-track" },
+        { "value": "04", "label": "یدک‌کش", "labelEn": "Towed" }
+      ]
+    }
+  },
+  {
+    "symbolSet": "20",
+    "name": "تاسیسات زمینی",
+    "nameEn": "Land Installations",
+    "modifiers": {
+      "modifierOne": [
+        { "value": "00", "label": "بدون تغییر", "labelEn": "Unspecified" },
+        { "value": "01", "label": "نظامی", "labelEn": "Military" },
+        { "value": "02", "label": "غیرنظامی", "labelEn": "Civilian" }
+      ],
+      "modifierTwo": [
+        { "value": "00", "label": "بدون تغییر", "labelEn": "Unspecified" },
+        { "value": "01", "label": "زیرزمینی", "labelEn": "Underground" },
+        { "value": "02", "label": "سطحی", "labelEn": "Surface" },
+        { "value": "03", "label": "تخریب شده", "labelEn": "Demolished" }
+      ]
+    }
+  },
+  {
+    "symbolSet": "25",
+    "name": "کنترل و دستورات",
+    "nameEn": "Control Measures",
+    "modifiers": {
+      "modifierOne": [
+        { "value": "00", "label": "بدون تغییر", "labelEn": "Unspecified" }
+      ],
+      "modifierTwo": [
+        { "value": "00", "label": "بدون تغییر", "labelEn": "Unspecified" }
+      ]
+    }
+  },
+  {
+    "symbolSet": "27",
+    "name": "پرسنل",
+    "nameEn": "Personnel",
+    "modifiers": {
+      "modifierOne": [
+        { "value": "00", "label": "بدون تغییر", "labelEn": "Unspecified" },
+        { "value": "01", "label": "مذکر", "labelEn": "Male" },
+        { "value": "02", "label": "مؤنث", "labelEn": "Female" }
+      ],
+      "modifierTwo": [
+        { "value": "00", "label": "بدون تغییر", "labelEn": "Unspecified" },
+        { "value": "01", "label": "رزمی", "labelEn": "Combat" },
+        { "value": "02", "label": "پشتیبانی رزم", "labelEn": "Combat Support" },
+        { "value": "03", "label": "پشتیبانی خدمات رزم", "labelEn": "Combat Service Support" }
+      ]
+    }
+  },
+  {
+    "symbolSet": "30",
+    "name": "دریایی سطحی",
+    "nameEn": "Sea Surface",
+    "modifiers": {
+      "modifierOne": [
+        { "value": "00", "label": "بدون تغییر", "labelEn": "Unspecified" },
+        { "value": "01", "label": "سبک", "labelEn": "Light" },
+        { "value": "02", "label": "متوسط", "labelEn": "Medium" },
+        { "value": "03", "label": "سنگین", "labelEn": "Heavy" },
+        { "value": "04", "label": "رزمی", "labelEn": "Combatant" }
+      ],
+      "modifierTwo": [
+        { "value": "00", "label": "بدون تغییر", "labelEn": "Unspecified" },
+        { "value": "01", "label": "موشکی", "labelEn": "Missile" },
+        { "value": "02", "label": "اژدری", "labelEn": "Torpedo" },
+        { "value": "03", "label": "پشتیبانی", "labelEn": "Support" }
+      ]
+    }
+  },
+  {
+    "symbolSet": "35",
+    "name": "دریایی زیرسطحی",
+    "nameEn": "Sea Subsurface",
+    "modifiers": {
+      "modifierOne": [
+        { "value": "00", "label": "بدون تغییر", "labelEn": "Unspecified" },
+        { "value": "01", "label": "هسته‌ای", "labelEn": "Nuclear" },
+        { "value": "02", "label": "دیزلی", "labelEn": "Diesel" }
+      ],
+      "modifierTwo": [
+        { "value": "00", "label": "بدون تغییر", "labelEn": "Unspecified" },
+        { "value": "01", "label": "موشکی بالستیک", "labelEn": "Ballistic Missile" },
+        { "value": "02", "label": "کروز", "labelEn": "Cruise Missile" },
+        { "value": "03", "label": "اژدری", "labelEn": "Torpedo" }
+      ]
+    }
+  },
+  {
+    "symbolSet": "40",
+    "name": "تاسیسات دریایی",
+    "nameEn": "Sea Installations",
+    "modifiers": {
+      "modifierOne": [
+        { "value": "00", "label": "بدون تغییر", "labelEn": "Unspecified" },
+        { "value": "01", "label": "نظامی", "labelEn": "Military" },
+        { "value": "02", "label": "غیرنظامی", "labelEn": "Civilian" }
+      ],
+      "modifierTwo": [
+        { "value": "00", "label": "بدون تغییر", "labelEn": "Unspecified" }
+      ]
+    }
+  },
+  {
+    "symbolSet": "45",
+    "name": "فعالیت‌های دریایی",
+    "nameEn": "Sea Activities",
+    "modifiers": {
+      "modifierOne": [
+        { "value": "00", "label": "بدون تغییر", "labelEn": "Unspecified" }
+      ],
+      "modifierTwo": [
+        { "value": "00", "label": "بدون تغییر", "labelEn": "Unspecified" }
+      ]
+    }
+  },
+  {
+    "symbolSet": "50",
+    "name": "هوافضا",
+    "nameEn": "Air Space",
+    "modifiers": {
+      "modifierOne": [
+        { "value": "00", "label": "بدون تغییر", "labelEn": "Unspecified" }
+      ],
+      "modifierTwo": [
+        { "value": "00", "label": "بدون تغییر", "labelEn": "Unspecified" }
+      ]
+    }
+  },
+  {
+    "symbolSet": "60",
+    "name": "نقاط مرجع",
+    "nameEn": "Control Points",
+    "modifiers": {
+      "modifierOne": [
+        { "value": "00", "label": "بدون تغییر", "labelEn": "Unspecified" }
+      ],
+      "modifierTwo": [
+        { "value": "00", "label": "بدون تغییر", "labelEn": "Unspecified" }
+      ]
+    }
+  }
+] 

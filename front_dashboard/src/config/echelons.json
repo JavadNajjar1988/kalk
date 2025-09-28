@@ -1,0 +1,153 @@
+[
+  {
+    "symbolSet": "01",
+    "name": "هوایی",
+    "nameEn": "Air",
+    "echelons": [
+      { "value": "00", "label": "نامشخص", "labelEn": "Unspecified" },
+      { "value": "11", "label": "تیم/طاقه", "labelEn": "Team/Crew" },
+      { "value": "12", "label": "جوخه هوایی", "labelEn": "Air Section" },
+      { "value": "13", "label": "دسته هوایی", "labelEn": "Air Detachment" },
+      { "value": "14", "label": "اسکادران", "labelEn": "Squadron" },
+      { "value": "15", "label": "گروه هوایی", "labelEn": "Air Group" },
+      { "value": "16", "label": "بال", "labelEn": "Wing" },
+      { "value": "17", "label": "پایگاه هوایی", "labelEn": "Air Base" },
+      { "value": "18", "label": "نیروی هوایی", "labelEn": "Air Force" }
+    ]
+  },
+  {
+    "symbolSet": "05",
+    "name": "فضایی",
+    "nameEn": "Space",
+    "echelons": [
+      { "value": "00", "label": "نامشخص", "labelEn": "Unspecified" },
+      { "value": "11", "label": "تیم", "labelEn": "Team" },
+      { "value": "12", "label": "دسته فضایی", "labelEn": "Space Detachment" },
+      { "value": "13", "label": "واحد فضایی", "labelEn": "Space Unit" },
+      { "value": "14", "label": "مرکز فضایی", "labelEn": "Space Center" },
+      { "value": "15", "label": "نیروی فضایی", "labelEn": "Space Force" }
+    ]
+  },
+  {
+    "symbolSet": "10",
+    "name": "زمینی",
+    "nameEn": "Land",
+    "echelons": [
+      { "value": "00", "label": "نامشخص", "labelEn": "Unspecified" },
+      { "value": "11", "label": "تیم/خدمه", "labelEn": "Team/Crew" },
+      { "value": "12", "label": "جوخه", "labelEn": "Squad" },
+      { "value": "13", "label": "بخش", "labelEn": "Section" },
+      { "value": "14", "label": "دسته/گروه جداشده", "labelEn": "Platoon/Detachment" },
+      { "value": "15", "label": "گروهان/باتری/سرایا", "labelEn": "Company/Battery/Troop" },
+      { "value": "16", "label": "گردان/اسکادران", "labelEn": "Battalion/Squadron" },
+      { "value": "17", "label": "هنگ/گروه", "labelEn": "Regiment/Group" },
+      { "value": "18", "label": "تیپ", "labelEn": "Brigade" },
+      { "value": "21", "label": "لشکر", "labelEn": "Division" },
+      { "value": "22", "label": "سپاه", "labelEn": "Corps" },
+      { "value": "23", "label": "ارتش", "labelEn": "Army" },
+      { "value": "24", "label": "گروه ارتش/جبهه", "labelEn": "Army Group/Front" },
+      { "value": "25", "label": "منطقه/تئاتر", "labelEn": "Region/Theater" },
+      { "value": "26", "label": "فرماندهی", "labelEn": "Command" }
+    ]
+  },
+  {
+    "symbolSet": "15",
+    "name": "تجهیزات زمینی",
+    "nameEn": "Land Equipment",
+    "echelons": [
+      { "value": "00", "label": "نامشخص", "labelEn": "Unspecified" },
+      { "value": "11", "label": "تکی", "labelEn": "Individual" },
+      { "value": "12", "label": "جفت", "labelEn": "Pair" },
+      { "value": "13", "label": "گروه سلاح", "labelEn": "Weapons Group" }
+    ]
+  },
+  {
+    "symbolSet": "20",
+    "name": "تاسیسات زمینی",
+    "nameEn": "Land Installations",
+    "echelons": [
+      { "value": "00", "label": "نامشخص", "labelEn": "Unspecified" },
+      { "value": "11", "label": "تاسیسات کوچک", "labelEn": "Small Installation" },
+      { "value": "12", "label": "تاسیسات متوسط", "labelEn": "Medium Installation" },
+      { "value": "13", "label": "تاسیسات بزرگ", "labelEn": "Large Installation" }
+    ]
+  },
+  {
+    "symbolSet": "25",
+    "name": "کنترل و دستورات",
+    "nameEn": "Control Measures",
+    "echelons": [
+      { "value": "00", "label": "نامشخص", "labelEn": "Unspecified" }
+    ]
+  },
+  {
+    "symbolSet": "27",
+    "name": "پرسنل",
+    "nameEn": "Personnel",
+    "echelons": [
+      { "value": "00", "label": "نامشخص", "labelEn": "Unspecified" },
+      { "value": "11", "label": "فرد", "labelEn": "Individual" },
+      { "value": "12", "label": "تیم", "labelEn": "Team" },
+      { "value": "13", "label": "گروه", "labelEn": "Group" }
+    ]
+  },
+  {
+    "symbolSet": "30",
+    "name": "دریایی سطحی",
+    "nameEn": "Sea Surface",
+    "echelons": [
+      { "value": "00", "label": "نامشخص", "labelEn": "Unspecified" },
+      { "value": "11", "label": "کشتی منفرد", "labelEn": "Individual Ship" },
+      { "value": "12", "label": "گروه رزمی", "labelEn": "Task Element" },
+      { "value": "13", "label": "گروه ناوی", "labelEn": "Task Unit" },
+      { "value": "14", "label": "ناوگروه", "labelEn": "Task Group" },
+      { "value": "15", "label": "ناوتیپ", "labelEn": "Task Force" },
+      { "value": "16", "label": "ناوگان", "labelEn": "Fleet" }
+    ]
+  },
+  {
+    "symbolSet": "35",
+    "name": "دریایی زیرسطحی",
+    "nameEn": "Sea Subsurface",
+    "echelons": [
+      { "value": "00", "label": "نامشخص", "labelEn": "Unspecified" },
+      { "value": "11", "label": "زیردریایی منفرد", "labelEn": "Individual Submarine" },
+      { "value": "12", "label": "گروه زیردریایی", "labelEn": "Submarine Group" }
+    ]
+  },
+  {
+    "symbolSet": "40",
+    "name": "تاسیسات دریایی",
+    "nameEn": "Sea Installations",
+    "echelons": [
+      { "value": "00", "label": "نامشخص", "labelEn": "Unspecified" },
+      { "value": "11", "label": "تاسیسات کوچک", "labelEn": "Small Installation" },
+      { "value": "12", "label": "تاسیسات متوسط", "labelEn": "Medium Installation" },
+      { "value": "13", "label": "تاسیسات بزرگ", "labelEn": "Large Installation" }
+    ]
+  },
+  {
+    "symbolSet": "45",
+    "name": "فعالیت‌های دریایی",
+    "nameEn": "Sea Activities",
+    "echelons": [
+      { "value": "00", "label": "نامشخص", "labelEn": "Unspecified" }
+    ]
+  },
+  {
+    "symbolSet": "50",
+    "name": "هوافضا",
+    "nameEn": "Air Space",
+    "echelons": [
+      { "value": "00", "label": "نامشخص", "labelEn": "Unspecified" }
+    ]
+  },
+  {
+    "symbolSet": "60",
+    "name": "نقاط مرجع",
+    "nameEn": "Control Points",
+    "echelons": [
+      { "value": "00", "label": "نامشخص", "labelEn": "Unspecified" }
+    ]
+  }
+] 

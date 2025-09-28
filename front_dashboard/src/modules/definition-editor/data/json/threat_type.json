@@ -1,0 +1,390 @@
+{
+  "nodes": [
+    {
+      "id": "1",
+      "name": "تهدید متقارن",
+      "level": 1,
+      "parentId": null,
+      "description": "تهدیدات متقارن و سنتی نظامی",
+      "children": [
+        {
+          "id": "1-1",
+          "name": "تهدید نیروهای زمینی",
+          "level": 2,
+          "parentId": "1",
+          "description": "تهدیدات نیروهای زمینی دشمن"
+        },
+        {
+          "id": "1-2",
+          "name": "تهدید نیروهای هوایی",
+          "level": 2,
+          "parentId": "1",
+          "description": "تهدیدات نیروهای هوایی دشمن"
+        },
+        {
+          "id": "1-3",
+          "name": "تهدید نیروهای دریایی",
+          "level": 2,
+          "parentId": "1",
+          "description": "تهدیدات نیروهای دریایی دشمن"
+        }
+      ]
+    },
+    {
+      "id": "2",
+      "name": "تهدید نامتقارن",
+      "level": 1,
+      "parentId": null,
+      "description": "تهدیدات نامتقارن و غیرسنتی",
+      "children": [
+        {
+          "id": "2-1",
+          "name": "تروریسم",
+          "level": 2,
+          "parentId": "2",
+          "description": "تهدیدات تروریستی و گروه‌های تروریستی"
+        },
+        {
+          "id": "2-2",
+          "name": "شبه‌نظامیان",
+          "level": 2,
+          "parentId": "2",
+          "description": "تهدیدات شبه‌نظامیان و گروه‌های مسلح غیردولتی"
+        },
+        {
+          "id": "2-3",
+          "name": "جنگ چریکی",
+          "level": 2,
+          "parentId": "2",
+          "description": "تهدیدات جنگ چریکی و عملیات نامنظم"
+        }
+      ]
+    },
+    {
+      "id": "3",
+      "name": "تهدید ترکیبی",
+      "level": 1,
+      "parentId": null,
+      "description": "تهدیدات ترکیبی و چندبعدی",
+      "children": [
+        {
+          "id": "3-1",
+          "name": "عملیات ترکیبی",
+          "level": 2,
+          "parentId": "3",
+          "description": "ترکیبی از تهدیدات متقارن و نامتقارن"
+        },
+        {
+          "id": "3-2",
+          "name": "جنگ هیبریدی",
+          "level": 2,
+          "parentId": "3",
+          "description": "جنگ هیبریدی و عملیات چندبعدی"
+        }
+      ]
+    },
+    {
+      "id": "4",
+      "name": "تهدید داخلی",
+      "level": 1,
+      "parentId": null,
+      "description": "تهدیدات داخلی و شورش‌ها",
+      "children": [
+        {
+          "id": "4-1",
+          "name": "شورش داخلی",
+          "level": 2,
+          "parentId": "4",
+          "description": "تهدیدات شورش داخلی و ناآرامی‌های اجتماعی"
+        },
+        {
+          "id": "4-2",
+          "name": "جنگ داخلی",
+          "level": 2,
+          "parentId": "4",
+          "description": "تهدیدات جنگ داخلی و درگیری‌های داخلی"
+        }
+      ]
+    },
+    {
+      "id": "5",
+      "name": "تهدید سایبری",
+      "level": 1,
+      "parentId": null,
+      "description": "تهدیدات سایبری و فضای مجازی",
+      "children": [
+        {
+          "id": "5-1",
+          "name": "حمله سایبری",
+          "level": 2,
+          "parentId": "5",
+          "description": "تهدیدات حمله سایبری و هک"
+        },
+        {
+          "id": "5-2",
+          "name": "جنگ سایبری",
+          "level": 2,
+          "parentId": "5",
+          "description": "تهدیدات جنگ سایبری و عملیات سایبری"
+        }
+      ]
+    },
+    {
+      "id": "6",
+      "name": "تهدید اطلاعاتی / رسانه‌ای",
+      "level": 1,
+      "parentId": null,
+      "description": "تهدیدات اطلاعاتی و جنگ روانی",
+      "children": [
+        {
+          "id": "6-1",
+          "name": "جنگ روانی",
+          "level": 2,
+          "parentId": "6",
+          "description": "تهدیدات جنگ روانی و تبلیغات"
+        },
+        {
+          "id": "6-2",
+          "name": "عملیات اطلاعاتی",
+          "level": 2,
+          "parentId": "6",
+          "description": "تهدیدات عملیات اطلاعاتی و جاسوسی"
+        }
+      ]
+    },
+    {
+      "id": "7",
+      "name": "تهدید هسته‌ای / شیمیایی / میکروبی",
+      "level": 1,
+      "parentId": null,
+      "description": "تهدیدات CBRN (شیمیایی، بیولوژیکی، رادیولوژیکی، هسته‌ای)",
+      "children": [
+        {
+          "id": "7-1",
+          "name": "تهدید هسته‌ای",
+          "level": 2,
+          "parentId": "7",
+          "description": "تهدیدات سلاح‌های هسته‌ای"
+        },
+        {
+          "id": "7-2",
+          "name": "تهدید شیمیایی",
+          "level": 2,
+          "parentId": "7",
+          "description": "تهدیدات سلاح‌های شیمیایی"
+        },
+        {
+          "id": "7-3",
+          "name": "تهدید بیولوژیکی",
+          "level": 2,
+          "parentId": "7",
+          "description": "تهدیدات سلاح‌های بیولوژیکی"
+        }
+      ]
+    },
+    {
+      "id": "8",
+      "name": "تهدید محیطی / طبیعی",
+      "level": 1,
+      "parentId": null,
+      "description": "تهدیدات محیطی و بلایای طبیعی",
+      "children": [
+        {
+          "id": "8-1",
+          "name": "بلایای طبیعی",
+          "level": 2,
+          "parentId": "8",
+          "description": "تهدیدات بلایای طبیعی مانند زلزله، سیل، طوفان"
+        },
+        {
+          "id": "8-2",
+          "name": "تغییرات اقلیمی",
+          "level": 2,
+          "parentId": "8",
+          "description": "تهدیدات ناشی از تغییرات اقلیمی"
+        }
+      ]
+    },
+    {
+      "id": "9",
+      "name": "تهدید هوشمند",
+      "level": 1,
+      "parentId": null,
+      "description": "تهدیدات هوشمند و پیشرفته",
+      "children": [
+        {
+          "id": "9-1",
+          "name": "هوش مصنوعی",
+          "level": 2,
+          "parentId": "9",
+          "description": "تهدیدات ناشی از هوش مصنوعی و اتوماسیون"
+        },
+        {
+          "id": "9-2",
+          "name": "سلاح‌های پیشرفته",
+          "level": 2,
+          "parentId": "9",
+          "description": "تهدیدات سلاح‌های پیشرفته و تکنولوژی‌های نوین"
+        }
+      ]
+    }
+  ],
+  "levels": [
+    {
+      "id": "1",
+      "name": "تهدید متقارن",
+      "englishName": "Symmetric Threat",
+      "order": 1,
+      "isRequired": true,
+      "isActive": true,
+      "description": "تهدیدات متقارن و سنتی نظامی",
+      "icon": "⚔️",
+      "threatLevel": "HIGH",
+      "threatCategory": "CONVENTIONAL",
+      "responseTime": "IMMEDIATE"
+    },
+    {
+      "id": "2",
+      "name": "تهدید نامتقارن",
+      "englishName": "Asymmetric Threat",
+      "order": 2,
+      "isRequired": true,
+      "isActive": true,
+      "description": "تهدیدات نامتقارن و غیرسنتی",
+      "icon": "💣",
+      "threatLevel": "VARIABLE",
+      "threatCategory": "UNCONVENTIONAL",
+      "responseTime": "RAPID"
+    },
+    {
+      "id": "3",
+      "name": "تهدید ترکیبی",
+      "englishName": "Hybrid Threat",
+      "order": 3,
+      "isRequired": true,
+      "isActive": true,
+      "description": "تهدیدات ترکیبی و چندبعدی",
+      "icon": "🌀",
+      "threatLevel": "COMPLEX",
+      "threatCategory": "MULTI_DOMAIN",
+      "responseTime": "COORDINATED"
+    },
+    {
+      "id": "4",
+      "name": "تهدید داخلی",
+      "englishName": "Internal Threat",
+      "order": 4,
+      "isRequired": true,
+      "isActive": true,
+      "description": "تهدیدات داخلی و شورش‌ها",
+      "icon": "🏠",
+      "threatLevel": "MEDIUM",
+      "threatCategory": "INTERNAL_SECURITY",
+      "responseTime": "SUSTAINED"
+    },
+    {
+      "id": "5",
+      "name": "تهدید سایبری",
+      "englishName": "Cyber Threat",
+      "order": 5,
+      "isRequired": true,
+      "isActive": true,
+      "description": "تهدیدات سایبری و فضای مجازی",
+      "icon": "💻",
+      "threatLevel": "CRITICAL",
+      "threatCategory": "CYBER_DOMAIN",
+      "responseTime": "REAL_TIME"
+    },
+    {
+      "id": "6",
+      "name": "تهدید اطلاعاتی",
+      "englishName": "Information Threat",
+      "order": 6,
+      "isRequired": true,
+      "isActive": true,
+      "description": "تهدیدات اطلاعاتی و جنگ روانی",
+      "icon": "📡",
+      "threatLevel": "PERSISTENT",
+      "threatCategory": "INFORMATION_WARFARE",
+      "responseTime": "CONTINUOUS"
+    },
+    {
+      "id": "7",
+      "name": "تهدید CBRN",
+      "englishName": "CBRN Threat",
+      "order": 7,
+      "isRequired": true,
+      "isActive": true,
+      "description": "تهدیدات هسته‌ای، شیمیایی، بیولوژیک و رادیولوژیک",
+      "icon": "☢️",
+      "threatLevel": "EXTREME",
+      "threatCategory": "WMD",
+      "responseTime": "EMERGENCY"
+    },
+    {
+      "id": "8",
+      "name": "تهدید محیطی",
+      "englishName": "Environmental Threat",
+      "order": 8,
+      "isRequired": true,
+      "isActive": true,
+      "description": "تهدیدات محیطی و بلایای طبیعی",
+      "icon": "🌍",
+      "threatLevel": "VARIABLE",
+      "threatCategory": "NATURAL_DISASTER",
+      "responseTime": "PREDICTIVE"
+    },
+    {
+      "id": "9",
+      "name": "تهدید هوشمند",
+      "englishName": "Emerging Smart Threat",
+      "order": 9,
+      "isRequired": true,
+      "isActive": true,
+      "description": "تهدیدات هوشمند و پیشرفته نوین",
+      "icon": "🤖",
+      "threatLevel": "EMERGING",
+      "threatCategory": "ADVANCED_TECHNOLOGY",
+      "responseTime": "ADAPTIVE"
+    },
+    {
+      "id": "10",
+      "name": "تهدید فضایی",
+      "englishName": "Space Threat",
+      "order": 10,
+      "isRequired": true,
+      "isActive": true,
+      "description": "تهدیدات فضایی و ماهواره‌ای",
+      "icon": "🚀",
+      "threatLevel": "STRATEGIC",
+      "threatCategory": "SPACE_DOMAIN",
+      "responseTime": "COORDINATED"
+    },
+    {
+      "id": "11",
+      "name": "تهدید اقتصادی",
+      "englishName": "Economic Threat",
+      "order": 11,
+      "isRequired": true,
+      "isActive": true,
+      "description": "تهدیدات اقتصادی و جنگ اقتصادی",
+      "icon": "💰",
+      "threatLevel": "STRATEGIC",
+      "threatCategory": "ECONOMIC_WARFARE",
+      "responseTime": "LONG_TERM"
+    },
+    {
+      "id": "12",
+      "name": "تهدید تروریستی",
+      "englishName": "Terrorist Threat",
+      "order": 12,
+      "isRequired": true,
+      "isActive": true,
+      "description": "تهدیدات تروریستی و عملیات تروریستی",
+      "icon": "💥",
+      "threatLevel": "HIGH",
+      "threatCategory": "TERRORISM",
+      "responseTime": "IMMEDIATE"
+    }
+  ]
+}

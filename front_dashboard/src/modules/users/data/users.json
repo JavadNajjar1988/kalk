@@ -1,0 +1,335 @@
+{
+  "users": [
+    {
+      "id": "usr_001",
+      "userCode": "USR001", 
+      "personalInfo": {
+        "fullName": "مهدی احمدی نژاد",
+        "fullNameEn": "Mehdi Ahmadinezhad",
+        "fatherName": "احمد",
+        "nationalId": "0123456789",
+        "nationality": "ایرانی",
+        "birthDate": "1985-03-15T00:00:00.000Z",
+        "gender": "مرد",
+        "birthPlace": "تهران، استان تهران",
+        "maritalStatus": "متاهل"
+      },
+      "contactInfo": {
+        "landline": "02133445566",
+        "mobile": ["09121234567", "09381234567"],
+        "addresses": "تهران، خیابان ولیعصر، پلاک 123، واحد 45",
+        "email": "mehdi.ahmadinezhad@example.com",
+        "postalCode": "1234567890",
+        "socialNetworks": [
+          { "platform": "تلگرام", "username": "@mehdi_ahmad" },
+          { "platform": "اینستاگرام", "username": "@mehdi.ahmad" }
+        ]
+      },
+      "professionalInfo": {
+        "status": "نظامی",
+        "details": {
+          "forceType": "ارتش",
+          "rank": "سرگرد", 
+          "position": "فرمانده گروهان",
+          "serviceNumber": "A123456789",
+          "unit": "گردان تفنگداران یکم"
+        }
+      },
+      "systemInfo": {
+        "role": "مدیر سیستم",
+        "accessLevel": "سطح 1 - دسترسی کامل",
+        "permissions": ["مدیریت کاربران", "مدیریت سیستم", "مشاهده گزارشات", "تنظیمات امنیتی"],
+        "lastLogin": "2024-01-15T08:30:00Z",
+        "loginCount": 245,
+        "password": "hashed_password_here",
+        "passwordLastChanged": "2024-01-01T00:00:00Z"
+      },
+      "createdAt": "2023-01-01T00:00:00Z",
+      "updatedAt": "2024-01-15T10:30:00Z",
+      "isActive": true
+    },
+    {
+      "id": "usr_002", 
+      "userCode": "USR002",
+      "personalInfo": {
+        "fullName": "زهرا محمدی فر",
+        "fullNameEn": "Zahra Mohammadifar",
+        "fatherName": "محمد",
+        "nationalId": "0987654321",
+        "nationality": "ایرانی",
+        "birthDate": "1990-07-22T00:00:00.000Z",
+        "gender": "زن",
+        "birthPlace": "مشهد، استان خراسان رضوی",
+        "maritalStatus": "مجرد"
+      },
+      "contactInfo": {
+        "landline": "05133445566",
+        "mobile": ["09151234567", "09351234567"],
+        "addresses": "مشهد، خیابان امام رضا، پلاک 456، طبقه 3",
+        "email": "zahra.mohammadifar@example.com",
+        "postalCode": "9876543210",
+        "socialNetworks": [
+          { "platform": "واتس‌اپ", "username": "+989151234567" }
+        ]
+      },
+      "professionalInfo": {
+        "status": "غیرنظامی",
+        "details": {
+          "organization": "شرکت فناوری اطلاعات پارس",
+          "department": "بخش توسعه نرم‌افزار",
+          "jobTitle": "توسعه‌دهنده نرم‌افزار ارشد",
+          "employeeCode": "PIT-2024-001"
+        }
+      },
+      "systemInfo": {
+        "role": "اپراتور",
+        "accessLevel": "سطح 2 - دسترسی عملیاتی", 
+        "permissions": ["مشاهده داده‌ها", "ویرایش محدود", "گزارش‌گیری"],
+        "lastLogin": "2024-01-14T14:20:00Z",
+        "loginCount": 156,
+        "password": "hashed_password_here",
+        "passwordLastChanged": "2023-12-15T00:00:00Z"
+      },
+      "createdAt": "2023-02-15T00:00:00Z",
+      "updatedAt": "2024-01-14T16:45:00Z", 
+      "isActive": true
+    },
+    {
+      "id": "usr_003",
+      "userCode": "USR003", 
+      "personalInfo": {
+        "fullName": "حسن رضایی",
+        "fullNameEn": "Hassan Rezaei",
+        "fatherName": "رضا",
+        "nationalId": "1122334455",
+        "nationality": "ایرانی",
+        "birthDate": "1988-11-10T00:00:00.000Z",
+        "gender": "مرد",
+        "birthPlace": "اصفهان، استان اصفهان",
+        "maritalStatus": "متاهل"
+      },
+      "contactInfo": {
+        "landline": "03133445566",
+        "mobile": ["09131234567"],
+        "addresses": "اصفهان، خیابان چهارباغ عباسی، پلاک 789",
+        "email": "hassan.rezaei@example.com",
+        "postalCode": "8765432109",
+        "socialNetworks": [
+          { "platform": "لینکدین", "username": "hassan-rezaei" }
+        ]
+      },
+      "professionalInfo": {
+        "status": "آزاد",
+        "details": {
+          "businessType": "مشاوره فناوری اطلاعات",
+          "expertise": "تحلیل سیستم و طراحی نرم‌افزار",
+          "licenseNumber": "FREE-2023-456"
+        }
+      },
+      "systemInfo": {
+        "role": "تحلیلگر",
+        "accessLevel": "سطح 3 - دسترسی محدود",
+        "permissions": ["مشاهده گزارشات", "تحلیل داده‌ها"],
+        "lastLogin": "2024-01-12T09:15:00Z",
+        "loginCount": 89,
+        "password": "hashed_password_here", 
+        "passwordLastChanged": "2023-11-20T00:00:00Z"
+      },
+      "createdAt": "2023-03-10T00:00:00Z",
+      "updatedAt": "2024-01-12T11:30:00Z",
+      "isActive": true
+    },
+    {
+      "id": "usr_004",
+      "userCode": "USR004",
+      "personalInfo": {
+        "fullName": "فاطمه کریمی", 
+        "fullNameEn": "Fatemeh Karimi",
+        "fatherName": "کریم",
+        "nationalId": "5566778899",
+        "nationality": "ایرانی",
+        "birthDate": "1992-05-18T00:00:00.000Z",
+        "gender": "زن",
+        "birthPlace": "شیراز، استان فارس",
+        "maritalStatus": "متاهل"
+      },
+      "contactInfo": {
+        "landline": "07133445566",
+        "mobile": ["09171234567", "09171234568"],
+        "addresses": "شیراز، خیابان زند، کوچه گلستان، پلاک 321",
+        "email": "fatemeh.karimi@example.com",
+        "postalCode": "7654321098",
+        "socialNetworks": [
+          { "platform": "تلگرام", "username": "@fatemeh_karimi" }
+        ]
+      },
+      "professionalInfo": {
+        "status": "نظامی",
+        "details": {
+          "forceType": "نیروی انتظامی",
+          "rank": "ستوان یکم",
+          "position": "سرپرست بخش امنیت اطلاعات",
+          "serviceNumber": "POL555666777",
+          "unit": "پلیس فتا"
+        }
+      },
+      "systemInfo": {
+        "role": "سرپرست",
+        "accessLevel": "سطح 2 - دسترسی عملیاتی",
+        "permissions": ["مدیریت تیم", "مشاهده گزارشات", "ویرایش محدود"],
+        "lastLogin": "2024-01-13T13:45:00Z",
+        "loginCount": 198,
+        "password": "hashed_password_here",
+        "passwordLastChanged": "2023-10-10T00:00:00Z"
+      },
+      "createdAt": "2023-04-05T00:00:00Z",
+      "updatedAt": "2024-01-13T15:20:00Z",
+      "isActive": true
+    },
+    {
+      "id": "usr_005",
+      "userCode": "USR005",
+      "personalInfo": {
+        "fullName": "علی رضا محمودی",
+        "fullNameEn": "Alireza Mahmoudi", 
+        "fatherName": "محمود",
+        "nationalId": "9988776655",
+        "nationality": "ایرانی",
+        "birthDate": "1987-09-25T00:00:00.000Z",
+        "gender": "مرد",
+        "birthPlace": "تبریز، استان آذربایجان شرقی",
+        "maritalStatus": "مجرد"
+      },
+      "contactInfo": {
+        "landline": "04133445566",
+        "mobile": ["09141234567", "09144321098"],
+        "addresses": "تبریز، خیابان والی عهد، کوچه شهدا، پلاک 654، طبقه 2",
+        "email": "alireza.mahmoudi@example.com",
+        "postalCode": "5432109876",
+        "socialNetworks": [
+          { "platform": "تلگرام", "username": "@alireza_mahmoudi" },
+          { "platform": "واتس‌اپ", "username": "+989141234567" }
+        ]
+      },
+      "professionalInfo": {
+        "status": "خصوصی",
+        "details": {
+          "companyName": "شرکت رایانه‌ای آسیا",
+          "position": "مدیر فنی",
+          "industry": "فناوری اطلاعات"
+        }
+      },
+      "systemInfo": {
+        "role": "مهمان",
+        "accessLevel": "سطح 4 - دسترسی مهمان",
+        "permissions": ["مشاهده محدود"],
+        "lastLogin": "2024-01-10T16:30:00Z",
+        "loginCount": 23,
+        "password": "hashed_password_here",
+        "passwordLastChanged": "2023-12-01T00:00:00Z"
+      },
+      "createdAt": "2023-12-01T00:00:00Z",
+      "updatedAt": "2024-01-10T18:15:00Z",
+      "isActive": true
+    }
+  ],
+  "roles": [
+    {
+      "id": "role_admin",
+      "name": "مدیر سیستم",
+      "englishName": "System Administrator",
+      "description": "دسترسی کامل به تمام بخش‌های سیستم",
+      "accessLevel": "سطح 1 - دسترسی کامل",
+      "permissions": [
+        "مدیریت کاربران",
+        "مدیریت سیستم", 
+        "مشاهده گزارشات",
+        "تنظیمات امنیتی",
+        "بکاپ و ریستور",
+        "مدیریت دسترسی‌ها"
+      ]
+    },
+    {
+      "id": "role_operator",
+      "name": "اپراتور",
+      "englishName": "Operator",
+      "description": "دسترسی عملیاتی به سیستم",
+      "accessLevel": "سطح 2 - دسترسی عملیاتی",
+      "permissions": [
+        "مشاهده داده‌ها",
+        "ویرایش محدود",
+        "گزارش‌گیری",
+        "مدیریت محتوا"
+      ]
+    },
+    {
+      "id": "role_supervisor",
+      "name": "سرپرست",
+      "englishName": "Supervisor", 
+      "description": "مدیریت تیم و نظارت بر عملیات",
+      "accessLevel": "سطح 2 - دسترسی عملیاتی",
+      "permissions": [
+        "مدیریت تیم",
+        "مشاهده گزارشات",
+        "ویرایش محدود",
+        "تأیید درخواست‌ها"
+      ]
+    },
+    {
+      "id": "role_analyst",
+      "name": "تحلیلگر",
+      "englishName": "Analyst",
+      "description": "تحلیل داده‌ها و گزارش‌نویسی",
+      "accessLevel": "سطح 3 - دسترسی محدود",
+      "permissions": [
+        "مشاهده گزارشات",
+        "تحلیل داده‌ها",
+        "ایجاد گزارش"
+      ]
+    },
+    {
+      "id": "role_guest",
+      "name": "مهمان",
+      "englishName": "Guest",
+      "description": "دسترسی محدود فقط برای مشاهده",
+      "accessLevel": "سطح 4 - دسترسی مهمان",
+      "permissions": [
+        "مشاهده محدود"
+      ]
+    }
+  ],
+  "accessLevels": [
+    {
+      "id": "level_1",
+      "name": "سطح 1 - دسترسی کامل",
+      "englishName": "Level 1 - Full Access",
+      "description": "دسترسی کامل به تمام منابع و عملیات",
+      "color": "#FF5722",
+      "priority": 1
+    },
+    {
+      "id": "level_2", 
+      "name": "سطح 2 - دسترسی عملیاتی",
+      "englishName": "Level 2 - Operational Access",
+      "description": "دسترسی به عملیات روزمره و مدیریت محتوا",
+      "color": "#FF9800",
+      "priority": 2
+    },
+    {
+      "id": "level_3",
+      "name": "سطح 3 - دسترسی محدود", 
+      "englishName": "Level 3 - Limited Access",
+      "description": "دسترسی محدود به مشاهده و تحلیل",
+      "color": "#FFC107",
+      "priority": 3
+    },
+    {
+      "id": "level_4",
+      "name": "سطح 4 - دسترسی مهمان",
+      "englishName": "Level 4 - Guest Access",
+      "description": "دسترسی فقط خواندنی و محدود",
+      "color": "#4CAF50",
+      "priority": 4
+    }
+  ]
+}

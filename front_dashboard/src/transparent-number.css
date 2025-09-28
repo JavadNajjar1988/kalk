@@ -1,0 +1,8 @@
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  background: transparent !important;
+  -webkit-appearance: none;
+}
+input[type="number"] {
+  background: transparent !important;
+} 

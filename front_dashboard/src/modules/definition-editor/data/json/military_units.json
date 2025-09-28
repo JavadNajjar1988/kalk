@@ -1,0 +1,709 @@
+{
+  "nodes": [
+    {
+      "id": "iran",
+      "name": "ایران",
+      "level": 1,
+      "parentId": null,
+      "description": "جمهوری اسلامی ایران",
+      "children": [
+        {
+          "id": "ground-force",
+          "name": "نیروی زمینی",
+          "level": 2,
+          "parentId": "iran",
+          "description": "نیروی زمینی ارتش جمهوری اسلامی ایران",
+          "children": [
+            {
+              "id": "ground-cmd",
+              "name": "فرماندهی",
+              "level": 3,
+              "parentId": "ground-force",
+              "description": "فرماندهی کل نیروی زمینی",
+              "children": [
+                {
+                  "id": "corps-1",
+                  "name": "سپاه",
+                  "level": 4,
+                  "parentId": "ground-cmd",
+                  "description": "سپاه نیروی زمینی",
+                  "specialty": "زرهی",
+                  "children": [
+                    {
+                      "id": "div-1-1",
+                      "name": "لشکر",
+                      "level": 5,
+                      "parentId": "corps-1",
+                      "description": "لشکر نیروی زمینی",
+                      "specialty": "زرهی",
+                      "children": [
+                        {
+                          "id": "bde-1-1-1",
+                          "name": "تیپ",
+                          "level": 6,
+                          "parentId": "div-1-1",
+                          "description": "تیپ نیروی زمینی",
+                          "specialty": "زرهی",
+                          "children": [
+                            {
+                              "id": "bn-1-1-1-1",
+                              "name": "گردان",
+                              "level": 7,
+                              "parentId": "bde-1-1-1",
+                              "description": "گردان نیروی زمینی",
+                              "specialty": "تانک",
+                              "children": [
+                                {
+                                  "id": "co-1-1-1-1-1",
+                                  "name": "گروهان",
+                                  "level": 8,
+                                  "parentId": "bn-1-1-1-1",
+                                  "description": "گروهان نیروی زمینی",
+                                  "specialty": "تانک",
+                                  "children": [
+                                    {
+                                      "id": "plt-1-1-1-1-1-1",
+                                      "name": "دسته",
+                                      "level": 9,
+                                      "parentId": "co-1-1-1-1-1",
+                                      "description": "دسته نیروی زمینی",
+                                      "specialty": "تانک",
+                                      "children": [
+                                        {
+                                          "id": "sqd-1-1-1-1-1-1-1",
+                                          "name": "جوخه",
+                                          "level": 10,
+                                          "parentId": "plt-1-1-1-1-1-1",
+                                          "description": "جوخه نیروی زمینی",
+                                          "specialty": "تانک",
+                                          "children": [
+                                            {
+                                              "id": "per-1",
+                                              "name": "نفر",
+                                              "level": 11,
+                                              "parentId": "sqd-1-1-1-1-1-1-1",
+                                              "description": "نفر نیروی زمینی"
+                                            }
+                                          ]
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "air-force",
+          "name": "نیروی هوایی",
+          "level": 2,
+          "parentId": "iran",
+          "description": "نیروی هوایی ارتش جمهوری اسلامی ایران",
+          "children": [
+            {
+              "id": "air-cmd",
+              "name": "فرماندهی",
+              "level": 3,
+              "parentId": "air-force",
+              "description": "فرماندهی نیروی هوایی",
+              "children": [
+                {
+                  "id": "air-corps-1",
+                  "name": "سپاه",
+                  "level": 4,
+                  "parentId": "air-cmd",
+                  "description": "سپاه نیروی هوایی",
+                  "specialty": "جنگنده",
+                  "children": [
+                    {
+                      "id": "air-div-1",
+                      "name": "لشکر",
+                      "level": 5,
+                      "parentId": "air-corps-1",
+                      "description": "لشکر نیروی هوایی",
+                      "specialty": "جنگنده",
+                      "children": [
+                        {
+                          "id": "air-wing-1",
+                          "name": "تیپ",
+                          "level": 6,
+                          "parentId": "air-div-1",
+                          "description": "تیپ نیروی هوایی",
+                          "specialty": "F-14",
+                          "children": [
+                            {
+                              "id": "squadron-1",
+                              "name": "گردان",
+                              "level": 7,
+                              "parentId": "air-wing-1",
+                              "description": "گردان نیروی هوایی",
+                              "specialty": "F-14",
+                              "children": [
+                                {
+                                  "id": "flight-1",
+                                  "name": "گروهان",
+                                  "level": 8,
+                                  "parentId": "squadron-1",
+                                  "description": "گروهان نیروی هوایی",
+                                  "specialty": "F-14",
+                                  "children": [
+                                    {
+                                      "id": "section-1",
+                                      "name": "دسته",
+                                      "level": 9,
+                                      "parentId": "flight-1",
+                                      "description": "دسته نیروی هوایی",
+                                      "specialty": "F-14",
+                                      "children": [
+                                        {
+                                          "id": "element-1",
+                                          "name": "جوخه",
+                                          "level": 10,
+                                          "parentId": "section-1",
+                                          "description": "جوخه نیروی هوایی",
+                                          "specialty": "F-14",
+                                          "children": [
+                                            {
+                                              "id": "pilot-1",
+                                              "name": "نفر",
+                                              "level": 11,
+                                              "parentId": "element-1",
+                                              "description": "نفر نیروی هوایی"
+                                            }
+                                          ]
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "3",
+          "name": "نیروی دریایی",
+          "level": 2,
+          "parentId": "iran",
+          "description": "نیروی دریایی ارتش جمهوری اسلامی ایران",
+          "children": [
+            {
+              "id": "3-1",
+              "name": "فرماندهی",
+              "level": 3,
+              "parentId": "3",
+              "description": "فرماندهی نیروی دریایی ارتش",
+              "children": [
+                {
+                  "id": "3-1-1",
+                  "name": "سپاه",
+                  "level": 4,
+                  "parentId": "3-1",
+                  "description": "سپاه نیروی دریایی",
+                  "children": [
+                    {
+                      "id": "3-1-1-1",
+                      "name": "لشکر",
+                      "level": 5,
+                      "parentId": "3-1-1",
+                      "description": "لشکر نیروی دریایی",
+                      "children": [
+                        {
+                          "id": "3-1-1-1-1",
+                          "name": "تیپ",
+                          "level": 6,
+                          "parentId": "3-1-1-1",
+                          "description": "تیپ نیروی دریایی",
+                          "children": [
+                            {
+                              "id": "3-1-1-1-1-1",
+                              "name": "گردان",
+                              "level": 7,
+                              "parentId": "3-1-1-1-1",
+                              "description": "گردان نیروی دریایی",
+                              "children": [
+                                {
+                                  "id": "3-1-1-1-1-1-1",
+                                  "name": "گروهان",
+                                  "level": 8,
+                                  "parentId": "3-1-1-1-1-1",
+                                  "description": "گروهان نیروی دریایی",
+                                  "children": [
+                                    {
+                                      "id": "3-1-1-1-1-1-1-1",
+                                      "name": "دسته",
+                                      "level": 9,
+                                      "parentId": "3-1-1-1-1-1-1",
+                                      "description": "دسته نیروی دریایی",
+                                      "children": [
+                                        {
+                                          "id": "3-1-1-1-1-1-1-1-1",
+                                          "name": "جوخه",
+                                          "level": 10,
+                                          "parentId": "3-1-1-1-1-1-1-1",
+                                          "description": "جوخه نیروی دریایی",
+                                          "children": [
+                                            {
+                                              "id": "3-1-1-1-1-1-1-1-1-1",
+                                              "name": "نفر",
+                                              "level": 11,
+                                              "parentId": "3-1-1-1-1-1-1-1-1",
+                                              "description": "نفر نیروی دریایی"
+                                            }
+                                          ]
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "israel",
+      "name": "اسرائیل",
+      "level": 1,
+      "parentId": null,
+      "description": "دولت اسرائیل",
+      "children": [
+        {
+          "id": "idf-ground",
+          "name": "نیروی زمینی",
+          "level": 2,
+          "parentId": "israel",
+          "description": "نیروی زمینی اسرائیل",
+          "children": [
+            {
+              "id": "idf-ground-cmd",
+              "name": "فرماندهی",
+              "level": 3,
+              "parentId": "idf-ground",
+              "description": "فرماندهی نیروی زمینی",
+              "children": [
+                {
+                  "id": "idf-corps-1",
+                  "name": "Corps",
+                  "level": 4,
+                  "parentId": "idf-ground-cmd",
+                  "description": "Corps نیروی زمینی اسرائیل",
+                  "children": [
+                    {
+                      "id": "idf-div-1",
+                      "name": "Division",
+                      "level": 5,
+                      "parentId": "idf-corps-1",
+                      "description": "Division نیروی زمینی اسرائیل",
+                      "children": [
+                        {
+                          "id": "idf-bde-1",
+                          "name": "Brigade",
+                          "level": 6,
+                          "parentId": "idf-div-1",
+                          "description": "Brigade نیروی زمینی اسرائیل",
+                          "children": [
+                            {
+                              "id": "idf-bn-1",
+                              "name": "Battalion",
+                              "level": 7,
+                              "parentId": "idf-bde-1",
+                              "description": "Battalion نیروی زمینی اسرائیل",
+                              "children": [
+                                {
+                                  "id": "idf-co-1",
+                                  "name": "Company",
+                                  "level": 8,
+                                  "parentId": "idf-bn-1",
+                                  "description": "Company نیروی زمینی اسرائیل",
+                                  "children": [
+                                    {
+                                      "id": "idf-plt-1",
+                                      "name": "Platoon",
+                                      "level": 9,
+                                      "parentId": "idf-co-1",
+                                      "description": "Platoon نیروی زمینی اسرائیل",
+                                      "children": [
+                                        {
+                                          "id": "idf-sqd-1",
+                                          "name": "Squad",
+                                          "level": 10,
+                                          "parentId": "idf-plt-1",
+                                          "description": "Squad نیروی زمینی اسرائیل",
+                                          "children": [
+                                            {
+                                              "id": "idf-per-1",
+                                              "name": "Personnel",
+                                              "level": 11,
+                                              "parentId": "idf-sqd-1",
+                                              "description": "Personnel نیروی زمینی اسرائیل"
+                                            }
+                                          ]
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "idf-air",
+          "name": "نیروی هوایی",
+          "level": 2,
+          "parentId": "israel",
+          "description": "نیروی هوایی اسرائیل",
+          "children": [
+            {
+              "id": "idf-air-cmd",
+              "name": "فرماندهی",
+              "level": 3,
+              "parentId": "idf-air",
+              "description": "فرماندهی نیروی هوایی",
+              "children": [
+                {
+                  "id": "idf-air-corps-1",
+                  "name": "Corps",
+                  "level": 4,
+                  "parentId": "idf-air-cmd",
+                  "description": "Corps نیروی هوایی اسرائیل",
+                  "children": [
+                    {
+                      "id": "idf-air-div-1",
+                      "name": "Division",
+                      "level": 5,
+                      "parentId": "idf-air-corps-1",
+                      "description": "Division نیروی هوایی اسرائیل",
+                      "children": [
+                        {
+                          "id": "idf-air-wing-1",
+                          "name": "Brigade",
+                          "level": 6,
+                          "parentId": "idf-air-div-1",
+                          "description": "Brigade نیروی هوایی اسرائیل",
+                          "children": [
+                            {
+                              "id": "idf-squadron-1",
+                              "name": "Battalion",
+                              "level": 7,
+                              "parentId": "idf-air-wing-1",
+                              "description": "Battalion نیروی هوایی اسرائیل",
+                              "children": [
+                                {
+                                  "id": "idf-flight-1",
+                                  "name": "Company",
+                                  "level": 8,
+                                  "parentId": "idf-squadron-1",
+                                  "description": "Company نیروی هوایی اسرائیل",
+                                  "children": [
+                                    {
+                                      "id": "idf-section-1",
+                                      "name": "Platoon",
+                                      "level": 9,
+                                      "parentId": "idf-flight-1",
+                                      "description": "Platoon نیروی هوایی اسرائیل",
+                                      "children": [
+                                        {
+                                          "id": "idf-element-1",
+                                          "name": "Squad",
+                                          "level": 10,
+                                          "parentId": "idf-section-1",
+                                          "description": "Squad نیروی هوایی اسرائیل",
+                                          "children": [
+                                            {
+                                              "id": "idf-pilot-1",
+                                              "name": "Personnel",
+                                              "level": 11,
+                                              "parentId": "idf-element-1",
+                                              "description": "Personnel نیروی هوایی اسرائیل"
+                                            }
+                                          ]
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "idf-navy",
+          "name": "نیروی دریایی",
+          "level": 2,
+          "parentId": "israel",
+          "description": "نیروی دریایی اسرائیل",
+          "children": [
+            {
+              "id": "idf-navy-cmd",
+              "name": "فرماندهی",
+              "level": 3,
+              "parentId": "idf-navy",
+              "description": "فرماندهی نیروی دریایی",
+              "children": [
+                {
+                  "id": "idf-navy-corps-1",
+                  "name": "Corps",
+                  "level": 4,
+                  "parentId": "idf-navy-cmd",
+                  "description": "Corps نیروی دریایی اسرائیل",
+                  "children": [
+                    {
+                      "id": "idf-navy-div-1",
+                      "name": "Division",
+                      "level": 5,
+                      "parentId": "idf-navy-corps-1",
+                      "description": "Division نیروی دریایی اسرائیل",
+                      "children": [
+                        {
+                          "id": "idf-navy-bde-1",
+                          "name": "Brigade",
+                          "level": 6,
+                          "parentId": "idf-navy-div-1",
+                          "description": "Brigade نیروی دریایی اسرائیل",
+                          "children": [
+                            {
+                              "id": "idf-navy-bn-1",
+                              "name": "Battalion",
+                              "level": 7,
+                              "parentId": "idf-navy-bde-1",
+                              "description": "Battalion نیروی دریایی اسرائیل",
+                              "children": [
+                                {
+                                  "id": "idf-navy-co-1",
+                                  "name": "Company",
+                                  "level": 8,
+                                  "parentId": "idf-navy-bn-1",
+                                  "description": "Company نیروی دریایی اسرائیل",
+                                  "children": [
+                                    {
+                                      "id": "idf-navy-plt-1",
+                                      "name": "Platoon",
+                                      "level": 9,
+                                      "parentId": "idf-navy-co-1",
+                                      "description": "Platoon نیروی دریایی اسرائیل",
+                                      "children": [
+                                        {
+                                          "id": "idf-navy-sqd-1",
+                                          "name": "Squad",
+                                          "level": 10,
+                                          "parentId": "idf-navy-plt-1",
+                                          "description": "Squad نیروی دریایی اسرائیل",
+                                          "children": [
+                                            {
+                                              "id": "idf-navy-per-1",
+                                              "name": "Personnel",
+                                              "level": 11,
+                                              "parentId": "idf-navy-sqd-1",
+                                              "description": "Personnel نیروی دریایی اسرائیل"
+                                            }
+                                          ]
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "levels": [
+    {
+      "id": "lvl-1",
+      "name": "کشور",
+      "englishName": "Country",
+      "order": 1,
+      "isRequired": true,
+      "isActive": true,
+      "icon": "flag",
+      "natoRank": null,
+      "standardCode": null,
+      "personnelRange": null,
+      "specialty": null
+    },
+    {
+      "id": "lvl-2",
+      "name": "نیرو",
+      "englishName": "Force",
+      "order": 2,
+      "isRequired": true,
+      "isActive": true,
+      "icon": "military",
+      "natoRank": "Force Level",
+      "standardCode": "FORCE",
+      "personnelRange": "100,000+ نفر",
+      "specialty": "Military"
+    },
+    {
+      "id": "lvl-3",
+      "name": "فرماندهی",
+      "englishName": "Command",
+      "order": 3,
+      "isRequired": true,
+      "isActive": true,
+      "icon": "star",
+      "natoRank": "Command Level",
+      "standardCode": "CMD",
+      "personnelRange": "50,000-100,000 نفر",
+      "specialty": "Military"
+    },
+    {
+      "id": "lvl-4",
+      "name": "سپاه",
+      "englishName": "Corps",
+      "order": 4,
+      "isRequired": true,
+      "isActive": true,
+      "icon": "general",
+      "natoRank": "Corps Level",
+      "standardCode": "CORPS",
+      "personnelRange": "20,000-50,000 نفر",
+      "specialty": "Military"
+    },
+    {
+      "id": "lvl-5",
+      "name": "لشکر",
+      "englishName": "Division",
+      "order": 5,
+      "isRequired": true,
+      "isActive": true,
+      "icon": "senior",
+      "natoRank": "Division Level",
+      "standardCode": "DIV",
+      "personnelRange": "10,000-20,000 نفر",
+      "specialty": "Military"
+    },
+    {
+      "id": "lvl-6",
+      "name": "تیپ",
+      "englishName": "Brigade",
+      "order": 6,
+      "isRequired": true,
+      "isActive": true,
+      "icon": "officer",
+      "natoRank": "Brigade Level",
+      "standardCode": "BDE",
+      "personnelRange": "3,000-5,000 نفر",
+      "specialty": "Military"
+    },
+    {
+      "id": "lvl-7",
+      "name": "گردان",
+      "englishName": "Battalion",
+      "order": 7,
+      "isRequired": true,
+      "isActive": true,
+      "icon": "junior",
+      "natoRank": "Battalion Level",
+      "standardCode": "BN",
+      "personnelRange": "300-1,000 نفر",
+      "specialty": "Military"
+    },
+    {
+      "id": "lvl-8",
+      "name": "گروهان",
+      "englishName": "Company",
+      "order": 8,
+      "isRequired": true,
+      "isActive": true,
+      "icon": "nco",
+      "natoRank": "Company Level",
+      "standardCode": "CO",
+      "personnelRange": "100-200 نفر",
+      "specialty": "Military"
+    },
+    {
+      "id": "lvl-9",
+      "name": "دسته",
+      "englishName": "Platoon",
+      "order": 9,
+      "isRequired": true,
+      "isActive": true,
+      "icon": "soldier",
+      "natoRank": "Platoon Level",
+      "standardCode": "PLT",
+      "personnelRange": "20-50 نفر",
+      "specialty": "Military"
+    },
+    {
+      "id": "lvl-10",
+      "name": "جوخه",
+      "englishName": "Squad",
+      "order": 10,
+      "isRequired": true,
+      "isActive": true,
+      "icon": "team",
+      "natoRank": "Squad Level",
+      "standardCode": "SQD",
+      "personnelRange": "8-12 نفر",
+      "specialty": "Military"
+    },
+    {
+      "id": "lvl-11",
+      "name": "نفر",
+      "englishName": "Personnel",
+      "order": 11,
+      "isRequired": true,
+      "isActive": true,
+      "icon": "person",
+      "natoRank": "Individual Level",
+      "standardCode": "IND",
+      "personnelRange": "1 نفر",
+      "specialty": "Military"
+    }
+  ]
+}

@@ -1,0 +1,1910 @@
+{
+  "category": {
+    "id": "logistics",
+    "name": "تدارکات",
+    "englishName": "Logistics",
+    "description": "تدارکات شامل مواد، تجهیزات، خدمات و پشتیبانی لجستیکی",
+    "icon": "📦",
+    "color": "#10B981",
+    "maxLevels": 5,
+    "isActive": true,
+    "order": 5,
+    "type": "LOGISTICS"
+  },
+  "levels": [
+    {
+      "id": "1",
+      "name": "دسته تدارکات",
+      "englishName": "Logistics Category",
+      "description": "دسته‌بندی اصلی تدارکات",
+      "level": 1,
+      "order": 1,
+      "icon": "📦",
+      "standardCode": "LOG-CAT",
+      "personnelRange": "1-1000"
+    },
+    {
+      "id": "2",
+      "name": "نوع تدارکات",
+      "englishName": "Logistics Type",
+      "description": "نوع خاص تدارکات",
+      "level": 2,
+      "order": 2,
+      "icon": "🔧",
+      "standardCode": "LOG-TYPE",
+      "personnelRange": "1-500"
+    },
+    {
+      "id": "3",
+      "name": "کلاس تدارکات",
+      "englishName": "Logistics Class",
+      "description": "کلاس تدارکات",
+      "level": 3,
+      "order": 3,
+      "icon": "⚙️",
+      "standardCode": "LOG-CLASS",
+      "personnelRange": "1-200"
+    },
+    {
+      "id": "4",
+      "name": "مدل تدارکات",
+      "englishName": "Logistics Model",
+      "description": "مدل خاص تدارکات",
+      "level": 4,
+      "order": 4,
+      "icon": "🏷️",
+      "standardCode": "LOG-MODEL",
+      "personnelRange": "1-100"
+    },
+    {
+      "id": "5",
+      "name": "واحد تدارکات",
+      "englishName": "Logistics Unit",
+      "description": "واحد خاص تدارکات",
+      "level": 5,
+      "order": 5,
+      "icon": "🎯",
+      "standardCode": "LOG-UNIT",
+      "personnelRange": "1-50"
+    }
+  ],
+  "fieldTemplates": {
+    "basic": [
+      {
+        "id": "name",
+        "name": "نام",
+        "englishName": "Name",
+        "type": "text",
+        "required": true,
+        "placeholder": "نام آیتم را وارد کنید"
+      },
+      {
+        "id": "englishName",
+        "name": "نام انگلیسی",
+        "englishName": "English Name",
+        "type": "text",
+        "required": true,
+        "placeholder": "Enter English name"
+      },
+      {
+        "id": "description",
+        "name": "توضیحات",
+        "englishName": "Description",
+        "type": "textarea",
+        "required": false,
+        "placeholder": "توضیحات تفصیلی"
+      },
+      {
+        "id": "natoCode",
+        "name": "کد ناتو",
+        "englishName": "NATO Code",
+        "type": "text",
+        "required": false,
+        "placeholder": "NATO-XXXX"
+      },
+      {
+        "id": "nationalCode",
+        "name": "کد ملی",
+        "englishName": "National Code",
+        "type": "text",
+        "required": false,
+        "placeholder": "کد ملی آیتم"
+      }
+    ],
+    "identification": [
+      {
+        "id": "manufacturer",
+        "name": "سازنده",
+        "englishName": "Manufacturer",
+        "type": "text",
+        "required": false,
+        "placeholder": "نام شرکت سازنده"
+      },
+      {
+        "id": "model",
+        "name": "مدل",
+        "englishName": "Model",
+        "type": "text",
+        "required": false,
+        "placeholder": "مدل و نسخه"
+      },
+      {
+        "id": "serialNumber",
+        "name": "شماره سریال",
+        "englishName": "Serial Number",
+        "type": "text",
+        "required": false,
+        "placeholder": "SN-XXXXXXXXX"
+      },
+      {
+        "id": "manufactureDate",
+        "name": "تاریخ تولید",
+        "englishName": "Manufacture Date",
+        "type": "date",
+        "required": false
+      },
+      {
+        "id": "productionCountry",
+        "name": "کشور سازنده",
+        "englishName": "Country of Origin",
+        "type": "select",
+        "required": false,
+        "options": ["ایران", "آمریکا", "آلمان", "فرانسه", "روسیه", "چین", "انگلستان", "ایتالیا", "کره جنوبی", "ژاپن"]
+      }
+    ],
+    "operational": [
+      {
+        "id": "operationalStatus",
+        "name": "وضعیت عملیاتی",
+        "englishName": "Operational Status",
+        "type": "select",
+        "required": true,
+        "options": ["عملیاتی", "در حال تعمیر", "خارج از سرویس", "در انتظار تعمیر", "آماده استقرار"]
+      },
+      {
+        "id": "readinessLevel",
+        "name": "سطح آمادگی",
+        "englishName": "Readiness Level",
+        "type": "select",
+        "required": true,
+        "options": ["A - کاملاً آماده", "B - آماده با محدودیت", "C - نیازمند تعمیر", "D - غیرقابل استفاده"]
+      },
+      {
+        "id": "priority",
+        "name": "اولویت",
+        "englishName": "Priority",
+        "type": "select",
+        "required": true,
+        "options": ["بحرانی", "بالا", "متوسط", "پایین"]
+      },
+      {
+        "id": "criticalityLevel",
+        "name": "سطح بحرانی بودن",
+        "englishName": "Criticality Level",
+        "type": "select",
+        "required": false,
+        "options": ["حیاتی", "مهم", "معمولی", "غیرضروری"]
+      }
+    ],
+    "supply": [
+      {
+        "id": "consumptionRate",
+        "name": "نرخ مصرف",
+        "englishName": "Consumption Rate",
+        "type": "text",
+        "required": false,
+        "placeholder": "مثال: 10 واحد در روز"
+      },
+      {
+        "id": "minimumStock",
+        "name": "حداقل موجودی",
+        "englishName": "Minimum Stock Level",
+        "type": "number",
+        "required": false,
+        "placeholder": "حداقل تعداد مورد نیاز"
+      },
+      {
+        "id": "maximumStock",
+        "name": "حداکثر موجودی",
+        "englishName": "Maximum Stock Level",
+        "type": "number",
+        "required": false,
+        "placeholder": "حداکثر ظرفیت انبار"
+      },
+      {
+        "id": "reorderPoint",
+        "name": "نقطه سفارش مجدد",
+        "englishName": "Reorder Point",
+        "type": "number",
+        "required": false,
+        "placeholder": "تعداد برای سفارش مجدد"
+      },
+      {
+        "id": "unitOfMeasure",
+        "name": "واحد اندازه‌گیری",
+        "englishName": "Unit of Measure",
+        "type": "select",
+        "required": true,
+        "options": ["عدد", "کیلوگرم", "لیتر", "متر", "متر مربع", "متر مکعب", "تن", "بسته", "جعبه", "کارتن"]
+      }
+    ],
+    "technical": [
+      {
+        "id": "weight",
+        "name": "وزن",
+        "englishName": "Weight",
+        "type": "text",
+        "required": false,
+        "placeholder": "وزن به کیلوگرم"
+      },
+      {
+        "id": "dimensions",
+        "name": "ابعاد",
+        "englishName": "Dimensions",
+        "type": "text",
+        "required": false,
+        "placeholder": "طول × عرض × ارتفاع (سانتی‌متر)"
+      },
+      {
+        "id": "capacity",
+        "name": "ظرفیت",
+        "englishName": "Capacity",
+        "type": "text",
+        "required": false,
+        "placeholder": "ظرفیت عملکرد"
+      },
+      {
+        "id": "powerRequirement",
+        "name": "نیاز برق",
+        "englishName": "Power Requirement",
+        "type": "text",
+        "required": false,
+        "placeholder": "ولتاژ و آمپراژ مورد نیاز"
+      },
+      {
+        "id": "operatingTemperature",
+        "name": "دمای عملکرد",
+        "englishName": "Operating Temperature",
+        "type": "text",
+        "required": false,
+        "placeholder": "محدوده دمایی عملکرد"
+      },
+      {
+        "id": "shelfLife",
+        "name": "مدت ماندگاری",
+        "englishName": "Shelf Life",
+        "type": "text",
+        "required": false,
+        "placeholder": "مدت زمان ماندگاری"
+      }
+    ],
+    "maintenance": [
+      {
+        "id": "maintenanceInterval",
+        "name": "فاصله تعمیرات",
+        "englishName": "Maintenance Interval",
+        "type": "text",
+        "required": false,
+        "placeholder": "فاصله زمانی تعمیرات"
+      },
+      {
+        "id": "maintenanceType",
+        "name": "نوع تعمیرات",
+        "englishName": "Maintenance Type",
+        "type": "select",
+        "required": false,
+        "options": ["پیشگیرانه", "اصلاحی", "اورهال", "جایگزینی"]
+      },
+      {
+        "id": "spareParts",
+        "name": "قطعات یدکی",
+        "englishName": "Spare Parts",
+        "type": "textarea",
+        "required": false,
+        "placeholder": "لیست قطعات یدکی مورد نیاز"
+      },
+      {
+        "id": "maintenanceCost",
+        "name": "هزینه تعمیرات",
+        "englishName": "Maintenance Cost",
+        "type": "number",
+        "required": false,
+        "placeholder": "هزینه تعمیرات (ریال)"
+      }
+    ],
+    "logistics": [
+      {
+        "id": "supplier",
+        "name": "تأمین‌کننده",
+        "englishName": "Supplier",
+        "type": "text",
+        "required": false,
+        "placeholder": "نام شرکت تأمین‌کننده"
+      },
+      {
+        "id": "unitCost",
+        "name": "هزینه واحد",
+        "englishName": "Unit Cost",
+        "type": "number",
+        "required": false,
+        "placeholder": "هزینه هر واحد (ریال)"
+      },
+      {
+        "id": "leadTime",
+        "name": "زمان تأمین",
+        "englishName": "Lead Time",
+        "type": "text",
+        "required": false,
+        "placeholder": "زمان مورد نیاز برای تأمین"
+      },
+      {
+        "id": "storageRequirements",
+        "name": "نیازهای انبارداری",
+        "englishName": "Storage Requirements",
+        "type": "textarea",
+        "required": false,
+        "placeholder": "شرایط نگهداری و انبارداری"
+      },
+      {
+        "id": "transportMethod",
+        "name": "روش حمل و نقل",
+        "englishName": "Transportation Method",
+        "type": "select",
+        "required": false,
+        "options": ["جاده‌ای", "ریلی", "هوایی", "دریایی", "ترکیبی"]
+      },
+      {
+        "id": "packagingType",
+        "name": "نوع بسته‌بندی",
+        "englishName": "Packaging Type",
+        "type": "select",
+        "required": false,
+        "options": ["کارتن", "پالت", "کانتینر", "جعبه فلزی", "کیسه", "بطری", "قوطی"]
+      }
+    ],
+    "security": [
+      {
+        "id": "securityClassification",
+        "name": "طبقه‌بندی امنیتی",
+        "englishName": "Security Classification",
+        "type": "select",
+        "required": true,
+        "options": ["عادی", "محدود", "محرمانه", "فوق محرمانه"]
+      },
+      {
+        "id": "hazardClass",
+        "name": "کلاس خطر",
+        "englishName": "Hazard Class",
+        "type": "select",
+        "required": false,
+        "options": ["بدون خطر", "قابل اشتعال", "انفجاری", "سمی", "خورنده", "رادیواکتیو"]
+      },
+      {
+        "id": "environmentalImpact",
+        "name": "تأثیر زیست محیطی",
+        "englishName": "Environmental Impact",
+        "type": "select",
+        "required": false,
+        "options": ["بی‌ضرر", "کم ضرر", "متوسط", "مضر", "بسیار مضر"]
+      },
+      {
+        "id": "compatibilityRestrictions",
+        "name": "محدودیت‌های سازگاری",
+        "englishName": "Compatibility Restrictions",
+        "type": "textarea",
+        "required": false,
+        "placeholder": "موادی که نباید همراه نگهداری شوند"
+      }
+    ]
+  },
+  "nodes": [
+    {
+      "id": "1",
+      "name": "مواد و تجهیزات",
+      "englishName": "Materials and Equipment",
+      "description": "مواد، تجهیزات و ابزارآلات مورد نیاز برای عملیات",
+      "level": 1,
+      "parentId": null,
+      "order": 1,
+      "icon": "📦",
+      "coordinates": null,
+      "country": null,
+      "natoEquivalent": null,
+      "specialty": null,
+      "metadata": {
+        "category": "materials",
+        "type": "consumable",
+        "capabilities": ["تامین", "ذخیره", "توزیع"]
+      },
+      "fieldTemplates": ["basic", "identification", "operational", "supply", "technical", "logistics", "security"],
+      "children": [
+        {
+          "id": "1-1",
+          "name": "سوخت و انرژی",
+          "englishName": "Fuel and Energy",
+          "description": "سوخت‌ها و منابع انرژی مختلف",
+          "level": 2,
+          "parentId": "1",
+          "order": 1,
+          "icon": "⛽",
+          "fieldTemplates": ["basic", "identification", "operational", "supply", "technical", "logistics", "security"],
+          "children": [
+            {
+              "id": "1-1-1",
+              "name": "سوخت‌های مایع",
+              "englishName": "Liquid Fuels",
+              "description": "سوخت‌های مایع برای موتورها و ژنراتورها",
+              "level": 3,
+              "parentId": "1-1",
+              "order": 1,
+              "icon": "🛢️",
+              "fieldTemplates": ["basic", "identification", "operational", "supply", "technical", "logistics", "security"],
+              "children": [
+                {
+                  "id": "1-1-1-1",
+                  "name": "بنزین نظامی",
+                  "englishName": "Military Gasoline",
+                  "description": "بنزین مخصوص وسایل نقلیه نظامی",
+                  "level": 4,
+                  "parentId": "1-1-1",
+                  "order": 1,
+                  "icon": "🏷️",
+                  "fieldTemplates": ["basic", "identification", "operational", "supply", "technical", "logistics", "security"],
+                  "children": [
+                    {
+                      "id": "1-1-1-1-1",
+                      "name": "بنزین 95 اکتان",
+                      "englishName": "95 Octane Gasoline",
+                      "description": "بنزین 95 اکتان برای وسایل نقلیه نظامی",
+                      "level": 5,
+                      "parentId": "1-1-1-1",
+                      "order": 1,
+                      "icon": "🎯",
+                      "fieldTemplates": ["basic", "identification", "operational", "supply", "technical", "logistics", "security"],
+                      "customFields": [
+                        {
+                          "id": "natoCode",
+                          "name": "کد ناتو",
+                          "englishName": "NATO Code",
+                          "type": "text",
+                          "isRequired": false,
+                          "order": 1,
+                          "value": "FUEL-95"
+                        },
+                        {
+                          "id": "nationalCode",
+                          "name": "کد ملی",
+                          "englishName": "National Code",
+                          "type": "text",
+                          "isRequired": false,
+                          "order": 2,
+                          "value": "IRN-FUEL-95"
+                        },
+                        {
+                          "id": "manufacturer",
+                          "name": "سازنده",
+                          "englishName": "Manufacturer",
+                          "type": "text",
+                          "isRequired": false,
+                          "order": 3,
+                          "value": "پالایشگاه اصفهان"
+                        },
+                        {
+                          "id": "operationalStatus",
+                          "name": "وضعیت عملیاتی",
+                          "englishName": "Operational Status",
+                          "type": "select",
+                          "isRequired": true,
+                          "order": 4,
+                          "options": ["عملیاتی", "در حال تعمیر", "خارج از سرویس"],
+                          "value": "عملیاتی"
+                        },
+                        {
+                          "id": "priority",
+                          "name": "اولویت",
+                          "englishName": "Priority",
+                          "type": "select",
+                          "isRequired": true,
+                          "order": 5,
+                          "options": ["بحرانی", "بالا", "متوسط", "پایین"],
+                          "value": "بالا"
+                        },
+                        {
+                          "id": "unitOfMeasure",
+                          "name": "واحد اندازه‌گیری",
+                          "englishName": "Unit of Measure",
+                          "type": "select",
+                          "isRequired": true,
+                          "order": 6,
+                          "options": ["لیتر", "کیلوگرم", "تن", "عدد"],
+                          "value": "لیتر"
+                        },
+                        {
+                          "id": "unitCost",
+                          "name": "هزینه واحد",
+                          "englishName": "Unit Cost",
+                          "type": "number",
+                          "isRequired": false,
+                          "order": 7,
+                          "value": "15000"
+                        },
+                        {
+                          "id": "supplier",
+                          "name": "تأمین‌کننده",
+                          "englishName": "Supplier",
+                          "type": "text",
+                          "isRequired": false,
+                          "order": 8,
+                          "value": "شرکت ملی پخش فرآورده‌های نفتی"
+                        }
+                      ],
+                      "children": []
+                    }
+                  ]
+                },
+                {
+                  "id": "1-1-1-2",
+                  "name": "گازوئیل نظامی",
+                  "englishName": "Military Diesel",
+                  "description": "گازوئیل مخصوص تجهیزات نظامی",
+                  "level": 4,
+                  "parentId": "1-1-1",
+                  "order": 2,
+                  "icon": "🏷️",
+                  "fieldTemplates": ["basic", "identification", "operational", "supply", "technical", "logistics", "security"],
+                  "children": [
+                    {
+                      "id": "1-1-1-2-1",
+                      "name": "گازوئیل یورو 5",
+                      "englishName": "Euro 5 Diesel",
+                      "description": "گازوئیل با استاندارد یورو 5",
+                      "level": 5,
+                      "parentId": "1-1-1-2",
+                      "order": 1,
+                      "icon": "🎯",
+                      "fieldTemplates": ["basic", "identification", "operational", "supply", "technical", "logistics", "security"],
+                      "customFields": [
+                        {
+                          "id": "natoCode",
+                          "name": "کد ناتو",
+                          "englishName": "NATO Code",
+                          "type": "text",
+                          "isRequired": false,
+                          "order": 1,
+                          "value": "DIESEL-EURO5"
+                        },
+                        {
+                          "id": "nationalCode",
+                          "name": "کد ملی",
+                          "englishName": "National Code",
+                          "type": "text",
+                          "isRequired": false,
+                          "order": 2,
+                          "value": "IRN-DIESEL-E5"
+                        },
+                        {
+                          "id": "manufacturer",
+                          "name": "سازنده",
+                          "englishName": "Manufacturer",
+                          "type": "text",
+                          "isRequired": false,
+                          "order": 3,
+                          "value": "پالایشگاه آبادان"
+                        },
+                        {
+                          "id": "operationalStatus",
+                          "name": "وضعیت عملیاتی",
+                          "englishName": "Operational Status",
+                          "type": "select",
+                          "isRequired": true,
+                          "order": 4,
+                          "options": ["عملیاتی", "در حال تعمیر", "خارج از سرویس", "در انتظار تعمیر", "آماده استقرار"],
+                          "value": "عملیاتی"
+                        },
+                        {
+                          "id": "priority",
+                          "name": "اولویت",
+                          "englishName": "Priority",
+                          "type": "select",
+                          "isRequired": true,
+                          "order": 5,
+                          "options": ["بحرانی", "بالا", "متوسط", "پایین"],
+                          "value": "بالا"
+                        },
+                        {
+                          "id": "unitOfMeasure",
+                          "name": "واحد اندازه‌گیری",
+                          "englishName": "Unit of Measure",
+                          "type": "select",
+                          "isRequired": true,
+                          "order": 6,
+                          "options": ["لیتر", "کیلوگرم", "تن", "عدد"],
+                          "value": "لیتر"
+                        },
+                        {
+                          "id": "unitCost",
+                          "name": "هزینه واحد",
+                          "englishName": "Unit Cost",
+                          "type": "number",
+                          "isRequired": false,
+                          "order": 7,
+                          "value": "12000"
+                        },
+                        {
+                          "id": "supplier",
+                          "name": "تأمین‌کننده",
+                          "englishName": "Supplier",
+                          "type": "text",
+                          "isRequired": false,
+                          "order": 8,
+                          "value": "شرکت ملی پخش فرآورده‌های نفتی"
+                        }
+                      ],
+                      "children": []
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "1-1-2",
+              "name": "سوخت‌های جامد",
+              "englishName": "Solid Fuels",
+              "description": "سوخت‌های جامد مانند زغال و چوب",
+              "level": 3,
+              "parentId": "1-1",
+              "order": 2,
+              "icon": "🔥",
+              "fieldTemplates": ["basic", "identification", "operational", "supply", "technical", "logistics", "security"],
+              "children": [
+                {
+                  "id": "1-1-2-1",
+                  "name": "زغال سنگ",
+                  "englishName": "Coal",
+                  "description": "زغال سنگ برای تولید انرژی",
+                  "level": 4,
+                  "parentId": "1-1-2",
+                  "order": 1,
+                  "icon": "🏷️",
+                  "fieldTemplates": ["basic", "identification", "operational", "supply", "technical", "logistics", "security"],
+                  "children": [
+                    {
+                      "id": "1-1-2-1-1",
+                      "name": "زغال آنتراسیت",
+                      "englishName": "Anthracite Coal",
+                      "description": "زغال سنگ با کیفیت بالا",
+                      "level": 5,
+                      "parentId": "1-1-2-1",
+                      "order": 1,
+                      "icon": "🎯",
+                      "fieldTemplates": ["basic", "identification", "operational", "supply", "technical", "logistics", "security"],
+                      "customFields": [
+                        {
+                          "id": "natoCode",
+                          "name": "کد ناتو",
+                          "englishName": "NATO Code",
+                          "type": "text",
+                          "isRequired": false,
+                          "order": 1,
+                          "value": "COAL-ANTH"
+                        },
+                        {
+                          "id": "nationalCode",
+                          "name": "کد ملی",
+                          "englishName": "National Code",
+                          "type": "text",
+                          "isRequired": false,
+                          "order": 2,
+                          "value": "IRN-COAL-001"
+                        },
+                        {
+                          "id": "manufacturer",
+                          "name": "سازنده",
+                          "englishName": "Manufacturer",
+                          "type": "text",
+                          "isRequired": false,
+                          "order": 3,
+                          "value": "شرکت معدن زغال البرز"
+                        },
+                        {
+                          "id": "operationalStatus",
+                          "name": "وضعیت عملیاتی",
+                          "englishName": "Operational Status",
+                          "type": "select",
+                          "isRequired": true,
+                          "order": 4,
+                          "options": ["عملیاتی", "در حال تعمیر", "خارج از سرویس", "در انتظار تعمیر", "آماده استقرار"],
+                          "value": "عملیاتی"
+                        },
+                        {
+                          "id": "priority",
+                          "name": "اولویت",
+                          "englishName": "Priority",
+                          "type": "select",
+                          "isRequired": true,
+                          "order": 5,
+                          "options": ["بحرانی", "بالا", "متوسط", "پایین"],
+                          "value": "متوسط"
+                        },
+                        {
+                          "id": "unitOfMeasure",
+                          "name": "واحد اندازه‌گیری",
+                          "englishName": "Unit of Measure",
+                          "type": "select",
+                          "isRequired": true,
+                          "order": 6,
+                          "options": ["عدد", "کیلوگرم", "لیتر", "متر", "متر مربع", "متر مکعب", "تن", "بسته", "جعبه", "کارتن"],
+                          "value": "تن"
+                        },
+                        {
+                          "id": "unitCost",
+                          "name": "هزینه واحد",
+                          "englishName": "Unit Cost",
+                          "type": "number",
+                          "isRequired": false,
+                          "order": 7,
+                          "value": "5000000"
+                        },
+                        {
+                          "id": "supplier",
+                          "name": "تأمین‌کننده",
+                          "englishName": "Supplier",
+                          "type": "text",
+                          "isRequired": false,
+                          "order": 8,
+                          "value": "شرکت معدن زغال البرز"
+                        }
+                      ],
+                      "children": []
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "1-2",
+          "name": "ابزار و تجهیزات",
+          "englishName": "Tools and Equipment",
+          "description": "ابزارآلات و تجهیزات عمومی",
+          "level": 2,
+          "parentId": "1",
+          "order": 2,
+          "icon": "🔧",
+          "fieldTemplates": ["basic", "identification", "operational", "supply", "technical", "maintenance", "logistics", "security"],
+          "children": [
+            {
+              "id": "1-2-1",
+              "name": "ابزار دستی",
+              "englishName": "Hand Tools",
+              "description": "ابزارآلات دستی و کوچک",
+              "level": 3,
+              "parentId": "1-2",
+              "order": 1,
+              "icon": "🔨",
+              "fieldTemplates": ["basic", "identification", "operational", "supply", "technical", "maintenance", "logistics", "security"],
+              "children": [
+                {
+                  "id": "1-2-1-1",
+                  "name": "ابزار تعمیر",
+                  "englishName": "Repair Tools",
+                  "description": "ابزارآلات تعمیر و نگهداری",
+                  "level": 4,
+                  "parentId": "1-2-1",
+                  "order": 1,
+                  "icon": "🏷️",
+                  "fieldTemplates": ["basic", "identification", "operational", "supply", "technical", "maintenance", "logistics", "security"],
+                  "children": [
+                    {
+                      "id": "1-2-1-1-1",
+                      "name": "آچار فرانسه",
+                      "englishName": "Adjustable Wrench",
+                      "description": "آچار قابل تنظیم فرانسه",
+                      "level": 5,
+                      "parentId": "1-2-1-1",
+                      "order": 1,
+                      "icon": "🎯",
+                      "fieldTemplates": ["basic", "identification", "operational", "supply", "technical", "maintenance", "logistics", "security"],
+                      "customFields": [
+                        {
+                          "id": "natoCode",
+                          "name": "کد ناتو",
+                          "englishName": "NATO Code",
+                          "type": "text",
+                          "isRequired": false,
+                          "order": 1,
+                          "value": "TOOL-ADJ-WR"
+                        },
+                        {
+                          "id": "nationalCode",
+                          "name": "کد ملی",
+                          "englishName": "National Code",
+                          "type": "text",
+                          "isRequired": false,
+                          "order": 2,
+                          "value": "IRN-TOOL-001"
+                        },
+                        {
+                          "id": "manufacturer",
+                          "name": "سازنده",
+                          "englishName": "Manufacturer",
+                          "type": "text",
+                          "isRequired": false,
+                          "order": 3,
+                          "value": "شرکت ابزار بهکو"
+                        },
+                        {
+                          "id": "operationalStatus",
+                          "name": "وضعیت عملیاتی",
+                          "englishName": "Operational Status",
+                          "type": "select",
+                          "isRequired": true,
+                          "order": 4,
+                          "options": ["عملیاتی", "در حال تعمیر", "خارج از سرویس", "در انتظار تعمیر", "آماده استقرار"],
+                          "value": "عملیاتی"
+                        },
+                        {
+                          "id": "priority",
+                          "name": "اولویت",
+                          "englishName": "Priority",
+                          "type": "select",
+                          "isRequired": true,
+                          "order": 5,
+                          "options": ["بحرانی", "بالا", "متوسط", "پایین"],
+                          "value": "متوسط"
+                        },
+                        {
+                          "id": "unitOfMeasure",
+                          "name": "واحد اندازه‌گیری",
+                          "englishName": "Unit of Measure",
+                          "type": "select",
+                          "isRequired": true,
+                          "order": 6,
+                          "options": ["عدد", "کیلوگرم", "لیتر", "متر", "متر مربع", "متر مکعب", "تن", "بسته", "جعبه", "کارتن"],
+                          "value": "عدد"
+                        },
+                        {
+                          "id": "unitCost",
+                          "name": "هزینه واحد",
+                          "englishName": "Unit Cost",
+                          "type": "number",
+                          "isRequired": false,
+                          "order": 7,
+                          "value": "250000"
+                        },
+                        {
+                          "id": "supplier",
+                          "name": "تأمین‌کننده",
+                          "englishName": "Supplier",
+                          "type": "text",
+                          "isRequired": false,
+                          "order": 8,
+                          "value": "شرکت ابزار بهکو"
+                        }
+                      ],
+                      "children": []
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "2",
+      "name": "خدمات پزشکی",
+      "englishName": "Medical Services",
+      "description": "خدمات پزشکی، بهداشتی و درمانی برای نیروها",
+      "level": 1,
+      "parentId": null,
+      "order": 2,
+      "icon": "🏥",
+      "coordinates": null,
+      "country": null,
+      "natoEquivalent": null,
+      "specialty": null,
+      "metadata": {
+        "category": "medical",
+        "type": "service",
+        "capabilities": ["درمان", "پیشگیری", "مراقبت"]
+      },
+      "fieldTemplates": ["basic", "identification", "operational", "supply", "technical", "maintenance", "logistics", "security"],
+      "children": [
+        {
+          "id": "2-1",
+          "name": "تجهیزات پزشکی",
+          "englishName": "Medical Equipment",
+          "description": "تجهیزات پزشکی و تشخیصی",
+          "level": 2,
+          "parentId": "2",
+          "order": 1,
+          "icon": "🩺",
+          "fieldTemplates": ["basic", "identification", "operational", "supply", "technical", "maintenance", "logistics", "security"],
+          "children": [
+            {
+              "id": "2-1-1",
+              "name": "تجهیزات تشخیصی",
+              "englishName": "Diagnostic Equipment",
+              "description": "تجهیزات تشخیص بیماری‌ها و آسیب‌ها",
+              "level": 3,
+              "parentId": "2-1",
+              "order": 1,
+              "icon": "🔬",
+              "fieldTemplates": ["basic", "identification", "operational", "supply", "technical", "maintenance", "logistics", "security"],
+              "children": [
+                {
+                  "id": "2-1-1-1",
+                  "name": "دستگاه‌های تصویربرداری",
+                  "englishName": "Imaging Devices",
+                  "description": "دستگاه‌های تصویربرداری پزشکی",
+                  "level": 4,
+                  "parentId": "2-1-1",
+                  "order": 1,
+                  "icon": "🏷️",
+                  "fieldTemplates": ["basic", "identification", "operational", "supply", "technical", "maintenance", "logistics", "security"],
+                  "children": [
+                    {
+                      "id": "2-1-1-1-1",
+                      "name": "دستگاه اشعه ایکس",
+                      "englishName": "X-Ray Machine",
+                      "description": "دستگاه اشعه ایکس برای تصویربرداری",
+                      "level": 5,
+                      "parentId": "2-1-1-1",
+                      "order": 1,
+                      "icon": "🎯",
+                      "fieldTemplates": ["basic", "identification", "operational", "supply", "technical", "maintenance", "logistics", "security"],
+                      "customFields": [
+                        {
+                          "id": "natoCode",
+                          "name": "کد ناتو",
+                          "englishName": "NATO Code",
+                          "type": "text",
+                          "isRequired": false,
+                          "order": 1,
+                          "value": "MED-XRAY-001"
+                        },
+                        {
+                          "id": "nationalCode",
+                          "name": "کد ملی",
+                          "englishName": "National Code",
+                          "type": "text",
+                          "isRequired": false,
+                          "order": 2,
+                          "value": "IRN-MED-XR01"
+                        },
+                        {
+                          "id": "manufacturer",
+                          "name": "سازنده",
+                          "englishName": "Manufacturer",
+                          "type": "text",
+                          "isRequired": false,
+                          "order": 3,
+                          "value": "Siemens Healthineers"
+                        },
+                        {
+                          "id": "operationalStatus",
+                          "name": "وضعیت عملیاتی",
+                          "englishName": "Operational Status",
+                          "type": "select",
+                          "isRequired": true,
+                          "order": 4,
+                          "options": ["عملیاتی", "در حال تعمیر", "خارج از سرویس", "در انتظار تعمیر", "آماده استقرار"],
+                          "value": "عملیاتی"
+                        },
+                        {
+                          "id": "priority",
+                          "name": "اولویت",
+                          "englishName": "Priority",
+                          "type": "select",
+                          "isRequired": true,
+                          "order": 5,
+                          "options": ["بحرانی", "بالا", "متوسط", "پایین"],
+                          "value": "بحرانی"
+                        },
+                        {
+                          "id": "unitOfMeasure",
+                          "name": "واحد اندازه‌گیری",
+                          "englishName": "Unit of Measure",
+                          "type": "select",
+                          "isRequired": true,
+                          "order": 6,
+                          "options": ["عدد", "کیلوگرم", "لیتر", "متر", "متر مربع", "متر مکعب", "تن", "بسته", "جعبه", "کارتن"],
+                          "value": "عدد"
+                        },
+                        {
+                          "id": "unitCost",
+                          "name": "هزینه واحد",
+                          "englishName": "Unit Cost",
+                          "type": "number",
+                          "isRequired": false,
+                          "order": 7,
+                          "value": "2000000000"
+                        },
+                        {
+                          "id": "supplier",
+                          "name": "تأمین‌کننده",
+                          "englishName": "Supplier",
+                          "type": "text",
+                          "isRequired": false,
+                          "order": 8,
+                          "value": "شرکت تجهیزات پزشکی پارس"
+                        }
+                      ],
+                      "children": []
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "2-2",
+          "name": "داروها و مواد درمانی",
+          "englishName": "Pharmaceuticals and Medical Supplies",
+          "description": "داروها، مواد درمانی و مصرفی پزشکی",
+          "level": 2,
+          "parentId": "2",
+          "order": 2,
+          "icon": "💊",
+          "fieldTemplates": ["basic", "identification", "operational", "supply", "technical", "logistics", "security"],
+          "children": [
+            {
+              "id": "2-2-1",
+              "name": "داروهای ضروری",
+              "englishName": "Essential Medicines",
+              "description": "داروهای ضروری و حیاتی",
+              "level": 3,
+              "parentId": "2-2",
+              "order": 1,
+              "icon": "💉",
+              "fieldTemplates": ["basic", "identification", "operational", "supply", "technical", "logistics", "security"],
+              "children": [
+                {
+                  "id": "2-2-1-1",
+                  "name": "آنتی‌بیوتیک‌ها",
+                  "englishName": "Antibiotics",
+                  "description": "داروهای آنتی‌بیوتیک و ضدعفونی",
+                  "level": 4,
+                  "parentId": "2-2-1",
+                  "order": 1,
+                  "icon": "🏷️",
+                  "fieldTemplates": ["basic", "identification", "operational", "supply", "technical", "logistics", "security"],
+                  "children": [
+                    {
+                      "id": "2-2-1-1-1",
+                      "name": "پنی‌سیلین",
+                      "englishName": "Penicillin",
+                      "description": "پنی‌سیلین برای درمان عفونت‌های باکتریایی",
+                      "level": 5,
+                      "parentId": "2-2-1-1",
+                      "order": 1,
+                      "icon": "🎯",
+                      "fieldTemplates": ["basic", "identification", "operational", "supply", "technical", "logistics", "security"],
+                      "customFields": [
+                        {
+                          "id": "natoCode",
+                          "name": "کد ناتو",
+                          "englishName": "NATO Code",
+                          "type": "text",
+                          "isRequired": false,
+                          "order": 1,
+                          "value": "MED-PEN-001"
+                        },
+                        {
+                          "id": "nationalCode",
+                          "name": "کد ملی",
+                          "englishName": "National Code",
+                          "type": "text",
+                          "isRequired": false,
+                          "order": 2,
+                          "value": "IRN-MED-PN01"
+                        },
+                        {
+                          "id": "manufacturer",
+                          "name": "سازنده",
+                          "englishName": "Manufacturer",
+                          "type": "text",
+                          "isRequired": false,
+                          "order": 3,
+                          "value": "شرکت داروسازی داروپخش"
+                        },
+                        {
+                          "id": "operationalStatus",
+                          "name": "وضعیت عملیاتی",
+                          "englishName": "Operational Status",
+                          "type": "select",
+                          "isRequired": true,
+                          "order": 4,
+                          "options": ["عملیاتی", "در حال تعمیر", "خارج از سرویس", "در انتظار تعمیر", "آماده استقرار"],
+                          "value": "عملیاتی"
+                        },
+                        {
+                          "id": "priority",
+                          "name": "اولویت",
+                          "englishName": "Priority",
+                          "type": "select",
+                          "isRequired": true,
+                          "order": 5,
+                          "options": ["بحرانی", "بالا", "متوسط", "پایین"],
+                          "value": "بحرانی"
+                        },
+                        {
+                          "id": "unitOfMeasure",
+                          "name": "واحد اندازه‌گیری",
+                          "englishName": "Unit of Measure",
+                          "type": "select",
+                          "isRequired": true,
+                          "order": 6,
+                          "options": ["عدد", "کیلوگرم", "لیتر", "متر", "متر مربع", "متر مکعب", "تن", "بسته", "جعبه", "کارتن"],
+                          "value": "عدد"
+                        },
+                        {
+                          "id": "unitCost",
+                          "name": "هزینه واحد",
+                          "englishName": "Unit Cost",
+                          "type": "number",
+                          "isRequired": false,
+                          "order": 7,
+                          "value": "250000"
+                        },
+                        {
+                          "id": "supplier",
+                          "name": "تأمین‌کننده",
+                          "englishName": "Supplier",
+                          "type": "text",
+                          "isRequired": false,
+                          "order": 8,
+                          "value": "شرکت داروسازی داروپخش"
+                        }
+                      ],
+                      "children": []
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "3",
+      "name": "حمل و نقل",
+      "englishName": "Transportation",
+      "description": "خدمات حمل و نقل و حرکت نیروها و تجهیزات",
+      "level": 1,
+      "parentId": null,
+      "order": 3,
+      "icon": "🚛",
+      "fieldTemplates": ["basic", "identification", "operational", "supply", "technical", "maintenance", "logistics", "security"],
+      "children": [
+        {
+          "id": "3-1",
+          "name": "وسایل نقلیه زمینی",
+          "englishName": "Ground Vehicles",
+          "description": "وسایل نقلیه زمینی برای حمل و نقل",
+          "level": 2,
+          "parentId": "3",
+          "order": 1,
+          "icon": "🚚",
+          "fieldTemplates": ["basic", "identification", "operational", "supply", "technical", "maintenance", "logistics", "security"],
+          "children": [
+            {
+              "id": "3-1-1",
+              "name": "کامیون‌های باربری",
+              "englishName": "Cargo Trucks",
+              "description": "کامیون‌های مخصوص حمل بار و تجهیزات",
+              "level": 3,
+              "parentId": "3-1",
+              "order": 1,
+              "icon": "📦",
+              "fieldTemplates": ["basic", "identification", "operational", "supply", "technical", "maintenance", "logistics", "security"],
+              "children": [
+                {
+                  "id": "3-1-1-1",
+                  "name": "کامیون‌های سنگین",
+                  "englishName": "Heavy Trucks",
+                  "description": "کامیون‌های سنگین برای حمل بارهای بزرگ",
+                  "level": 4,
+                  "parentId": "3-1-1",
+                  "order": 1,
+                  "icon": "🏷️",
+                  "fieldTemplates": ["basic", "identification", "operational", "supply", "technical", "maintenance", "logistics", "security"],
+                  "children": [
+                    {
+                      "id": "3-1-1-1-1",
+                      "name": "کامیون 6x6 نظامی",
+                      "englishName": "6x6 Military Truck",
+                      "description": "کامیون نظامی 6x6 برای عملیات نظامی",
+                      "level": 5,
+                      "parentId": "3-1-1-1",
+                      "order": 1,
+                      "icon": "🎯",
+                      "fieldTemplates": ["basic", "identification", "operational", "supply", "technical", "maintenance", "logistics", "security"],
+                      "customFields": [
+                        {
+                          "id": "natoCode",
+                          "name": "کد ناتو",
+                          "englishName": "NATO Code",
+                          "type": "text",
+                          "isRequired": false,
+                          "order": 1,
+                          "value": "VEH-TRK-6X6"
+                        },
+                        {
+                          "id": "nationalCode",
+                          "name": "کد ملی",
+                          "englishName": "National Code",
+                          "type": "text",
+                          "isRequired": false,
+                          "order": 2,
+                          "value": "IRN-VEH-T01"
+                        },
+                        {
+                          "id": "manufacturer",
+                          "name": "سازنده",
+                          "englishName": "Manufacturer",
+                          "type": "text",
+                          "isRequired": false,
+                          "order": 3,
+                          "value": "شرکت خودروسازی بهمن"
+                        },
+                        {
+                          "id": "operationalStatus",
+                          "name": "وضعیت عملیاتی",
+                          "englishName": "Operational Status",
+                          "type": "select",
+                          "isRequired": true,
+                          "order": 4,
+                          "options": ["عملیاتی", "در حال تعمیر", "خارج از سرویس", "در انتظار تعمیر", "آماده استقرار"],
+                          "value": "عملیاتی"
+                        },
+                        {
+                          "id": "priority",
+                          "name": "اولویت",
+                          "englishName": "Priority",
+                          "type": "select",
+                          "isRequired": true,
+                          "order": 5,
+                          "options": ["بحرانی", "بالا", "متوسط", "پایین"],
+                          "value": "بالا"
+                        },
+                        {
+                          "id": "unitOfMeasure",
+                          "name": "واحد اندازه‌گیری",
+                          "englishName": "Unit of Measure",
+                          "type": "select",
+                          "isRequired": true,
+                          "order": 6,
+                          "options": ["عدد", "کیلوگرم", "لیتر", "متر", "متر مربع", "متر مکعب", "تن", "بسته", "جعبه", "کارتن"],
+                          "value": "عدد"
+                        },
+                        {
+                          "id": "unitCost",
+                          "name": "هزینه واحد",
+                          "englishName": "Unit Cost",
+                          "type": "number",
+                          "isRequired": false,
+                          "order": 7,
+                          "value": "8000000000"
+                        },
+                        {
+                          "id": "supplier",
+                          "name": "تأمین‌کننده",
+                          "englishName": "Supplier",
+                          "type": "text",
+                          "isRequired": false,
+                          "order": 8,
+                          "value": "شرکت خودروسازی بهمن"
+                        }
+                      ],
+                      "children": []
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "3-1-2",
+              "name": "وسایل نقلیه پرسنلی",
+              "englishName": "Personnel Carriers",
+              "description": "وسایل نقلیه برای انتقال پرسنل",
+              "level": 3,
+              "parentId": "3-1",
+              "order": 2,
+              "icon": "🚌",
+              "fieldTemplates": ["basic", "identification", "operational", "supply", "technical", "maintenance", "logistics", "security"],
+              "children": [
+                {
+                  "id": "3-1-2-1",
+                  "name": "اوتوبوس‌های نظامی",
+                  "englishName": "Military Buses",
+                  "description": "اوتوبوس‌های مخصوص انتقال نیروها",
+                  "level": 4,
+                  "parentId": "3-1-2",
+                  "order": 1,
+                  "icon": "🏷️",
+                  "fieldTemplates": ["basic", "identification", "operational", "supply", "technical", "maintenance", "logistics", "security"],
+                  "children": [
+                    {
+                      "id": "3-1-2-1-1",
+                      "name": "اوتوبوس 50 نفره",
+                      "englishName": "50-Seat Military Bus",
+                      "description": "اوتوبوس نظامی ظرفیت 50 نفر",
+                      "level": 5,
+                      "parentId": "3-1-2-1",
+                      "order": 1,
+                      "icon": "🎯",
+                      "fieldTemplates": ["basic", "identification", "operational", "supply", "technical", "maintenance", "logistics", "security"],
+                      "customFields": [
+                        {
+                          "id": "natoCode",
+                          "name": "کد ناتو",
+                          "englishName": "NATO Code",
+                          "type": "text",
+                          "isRequired": false,
+                          "order": 1,
+                          "value": "VEH-BUS-50P"
+                        },
+                        {
+                          "id": "nationalCode",
+                          "name": "کد ملی",
+                          "englishName": "National Code",
+                          "type": "text",
+                          "isRequired": false,
+                          "order": 2,
+                          "value": "IRN-VEH-B50"
+                        },
+                        {
+                          "id": "manufacturer",
+                          "name": "سازنده",
+                          "englishName": "Manufacturer",
+                          "type": "text",
+                          "isRequired": false,
+                          "order": 3,
+                          "value": "شرکت اتوبوسرانی ایران"
+                        },
+                        {
+                          "id": "operationalStatus",
+                          "name": "وضعیت عملیاتی",
+                          "englishName": "Operational Status",
+                          "type": "select",
+                          "isRequired": true,
+                          "order": 4,
+                          "options": ["عملیاتی", "در حال تعمیر", "خارج از سرویس", "در انتظار تعمیر", "آماده استقرار"],
+                          "value": "عملیاتی"
+                        },
+                        {
+                          "id": "priority",
+                          "name": "اولویت",
+                          "englishName": "Priority",
+                          "type": "select",
+                          "isRequired": true,
+                          "order": 5,
+                          "options": ["بحرانی", "بالا", "متوسط", "پایین"],
+                          "value": "متوسط"
+                        },
+                        {
+                          "id": "unitOfMeasure",
+                          "name": "واحد اندازه‌گیری",
+                          "englishName": "Unit of Measure",
+                          "type": "select",
+                          "isRequired": true,
+                          "order": 6,
+                          "options": ["عدد", "کیلوگرم", "لیتر", "متر", "متر مربع", "متر مکعب", "تن", "بسته", "جعبه", "کارتن"],
+                          "value": "عدد"
+                        },
+                        {
+                          "id": "unitCost",
+                          "name": "هزینه واحد",
+                          "englishName": "Unit Cost",
+                          "type": "number",
+                          "isRequired": false,
+                          "order": 7,
+                          "value": "3500000000"
+                        },
+                        {
+                          "id": "supplier",
+                          "name": "تأمین‌کننده",
+                          "englishName": "Supplier",
+                          "type": "text",
+                          "isRequired": false,
+                          "order": 8,
+                          "value": "شرکت اتوبوسرانی ایران"
+                        }
+                      ],
+                      "children": []
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "3-2",
+          "name": "وسایل نقلیه هوایی",
+          "englishName": "Aircraft",
+          "description": "وسایل نقلیه هوایی برای حمل و نقل",
+          "level": 2,
+          "parentId": "3",
+          "order": 2,
+          "icon": "✈️",
+          "fieldTemplates": ["basic", "identification", "operational", "supply", "technical", "maintenance", "logistics", "security"],
+          "children": [
+            {
+              "id": "3-2-1",
+              "name": "هلیکوپترهای حمل و نقل",
+              "englishName": "Transport Helicopters",
+              "description": "هلیکوپترهای مخصوص حمل و نقل",
+              "level": 3,
+              "parentId": "3-2",
+              "order": 1,
+              "icon": "🚁",
+              "fieldTemplates": ["basic", "identification", "operational", "supply", "technical", "maintenance", "logistics", "security"],
+              "children": [
+                {
+                  "id": "3-2-1-1",
+                  "name": "هلیکوپترهای سنگین",
+                  "englishName": "Heavy Lift Helicopters",
+                  "description": "هلیکوپترهای حمل بار سنگین",
+                  "level": 4,
+                  "parentId": "3-2-1",
+                  "order": 1,
+                  "icon": "🏷️",
+                  "fieldTemplates": ["basic", "identification", "operational", "supply", "technical", "maintenance", "logistics", "security"],
+                  "children": [
+                    {
+                      "id": "3-2-1-1-1",
+                      "name": "CH-47 Chinook",
+                      "englishName": "CH-47 Chinook",
+                      "description": "هلیکوپتر حمل بار سنگین CH-47",
+                      "level": 5,
+                      "parentId": "3-2-1-1",
+                      "order": 1,
+                      "icon": "🎯",
+                      "fieldTemplates": ["basic", "identification", "operational", "supply", "technical", "maintenance", "logistics", "security"],
+                      "customFields": [
+                        {
+                          "id": "natoCode",
+                          "name": "کد ناتو",
+                          "englishName": "NATO Code",
+                          "type": "text",
+                          "isRequired": false,
+                          "order": 1,
+                          "value": "AIR-CH47"
+                        },
+                        {
+                          "id": "nationalCode",
+                          "name": "کد ملی",
+                          "englishName": "National Code",
+                          "type": "text",
+                          "isRequired": false,
+                          "order": 2,
+                          "value": "IRN-AIR-CH47"
+                        },
+                        {
+                          "id": "manufacturer",
+                          "name": "سازنده",
+                          "englishName": "Manufacturer",
+                          "type": "text",
+                          "isRequired": false,
+                          "order": 3,
+                          "value": "Boeing Defense"
+                        },
+                        {
+                          "id": "operationalStatus",
+                          "name": "وضعیت عملیاتی",
+                          "englishName": "Operational Status",
+                          "type": "select",
+                          "isRequired": true,
+                          "order": 4,
+                          "options": ["عملیاتی", "در حال تعمیر", "خارج از سرویس", "در انتظار تعمیر", "آماده استقرار"],
+                          "value": "عملیاتی"
+                        },
+                        {
+                          "id": "priority",
+                          "name": "اولویت",
+                          "englishName": "Priority",
+                          "type": "select",
+                          "isRequired": true,
+                          "order": 5,
+                          "options": ["بحرانی", "بالا", "متوسط", "پایین"],
+                          "value": "بحرانی"
+                        },
+                        {
+                          "id": "unitOfMeasure",
+                          "name": "واحد اندازه‌گیری",
+                          "englishName": "Unit of Measure",
+                          "type": "select",
+                          "isRequired": true,
+                          "order": 6,
+                          "options": ["عدد", "کیلوگرم", "لیتر", "متر", "متر مربع", "متر مکعب", "تن", "بسته", "جعبه", "کارتن"],
+                          "value": "عدد"
+                        },
+                        {
+                          "id": "unitCost",
+                          "name": "هزینه واحد",
+                          "englishName": "Unit Cost",
+                          "type": "number",
+                          "isRequired": false,
+                          "order": 7,
+                          "value": "250000000000"
+                        },
+                        {
+                          "id": "supplier",
+                          "name": "تأمین‌کننده",
+                          "englishName": "Supplier",
+                          "type": "text",
+                          "isRequired": false,
+                          "order": 8,
+                          "value": "Boeing Defense Systems"
+                        }
+                      ],
+                      "children": []
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "4",
+      "name": "ارتباطات",
+      "englishName": "Communications",
+      "description": "خدمات ارتباطی و مخابراتی",
+      "level": 1,
+      "parentId": null,
+      "order": 4,
+      "icon": "📡",
+      "fieldTemplates": ["basic", "identification", "operational", "supply", "technical", "maintenance", "logistics", "security"],
+      "children": [
+        {
+          "id": "4-1",
+          "name": "تجهیزات مخابراتی",
+          "englishName": "Telecommunications Equipment",
+          "description": "تجهیزات مخابراتی برای ارتباطات",
+          "level": 2,
+          "parentId": "4",
+          "order": 1,
+          "icon": "📞",
+          "fieldTemplates": ["basic", "identification", "operational", "supply", "technical", "maintenance", "logistics", "security"],
+          "children": [
+            {
+              "id": "4-1-1",
+              "name": "رادیوهای نظامی",
+              "englishName": "Military Radios",
+              "description": "رادیوهای مخصوص عملیات نظامی",
+              "level": 3,
+              "parentId": "4-1",
+              "order": 1,
+              "icon": "📻",
+              "fieldTemplates": ["basic", "identification", "operational", "supply", "technical", "maintenance", "logistics", "security"],
+              "children": [
+                {
+                  "id": "4-1-1-1",
+                  "name": "رادیوهای دستی",
+                  "englishName": "Handheld Radios",
+                  "description": "رادیوهای دستی برای ارتباطات تاکتیکی",
+                  "level": 4,
+                  "parentId": "4-1-1",
+                  "order": 1,
+                  "icon": "🏷️",
+                  "fieldTemplates": ["basic", "identification", "operational", "supply", "technical", "maintenance", "logistics", "security"],
+                  "children": [
+                    {
+                      "id": "4-1-1-1-1",
+                      "name": "رادیو PRC-152",
+                      "englishName": "PRC-152 Radio",
+                      "description": "رادیو نظامی پیشرفته PRC-152",
+                      "level": 5,
+                      "parentId": "4-1-1-1",
+                      "order": 1,
+                      "icon": "🎯",
+                      "fieldTemplates": ["basic", "identification", "operational", "supply", "technical", "maintenance", "logistics", "security"],
+                      "customFields": [
+                        {
+                          "id": "natoCode",
+                          "name": "کد ناتو",
+                          "englishName": "NATO Code",
+                          "type": "text",
+                          "isRequired": false,
+                          "order": 1,
+                          "value": "COMM-PRC152"
+                        },
+                        {
+                          "id": "operationalStatus",
+                          "name": "وضعیت عملیاتی",
+                          "englishName": "Operational Status",
+                          "type": "select",
+                          "isRequired": true,
+                          "order": 2,
+                          "options": ["عملیاتی", "در حال تعمیر", "خارج از سرویس"],
+                          "value": "عملیاتی"
+                        },
+                        {
+                          "id": "unitOfMeasure",
+                          "name": "واحد اندازه‌گیری",
+                          "englishName": "Unit of Measure",
+                          "type": "select",
+                          "isRequired": true,
+                          "order": 3,
+                          "options": ["عدد", "کیلوگرم", "لیتر", "متر", "متر مربع", "متر مکعب", "تن", "بسته", "جعبه", "کارتن"],
+                          "value": "عدد"
+                        }
+                      ],
+                      "children": []
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "5",
+      "name": "آذوقه و تغذیه",
+      "englishName": "Food and Subsistence",
+      "description": "آذوقه، غذا و مواد تغذیه‌ای",
+      "level": 1,
+      "parentId": null,
+      "order": 5,
+      "icon": "🍽️",
+      "fieldTemplates": ["basic", "identification", "operational", "supply", "technical", "logistics", "security"],
+      "children": [
+        {
+          "id": "5-1",
+          "name": "غذاهای آماده",
+          "englishName": "Ready-to-Eat Meals",
+          "description": "غذاهای آماده و بسته‌بندی شده",
+          "level": 2,
+          "parentId": "5",
+          "order": 1,
+          "icon": "🍲",
+          "fieldTemplates": ["basic", "identification", "operational", "supply", "technical", "logistics", "security"],
+          "children": [
+            {
+              "id": "5-1-1",
+              "name": "MRE نظامی",
+              "englishName": "Military MRE",
+              "description": "وعده غذایی آماده برای مصرف",
+              "level": 3,
+              "parentId": "5-1",
+              "order": 1,
+              "icon": "🍵",
+              "fieldTemplates": ["basic", "identification", "operational", "supply", "technical", "logistics", "security"],
+              "children": [
+                {
+                  "id": "5-1-1-1",
+                  "name": "MRE صبحانه",
+                  "englishName": "MRE Breakfast",
+                  "description": "وعده غذایی آماده صبحانه",
+                  "level": 4,
+                  "parentId": "5-1-1",
+                  "order": 1,
+                  "icon": "🏷️",
+                  "fieldTemplates": ["basic", "identification", "operational", "supply", "technical", "logistics", "security"],
+                  "children": [
+                    {
+                      "id": "5-1-1-1-1",
+                      "name": "MRE صبحانه کامل",
+                      "englishName": "Complete MRE Breakfast",
+                      "description": "وعده کامل صبحانه با 1200 کیلوکالری",
+                      "level": 5,
+                      "parentId": "5-1-1-1",
+                      "order": 1,
+                      "icon": "🎯",
+                      "fieldTemplates": ["basic", "identification", "operational", "supply", "technical", "logistics", "security"],
+                      "children": []
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "6",
+      "name": "مهمات و انفجاری",
+      "englishName": "Ammunition and Explosives",
+      "description": "مهمات، مواد انفجاری و محترقه",
+      "level": 1,
+      "parentId": null,
+      "order": 6,
+      "icon": "💣",
+      "fieldTemplates": ["basic", "identification", "operational", "supply", "technical", "logistics", "security"],
+      "children": [
+        {
+          "id": "6-1",
+          "name": "مهمات سبک",
+          "englishName": "Small Arms Ammunition",
+          "description": "مهمات اسلحه سبک و فردی",
+          "level": 2,
+          "parentId": "6",
+          "order": 1,
+          "icon": "🔫",
+          "fieldTemplates": ["basic", "identification", "operational", "supply", "technical", "logistics", "security"],
+          "children": [
+            {
+              "id": "6-1-1",
+              "name": "فشنگ 7.62mm",
+              "englishName": "7.62mm Cartridge",
+              "description": "فشنگ 7.62 میلی‌متری",
+              "level": 3,
+              "parentId": "6-1",
+              "order": 1,
+              "icon": "🔋",
+              "fieldTemplates": ["basic", "identification", "operational", "supply", "technical", "logistics", "security"],
+              "children": [
+                {
+                  "id": "6-1-1-1",
+                  "name": "7.62x51mm NATO",
+                  "englishName": "7.62x51mm NATO",
+                  "description": "فشنگ استاندارد ناتو",
+                  "level": 4,
+                  "parentId": "6-1-1",
+                  "order": 1,
+                  "icon": "🏷️",
+                  "fieldTemplates": ["basic", "identification", "operational", "supply", "technical", "logistics", "security"],
+                  "children": [
+                    {
+                      "id": "6-1-1-1-1",
+                      "name": "NATO Ball M80",
+                      "englishName": "NATO Ball M80",
+                      "description": "فشنگ استاندارد ناتو M80",
+                      "level": 5,
+                      "parentId": "6-1-1-1",
+                      "order": 1,
+                      "icon": "🎯",
+                      "fieldTemplates": ["basic", "identification", "operational", "supply", "technical", "logistics", "security"],
+                      "children": []
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "7",
+      "name": "تعمیر و نگهداری",
+      "englishName": "Maintenance and Repair",
+      "description": "خدمات تعمیر، نگهداری و بازسازی",
+      "level": 1,
+      "parentId": null,
+      "order": 7,
+      "icon": "🔧",
+      "fieldTemplates": ["basic", "identification", "operational", "supply", "technical", "maintenance", "logistics", "security"],
+      "children": [
+        {
+          "id": "7-1",
+          "name": "تعمیرات تجهیزات",
+          "englishName": "Equipment Maintenance",
+          "description": "تعمیر و نگهداری تجهیزات",
+          "level": 2,
+          "parentId": "7",
+          "order": 1,
+          "icon": "🔨",
+          "fieldTemplates": ["basic", "identification", "operational", "supply", "technical", "maintenance", "logistics", "security"],
+          "children": [
+            {
+              "id": "7-1-1",
+              "name": "قطعات یدکی",
+              "englishName": "Spare Parts",
+              "description": "قطعات یدکی و جایگزین",
+              "level": 3,
+              "parentId": "7-1",
+              "order": 1,
+              "icon": "⚙️",
+              "fieldTemplates": ["basic", "identification", "operational", "supply", "technical", "maintenance", "logistics", "security"],
+              "children": [
+                {
+                  "id": "7-1-1-1",
+                  "name": "قطعات موتور",
+                  "englishName": "Engine Parts",
+                  "description": "قطعات یدکی موتور و پیشرانه",
+                  "level": 4,
+                  "parentId": "7-1-1",
+                  "order": 1,
+                  "icon": "🏷️",
+                  "fieldTemplates": ["basic", "identification", "operational", "supply", "technical", "maintenance", "logistics", "security"],
+                  "children": [
+                    {
+                      "id": "7-1-1-1-1",
+                      "name": "فیلتر روغن",
+                      "englishName": "Oil Filter",
+                      "description": "فیلتر روغن موتور",
+                      "level": 5,
+                      "parentId": "7-1-1-1",
+                      "order": 1,
+                      "icon": "🎯",
+                      "fieldTemplates": ["basic", "identification", "operational", "supply", "technical", "maintenance", "logistics", "security"],
+                      "children": []
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "8",
+      "name": "اسکان و زیرساخت",
+      "englishName": "Housing and Infrastructure",
+      "description": "اسکان، بارگاه و زیرساخت‌های عملیاتی",
+      "level": 1,
+      "parentId": null,
+      "order": 8,
+      "icon": "🏠",
+      "fieldTemplates": ["basic", "identification", "operational", "supply", "technical", "logistics", "security"],
+      "children": [
+        {
+          "id": "8-1",
+          "name": "چادر و اقامتگاه",
+          "englishName": "Tents and Shelters",
+          "description": "چادرها و سرپناه‌های موقت",
+          "level": 2,
+          "parentId": "8",
+          "order": 1,
+          "icon": "⛺",
+          "fieldTemplates": ["basic", "identification", "operational", "supply", "technical", "logistics", "security"],
+          "children": [
+            {
+              "id": "8-1-1",
+              "name": "چادرهای نظامی",
+              "englishName": "Military Tents",
+              "description": "چادرهای مخصوص عملیات نظامی",
+              "level": 3,
+              "parentId": "8-1",
+              "order": 1,
+              "icon": "🏡",
+              "fieldTemplates": ["basic", "identification", "operational", "supply", "technical", "logistics", "security"],
+              "children": [
+                {
+                  "id": "8-1-1-1",
+                  "name": "چادر گروهی",
+                  "englishName": "Group Tent",
+                  "description": "چادر بزرگ برای گروه‌های نظامی",
+                  "level": 4,
+                  "parentId": "8-1-1",
+                  "order": 1,
+                  "icon": "🏷️",
+                  "fieldTemplates": ["basic", "identification", "operational", "supply", "technical", "logistics", "security"],
+                  "children": [
+                    {
+                      "id": "8-1-1-1-1",
+                      "name": "چادر 20 نفره",
+                      "englishName": "20-Person Tent",
+                      "description": "چادر گروهی ظرفیت 20 نفر",
+                      "level": 5,
+                      "parentId": "8-1-1-1",
+                      "order": 1,
+                      "icon": "🎯",
+                      "fieldTemplates": ["basic", "identification", "operational", "supply", "technical", "logistics", "security"],
+                      "children": []
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

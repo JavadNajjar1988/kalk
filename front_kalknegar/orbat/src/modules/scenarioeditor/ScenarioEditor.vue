@@ -1,0 +1,453 @@
+<template>
+  <div class="bg-background flex h-dvh flex-col overflow-hidden" ref="dropZoneRef">
+    <nav
+      class="flex shrink-0 items-center justify-between bg-indigo-100 dark:bg-slate-800 py-3 pr-6 pl-8 text-slate-700 dark:text-gray-200 print:hidden border-b border-indigo-200 dark:border-slate-700"
+    >
+      <div class="flex min-w-0 flex-auto items-center">
+        <div class="flex min-w-0 flex-auto items-center">
+          <MainMenu @action="onScenarioAction" @ui-action="onUiAction" />
+          <button
+            type="button"
+            class="hidden truncate pl-3 text-slate-600 dark:text-gray-400 hover:text-slate-800 dark:hover:text-gray-200 sm:block transition-colors duration-200"
+            @click="showInfo()"
+          >
+            {{ activeScenario.store.state.info.name }}
+          </button>
+        </div>
+      </div>
+      <div class="flex shrink-0 items-center gap-1 overflow-clip sm:gap-2">
+        <PlaybackMenu v-if="route.name === MAP_EDIT_MODE_ROUTE" />
+        
+        <button
+          @click="showSearch = true"
+          class="inline-flex items-center justify-center rounded-xl p-2.5 text-slate-600 dark:text-gray-400 hover:bg-blue-50 dark:hover:bg-slate-700 hover:text-slate-800 dark:hover:text-white focus:ring-2 focus:ring-blue-300 dark:focus:ring-white focus:outline-hidden focus:ring-inset transition-all duration-200"
+        >
+          <SearchIcon class="block h-6 w-6" />
+        </button>
+        <div class="flex items-center rounded-2xl bg-purple-50 dark:bg-slate-700 px-2 py-1 border border-purple-200 dark:border-slate-600">
+          <router-link
+            :to="{ name: MAP_EDIT_MODE_ROUTE }"
+            title="حالت ویرایش نقشه"
+            exact-active-class="text-green-600 bg-green-100 dark:text-green-400 dark:bg-green-900/30"
+            class="inline-flex items-center justify-center rounded-xl p-2 text-slate-600 dark:text-gray-400 hover:bg-green-50 dark:hover:bg-slate-600 hover:text-green-600 dark:hover:text-green-400 focus:ring-2 focus:ring-green-300 dark:focus:ring-white focus:outline-hidden focus:ring-inset transition-all duration-200"
+          >
+            <GlobeAltIcon class="h-6 w-6" />
+          </router-link>
+          <router-link
+            :to="{ name: GRID_EDIT_ROUTE }"
+            title="حالت ویرایش جدول"
+            exact-active-class="text-blue-600 bg-blue-100 dark:text-blue-400 dark:bg-blue-900/30"
+            class="inline-flex items-center justify-center rounded-xl p-2 text-slate-600 dark:text-gray-400 hover:bg-blue-50 dark:hover:bg-slate-600 hover:text-blue-600 dark:hover:text-blue-400 focus:ring-2 focus:ring-blue-300 dark:focus:ring-white focus:outline-hidden focus:ring-inset transition-all duration-200"
+          >
+            <TableIcon class="h-6 w-6" />
+          </router-link>
+          <router-link
+            :to="{ name: CHART_EDIT_MODE_ROUTE }"
+            title="حالت ویرایش نمودار"
+            exact-active-class="text-orange-600 bg-orange-100 dark:text-orange-400 dark:bg-orange-900/30"
+            class="inline-flex items-center justify-center rounded-xl p-2 text-slate-600 dark:text-gray-400 hover:bg-orange-50 dark:hover:bg-slate-600 hover:text-orange-600 dark:hover:text-orange-400 focus:ring-2 focus:ring-orange-300 dark:focus:ring-white focus:outline-hidden focus:ring-inset transition-all duration-200"
+          >
+            <IconSitemap class="h-6 w-6" />
+          </router-link>
+        </div>
+        <div class="flex items-center">
+          <button
+            @click="undo()"
+            class="hidden items-center justify-center rounded-xl p-2 text-slate-600 dark:text-gray-400 hover:bg-yellow-50 dark:hover:bg-slate-700 hover:text-yellow-600 dark:hover:text-yellow-400 focus:ring-2 focus:ring-yellow-300 dark:focus:ring-white focus:outline-hidden focus:ring-inset disabled:opacity-40 disabled:cursor-not-allowed sm:block transition-all duration-200"
+            title="لغو عمل (ctrl+z)"
+            :disabled="!canUndo"
+          >
+            <IconUndo class="block h-6 w-6" />
+          </button>
+          <button
+            @click="redo()"
+            class="hidden items-center justify-center rounded-xl p-2 text-slate-600 dark:text-gray-400 hover:bg-teal-50 dark:hover:bg-slate-700 hover:text-teal-600 dark:hover:text-teal-400 focus:ring-2 focus:ring-teal-300 dark:focus:ring-white focus:outline-hidden focus:ring-inset disabled:opacity-40 disabled:cursor-not-allowed sm:block transition-all duration-200"
+            title="انجام مجدد عمل"
+            :disabled="!canRedo"
+          >
+            <IconRedo class="block h-6 w-6" />
+          </button>
+        </div>
+        <button
+          @click="showKeyboardShortcuts"
+          class="hidden items-center justify-center rounded-xl p-2 text-slate-600 dark:text-gray-400 hover:bg-pink-50 dark:hover:bg-slate-700 hover:text-pink-600 dark:hover:text-pink-400 focus:ring-2 focus:ring-pink-300 dark:focus:ring-white focus:outline-hidden focus:ring-inset sm:block transition-all duration-200"
+          title="نمایش میانبرهای صفحه کلید"
+        >
+          <IconKeyboard class="block h-6 w-6" />
+        </button>
+
+        <button
+          class="inline-flex items-center justify-center rounded-xl p-2.5 text-slate-600 dark:text-gray-400 hover:bg-red-50 dark:hover:bg-slate-700 hover:text-red-600 dark:hover:text-red-400 focus:ring-2 focus:ring-red-300 dark:focus:ring-white focus:outline-hidden focus:ring-inset transition-all duration-200"
+          @click="isOpen = !isOpen"
+        >
+          <MenuIcon class="block h-6 w-6" />
+        </button>
+      </div>
+    </nav>
+    <router-view v-slot="{ Component }">
+      <!--      <keep-alive include="ScenarioEditorGeo">-->
+      <component
+        :is="Component"
+        @show-export="showExportModal = true"
+        @show-load="showLoadModal = true"
+        @show-settings="isOpen = true"
+      />
+      <!--      </keep-alive>-->
+    </router-view>
+    <GlobalEvents
+      v-if="shortcutsEnabled"
+      :filter="inputEventFilter"
+      @keyup.?="showKeyboardShortcuts"
+      @keydown.ctrl.k.prevent="showSearch = true"
+      @keydown.meta.k.prevent="showSearch = true"
+      @keyup.prevent.alt.k="showSearch = true"
+    />
+    <GlobalEvents
+      :filter="inputEventFilter"
+      @keydown.meta.z.exact="undo()"
+      @keyup.ctrl.z.exact="undo()"
+      @keydown.meta.shift.z="redo()"
+      @keyup.ctrl.shift.z="redo()"
+      @keyup.ctrl.y="redo()"
+    />
+    <ShortcutsModal v-model="shortcutsModalVisible" />
+    <MainViewSlideOver v-model="isOpen" />
+    <CommandPalette
+      v-model="showSearch"
+      @select-unit="onUnitSelect"
+      @select-feature="onFeatureSelect"
+      @select-layer="onLayerSelect"
+      @select-image-layer="onImageLayerSelect"
+      @select-event="onEventSelect"
+      @select-place="onPlaceSelectHook.trigger($event)"
+      @select-action="onScenarioAction"
+    />
+    <AppNotifications />
+    <LoadScenarioDialog v-if="showLoadModal" v-model="showLoadModal" />
+    <InputDateModal
+      v-if="showDateModal"
+      v-model="showDateModal"
+      :dialog-title="dateModalTitle"
+      :timestamp="initialDateModalValue"
+      @update:timestamp="confirmDateModal($event)"
+      :time-zone="dateModalTimeZone"
+      @cancel="cancelDateModal"
+    />
+    <SymbolPickerModal
+      v-if="showSidcModal"
+      :sidc="initialSidcModalValue"
+      @update:sidc="confirmSidcModal($event)"
+      @cancel="cancelSidcModal"
+      :dialog-title="sidcModalTitle"
+      :hide-modifiers="hideModifiers"
+      :hide-symbol-color="hideSymbolColor"
+      :inherited-symbol-options="inheritedSymbolOptions"
+      :symbol-options="symbolOptions"
+      :initial-tab="sidcModalInitialTab"
+      :reinforced-status="initialReinforcedReduced"
+    />
+    <ExportScenarioModal v-if="showExportModal" v-model="showExportModal" />
+    <ImportModal v-if="showImportModal" v-model="showImportModal" />
+    <div
+      v-if="isOverDropZone"
+      class="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/80"
+    >
+      <p class="rounded border bg-white/40 p-4 text-gray-900">فایل را برای وارد کردن داده‌ها رها کنید</p>
+    </div>
+    <div
+      v-if="uiStore.debugMode"
+      class="bg-opacity-70 fixed bottom-2 left-2 z-50 rounded bg-gray-50 text-gray-900 print:hidden"
+    >
+      <p class="p-2 text-xs font-bold">
+        <span class="sm:hidden">mo</span>
+        <span class="hidden sm:inline md:hidden">sm</span>
+        <span class="hidden md:inline lg:hidden">md</span>
+        <span class="hidden lg:inline xl:hidden">lg</span>
+        <span class="hidden xl:inline 2xl:hidden">xl</span>
+        <span class="3xl:hidden hidden 2xl:inline">2xl</span>
+        <span class="3xl:inline 4xl:hidden hidden">3xl</span>
+        <span class="4xl:inline hidden">4xl+</span>
+      </p>
+
+      <p></p>
+    </div>
+  </div>
+</template>
+
+<script setup lang="ts">
+import { computed, defineAsyncComponent, onUnmounted, provide, ref } from "vue";
+import { GlobalEvents } from "vue-global-events";
+import { useDragStore } from "@/stores/dragStore";
+import ShortcutsModal from "@/components/ShortcutsModal.vue";
+
+import {
+  Bars3Icon as MenuIcon,
+  GlobeAltIcon,
+  MagnifyingGlassIcon as SearchIcon,
+  TableCellsIcon as TableIcon,
+} from "@heroicons/vue/24/outline";
+import { inputEventFilter } from "@/components/helpers";
+import { useRoute, useRouter } from "vue-router";
+import { useUiStore } from "@/stores/uiStore";
+import {
+  IconKeyboard,
+  IconRedoVariant as IconRedo,
+  IconSitemap,
+  IconUndoVariant as IconUndo,
+} from "@iconify-prerendered/vue-mdi";
+
+import { createEventHook, useClipboard, useTitle, watchOnce } from "@vueuse/core";
+import MainViewSlideOver from "@/components/MainViewSlideOver.vue";
+import { type ScenarioActions, TAB_LAYERS, type UiAction } from "@/types/constants";
+import AppNotifications from "@/components/AppNotifications.vue";
+import { useNotifications } from "@/composables/notifications";
+import type { FeatureId } from "@/types/scenarioGeoModels";
+import NProgress from "nprogress";
+import type { TScenario } from "@/scenariostore";
+import type { EntityId } from "@/types/base";
+import {
+  activeFeatureStylesKey,
+  activeLayerKey,
+  activeParentKey,
+  activeScenarioKey,
+  currentScenarioTabKey,
+  searchActionsKey,
+  sidcModalKey,
+  timeModalKey,
+} from "@/components/injects";
+import { useFeatureStyles } from "@/geo/featureStyles";
+import type { EventSearchResult } from "@/components/types";
+import { useDateModal, useSidcModal } from "@/composables/modals";
+import { storeToRefs } from "pinia";
+import {
+  CHART_EDIT_MODE_ROUTE,
+  GRID_EDIT_ROUTE,
+  MAP_EDIT_MODE_ROUTE,
+  NEW_SCENARIO_ROUTE,
+} from "@/router/names";
+import { useFileDropZone } from "@/composables/filedragdrop";
+import { useTabStore } from "@/stores/tabStore";
+import CommandPalette from "@/components/CommandPalette.vue";
+import type { PhotonSearchResult } from "@/composables/geosearching";
+import { useSelectedItems } from "@/stores/selectedStore";
+import MainMenu from "@/modules/scenarioeditor/MainMenu.vue";
+import { useMapSettingsStore } from "@/stores/mapSettingsStore";
+import { useTimeFormatterProvider } from "@/stores/timeFormatStore";
+import PlaybackMenu from "@/modules/scenarioeditor/PlaybackMenu.vue";
+
+const props = defineProps<{ activeScenario: TScenario }>();
+
+const LoadScenarioDialog = defineAsyncComponent(() => import("./LoadScenarioDialog.vue"));
+const SymbolPickerModal = defineAsyncComponent(
+  () => import("@/components/SymbolPickerModal.vue"),
+);
+const InputDateModal = defineAsyncComponent(
+  () => import("@/components/InputDateModal.vue"),
+);
+
+const ExportScenarioModal = defineAsyncComponent(
+  () => import("@/components/ExportScenarioModal.vue"),
+);
+
+const ImportModal = defineAsyncComponent(() => import("@/components/ImportModal.vue"));
+
+const dropZoneRef = ref<HTMLDivElement>();
+const activeParentId = ref<EntityId | undefined | null>(null);
+const activeLayerId = ref<FeatureId | undefined | null>(null);
+const scnFeatureStyles = useFeatureStyles(props.activeScenario.geo);
+
+const uiTabs = useTabStore();
+const { activeScenarioTab } = storeToRefs(uiTabs);
+const selectedItems = useSelectedItems();
+provide(activeParentKey, activeParentId);
+provide(activeLayerKey, activeLayerId);
+provide(activeScenarioKey, props.activeScenario);
+provide(activeFeatureStylesKey, scnFeatureStyles);
+provide(currentScenarioTabKey, activeScenarioTab);
+
+const onUnitSelectHook = createEventHook<{ unitId: EntityId }>();
+const onLayerSelectHook = createEventHook<{ layerId: FeatureId }>();
+const onImageLayerSelectHook = createEventHook<{ layerId: FeatureId }>();
+const onFeatureSelectHook = createEventHook<{
+  featureId: FeatureId;
+  layerId: FeatureId;
+}>();
+const onEventSelectHook = createEventHook<EventSearchResult>();
+const onPlaceSelectHook = createEventHook<PhotonSearchResult>();
+const onScenarioActionHook = createEventHook<{ action: ScenarioActions }>();
+provide(searchActionsKey, {
+  onUnitSelectHook,
+  onLayerSelectHook,
+  onFeatureSelectHook,
+  onEventSelectHook,
+  onPlaceSelectHook,
+  onImageLayerSelectHook,
+  onScenarioActionHook,
+});
+
+const { state, undo, redo, canRedo, canUndo } = props.activeScenario.store;
+
+const {
+  unitActions,
+  io,
+  helpers: { getUnitById },
+} = props.activeScenario;
+const route = useRoute();
+const router = useRouter();
+const { copy: copyToClipboard, copied } = useClipboard();
+
+const isOpen = ref(false);
+const showLoadModal = ref(false);
+const shortcutsModalVisible = ref(false);
+const showExportModal = ref(false);
+const showImportModal = ref(false);
+
+useTimeFormatterProvider({ activeScenario: props.activeScenario });
+
+const uiStore = useUiStore();
+const { showSearch } = storeToRefs(uiStore);
+
+const mapStore = useMapSettingsStore();
+mapStore.baseLayerName = state.mapSettings.baseMapId;
+
+const originalTitle = useTitle().value;
+const windowTitle = computed(() => state.info.name);
+const { send } = useNotifications();
+
+useTitle(windowTitle);
+
+const {
+  showDateModal,
+  confirmDateModal,
+  cancelDateModal,
+  initialDateModalValue,
+  dateModalTimeZone,
+  dateModalTitle,
+  getModalTimestamp,
+} = useDateModal();
+
+provide(timeModalKey, { getModalTimestamp });
+
+const {
+  getModalSidc,
+  confirmSidcModal,
+  showSidcModal,
+  cancelSidcModal,
+  initialSidcModalValue,
+  sidcModalTitle,
+  hideModifiers,
+  hideSymbolColor,
+  symbolOptions,
+  inheritedSymbolOptions,
+  initialTab: sidcModalInitialTab,
+  initialReinforcedReduced,
+} = useSidcModal();
+provide(sidcModalKey, { getModalSidc });
+
+onUnmounted(() => {
+  useTitle(originalTitle);
+});
+
+const shortcutsEnabled = computed(() => !uiStore.modalOpen);
+
+const onUnitSelect = (unitId: EntityId) => {
+  onUnitSelectHook.trigger({ unitId });
+};
+
+const onLayerSelect = (layerId: FeatureId) => {
+  onLayerSelectHook.trigger({ layerId });
+};
+
+const onImageLayerSelect = (layerId: FeatureId) => {
+  onImageLayerSelectHook.trigger({ layerId });
+};
+
+const onEventSelect = (e: EventSearchResult) => {
+  onEventSelectHook.trigger(e);
+};
+
+const onFeatureSelect = (featureId: FeatureId, layerId: FeatureId) => {
+  onFeatureSelectHook.trigger({ featureId, layerId });
+};
+
+async function onScenarioAction(action: ScenarioActions) {
+  if (action === "addSide") {
+    unitActions.addSide();
+  } else if (action === "save") {
+    const preId = state.id;
+    const newId = await io.saveToIndexedDb();
+    send({ message: "Scenario saved to IndexedDb" });
+    if (preId !== newId) {
+      await router.push({ name: MAP_EDIT_MODE_ROUTE, params: { scenarioId: newId } });
+    }
+  } else if (action === "load") {
+    io.loadFromLocalStorage();
+    showInfo();
+    send({ message: "Scenario loaded from local storage" });
+  } else if (action === "exportJson") {
+    await io.downloadAsJson();
+  } else if (action === "loadNew") {
+    showLoadModal.value = true;
+  } else if (action === "exportToClipboard") {
+    await copyToClipboard(io.stringifyScenario());
+    if (copied.value) send({ message: "Scenario copied to clipboard" });
+  } else if (action === "export") {
+    showExportModal.value = true;
+  } else if (action === "import") {
+    showImportModal.value = true;
+  } else if (action === "showInfo") {
+    showInfo();
+  } else if (action === "duplicate") {
+    const scenarioId = await io.duplicateScenario();
+    await router.push({ name: MAP_EDIT_MODE_ROUTE, params: { scenarioId } });
+  } else if (action === "createNew") {
+    await router.push({ name: NEW_SCENARIO_ROUTE });
+  } else if (action === "browseSymbols") {
+    const activeUnitId = selectedItems.activeUnitId.value;
+    let initialSidc = "10031000001211000000";
+    if (activeUnitId) {
+      initialSidc = getUnitById(activeUnitId).sidc;
+    }
+    await getModalSidc(initialSidc, { title: "مرورگر نمادها", initialTab: 1 });
+  }
+  await onScenarioActionHook.trigger({ action });
+}
+
+function onUiAction(action: UiAction) {
+  if (action === "showKeyboardShortcuts") {
+    showKeyboardShortcuts();
+  }
+  if (action === "showSearch") {
+    showSearch.value = true;
+  }
+}
+
+function showKeyboardShortcuts() {
+  shortcutsModalVisible.value = true;
+}
+
+watchOnce(
+  () => activeScenarioTab.value === TAB_LAYERS,
+  () => {
+    NProgress.start();
+  },
+);
+
+function onDrop(files: File[] | null) {
+  if (!files || !files.length) return;
+  const dragState = useDragStore();
+  dragState.draggedFiles = files;
+  showImportModal.value = true;
+}
+
+function showInfo() {
+  selectedItems.clear();
+  selectedItems.showScenarioInfo.value = true;
+}
+
+const { isOverDropZone } = useFileDropZone(dropZoneRef, onDrop);
+
+if (state.layers.length > 0) {
+  activeLayerId.value = state.layers[0];
+}
+</script>

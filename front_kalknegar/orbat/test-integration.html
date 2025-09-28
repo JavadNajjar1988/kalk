@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ORBAT Integration Test</title>
+    <style>
+        body { 
+            font-family: 'B-Yekan', 'Vazirmatn', 'Tahoma', 'Iranian Sans', 'بی یکان', 'تهوما', 'Segoe UI', 'Arial', sans-serif; 
+            margin: 20px;
+            direction: ltr;
+        }
+        .container { 
+            max-width: 800px; 
+            margin: 0 auto; 
+        }
+        .status { 
+            padding: 10px; 
+            margin: 10px 0; 
+            border-radius: 4px; 
+        }
+        .success { 
+            background-color: #d4edda; 
+            color: #155724; 
+            border: 1px solid #c3e6cb; 
+        }
+        .error { 
+            background-color: #f8d7da; 
+            color: #721c24; 
+            border: 1px solid #f5c6cb; 
+        }
+        .info { 
+            background-color: #d1ecf1; 
+            color: #0c5460; 
+            border: 1px solid #bee5eb; 
+        }
+        iframe { 
+            width: 100%; 
+            height: 500px; 
+            border: 1px solid #ddd; 
+            border-radius: 4px; 
+        }
+        .logs {
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            padding: 15px;
+            max-height: 300px;
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🗺️ ORBAT Integration Test</h1>
+        <p>Testing React-Vue message bridge communication</p>
+        
+        <div class="status info">
+            <strong>Status:</strong> <span id="status">Initializing...</span>
+        </div>
+
+        <div class="status" id="message-log">
+            <strong>Message Log:</strong>
+            <div class="logs" id="logs"></div>
+        </div>
+
+        <h3>ORBAT Iframe (Integration Mode)</h3>
+        <iframe 
+            id="orbat-iframe"
+            src="http://localhost:5173/?integration=react"
+            title="ORBAT Integration Test">
+        </iframe>
+
+        <h3>Test Commands</h3>
+        <button onclick="sendTestCommand()">Send Test Command</button>
+        <button onclick="sendTestRequest()">Send Test Request</button>
+        <button onclick="clearLogs()">Clear Logs</button>
+    </div>
+
+    <script>
+        let messageCount = 0;
+        
+        function log(message, type = 'info') {
+            messageCount++;
+            const timestamp = new Date().toLocaleTimeString();
+            const logElement = document.getElementById('logs');
+            const logEntry = document.createElement('div');
+            logEntry.style.color = type === 'error' ? '#721c24' : type === 'success' ? '#155724' : '#0c5460';
+            logEntry.innerHTML = `[${timestamp}] ${message}`;
+            logElement.appendChild(logEntry);
+            logElement.scrollTop = logElement.scrollHeight;
+        }
+
+        function updateStatus(message, type = 'info') {
+            const statusElement = document.getElementById('status');
+            statusElement.textContent = message;
+            statusElement.parentElement.className = `status ${type}`;
+        }
+
+        // Listen for messages from Vue ORBAT
+        window.addEventListener('message', (event) => {
+            // Validate origin
+            if (event.origin !== 'http://localhost:5173') {
+                return;
+            }
+
+            const message = event.data;
+            log(`Received: ${JSON.stringify(message)}`, 'success');
+
+            switch (message.type) {
+                case 'ORBAT_READY':
+                    updateStatus('✅ ORBAT Ready - Integration successful!', 'success');
+                    log('ORBAT is ready for commands', 'success');
+                    break;
+                
+                case 'ORBAT_RESPONSE':
+                    log(`Response received: ${JSON.stringify(message.data)}`, 'success');
+                    break;
+                
+                case 'ORBAT_EVENT':
+                    log(`Event: ${message.eventType} - ${JSON.stringify(message.data)}`, 'info');
+                    break;
+                
+                default:
+                    log(`Unknown message type: ${message.type}`, 'error');
+            }
+        });
+
+        function sendTestCommand() {
+            const iframe = document.getElementById('orbat-iframe');
+            const command = {
+                id: 'test_command_' + Date.now(),
+                type: 'ORBAT_COMMAND',
+                origin: 'react',
+                timestamp: Date.now(),
+                command: 'setViewMode',
+                payload: { mode: 'chart' }
+            };
+            
+            iframe.contentWindow.postMessage(command, 'http://localhost:5173');
+            log(`Sent command: ${JSON.stringify(command)}`, 'info');
+        }
+
+        function sendTestRequest() {
+            const iframe = document.getElementById('orbat-iframe');
+            const request = {
+                id: 'test_request_' + Date.now(),
+                type: 'ORBAT_REQUEST',
+                origin: 'react',
+                timestamp: Date.now(),
+                dataType: 'scenarios',
+                params: {}
+            };
+            
+            iframe.contentWindow.postMessage(request, 'http://localhost:5173');
+            log(`Sent request: ${JSON.stringify(request)}`, 'info');
+        }
+
+        function clearLogs() {
+            document.getElementById('logs').innerHTML = '';
+            messageCount = 0;
+        }
+
+        // Initialize
+        updateStatus('🔄 Waiting for ORBAT ready signal...', 'info');
+        log('Integration test initialized', 'info');
+        log('Waiting for ORBAT_READY message from Vue iframe...', 'info');
+
+        // Set timeout to detect if no ready message received
+        setTimeout(() => {
+            if (document.getElementById('status').textContent.includes('Waiting')) {
+                updateStatus('❌ Timeout - No ready signal received', 'error');
+                log('Timeout: ORBAT_READY message not received within 10 seconds', 'error');
+                log('Check Vue backend console for errors', 'error');
+            }
+        }, 10000);
+    </script>
+</body>
+</html>

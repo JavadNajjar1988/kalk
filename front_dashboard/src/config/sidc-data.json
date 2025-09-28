@@ -1,0 +1,1457 @@
+{
+  "version": "1.0.0",
+  "standard": "APP-6E / MIL-STD-2525E",
+  "symbolSets": [
+    {
+      "id": "01",
+      "name": "هوایی",
+      "nameEn": "Air",
+      "geometry": "POINT",
+      "entities": [
+        {
+          "id": "110000",
+          "name": "نظامی",
+          "nameEn": "Military",
+          "types": [
+            {
+              "id": "110100",
+              "name": "هواپیمای بال ثابت",
+              "nameEn": "Fixed Wing",
+              "subtypes": [
+                {
+                  "id": "110101",
+                  "name": "تخلیه پزشکی",
+                  "nameEn": "Medical Evacuation (MEDEVAC)"
+                },
+                {
+                  "id": "110102",
+                  "name": "تهاجمی/حمله",
+                  "nameEn": "Attack/Strike"
+                },
+                {
+                  "id": "110103",
+                  "name": "بمب‌افکن",
+                  "nameEn": "Bomber"
+                },
+                {
+                  "id": "110104",
+                  "name": "جنگنده",
+                  "nameEn": "Fighter"
+                },
+                {
+                  "id": "110105",
+                  "name": "جنگنده/بمب‌افکن",
+                  "nameEn": "Fighter/Bomber"
+                },
+                {
+                  "id": "110107",
+                  "name": "ترابری",
+                  "nameEn": "Cargo"
+                }
+              ]
+            },
+            {
+              "id": "110200",
+              "name": "بالگرد",
+              "nameEn": "Rotary Wing",
+              "subtypes": [
+                {
+                  "id": "110201",
+                  "name": "تخلیه پزشکی",
+                  "nameEn": "Medical Evacuation (MEDEVAC)"
+                },
+                {
+                  "id": "110202",
+                  "name": "تهاجمی",
+                  "nameEn": "Attack"
+                },
+                {
+                  "id": "110203",
+                  "name": "ترابری",
+                  "nameEn": "Cargo"
+                },
+                {
+                  "id": "110204",
+                  "name": "اسکورت",
+                  "nameEn": "Escort"
+                },
+                {
+                  "id": "110205",
+                  "name": "چندمنظوره",
+                  "nameEn": "Utility"
+                }
+              ]
+            },
+            {
+              "id": "110300",
+              "name": "پهپاد",
+              "nameEn": "Unmanned Aircraft (UA)",
+              "subtypes": []
+            }
+          ]
+        },
+        {
+          "id": "120000",
+          "name": "غیرنظامی",
+          "nameEn": "Civilian",
+          "types": [
+            {
+              "id": "120100",
+              "name": "هواپیمای بال ثابت",
+              "nameEn": "Fixed Wing",
+              "subtypes": []
+            },
+            {
+              "id": "120200",
+              "name": "بالگرد",
+              "nameEn": "Rotary Wing",
+              "subtypes": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "05",
+      "name": "فضایی",
+      "nameEn": "Space",
+      "geometry": "POINT",
+      "entities": [
+        {
+          "id": "110000",
+          "name": "نظامی",
+          "nameEn": "Military",
+          "types": [
+            {
+              "id": "110100",
+              "name": "ماهواره",
+              "nameEn": "Satellite",
+              "subtypes": [
+                {
+                  "id": "110101",
+                  "name": "مخابراتی",
+                  "nameEn": "Communications"
+                },
+                {
+                  "id": "110102",
+                  "name": "شناسایی",
+                  "nameEn": "Reconnaissance"
+                },
+                {
+                  "id": "110103",
+                  "name": "ناوبری",
+                  "nameEn": "Navigation"
+                },
+                {
+                  "id": "110104",
+                  "name": "هواشناسی",
+                  "nameEn": "Meteorological"
+                }
+              ]
+            },
+            {
+              "id": "110200",
+              "name": "ایستگاه فضایی",
+              "nameEn": "Space Station",
+              "subtypes": []
+            }
+          ]
+        },
+        {
+          "id": "120000",
+          "name": "غیرنظامی",
+          "nameEn": "Civilian",
+          "types": [
+            {
+              "id": "120100",
+              "name": "ماهواره",
+              "nameEn": "Satellite",
+              "subtypes": [
+                {
+                  "id": "120101",
+                  "name": "مخابراتی",
+                  "nameEn": "Communications"
+                },
+                {
+                  "id": "120102",
+                  "name": "هواشناسی",
+                  "nameEn": "Meteorological"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "10",
+      "name": "زمینی",
+      "nameEn": "Land",
+      "geometry": "POINT",
+      "entities": [
+        {
+          "id": "110000",
+          "name": "فرماندهی و کنترل",
+          "nameEn": "Command and Control",
+          "types": [
+            {
+              "id": "110100",
+              "name": "مرکز فرماندهی",
+              "nameEn": "Command Post/Center",
+              "subtypes": [
+                {
+                  "id": "110101",
+                  "name": "فرماندهی اصلی",
+                  "nameEn": "Main Command Post"
+                },
+                {
+                  "id": "110102",
+                  "name": "فرماندهی تاکتیکی",
+                  "nameEn": "Tactical Command Post"
+                },
+                {
+                  "id": "110103",
+                  "name": "فرماندهی پیشرفته",
+                  "nameEn": "Forward Command Post"
+                }
+              ]
+            },
+            {
+              "id": "110200",
+              "name": "امور مدنی",
+              "nameEn": "Civil Affairs",
+              "subtypes": []
+            },
+            {
+              "id": "110300",
+              "name": "مخابرات",
+              "nameEn": "Signal",
+              "subtypes": [
+                {
+                  "id": "110301",
+                  "name": "رادیویی",
+                  "nameEn": "Radio"
+                },
+                {
+                  "id": "110302",
+                  "name": "رله رادیویی",
+                  "nameEn": "Radio Relay"
+                },
+                {
+                  "id": "110303",
+                  "name": "ماهواره‌ای",
+                  "nameEn": "Tactical Satellite"
+                },
+                {
+                  "id": "110304",
+                  "name": "کنترل ارتباطات",
+                  "nameEn": "Network Control"
+                }
+              ]
+            },
+            {
+              "id": "110400",
+              "name": "اطلاعات",
+              "nameEn": "Intelligence",
+              "subtypes": [
+                {
+                  "id": "110401",
+                  "name": "تجزیه و تحلیل",
+                  "nameEn": "Analysis Center"
+                },
+                {
+                  "id": "110402",
+                  "name": "اطلاعات انسانی",
+                  "nameEn": "Human Intelligence (HUMINT)"
+                },
+                {
+                  "id": "110403",
+                  "name": "اطلاعات سیگنالی",
+                  "nameEn": "Signals Intelligence (SIGINT)"
+                },
+                {
+                  "id": "110404",
+                  "name": "اطلاعات تصویری",
+                  "nameEn": "Imagery Intelligence (IMINT)"
+                }
+              ]
+            },
+            {
+              "id": "110500",
+              "name": "عملیات الکترونیک",
+              "nameEn": "Electronic Warfare",
+              "subtypes": [
+                {
+                  "id": "110501",
+                  "name": "جنگ الکترونیک",
+                  "nameEn": "Electronic Warfare"
+                },
+                {
+                  "id": "110502",
+                  "name": "اختلال",
+                  "nameEn": "Jamming"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "120000",
+          "name": "حرکت و مانور",
+          "nameEn": "Movement and Maneuver",
+          "types": [
+            {
+              "id": "120100",
+              "name": "زرهی",
+              "nameEn": "Armor",
+              "subtypes": [
+                {
+                  "id": "120101",
+                  "name": "زرهی سبک",
+                  "nameEn": "Light Armor"
+                },
+                {
+                  "id": "120102",
+                  "name": "زرهی متوسط",
+                  "nameEn": "Medium Armor"
+                },
+                {
+                  "id": "120103",
+                  "name": "زرهی سنگین",
+                  "nameEn": "Heavy Armor"
+                },
+                {
+                  "id": "120104",
+                  "name": "زرهی شناسایی",
+                  "nameEn": "Reconnaissance/Cavalry/Scout"
+                },
+                {
+                  "id": "120105",
+                  "name": "زرهی آبی‌خاکی",
+                  "nameEn": "Amphibious Armor"
+                }
+              ]
+            },
+            {
+              "id": "120200",
+              "name": "پیاده‌نظام",
+              "nameEn": "Infantry",
+              "subtypes": [
+                {
+                  "id": "120201",
+                  "name": "پیاده سبک",
+                  "nameEn": "Light Infantry"
+                },
+                {
+                  "id": "120202",
+                  "name": "پیاده آبی‌خاکی",
+                  "nameEn": "Amphibious Infantry"
+                },
+                {
+                  "id": "120203",
+                  "name": "پیاده مکانیزه",
+                  "nameEn": "Mechanized/Armored Infantry"
+                },
+                {
+                  "id": "120204",
+                  "name": "پیاده موتوریزه",
+                  "nameEn": "Motorized Infantry"
+                },
+                {
+                  "id": "120205",
+                  "name": "پیاده هوابرد",
+                  "nameEn": "Airborne Infantry"
+                },
+                {
+                  "id": "120206",
+                  "name": "پیاده هواحمل",
+                  "nameEn": "Air Assault Infantry"
+                },
+                {
+                  "id": "120207",
+                  "name": "پیاده کوهستانی",
+                  "nameEn": "Mountain Infantry"
+                }
+              ]
+            },
+            {
+              "id": "120300",
+              "name": "شناسایی",
+              "nameEn": "Reconnaissance/Cavalry/Scout",
+              "subtypes": [
+                {
+                  "id": "120301",
+                  "name": "شناسایی موتوریزه",
+                  "nameEn": "Motorized Reconnaissance"
+                },
+                {
+                  "id": "120302",
+                  "name": "شناسایی هوایی",
+                  "nameEn": "Aerial Reconnaissance"
+                }
+              ]
+            },
+            {
+              "id": "120400",
+              "name": "نیروهای ویژه",
+              "nameEn": "Special Forces",
+              "subtypes": [
+                {
+                  "id": "120401",
+                  "name": "تکاور",
+                  "nameEn": "Special Operations Forces"
+                },
+                {
+                  "id": "120402",
+                  "name": "چترباز",
+                  "nameEn": "Airborne Special Forces"
+                }
+              ]
+            },
+            {
+              "id": "120500",
+              "name": "گارد",
+              "nameEn": "Guard",
+              "subtypes": []
+            },
+            {
+              "id": "120600",
+              "name": "تفنگدار دریایی",
+              "nameEn": "Marine",
+              "subtypes": []
+            }
+          ]
+        },
+        {
+          "id": "130000",
+          "name": "آتش‌بار",
+          "nameEn": "Fires",
+          "types": [
+            {
+              "id": "130100",
+              "name": "پدافند هوایی",
+              "nameEn": "Air Defense",
+              "subtypes": [
+                {
+                  "id": "130101",
+                  "name": "پدافند هوایی توپخانه‌ای",
+                  "nameEn": "Air Defense Gun"
+                },
+                {
+                  "id": "130102",
+                  "name": "پدافند هوایی موشکی",
+                  "nameEn": "Air Defense Missile"
+                },
+                {
+                  "id": "130103",
+                  "name": "پدافند هوایی توپ/موشک",
+                  "nameEn": "Air Defense Gun/Missile"
+                },
+                {
+                  "id": "130104",
+                  "name": "پدافند هوایی برد کوتاه",
+                  "nameEn": "Short-Range Air Defense"
+                },
+                {
+                  "id": "130105",
+                  "name": "پدافند هوایی برد متوسط",
+                  "nameEn": "Medium-Range Air Defense"
+                },
+                {
+                  "id": "130106",
+                  "name": "پدافند هوایی برد بلند",
+                  "nameEn": "Long-Range Air Defense"
+                }
+              ]
+            },
+            {
+              "id": "130200",
+              "name": "توپخانه",
+              "nameEn": "Field Artillery",
+              "subtypes": [
+                {
+                  "id": "130201",
+                  "name": "توپخانه خودکششی",
+                  "nameEn": "Self-propelled Artillery"
+                },
+                {
+                  "id": "130202",
+                  "name": "توپخانه کششی",
+                  "nameEn": "Towed Artillery"
+                },
+                {
+                  "id": "130203",
+                  "name": "توپخانه هدف‌یابی",
+                  "nameEn": "Target Acquisition Artillery"
+                }
+              ]
+            },
+            {
+              "id": "130300",
+              "name": "خمپاره‌انداز",
+              "nameEn": "Mortar",
+              "subtypes": [
+                {
+                  "id": "130301",
+                  "name": "خمپاره‌انداز زرهی",
+                  "nameEn": "Armored/Tracked Mortar"
+                },
+                {
+                  "id": "130302",
+                  "name": "خمپاره‌انداز چرخ‌دار",
+                  "nameEn": "Self-Propelled Wheeled Mortar"
+                },
+                {
+                  "id": "130303",
+                  "name": "خمپاره‌انداز کششی",
+                  "nameEn": "Towed Mortar"
+                }
+              ]
+            },
+            {
+              "id": "130400",
+              "name": "راکت‌انداز",
+              "nameEn": "Rocket Artillery",
+              "subtypes": [
+                {
+                  "id": "130401",
+                  "name": "راکت‌انداز چندتایی",
+                  "nameEn": "Multiple Rocket Launcher"
+                },
+                {
+                  "id": "130402",
+                  "name": "راکت‌انداز تکی",
+                  "nameEn": "Single Rocket Launcher"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "140000",
+          "name": "حفاظت",
+          "nameEn": "Protection",
+          "types": [
+            {
+              "id": "140100",
+              "name": "دفاع ش.ب.ه",
+              "nameEn": "Chemical Biological Radiological Nuclear Defense",
+              "subtypes": [
+                {
+                  "id": "140101",
+                  "name": "آلودگی‌زدایی",
+                  "nameEn": "Decontamination"
+                },
+                {
+                  "id": "140102",
+                  "name": "تشخیص",
+                  "nameEn": "Detection"
+                }
+              ]
+            },
+            {
+              "id": "140200",
+              "name": "پلیس نظامی",
+              "nameEn": "Military Police",
+              "subtypes": []
+            },
+            {
+              "id": "140300",
+              "name": "مهندسی",
+              "nameEn": "Engineer",
+              "subtypes": [
+                {
+                  "id": "140301",
+                  "name": "مهندسی مکانیزه",
+                  "nameEn": "Mechanized Engineer"
+                },
+                {
+                  "id": "140302",
+                  "name": "مهندسی موتوریزه",
+                  "nameEn": "Motorized Engineer"
+                },
+                {
+                  "id": "140303",
+                  "name": "مهندسی شناسایی",
+                  "nameEn": "Engineer Reconnaissance"
+                },
+                {
+                  "id": "140304",
+                  "name": "مهندسی پل",
+                  "nameEn": "Bridge"
+                },
+                {
+                  "id": "140305",
+                  "name": "مهندسی ساخت‌وساز",
+                  "nameEn": "Construction"
+                }
+              ]
+            },
+            {
+              "id": "140400",
+              "name": "مین‌روبی",
+              "nameEn": "Explosive Ordnance Disposal",
+              "subtypes": []
+            }
+          ]
+        },
+        {
+          "id": "150000",
+          "name": "پشتیبانی",
+          "nameEn": "Sustainment",
+          "types": [
+            {
+              "id": "150100",
+              "name": "تدارکات",
+              "nameEn": "Logistics",
+              "subtypes": [
+                {
+                  "id": "150101",
+                  "name": "ذخیره و توزیع",
+                  "nameEn": "Supply and Storage"
+                },
+                {
+                  "id": "150102",
+                  "name": "تعمیر و نگهداری",
+                  "nameEn": "Maintenance"
+                },
+                {
+                  "id": "150103",
+                  "name": "خدمات",
+                  "nameEn": "Services"
+                }
+              ]
+            },
+            {
+              "id": "150200",
+              "name": "پزشکی",
+              "nameEn": "Medical",
+              "subtypes": [
+                {
+                  "id": "150201",
+                  "name": "تخلیه پزشکی",
+                  "nameEn": "Medical Evacuation (MEDEVAC)"
+                },
+                {
+                  "id": "150202",
+                  "name": "بیمارستان صحرایی",
+                  "nameEn": "Medical Treatment Facility"
+                }
+              ]
+            },
+            {
+              "id": "150300",
+              "name": "حمل‌ونقل",
+              "nameEn": "Transportation",
+              "subtypes": [
+                {
+                  "id": "150301",
+                  "name": "حمل‌ونقل موتوری",
+                  "nameEn": "Motor Transportation"
+                },
+                {
+                  "id": "150302",
+                  "name": "حمل‌ونقل ریلی",
+                  "nameEn": "Railway Transportation"
+                },
+                {
+                  "id": "150303",
+                  "name": "ترابری هوایی",
+                  "nameEn": "Air Transportation"
+                }
+              ]
+            },
+            {
+              "id": "150400",
+              "name": "سوخت‌رسانی",
+              "nameEn": "Supply",
+              "subtypes": []
+            }
+          ]
+        },
+        {
+          "id": "160000",
+          "name": "آموزش",
+          "nameEn": "Training",
+          "types": [
+            {
+              "id": "160100",
+              "name": "مرکز آموزشی",
+              "nameEn": "Training Center",
+              "subtypes": []
+            },
+            {
+              "id": "160200",
+              "name": "پادگان آموزشی",
+              "nameEn": "Training Camp",
+              "subtypes": []
+            }
+          ]
+        },
+        {
+          "id": "170000",
+          "name": "غیر نظامی",
+          "nameEn": "Civilian",
+          "types": [
+            {
+              "id": "170100",
+              "name": "سازمان‌های غیردولتی",
+              "nameEn": "Non-Governmental Organizations",
+              "subtypes": [
+                {
+                  "id": "170101",
+                  "name": "بشردوستانه",
+                  "nameEn": "Humanitarian Aid"
+                },
+                {
+                  "id": "170102",
+                  "name": "امدادی",
+                  "nameEn": "Relief Organizations"
+                }
+              ]
+            },
+            {
+              "id": "170200",
+              "name": "امداد و نجات",
+              "nameEn": "Relief & Rescue",
+              "subtypes": [
+                {
+                  "id": "170201",
+                  "name": "آتش‌نشانی",
+                  "nameEn": "Firefighters"
+                },
+                {
+                  "id": "170202",
+                  "name": "اورژانس",
+                  "nameEn": "Emergency Medical Services"
+                }
+              ]
+            },
+            {
+              "id": "170300",
+              "name": "پناهندگان",
+              "nameEn": "Refugees",
+              "subtypes": [
+                {
+                  "id": "170301",
+                  "name": "اردوگاه",
+                  "nameEn": "Refugee Camp"
+                },
+                {
+                  "id": "170302",
+                  "name": "مسیر انتقال",
+                  "nameEn": "Refugee Movement Route"
+                }
+              ]
+            },
+            {
+              "id": "170400",
+              "name": "زیرساخت‌ها",
+              "nameEn": "Infrastructure",
+              "subtypes": [
+                {
+                  "id": "170401",
+                  "name": "آب و برق",
+                  "nameEn": "Water & Electricity"
+                },
+                {
+                  "id": "170402",
+                  "name": "مراکز مخابراتی",
+                  "nameEn": "Communications Centers"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "180000",
+          "name": "سایر",
+          "nameEn": "Other",
+          "types": [
+            {
+              "id": "180100",
+              "name": "یگان‌های ترکیبی",
+              "nameEn": "Composite Units",
+              "subtypes": [
+                {
+                  "id": "180101",
+                  "name": "نیروی مشترک",
+                  "nameEn": "Joint Force"
+                },
+                {
+                  "id": "180102",
+                  "name": "یگان چندملیتی",
+                  "nameEn": "Multinational Unit"
+                }
+              ]
+            },
+            {
+              "id": "180200",
+              "name": "یگان‌های ویژه",
+              "nameEn": "Special Units",
+              "subtypes": [
+                {
+                  "id": "180201",
+                  "name": "مقابله با تروریسم",
+                  "nameEn": "Counter-Terrorism"
+                },
+                {
+                  "id": "180202",
+                  "name": "عملیات‌های ویژه",
+                  "nameEn": "Special Operations"
+                }
+              ]
+            },
+            {
+              "id": "180300",
+              "name": "عملیات‌های خاص",
+              "nameEn": "Special Operations",
+              "subtypes": [
+                {
+                  "id": "180301",
+                  "name": "عملیات‌های سری",
+                  "nameEn": "Covert Operations"
+                },
+                {
+                  "id": "180302",
+                  "name": "عملیات‌های اطلاعاتی",
+                  "nameEn": "Intelligence Operations"
+                }
+              ]
+            },
+            {
+              "id": "180400",
+              "name": "نامشخص",
+              "nameEn": "Unknown",
+              "subtypes": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "15",
+      "name": "تجهیزات زمینی",
+      "nameEn": "Land Equipment",
+      "geometry": "POINT",
+      "entities": [
+        {
+          "id": "110000",
+          "name": "سلاح",
+          "nameEn": "Weapon",
+          "types": [
+            {
+              "id": "110100",
+              "name": "تانک",
+              "nameEn": "Tank",
+              "subtypes": [
+                {
+                  "id": "110101",
+                  "name": "سبک",
+                  "nameEn": "Light"
+                },
+                {
+                  "id": "110102",
+                  "name": "متوسط",
+                  "nameEn": "Medium"
+                },
+                {
+                  "id": "110103",
+                  "name": "سنگین",
+                  "nameEn": "Heavy"
+                }
+              ]
+            },
+            {
+              "id": "110200",
+              "name": "نفربر زرهی",
+              "nameEn": "Armored Personnel Carrier",
+              "subtypes": [
+                {
+                  "id": "110201",
+                  "name": "چرخدار",
+                  "nameEn": "Wheeled"
+                },
+                {
+                  "id": "110202",
+                  "name": "زنجیری",
+                  "nameEn": "Tracked"
+                }
+              ]
+            },
+            {
+              "id": "110300",
+              "name": "خودروی زرهی",
+              "nameEn": "Armored Fighting Vehicle",
+              "subtypes": []
+            }
+          ]
+        },
+        {
+          "id": "120000",
+          "name": "سامانه دفاعی",
+          "nameEn": "Defense System",
+          "types": [
+            {
+              "id": "120100",
+              "name": "پدافند هوایی",
+              "nameEn": "Air Defense",
+              "subtypes": [
+                {
+                  "id": "120101",
+                  "name": "توپ",
+                  "nameEn": "Gun"
+                },
+                {
+                  "id": "120102",
+                  "name": "موشک",
+                  "nameEn": "Missile"
+                },
+                {
+                  "id": "120103",
+                  "name": "رادار",
+                  "nameEn": "Radar"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "130000",
+          "name": "توپخانه",
+          "nameEn": "Artillery",
+          "types": [
+            {
+              "id": "130100",
+              "name": "توپ صحرایی",
+              "nameEn": "Field Artillery",
+              "subtypes": [
+                {
+                  "id": "130101",
+                  "name": "خودکششی",
+                  "nameEn": "Self-propelled"
+                },
+                {
+                  "id": "130102",
+                  "name": "یدک‌کشیده",
+                  "nameEn": "Towed"
+                }
+              ]
+            },
+            {
+              "id": "130200",
+              "name": "راکت‌انداز",
+              "nameEn": "Rocket Launcher",
+              "subtypes": [
+                {
+                  "id": "130201",
+                  "name": "چندلوله",
+                  "nameEn": "Multiple Rocket Launcher"
+                },
+                {
+                  "id": "130202",
+                  "name": "تک‌لوله",
+                  "nameEn": "Single Rocket Launcher"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "140000",
+          "name": "مهندسی",
+          "nameEn": "Engineer Equipment",
+          "types": [
+            {
+              "id": "140100",
+              "name": "پل",
+              "nameEn": "Bridge",
+              "subtypes": []
+            },
+            {
+              "id": "140200",
+              "name": "حفاری",
+              "nameEn": "Earthmover",
+              "subtypes": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "20",
+      "name": "تاسیسات زمینی",
+      "nameEn": "Land Installations",
+      "geometry": "POINT",
+      "entities": [
+        {
+          "id": "110000",
+          "name": "نظامی",
+          "nameEn": "Military",
+          "types": [
+            {
+              "id": "110100",
+              "name": "پایگاه",
+              "nameEn": "Base",
+              "subtypes": []
+            },
+            {
+              "id": "110200",
+              "name": "سنگر",
+              "nameEn": "Fortification",
+              "subtypes": []
+            },
+            {
+              "id": "110300",
+              "name": "انبار مهمات",
+              "nameEn": "Ammunition Cache",
+              "subtypes": []
+            }
+          ]
+        },
+        {
+          "id": "120000",
+          "name": "غیرنظامی",
+          "nameEn": "Civilian",
+          "types": [
+            {
+              "id": "120100",
+              "name": "نیروگاه",
+              "nameEn": "Power Plant",
+              "subtypes": [
+                {
+                  "id": "120101",
+                  "name": "هسته‌ای",
+                  "nameEn": "Nuclear"
+                },
+                {
+                  "id": "120102",
+                  "name": "حرارتی",
+                  "nameEn": "Thermal"
+                },
+                {
+                  "id": "120103",
+                  "name": "آبی",
+                  "nameEn": "Hydro"
+                }
+              ]
+            },
+            {
+              "id": "120200",
+              "name": "بیمارستان",
+              "nameEn": "Hospital",
+              "subtypes": []
+            },
+            {
+              "id": "120300",
+              "name": "دانشگاه",
+              "nameEn": "University",
+              "subtypes": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "25",
+      "name": "کنترل و دستورات",
+      "nameEn": "Control Measures",
+      "geometry": "LINE",
+      "entities": [
+        {
+          "id": "110000",
+          "name": "حد عملیات",
+          "nameEn": "Boundary",
+          "types": [
+            {
+              "id": "110100",
+              "name": "مرز بین‌المللی",
+              "nameEn": "International Boundary",
+              "subtypes": []
+            },
+            {
+              "id": "110200",
+              "name": "مرز اداری",
+              "nameEn": "Administrative Boundary",
+              "subtypes": []
+            }
+          ]
+        },
+        {
+          "id": "120000",
+          "name": "خط پیشروی",
+          "nameEn": "Line of Advance",
+          "types": [
+            {
+              "id": "120100",
+              "name": "خط نبرد",
+              "nameEn": "Line of Contact",
+              "subtypes": []
+            },
+            {
+              "id": "120200",
+              "name": "خط عقب‌نشینی",
+              "nameEn": "Withdrawal Line",
+              "subtypes": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "27",
+      "name": "پرسنل",
+      "nameEn": "Personnel",
+      "geometry": "POINT",
+      "entities": [
+        {
+          "id": "110000",
+          "name": "نظامی",
+          "nameEn": "Military",
+          "types": [
+            {
+              "id": "110100",
+              "name": "افسر",
+              "nameEn": "Officer",
+              "subtypes": []
+            },
+            {
+              "id": "110200",
+              "name": "سرباز",
+              "nameEn": "Soldier",
+              "subtypes": []
+            },
+            {
+              "id": "110300",
+              "name": "تیرانداز ماهر",
+              "nameEn": "Sniper",
+              "subtypes": []
+            }
+          ]
+        },
+        {
+          "id": "120000",
+          "name": "غیرنظامی",
+          "nameEn": "Civilian",
+          "types": [
+            {
+              "id": "120100",
+              "name": "پناهنده",
+              "nameEn": "Refugee",
+              "subtypes": []
+            },
+            {
+              "id": "120200",
+              "name": "آواره",
+              "nameEn": "Displaced Person",
+              "subtypes": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "30",
+      "name": "دریایی سطحی",
+      "nameEn": "Sea Surface",
+      "geometry": "POINT",
+      "entities": [
+        {
+          "id": "120000",
+          "name": "نظامی",
+          "nameEn": "Military Combatant",
+          "types": [
+            {
+              "id": "120200",
+              "name": "ناو سطحی",
+              "nameEn": "Surface Combatant, Line",
+              "subtypes": [
+                {
+                  "id": "120203",
+                  "name": "ناوشکن",
+                  "nameEn": "Destroyer"
+                },
+                {
+                  "id": "120204",
+                  "name": "ناوچه",
+                  "nameEn": "Frigate"
+                }
+              ]
+            },
+            {
+              "id": "120300",
+              "name": "ناو هواپیمابر",
+              "nameEn": "Aircraft Carrier",
+              "subtypes": []
+            },
+            {
+              "id": "120400",
+              "name": "قایق گشتی",
+              "nameEn": "Patrol Boat",
+              "subtypes": []
+            }
+          ]
+        },
+        {
+          "id": "130000",
+          "name": "غیرنظامی",
+          "nameEn": "Civilian",
+          "types": [
+            {
+              "id": "130100",
+              "name": "کشتی تجاری",
+              "nameEn": "Merchant Ship",
+              "subtypes": []
+            },
+            {
+              "id": "130200",
+              "name": "کشتی ماهیگیری",
+              "nameEn": "Fishing Vessel",
+              "subtypes": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "35",
+      "name": "دریایی زیرسطحی",
+      "nameEn": "Sea Subsurface",
+      "geometry": "POINT",
+      "entities": [
+        {
+          "id": "110000",
+          "name": "نظامی",
+          "nameEn": "Military",
+          "types": [
+            {
+              "id": "110100",
+              "name": "زیردریایی",
+              "nameEn": "Submarine",
+              "subtypes": [
+                {
+                  "id": "110101",
+                  "name": "تهاجمی",
+                  "nameEn": "Attack"
+                },
+                {
+                  "id": "110102",
+                  "name": "موشکی بالستیک",
+                  "nameEn": "Ballistic Missile"
+                },
+                {
+                  "id": "110103",
+                  "name": "هسته‌ای",
+                  "nameEn": "Nuclear Propulsion"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "40",
+      "name": "تاسیسات دریایی",
+      "nameEn": "Sea Installations",
+      "geometry": "POINT",
+      "entities": [
+        {
+          "id": "110000",
+          "name": "پایگاه دریایی",
+          "nameEn": "Sea Base",
+          "types": [
+            {
+              "id": "110100",
+              "name": "اسکله",
+              "nameEn": "Pier",
+              "subtypes": []
+            },
+            {
+              "id": "110200",
+              "name": "بندر",
+              "nameEn": "Port",
+              "subtypes": []
+            }
+          ]
+        },
+        {
+          "id": "120000",
+          "name": "تاسیسات نفتی",
+          "nameEn": "Oil Installation",
+          "types": [
+            {
+              "id": "120100",
+              "name": "سکوی نفتی",
+              "nameEn": "Oil Platform",
+              "subtypes": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "45",
+      "name": "فعالیت‌های دریایی",
+      "nameEn": "Sea Activities",
+      "geometry": "POINT",
+      "entities": [
+        {
+          "id": "110000",
+          "name": "عملیات دریایی",
+          "nameEn": "Sea Operation",
+          "types": [
+            {
+              "id": "110100",
+              "name": "مین دریایی",
+              "nameEn": "Naval Mine",
+              "subtypes": []
+            },
+            {
+              "id": "110200",
+              "name": "نجات دریایی",
+              "nameEn": "Sea Rescue",
+              "subtypes": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "50",
+      "name": "هوافضا",
+      "nameEn": "Air Space",
+      "geometry": "POLYGON",
+      "entities": [
+        {
+          "id": "110000",
+          "name": "منطقه پرواز",
+          "nameEn": "Flight Zone",
+          "types": [
+            {
+              "id": "110100",
+              "name": "منطقه پرواز ممنوع",
+              "nameEn": "No Fly Zone",
+              "subtypes": []
+            },
+            {
+              "id": "110200",
+              "name": "منطقه پرواز محدود",
+              "nameEn": "Restricted Flight Zone",
+              "subtypes": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "60",
+      "name": "نقاط مرجع",
+      "nameEn": "Control Points",
+      "geometry": "POINT",
+      "entities": [
+        {
+          "id": "110000",
+          "name": "نقطه کنترل",
+          "nameEn": "Control Point",
+          "types": [
+            {
+              "id": "110100",
+              "name": "نقطه بازرسی",
+              "nameEn": "Check Point",
+              "subtypes": []
+            },
+            {
+              "id": "110200",
+              "name": "نقطه تماس",
+              "nameEn": "Contact Point",
+              "subtypes": []
+            },
+            {
+              "id": "110300",
+              "name": "نقطه تجمع",
+              "nameEn": "Assembly Point",
+              "subtypes": []
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "standardIdentities": [
+    {
+      "id": "0",
+      "name": "نامشخص",
+      "nameEn": "Pending"
+    },
+    {
+      "id": "1",
+      "name": "ناشناخته",
+      "nameEn": "Unknown"
+    },
+    {
+      "id": "2",
+      "name": "دوست فرضی",
+      "nameEn": "Assumed Friend"
+    },
+    {
+      "id": "3",
+      "name": "دوست",
+      "nameEn": "Friend"
+    },
+    {
+      "id": "4",
+      "name": "خنثی",
+      "nameEn": "Neutral"
+    },
+    {
+      "id": "5",
+      "name": "مظنون",
+      "nameEn": "Suspect"
+    },
+    {
+      "id": "6",
+      "name": "دشمن",
+      "nameEn": "Hostile"
+    }
+  ],
+  "contexts": [
+    {
+      "id": "0",
+      "name": "عملیاتی",
+      "nameEn": "Reality"
+    },
+    {
+      "id": "1",
+      "name": "تمرین",
+      "nameEn": "Exercise"
+    },
+    {
+      "id": "2",
+      "name": "شبیه‌سازی",
+      "nameEn": "Simulation"
+    },
+    {
+      "id": "3",
+      "name": "آزمایشی",
+      "nameEn": "Test"
+    }
+  ],
+  "versions": [
+    {
+      "id": "10",
+      "name": "APP-6D / MIL-STD-2525D",
+      "nameEn": "APP-6D / MIL-STD-2525D"
+    },
+    {
+      "id": "15",
+      "name": "APP-6E / MIL-STD-2525E",
+      "nameEn": "APP-6E / MIL-STD-2525E"
+    },
+    {
+      "id": "20",
+      "name": "نسخه آینده",
+      "nameEn": "Future Version"
+    }
+  ]
+} 

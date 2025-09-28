@@ -1,0 +1,1426 @@
+{
+  "category": {
+    "id": "persons",
+    "name": "اشخاص",
+    "englishName": "Persons",
+    "description": "طبقه‌بندی منابع و کاربران",
+    "icon": "👥",
+    "color": "#10B981",
+    "maxLevels": 4,
+    "isActive": true,
+    "order": 17,
+    "type": "PERSONS"
+  },
+  "levels": [
+    { "id": "1", "name": "رده ۱", "englishName": "Level 1", "order": 1, "isRequired": true, "isActive": true },
+    { "id": "2", "name": "رده ۲", "englishName": "Level 2", "order": 2, "isRequired": true, "isActive": true },
+    { "id": "3", "name": "رده ۳", "englishName": "Level 3", "order": 3, "isRequired": false, "isActive": true },
+    { "id": "4", "name": "رده ۴", "englishName": "Level 4", "order": 4, "isRequired": false, "isActive": true }
+  ],
+  "nodes": [
+    {
+      "id": "pr-1",
+      "name": "منابع",
+      "englishName": "Resources",
+      "level": 1,
+      "parentId": null,
+      "order": 1,
+      "description": "منابع و مواد مورد نیاز",
+      "children": [
+        {
+          "id": "pr-1-1",
+          "name": "اطلاعات شخصی",
+          "englishName": "Personal Information",
+          "level": 2,
+          "parentId": "pr-1",
+          "order": 1,
+          "description": "اطلاعات هویتی و شخصی افراد",
+          "children": [],
+          "customFields": [
+            {
+              "id": "res-first-name",
+              "name": "نام",
+              "englishName": "First Name",
+              "type": "text",
+              "isRequired": true,
+              "order": 1,
+              "validation": {
+                "minLength": 2,
+                "maxLength": 50
+              }
+            },
+            {
+              "id": "res-last-name",
+              "name": "نام خانوادگی",
+              "englishName": "Last Name",
+              "type": "text",
+              "isRequired": true,
+              "order": 2,
+              "validation": {
+                "minLength": 2,
+                "maxLength": 50
+              }
+            },
+            {
+              "id": "res-first-name-en",
+              "name": "نام (انگلیسی)",
+              "englishName": "First Name (English)",
+              "type": "text-english",
+              "isRequired": false,
+              "order": 3,
+              "validation": {
+                "custom": "english-only",
+                "minLength": 2,
+                "maxLength": 50
+              }
+            },
+            {
+              "id": "res-last-name-en",
+              "name": "نام خانوادگی (انگلیسی)",
+              "englishName": "Last Name (English)",
+              "type": "text-english",
+              "isRequired": false,
+              "order": 4,
+              "validation": {
+                "custom": "english-only",
+                "minLength": 2,
+                "maxLength": 50
+              }
+            },
+            {
+              "id": "res-nationality",
+              "name": "تابعیت",
+              "englishName": "Nationality",
+              "type": "select",
+              "isRequired": true,
+              "order": 5,
+              "options": [
+                {"value": "iranian", "label": "ایرانی", "flag": "🇮🇷"},
+                {"value": "lebanon", "label": "لبنانی", "flag": "🇱🇧"},
+                {"value": "iraq", "label": "عراقی", "flag": "🇮🇶"},
+                {"value": "qatar", "label": "قطری", "flag": "🇶🇦"},
+                {"value": "other", "label": "سایر", "flag": "🌍"}
+              ]
+            },
+            {
+              "id": "res-national-id",
+              "name": "شماره شناسایی ملی",
+              "englishName": "National ID",
+              "type": "conditional-national-id",
+              "isRequired": true,
+              "order": 6,
+              "conditionalOn": {
+                "field": "res-nationality",
+                "operator": "equals"
+              },
+              "validation": {
+                "custom": "national-id",
+                "dependsOn": "res-nationality"
+              }
+            },
+            {
+              "id": "res-birth-date",
+              "name": "تاریخ تولد",
+              "englishName": "Birth Date",
+              "type": "date",
+              "isRequired": true,
+              "order": 7
+            },
+            {
+              "id": "res-gender",
+              "name": "جنسیت",
+              "englishName": "Gender",
+              "type": "select",
+              "isRequired": true,
+              "order": 8,
+              "options": ["مرد", "زن"]
+            },
+            {
+              "id": "res-phones",
+              "name": "شماره‌های تماس",
+              "englishName": "Phone Numbers",
+              "type": "phone-array",
+              "isRequired": true,
+              "order": 9,
+              "arrayConfig": {
+                "minItems": 1,
+                "maxItems": 5,
+                "itemStructure": {
+                  "number": {
+                    "type": "text",
+                    "label": "شماره تلفن",
+                    "required": true,
+                    "validation": {"custom": "phone"}
+                  },
+                  "label": {
+                    "type": "select",
+                    "label": "نوع شماره",
+                    "required": true,
+                    "options": [
+                      {"value": "mobile", "label": "موبایل", "icon": "📱"},
+                      {"value": "home", "label": "منزل", "icon": "🏠"},
+                      {"value": "work", "label": "محل کار", "icon": "🏢"},
+                      {"value": "emergency", "label": "اضطراری", "icon": "🚨"},
+                      {"value": "other", "label": "سایر", "icon": "📞"}
+                    ]
+                  },
+                  "isPrimary": {
+                    "type": "boolean",
+                    "label": "شماره اصلی",
+                    "required": false
+                  }
+                }
+              }
+            },
+            {
+              "id": "res-addresses",
+              "name": "آدرس‌ها",
+              "englishName": "Addresses",
+              "type": "address-array",
+              "isRequired": false,
+              "order": 10,
+              "arrayConfig": {
+                "minItems": 0,
+                "maxItems": 3,
+                "itemStructure": {
+                  "label": {
+                    "type": "select",
+                    "label": "نوع آدرس",
+                    "required": true,
+                    "options": [
+                      {"value": "home", "label": "منزل", "icon": "🏠"},
+                      {"value": "work", "label": "محل کار", "icon": "🏢"},
+                      {"value": "birth", "label": "محل تولد", "icon": "🎂"},
+                      {"value": "temporary", "label": "موقت", "icon": "⏰"},
+                      {"value": "other", "label": "سایر", "icon": "📍"}
+                    ]
+                  },
+                  "hierarchicalPath": {
+                    "type": "hierarchical-address",
+                    "label": "انتخاب منطقه",
+                    "required": true,
+                    "hierarchicalConfig": {
+                      "rootCategory": "geographical",
+                      "levels": ["استان", "شهر", "منطقه"],
+                      "allowFreeText": true
+                    }
+                  },
+                  "detailedAddress": {
+                    "type": "textarea",
+                    "label": "آدرس دقیق",
+                    "required": false
+                  },
+                  "postalCode": {
+                    "type": "text-numeric",
+                    "label": "کد پستی",
+                    "required": false,
+                    "validation": {
+                      "custom": "numeric-only",
+                      "minLength": 10,
+                      "maxLength": 10
+                    }
+                  }
+                }
+              }
+            },
+            {
+              "id": "res-birth-place",
+              "name": "محل تولد",
+              "englishName": "Place of Birth",
+              "type": "hierarchical-address",
+              "isRequired": false,
+              "order": 11,
+              "hierarchicalConfig": {
+                "rootCategory": "geographical",
+                "levels": ["استان", "شهر"],
+                "allowFreeText": true
+              }
+            }
+          ]
+        },
+        {
+          "id": "pr-1-2",
+          "name": "اطلاعات حقوقی",
+          "englishName": "Legal Information",
+          "level": 2,
+          "parentId": "pr-1",
+          "order": 2,
+          "description": "وضعیت حقوقی و طبقه‌بندی افراد",
+          "children": [
+            {
+              "id": "pr-1-2-1",
+              "name": "اشخاص کلیدی",
+              "englishName": "Key Personnel",
+              "level": 3,
+              "parentId": "pr-1-2",
+              "order": 1,
+              "description": "فرماندهان و اشخاص کلیدی",
+              "children": [
+                {
+                  "id": "pr-1-2-1-1",
+                  "name": "زنده",
+                  "englishName": "Alive",
+                  "level": 4,
+                  "parentId": "pr-1-2-1",
+                  "order": 1,
+                  "description": "اشخاص کلیدی زنده",
+                  "children": [],
+                  "customFields": [
+                    {
+                      "id": "kp-alive-position",
+                      "name": "سمت و جایگاه",
+                      "englishName": "Position",
+                      "type": "text",
+                      "isRequired": true,
+                      "order": 1
+                    },
+                    {
+                      "id": "kp-alive-authority-level",
+                      "name": "سطح اختیارات",
+                      "englishName": "Authority Level",
+                      "type": "select",
+                      "isRequired": true,
+                      "order": 2,
+                      "options": ["فرمانده کل", "فرمانده ارشد", "فرمانده میانی", "فرمانده پایین"]
+                    },
+                    {
+                      "id": "kp-alive-unit",
+                      "name": "یگان تحت فرماندهی",
+                      "englishName": "Unit Under Command",
+                      "type": "reference",
+                      "isRequired": false,
+                      "order": 3,
+                      "referenceCategory": "military_units",
+                      "referencePath": "nodes"
+                    }
+                  ]
+                },
+                {
+                  "id": "pr-1-2-1-2",
+                  "name": "شهید",
+                  "englishName": "Martyr",
+                  "level": 4,
+                  "parentId": "pr-1-2-1",
+                  "order": 2,
+                  "description": "اشخاص کلیدی شهید",
+                  "children": [],
+                  "customFields": [
+                    {
+                      "id": "kp-martyr-position-at-death",
+                      "name": "سمت در زمان شهادت",
+                      "englishName": "Position at Death",
+                      "type": "text",
+                      "isRequired": true,
+                      "order": 1
+                    },
+                    {
+                      "id": "kp-martyr-date",
+                      "name": "تاریخ شهادت",
+                      "englishName": "Date of Martyrdom",
+                      "type": "date",
+                      "isRequired": true,
+                      "order": 2
+                    },
+                    {
+                      "id": "kp-martyr-location",
+                      "name": "محل شهادت",
+                      "englishName": "Place of Martyrdom",
+                      "type": "reference",
+                      "isRequired": true,
+                      "order": 3,
+                      "referenceCategory": "geographical",
+                      "referencePath": "nodes"
+                    }
+                  ]
+                },
+                {
+                  "id": "pr-1-2-1-3",
+                  "name": "آسیب دیده",
+                  "englishName": "Injured",
+                  "level": 4,
+                  "parentId": "pr-1-2-1",
+                  "order": 3,
+                  "description": "اشخاص کلیدی آسیب دیده",
+                  "children": [],
+                  "customFields": [
+                    {
+                      "id": "kp-injured-severity",
+                      "name": "شدت آسیب",
+                      "englishName": "Injury Severity",
+                      "type": "select",
+                      "isRequired": true,
+                      "order": 1,
+                      "options": ["خفیف", "متوسط", "شدید", "بحرانی"]
+                    },
+                    {
+                      "id": "kp-injured-date",
+                      "name": "تاریخ آسیب",
+                      "englishName": "Date of Injury",
+                      "type": "date",
+                      "isRequired": true,
+                      "order": 2
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "pr-1-2-2",
+              "name": "نظامی",
+              "englishName": "Military",
+              "level": 3,
+              "parentId": "pr-1-2",
+              "order": 2,
+              "description": "نیروهای نظامی",
+              "children": [
+                {
+                  "id": "pr-1-2-2-1",
+                  "name": "زنده",
+                  "englishName": "Alive",
+                  "level": 4,
+                  "parentId": "pr-1-2-2",
+                  "order": 1,
+                  "description": "نیروهای نظامی زنده",
+                  "children": [],
+                  "customFields": [
+                    {
+                      "id": "mil-alive-force-type",
+                      "name": "نوع نیرو",
+                      "englishName": "Force Type",
+                      "type": "reference",
+                      "isRequired": true,
+                      "order": 1,
+                      "referenceCategory": "force_type",
+                      "referencePath": "nodes"
+                    },
+                    {
+                      "id": "mil-alive-rank",
+                      "name": "درجه نظامی",
+                      "englishName": "Military Rank",
+                      "type": "reference",
+                      "isRequired": true,
+                      "order": 2,
+                      "referenceCategory": "military_ranks",
+                      "referencePath": "nodes"
+                    },
+                    {
+                      "id": "mil-alive-position",
+                      "name": "جایگاه نظامی",
+                      "englishName": "Military Position",
+                      "type": "reference",
+                      "isRequired": true,
+                      "order": 3,
+                      "referenceCategory": "military_units",
+                      "referencePath": "nodes"
+                    }
+                  ]
+                },
+                {
+                  "id": "pr-1-2-2-2",
+                  "name": "شهید",
+                  "englishName": "Martyr",
+                  "level": 4,
+                  "parentId": "pr-1-2-2",
+                  "order": 2,
+                  "description": "نیروهای نظامی شهید",
+                  "children": [],
+                  "customFields": [
+                    {
+                      "id": "mil-martyr-rank",
+                      "name": "درجه در زمان شهادت",
+                      "englishName": "Rank at Martyrdom",
+                      "type": "reference",
+                      "isRequired": true,
+                      "order": 1,
+                      "referenceCategory": "military_ranks",
+                      "referencePath": "nodes"
+                    },
+                    {
+                      "id": "mil-martyr-location",
+                      "name": "محل شهادت",
+                      "englishName": "Place of Martyrdom",
+                      "type": "reference",
+                      "isRequired": true,
+                      "order": 2,
+                      "referenceCategory": "geographical",
+                      "referencePath": "nodes"
+                    },
+                    {
+                      "id": "mil-martyr-cause",
+                      "name": "نحوه شهادت",
+                      "englishName": "Cause of Martyrdom",
+                      "type": "select",
+                      "isRequired": true,
+                      "order": 3,
+                      "options": ["نبرد مستقیم", "انفجار", "حمله هوایی", "تک‌تیراندازی", "مایین"]
+                    }
+                  ]
+                },
+                {
+                  "id": "pr-1-2-2-3",
+                  "name": "آسیب دیده",
+                  "englishName": "Injured",
+                  "level": 4,
+                  "parentId": "pr-1-2-2",
+                  "order": 3,
+                  "description": "نیروهای نظامی آسیب دیده",
+                  "children": [],
+                  "customFields": [
+                    {
+                      "id": "mil-injured-rank",
+                      "name": "درجه نظامی",
+                      "englishName": "Military Rank",
+                      "type": "reference",
+                      "isRequired": true,
+                      "order": 1,
+                      "referenceCategory": "military_ranks",
+                      "referencePath": "nodes"
+                    },
+                    {
+                      "id": "mil-injured-severity",
+                      "name": "شدت آسیب",
+                      "englishName": "Injury Severity",
+                      "type": "select",
+                      "isRequired": true,
+                      "order": 2,
+                      "options": ["خفیف", "متوسط", "شدید", "بحرانی"]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "pr-1-2-3",
+              "name": "غیرنظامی",
+              "englishName": "Civilian",
+              "level": 3,
+              "parentId": "pr-1-2",
+              "order": 3,
+              "description": "افراد غیرنظامی",
+              "children": [
+                {
+                  "id": "pr-1-2-3-1",
+                  "name": "زنده",
+                  "englishName": "Alive",
+                  "level": 4,
+                  "parentId": "pr-1-2-3",
+                  "order": 1,
+                  "description": "افراد غیرنظامی زنده",
+                  "children": [],
+                  "customFields": [
+                    {
+                      "id": "civ-alive-occupation",
+                      "name": "شغل",
+                      "englishName": "Occupation",
+                      "type": "text",
+                      "isRequired": true,
+                      "order": 1
+                    },
+                    {
+                      "id": "civ-alive-role",
+                      "name": "نقش در عملیات",
+                      "englishName": "Role in Operations",
+                      "type": "select",
+                      "isRequired": false,
+                      "order": 2,
+                      "options": ["مشاور", "تحلیلگر", "مترجم", "پزشک", "راننده"]
+                    }
+                  ]
+                },
+                {
+                  "id": "pr-1-2-3-2",
+                  "name": "شهید",
+                  "englishName": "Martyr",
+                  "level": 4,
+                  "parentId": "pr-1-2-3",
+                  "order": 2,
+                  "description": "افراد غیرنظامی شهید",
+                  "children": [],
+                  "customFields": [
+                    {
+                      "id": "civ-martyr-occupation",
+                      "name": "شغل در زمان شهادت",
+                      "englishName": "Occupation at Martyrdom",
+                      "type": "text",
+                      "isRequired": true,
+                      "order": 1
+                    },
+                    {
+                      "id": "civ-martyr-location",
+                      "name": "محل شهادت",
+                      "englishName": "Place of Martyrdom",
+                      "type": "reference",
+                      "isRequired": true,
+                      "order": 2,
+                      "referenceCategory": "geographical",
+                      "referencePath": "nodes"
+                    }
+                  ]
+                },
+                {
+                  "id": "pr-1-2-3-3",
+                  "name": "آسیب دیده",
+                  "englishName": "Injured",
+                  "level": 4,
+                  "parentId": "pr-1-2-3",
+                  "order": 3,
+                  "description": "افراد غیرنظامی آسیب دیده",
+                  "children": [],
+                  "customFields": [
+                    {
+                      "id": "civ-injured-severity",
+                      "name": "شدت آسیب",
+                      "englishName": "Injury Severity",
+                      "type": "select",
+                      "isRequired": true,
+                      "order": 1,
+                      "options": ["خفیف", "متوسط", "شدید", "بحرانی"]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "pr-1-3",
+          "name": "میزان تحصیلات",
+          "englishName": "Education Level",
+          "level": 2,
+          "parentId": "pr-1",
+          "order": 3,
+          "description": "مدرک تحصیلی و سطح تحصیلات",
+          "children": [],
+          "customFields": [
+            {
+              "id": "edu-field-of-study",
+              "name": "رشته تحصیلی",
+              "englishName": "Field of Study",
+              "type": "text",
+              "isRequired": true,
+              "order": 1
+            },
+            {
+              "id": "edu-specialization",
+              "name": "گرایش",
+              "englishName": "Specialization",
+              "type": "text",
+              "isRequired": false,
+              "order": 2
+            },
+            {
+              "id": "edu-degree",
+              "name": "عنوان",
+              "englishName": "Degree",
+              "type": "select",
+              "isRequired": true,
+              "order": 3,
+              "options": ["زیر دیپلم", "دیپلم", "کاردانی", "کارشناسی", "کارشناسی ارشد", "دکترا"]
+            },
+            {
+              "id": "edu-institution",
+              "name": "محل تحصیل",
+              "englishName": "Educational Institution",
+              "type": "text",
+              "isRequired": true,
+              "order": 4
+            },
+            {
+              "id": "edu-graduation-year",
+              "name": "سال تحصیل",
+              "englishName": "Graduation Year",
+              "type": "number",
+              "isRequired": false,
+              "order": 5
+            }
+          ]
+        },
+        {
+          "id": "pr-1-4",
+          "name": "توانایی ها و مهارت ها",
+          "englishName": "Skills & Abilities",
+          "level": 2,
+          "parentId": "pr-1",
+          "order": 4,
+          "description": "مهارت‌ها و توانایی‌های رزمی و عملیاتی",
+          "children": [],
+          "customFields": [
+            {
+              "id": "skills-combat-abilities",
+              "name": "مهارت‌های رزمی",
+              "englishName": "Combat Skills",
+              "type": "multiselect",
+              "isRequired": false,
+              "order": 1,
+              "options": ["تیراندازی دقیق", "نبرد تن به تن", "استفاده از سلاح‌های سنگین", "تاکتیک‌های چریکی", "نبرد شهری", "عملیات شبانه"]
+            },
+            {
+              "id": "skills-strategic-thinking",
+              "name": "تفکر استراتژیک",
+              "englishName": "Strategic Thinking",
+              "type": "select",
+              "isRequired": false,
+              "order": 2,
+              "options": ["عالی", "خوب", "متوسط", "مبتدی"]
+            },
+            {
+              "id": "skills-leadership",
+              "name": "مهارت‌های رهبری",
+              "englishName": "Leadership Skills",
+              "type": "multiselect",
+              "isRequired": false,
+              "order": 3,
+              "options": ["مدیریت تیم", "تصمیم‌گیری سریع", "ایجاد انگیزه", "نظارت و کنترل", "برنامه‌ریزی عملیاتی"]
+            },
+            {
+              "id": "skills-technical",
+              "name": "مهارت‌های فنی",
+              "englishName": "Technical Skills",
+              "type": "multiselect",
+              "isRequired": false,
+              "order": 4,
+              "options": ["ارتباطات رادیویی", "ناوبری و کارتوگرافی", "تعمیر تجهیزات", "عکاسی و فیلمبرداری", "برنامه‌نویسی", "شناسایی مواد منفجره"]
+            },
+            {
+              "id": "skills-languages",
+              "name": "زبان‌های خارجی",
+              "englishName": "Foreign Languages",
+              "type": "multiselect",
+              "isRequired": false,
+              "order": 5,
+              "options": ["انگلیسی", "عربی", "روسی", "آلمانی", "فرانسوی", "ترکی", "چینی"]
+            },
+            {
+              "id": "skills-battle-experience",
+              "name": "تجربه میدان نبرد",
+              "englishName": "Battle Experience",
+              "type": "select",
+              "isRequired": false,
+              "order": 6,
+              "options": ["بالا (بیش از ۵ سال)", "متوسط (۲-۵ سال)", "کم (کمتر از ۲ سال)", "بدون تجربه"]
+            },
+            {
+              "id": "skills-stress-management",
+              "name": "مدیریت استرس و فشار",
+              "englishName": "Stress Management",
+              "type": "select",
+              "isRequired": false,
+              "order": 7,
+              "options": ["عالی", "خوب", "متوسط", "ضعیف"]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "pr-2",
+      "name": "کاربران",
+      "englishName": "Users",
+      "level": 1,
+      "parentId": null,
+      "order": 2,
+      "description": "کاربران سیستم و نقش‌های آن‌ها",
+      "children": [
+        {
+          "id": "pr-2-1",
+          "name": "اطلاعات شخصی",
+          "englishName": "Personal Information",
+          "level": 2,
+          "parentId": "pr-2",
+          "order": 1,
+          "description": "اطلاعات هویتی و شخصی کاربران",
+          "children": [],
+          "customFields": [
+            {
+              "id": "pf-full-name",
+              "name": "نام و نام خانوادگی",
+              "englishName": "Full Name",
+              "type": "text",
+              "isRequired": true,
+              "order": 1
+            },
+            {
+              "id": "pf-full-name-en",
+              "name": "نام و نام خانوادگی (انگلیسی)",
+              "englishName": "Full Name (English)",
+              "type": "text",
+              "isRequired": false,
+              "order": 2
+            },
+            {
+              "id": "pf-father-name",
+              "name": "نام پدر",
+              "englishName": "Father's Name",
+              "type": "text",
+              "isRequired": true,
+              "order": 3
+            },
+            {
+              "id": "pf-national-id",
+              "name": "شماره ملی",
+              "englishName": "National ID",
+              "type": "text",
+              "isRequired": true,
+              "order": 4,
+              "validationRules": {
+                "pattern": "^[0-9]{10}$",
+                "maxLength": 10
+              }
+            },
+            {
+              "id": "pf-nationality",
+              "name": "تابعیت",
+              "englishName": "Nationality",
+              "type": "select",
+              "isRequired": true,
+              "order": 5,
+              "options": ["ایرانی", "غیرایرانی", "تبعه مضاعف"]
+            },
+            {
+              "id": "pf-birth-date",
+              "name": "تاریخ تولد",
+              "englishName": "Birth Date",
+              "type": "date",
+              "isRequired": true,
+              "order": 6
+            },
+            {
+              "id": "pf-gender",
+              "name": "جنسیت",
+              "englishName": "Gender",
+              "type": "select",
+              "isRequired": true,
+              "order": 7,
+              "options": ["مرد", "زن"]
+            },
+            {
+              "id": "pf-birth-place",
+              "name": "محل تولد",
+              "englishName": "Place of Birth",
+              "type": "reference",
+              "isRequired": false,
+              "order": 8,
+              "referenceCategory": "geographical",
+              "referencePath": "nodes"
+            },
+            {
+              "id": "pf-marital-status",
+              "name": "تاهل",
+              "englishName": "Marital Status",
+              "type": "select",
+              "isRequired": false,
+              "order": 9,
+              "options": ["مجرد", "متاهل", "مطلقه", "بیوه"]
+            }
+          ]
+        },
+        {
+          "id": "pr-2-2",
+          "name": "اطلاعات تماس",
+          "englishName": "Contact Information",
+          "level": 2,
+          "parentId": "pr-2",
+          "order": 2,
+          "description": "شماره تلفن، آدرس، ایمیل و سایر اطلاعات تماس",
+          "children": [],
+          "customFields": [
+            {
+              "id": "cf-landline",
+              "name": "شماره تماس ثابت",
+              "englishName": "Landline Phone",
+              "type": "text",
+              "isRequired": false,
+              "order": 1,
+              "validationRules": {
+                "pattern": "^[0-9-+()\\s]*$"
+              }
+            },
+            {
+              "id": "cf-mobile",
+              "name": "شماره تماس همراه",
+              "englishName": "Mobile Phone",
+              "type": "phone",
+              "isRequired": true,
+              "order": 2
+            },
+            {
+              "id": "cf-address",
+              "name": "آدرس ها",
+              "englishName": "Addresses",
+              "type": "reference",
+              "isRequired": false,
+              "order": 3,
+              "referenceCategory": "geographical",
+              "referencePath": "nodes",
+              "allowMultiple": true
+            },
+            {
+              "id": "cf-email",
+              "name": "ایمیل",
+              "englishName": "Email",
+              "type": "email",
+              "isRequired": false,
+              "order": 4,
+              "validationRules": {
+                "pattern": "^[\\w-\\.]+@([\\w-]+\\.)+[\\w-]{2,4}$"
+              }
+            },
+            {
+              "id": "cf-postal-code",
+              "name": "کد پستی",
+              "englishName": "Postal Code",
+              "type": "text",
+              "isRequired": false,
+              "order": 5,
+              "validationRules": {
+                "pattern": "^[0-9]{10}$",
+                "minLength": 10,
+                "maxLength": 10
+              }
+            },
+            {
+              "id": "cf-social-networks",
+              "name": "افزودن شبکه های اجتماعی",
+              "englishName": "Social Networks",
+              "type": "social",
+              "isRequired": false,
+              "order": 6
+            }
+          ]
+        },
+        {
+          "id": "pr-2-3",
+          "name": "اطلاعات حقوقی",
+          "englishName": "Legal Information",
+          "level": 2,
+          "parentId": "pr-2",
+          "order": 3,
+          "description": "وضعیت اشتغال و موقعیت حقوقی کاربران",
+          "children": [
+            {
+              "id": "pr-2-3-1",
+              "name": "آزاد",
+              "englishName": "Freelance",
+              "level": 3,
+              "parentId": "pr-2-3",
+              "order": 1,
+              "description": "کاربران آزاد و خوداشتغال",
+              "children": [],
+              "customFields": [
+                {
+                  "id": "legal-freelance-business-type",
+                  "name": "نوع کسب و کار",
+                  "englishName": "Business Type",
+                  "type": "text",
+                  "isRequired": true,
+                  "order": 1
+                },
+                {
+                  "id": "legal-freelance-specialization",
+                  "name": "تخصص",
+                  "englishName": "Specialization",
+                  "type": "text",
+                  "isRequired": true,
+                  "order": 2
+                },
+                {
+                  "id": "legal-freelance-experience-years",
+                  "name": "سابقه کار (سال)",
+                  "englishName": "Experience Years",
+                  "type": "number",
+                  "isRequired": false,
+                  "order": 3
+                }
+              ]
+            },
+            {
+              "id": "pr-2-3-2",
+              "name": "دولتی",
+              "englishName": "Government",
+              "level": 3,
+              "parentId": "pr-2-3",
+              "order": 2,
+              "description": "کارکنان دولتی",
+              "children": [],
+              "customFields": [
+                {
+                  "id": "legal-gov-organization",
+                  "name": "سازمان یا وزارتخانه",
+                  "englishName": "Organization or Ministry",
+                  "type": "reference",
+                  "isRequired": true,
+                  "order": 1,
+                  "referenceCategory": "organizational_affiliation",
+                  "referencePath": "nodes"
+                },
+                {
+                  "id": "legal-gov-department",
+                  "name": "اداره",
+                  "englishName": "Department",
+                  "type": "text",
+                  "isRequired": true,
+                  "order": 2
+                },
+                {
+                  "id": "legal-gov-job-title",
+                  "name": "عنوان شغل",
+                  "englishName": "Job Title",
+                  "type": "text",
+                  "isRequired": true,
+                  "order": 3
+                },
+                {
+                  "id": "legal-gov-employee-code",
+                  "name": "کد کارمندی",
+                  "englishName": "Employee Code",
+                  "type": "text",
+                  "isRequired": false,
+                  "order": 4
+                }
+              ]
+            },
+            {
+              "id": "pr-2-3-3",
+              "name": "خصوصی",
+              "englishName": "Private",
+              "level": 3,
+              "parentId": "pr-2-3",
+              "order": 3,
+              "description": "کارکنان بخش خصوصی",
+              "children": [],
+              "customFields": [
+                {
+                  "id": "legal-private-company-name",
+                  "name": "نام شرکت",
+                  "englishName": "Company Name",
+                  "type": "text",
+                  "isRequired": true,
+                  "order": 1
+                },
+                {
+                  "id": "legal-private-position",
+                  "name": "سمت",
+                  "englishName": "Position",
+                  "type": "text",
+                  "isRequired": true,
+                  "order": 2
+                },
+                {
+                  "id": "legal-private-industry",
+                  "name": "صنعت",
+                  "englishName": "Industry",
+                  "type": "select",
+                  "isRequired": false,
+                  "order": 3,
+                  "options": ["فناوری اطلاعات", "مالی و بانکداری", "ساخت و ساز", "بهداشت و درمان", "آموزش", "تولیدی", "خدماتی", "سایر"]
+                }
+              ]
+            },
+            {
+              "id": "pr-2-3-4",
+              "name": "نظامی",
+              "englishName": "Military",
+              "level": 3,
+              "parentId": "pr-2-3",
+              "order": 4,
+              "description": "کادر نظامی",
+              "children": [],
+              "customFields": [
+                {
+                  "id": "legal-military-force",
+                  "name": "نوع نیرو",
+                  "englishName": "Force Type",
+                  "type": "reference",
+                  "isRequired": true,
+                  "order": 1,
+                  "referenceCategory": "force_type",
+                  "referencePath": "nodes"
+                },
+                {
+                  "id": "legal-military-rank",
+                  "name": "درجه",
+                  "englishName": "Rank",
+                  "type": "reference",
+                  "isRequired": true,
+                  "order": 2,
+                  "referenceCategory": "military_ranks",
+                  "referencePath": "nodes"
+                },
+                {
+                  "id": "legal-military-unit",
+                  "name": "یگان",
+                  "englishName": "Unit",
+                  "type": "reference",
+                  "isRequired": true,
+                  "order": 3,
+                  "referenceCategory": "military_units",
+                  "referencePath": "nodes"
+                },
+                {
+                  "id": "legal-military-service-number",
+                  "name": "شماره نظامی",
+                  "englishName": "Service Number",
+                  "type": "text",
+                  "isRequired": false,
+                  "order": 4
+                }
+              ]
+            },
+            {
+              "id": "pr-2-3-5",
+              "name": "بی کار",
+              "englishName": "Unemployed",
+              "level": 3,
+              "parentId": "pr-2-3",
+              "order": 5,
+              "description": "افراد بی کار",
+              "children": [],
+              "customFields": [
+                {
+                  "id": "legal-unemployed-duration",
+                  "name": "مدت بیکاری (ماه)",
+                  "englishName": "Unemployment Duration (months)",
+                  "type": "number",
+                  "isRequired": false,
+                  "order": 1
+                },
+                {
+                  "id": "legal-unemployed-last-job",
+                  "name": "آخرین شغل",
+                  "englishName": "Last Job",
+                  "type": "text",
+                  "isRequired": false,
+                  "order": 2
+                },
+                {
+                  "id": "legal-unemployed-seeking-type",
+                  "name": "نوع شغل مورد نظر",
+                  "englishName": "Desired Job Type",
+                  "type": "text",
+                  "isRequired": false,
+                  "order": 3
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "pr-2-4",
+          "name": "میزان تحصیلات",
+          "englishName": "Education Level",
+          "level": 2,
+          "parentId": "pr-2",
+          "order": 4,
+          "description": "اطلاعات تحصیلی کاربران",
+          "children": [],
+          "customFields": [
+            {
+              "id": "education-field",
+              "name": "رشته تحصیلی",
+              "englishName": "Field of Study",
+              "type": "text",
+              "isRequired": true,
+              "order": 1
+            },
+            {
+              "id": "education-specialization",
+              "name": "گرایش",
+              "englishName": "Specialization",
+              "type": "text",
+              "isRequired": false,
+              "order": 2
+            },
+            {
+              "id": "education-degree",
+              "name": "عنوان",
+              "englishName": "Degree",
+              "type": "select",
+              "isRequired": true,
+              "order": 3,
+              "options": ["دیپلم", "کاردانی", "کارشناسی", "کارشناسی ارشد", "دکتری", "فوق دکتری"]
+            },
+            {
+              "id": "education-institution",
+              "name": "محل تحصیل",
+              "englishName": "Educational Institution",
+              "type": "text",
+              "isRequired": true,
+              "order": 4
+            },
+            {
+              "id": "education-graduation-year",
+              "name": "سال تحصیل",
+              "englishName": "Graduation Year",
+              "type": "number",
+              "isRequired": true,
+              "order": 5,
+              "validationRules": {
+                "min": 1300,
+                "max": 1450
+              }
+            }
+          ]
+        },
+        {
+          "id": "pr-2-5",
+          "name": "توانایی ها و مهارت ها",
+          "englishName": "Abilities and Skills",
+          "level": 2,
+          "parentId": "pr-2",
+          "order": 5,
+          "description": "مهارت ها و توانایی های کاربران",
+          "children": [],
+          "customFields": [
+            {
+              "id": "skills-technical",
+              "name": "مهارت های فنی",
+              "englishName": "Technical Skills",
+              "type": "multiselect",
+              "isRequired": false,
+              "order": 1,
+              "options": ["برنامه نویسی", "طراحی گرافیک", "تحلیل داده", "مدیریت شبکه", "امنیت سایبری", "هوش مصنوعی", "مهندسی نرم افزار", "مدیریت پایگاه داده"]
+            },
+            {
+              "id": "skills-languages",
+              "name": "زبان های خارجی",
+              "englishName": "Foreign Languages",
+              "type": "multiselect",
+              "isRequired": false,
+              "order": 2,
+              "options": ["انگلیسی", "عربی", "روسی", "چینی", "فرانسوی", "آلمانی", "ترکی", "اردو"]
+            },
+            {
+              "id": "skills-language-level",
+              "name": "سطح زبان",
+              "englishName": "Language Level",
+              "type": "select",
+              "isRequired": false,
+              "order": 3,
+              "options": ["مبتدی", "متوسط", "پیشرفته", "بومی"]
+            },
+            {
+              "id": "skills-management",
+              "name": "مهارت های مدیریتی",
+              "englishName": "Management Skills",
+              "type": "multiselect",
+              "isRequired": false,
+              "order": 4,
+              "options": ["رهبری تیم", "مدیریت پروژه", "تصمیم گیری", "برنامه ریزی استراتژیک", "مذاکره", "حل مسئله", "مدیریت بحران"]
+            },
+            {
+              "id": "skills-military",
+              "name": "مهارت های نظامی",
+              "englishName": "Military Skills",
+              "type": "multiselect",
+              "isRequired": false,
+              "order": 5,
+              "options": ["تاکتیک و استراتژی", "اطلاعات نظامی", "عملیات ویژه", "تسلیحات", "ارتباطات نظامی", "ناوبری", "بقا", "آموزش نظامی"]
+            },
+            {
+              "id": "skills-certifications",
+              "name": "گواهینامه ها",
+              "englishName": "Certifications",
+              "type": "textarea",
+              "isRequired": false,
+              "order": 6
+            },
+            {
+              "id": "skills-soft-skills",
+              "name": "مهارت های نرم",
+              "englishName": "Soft Skills",
+              "type": "multiselect",
+              "isRequired": false,
+              "order": 7,
+              "options": ["کار تیمی", "ارتباط مؤثر", "خلاقیت", "انطباق پذیری", "مسئولیت پذیری", "دقت", "صبر و حوصله", "انگیزه"]
+            }
+          ]
+        },
+        {
+          "id": "pr-2-6",
+          "name": "نقش ها و دسترسی ها",
+          "englishName": "Roles and Access",
+          "level": 2,
+          "parentId": "pr-2",
+          "order": 6,
+          "description": "نقش های کاربری و سطوح دسترسی",
+          "children": [],
+          "customFields": [
+            {
+              "id": "roles-user-role",
+              "name": "نقش کاربر",
+              "englishName": "User Role",
+              "type": "select",
+              "isRequired": true,
+              "order": 1,
+              "options": ["مدیر کل", "فرمانده", "اپراتور", "ناظر"]
+            },
+            {
+              "id": "roles-access-dashboard",
+              "name": "مشاهده داشبورد",
+              "englishName": "Dashboard Access",
+              "type": "boolean",
+              "isRequired": true,
+              "order": 2
+            },
+            {
+              "id": "roles-access-map",
+              "name": "مشاهده نقشه",
+              "englishName": "Map Access",
+              "type": "boolean",
+              "isRequired": true,
+              "order": 3
+            },
+            {
+              "id": "roles-access-data",
+              "name": "مشاهده داده ها",
+              "englishName": "Data Access",
+              "type": "boolean",
+              "isRequired": true,
+              "order": 4
+            },
+            {
+              "id": "roles-access-reports",
+              "name": "مشاهده گزارشات",
+              "englishName": "Reports Access",
+              "type": "boolean",
+              "isRequired": true,
+              "order": 5
+            },
+            {
+              "id": "roles-access-level",
+              "name": "سطح دسترسی",
+              "englishName": "Access Level",
+              "type": "select",
+              "isRequired": true,
+              "order": 6,
+              "options": ["فقط خواندن", "خواندن و نوشتن", "کنترل کامل", "مدیریت سیستم"]
+            },
+            {
+              "id": "roles-department-access",
+              "name": "دسترسی بخش",
+              "englishName": "Department Access",
+              "type": "reference",
+              "isRequired": false,
+              "order": 7,
+              "referenceCategory": "organizational_affiliation",
+              "referencePath": "nodes",
+              "allowMultiple": true
+            }
+          ]
+        },
+        {
+          "id": "pr-2-7",
+          "name": "حساب کاربری",
+          "englishName": "User Account",
+          "level": 2,
+          "parentId": "pr-2",
+          "order": 7,
+          "description": "اطلاعات حساب کاربری و احراز هویت",
+          "children": [],
+          "customFields": [
+            {
+              "id": "account-avatar",
+              "name": "انتخاب نمایه یا آواتار",
+              "englishName": "Profile Picture or Avatar",
+              "type": "select",
+              "isRequired": false,
+              "order": 1,
+              "options": [
+                "Avatar-1.png",
+                "Avatar-2.png",
+                "Avatar-3.png",
+                "Avatar-4.png",
+                "Avatar-5.png",
+                "Avatar-6.png",
+                "Avatar-7.png",
+                "Avatar-8.png",
+                "Avatar-9.png",
+                "Avatar-10.png",
+                "Avatar-11.png",
+                "Avatar-12.png",
+                "Avatar-13.png",
+                "Avatar-14.png",
+                "Avatar-15.png",
+                "Avatar-16.png",
+                "Avatar-17.png",
+                "Avatar-18.png",
+                "Avatar-19.png",
+                "Avatar-20.png",
+                "Avatar-21.png",
+                "Avatar-22.png",
+                "Avatar-23.png"
+              ]
+            },
+            {
+              "id": "account-username",
+              "name": "نام کاربری",
+              "englishName": "Username",
+              "type": "text",
+              "isRequired": true,
+              "order": 2,
+              "validationRules": {
+                "minLength": 3,
+                "maxLength": 20,
+                "pattern": "^[a-zA-Z0-9_]+$"
+              }
+            },
+            {
+              "id": "account-password",
+              "name": "رمز عبور",
+              "englishName": "Password",
+              "type": "password",
+              "isRequired": true,
+              "order": 3,
+              "validationRules": {
+                "minLength": 8,
+                "requireUppercase": true,
+                "requireLowercase": true,
+                "requireNumbers": true,
+                "requireSpecialChars": true
+              }
+            },
+            {
+              "id": "account-confirm-password",
+              "name": "تکرار رمز عبور",
+              "englishName": "Confirm Password",
+              "type": "password",
+              "isRequired": true,
+              "order": 4,
+              "validationRules": {
+                "mustMatch": "account-password"
+              }
+            },
+            {
+              "id": "account-last-login",
+              "name": "آخرین ورود",
+              "englishName": "Last Login",
+              "type": "datetime",
+              "isRequired": false,
+              "order": 5,
+              "readonly": true
+            },
+            {
+              "id": "account-status",
+              "name": "وضعیت حساب",
+              "englishName": "Account Status",
+              "type": "select",
+              "isRequired": true,
+              "order": 6,
+              "options": ["فعال", "غیرفعال", "معلق", "مسدود"],
+              "defaultValue": "فعال"
+            },
+            {
+              "id": "account-two-factor",
+              "name": "تأیید دو مرحله‌ای",
+              "englishName": "Two-Factor Authentication",
+              "type": "boolean",
+              "isRequired": false,
+              "order": 7,
+              "defaultValue": false
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

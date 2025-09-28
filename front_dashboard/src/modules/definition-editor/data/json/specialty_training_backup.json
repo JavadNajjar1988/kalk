@@ -1,0 +1,510 @@
+{
+  "nodes": [
+    {
+      "id": "iran",
+      "name": "ایران",
+      "level": 1,
+      "parentId": null,
+      "description": "جمهوری اسلامی ایران",
+      "children": [
+        {
+          "id": "1",
+          "name": "تخصص‌های رزمی",
+          "level": 3,
+          "parentId": "iran",
+          "description": "تخصص‌های مربوط به نیروهای رزمی و عملیات‌های نظامی",
+      "children": [
+        {
+          "id": "1-1",
+          "name": "پیاده‌نظام",
+          "level": 3,
+          "parentId": "1",
+          "description": "تخصص پیاده‌نظام و رزم زمینی"
+        },
+        {
+          "id": "1-2",
+          "name": "زرهی",
+          "level": 3,
+          "parentId": "1",
+          "description": "تخصص زرهی و تانک"
+        },
+        {
+          "id": "1-3",
+          "name": "مکانیزه",
+          "level": 3,
+          "parentId": "1",
+          "description": "تخصص مکانیزه و خودروهای زرهی"
+        },
+        {
+          "id": "1-4",
+          "name": "توپخانه",
+          "level": 3,
+          "parentId": "1",
+          "description": "تخصص توپخانه و آتش‌بار"
+        },
+        {
+          "id": "1-5",
+          "name": "سلاح‌های سبک و سنگین",
+          "level": 3,
+          "parentId": "1",
+          "description": "تخصص سلاح‌های سبک و سنگین"
+        },
+        {
+          "id": "1-6",
+          "name": "ضد تانک",
+          "level": 3,
+          "parentId": "1",
+          "description": "تخصص ضد تانک و سلاح‌های ضد زره"
+        },
+        {
+          "id": "1-7",
+          "name": "نیروهای دفاع هوایی",
+          "level": 3,
+          "parentId": "1",
+          "description": "تخصص دفاع هوایی و پدافند"
+        }
+      ]
+    },
+    {
+      "id": "2",
+      "name": "مهندسی و پشتیبانی",
+      "level": 2,
+      "parentId": "iran",
+      "description": "تخصص‌های مهندسی رزمی و پشتیبانی فنی",
+      "children": [
+        {
+          "id": "2-1",
+          "name": "احداث پل و جاده",
+          "level": 3,
+          "parentId": "2",
+          "description": "تخصص احداث پل و جاده در مناطق عملیاتی"
+        },
+        {
+          "id": "2-2",
+          "name": "مین‌روب",
+          "level": 3,
+          "parentId": "2",
+          "description": "تخصص مین‌روبی و پاکسازی مناطق مین‌گذاری شده"
+        },
+        {
+          "id": "2-3",
+          "name": "استحکامات دفاعی",
+          "level": 3,
+          "parentId": "2",
+          "description": "تخصص ساخت استحکامات دفاعی و سنگر"
+        },
+        {
+          "id": "2-4",
+          "name": "خدمات ساخت‌وساز در صحنه جنگ",
+          "level": 3,
+          "parentId": "2",
+          "description": "تخصص خدمات ساخت‌وساز در صحنه جنگ"
+        },
+        {
+          "id": "2-5",
+          "name": "لجستیک و تأمین",
+          "level": 3,
+          "parentId": "2",
+          "description": "تخصص لجستیک و تأمین تجهیزات"
+        },
+        {
+          "id": "2-6",
+          "name": "مدیریت منابع",
+          "level": 3,
+          "parentId": "2",
+          "description": "تخصص مدیریت منابع و تدارکات"
+        },
+        {
+          "id": "2-7",
+          "name": "پشتیبانی ارتباطی",
+          "level": 3,
+          "parentId": "2",
+          "description": "تخصص پشتیبانی ارتباطی و مخابرات"
+        }
+      ]
+    },
+    {
+      "id": "3",
+      "name": "پزشکی و امداد",
+      "level": 2,
+      "parentId": "iran",
+      "description": "تخصص‌های پزشکی نظامی و عملیات امداد و نجات",
+      "children": [
+        {
+          "id": "3-1",
+          "name": "پزشکی رزمی",
+          "level": 3,
+          "parentId": "3",
+          "description": "تخصص پزشکی رزمی و درمان در صحنه جنگ"
+        },
+        {
+          "id": "3-2",
+          "name": "تخلیه مجروحین",
+          "level": 3,
+          "parentId": "3",
+          "description": "تخصص تخلیه مجروحین و انتقال بیماران"
+        },
+        {
+          "id": "3-3",
+          "name": "امداد روانی",
+          "level": 3,
+          "parentId": "3",
+          "description": "تخصص امداد روانی و مشاوره نظامی"
+        },
+        {
+          "id": "3-4",
+          "name": "بیمارستان سیار",
+          "level": 3,
+          "parentId": "3",
+          "description": "تخصص بیمارستان سیار و درمانگاه‌های صحرایی"
+        },
+        {
+          "id": "3-5",
+          "name": "تیم واکنش سریع",
+          "level": 3,
+          "parentId": "3",
+          "description": "تخصص تیم واکنش سریع پزشکی"
+        }
+      ]
+    },
+    {
+      "id": "4",
+      "name": "اطلاعاتی و سایبری",
+      "level": 2,
+      "parentId": "iran",
+      "description": "تخصص‌های اطلاعاتی و عملیات سایبری",
+      "children": [
+        {
+          "id": "4-1",
+          "name": "تحلیل اطلاعات",
+          "level": 3,
+          "parentId": "4",
+          "description": "تخصص تحلیل اطلاعات و پردازش داده‌ها"
+        },
+        {
+          "id": "4-2",
+          "name": "عملیات سایبری",
+          "level": 3,
+          "parentId": "4",
+          "description": "تخصص عملیات سایبری و جنگ الکترونیک"
+        },
+        {
+          "id": "4-3",
+          "name": "جمع‌آوری داده میدانی",
+          "level": 3,
+          "parentId": "4",
+          "description": "تخصص ISR - جمع‌آوری اطلاعات، نظارت و شناسایی"
+        },
+        {
+          "id": "4-4",
+          "name": "مدیریت اطلاعات",
+          "level": 3,
+          "parentId": "4",
+          "description": "تخصص مدیریت اطلاعات و پایگاه داده"
+        },
+        {
+          "id": "4-5",
+          "name": "پشتیبانی اطلاعاتی",
+          "level": 3,
+          "parentId": "4",
+          "description": "تخصص پشتیبانی اطلاعاتی و تحلیلی"
+        }
+      ]
+    },
+    {
+      "id": "5",
+      "name": "جنگ الکترونیک",
+      "level": 2,
+      "parentId": "iran",
+      "description": "تخصص‌های جنگ الکترونیک و عملیات الکترومغناطیسی",
+      "children": [
+        {
+          "id": "5-1",
+          "name": "شنود و پارازیت",
+          "level": 3,
+          "parentId": "5",
+          "description": "تخصص شنود و پارازیت سیگنال‌های دشمن"
+        },
+        {
+          "id": "5-2",
+          "name": "EW فعال و منفعل",
+          "level": 3,
+          "parentId": "5",
+          "description": "تخصص جنگ الکترونیک فعال و منفعل"
+        },
+        {
+          "id": "5-3",
+          "name": "ضد رادار",
+          "level": 3,
+          "parentId": "5",
+          "description": "تخصص ضد رادار و خنثی‌سازی سیستم‌های راداری"
+        },
+        {
+          "id": "5-4",
+          "name": "حفاظت از سیستم‌های ارتباطی",
+          "level": 3,
+          "parentId": "5",
+          "description": "تخصص حفاظت از سیستم‌های ارتباطی"
+        }
+      ]
+    },
+    {
+      "id": "6",
+      "name": "ش.م.ه",
+      "level": 2,
+      "parentId": "iran",
+      "description": "تخصص‌های شیمیایی، میکروبی، رادیولوژیکی و هسته‌ای",
+      "children": [
+        {
+          "id": "6-1",
+          "name": "عملیات در محیط شیمیایی/هسته‌ای",
+          "level": 3,
+          "parentId": "6",
+          "description": "تخصص عملیات در محیط شیمیایی/هسته‌ای"
+        },
+        {
+          "id": "6-2",
+          "name": "ضد آلودگی",
+          "level": 3,
+          "parentId": "6",
+          "description": "تخصص ضد آلودگی و پاکسازی"
+        },
+        {
+          "id": "6-3",
+          "name": "تیم واکنش سریع",
+          "level": 3,
+          "parentId": "6",
+          "description": "تیم واکنش سریع برای CBRN"
+        },
+        {
+          "id": "6-4",
+          "name": "تجهیزات حفاظت فردی",
+          "level": 3,
+          "parentId": "6",
+          "description": "تخصص تجهیزات حفاظت فردی CBRN"
+        }
+      ]
+    },
+    {
+      "id": "7",
+      "name": "عملیات ویژه",
+      "level": 2,
+      "parentId": "iran",
+      "description": "تخصص‌های عملیات ویژه و نیروهای خاص",
+      "children": [
+        {
+          "id": "7-1",
+          "name": "نفوذ و ترور",
+          "level": 3,
+          "parentId": "7",
+          "description": "تخصص نفوذ و ترور"
+        },
+        {
+          "id": "7-2",
+          "name": "نجات گروگان‌ها",
+          "level": 3,
+          "parentId": "7",
+          "description": "تخصص نجات گروگان‌ها"
+        },
+        {
+          "id": "7-3",
+          "name": "چتربازی نظامی",
+          "level": 3,
+          "parentId": "7",
+          "description": "تخصص چتربازی نظامی"
+        },
+        {
+          "id": "7-4",
+          "name": "عملیات کوهستانی",
+          "level": 3,
+          "parentId": "7",
+          "description": "تخصص عملیات کوهستانی"
+        },
+        {
+          "id": "7-5",
+          "name": "عملیات دریایی ویژه",
+          "level": 3,
+          "parentId": "7",
+          "description": "تخصص عملیات دریایی ویژه"
+        },
+        {
+          "id": "7-6",
+          "name": "عملیات ضد تروریسم",
+          "level": 3,
+          "parentId": "7",
+          "description": "تخصص عملیات ضد تروریسم"
+        }
+      ]
+    },
+    {
+      "id": "8",
+      "name": "آموزش‌های خاص",
+      "level": 1,
+      "parentId": null,
+      "description": "آموزش‌های تخصصی و دوره‌های خاص نظامی",
+      "children": [
+        {
+          "id": "8-1",
+          "name": "آموزش مربی نظامی",
+          "level": 3,
+          "parentId": "8",
+          "description": "آموزش مربی نظامی"
+        },
+        {
+          "id": "8-2",
+          "name": "آموزش فرماندهی میدانی",
+          "level": 3,
+          "parentId": "8",
+          "description": "آموزش فرماندهی میدانی"
+        },
+        {
+          "id": "8-3",
+          "name": "آموزش نبردهای شهری",
+          "level": 3,
+          "parentId": "8",
+          "description": "آموزش نبردهای شهری"
+        },
+        {
+          "id": "8-4",
+          "name": "آموزش در عملیات‌های مشترک",
+          "level": 3,
+          "parentId": "8",
+          "description": "آموزش در عملیات‌های مشترک"
+        },
+        {
+          "id": "8-5",
+          "name": "آموزش تاکتیک‌های پیشرفته",
+          "level": 3,
+          "parentId": "8",
+          "description": "آموزش تاکتیک‌های پیشرفته"
+        },
+        {
+          "id": "8-6",
+          "name": "آموزش شبیه‌سازی‌های جنگی",
+          "level": 3,
+          "parentId": "8",
+          "description": "آموزش شبیه‌سازی‌های جنگی"
+        }
+      ]
+    }
+  ],
+  "levels": [
+    {
+      "id": "lvl-1",
+      "name": "کشور",
+      "englishName": "Country",
+      "order": 1,
+      "isRequired": true,
+      "isActive": true,
+      "icon": "flag",
+      "natoRank": null,
+      "standardCode": null,
+      "personnelRange": null,
+      "specialty": null
+    },
+    {
+      "id": "lvl-2",
+      "name": "نیروهای رزمی",
+      "englishName": "Combat Forces",
+      "order": 2,
+      "isRequired": true,
+      "isActive": true,
+      "icon": "military",
+      "natoRank": null,
+      "standardCode": null,
+      "personnelRange": null,
+      "specialty": "Combat"
+    },
+    {
+      "id": "lvl-3",
+      "name": "مهندسی و پشتیبانی",
+      "englishName": "Engineering & Support",
+      "order": 3,
+      "isRequired": true,
+      "isActive": true,
+      "icon": "engineering",
+      "natoRank": null,
+      "standardCode": null,
+      "personnelRange": null,
+      "specialty": "Engineering"
+    },
+    {
+      "id": "lvl-4",
+      "name": "پزشکی و امداد",
+      "englishName": "Medical & Rescue",
+      "order": 4,
+      "isRequired": true,
+      "isActive": true,
+      "icon": "medical",
+      "natoRank": null,
+      "standardCode": null,
+      "personnelRange": null,
+      "specialty": "Medical"
+    },
+    {
+      "id": "lvl-5",
+      "name": "اطلاعاتی و سایبری",
+      "englishName": "Intelligence & Cyber Operations",
+      "order": 5,
+      "isRequired": true,
+      "isActive": true,
+      "icon": "intelligence",
+      "natoRank": null,
+      "standardCode": null,
+      "personnelRange": null,
+      "specialty": "Intelligence"
+    },
+    {
+      "id": "lvl-6",
+      "name": "جنگ الکترونیک",
+      "englishName": "Electronic Warfare",
+      "order": 6,
+      "isRequired": true,
+      "isActive": true,
+      "icon": "electronic",
+      "natoRank": null,
+      "standardCode": null,
+      "personnelRange": null,
+      "specialty": "EW"
+    },
+    {
+      "id": "lvl-7",
+      "name": "ش.م.ه",
+      "englishName": "CBRN - Chemical, Biological, Radiological, and Nuclear",
+      "order": 7,
+      "isRequired": true,
+      "isActive": true,
+      "icon": "cbrn",
+      "natoRank": null,
+      "standardCode": null,
+      "personnelRange": null,
+      "specialty": "CBRN"
+    },
+    {
+      "id": "lvl-8",
+      "name": "عملیات ویژه",
+      "englishName": "Special Operations",
+      "order": 8,
+      "isRequired": true,
+      "isActive": true,
+      "icon": "special",
+      "natoRank": null,
+      "standardCode": null,
+      "personnelRange": null,
+      "specialty": "SpecialOps"
+    },
+    {
+      "id": "lvl-9",
+      "name": "آموزش‌های خاص",
+      "englishName": "Specialized Training",
+      "order": 9,
+      "isRequired": true,
+      "isActive": true,
+      "icon": "training",
+      "natoRank": null,
+      "standardCode": null,
+      "personnelRange": null,
+      "specialty": "Training"
+    }
+  ]
+}

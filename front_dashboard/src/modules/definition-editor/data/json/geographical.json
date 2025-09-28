@@ -1,0 +1,438 @@
+{
+  "nodes": [
+    {
+      "id": "1",
+      "name": "آسیا",
+      "level": 1,
+      "parentId": null,
+      "description": "قاره آسیا",
+      "children": [
+        {
+          "id": "2",
+          "name": "ایران",
+          "level": 2,
+          "parentId": "1",
+          "description": "جمهوری اسلامی ایران",
+          "children": [
+            {
+              "id": "3",
+              "name": "تهران",
+              "level": 3,
+              "parentId": "2",
+              "description": "استان تهران",
+              "coordinates": { "lat": 35.6892, "lng": 51.3890 },
+              "children": [
+                {
+                  "id": "4",
+                  "name": "شهریار",
+                  "level": 4,
+                  "parentId": "3",
+                  "description": "شهرستان شهریار",
+                  "coordinates": { "lat": 35.6597, "lng": 51.0593 },
+                  "children": [
+                    {
+                      "id": "5",
+                      "name": "بخش مرکزی",
+                      "level": 5,
+                      "parentId": "4",
+                      "description": "بخش مرکزی شهریار",
+                      "children": [
+                        {
+                          "id": "6",
+                          "name": "دهستان فردوس",
+                          "level": 6,
+                          "parentId": "5",
+                          "description": "دهستان فردوس - زون عملیاتی شمالی",
+                          "coordinates": { "lat": 35.6700, "lng": 51.0700 },
+                          "children": [
+                            {
+                              "id": "7",
+                              "name": "شهر شهریار",
+                              "level": 7,
+                              "parentId": "6",
+                              "description": "شهر شهریار - پایگاه عملیاتی",
+                              "coordinates": { "lat": 35.6597, "lng": 51.0593 },
+                              "children": [
+                                {
+                                  "id": "8",
+                                  "name": "محله مرکزی",
+                                  "level": 8,
+                                  "parentId": "7",
+                                  "description": "محله مرکزی - قرارگاه فرماندهی",
+                                  "coordinates": { "lat": 35.6597, "lng": 51.0593 },
+                                  "children": [
+                                    {
+                                      "id": "9",
+                                      "name": "مختصات دقیق فرماندهی",
+                                      "level": 9,
+                                      "parentId": "8",
+                                      "description": "نقطه دقیق فرماندهی - منطقه پویش AOI",
+                                      "coordinates": { "lat": 35.6597, "lng": 51.0593 }
+                                    }
+                                  ]
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "10",
+              "name": "اصفهان",
+              "level": 3,
+              "parentId": "2",
+              "description": "استان اصفهان",
+              "coordinates": { "lat": 32.6546, "lng": 51.6680 },
+              "children": [
+                {
+                  "id": "11",
+                  "name": "شهرستان اصفهان",
+                  "level": 4,
+                  "parentId": "10",
+                  "description": "شهرستان اصفهان",
+                  "coordinates": { "lat": 32.6546, "lng": 51.6680 },
+                  "children": [
+                    {
+                      "id": "12",
+                      "name": "بخش مرکزی",
+                      "level": 5,
+                      "parentId": "11",
+                      "description": "بخش مرکزی اصفهان",
+                      "children": [
+                        {
+                          "id": "13",
+                          "name": "دهستان جی",
+                          "level": 6,
+                          "parentId": "12",
+                          "description": "دهستان جی - زون عملیاتی جنوبی",
+                          "coordinates": { "lat": 32.6500, "lng": 51.6700 },
+                          "children": [
+                            {
+                              "id": "14",
+                              "name": "شهر اصفهان",
+                              "level": 7,
+                              "parentId": "13",
+                              "description": "شهر اصفهان - پایگاه عملیاتی",
+                              "coordinates": { "lat": 32.6546, "lng": 51.6680 },
+                              "children": [
+                                {
+                                  "id": "15",
+                                  "name": "محله چهارباغ",
+                                  "level": 8,
+                                  "parentId": "14",
+                                  "description": "محله چهارباغ - قرارگاه عملیاتی",
+                                  "coordinates": { "lat": 32.6546, "lng": 51.6680 },
+                                  "children": [
+                                    {
+                                      "id": "16",
+                                      "name": "مختصات دقیق چهارباغ",
+                                      "level": 9,
+                                      "parentId": "15",
+                                      "description": "نقطه دقیق چهارباغ - منطقه پویش AOI",
+                                      "coordinates": { "lat": 32.6546, "lng": 51.6680 }
+                                    }
+                                  ]
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "17",
+          "name": "عراق",
+          "level": 2,
+          "parentId": "1",
+          "description": "جمهوری عراق",
+          "coordinates": { "lat": 33.3152, "lng": 44.3661 },
+          "children": [
+            {
+              "id": "18",
+              "name": "بغداد",
+              "level": 3,
+              "parentId": "17",
+              "description": "استان بغداد",
+              "coordinates": { "lat": 33.3152, "lng": 44.3661 },
+              "children": [
+                {
+                  "id": "19",
+                  "name": "شهرستان بغداد",
+                  "level": 4,
+                  "parentId": "18",
+                  "description": "شهرستان بغداد",
+                  "coordinates": { "lat": 33.3152, "lng": 44.3661 },
+                  "children": [
+                    {
+                      "id": "20",
+                      "name": "بخش مرکزی",
+                      "level": 5,
+                      "parentId": "19",
+                      "description": "بخش مرکزی بغداد",
+                      "children": [
+                        {
+                          "id": "21",
+                          "name": "دهستان کرخ",
+                          "level": 6,
+                          "parentId": "20",
+                          "description": "دهستان کرخ - زون عملیاتی غربی",
+                          "coordinates": { "lat": 33.3200, "lng": 44.3600 },
+                          "children": [
+                            {
+                              "id": "22",
+                              "name": "شهر بغداد",
+                              "level": 7,
+                              "parentId": "21",
+                              "description": "شهر بغداد - پایگاه عملیاتی",
+                              "coordinates": { "lat": 33.3152, "lng": 44.3661 },
+                              "children": [
+                                {
+                                  "id": "23",
+                                  "name": "محله کرخ",
+                                  "level": 8,
+                                  "parentId": "22",
+                                  "description": "محله کرخ - قرارگاه عملیاتی",
+                                  "coordinates": { "lat": 33.3152, "lng": 44.3661 },
+                                  "children": [
+                                    {
+                                      "id": "24",
+                                      "name": "مختصات دقیق کرخ",
+                                      "level": 9,
+                                      "parentId": "23",
+                                      "description": "نقطه دقیق کرخ - منطقه پویش AOI",
+                                      "coordinates": { "lat": 33.3152, "lng": 44.3661 }
+                                    }
+                                  ]
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "25",
+      "name": "اروپا",
+      "level": 1,
+      "parentId": null,
+      "description": "قاره اروپا",
+      "children": [
+        {
+          "id": "26",
+          "name": "آلمان",
+          "level": 2,
+          "parentId": "25",
+          "description": "جمهوری فدرال آلمان",
+          "coordinates": { "lat": 51.1657, "lng": 10.4515 },
+          "children": [
+            {
+              "id": "27",
+              "name": "بایرن",
+              "level": 3,
+              "parentId": "26",
+              "description": "ایالت بایرن",
+              "coordinates": { "lat": 48.7904, "lng": 11.4979 },
+              "children": [
+                {
+                  "id": "28",
+                  "name": "مونیخ",
+                  "level": 4,
+                  "parentId": "27",
+                  "description": "شهرستان مونیخ",
+                  "coordinates": { "lat": 48.1351, "lng": 11.5820 },
+                  "children": [
+                    {
+                      "id": "29",
+                      "name": "بخش مرکزی",
+                      "level": 5,
+                      "parentId": "28",
+                      "description": "بخش مرکزی مونیخ",
+                      "children": [
+                        {
+                          "id": "30",
+                          "name": "زون عملیاتی شمالی",
+                          "level": 6,
+                          "parentId": "29",
+                          "description": "زون عملیاتی شمالی مونیخ",
+                          "coordinates": { "lat": 48.1400, "lng": 11.5800 },
+                          "children": [
+                            {
+                              "id": "31",
+                              "name": "شهر مونیخ",
+                              "level": 7,
+                              "parentId": "30",
+                              "description": "شهر مونیخ - پایگاه عملیاتی",
+                              "coordinates": { "lat": 48.1351, "lng": 11.5820 },
+                              "children": [
+                                {
+                                  "id": "32",
+                                  "name": "محله مرکزی",
+                                  "level": 8,
+                                  "parentId": "31",
+                                  "description": "محله مرکزی مونیخ - قرارگاه عملیاتی",
+                                  "coordinates": { "lat": 48.1351, "lng": 11.5820 },
+                                  "children": [
+                                    {
+                                      "id": "33",
+                                      "name": "مختصات دقیق مرکزی",
+                                      "level": 9,
+                                      "parentId": "32",
+                                      "description": "نقطه دقیق مرکزی مونیخ - منطقه پویش AOI",
+                                      "coordinates": { "lat": 48.1351, "lng": 11.5820 }
+                                    }
+                                  ]
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "levels": [
+    {
+      "id": "lvl-1",
+      "name": "قاره",
+      "englishName": "Continent",
+      "order": 1,
+      "isRequired": true,
+      "isActive": true,
+      "icon": "globe",
+      "natoRank": null,
+      "standardCode": null,
+      "personnelRange": null,
+      "specialty": null
+    },
+    {
+      "id": "lvl-2",
+      "name": "کشور",
+      "englishName": "Country",
+      "order": 2,
+      "isRequired": true,
+      "isActive": true,
+      "icon": "flag",
+      "natoRank": null,
+      "standardCode": null,
+      "personnelRange": null,
+      "specialty": null
+    },
+    {
+      "id": "lvl-3",
+      "name": "استان / ایالت",
+      "englishName": "Province / State",
+      "order": 3,
+      "isRequired": true,
+      "isActive": true,
+      "icon": "map",
+      "natoRank": null,
+      "standardCode": null,
+      "personnelRange": null,
+      "specialty": null
+    },
+    {
+      "id": "lvl-4",
+      "name": "شهرستان / منطقه",
+      "englishName": "County / District",
+      "order": 4,
+      "isRequired": true,
+      "isActive": true,
+      "icon": "map-pin",
+      "natoRank": null,
+      "standardCode": null,
+      "personnelRange": null,
+      "specialty": null
+    },
+    {
+      "id": "lvl-5",
+      "name": "بخش / ناحیه",
+      "englishName": "Sector / Sub-district",
+      "order": 5,
+      "isRequired": false,
+      "isActive": true,
+      "icon": "grid",
+      "natoRank": null,
+      "standardCode": null,
+      "personnelRange": null,
+      "specialty": null
+    },
+    {
+      "id": "lvl-6",
+      "name": "دهستان / زون عملیاتی",
+      "englishName": "Rural District / Operational Zone",
+      "order": 6,
+      "isRequired": false,
+      "isActive": true,
+      "icon": "layers",
+      "natoRank": null,
+      "standardCode": null,
+      "personnelRange": null,
+      "specialty": null
+    },
+    {
+      "id": "lvl-7",
+      "name": "روستا / شهر / پایگاه",
+      "englishName": "Village / Town / Base",
+      "order": 7,
+      "isRequired": false,
+      "isActive": true,
+      "icon": "home",
+      "natoRank": null,
+      "standardCode": null,
+      "personnelRange": null,
+      "specialty": null
+    },
+    {
+      "id": "lvl-8",
+      "name": "محله / قرارگاه",
+      "englishName": "Neighborhood / HQ Zone",
+      "order": 8,
+      "isRequired": false,
+      "isActive": true,
+      "icon": "map",
+      "natoRank": null,
+      "standardCode": null,
+      "personnelRange": null,
+      "specialty": null
+    },
+    {
+      "id": "lvl-9",
+      "name": "مختصات دقیق / منطقه پویش",
+      "englishName": "Point / Grid Square / AOI",
+      "order": 9,
+      "isRequired": false,
+      "isActive": true,
+      "icon": "crosshair",
+      "natoRank": null,
+      "standardCode": null,
+      "personnelRange": null,
+      "specialty": null
+    }
+  ]
+}

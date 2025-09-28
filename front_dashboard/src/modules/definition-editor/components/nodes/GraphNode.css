@@ -1,0 +1,231 @@
+/* CSS برای GraphNode */
+
+.graph-node {
+  position: absolute;
+  cursor: pointer;
+  user-select: none;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.graph-node:hover {
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+  transform: translate(-50%, -50%) scale(1.05);
+}
+
+.graph-node.selected {
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
+  border: 2px solid #3b82f6;
+}
+
+.graph-node.highlighted {
+  box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.3);
+  border: 2px solid #f59e0b;
+}
+
+.graph-node.hovered {
+  z-index: 10;
+}
+
+.graph-node-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  text-align: center;
+  position: relative;
+}
+
+.graph-node-icon {
+  font-size: 16px;
+  margin-bottom: 4px;
+}
+
+.graph-node-label {
+  font-size: inherit;
+  font-weight: inherit;
+  color: inherit;
+  line-height: 1.2;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
+  padding: 0 4px;
+}
+
+.graph-node-children-count {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  background-color: #ef4444;
+  color: white;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: 600;
+  border: 2px solid white;
+}
+
+/* Tooltip */
+.graph-node-tooltip {
+  position: absolute;
+  top: -10px;
+  left: 50%;
+  transform: translateX(-50%) translateY(-100%);
+  z-index: 1000;
+  pointer-events: none;
+}
+
+.tooltip-content {
+  background-color: #1f2937;
+  color: white;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  white-space: nowrap;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  max-width: 200px;
+}
+
+.tooltip-content::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 4px solid transparent;
+  border-top-color: #1f2937;
+}
+
+.tooltip-title {
+  font-weight: 600;
+  margin-bottom: 4px;
+  color: #f9fafb;
+}
+
+.tooltip-description {
+  color: #d1d5db;
+  margin-bottom: 4px;
+  font-size: 11px;
+}
+
+.tooltip-meta {
+  display: flex;
+  gap: 8px;
+  font-size: 10px;
+  color: #9ca3af;
+}
+
+.tooltip-meta span {
+  background-color: #374151;
+  padding: 2px 6px;
+  border-radius: 3px;
+}
+
+/* حالت‌های مختلف */
+.graph-node.small {
+  width: 80px;
+  height: 40px;
+  font-size: 12px;
+}
+
+.graph-node.small .graph-node-icon {
+  font-size: 12px;
+}
+
+.graph-node.large {
+  width: 160px;
+  height: 80px;
+  font-size: 16px;
+}
+
+.graph-node.large .graph-node-icon {
+  font-size: 20px;
+}
+
+/* شکل‌های مختلف */
+.graph-node.circle {
+  border-radius: 50%;
+}
+
+.graph-node.square {
+  border-radius: 4px;
+}
+
+.graph-node.rounded {
+  border-radius: 12px;
+}
+
+/* انیمیشن‌ها */
+.graph-node.animated {
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0% {
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  }
+  50% {
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1), 0 0 0 6px rgba(59, 130, 246, 0.1);
+  }
+  100% {
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  }
+}
+
+/* حالت‌های خاص */
+.graph-node.dragging {
+  opacity: 0.5;
+  transform: translate(-50%, -50%) scale(0.9);
+}
+
+.graph-node.drag-over {
+  border: 2px dashed #3b82f6;
+  background-color: rgba(59, 130, 246, 0.1);
+}
+
+.graph-node.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.graph-node.disabled:hover {
+  transform: translate(-50%, -50%);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* حالت‌های رنگی */
+.graph-node.primary {
+  background-color: #3b82f6;
+  border-color: #1d4ed8;
+}
+
+.graph-node.secondary {
+  background-color: #6b7280;
+  border-color: #4b5563;
+}
+
+.graph-node.success {
+  background-color: #10b981;
+  border-color: #059669;
+}
+
+.graph-node.warning {
+  background-color: #f59e0b;
+  border-color: #d97706;
+}
+
+.graph-node.danger {
+  background-color: #ef4444;
+  border-color: #dc2626;
+}
+
+.graph-node.info {
+  background-color: #06b6d4;
+  border-color: #0891b2;
+}
