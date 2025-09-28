@@ -779,13 +779,6 @@ const HomePage: React.FC = () => {
         roles: ['admin', 'commander', 'operator', 'viewer'],
       },
       {
-        title: 'نقشه‌کش آرایش نبرد',
-        icon: <RadarIcon />,
-        color: '#d32f2f',
-        onClick: () => navigate('/dashboard/orbat-mapper'),
-        roles: ['admin', 'commander', 'operator'],
-      },
-      {
         title: t('dashboard.quickActions.reporting'),
         icon: <TrendingUp />,
         color: '#ed6c02',

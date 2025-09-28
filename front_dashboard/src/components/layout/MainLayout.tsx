@@ -41,6 +41,7 @@ import {
   CheckCircle,
   Category as CategoryIcon,
   Edit as EditIcon,
+  Assignment as AssignmentIcon,
   AccountBox,
 } from '@mui/icons-material';
 import { useNavigate, useLocation } from 'react-router-dom';
@@ -131,8 +132,15 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
     { 
       id: 'orbat-mapper', 
       label: 'کالک نگار', 
-      icon: <Map />, 
-      path: '/dashboard/map-viewer',
+      icon: <MilitaryTech />, 
+      path: '/dashboard/orbat-mapper',
+      roles: ['admin', 'commander', 'operator']
+    },
+    { 
+      id: 'scenario-management', 
+      label: 'مدیریت سناریو ها', 
+      icon: <AssignmentIcon />, 
+      path: '/dashboard/scenarios',
       roles: ['admin', 'commander', 'operator']
     },
     { 
