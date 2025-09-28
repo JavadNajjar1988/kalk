@@ -24,39 +24,31 @@ export const primaryColors = {
   orange: '#ff9800'
 };
 
-// B-Yekan font faces
-const BYekanFontFaces = `
+// Yekan font faces
+const YekanFontFaces = `
   @font-face {
-    font-family: 'B-Yekan';
-    src: local('B Yekan'),
-         local('Yekan'),
-         local('BYekan'),
-         url('/fonts/Yekan.woff2') format('woff2'),
+    font-family: 'Yekan';
+    src: url('/fonts/Yekan.woff2') format('woff2'),
          url('/fonts/Yekan.woff') format('woff');
-    font-weight: 400;
+    font-weight: normal;
     font-style: normal;
     font-display: swap;
-    unicode-range: U+0600-06FF, U+200C-200F, U+2010-2011, U+204F, U+2E41, U+FB50-FDFF, U+FE80-FEFC;
   }
   
   @font-face {
-    font-family: 'B-Yekan';
-    src: local('B Yekan Bold'),
-         local('Yekan Bold'),
-         local('BYekan Bold'),
-         url('/fonts/Yekan-Bold.woff2') format('woff2'),
+    font-family: 'Yekan';
+    src: url('/fonts/Yekan-Bold.woff2') format('woff2'),
          url('/fonts/Yekan-Bold.woff') format('woff');
-    font-weight: 700;
+    font-weight: bold;
     font-style: normal;
     font-display: swap;
-    unicode-range: U+0600-06FF, U+200C-200F, U+2010-2011, U+204F, U+2E41, U+FB50-FDFF, U+FE80-FEFC;
   }
 `;
 
 // Inject font faces
 if (typeof document !== 'undefined') {
   const styleElement = document.createElement('style');
-  styleElement.textContent = BYekanFontFaces;
+  styleElement.textContent = YekanFontFaces;
   document.head.appendChild(styleElement);
 }
 
@@ -165,15 +157,15 @@ export const createAppTheme = (
       },
     },
     typography: {
-      fontFamily: '"B-Yekan", "Vazirmatn", "Tahoma", "Iranian Sans", "بی یکان", "تهوما", "Segoe UI", "Arial", sans-serif',
+      fontFamily: '"Yekan", "Roboto", "Helvetica", "Arial", sans-serif',
       h1: {
-        fontFamily: '"B-Yekan", serif',
+        fontFamily: '"Yekan", serif',
         fontWeight: 700,
         fontSize: `${2.5 * fontSizeMultiplier}rem`,
         lineHeight: 1.2,
       },
       h2: {
-        fontFamily: '"B-Yekan", serif',
+        fontFamily: '"Yekan", serif',
         fontWeight: 600,
         fontSize: `${2 * fontSizeMultiplier}rem`,
         lineHeight: 1.3,
@@ -185,41 +177,41 @@ export const createAppTheme = (
         lineHeight: 1.3,
       },
       h4: {
-        fontFamily: '"B-Yekan", serif',
+        fontFamily: '"Yekan", serif',
         fontWeight: 600,
         fontSize: `${1.5 * fontSizeMultiplier}rem`,
         lineHeight: 1.4,
       },
       h5: {
-        fontFamily: '"B-Yekan", serif',
+        fontFamily: '"Yekan", serif',
         fontWeight: 600,
         fontSize: `${1.25 * fontSizeMultiplier}rem`,
         lineHeight: 1.4,
       },
       h6: {
-        fontFamily: '"B-Yekan", serif',
+        fontFamily: '"Yekan", serif',
         fontWeight: 600,
         fontSize: `${1.1 * fontSizeMultiplier}rem`,
         lineHeight: 1.4,
       },
       body1: {
-        fontFamily: '"B-Yekan", sans-serif',
+        fontFamily: '"Yekan", sans-serif',
         fontSize: `${1 * fontSizeMultiplier}rem`,
         lineHeight: 1.5,
       },
       body2: {
-        fontFamily: '"B-Yekan", sans-serif',
+        fontFamily: '"Yekan", sans-serif',
         fontSize: `${0.875 * fontSizeMultiplier}rem`,
         lineHeight: 1.5,
       },
       button: {
-        fontFamily: '"B-Yekan", sans-serif',
+        fontFamily: '"Yekan", sans-serif',
         fontWeight: 500,
         fontSize: `${0.875 * fontSizeMultiplier}rem`,
         textTransform: 'none',
       },
       caption: {
-        fontFamily: '"B-Yekan", sans-serif',
+        fontFamily: '"Yekan", sans-serif',
         fontSize: `${0.75 * fontSizeMultiplier}rem`,
         lineHeight: 1.4,
       },
@@ -290,7 +282,7 @@ export const createAppTheme = (
               ? darkThemeColors.background.default
               : finalThemeConfig.colors.background.default,
             minHeight: '100vh',
-            fontFamily: '"B-Yekan", sans-serif',
+            fontFamily: '"Yekan", sans-serif',
           },
           '*': {
             '&::-webkit-scrollbar': {

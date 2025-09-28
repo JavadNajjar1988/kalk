@@ -1,27 +1,19 @@
-/* B-Yekan font with fallbacks */
+/* self-host Vazirmatn */
 @font-face {
-  font-family: 'B-Yekan';
-  src: local('B Yekan'),
-       local('Yekan'),
-       local('BYekan'),
-       url('/fonts/Yekan.woff2') format('woff2'),
+  font-family: 'Yekan';
+  src: url('/fonts/Yekan.woff2') format('woff2'),
        url('/fonts/Yekan.woff') format('woff');
   font-weight: 400;
   font-style: normal;
   font-display: swap;
-  unicode-range: U+0600-06FF, U+200C-200F, U+2010-2011, U+204F, U+2E41, U+FB50-FDFF, U+FE80-FEFC;
 }
 @font-face {
-  font-family: 'B-Yekan';
-  src: local('B Yekan Bold'),
-       local('Yekan Bold'),
-       local('BYekan Bold'),
-       url('/fonts/Yekan-Bold.woff2') format('woff2'),
+  font-family: 'Yekan';
+  src: url('/fonts/Yekan-Bold.woff2') format('woff2'),
        url('/fonts/Yekan-Bold.woff') format('woff');
   font-weight: 700;
   font-style: normal;
   font-display: swap;
-  unicode-range: U+0600-06FF, U+200C-200F, U+2010-2011, U+204F, U+2E41, U+FB50-FDFF, U+FE80-FEFC;
 }
 
 /* OpenLayers CSS */
@@ -34,7 +26,7 @@
 }
 
 body {
-  font-family: 'B-Yekan', 'Vazirmatn', 'Tahoma', 'Iranian Sans', 'بی یکان', 'تهوما', 'Segoe UI', 'Arial', sans-serif;
+  font-family: 'Yekan', 'Arial', 'Roboto', sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   direction: rtl;
@@ -121,4 +113,32 @@ code {
 
 .ol-attribution a:hover {
   text-decoration: underline;
+}
+
+/* Military Symbol Styles for better visibility */
+.milsymbol {
+  filter: contrast(1.2) brightness(1.1);
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: crisp-edges;
+}
+
+.milsymbol svg {
+  filter: drop-shadow(0 0 1px rgba(255, 255, 255, 0.8));
+}
+
+/* Enhance text visibility in military symbols */
+.milsymbol svg text {
+  font-weight: bold !important;
+  stroke: white !important;
+  stroke-width: 0.5px !important;
+  paint-order: stroke fill !important;
+  font-family: 'Arial', sans-serif !important;
+}
+
+/* Improve echelon indicator visibility */
+.milsymbol svg text[text-anchor="middle"] {
+  font-weight: 900 !important;
+  stroke: white !important;
+  stroke-width: 1px !important;
+  fill: black !important;
 } 

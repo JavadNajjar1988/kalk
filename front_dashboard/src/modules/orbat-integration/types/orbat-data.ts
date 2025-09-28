@@ -1,6 +1,6 @@
 /**
  * ORBAT Data Types
- * ساختار داده‌های ORBAT سازگار با orbat-mapper
+ * ساختار داده‌های ORBAT
  */
 
 // Base entity

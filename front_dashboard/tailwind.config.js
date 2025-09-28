@@ -6,11 +6,7 @@ export default {
     "./src/**/*.{js,ts,jsx,tsx}",
   ],
   theme: {
-    extend: {
-      fontFamily: {
-        'sans': ['B-Yekan', 'Vazirmatn', 'Tahoma', 'Iranian Sans', 'بی یکان', 'تهوما', 'Segoe UI', 'Arial', 'sans-serif'],
-      },
-    },
+    extend: {},
   },
   plugins: [],
 }; 

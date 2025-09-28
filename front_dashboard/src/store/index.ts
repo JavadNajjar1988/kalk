@@ -16,7 +16,6 @@ import tabularResourcesSlice from './slices/tabularResourcesSlice';
 import definitionEditorSlice, { setExpandedNodes as deSetExpandedNodes, setHighlightedNodes as deSetHighlightedNodes } from '../modules/definition-editor/store/definitionEditorSlice';
 import equipmentFieldsReducer from '../modules/definition-editor/store/equipmentFieldsSlice';
 import hierarchyLevelsReducer from '../modules/definition-editor/store/hierarchyLevelsSlice';
-import smartFieldBuilderReducer from '../modules/definition-editor/store/smartFieldBuilderSlice';
 import usersSlice from '../modules/users/store/usersSlice';
 import resourcesModuleSlice from '../modules/resources/store/resourcesSlice';
 
@@ -33,7 +32,6 @@ const rootReducer = combineReducers({
 	definitionEditor: definitionEditorSlice,
 	equipmentFields: equipmentFieldsReducer,
 	hierarchyLevels: hierarchyLevelsReducer,
-	smartFieldBuilder: smartFieldBuilderReducer,
 	users: usersSlice,
 	resourcesModule: resourcesModuleSlice,
 });

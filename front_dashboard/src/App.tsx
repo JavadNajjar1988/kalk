@@ -13,7 +13,6 @@ import TransformFarsiNumbers from './components/common/TransformFarsiNumbers';
 import NewSplashScreen from './components/common/NewSplashScreen';
 import authRoutes from './modules/auth/routes';
 import DashboardRoutes from './modules/dashboard/routes';
-import ScenarioManagementRoutes from './modules/scenario-management/routes';
 import { ScenarioDialogProvider } from './components/common/ScenarioDialogContext';
 import { initializeViewportHeight } from './utils/browserCompatibility';
 import './transparent-number.css';
@@ -66,10 +65,6 @@ const AppRoutes: React.FC = () => {
     {
       path: '/dashboard/*',
       element: <ProtectedRoute><DashboardRoutes /></ProtectedRoute>,
-    },
-    {
-      path: '/orbat-editor/*',
-      element: <ProtectedRoute><ScenarioManagementRoutes /></ProtectedRoute>,
     },
     {
       path: '*',

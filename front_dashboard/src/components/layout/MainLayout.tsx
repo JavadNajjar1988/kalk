@@ -130,10 +130,17 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
       roles: ['admin', 'commander', 'operator']
     },
     { 
-      id: 'map-viewer', 
+      id: 'orbat-mapper', 
       label: 'کالک نگار', 
-      icon: <Map />, 
-      path: '/dashboard/map-viewer',
+      icon: <MilitaryTech />, 
+      path: '/dashboard/orbat-mapper',
+      roles: ['admin', 'commander', 'operator']
+    },
+    { 
+      id: 'scenario-management', 
+      label: 'مدیریت سناریو ها', 
+      icon: <AssignmentIcon />, 
+      path: '/dashboard/scenarios',
       roles: ['admin', 'commander', 'operator']
     },
     { 
