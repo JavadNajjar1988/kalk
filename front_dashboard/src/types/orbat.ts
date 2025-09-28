@@ -1,4 +1,4 @@
-// تایپ‌های ORBAT سازگار با orbat-mapper
+// تایپ‌های ORBAT
 import type { SymbolOptions } from 'milsymbol';
 
 // موقعیت جغرافیایی
