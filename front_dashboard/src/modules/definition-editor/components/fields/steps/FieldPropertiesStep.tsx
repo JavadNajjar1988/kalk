@@ -21,6 +21,8 @@ import SecurityStorageProperties from '../properties/SecurityStorageProperties';
 import DisplayProperties from '../properties/DisplayProperties';
 import SelectOptionsProperties from '../properties/SelectOptionsProperties';
 import SelectFieldProperties from '../properties/SelectFieldProperties';
+import VariantProperties from '../properties/VariantProperties';
+import MaskProperties from '../properties/MaskProperties';
 
 const FieldPropertiesStep: React.FC<FieldPropertiesStepProps> = ({ formData, onChange }) => {
   // Determine which properties component to show based on field type
@@ -29,14 +31,48 @@ const FieldPropertiesStep: React.FC<FieldPropertiesStepProps> = ({ formData, onC
       return <SelectFieldProperties formData={formData} onChange={onChange} />;
     }
     
+    // For text-based fields, show relevant properties
+    if (formData.type === 'text' || formData.type === 'email' || formData.type === 'password' || formData.type === 'textarea') {
+      return (
+        <>
+          <ContentControlProperties formData={formData} onChange={onChange} />
+          <AssistiveProperties formData={formData} onChange={onChange} />
+          <BehaviorLogicProperties formData={formData} onChange={onChange} />
+          <SecurityStorageProperties formData={formData} onChange={onChange} />
+          <DisplayProperties formData={formData} onChange={onChange} />
+          <VariantProperties formData={formData} onChange={onChange} />
+          <MaskProperties formData={formData} onChange={onChange} />
+        </>
+      );
+    }
+    
+    // For number fields, show only relevant properties
+    if (formData.type === 'number') {
+      return (
+        <>
+          <BehaviorLogicProperties formData={formData} onChange={onChange} />
+          <SecurityStorageProperties formData={formData} onChange={onChange} />
+          <DisplayProperties formData={formData} onChange={onChange} />
+        </>
+      );
+    }
+    
+    // For boolean fields, show minimal properties
+    if (formData.type === 'boolean') {
+      return (
+        <>
+          <BehaviorLogicProperties formData={formData} onChange={onChange} />
+          <DisplayProperties formData={formData} onChange={onChange} />
+        </>
+      );
+    }
+    
+    // For other field types, show basic properties
     return (
       <>
-        <ContentControlProperties formData={formData} onChange={(key, value) => onChange(key as any, value)} />
-        <AssistiveProperties formData={formData} onChange={(key, value) => onChange(key as any, value)} />
-        <BehaviorLogicProperties formData={formData} onChange={(key, value) => onChange(key as any, value)} />
-        <SecurityStorageProperties formData={formData} onChange={(key, value) => onChange(key as any, value)} />
-        <DisplayProperties formData={formData} onChange={(key, value) => onChange(key as any, value)} />
-        <SelectOptionsProperties formData={formData} onChange={(key, value) => onChange(key as any, value)} />
+        <BehaviorLogicProperties formData={formData} onChange={onChange} />
+        <SecurityStorageProperties formData={formData} onChange={onChange} />
+        <DisplayProperties formData={formData} onChange={onChange} />
       </>
     );
   };
@@ -131,7 +167,7 @@ const FieldPropertiesStep: React.FC<FieldPropertiesStepProps> = ({ formData, onC
               <InputLabel>جهت متن</InputLabel>
               <Select
                 value={formData.direction || 'auto'}
-                onChange={(e) => onChange('direction', e.target.value)}
+                onChange={(e) => onChange('direction', e.target.value as any)}
                 label="جهت متن"
                 sx={{
                   background: 'rgba(255, 255, 255, 0.8)',

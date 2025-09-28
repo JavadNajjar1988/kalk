@@ -1,10 +1,11 @@
 import React, { memo } from 'react';
-import { Box, Typography, Paper, Grid, FormControl, InputLabel, Select, MenuItem, FormControlLabel, Switch } from '@mui/material';
+import { Box, Typography, Paper, Grid, FormControl, InputLabel, Select, MenuItem, FormControlLabel, Switch, TextField } from '@mui/material';
 import HelpTooltip from '../shared/HelpTooltip';
+import { ExtendedCustomFieldDefinition } from '../types/FieldEditTypes';
 
 interface SecurityStoragePropertiesProps {
-  formData: any;
-  onChange: (key: string, value: any) => void;
+  formData: ExtendedCustomFieldDefinition;
+  onChange: (key: keyof ExtendedCustomFieldDefinition, value: any) => void;
 }
 
 const SecurityStorageProperties: React.FC<SecurityStoragePropertiesProps> = ({ formData, onChange }) => {
@@ -31,8 +32,11 @@ const SecurityStorageProperties: React.FC<SecurityStoragePropertiesProps> = ({ f
             <FormControlLabel
               control={
                 <Switch
-                  checked={formData.enableSensitiveDataDetection || false}
-                  onChange={(e) => onChange('enableSensitiveDataDetection', e.target.checked)}
+                  checked={formData.piiCheck?.enabled || false}
+                  onChange={(e) => onChange('piiCheck', { 
+                    ...formData.piiCheck, 
+                    enabled: e.target.checked 
+                  })}
                   size="small"
                 />
               }
@@ -44,23 +48,47 @@ const SecurityStorageProperties: React.FC<SecurityStoragePropertiesProps> = ({ f
               example="تشخیص 'ali@gmail.com' یا '0123456789'"
             />
           </Box>
-          {formData.enableSensitiveDataDetection && (
-            <FormControl fullWidth>
-              <InputLabel>عمل</InputLabel>
-              <Select
-                value={formData.sensitiveDataAction || 'warn'}
-                onChange={(e) => onChange('sensitiveDataAction', e.target.value)}
-                label="عمل"
-                sx={{
-                  background: 'rgba(255, 255, 255, 0.8)',
-                  backdropFilter: 'blur(10px)',
-                }}
-              >
-                <MenuItem value="warn">هشدار</MenuItem>
-                <MenuItem value="block">مسدود</MenuItem>
-                <MenuItem value="mask">ماسک</MenuItem>
-              </Select>
-            </FormControl>
+          {formData.piiCheck?.enabled && (
+            <Grid container spacing={2}>
+              <Grid item xs={12}>
+                <FormControl fullWidth>
+                  <InputLabel>عمل</InputLabel>
+                  <Select
+                    value={formData.piiCheck.action || 'warn'}
+                    onChange={(e) => onChange('piiCheck', { 
+                      ...formData.piiCheck, 
+                      action: e.target.value as any
+                    })}
+                    label="عمل"
+                    sx={{
+                      background: 'rgba(255, 255, 255, 0.8)',
+                      backdropFilter: 'blur(10px)',
+                    }}
+                  >
+                    <MenuItem value="warn">هشدار</MenuItem>
+                    <MenuItem value="block">مسدود</MenuItem>
+                  </Select>
+                </FormControl>
+              </Grid>
+              <Grid item xs={12}>
+                <TextField
+                  fullWidth
+                  label="الگوهای سفارشی (با کاما جدا کنید)"
+                  value={formData.piiCheck.patterns?.join(', ') || ''}
+                  onChange={(e) => onChange('piiCheck', { 
+                    ...formData.piiCheck, 
+                    patterns: e.target.value.split(',').map(p => p.trim()).filter(p => p)
+                  })}
+                  placeholder="الگوی ۱, الگوی ۲, الگوی ۳"
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      background: 'rgba(255, 255, 255, 0.8)',
+                      backdropFilter: 'blur(10px)',
+                    },
+                  }}
+                />
+              </Grid>
+            </Grid>
           )}
         </Grid>
 
@@ -70,8 +98,11 @@ const SecurityStorageProperties: React.FC<SecurityStoragePropertiesProps> = ({ f
             <FormControlLabel
               control={
                 <Switch
-                  checked={formData.enableInappropriateWordsDetection || false}
-                  onChange={(e) => onChange('enableInappropriateWordsDetection', e.target.checked)}
+                  checked={formData.profanityCheck?.enabled || false}
+                  onChange={(e) => onChange('profanityCheck', { 
+                    ...formData.profanityCheck, 
+                    enabled: e.target.checked 
+                  })}
                   size="small"
                 />
               }
@@ -83,23 +114,47 @@ const SecurityStorageProperties: React.FC<SecurityStoragePropertiesProps> = ({ f
               example="تشخیص و فیلتر کلمات غیرمجاز"
             />
           </Box>
-          {formData.enableInappropriateWordsDetection && (
-            <FormControl fullWidth>
-              <InputLabel>عمل</InputLabel>
-              <Select
-                value={formData.inappropriateWordsAction || 'warn'}
-                onChange={(e) => onChange('inappropriateWordsAction', e.target.value)}
-                label="عمل"
-                sx={{
-                  background: 'rgba(255, 255, 255, 0.8)',
-                  backdropFilter: 'blur(10px)',
-                }}
-              >
-                <MenuItem value="warn">هشدار</MenuItem>
-                <MenuItem value="block">مسدود</MenuItem>
-                <MenuItem value="replace">جایگزین</MenuItem>
-              </Select>
-            </FormControl>
+          {formData.profanityCheck?.enabled && (
+            <Grid container spacing={2}>
+              <Grid item xs={12}>
+                <FormControl fullWidth>
+                  <InputLabel>عمل</InputLabel>
+                  <Select
+                    value={formData.profanityCheck.action || 'warn'}
+                    onChange={(e) => onChange('profanityCheck', { 
+                      ...formData.profanityCheck, 
+                      action: e.target.value as any
+                    })}
+                    label="عمل"
+                    sx={{
+                      background: 'rgba(255, 255, 255, 0.8)',
+                      backdropFilter: 'blur(10px)',
+                    }}
+                  >
+                    <MenuItem value="warn">هشدار</MenuItem>
+                    <MenuItem value="block">مسدود</MenuItem>
+                  </Select>
+                </FormControl>
+              </Grid>
+              <Grid item xs={12}>
+                <TextField
+                  fullWidth
+                  label="کلمات سفارشی (با کاما جدا کنید)"
+                  value={formData.profanityCheck.customWords?.join(', ') || ''}
+                  onChange={(e) => onChange('profanityCheck', { 
+                    ...formData.profanityCheck, 
+                    customWords: e.target.value.split(',').map(w => w.trim()).filter(w => w)
+                  })}
+                  placeholder="کلمه ۱, کلمه ۲, کلمه ۳"
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      background: 'rgba(255, 255, 255, 0.8)',
+                      backdropFilter: 'blur(10px)',
+                    },
+                  }}
+                />
+              </Grid>
+            </Grid>
           )}
         </Grid>
 
@@ -112,8 +167,11 @@ const SecurityStorageProperties: React.FC<SecurityStoragePropertiesProps> = ({ f
             <FormControlLabel
               control={
                 <Switch
-                  checked={formData.searchable || false}
-                  onChange={(e) => onChange('searchable', e.target.checked)}
+                  checked={formData.indexing?.searchable || false}
+                  onChange={(e) => onChange('indexing', { 
+                    ...formData.indexing, 
+                    searchable: e.target.checked 
+                  })}
                   size="small"
                 />
               }
@@ -122,8 +180,11 @@ const SecurityStorageProperties: React.FC<SecurityStoragePropertiesProps> = ({ f
             <FormControlLabel
               control={
                 <Switch
-                  checked={formData.filterable || false}
-                  onChange={(e) => onChange('filterable', e.target.checked)}
+                  checked={formData.indexing?.filterable || false}
+                  onChange={(e) => onChange('indexing', { 
+                    ...formData.indexing, 
+                    filterable: e.target.checked 
+                  })}
                   size="small"
                 />
               }
@@ -137,8 +198,8 @@ const SecurityStorageProperties: React.FC<SecurityStoragePropertiesProps> = ({ f
           <FormControl fullWidth>
             <InputLabel>آنالایزر جستجو</InputLabel>
             <Select
-              value={formData.searchAnalyzer || 'standard'}
-              onChange={(e) => onChange('searchAnalyzer', e.target.value)}
+              value={formData.analyzer || 'standard'}
+              onChange={(e) => onChange('analyzer', e.target.value)}
               label="آنالایزر جستجو"
               sx={{
                 background: 'rgba(255, 255, 255, 0.8)',
@@ -147,7 +208,6 @@ const SecurityStorageProperties: React.FC<SecurityStoragePropertiesProps> = ({ f
             >
               <MenuItem value="standard">استاندارد</MenuItem>
               <MenuItem value="persian">فارسی</MenuItem>
-              <MenuItem value="custom">سفارشی</MenuItem>
             </Select>
           </FormControl>
         </Grid>

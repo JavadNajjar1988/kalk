@@ -15,6 +15,12 @@ import {
   InputAdornment,
   OutlinedInput
 } from '@mui/material';
+import { 
+  Accordion, 
+  AccordionSummary, 
+  AccordionDetails 
+} from '@mui/material';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import { ExtendedCustomFieldDefinition, FieldType } from '../types/FieldEditTypes';
 import { FieldEnhancer } from '../processors/FieldEnhancer';
 
@@ -36,20 +42,42 @@ export const LiveFieldPreview: React.FC<LiveFieldPreviewProps> = ({ formData }) 
     setFieldErrors([]);
     
     try {
-      // Apply sync processing for immediate feedback
-      const processedValue = FieldEnhancer.processValueSync(value, formData);
-      
-      // If processing made changes, update the field value
-      if (processedValue !== value) {
-        setFieldValue(processedValue);
-      }
-      
-      // Apply async processing for validation
-      const result = await FieldEnhancer.processValue(processedValue, formData);
-      
-      // Handle validation errors
-      if (!result.isValid && result.validationErrors) {
-        setFieldErrors(result.validationErrors);
+      // Check if FieldEnhancer is available
+      if (typeof FieldEnhancer !== 'undefined' && FieldEnhancer.processValueSync) {
+        // Apply sync processing for immediate feedback
+        const processedValue = FieldEnhancer.processValueSync(value, formData);
+        
+        // If processing made changes, update the field value
+        if (processedValue !== value) {
+          setFieldValue(processedValue);
+        }
+        
+        // Apply async processing for validation
+        if (FieldEnhancer.processValue) {
+          const result = await FieldEnhancer.processValue(processedValue, formData);
+          
+          // Handle validation errors
+          if (!result.isValid && result.validationErrors) {
+            setFieldErrors(result.validationErrors);
+          }
+        }
+      } else {
+        // Fallback: basic validation without FieldEnhancer
+        console.warn('FieldEnhancer not available, using basic validation');
+        
+        // Basic validation for required fields
+        if (formData.isRequired && !value.trim()) {
+          setFieldErrors(['این فیلد اجباری است']);
+        }
+        
+        // Basic length validation
+        if (formData.validationRules?.minLength && value.length < formData.validationRules.minLength) {
+          setFieldErrors([`حداقل ${formData.validationRules.minLength} کاراکتر لازم است`]);
+        }
+        
+        if (formData.validationRules?.maxLength && value.length > formData.validationRules.maxLength) {
+          setFieldErrors([`حداکثر ${formData.validationRules.maxLength} کاراکتر مجاز است`]);
+        }
       }
     } catch (error) {
       console.warn('Field processing failed:', error);
@@ -63,6 +91,94 @@ export const LiveFieldPreview: React.FC<LiveFieldPreviewProps> = ({ formData }) 
       case 'text':
       case 'email':
       case 'password':
+        // Special handling for accordion display
+        if (formData.displayType === 'accordion') {
+          return (
+            <Accordion>
+              <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                <Typography>{formData.accordionTitle || formData.name}</Typography>
+              </AccordionSummary>
+              <AccordionDetails>
+                {/* Show options when accordionDisplayMode is 'options', otherwise show text field */}
+                {formData.accordionDisplayMode === 'options' && formData.options && formData.options.length > 0 ? (
+                  <Box sx={{ width: '100%' }}>
+                    {formData.selectionAid === 'single' ? (
+                      <FormControl fullWidth>
+                        <InputLabel>انتخاب گزینه</InputLabel>
+                        <Select
+                          value={fieldValue}
+                          onChange={(e) => handleValueChange(e.target.value)}
+                          label="انتخاب گزینه"
+                        >
+                          {formData.options.map((option: any, index: number) => (
+                            <MenuItem key={index} value={typeof option === 'string' ? option : option.value}>
+                              {typeof option === 'string' ? option : option.label || option.value}
+                            </MenuItem>
+                          ))}
+                        </Select>
+                      </FormControl>
+                    ) : formData.selectionAid === 'multi' ? (
+                      <FormControl fullWidth>
+                        <InputLabel>انتخاب چندگانه</InputLabel>
+                        <Select
+                          multiple
+                          value={fieldValue ? fieldValue.split(',') : []}
+                          onChange={(e) => handleValueChange(Array.isArray(e.target.value) ? e.target.value.join(',') : '')}
+                          label="انتخاب چندگانه"
+                        >
+                          {formData.options.map((option: any, index: number) => (
+                            <MenuItem key={index} value={typeof option === 'string' ? option : option.value}>
+                              {typeof option === 'string' ? option : option.label || option.value}
+                            </MenuItem>
+                          ))}
+                        </Select>
+                      </FormControl>
+                    ) : (
+                      <Box>
+                        {formData.options.map((option: any, index: number) => (
+                          <Box key={index} sx={{ mb: 1 }}>
+                            <Typography variant="body2">
+                              {typeof option === 'string' ? option : option.label || option.value}
+                            </Typography>
+                          </Box>
+                        ))}
+                      </Box>
+                    )}
+                  </Box>
+                ) : (
+                  <TextField
+                    fullWidth
+                    label={formData.name + (formData.isRequired ? ' *' : '')}
+                    placeholder={formData.placeholder || ''}
+                    helperText={formData.helpText || ''}
+                    value={fieldValue}
+                    onChange={(e) => handleValueChange(e.target.value)}
+                    type={formData.type === 'password' ? 'password' : 'text'}
+                    dir={formData.direction === 'ltr' ? 'ltr' : 'rtl'}
+                    error={fieldErrors.length > 0}
+                    sx={{
+                      '& .MuiOutlinedInput-root': {
+                        background: 'rgba(255, 255, 255, 0.8)',
+                        backdropFilter: 'blur(10px)',
+                        '&:hover': { boxShadow: '0 4px 12px rgba(74, 144, 226, 0.15)' },
+                        '&.Mui-focused': { boxShadow: '0 0 0 3px rgba(74, 144, 226, 0.1)' },
+                      }
+                    }}
+                    InputProps={{
+                      startAdornment: formData.prefix ? (
+                        <Typography sx={{ mr: 1, color: '#64748B' }}>{formData.prefix}</Typography>
+                      ) : undefined,
+                      endAdornment: formData.suffix ? (
+                        <Typography sx={{ ml: 1, color: '#64748B' }}>{formData.suffix}</Typography>
+                      ) : undefined,
+                    }}
+                  />
+                )}
+              </AccordionDetails>
+            </Accordion>
+          );
+        }
+        
         return (
           <TextField
             fullWidth
@@ -94,6 +210,87 @@ export const LiveFieldPreview: React.FC<LiveFieldPreviewProps> = ({ formData }) 
         );
       
       case 'textarea':
+        // Special handling for accordion display
+        if (formData.displayType === 'accordion') {
+          return (
+            <Accordion>
+              <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                <Typography>{formData.accordionTitle || formData.name}</Typography>
+              </AccordionSummary>
+              <AccordionDetails>
+                {/* Show options when accordionDisplayMode is 'options', otherwise show textarea */}
+                {formData.accordionDisplayMode === 'options' && formData.options && formData.options.length > 0 ? (
+                  <Box sx={{ width: '100%' }}>
+                    {formData.selectionAid === 'single' ? (
+                      <FormControl fullWidth>
+                        <InputLabel>انتخاب گزینه</InputLabel>
+                        <Select
+                          value={fieldValue}
+                          onChange={(e) => handleValueChange(e.target.value)}
+                          label="انتخاب گزینه"
+                        >
+                          {formData.options.map((option: any, index: number) => (
+                            <MenuItem key={index} value={typeof option === 'string' ? option : option.value}>
+                              {typeof option === 'string' ? option : option.label || option.value}
+                            </MenuItem>
+                          ))}
+                        </Select>
+                      </FormControl>
+                    ) : formData.selectionAid === 'multi' ? (
+                      <FormControl fullWidth>
+                        <InputLabel>انتخاب چندگانه</InputLabel>
+                        <Select
+                          multiple
+                          value={fieldValue ? fieldValue.split(',') : []}
+                          onChange={(e) => handleValueChange(Array.isArray(e.target.value) ? e.target.value.join(',') : '')}
+                          label="انتخاب چندگانه"
+                        >
+                          {formData.options.map((option: any, index: number) => (
+                            <MenuItem key={index} value={typeof option === 'string' ? option : option.value}>
+                              {typeof option === 'string' ? option : option.label || option.value}
+                            </MenuItem>
+                          ))}
+                        </Select>
+                      </FormControl>
+                    ) : (
+                      <Box>
+                        {formData.options.map((option: any, index: number) => (
+                          <Box key={index} sx={{ mb: 1 }}>
+                            <Typography variant="body2">
+                              {typeof option === 'string' ? option : option.label || option.value}
+                            </Typography>
+                          </Box>
+                        ))}
+                      </Box>
+                    )}
+                  </Box>
+                ) : (
+                  <TextField
+                    fullWidth
+                    label={formData.name + (formData.isRequired ? ' *' : '')}
+                    placeholder={formData.placeholder || ''}
+                    helperText={formData.helpText || ''}
+                    value={fieldValue}
+                    onChange={(e) => handleValueChange(e.target.value)}
+                    multiline
+                    rows={formData.textareaRows || 4}
+                    dir={formData.direction === 'ltr' ? 'ltr' : 'rtl'}
+                    error={fieldErrors.length > 0}
+                    sx={{
+                      '& .MuiOutlinedInput-root': {
+                        background: 'rgba(255, 255, 255, 0.8)',
+                        backdropFilter: 'blur(10px)',
+                        '&:hover': { boxShadow: '0 4px 12px rgba(74, 144, 226, 0.15)' },
+                        '&.Mui-focused': { boxShadow: '0 0 0 3px rgba(74, 144, 226, 0.1)' },
+                      }
+                    }}
+                  />
+                )}
+              </AccordionDetails>
+            </Accordion>
+          );
+        }
+        
         return (
           <TextField
             fullWidth
@@ -144,9 +341,16 @@ export const LiveFieldPreview: React.FC<LiveFieldPreviewProps> = ({ formData }) 
           <FormControl fullWidth error={fieldErrors.length > 0}>
             <InputLabel>{formData.name + (formData.isRequired ? ' *' : '')}</InputLabel>
             <Select
-              value={fieldValue}
-              onChange={(e) => handleValueChange(e.target.value as string)}
+              value={formData.selectionAid === 'multi' ? (fieldValue ? fieldValue.split(',') : []) : fieldValue}
+              onChange={(e) => {
+                if (formData.selectionAid === 'multi') {
+                  handleValueChange(Array.isArray(e.target.value) ? e.target.value.join(',') : '');
+                } else {
+                  handleValueChange(e.target.value as string);
+                }
+              }}
               label={formData.name + (formData.isRequired ? ' *' : '')}
+              multiple={formData.selectionAid === 'multi'}
               sx={{
                 '& .MuiOutlinedInput-root': {
                   background: 'rgba(255, 255, 255, 0.8)',

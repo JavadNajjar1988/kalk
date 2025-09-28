@@ -1,10 +1,11 @@
 import React, { memo, useEffect } from 'react';
 import { Box, Typography, Paper, Grid, TextField, FormControl, InputLabel, Select, MenuItem, FormControlLabel, Switch } from '@mui/material';
 import HelpTooltip from '../shared/HelpTooltip';
+import { ExtendedCustomFieldDefinition } from '../types/FieldEditTypes';
 
 interface DisplayPropertiesProps {
-  formData: any;
-  onChange: (key: string, value: any) => void;
+  formData: ExtendedCustomFieldDefinition;
+  onChange: (key: keyof ExtendedCustomFieldDefinition, value: any) => void;
 }
 
 const DisplayProperties: React.FC<DisplayPropertiesProps> = ({ formData, onChange }) => {
@@ -12,13 +13,23 @@ const DisplayProperties: React.FC<DisplayPropertiesProps> = ({ formData, onChang
   useEffect(() => {
     // If display type changes to one that supports options, and we don't have options yet,
     // initialize with an empty array
-    const supportsOptionsDisplay = ['accordion', 'chips', 'pill'].includes(formData.displayType);
-    const isTextType = ['text', 'textarea'].includes(formData.type);
+    const supportsOptionsDisplay = ['accordion', 'chips', 'pill'].includes(formData.variant || '');
+    const isTextType = ['text', 'textarea'].includes(formData.type || '');
     
     if (supportsOptionsDisplay && isTextType && !formData.options) {
       onChange('options', []);
     }
-  }, [formData.displayType, formData.type, formData.options, onChange]);
+  }, [formData.variant, formData.type, formData.options, onChange]);
+
+  // Handle variant change - also update displayType for consistency
+  const handleVariantChange = (value: string) => {
+    // Use a single onChange call to update both properties atomically
+    onChange('variant', value);
+    // Update displayType in the next tick to avoid race condition
+    setTimeout(() => {
+      onChange('displayType', value);
+    }, 0);
+  };
 
   return (
     <Paper
@@ -42,18 +53,18 @@ const DisplayProperties: React.FC<DisplayPropertiesProps> = ({ formData, onChang
           <FormControl fullWidth>
             <InputLabel>نوع نمایش</InputLabel>
             <Select
-              value={formData.displayType || 'normal'}
-              onChange={(e) => onChange('displayType', e.target.value)}
+              value={formData.variant || 'plain'}
+              onChange={(e) => handleVariantChange(e.target.value)}
               label="نوع نمایش"
               sx={{
                 background: 'rgba(255, 255, 255, 0.8)',
                 backdropFilter: 'blur(10px)',
               }}
             >
-              <MenuItem value="normal">معمولی</MenuItem>
+              <MenuItem value="plain">معمولی</MenuItem>
               <MenuItem value="accordion">آکاردئونی</MenuItem>
-              <MenuItem value="multiline">چندخطی</MenuItem>
-              <MenuItem value="rich-text">متن غنی</MenuItem>
+              <MenuItem value="textarea">چندخطی</MenuItem>
+              <MenuItem value="richtext">متن غنی</MenuItem>
               <MenuItem value="inline">درجا</MenuItem>
               <MenuItem value="chips">چیپ‌ها</MenuItem>
               <MenuItem value="pill">پِل</MenuItem>
@@ -65,22 +76,29 @@ const DisplayProperties: React.FC<DisplayPropertiesProps> = ({ formData, onChang
 
         {/* Selection Helper */}
         <Grid item xs={12} md={6}>
-          <FormControl fullWidth>
-            <InputLabel>کمک انتخاب</InputLabel>
-            <Select
-              value={formData.selectionHelper || 'none'}
-              onChange={(e) => onChange('selectionHelper', e.target.value)}
-              label="کمک انتخاب"
-              sx={{
-                background: 'rgba(255, 255, 255, 0.8)',
-                backdropFilter: 'blur(10px)',
-              }}
-            >
-              <MenuItem value="none">هیچ</MenuItem>
-              <MenuItem value="single">انتخاب تکی</MenuItem>
-              <MenuItem value="multiple">انتخاب چندتایی</MenuItem>
-            </Select>
-          </FormControl>
+          <Box sx={{ display: 'flex', alignItems: 'center' }}>
+            <FormControl fullWidth>
+              <InputLabel>کمک انتخاب</InputLabel>
+              <Select
+                value={formData.selectionAid || 'none'}
+                onChange={(e) => onChange('selectionAid', e.target.value)}
+                label="کمک انتخاب"
+                sx={{
+                  background: 'rgba(255, 255, 255, 0.8)',
+                  backdropFilter: 'blur(10px)',
+                }}
+              >
+                <MenuItem value="none">هیچ</MenuItem>
+                <MenuItem value="single">انتخاب تکی</MenuItem>
+                <MenuItem value="multi">انتخاب چندتایی</MenuItem>
+              </Select>
+            </FormControl>
+            <HelpTooltip
+              title="کمک انتخاب"
+              description="نوع کمک انتخاب برای فیلد"
+              example="انتخاب تکی یا چندتایی"
+            />
+          </Box>
         </Grid>
 
         {/* Size */}
@@ -88,7 +106,7 @@ const DisplayProperties: React.FC<DisplayPropertiesProps> = ({ formData, onChang
           <FormControl fullWidth>
             <InputLabel>اندازه</InputLabel>
             <Select
-              value={formData.size || 'medium'}
+              value={formData.size || 'md'}
               onChange={(e) => onChange('size', e.target.value)}
               label="اندازه"
               sx={{
@@ -96,9 +114,9 @@ const DisplayProperties: React.FC<DisplayPropertiesProps> = ({ formData, onChang
                 backdropFilter: 'blur(10px)',
               }}
             >
-              <MenuItem value="small">کوچک</MenuItem>
-              <MenuItem value="medium">متوسط</MenuItem>
-              <MenuItem value="large">بزرگ</MenuItem>
+              <MenuItem value="sm">کوچک</MenuItem>
+              <MenuItem value="md">متوسط</MenuItem>
+              <MenuItem value="lg">بزرگ</MenuItem>
               <MenuItem value="full">کامل</MenuItem>
             </Select>
           </FormControl>
@@ -180,8 +198,8 @@ const DisplayProperties: React.FC<DisplayPropertiesProps> = ({ formData, onChang
             <FormControlLabel
               control={
                 <Switch
-                  checked={formData.showCopyButton || false}
-                  onChange={(e) => onChange('showCopyButton', e.target.checked)}
+                  checked={formData.copyButton || false}
+                  onChange={(e) => onChange('copyButton', e.target.checked)}
                   size="small"
                 />
               }

@@ -1,10 +1,11 @@
 import React, { memo } from 'react';
 import { Box, Typography, Paper, Grid, TextField, FormControl, InputLabel, Select, MenuItem, FormControlLabel, Switch } from '@mui/material';
 import HelpTooltip from '../shared/HelpTooltip';
+import { ExtendedCustomFieldDefinition } from '../types/FieldEditTypes';
 
 interface AssistivePropertiesProps {
-  formData: any;
-  onChange: (key: string, value: any) => void;
+  formData: ExtendedCustomFieldDefinition;
+  onChange: (key: keyof ExtendedCustomFieldDefinition, value: any) => void;
 }
 
 const AssistiveProperties: React.FC<AssistivePropertiesProps> = ({ formData, onChange }) => {
@@ -31,8 +32,8 @@ const AssistiveProperties: React.FC<AssistivePropertiesProps> = ({ formData, onC
             <FormControlLabel
               control={
                 <Switch
-                  checked={formData.enableSuggestions || false}
-                  onChange={(e) => onChange('enableSuggestions', e.target.checked)}
+                  checked={formData.suggestions && formData.suggestions.length > 0}
+                  onChange={(e) => onChange('suggestions', e.target.checked ? [''] : [])}
                   size="small"
                 />
               }
@@ -44,12 +45,12 @@ const AssistiveProperties: React.FC<AssistivePropertiesProps> = ({ formData, onC
               example="پیشنهاد ۱، پیشنهاد ۲، پیشنهاد ۳"
             />
           </Box>
-          {formData.enableSuggestions && (
+          {formData.suggestions && formData.suggestions.length > 0 && (
             <TextField
               fullWidth
               label="پیشنهادات (هر خط یک مورد)"
-              value={formData.suggestions || ''}
-              onChange={(e) => onChange('suggestions', e.target.value)}
+              value={Array.isArray(formData.suggestions) ? formData.suggestions.join('\n') : formData.suggestions || ''}
+              onChange={(e) => onChange('suggestions', e.target.value.split('\n'))}
               multiline
               rows={4}
               placeholder="پیشنهاد ۱&#10;پیشنهاد ۲&#10;پیشنهاد ۳"
@@ -69,8 +70,8 @@ const AssistiveProperties: React.FC<AssistivePropertiesProps> = ({ formData, onC
             <FormControlLabel
               control={
                 <Switch
-                  checked={formData.autoComplete || false}
-                  onChange={(e) => onChange('autoComplete', e.target.checked)}
+                  checked={formData.enableAutoComplete || false}
+                  onChange={(e) => onChange('enableAutoComplete', e.target.checked)}
                   size="small"
                 />
               }
@@ -107,8 +108,8 @@ const AssistiveProperties: React.FC<AssistivePropertiesProps> = ({ formData, onC
             <FormControl fullWidth>
               <InputLabel>جداکننده</InputLabel>
               <Select
-                value={formData.multipleSeparator || 'comma'}
-                onChange={(e) => onChange('multipleSeparator', e.target.value)}
+                value={formData.multiValueSeparator || 'comma'}
+                onChange={(e) => onChange('multiValueSeparator', e.target.value)}
                 label="جداکننده"
                 sx={{
                   background: 'rgba(255, 255, 255, 0.8)',
@@ -129,8 +130,8 @@ const AssistiveProperties: React.FC<AssistivePropertiesProps> = ({ formData, onC
           <FormControl fullWidth>
             <InputLabel>غلط‌یاب</InputLabel>
             <Select
-              value={formData.spellCheck || 'off'}
-              onChange={(e) => onChange('spellCheck', e.target.value)}
+              value={formData.spellcheck || 'off'}
+              onChange={(e) => onChange('spellcheck', e.target.value)}
               label="غلط‌یاب"
               sx={{
                 background: 'rgba(255, 255, 255, 0.8)',
@@ -138,13 +139,31 @@ const AssistiveProperties: React.FC<AssistivePropertiesProps> = ({ formData, onC
               }}
             >
               <MenuItem value="off">خاموش</MenuItem>
-              <MenuItem value="persian">فارسی</MenuItem>
-              <MenuItem value="english">انگلیسی</MenuItem>
-              <MenuItem value="both">فارسی + انگلیسی</MenuItem>
+              <MenuItem value="fa">فارسی</MenuItem>
+              <MenuItem value="en">انگلیسی</MenuItem>
               <MenuItem value="custom">سفارشی</MenuItem>
             </Select>
           </FormControl>
         </Grid>
+
+        {/* Custom Dictionary */}
+        {formData.spellcheck === 'custom' && (
+          <Grid item xs={12}>
+            <TextField
+              fullWidth
+              label="واژه‌نامه سفارشی (با کاما جدا کنید)"
+              value={formData.customDictionary || ''}
+              onChange={(e) => onChange('customDictionary', e.target.value)}
+              placeholder="واژه ۱, واژه ۲, واژه ۳"
+              sx={{
+                '& .MuiOutlinedInput-root': {
+                  background: 'rgba(255, 255, 255, 0.8)',
+                  backdropFilter: 'blur(10px)',
+                },
+              }}
+            />
+          </Grid>
+        )}
       </Grid>
     </Paper>
   );

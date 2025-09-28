@@ -31,6 +31,7 @@ import ReferenceCategorySelectorComprehensiveTest from '@/components/test/Refere
 import FinalIntegrationTest from '@/components/test/FinalIntegrationTest';
 import TestsPage from '@/components/test/TestsPage';
 import SmartFieldPreviewSyncTest from '@/test/SmartFieldPreviewSyncTest';
+import OrbatMapperModule from '../../orbat-mapper/index';
 
  
 import DefinitionEditorRoutes from '../../definition-editor/routes';
@@ -57,6 +58,8 @@ const DashboardRoutes: React.FC = () => {
         </Route>
         <Route path="resources" element={<ResourcesPage />} />
 
+        {/* ماژول ORBAT Mapper */}
+        <Route path="orbat-mapper/*" element={<OrbatMapperModule />} />
         
         <Route path="definition-editor/*" element={<DefinitionEditorRoutes />} />
         <Route path="military-symbol-generator" element={<MilitarySymbolGeneratorPage />} />

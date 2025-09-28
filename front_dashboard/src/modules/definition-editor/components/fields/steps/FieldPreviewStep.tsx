@@ -120,40 +120,53 @@ export const FieldPreviewStep = memo<FieldPreviewStepProps>(({ formData, origina
           <Accordion>
             <AccordionSummary expandIcon={<ExpandMoreIcon />}>
               <Typography sx={{ fontSize: isMobile ? '0.9rem' : undefined }}>
-                {formData.name}
+                {formData.accordionTitle || formData.name}
               </Typography>
             </AccordionSummary>
             <AccordionDetails>
-              <TextField
-                fullWidth
-                label={formData.name + (formData.isRequired ? ' *' : '')}
-                placeholder={formData.placeholder || ''}
-                helperText={formData.helpText || ''}
-                value={accordionPreviewValue}
-                onChange={handleAccordionChange}
-                multiline={formData.variant === 'textarea'}
-                rows={formData.textareaRows || 3}
-                dir={formData.direction === 'ltr' ? 'ltr' : 'rtl'}
-                sx={{
-                  '& .MuiOutlinedInput-root': {
-                    background: 'rgba(255, 255, 255, 0.8)',
-                    backdropFilter: 'blur(10px)',
-                    fontSize: formData.size === 'sm' ? (isMobile ? '0.75rem' : '0.875rem') : formData.size === 'lg' ? (isMobile ? '1rem' : '1.125rem') : (isMobile ? '0.875rem' : '1rem'),
-                    '&:hover': { boxShadow: '0 4px 12px rgba(74, 144, 226, 0.15)' },
-                    '&.Mui-focused': { boxShadow: '0 0 0 3px rgba(74, 144, 226, 0.1)' },
-                  },
-                  mb: 2
-                }}
-                InputProps={{
-                  startAdornment: formData.prefix ? (
-                    <Typography sx={{ mr: 1, color: '#64748B', fontSize: isMobile ? '0.75rem' : undefined }}>{formData.prefix}</Typography>
-                  ) : undefined,
-                  endAdornment: formData.suffix ? (
-                    <Typography sx={{ ml: 1, color: '#64748B', fontSize: isMobile ? '0.75rem' : undefined }}>{formData.suffix}</Typography>
-                  ) : undefined,
-                }}
-                aria-label={`پیش‌نمایش فیلد آکاردئونی ${formData.name}`}
-              />
+              {/* Show options when accordionDisplayMode is 'options', otherwise show text field */}
+              {formData.accordionDisplayMode === 'options' && formData.options && formData.options.length > 0 ? (
+                <Box sx={{ width: '100%' }}>
+                  {formData.options.map((option: any, index: number) => (
+                    <Box key={index} sx={{ mb: 1 }}>
+                      <Typography variant="body2">
+                        {typeof option === 'string' ? option : option.label || option.value}
+                      </Typography>
+                    </Box>
+                  ))}
+                </Box>
+              ) : (
+                <TextField
+                  fullWidth
+                  label={formData.name + (formData.isRequired ? ' *' : '')}
+                  placeholder={formData.placeholder || ''}
+                  helperText={formData.helpText || ''}
+                  value={accordionPreviewValue}
+                  onChange={handleAccordionChange}
+                  multiline={formData.variant === 'textarea'}
+                  rows={formData.textareaRows || 3}
+                  dir={formData.direction === 'ltr' ? 'ltr' : 'rtl'}
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      background: 'rgba(255, 255, 255, 0.8)',
+                      backdropFilter: 'blur(10px)',
+                      fontSize: formData.size === 'sm' ? (isMobile ? '0.75rem' : '0.875rem') : formData.size === 'lg' ? (isMobile ? '1rem' : '1.125rem') : (isMobile ? '0.875rem' : '1rem'),
+                      '&:hover': { boxShadow: '0 4px 12px rgba(74, 144, 226, 0.15)' },
+                      '&.Mui-focused': { boxShadow: '0 0 0 3px rgba(74, 144, 226, 0.1)' },
+                    },
+                    mb: 2
+                  }}
+                  InputProps={{
+                    startAdornment: formData.prefix ? (
+                      <Typography sx={{ mr: 1, color: '#64748B', fontSize: isMobile ? '0.75rem' : undefined }}>{formData.prefix}</Typography>
+                    ) : undefined,
+                    endAdornment: formData.suffix ? (
+                      <Typography sx={{ ml: 1, color: '#64748B', fontSize: isMobile ? '0.75rem' : undefined }}>{formData.suffix}</Typography>
+                    ) : undefined,
+                  }}
+                  aria-label={`پیش‌نمایش فیلد آکاردئونی ${formData.name}`}
+                />
+              )}
               {/* Show active processing features for accordion too */}
               {(formData.caseTransform || formData.trimExtraSpaces || formData.characterControl) && (
                 <Box sx={{ 

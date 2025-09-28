@@ -1,10 +1,11 @@
 import React, { memo } from 'react';
-import { Box, Typography, Paper, Grid, TextField, FormControl, InputLabel, Select, MenuItem, FormControlLabel, Switch } from '@mui/material';
+import { Box, Typography, Paper, Grid, TextField, FormControl, InputLabel, Select, MenuItem, FormControlLabel, Switch, Slider } from '@mui/material';
 import HelpTooltip from '../shared/HelpTooltip';
+import { ExtendedCustomFieldDefinition } from '../types/FieldEditTypes';
 
 interface BehaviorLogicPropertiesProps {
-  formData: any;
-  onChange: (key: string, value: any) => void;
+  formData: ExtendedCustomFieldDefinition;
+  onChange: (key: keyof ExtendedCustomFieldDefinition, value: any) => void;
 }
 
 const BehaviorLogicProperties: React.FC<BehaviorLogicPropertiesProps> = ({ formData, onChange }) => {
@@ -31,7 +32,7 @@ const BehaviorLogicProperties: React.FC<BehaviorLogicPropertiesProps> = ({ formD
             <FormControlLabel
               control={
                 <Switch
-                  checked={formData.editableAfterSave || true}
+                  checked={formData.editableAfterSave !== undefined ? formData.editableAfterSave : true}
                   onChange={(e) => onChange('editableAfterSave', e.target.checked)}
                   size="small"
                 />
@@ -70,11 +71,15 @@ const BehaviorLogicProperties: React.FC<BehaviorLogicPropertiesProps> = ({ formD
               <Grid item xs={6}>
                 <TextField
                   fullWidth
-                  label="تأخیر (ثانیه)"
+                  label="تأخیر (میلی‌ثانیه)"
                   type="number"
-                  value={formData.autoSaveDelay || 3}
-                  onChange={(e) => onChange('autoSaveDelay', parseInt(e.target.value))}
-                  inputProps={{ min: 1, max: 60 }}
+                  value={formData.autoSaveDelay || 300}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    const numValue = value ? parseInt(value) : 300;
+                    onChange('autoSaveDelay', isNaN(numValue) ? 300 : numValue);
+                  }}
+                  inputProps={{ min: 100, max: 10000, step: 100 }}
                   sx={{
                     '& .MuiOutlinedInput-root': {
                       background: 'rgba(255, 255, 255, 0.8)',
@@ -89,7 +94,11 @@ const BehaviorLogicProperties: React.FC<BehaviorLogicPropertiesProps> = ({ formD
                   label="فاصله ذخیره (ثانیه)"
                   type="number"
                   value={formData.autoSaveInterval || 30}
-                  onChange={(e) => onChange('autoSaveInterval', parseInt(e.target.value))}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    const numValue = value ? parseInt(value) : 30;
+                    onChange('autoSaveInterval', isNaN(numValue) ? 30 : numValue);
+                  }}
                   inputProps={{ min: 10, max: 600 }}
                   sx={{
                     '& .MuiOutlinedInput-root': {
@@ -103,7 +112,7 @@ const BehaviorLogicProperties: React.FC<BehaviorLogicPropertiesProps> = ({ formD
           )}
         </Grid>
 
-        {/* Conditional Display */}
+        {/* Conditional Visibility */}
         <Grid item xs={12}>
           <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
             <FormControlLabel
@@ -228,6 +237,8 @@ const BehaviorLogicProperties: React.FC<BehaviorLogicPropertiesProps> = ({ formD
                   >
                     <MenuItem value="equals">برابر</MenuItem>
                     <MenuItem value="not_equals">نابرابر</MenuItem>
+                    <MenuItem value="greater_than">بزرگتر از</MenuItem>
+                    <MenuItem value="less_than">کوچکتر از</MenuItem>
                     <MenuItem value="contains">شامل</MenuItem>
                     <MenuItem value="not_contains">شامل نباشد</MenuItem>
                     <MenuItem value="empty">خالی</MenuItem>

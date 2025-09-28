@@ -12,6 +12,11 @@ export type FieldType = 'text' | 'number' | 'date' | 'select' | 'multiselect' | 
 
 // Extended interface for additional text field properties
 export interface ExtendedCustomFieldDefinition extends CustomFieldDefinition {
+  // Required fields for all field types
+  name: string;
+  englishName: string;
+  type: FieldType;
+  
   // Toggle enablers for optional properties
   enablePlaceholder?: boolean;
   enableDefaultValue?: boolean;
@@ -53,17 +58,23 @@ export interface ExtendedCustomFieldDefinition extends CustomFieldDefinition {
   // Content control properties
   characterControl?: 'letters-only' | 'letters-numbers' | 'all' | 'custom';
   trimExtraSpaces?: boolean;
+  trimWhitespace?: boolean;
   convertNumbers?: boolean;
+  normalizeDigits?: boolean;
   fixHalfSpace?: boolean;
+  fixZWNJ?: boolean;
   allowEmoji?: boolean;
   allowMarkdown?: boolean;
+  customRegex?: string;
   
   // Assistive properties
   suggestions?: string[];
   autoComplete?: boolean;
+  enableAutoComplete?: boolean;
   enableMultipleValues?: boolean;
-  multipleSeparator?: 'comma' | 'enter' | 'space' | 'semicolon';
+  multiValueSeparator?: 'comma' | 'enter' | 'space' | 'semicolon';
   spellCheck?: 'off' | 'persian' | 'english' | 'both' | 'custom';
+  spellcheck?: 'off' | 'fa' | 'en' | 'custom';
   customDictionary?: string;
   
   // Behavior properties
@@ -77,7 +88,7 @@ export interface ExtendedCustomFieldDefinition extends CustomFieldDefinition {
   conditionalDisplayValue?: string;
   enableConditionalEnable?: boolean;
   conditionalEnableField?: string;
-  conditionalEnableOperator?: 'equals' | 'not_equals' | 'contains' | 'not_contains' | 'empty' | 'not_empty';
+  conditionalEnableOperator?: 'equals' | 'not_equals' | 'greater_than' | 'less_than' | 'contains' | 'not_contains' | 'empty' | 'not_empty';
   conditionalEnableValue?: string;
   
   // Security properties
@@ -88,6 +99,7 @@ export interface ExtendedCustomFieldDefinition extends CustomFieldDefinition {
   searchable?: boolean;
   filterable?: boolean;
   searchAnalyzer?: 'standard' | 'persian' | 'custom';
+  analyzer?: 'standard' | 'persian';
   storeRawAndNormalized?: boolean;
   
   // Display properties
@@ -139,6 +151,12 @@ export interface ExtendedCustomFieldDefinition extends CustomFieldDefinition {
   inlineLabelPosition?: 'left' | 'top';
   inlineLabelWidth?: number;
   inlineSpacing?: 'compact' | 'normal' | 'comfortable';
+  
+  // Mask properties
+  maskPattern?: string;
+  
+  // Temporary field for adding new options
+  newOptionText?: string;
   
   // Behavior and Logic features
   debounceTime?: number;
