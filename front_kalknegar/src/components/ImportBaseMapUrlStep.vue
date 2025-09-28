@@ -26,7 +26,7 @@ import { type SelectItem } from "@/components/types";
 import InputGroup from "@/components/InputGroup.vue";
 import AlertWarning from "@/components/AlertWarning.vue";
 import { Button } from "@/components/ui/button";
-import { useScenarioStore } from "@/scenariostore";
+import { useScenario } from "@/scenariostore";
 import { addMapLayer } from "@/modules/scenarioeditor/scenarioMapLayers";
 
 const emit = defineEmits(["cancel", "loaded"]);
@@ -46,18 +46,18 @@ const tilejsonUrl = ref("");
 const isError = ref(false);
 const errorMessage = ref("");
 
-const scn = useScenarioStore();
+const { scenario } = useScenario();
 
 async function onAdd() {
   try {
     if (layerType.value === "XYZLayer") {
-      const layer = addMapLayer("XYZLayer", scn.geo);
-      scn.geo.updateMapLayer(layer.id, {
+      const layer = addMapLayer("XYZLayer", scenario.value.geo);
+      scenario.value.geo.updateMapLayer(layer.id, {
         url: xyzUrl.value,
       });
     } else if (layerType.value === "TileJSONLayer") {
-      const layer = addMapLayer("TileJSONLayer", scn.geo);
-      scn.geo.updateMapLayer(layer.id, {
+      const layer = addMapLayer("TileJSONLayer", scenario.value.geo);
+      scenario.value.geo.updateMapLayer(layer.id, {
         url: tilejsonUrl.value,
       });
     }
