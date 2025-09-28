@@ -40,6 +40,8 @@ import {
 import { useIndexedDb } from "@/scenariostore/localdb";
 import { klona } from "klona";
 import { saveBlobToLocalFile } from "@/utils/files";
+import { scenarioApiService } from "@/services/api/scenarioApiService";
+import { shouldUseMockApi } from "@/services/api/mockApiServer";
 
 export interface CreateEmptyScenarioOptions {
   id?: string;
@@ -372,13 +374,37 @@ export function useScenarioIO(store: ShallowRef<NewScenarioStore>) {
     return await putScenario(scn);
   }
 
-  async function duplicateScenario() {
-    const { putScenario } = await useIndexedDb();
+  async function saveToApi() {
     const scn = serializeToObject();
-    scn.id = nanoid();
-    scn.name = `${scn.name} (copy)`;
-    await putScenario(scn);
-    return scn.id;
+    if (scn.id.startsWith("demo-")) {
+      scn.id = nanoid();
+      store.value.state.id = scn.id;
+    }
+    
+    // If scenario exists, update it; otherwise create new
+    try {
+      await scenarioApiService.getScenarioById(scn.id);
+      return await scenarioApiService.updateScenario(scn.id, scn);
+    } catch (error) {
+      // Scenario doesn't exist, create new
+      const { id, meta, ...scenarioData } = scn;
+      return await scenarioApiService.createScenario(scenarioData);
+    }
+  }
+
+  async function duplicateScenario() {
+    const scn = serializeToObject();
+    const newName = `${scn.name} (copy)`;
+    
+    if (shouldUseMockApi()) {
+      const { putScenario } = await useIndexedDb();
+      scn.id = nanoid();
+      scn.name = newName;
+      await putScenario(scn);
+      return scn.id;
+    } else {
+      return await scenarioApiService.duplicateScenario(scn.id, newName);
+    }
   }
 
   function loadFromLocalStorage(key = LOCALSTORAGE_KEY) {
@@ -403,6 +429,16 @@ export function useScenarioIO(store: ShallowRef<NewScenarioStore>) {
       return;
     }
     loadFromObject(data.value);
+  }
+
+  async function loadFromApi(id: string) {
+    try {
+      const scenario = await scenarioApiService.getScenarioById(id);
+      loadFromObject(scenario);
+    } catch (error) {
+      console.error(`Failed to load scenario ${id} from API:`, error);
+      throw error;
+    }
   }
 
   function loadEmptyScenario() {
@@ -444,12 +480,14 @@ export function useScenarioIO(store: ShallowRef<NewScenarioStore>) {
     loadDemoScenario,
     loadEmptyScenario,
     loadFromObject,
+    loadFromApi,
     downloadAsJson,
     saveToLocalStorage,
     loadFromLocalStorage,
     stringifyScenario,
     serializeToObject,
     saveToIndexedDb,
+    saveToApi,
     duplicateScenario,
     stringifyObject,
     toObject,
