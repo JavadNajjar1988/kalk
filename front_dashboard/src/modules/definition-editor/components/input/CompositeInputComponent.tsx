@@ -20,7 +20,8 @@ import {
 } from '@mui/icons-material';
 
 import type { CompositeFieldConfig } from '../enhancement/CompositeFieldManager';
-import { SmartFieldConfig } from '../../smart-field-builder/types';
+// Smart Field Builder types disabled
+type SmartFieldConfig = any;
 
 interface CompositeInputComponentProps {
   config: SmartFieldConfig;

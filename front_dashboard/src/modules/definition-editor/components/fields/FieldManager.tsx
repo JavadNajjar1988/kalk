@@ -27,7 +27,10 @@ import {
   Chip,
   alpha,
   SelectChangeEvent,
-  Badge
+  Badge,
+  useTheme,
+  useMediaQuery,
+  Grid,
 } from '@mui/material';
 
 // Icons
@@ -64,10 +67,18 @@ import { CustomField } from '../../types/equipment';
 // Components
 import ReferenceCategorySelector from './ReferenceCategorySelector';
 import EnhancedReferenceFieldRenderer from './EnhancedReferenceFieldRenderer';
-import { SmartFieldBuilder, SmartFieldConfig, BaseFieldType } from '../smart-field-builder';
+// SmartFieldBuilder system disabled
+type SmartFieldConfig = never;
+enum BaseFieldType {
+  TEXT = 'text',
+  NUMBER = 'number',
+  CHOICE = 'choice',
+  REFERENCE = 'reference'
+}
 
 // Import the standardized conversion utility
-import { convertSmartFieldToCustomField } from '../smart-field-builder/utils/fieldConverter';
+// SmartFieldBuilder conversion disabled
+const convertSmartFieldToCustomField = (_smartField: any) => { throw new Error('SmartFieldBuilder disabled'); };
 
 // Reference Data Hook
 import { useAvailableReferenceCategories, type ReferenceSections } from '@/hooks/useReferenceData';
@@ -79,7 +90,7 @@ interface FieldManagerProps {
   title?: string;
   description?: string;
   nodeName?: string;
-  enableSmartFieldBuilder?: boolean;  // Smart Field Builder system
+  enableSmartFieldBuilder?: boolean;  // Deprecated
 }
 
 interface FieldFormErrors {
@@ -102,6 +113,9 @@ const FieldManager: React.FC<FieldManagerProps> = ({
   enableSmartFieldBuilder = true  // Enable by default
 }) => {
   const dispatch = useDispatch();
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const isTablet = useMediaQuery(theme.breakpoints.between('sm', 'md'));
   
   // Hook for reference categories
   const { categories: referenceCategories, getAvailableSections } = useAvailableReferenceCategories();
@@ -127,9 +141,8 @@ const FieldManager: React.FC<FieldManagerProps> = ({
   }, [editingField.options]);
   
   // Helper function to convert SmartFieldConfig to CustomField (same as SmartFieldManager)
-  const convertSmartFieldToCustom = (smartField: SmartFieldConfig): CustomField => {
-    // Use the standardized utility function
-    return convertSmartFieldToCustomField(smartField);
+  const convertSmartFieldToCustom = (_smartField: SmartFieldConfig): CustomField => {
+    throw new Error('SmartFieldBuilder disabled');
   };
 
   // Handle Smart Field Builder save
@@ -166,13 +179,8 @@ const FieldManager: React.FC<FieldManagerProps> = ({
 
   // افزودن فیلد جدید
   const handleAddField = () => {
-    if (enableSmartFieldBuilder) {
-      // Use Smart Field Builder
-      setEditingField({
-        order: fields.length + 1,
-        isRequired: false
-      });
-      setShowSmartFieldBuilder(true);
+    if (false) {
+      // disabled
     } else {
       // Legacy simple mode
       setEditingField({
@@ -215,22 +223,8 @@ const FieldManager: React.FC<FieldManagerProps> = ({
 
   // ویرایش فیلد
   const handleEditField = (field: CustomField) => {
-    if (enableSmartFieldBuilder) {
-      // Convert CustomField to SmartFieldConfig for editing
-      const smartConfig: SmartFieldConfig = {
-        id: field.id,
-        name: field.name,
-        englishName: field.englishName,
-        baseType: convertToBaseType(field.type),
-        enhancements: [],
-        validation: [],
-        isRequired: field.isRequired,
-        order: field.order,
-        description: ''
-      };
-      
-      setEditingField(smartConfig);
-      setShowSmartFieldBuilder(true);
+    if (false) {
+      // disabled
     } else {
       // Legacy simple mode
       setEditingField(field);
@@ -392,32 +386,32 @@ const FieldManager: React.FC<FieldManagerProps> = ({
   const getFieldTypeIcon = (type: string) => {
     switch (type) {
       case 'text':
-        return <TextFieldsIcon fontSize="small" />;
+        return <TextFieldsIcon fontSize={isMobile ? "small" : "medium"} />;
       case 'number':
-        return <NumbersIcon fontSize="small" />;
+        return <NumbersIcon fontSize={isMobile ? "small" : "medium"} />;
       case 'date':
-        return <CalendarTodayIcon fontSize="small" />;
+        return <CalendarTodayIcon fontSize={isMobile ? "small" : "medium"} />;
       case 'email':
-        return <EmailIcon fontSize="small" />;
+        return <EmailIcon fontSize={isMobile ? "small" : "medium"} />;
       case 'password':
-        return <LockIcon fontSize="small" />;
+        return <LockIcon fontSize={isMobile ? "small" : "medium"} />;
       case 'textarea':
-        return <NotesIcon fontSize="small" />;
+        return <NotesIcon fontSize={isMobile ? "small" : "medium"} />;
       case 'phone':
-        return <PhoneIcon fontSize="small" />;
+        return <PhoneIcon fontSize={isMobile ? "small" : "medium"} />;
       case 'social':
-        return <ShareIcon fontSize="small" />;
+        return <ShareIcon fontSize={isMobile ? "small" : "medium"} />;
       case 'select':
       case 'multiselect':
-        return <ListIcon fontSize="small" />;
+        return <ListIcon fontSize={isMobile ? "small" : "medium"} />;
       case 'boolean':
-        return <CheckBoxIcon fontSize="small" />;
+        return <CheckBoxIcon fontSize={isMobile ? "small" : "medium"} />;
       case 'file':
-        return <AttachFileIcon fontSize="small" />;
+        return <AttachFileIcon fontSize={isMobile ? "small" : "medium"} />;
       case 'reference':
-        return <LinkIcon fontSize="small" />;
+        return <LinkIcon fontSize={isMobile ? "small" : "medium"} />;
       default:
-        return <TextFieldsIcon fontSize="small" />;
+        return <TextFieldsIcon fontSize={isMobile ? "small" : "medium"} />;
     }
   };
   
@@ -458,7 +452,7 @@ const FieldManager: React.FC<FieldManagerProps> = ({
   return (
     <Paper 
       sx={{ 
-        p: 2, 
+        p: isMobile ? 1 : 2, 
         borderRadius: 2,
         boxShadow: (theme) => `0 4px 20px ${alpha(theme.palette.common.black, 0.08)}`,
         overflow: 'hidden'
@@ -470,28 +464,52 @@ const FieldManager: React.FC<FieldManagerProps> = ({
           mb: 2, 
           display: 'flex', 
           justifyContent: 'space-between', 
-          alignItems: 'flex-start'
+          alignItems: isMobile ? 'flex-start' : 'flex-start',
+          flexDirection: isMobile ? 'column' : 'row',
+          gap: isMobile ? 1 : 0
         }}
       >
-        <Box>
-          <Typography variant="h6" fontWeight={600}>
+        <Box sx={{ flex: 1 }}>
+          <Typography 
+            variant={isMobile ? "h6" : "h5"} 
+            fontWeight={600}
+            sx={{ fontSize: isMobile ? '1.1rem' : undefined }}
+          >
             {title}
             {nodeName && ` - ${nodeName}`}
           </Typography>
           {description && (
-            <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+            <Typography 
+              variant="body2" 
+              color="text.secondary" 
+              sx={{ 
+                mt: 0.5,
+                fontSize: isMobile ? '0.8rem' : undefined
+              }}
+            >
               {description}
             </Typography>
           )}
         </Box>
         
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+        <Box sx={{ 
+          display: 'flex', 
+          alignItems: 'center', 
+          gap: 1,
+          mt: isMobile ? 1 : 0,
+          width: isMobile ? '100%' : 'auto'
+        }}>
           <Button
             variant="contained"
             startIcon={<BuildIcon />}
             onClick={handleAddField}
+            fullWidth={isMobile}
+            sx={{ 
+              fontSize: isMobile ? '0.8rem' : undefined,
+              py: isMobile ? 0.5 : undefined
+            }}
           >
-            ساخت فیلد هوشمند
+            {isMobile ? 'ساخت فیلد' : 'ساخت فیلد هوشمند'}
           </Button>
         </Box>
       </Box>
@@ -511,7 +529,8 @@ const FieldManager: React.FC<FieldManagerProps> = ({
                 primary="هیچ فیلدی تعریف نشده است"
                 primaryTypographyProps={{ 
                   color: 'text.secondary',
-                  align: 'center' 
+                  align: 'center',
+                  fontSize: isMobile ? '0.9rem' : undefined
                 }}
               />
             </ListItem>
@@ -531,64 +550,108 @@ const FieldManager: React.FC<FieldManagerProps> = ({
                     transition: 'all 0.2s ease',
                     '&:hover': {
                       backgroundColor: (theme) => alpha(theme.palette.primary.main, 0.04),
-                    }
+                    },
+                    px: isMobile ? 1 : 2
                   }}
                 >
-                  <ListItemIcon>
+                  <ListItemIcon sx={{ minWidth: isMobile ? 30 : 40 }}>
                     {getFieldTypeIcon(field.type || 'text')}
                   </ListItemIcon>
                   
                   <ListItemText
                     disableTypography
                     primary={
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }} component="span">
-                        <Typography variant="body1">
+                      <Box sx={{ 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        gap: 0.5,
+                        flexWrap: 'wrap'
+                      }} component="span">
+                        <Typography 
+                          variant={isMobile ? "body2" : "body1"}
+                          sx={{ fontSize: isMobile ? '0.9rem' : undefined }}
+                        >
                           {field.name}
                         </Typography>
                         {field.isRequired && (
                           <Chip 
                             label="الزامی"
-                            size="small"
+                            size={isMobile ? "small" : "medium"}
                             color="error"
                             variant="outlined"
+                            sx={{ 
+                              height: isMobile ? 18 : 24,
+                              fontSize: isMobile ? '0.6rem' : '0.7rem'
+                            }}
                           />
                         )}
                       </Box>
                     }
                     secondary={
-                      <Box sx={{ display: 'flex', flexDirection: 'column', mt: 0.5 }} component="span">
-                        <Typography variant="caption" color="text.secondary">
+                      <Box sx={{ 
+                        display: 'flex', 
+                        flexDirection: 'column', 
+                        mt: 0.5,
+                        gap: 0.5
+                      }} component="span">
+                        <Typography 
+                          variant="caption" 
+                          color="text.secondary"
+                          sx={{ fontSize: isMobile ? '0.7rem' : undefined }}
+                        >
                           {field.englishName}
                         </Typography>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.5 }}>
+                        <Box sx={{ 
+                          display: 'flex', 
+                          alignItems: 'center', 
+                          gap: 0.5, 
+                          mt: 0.5,
+                          flexWrap: 'wrap'
+                        }}>
                           <Chip 
                             label={getFieldTypeName(field.type || 'text')}
-                            size="small"
+                            size={isMobile ? "small" : "medium"}
                             color="primary"
                             variant="outlined"
+                            sx={{ 
+                              height: isMobile ? 18 : 24,
+                              fontSize: isMobile ? '0.6rem' : '0.7rem'
+                            }}
                           />
                           {field.unit && (
                             <Chip 
                               label={`واحد: ${field.unit}`}
-                              size="small"
+                              size={isMobile ? "small" : "medium"}
                               color="info"
                               variant="outlined"
+                              sx={{ 
+                                height: isMobile ? 18 : 24,
+                                fontSize: isMobile ? '0.6rem' : '0.7rem'
+                              }}
                             />
                           )}
                           {field.options && field.options.length > 0 && (
                             <Chip 
                               label={`${field.options.length} گزینه`}
-                              size="small"
+                              size={isMobile ? "small" : "medium"}
                               color="success"
                               variant="outlined"
+                              sx={{ 
+                                height: isMobile ? 18 : 24,
+                                fontSize: isMobile ? '0.6rem' : '0.7rem'
+                              }}
                             />
                           )}
                           {field?.type === 'reference' && field.referenceCategory && (
                             <Chip 
                               label={`مرجع: ${field.referenceCategory}`}
-                              size="small"
+                              size={isMobile ? "small" : "medium"}
                               color="secondary"
                               variant="outlined"
+                              sx={{ 
+                                height: isMobile ? 18 : 24,
+                                fontSize: isMobile ? '0.6rem' : '0.7rem'
+                              }}
                             />
                           )}
                         </Box>
@@ -596,43 +659,64 @@ const FieldManager: React.FC<FieldManagerProps> = ({
                     }
                   />
                   
-                  <ListItemSecondaryAction>
+                  <ListItemSecondaryAction sx={{ 
+                    right: isMobile ? 8 : 16,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: isMobile ? 0.5 : 1
+                  }}>
                     <IconButton 
                       edge="end" 
                       onClick={() => moveField(field.id, 'up')}
                       color="default"
-                      size="small"
+                      size={isMobile ? "small" : "medium"}
                       disabled={index === 0}
-                      sx={{ mr: 0.5 }}
+                      sx={{ 
+                        p: isMobile ? 0.5 : 1,
+                        '&.Mui-disabled': {
+                          opacity: 0.3
+                        }
+                      }}
                     >
-                      <KeyboardArrowUpIcon fontSize="small" />
+                      <KeyboardArrowUpIcon fontSize={isMobile ? "small" : "medium"} />
                     </IconButton>
                     <IconButton 
                       edge="end" 
                       onClick={() => moveField(field.id, 'down')}
                       color="default"
-                      size="small"
+                      size={isMobile ? "small" : "medium"}
                       disabled={index === fields.length - 1}
-                      sx={{ mr: 1 }}
+                      sx={{ 
+                        p: isMobile ? 0.5 : 1,
+                        '&.Mui-disabled': {
+                          opacity: 0.3
+                        }
+                      }}
                     >
-                      <KeyboardArrowDownIcon fontSize="small" />
+                      <KeyboardArrowDownIcon fontSize={isMobile ? "small" : "medium"} />
                     </IconButton>
                     <IconButton 
                       edge="end" 
                       onClick={() => handleEditField(field)}
                       color="primary"
-                      size="small"
-                      sx={{ mr: 1 }}
+                      size={isMobile ? "small" : "medium"}
+                      sx={{ 
+                        p: isMobile ? 0.5 : 1,
+                        mr: isMobile ? 0.5 : 1
+                      }}
                     >
-                      <EditIcon fontSize="small" />
+                      <EditIcon fontSize={isMobile ? "small" : "medium"} />
                     </IconButton>
                     <IconButton 
                       edge="end" 
                       onClick={() => handleDeleteField(field.id)}
                       color="error"
-                      size="small"
+                      size={isMobile ? "small" : "medium"}
+                      sx={{ 
+                        p: isMobile ? 0.5 : 1
+                      }}
                     >
-                      <DeleteIcon fontSize="small" />
+                      <DeleteIcon fontSize={isMobile ? "small" : "medium"} />
                     </IconButton>
                   </ListItemSecondaryAction>
                 </ListItem>
@@ -645,20 +729,35 @@ const FieldManager: React.FC<FieldManagerProps> = ({
       <Dialog 
         open={isFormOpen} 
         onClose={() => setIsFormOpen(false)}
-        maxWidth="sm"
+        maxWidth={isMobile ? "xs" : "sm"}
         fullWidth
+        fullScreen={isMobile}
         PaperProps={{
-          sx: { direction: 'rtl' }
+          sx: { 
+            direction: 'rtl',
+            m: isMobile ? 0 : undefined
+          }
         }}
       >
-        <DialogTitle>
+        <DialogTitle sx={{ 
+          fontSize: isMobile ? '1.2rem' : undefined,
+          p: isMobile ? 2 : undefined
+        }}>
           {editingField.id ? 'ویرایش فیلد' : 'افزودن فیلد جدید'}
         </DialogTitle>
         
         <Divider />
         
-        <DialogContent sx={{ pt: 3 }}>
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+        <DialogContent sx={{ 
+          pt: isMobile ? 2 : 3,
+          px: isMobile ? 1 : undefined
+        }}>
+          <Box sx={{ 
+            display: 'flex', 
+            flexDirection: 'column', 
+            gap: isMobile ? 1 : 2,
+            px: isMobile ? 1 : undefined
+          }}>
             <TextField
               label="نام فیلد (فارسی)"
               value={editingField.name || ''}
@@ -672,7 +771,18 @@ const FieldManager: React.FC<FieldManagerProps> = ({
               required
               error={!!formErrors.name}
               helperText={formErrors.name}
-              sx={{ direction: 'rtl' }}
+              sx={{ 
+                direction: 'rtl',
+                '& .MuiFormHelperText-root': {
+                  fontSize: isMobile ? '0.7rem' : undefined
+                }
+              }}
+              inputProps={{
+                style: { fontSize: isMobile ? '0.9rem' : undefined }
+              }}
+              InputLabelProps={{
+                style: { fontSize: isMobile ? '0.9rem' : undefined }
+              }}
             />
             
             <TextField
@@ -688,10 +798,26 @@ const FieldManager: React.FC<FieldManagerProps> = ({
               required
               error={!!formErrors.englishName}
               helperText={formErrors.englishName}
+              inputProps={{
+                style: { fontSize: isMobile ? '0.9rem' : undefined }
+              }}
+              InputLabelProps={{
+                style: { fontSize: isMobile ? '0.9rem' : undefined }
+              }}
+              sx={{
+                '& .MuiFormHelperText-root': {
+                  fontSize: isMobile ? '0.7rem' : undefined
+                }
+              }}
             />
             
             <FormControl fullWidth required error={!!formErrors.type}>
-              <InputLabel id="field-type-label">نوع فیلد</InputLabel>
+              <InputLabel 
+                id="field-type-label"
+                sx={{ fontSize: isMobile ? '0.9rem' : undefined }}
+              >
+                نوع فیلد
+              </InputLabel>
               <Select
                 labelId="field-type-label"
                 value={editingField.type || ''}
@@ -700,6 +826,11 @@ const FieldManager: React.FC<FieldManagerProps> = ({
                   setEditingField({ ...editingField, type: e.target.value as any });
                   if (formErrors.type) {
                     setFormErrors({ ...formErrors, type: undefined });
+                  }
+                }}
+                sx={{
+                  '& .MuiSelect-select': {
+                    fontSize: isMobile ? '0.9rem' : undefined
                   }
                 }}
               >
@@ -738,7 +869,7 @@ const FieldManager: React.FC<FieldManagerProps> = ({
                 <MenuItem value="file">فایل (File)</MenuItem>
                 <MenuItem value="reference">مرجع (فیلد وابسته به دسته‌بندی دیگر)</MenuItem>
               </Select>
-              {formErrors.type && <FormHelperText>{formErrors.type}</FormHelperText>}
+              {formErrors.type && <FormHelperText sx={{ fontSize: isMobile ? '0.7rem' : undefined }}>{formErrors.type}</FormHelperText>}
             </FormControl>
             
             <FormControlLabel
@@ -747,9 +878,14 @@ const FieldManager: React.FC<FieldManagerProps> = ({
                   checked={editingField.isRequired || false}
                   onChange={(e) => setEditingField({ ...editingField, isRequired: e.target.checked })}
                   color="primary"
+                  size={isMobile ? "small" : "medium"}
                 />
               }
-              label="فیلد الزامی است"
+              label={
+                <Typography sx={{ fontSize: isMobile ? '0.9rem' : undefined }}>
+                  فیلد الزامی است
+                </Typography>
+              }
             />
             
             {(editingField.type === 'number') && (
@@ -759,6 +895,12 @@ const FieldManager: React.FC<FieldManagerProps> = ({
                 onChange={(e) => setEditingField({ ...editingField, unit: e.target.value })}
                 fullWidth
                 placeholder="مثال: کیلوگرم، متر، درصد"
+                inputProps={{
+                  style: { fontSize: isMobile ? '0.9rem' : undefined }
+                }}
+                InputLabelProps={{
+                  style: { fontSize: isMobile ? '0.9rem' : undefined }
+                }}
               />
             )}
             
@@ -779,12 +921,28 @@ const FieldManager: React.FC<FieldManagerProps> = ({
                 placeholder="هر گزینه را در یک خط بنویسید"
                 error={!!formErrors.options}
                 helperText={formErrors.options || 'هر گزینه را در یک خط جداگانه وارد کنید'}
+                inputProps={{
+                  style: { fontSize: isMobile ? '0.9rem' : undefined }
+                }}
+                InputLabelProps={{
+                  style: { fontSize: isMobile ? '0.9rem' : undefined }
+                }}
+                sx={{
+                  '& .MuiFormHelperText-root': {
+                    fontSize: isMobile ? '0.7rem' : undefined
+                  }
+                }}
               />
             )}
             
             {/* پیکربندی فیلدهای پیشرفته */}
             {editingField.type === 'conditional-national-id' && (
-              <FormHelperText sx={{ bgcolor: 'info.light', p: 2, borderRadius: 1 }}>
+              <FormHelperText sx={{ 
+                bgcolor: 'info.light', 
+                p: isMobile ? 1 : 2, 
+                borderRadius: 1,
+                fontSize: isMobile ? '0.8rem' : undefined
+              }}>
                 <Typography variant="body2">
                   <strong>کد ملی شرطی:</strong> این فیلد بر اساس فیلد تابعیت، نوع اعتبارسنجی کد ملی را تشخیص می‌دهد.
                   <br />
@@ -800,25 +958,58 @@ const FieldManager: React.FC<FieldManagerProps> = ({
             )}
             
             {(editingField.type === 'phone-array' || editingField.type === 'address-array') && (
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+              <Box sx={{ 
+                display: 'flex', 
+                flexDirection: 'column', 
+                gap: isMobile ? 1 : 2 
+              }}>
                 <TextField
                   label="حداقل تعداد آیتم"
                   type="number"
                   value={editingField.minItems || 1}
                   onChange={(e) => setEditingField({ ...editingField, minItems: parseInt(e.target.value) || 1 })}
-                  inputProps={{ min: 0, max: 10 }}
+                  inputProps={{ 
+                    min: 0, 
+                    max: 10,
+                    style: { fontSize: isMobile ? '0.9rem' : undefined }
+                  }}
+                  InputLabelProps={{
+                    style: { fontSize: isMobile ? '0.9rem' : undefined }
+                  }}
                   helperText="حداقل تعداد آیتم‌های مورد نیاز در آرایه"
+                  sx={{
+                    '& .MuiFormHelperText-root': {
+                      fontSize: isMobile ? '0.7rem' : undefined
+                    }
+                  }}
                 />
                 <TextField
                   label="حداکثر تعداد آیتم"
                   type="number"
                   value={editingField.maxItems || 5}
                   onChange={(e) => setEditingField({ ...editingField, maxItems: parseInt(e.target.value) || 5 })}
-                  inputProps={{ min: 1, max: 20 }}
+                  inputProps={{ 
+                    min: 1, 
+                    max: 20,
+                    style: { fontSize: isMobile ? '0.9rem' : undefined }
+                  }}
+                  InputLabelProps={{
+                    style: { fontSize: isMobile ? '0.9rem' : undefined }
+                  }}
                   helperText="حداکثر تعداد آیتم‌های مجاز در آرایه"
+                  sx={{
+                    '& .MuiFormHelperText-root': {
+                      fontSize: isMobile ? '0.7rem' : undefined
+                    }
+                  }}
                 />
                 {editingField.type === 'phone-array' && (
-                  <FormHelperText sx={{ bgcolor: 'info.light', p: 2, borderRadius: 1 }}>
+                  <FormHelperText sx={{ 
+                    bgcolor: 'info.light', 
+                    p: isMobile ? 1 : 2, 
+                    borderRadius: 1,
+                    fontSize: isMobile ? '0.8rem' : undefined
+                  }}>
                     <Typography variant="body2">
                       <strong>آرایه شماره تلفن:</strong> امکان اضافه کردن چندین شماره تلفن با برچسب‌های مختلف
                       <br />
@@ -829,7 +1020,12 @@ const FieldManager: React.FC<FieldManagerProps> = ({
                   </FormHelperText>
                 )}
                 {editingField.type === 'address-array' && (
-                  <FormHelperText sx={{ bgcolor: 'info.light', p: 2, borderRadius: 1 }}>
+                  <FormHelperText sx={{ 
+                    bgcolor: 'info.light', 
+                    p: isMobile ? 1 : 2, 
+                    borderRadius: 1,
+                    fontSize: isMobile ? '0.8rem' : undefined
+                  }}>
                     <Typography variant="body2">
                       <strong>آرایه آدرس:</strong> امکان اضافه کردن چندین آدرس با برچسب‌های مختلف
                       <br />
@@ -843,24 +1039,49 @@ const FieldManager: React.FC<FieldManagerProps> = ({
             )}
             
             {editingField.type === 'hierarchical-address' && (
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+              <Box sx={{ 
+                display: 'flex', 
+                flexDirection: 'column', 
+                gap: isMobile ? 1 : 2 
+              }}>
                 <TextField
                   label="دسته‌بندی جغرافیایی"
                   value={editingField.hierarchicalCategory || 'geographical'}
                   onChange={(e) => setEditingField({ ...editingField, hierarchicalCategory: e.target.value })}
                   placeholder="نام دسته‌بندی جغرافیایی مرجع"
+                  inputProps={{
+                    style: { fontSize: isMobile ? '0.9rem' : undefined }
+                  }}
+                  InputLabelProps={{
+                    style: { fontSize: isMobile ? '0.9rem' : undefined }
+                  }}
                   helperText="دسته‌بندی مرجع برای انتخاب موقعیت جغرافیایی"
+                  sx={{
+                    '& .MuiFormHelperText-root': {
+                      fontSize: isMobile ? '0.7rem' : undefined
+                    }
+                  }}
                 />
                 <FormControlLabel
                   control={
                     <Switch
                       checked={editingField.allowFreeText || false}
                       onChange={(e) => setEditingField({ ...editingField, allowFreeText: e.target.checked })}
+                      size={isMobile ? "small" : "medium"}
                     />
                   }
-                  label="اجازه متن آزاد برای آدرس"
+                  label={
+                    <Typography sx={{ fontSize: isMobile ? '0.9rem' : undefined }}>
+                      اجازه متن آزاد برای آدرس
+                    </Typography>
+                  }
                 />
-                <FormHelperText sx={{ bgcolor: 'info.light', p: 2, borderRadius: 1 }}>
+                <FormHelperText sx={{ 
+                  bgcolor: 'info.light', 
+                  p: isMobile ? 1 : 2, 
+                  borderRadius: 1,
+                  fontSize: isMobile ? '0.8rem' : undefined
+                }}>
                   <Typography variant="body2">
                     <strong>آدرس سلسله‌مراتبی:</strong> انتخاب آدرس از درخت جغرافیایی + آدرس دقیق
                     <br />
@@ -875,7 +1096,12 @@ const FieldManager: React.FC<FieldManagerProps> = ({
             )}
             
             {(editingField.type === 'name-split' || editingField.type === 'full-name-dual') && (
-              <FormHelperText sx={{ bgcolor: 'info.light', p: 2, borderRadius: 1 }}>
+              <FormHelperText sx={{ 
+                bgcolor: 'info.light', 
+                p: isMobile ? 1 : 2, 
+                borderRadius: 1,
+                fontSize: isMobile ? '0.8rem' : undefined
+              }}>
                 <Typography variant="body2">
                   {editingField.type === 'name-split' ? (
                     <>
@@ -903,7 +1129,12 @@ const FieldManager: React.FC<FieldManagerProps> = ({
             )}
             
             {(editingField.type === 'text-english' || editingField.type === 'text-numeric') && (
-              <FormHelperText sx={{ bgcolor: 'info.light', p: 2, borderRadius: 1 }}>
+              <FormHelperText sx={{ 
+                bgcolor: 'info.light', 
+                p: isMobile ? 1 : 2, 
+                borderRadius: 1,
+                fontSize: isMobile ? '0.8rem' : undefined
+              }}>
                 <Typography variant="body2">
                   {editingField.type === 'text-english' ? (
                     <>
@@ -925,185 +1156,232 @@ const FieldManager: React.FC<FieldManagerProps> = ({
                 </Typography>
               </FormHelperText>
             )}
-            
-            {/* پیکربندی Reference Fields */}
-            {editingField.type === 'reference' && (
-              <>
-                <ReferenceCategorySelector
-                  value={editingField.referenceCategory || ''}
-                  onChange={(categoryId) => {
-                    setEditingField({ 
-                      ...editingField, 
-                      referenceCategory: categoryId,
-                      // Reset sections when category changes
-                      referenceSections: undefined
-                    });
-                    if (formErrors.referenceCategory) {
-                      setFormErrors({ ...formErrors, referenceCategory: undefined });
-                    }
-                  }}
-                  error={formErrors.referenceCategory}
-                  label="دسته‌بندی مرجع"
-                />
-                
-                {editingField.referenceCategory && (
-                  <FormControl fullWidth required error={!!formErrors.referenceSections}>
-                    <InputLabel id="reference-sections-label">بخش نمایش</InputLabel>
-                    <Select
-                      labelId="reference-sections-label"
-                      value={editingField.referenceSections || ''}
-                      label="بخش نمایش"
-                      onChange={(e: SelectChangeEvent) => {
-                        setEditingField({ ...editingField, referenceSections: e.target.value as ReferenceSections });
-                        if (formErrors.referenceSections) {
-                          setFormErrors({ ...formErrors, referenceSections: undefined });
-                        }
-                      }}
-                    >
+          
+          {/* پیکربندی Reference Fields */}
+          {editingField.type === 'reference' && (
+            <>
+              <ReferenceCategorySelector
+                value={editingField.referenceCategory || ''}
+                onChange={(categoryId) => {
+                  setEditingField({ 
+                    ...editingField, 
+                    referenceCategory: categoryId,
+                    // Reset sections when category changes
+                    referenceSections: undefined
+                  });
+                  if (formErrors.referenceCategory) {
+                    setFormErrors({ ...formErrors, referenceCategory: undefined });
+                  }
+                }}
+                error={formErrors.referenceCategory}
+                label="دسته‌بندی مرجع"
+              />
+              
+              {editingField.referenceCategory && (
+                <FormControl fullWidth required error={!!formErrors.referenceSections}>
+                  <InputLabel 
+                    id="reference-sections-label"
+                    sx={{ fontSize: isMobile ? '0.9rem' : undefined }}
+                  >
+                    بخش نمایش
+                  </InputLabel>
+                  <Select
+                    labelId="reference-sections-label"
+                    value={editingField.referenceSections || ''}
+                    label="بخش نمایش"
+                    onChange={(e: SelectChangeEvent) => {
+                      setEditingField({ ...editingField, referenceSections: e.target.value as ReferenceSections });
+                      if (formErrors.referenceSections) {
+                        setFormErrors({ ...formErrors, referenceSections: undefined });
+                      }
+                    }}
+                    sx={{
+                      '& .MuiSelect-select': {
+                        fontSize: isMobile ? '0.9rem' : undefined
+                      }
+                    }}
+                  >
+                    {(() => {
+                      const availableSections = getAvailableSections(editingField.referenceCategory!);
+                      const options = [];
+                      
+                      if (availableSections.includes('hierarchy')) {
+                        options.push(
+                          <MenuItem key="hierarchy" value="hierarchy">
+                            مدیریت سطوح سلسله مراتبی
+                          </MenuItem>
+                        );
+                      }
+                      
+                      if (availableSections.includes('data')) {
+                        options.push(
+                          <MenuItem key="data" value="data">
+                            مدیریت داده‌های دسته‌بندی
+                          </MenuItem>
+                        );
+                      }
+                      
+                      if (availableSections.includes('both')) {
+                        options.push(
+                          <MenuItem key="both" value="both">
+                            هر دو بخش (سطوح + داده‌ها)
+                          </MenuItem>
+                        );
+                      }
+                      
+                      return options;
+                    })()} 
+                  </Select>
+                  {formErrors.referenceSections && <FormHelperText sx={{ fontSize: isMobile ? '0.7rem' : undefined }}>{formErrors.referenceSections}</FormHelperText>}
+                  
+                  {/* راهنمای بخش‌ها */}
+                  {editingField.referenceCategory && (
+                    <FormHelperText sx={{ fontSize: isMobile ? '0.7rem' : undefined }}>
                       {(() => {
-                        const availableSections = getAvailableSections(editingField.referenceCategory!);
-                        const options = [];
+                        const category = referenceCategories.find(cat => cat.id === editingField.referenceCategory);
+                        if (!category) return '';
                         
-                        if (availableSections.includes('hierarchy')) {
-                          options.push(
-                            <MenuItem key="hierarchy" value="hierarchy">
-                              مدیریت سطوح سلسله مراتبی
-                            </MenuItem>
-                          );
+                        if (category.hasHierarchy && category.hasData) {
+                          return 'این دسته‌بندی دارای هر دو بخش سطوح سلسله‌مراتبی و داده‌ها است';
+                        } else if (category.hasHierarchy && !category.hasData) {
+                          return 'این دسته‌بندی فقط دارای بخش سطوح سلسله‌مراتبی است';
+                        } else {
+                          return 'این دسته‌بندی دارای ساختار خاص است';
                         }
-                        
-                        if (availableSections.includes('data')) {
-                          options.push(
-                            <MenuItem key="data" value="data">
-                              مدیریت داده‌های دسته‌بندی
-                            </MenuItem>
-                          );
-                        }
-                        
-                        if (availableSections.includes('both')) {
-                          options.push(
-                            <MenuItem key="both" value="both">
-                              هر دو بخش (سطوح + داده‌ها)
-                            </MenuItem>
-                          );
-                        }
-                        
-                        return options;
                       })()} 
-                    </Select>
-                    {formErrors.referenceSections && <FormHelperText>{formErrors.referenceSections}</FormHelperText>}
-                    
-                    {/* راهنمای بخش‌ها */}
-                    {editingField.referenceCategory && (
-                      <FormHelperText>
-                        {(() => {
-                          const category = referenceCategories.find(cat => cat.id === editingField.referenceCategory);
-                          if (!category) return '';
-                          
-                          if (category.hasHierarchy && category.hasData) {
-                            return 'این دسته‌بندی دارای هر دو بخش سطوح سلسله‌مراتبی و داده‌ها است';
-                          } else if (category.hasHierarchy && !category.hasData) {
-                            return 'این دسته‌بندی فقط دارای بخش سطوح سلسله‌مراتبی است';
-                          } else {
-                            return 'این دسته‌بندی دارای ساختار خاص است';
-                          }
-                        })()} 
-                      </FormHelperText>
-                    )}
-                  </FormControl>
-                )}
-              </>
-            )}
-            
-            <TextField
-              label="ترتیب نمایش"
-              type="number"
-              value={editingField.order || ''}
-              onChange={(e) => {
-                const order = parseInt(e.target.value);
-                setEditingField({ ...editingField, order: isNaN(order) ? 1 : order });
-              }}
-              fullWidth
-              InputProps={{ inputProps: { min: 1 } }}
-            />
-          </Box>
-        </DialogContent>
-        
-        <Divider />
-        
-        <DialogActions sx={{ p: 2, gap: 1 }}>
-          <Button 
-            onClick={() => setIsFormOpen(false)}
-            variant="outlined"
-          >
-            انصراف
-          </Button>
-          <Button 
-            onClick={handleSaveField} 
-            variant="contained"
-            color="primary"
-          >
-            {editingField.id ? 'ذخیره تغییرات' : 'افزودن فیلد'}
-          </Button>
-        </DialogActions>
-      </Dialog>
+                    </FormHelperText>
+                  )}
+                </FormControl>
+              )}
+            </>
+          )}
+          
+          <TextField
+            label="ترتیب نمایش"
+            type="number"
+            value={editingField.order || ''}
+            onChange={(e) => {
+              const order = parseInt(e.target.value);
+              setEditingField({ ...editingField, order: isNaN(order) ? 1 : order });
+            }}
+            fullWidth
+            InputProps={{ 
+              inputProps: { 
+                min: 1,
+                style: { fontSize: isMobile ? '0.9rem' : undefined }
+              } 
+            }}
+            InputLabelProps={{
+              style: { fontSize: isMobile ? '0.9rem' : undefined }
+            }}
+          />
+        </Box>
+      </DialogContent>
       
-      {/* دیالوگ تأیید حذف */}
-      <Dialog
-        open={isDeleteConfirmOpen}
-        onClose={() => setIsDeleteConfirmOpen(false)}
-        PaperProps={{
-          sx: { direction: 'rtl' }
+      <Divider />
+      
+      <DialogActions sx={{ 
+        p: isMobile ? 2 : 2, 
+        gap: isMobile ? 1 : 1,
+        flexDirection: isMobile ? 'column' : 'row'
+      }}>
+        <Button 
+          onClick={() => setIsFormOpen(false)}
+          variant="outlined"
+          fullWidth={isMobile}
+          sx={{ 
+            fontSize: isMobile ? '0.9rem' : undefined,
+            py: isMobile ? 1 : undefined
+          }}
+        >
+          انصراف
+        </Button>
+        <Button 
+          onClick={handleSaveField} 
+          variant="contained"
+          color="primary"
+          fullWidth={isMobile}
+          sx={{ 
+            fontSize: isMobile ? '0.9rem' : undefined,
+            py: isMobile ? 1 : undefined
+          }}
+        >
+          {editingField.id ? 'ذخیره تغییرات' : 'افزودن فیلد جدید'}
+        </Button>
+      </DialogActions>
+    </Dialog>
+    
+    {/* دیالوگ تأیید حذف */}
+    <Dialog
+      open={isDeleteConfirmOpen}
+      onClose={() => setIsDeleteConfirmOpen(false)}
+      PaperProps={{
+        sx: { 
+          direction: 'rtl',
+          m: isMobile ? 0 : undefined
+        }
+      }}
+      fullScreen={isMobile}
+    >
+      <DialogTitle 
+        sx={{ 
+          display: 'flex', 
+          alignItems: 'center', 
+          gap: 1,
+          fontSize: isMobile ? '1.2rem' : undefined,
+          p: isMobile ? 2 : undefined
         }}
       >
-        <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          <WarningIcon color="warning" />
-          تأیید حذف
-        </DialogTitle>
-        <DialogContent>
-          <Typography>
-            آیا از حذف این فیلد اطمینان دارید؟ این عمل قابل بازگشت نیست.
-          </Typography>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setIsDeleteConfirmOpen(false)} color="primary">
-            انصراف
-          </Button>
-          <Button onClick={confirmDeleteField} color="error" variant="contained">
-            حذف
-          </Button>
-        </DialogActions>
-      </Dialog>
-      
-      {/* Smart Field Builder Dialog */}
-      <SmartFieldBuilder
-        open={showSmartFieldBuilder}
-        onClose={() => setShowSmartFieldBuilder(false)}
-        onSave={handleSmartFieldSave}
-        existingFields={fields.map(field => ({
-          id: field.id,
-          name: field.name,
-          englishName: field.englishName,
-          baseType: field.type as BaseFieldType,
-          isRequired: field.isRequired,
-          order: field.order,
-          enhancements: [],
-          validation: []
-        }))}
-        editingField={editingField.id ? {
-          id: editingField.id,
-          name: editingField.name || '',
-          englishName: editingField.englishName || '',
-          baseType: (editingField.type?.split('-')[0] || 'text') as BaseFieldType,
-          order: editingField.order || fields.length + 1,
-          isRequired: editingField.isRequired || false,
-          enhancements: [],
-          validation: []
-        } as SmartFieldConfig : null}
-        categoryContext={nodeName}
-      />
-    </Paper>
-  );
+        <WarningIcon color="warning" />
+        تأیید حذف
+      </DialogTitle>
+      <DialogContent
+        sx={{
+          fontSize: isMobile ? '0.9rem' : undefined,
+          p: isMobile ? 2 : undefined
+        }}
+      >
+        <Typography>
+          آیا از حذف این فیلد اطمینان دارید؟ این عمل قابل بازگشت نیست.
+        </Typography>
+      </DialogContent>
+      <DialogActions
+        sx={{
+          p: isMobile ? 2 : undefined,
+          flexDirection: isMobile ? 'column' : 'row',
+          gap: isMobile ? 1 : undefined
+        }}
+      >
+        <Button 
+          onClick={() => setIsDeleteConfirmOpen(false)} 
+          color="primary"
+          fullWidth={isMobile}
+          sx={{ 
+            fontSize: isMobile ? '0.9rem' : undefined,
+            py: isMobile ? 1 : undefined
+          }}
+        >
+          انصراف
+        </Button>
+        <Button 
+          onClick={confirmDeleteField} 
+          color="error" 
+          variant="contained"
+          fullWidth={isMobile}
+          sx={{ 
+            fontSize: isMobile ? '0.9rem' : undefined,
+            py: isMobile ? 1 : undefined
+          }}
+        >
+          حذف
+        </Button>
+      </DialogActions>
+    </Dialog>
+    
+    {/* Smart Field Builder Dialog */}
+    {/* SmartFieldBuilder disabled */}
+  </Paper>
+);
 };
 
 export default FieldManager;

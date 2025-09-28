@@ -38,7 +38,8 @@ import {
 } from '@mui/icons-material';
 
 import type { HierarchicalFieldConfig } from '../enhancement/HierarchicalFieldManager';
-import { SmartFieldConfig } from '../../smart-field-builder/types';
+// Smart Field Builder types disabled
+type SmartFieldConfig = any;
 import { loadGeographicalData, loadCategoryLevels } from '../../data/loader';
 import { CategoryType } from '../../types';
 

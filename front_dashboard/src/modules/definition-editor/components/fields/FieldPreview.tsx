@@ -20,7 +20,10 @@ import {
   Chip,
   InputAdornment,
   OutlinedInput,
-  Alert
+  Alert,
+  Accordion,
+  AccordionSummary,
+  AccordionDetails
 } from '@mui/material';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
@@ -32,9 +35,14 @@ import PreviewIcon from '@mui/icons-material/Preview';
 import FileUploadIcon from '@mui/icons-material/FileUpload';
 import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/Delete';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 
 // Types
 import { CustomField } from '../../types/equipment';
+
+// Field Enhancement System
+import { FieldEnhancer } from './processors/FieldEnhancer';
 
 // Reference Field Renderer
 import ReferenceFieldRenderer from './ReferenceFieldRenderer';
@@ -142,12 +150,67 @@ const FieldPreview: React.FC<FieldPreviewProps> = ({
   });
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   
-  // مدیریت تغییر مقدار فیلدها
-  const handleChange = (fieldId: string, value: any) => {
-    setFormValues({
-      ...formValues,
-      [fieldId]: value
-    });
+  // مدیریت تغییر مقدار فیلدها با تقویت پردازش
+  const handleChange = async (fieldId: string, value: any) => {
+    // Find the field definition
+    const field = fields.find(f => f.id === fieldId);
+    
+    if (field && typeof value === 'string' && FieldEnhancer.fieldNeedsProcessing(field as any)) {
+      try {
+        // Apply sync processing for immediate feedback
+        const processedValue = FieldEnhancer.processValueSync(value, field as any);
+        
+        setFormValues({
+          ...formValues,
+          [fieldId]: processedValue
+        });
+        
+        // Clear error if exists
+        if (formErrors[fieldId]) {
+          setFormErrors({
+            ...formErrors,
+            [fieldId]: ''
+          });
+        }
+        
+        // Apply async processing in background for validation
+        try {
+          const fullResult = await FieldEnhancer.processValue(processedValue, field as any);
+          
+          // Update with any additional changes
+          if (fullResult.hasChanges && fullResult.value !== processedValue) {
+            setFormValues(prev => ({
+              ...prev,
+              [fieldId]: fullResult.value
+            }));
+          }
+          
+          // Handle validation errors
+          if (!fullResult.isValid && fullResult.validationErrors) {
+            setFormErrors(prev => ({
+              ...prev,
+              [fieldId]: fullResult.validationErrors![0]
+            }));
+          }
+        } catch (asyncError) {
+          console.warn('Async field processing failed:', asyncError);
+        }
+        
+      } catch (error) {
+        console.warn('Field processing failed, using original value:', error);
+        // Fallback to original behavior
+        setFormValues({
+          ...formValues,
+          [fieldId]: value
+        });
+      }
+    } else {
+      // Original behavior for non-text fields or fields without processing
+      setFormValues({
+        ...formValues,
+        [fieldId]: value
+      });
+    }
     
     // پاک کردن خطا در صورت وجود
     if (formErrors[fieldId]) {
@@ -363,29 +426,454 @@ const FieldPreview: React.FC<FieldPreviewProps> = ({
               rows={4}
               required={field.isRequired}
               error={error}
-              helperText={fieldHelperText}
-              placeholder={placeholder}
+              helperText={fieldHelperText || field.helpText}
+              placeholder={placeholder || field.placeholder}
               disabled={readOnly}
-              sx={{ direction: 'rtl' }}
+              sx={{ 
+                direction: field.direction === 'ltr' ? 'ltr' : field.direction === 'rtl' ? 'rtl' : 'rtl' // default RTL
+              }}
+              inputProps={{
+                maxLength: field.maxLength,
+                minLength: field.minLength
+              }}
             />
           );
         }
         
-        // Default text field
-        return (
-          <TextField
-            label={displayName}
-            value={value}
-            onChange={(e) => handleChange(field.id, e.target.value)}
-            fullWidth
-            required={field.isRequired}
-            error={error}
-            helperText={fieldHelperText}
-            placeholder={placeholder}
-            disabled={readOnly}
-            sx={{ direction: 'rtl' }}
-          />
-        );
+        // Handle different variants
+        const renderTextFieldByVariant = () => {
+          const getFieldSize = (): 'small' | 'medium' | undefined => {
+            if (field.size === 'sm') return 'small';
+            if (field.size === 'lg') return 'medium';
+            return 'medium';
+          };
+
+          const commonProps = {
+            label: displayName,
+            value: value || '',
+            onChange: (e: any) => handleChange(field.id, e.target.value),
+            fullWidth: field.size !== 'sm' && field.size !== 'md' && field.size !== 'lg',
+            required: field.isRequired,
+            error: error,
+            helperText: fieldHelperText || field.helpText,
+            placeholder: placeholder || field.placeholder,
+            disabled: readOnly,
+            size: getFieldSize(),
+            sx: { 
+              direction: field.direction === 'ltr' ? 'ltr' : field.direction === 'rtl' ? 'rtl' : 'rtl',
+              ...(field.size === 'full' && { width: '100%' }),
+              ...(field.size === 'sm' && { maxWidth: '200px' }),
+              ...(field.size === 'md' && { maxWidth: '300px' }),
+              ...(field.size === 'lg' && { maxWidth: '500px' })
+            },
+            inputProps: {
+              maxLength: field.maxLength,
+              minLength: field.minLength,
+              spellCheck: field.spellcheck !== 'off',
+              ...(field.allowedCharset === 'letters' && {
+                pattern: '[A-Za-z\u0600-\u06FF\s]+'
+              }),
+              ...(field.allowedCharset === 'alphanumeric' && {
+                pattern: '[A-Za-z0-9\u0600-\u06FF\s]+'
+              }),
+              ...(field.allowedCharset === 'custom' && field.customRegex && {
+                pattern: field.customRegex
+              })
+            },
+            InputProps: {
+              ...(field.prefix && {
+                startAdornment: <InputAdornment position="start">{field.prefix}</InputAdornment>
+              }),
+              ...(field.suffix && {
+                endAdornment: <InputAdornment position="end">{field.suffix}</InputAdornment>
+              }),
+              ...(field.icon && {
+                startAdornment: <InputAdornment position="start"><span>{field.icon}</span></InputAdornment>
+              })
+            }
+          };
+
+          // Check both displayType and variant for backward compatibility
+          const fieldVariant = (field as any).displayType || field.variant;
+          
+          switch (fieldVariant) {
+            case 'accordion':
+              // Check if accordion display mode is set to 'options'
+              if (field.accordionDisplayMode === 'options' && field.options && field.options.length > 0) {
+                return (
+                  <Accordion>
+                    <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                      <Typography>{field.accordionTitle || displayName}</Typography>
+                    </AccordionSummary>
+                    <AccordionDetails>
+                      <FormControl fullWidth>
+                        <InputLabel>انتخاب گزینه</InputLabel>
+                        <Select
+                          value={value || ''}
+                          onChange={(e) => handleChange(field.id, e.target.value)}
+                          label="انتخاب گزینه"
+                          disabled={readOnly}
+                        >
+                          {field.options.map((option, index) => (
+                            <MenuItem key={index} value={option}>
+                              {option}
+                            </MenuItem>
+                          ))}
+                        </Select>
+                      </FormControl>
+                    </AccordionDetails>
+                  </Accordion>
+                );
+              } else {
+                // Default title mode - just display the title with no interactive content
+                return (
+                  <Accordion>
+                    <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                      <Typography>{field.accordionTitle || displayName}</Typography>
+                    </AccordionSummary>
+                    <AccordionDetails>
+                      <TextField {...commonProps} />
+                    </AccordionDetails>
+                  </Accordion>
+                );
+              }
+              
+            case 'textarea':
+              return <TextField 
+                {...commonProps} 
+                multiline 
+                rows={field.textareaRows || 4}
+                maxRows={field.textareaMaxRows || 10}
+                sx={{
+                  ...commonProps.sx,
+                  '& .MuiInputBase-root': {
+                    resize: field.textareaResize || 'vertical'
+                  }
+                }}
+              />;
+              
+            case 'richtext':
+              return (
+                <Box>
+                  <Typography variant="body2" sx={{ mb: 1 }}>{displayName}</Typography>
+                  <TextField 
+                    {...commonProps} 
+                    multiline 
+                    rows={Math.ceil((field.richtextHeight || 300) / 24)} // Approximate rows based on height
+                    sx={{
+                      ...commonProps.sx,
+                      '& .MuiInputBase-root': {
+                        minHeight: field.richtextHeight || 300
+                      }
+                    }}
+                  />
+                  <Box sx={{ mt: 1, display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                    <Typography variant="caption" color="text.secondary" sx={{ mr: 1 }}>Tools:</Typography>
+                    {(field.richtextToolbar || []).map((tool, index) => (
+                      <Chip key={index} label={tool} size="small" variant="outlined" />
+                    ))}
+                  </Box>
+                  <Typography variant="caption" color="text.secondary" display="block">
+                    Rich Text editing (preview mode)
+                  </Typography>
+                </Box>
+              );
+              
+            case 'chips':
+              const chipValues = field.multiValue ? 
+                (typeof value === 'string' ? value.split(field.multiValueSeparator === 'comma' ? ',' : field.multiValueSeparator === 'space' ? ' ' : '\n') : []) 
+                : [value || ''];
+              const displayedChips = chipValues.slice(0, field.chipsMaxCount || 10);
+              const hasMore = chipValues.length > (field.chipsMaxCount || 10);
+              
+              return (
+                <Box>
+                  <Typography variant="body2" sx={{ mb: 1 }}>{displayName}</Typography>
+                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 1 }}>
+                    {displayedChips.filter(v => v).map((chip, index) => (
+                      <Chip 
+                        key={index} 
+                        label={chip} 
+                        size="small" 
+                        variant={field.chipsVariant || 'filled'}
+                        color={field.chipsColor || 'default'}
+                        onDelete={field.chipsDeletable !== false ? () => {} : undefined}
+                      />
+                    ))}
+                    {hasMore && (
+                      <Chip 
+                        label={`+${chipValues.length - (field.chipsMaxCount || 10)} more`} 
+                        size="small" 
+                        variant="outlined" 
+                        color="secondary"
+                      />
+                    )}
+                  </Box>
+                  <TextField {...commonProps} size="small" />
+                </Box>
+              );
+              
+            case 'pill':
+              const getPillColor = () => {
+                switch (field.pillColor) {
+                  case 'primary': return { bgcolor: 'primary.main', color: 'primary.contrastText' };
+                  case 'secondary': return { bgcolor: 'secondary.main', color: 'secondary.contrastText' };
+                  case 'success': return { bgcolor: 'success.main', color: 'success.contrastText' };
+                  case 'error': return { bgcolor: 'error.main', color: 'error.contrastText' };
+                  case 'warning': return { bgcolor: 'warning.main', color: 'warning.contrastText' };
+                  default: return { bgcolor: 'grey.300', color: 'text.primary' };
+                }
+              };
+              
+              const getPillSize = () => {
+                switch (field.pillSize) {
+                  case 'small': return { height: '24px', fontSize: '0.75rem' };
+                  case 'large': return { height: '40px', fontSize: '1rem' };
+                  default: return { height: '32px', fontSize: '0.875rem' };
+                }
+              };
+              
+              const getChipSize = (): 'small' | 'medium' => {
+                return field.pillSize === 'small' ? 'small' : 'medium';
+              };
+              
+              return (
+                <Box>
+                  <Typography variant="body2" sx={{ mb: 1 }}>{displayName}</Typography>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    {value && (
+                      <Chip 
+                        label={value} 
+                        size={getChipSize()}
+                        sx={{ 
+                          borderRadius: '16px',
+                          ...getPillColor(),
+                          ...getPillSize()
+                        }} 
+                      />
+                    )}
+                    <TextField {...commonProps} size="small" sx={{ flex: 1 }} />
+                  </Box>
+                  {field.pillColor && (
+                    <Typography variant="caption" color="text.secondary">Color: {field.pillColor}</Typography>
+                  )}
+                </Box>
+              );
+              
+            case 'masked':
+              return (
+                <Box>
+                  <TextField {...commonProps} placeholder={field.maskPattern || placeholder} />
+                  {field.maskPattern && (
+                    <Typography variant="caption" color="text.secondary">
+                      Pattern: {field.maskPattern}
+                    </Typography>
+                  )}
+                </Box>
+              );
+              
+            case 'popover':
+              const getPopoverTrigger = () => {
+                switch (field.popoverTrigger) {
+                  case 'hover': return 'Hover to edit';
+                  case 'focus': return 'Focus to edit';
+                  default: return 'Click to edit';
+                }
+              };
+              
+              const getPopoverSize = () => {
+                switch (field.popoverSize) {
+                  case 'small': return { minWidth: '200px' };
+                  case 'medium': return { minWidth: '300px' };
+                  case 'large': return { minWidth: '500px' };
+                  default: return { minWidth: '250px' };
+                }
+              };
+              
+              return (
+                <Box>
+                  <Button 
+                    variant="outlined" 
+                    fullWidth 
+                    onClick={() => {}}
+                    sx={getPopoverSize()}
+                  >
+                    {getPopoverTrigger()}: {displayName}
+                  </Button>
+                  <Box sx={{ mt: 1 }}>
+                    <Typography variant="caption" color="text.secondary">
+                      Mode: {field.popoverMode || 'popover'} | Position: {field.popoverPosition || 'bottom'}
+                    </Typography>
+                  </Box>
+                  <Typography variant="caption" color="text.secondary" display="block">
+                    Current value: {value || 'Empty'}
+                  </Typography>
+                </Box>
+              );
+              
+            case 'inline':
+              const getInlineLayout = () => {
+                switch (field.inlineLabelPosition) {
+                  case 'top': return { flexDirection: 'column', alignItems: 'flex-start' };
+                  case 'right': return { flexDirection: 'row-reverse', alignItems: 'center' };
+                  default: return { flexDirection: 'row', alignItems: 'center' };
+                }
+              };
+              
+              const getInlineSpacing = () => {
+                switch (field.inlineSpacing) {
+                  case 'tight': return 1;
+                  case 'normal': return 2;
+                  case 'loose': return 3;
+                  default: return 2;
+                }
+              };
+              
+              const getLabelWidth = () => {
+                if (field.inlineWidth === 'auto') return { minWidth: 'auto' };
+                return { minWidth: field.inlineWidth || 100 };
+              };
+              
+              return (
+                <Box sx={{ 
+                  display: 'flex', 
+                  gap: getInlineSpacing(),
+                  ...getInlineLayout()
+                }}>
+                  <Typography 
+                    variant="body2" 
+                    sx={{
+                      ...getLabelWidth(),
+                      textAlign: field.inlineLabelPosition === 'right' ? 'right' : 'left'
+                    }}
+                  >
+                    {displayName}:
+                  </Typography>
+                  <TextField 
+                    {...commonProps} 
+                    variant="standard" 
+                    size="small" 
+                    sx={{ flex: 1 }} 
+                    label="" // Remove label since it's displayed separately
+                  />
+                </Box>
+              );
+              
+            default: // 'plain'
+              return <TextField {...commonProps} />;
+          }
+        };
+
+        // Add suggestions/autocomplete support
+        const renderWithSuggestions = (textField: React.ReactElement) => {
+          if (!field.suggestions || field.suggestions.length === 0) {
+            return textField;
+          }
+
+          if (field.selectionAid === 'single' || field.selectionAid === 'multi') {
+            return (
+              <Box>
+                {textField}
+                <Box sx={{ mt: 1 }}>
+                  <Typography variant="caption" color="text.secondary" sx={{ mb: 1, display: 'block' }}>
+                    Suggestions ({field.selectionAid === 'multi' ? 'multiple selection' : 'single selection'}):
+                  </Typography>
+                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                    {field.suggestions.map((suggestion, index) => (
+                      <Chip 
+                        key={index}
+                        label={suggestion}
+                        size="small"
+                        variant="outlined"
+                        clickable
+                        onClick={() => {
+                          if (field.selectionAid === 'multi' && field.multiValue) {
+                            const currentValues = value ? value.split(field.multiValueSeparator === 'comma' ? ',' : ' ') : [];
+                            if (!currentValues.includes(suggestion)) {
+                              const newValue = [...currentValues, suggestion].join(field.multiValueSeparator === 'comma' ? ',' : ' ');
+                              handleChange(field.id, newValue);
+                            }
+                          } else {
+                            handleChange(field.id, suggestion);
+                          }
+                        }}
+                      />
+                    ))}
+                  </Box>
+                </Box>
+              </Box>
+            );
+          }
+
+          return textField;
+        };
+
+        // Add character counter
+        const renderWithCounter = (element: React.ReactElement) => {
+          if (field.counterDisplay === 'off' || !field.maxLength) {
+            return element;
+          }
+
+          const currentLength = value ? value.length : 0;
+          const counter = (
+            <Typography 
+              variant="caption" 
+              color={currentLength > field.maxLength ? 'error' : 'text.secondary'}
+              sx={{ 
+                position: field.counterDisplay === 'inside' ? 'absolute' : 'relative',
+                right: field.counterDisplay === 'inside' ? 8 : 'auto',
+                bottom: field.counterDisplay === 'inside' ? 8 : 'auto',
+                mt: field.counterDisplay === 'bottom' ? 0.5 : 0
+              }}
+            >
+              {currentLength}/{field.maxLength}
+            </Typography>
+          );
+
+          if (field.counterDisplay === 'inside') {
+            return (
+              <Box sx={{ position: 'relative' }}>
+                {element}
+                {counter}
+              </Box>
+            );
+          }
+
+          return (
+            <Box>
+              {element}
+              {counter}
+            </Box>
+          );
+        };
+
+        // Add copy button
+        const renderWithCopyButton = (element: React.ReactElement) => {
+          if (!field.copyButton || !value) {
+            return element;
+          }
+
+          return (
+            <Box sx={{ display: 'flex', alignItems: 'flex-end', gap: 1 }}>
+              <Box sx={{ flex: 1 }}>{element}</Box>
+              <IconButton 
+                size="small" 
+                onClick={() => navigator.clipboard.writeText(value)}
+                title="Copy to clipboard"
+              >
+                <ContentCopyIcon />
+              </IconButton>
+            </Box>
+          );
+        };
+
+        // Render the complete text field with all features
+        const baseTextField = renderTextFieldByVariant();
+        const withSuggestions = renderWithSuggestions(baseTextField);
+        const withCounter = renderWithCounter(withSuggestions);
+        const finalTextField = renderWithCopyButton(withCounter);
+
+        return finalTextField;
         
       case 'number':
         return (
@@ -397,8 +885,8 @@ const FieldPreview: React.FC<FieldPreviewProps> = ({
             fullWidth
             required={field.isRequired}
             error={error}
-            helperText={fieldHelperText}
-            placeholder={placeholder}
+            helperText={fieldHelperText || field.helpText}
+            placeholder={placeholder || field.placeholder}
             disabled={readOnly}
             InputProps={{
               endAdornment: field.unit && (
@@ -406,6 +894,10 @@ const FieldPreview: React.FC<FieldPreviewProps> = ({
                   {field.unit}
                 </InputAdornment>
               )
+            }}
+            inputProps={{
+              min: field.validationRules?.minValue,
+              max: field.validationRules?.maxValue
             }}
           />
         );
@@ -573,10 +1065,16 @@ const FieldPreview: React.FC<FieldPreviewProps> = ({
             fullWidth
             required={field.isRequired}
             error={error}
-            helperText={fieldHelperText}
-            placeholder={placeholder}
+            helperText={fieldHelperText || field.helpText}
+            placeholder={placeholder || field.placeholder}
             disabled={readOnly}
-            sx={{ direction: 'rtl' }}
+            sx={{ 
+              direction: field.direction === 'ltr' ? 'ltr' : field.direction === 'rtl' ? 'rtl' : 'ltr' // default LTR for email
+            }}
+            inputProps={{
+              maxLength: field.maxLength,
+              minLength: field.minLength
+            }}
           />
         );
         
@@ -590,10 +1088,16 @@ const FieldPreview: React.FC<FieldPreviewProps> = ({
             fullWidth
             required={field.isRequired}
             error={error}
-            helperText={fieldHelperText}
-            placeholder={placeholder}
+            helperText={fieldHelperText || field.helpText}
+            placeholder={placeholder || field.placeholder}
             disabled={readOnly}
-            sx={{ direction: 'rtl' }}
+            sx={{ 
+              direction: field.direction === 'ltr' ? 'ltr' : field.direction === 'rtl' ? 'rtl' : 'ltr' // default LTR for password
+            }}
+            inputProps={{
+              maxLength: field.maxLength,
+              minLength: field.minLength
+            }}
           />
         );
         
@@ -608,10 +1112,16 @@ const FieldPreview: React.FC<FieldPreviewProps> = ({
             fullWidth
             required={field.isRequired}
             error={error}
-            helperText={fieldHelperText}
-            placeholder={placeholder}
+            helperText={fieldHelperText || field.helpText}
+            placeholder={placeholder || field.placeholder}
             disabled={readOnly}
-            sx={{ direction: 'rtl' }}
+            sx={{ 
+              direction: field.direction === 'ltr' ? 'ltr' : field.direction === 'rtl' ? 'rtl' : 'rtl' // default RTL
+            }}
+            inputProps={{
+              maxLength: field.maxLength,
+              minLength: field.minLength
+            }}
           />
         );
         
@@ -911,6 +1421,255 @@ const FieldPreview: React.FC<FieldPreviewProps> = ({
             disabled={readOnly}
             fullWidth
           />
+        );
+        
+      case 'array-text':
+        const arrayValue = Array.isArray(value) ? value : [];
+        const minItems = field.arrayTextMinItems || 1;
+        const maxItems = field.arrayTextMaxItems || 10;
+        const itemLabel = field.arrayTextItemLabel || 'آیتم';
+        const itemPlaceholder = field.arrayTextItemPlaceholder || `${itemLabel} را وارد کنید`;
+        const itemType = field.arrayTextItemType || 'text';
+        
+        return (
+          <Box>
+            <Typography variant="subtitle2" sx={{ mb: 1 }}>
+              {displayName}
+              {field.isRequired && <span style={{ color: 'red' }}> *</span>}
+            </Typography>
+            {arrayValue.map((item: string, index: number) => (
+              <Box key={index} sx={{ display: 'flex', gap: 1, mb: 1 }}>
+                <TextField
+                  label={`${itemLabel} ${index + 1}`}
+                  value={item || ''}
+                  onChange={(e) => {
+                    const newArray = [...arrayValue];
+                    newArray[index] = e.target.value;
+                    handleChange(field.id, newArray);
+                  }}
+                  fullWidth
+                  multiline={itemType === 'textarea'}
+                  rows={itemType === 'textarea' ? 3 : undefined}
+                  disabled={readOnly}
+                  placeholder={itemPlaceholder}
+                  sx={{ 
+                    direction: field.direction === 'ltr' ? 'ltr' : field.direction === 'rtl' ? 'rtl' : 'rtl'
+                  }}
+                />
+                {!readOnly && arrayValue.length > minItems && (
+                  <IconButton
+                    onClick={() => {
+                      const newArray = [...arrayValue];
+                      newArray.splice(index, 1);
+                      handleChange(field.id, newArray);
+                    }}
+                    color="error"
+                  >
+                    <DeleteIcon />
+                  </IconButton>
+                )}
+              </Box>
+            ))}
+            {!readOnly && arrayValue.length < maxItems && (
+              <Button
+                startIcon={<AddIcon />}
+                onClick={() => {
+                  const newArray = [...arrayValue, ''];
+                  handleChange(field.id, newArray);
+                }}
+                variant="outlined"
+                size="small"
+              >
+                افزودن {itemLabel}
+              </Button>
+            )}
+            {fieldHelperText && (
+              <FormHelperText error={error}>{fieldHelperText}</FormHelperText>
+            )}
+          </Box>
+        );
+        
+      case 'key-value':
+        const kvValue = Array.isArray(value) ? value : [];
+        const kvMinPairs = field.keyValueMinPairs || 1;
+        const kvMaxPairs = field.keyValueMaxPairs || 20;
+        const keyLabel = field.keyValueKeyLabel || 'ویژگی';
+        const valueLabel = field.keyValueValueLabel || 'مقدار';
+        const keyPlaceholder = field.keyValueKeyPlaceholder || `${keyLabel} را وارد کنید`;
+        const valuePlaceholder = field.keyValueValuePlaceholder || `${valueLabel} را وارد کنید`;
+        
+        return (
+          <Box>
+            <Typography variant="subtitle2" sx={{ mb: 1 }}>
+              {displayName}
+              {field.isRequired && <span style={{ color: 'red' }}> *</span>}
+            </Typography>
+            {kvValue.map((pair: {key: string, value: string}, index: number) => (
+              <Box key={index} sx={{ display: 'flex', gap: 1, mb: 1 }}>
+                <TextField
+                  label={keyLabel}
+                  value={pair?.key || ''}
+                  onChange={(e) => {
+                    const newArray = [...kvValue];
+                    newArray[index] = { ...newArray[index], key: e.target.value };
+                    handleChange(field.id, newArray);
+                  }}
+                  sx={{ flex: 1 }}
+                  disabled={readOnly}
+                  placeholder={keyPlaceholder}
+                />
+                <TextField
+                  label={valueLabel}
+                  value={pair?.value || ''}
+                  onChange={(e) => {
+                    const newArray = [...kvValue];
+                    newArray[index] = { ...newArray[index], value: e.target.value };
+                    handleChange(field.id, newArray);
+                  }}
+                  sx={{ flex: 1 }}
+                  disabled={readOnly}
+                  placeholder={valuePlaceholder}
+                />
+                {!readOnly && kvValue.length > kvMinPairs && (
+                  <IconButton
+                    onClick={() => {
+                      const newArray = [...kvValue];
+                      newArray.splice(index, 1);
+                      handleChange(field.id, newArray);
+                    }}
+                    color="error"
+                  >
+                    <DeleteIcon />
+                  </IconButton>
+                )}
+              </Box>
+            ))}
+            {field.keyValuePredefinedKeys && field.keyValuePredefinedKeys.length > 0 && (
+              <Box sx={{ mb: 2 }}>
+                <Typography variant="caption" color="text.secondary" sx={{ mb: 1, display: 'block' }}>
+                  ویژگی‌های پیشنهادی:
+                </Typography>
+                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                  {field.keyValuePredefinedKeys.map((key, index) => (
+                    <Chip 
+                      key={index}
+                      label={key}
+                      size="small"
+                      variant="outlined"
+                      clickable
+                      onClick={() => {
+                        if (!readOnly && kvValue.length < kvMaxPairs) {
+                          const newArray = [...kvValue, { key, value: '' }];
+                          handleChange(field.id, newArray);
+                        }
+                      }}
+                    />
+                  ))}
+                </Box>
+              </Box>
+            )}
+            {!readOnly && kvValue.length < kvMaxPairs && (
+              <Button
+                startIcon={<AddIcon />}
+                onClick={() => {
+                  const newArray = [...kvValue, { key: '', value: '' }];
+                  handleChange(field.id, newArray);
+                }}
+                variant="outlined"
+                size="small"
+              >
+                افزودن ویژگی
+              </Button>
+            )}
+            {fieldHelperText && (
+              <FormHelperText error={error}>{fieldHelperText}</FormHelperText>
+            )}
+          </Box>
+        );
+        
+      case 'grouped':
+        const groupedValue = value || {};
+        const sections = field.groupedSections || [];
+        
+        return (
+          <Box>
+            <Typography variant="subtitle2" sx={{ mb: 2 }}>
+              {displayName}
+              {field.isRequired && <span style={{ color: 'red' }}> *</span>}
+            </Typography>
+            {sections.map((section, sectionIndex) => (
+              <Accordion 
+                key={section.id}
+                defaultExpanded={section.defaultExpanded !== false}
+                disabled={readOnly}
+                sx={{ mb: 1 }}
+              >
+                <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                  <Typography variant="subtitle2">{section.title}</Typography>
+                </AccordionSummary>
+                <AccordionDetails>
+                  <Grid container spacing={2}>
+                    {section.fields.map((sectionField, fieldIndex) => {
+                      const fieldValue = groupedValue[section.id]?.[sectionField.key] || '';
+                      return (
+                        <Grid item xs={12} sm={6} key={sectionField.key}>
+                          {sectionField.type === 'select' ? (
+                            <FormControl fullWidth>
+                              <InputLabel>{sectionField.label}</InputLabel>
+                              <Select
+                                value={fieldValue}
+                                onChange={(e) => {
+                                  const newValue = {
+                                    ...groupedValue,
+                                    [section.id]: {
+                                      ...groupedValue[section.id],
+                                      [sectionField.key]: e.target.value
+                                    }
+                                  };
+                                  handleChange(field.id, newValue);
+                                }}
+                                label={sectionField.label}
+                                disabled={readOnly}
+                              >
+                                {(sectionField.options || []).map((option, optIndex) => (
+                                  <MenuItem key={optIndex} value={option}>{option}</MenuItem>
+                                ))}
+                              </Select>
+                            </FormControl>
+                          ) : (
+                            <TextField
+                              label={sectionField.label}
+                              value={fieldValue}
+                              onChange={(e) => {
+                                const newValue = {
+                                  ...groupedValue,
+                                  [section.id]: {
+                                    ...groupedValue[section.id],
+                                    [sectionField.key]: e.target.value
+                                  }
+                                };
+                                handleChange(field.id, newValue);
+                              }}
+                              fullWidth
+                              multiline={sectionField.type === 'textarea'}
+                              rows={sectionField.type === 'textarea' ? 3 : undefined}
+                              type={sectionField.type === 'number' ? 'number' : 'text'}
+                              required={sectionField.required}
+                              disabled={readOnly}
+                              placeholder={sectionField.placeholder}
+                            />
+                          )}
+                        </Grid>
+                      );
+                    })}
+                  </Grid>
+                </AccordionDetails>
+              </Accordion>
+            ))}
+            {fieldHelperText && (
+              <FormHelperText error={error}>{fieldHelperText}</FormHelperText>
+            )}
+          </Box>
         );
         
       default:

@@ -50,7 +50,7 @@ export const generateUserPDF = (userData: Partial<UserProfile>, addresses: Addre
         }
         
         body {
-          font-family: 'B-Yekan', 'Vazirmatn', 'Tahoma', 'Iranian Sans', 'بی یکان', 'تهوما', 'Segoe UI', 'Arial', sans-serif;
+          font-family: 'Tahoma', 'Arial', sans-serif;
           direction: rtl;
           background: white;
           color: #333;
