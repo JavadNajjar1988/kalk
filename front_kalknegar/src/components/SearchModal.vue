@@ -15,8 +15,8 @@
               :class="hit.index === currentHitIndex ? 'bg-blue-200' : 'bg-gray-100'"
               @click="onSelect(hit.index)"
             >
-              <SearchUnitHit v-if="hit.category === 'Units'" :unit="hit" />
-              <SearchFeatureHit v-else-if="hit.category === 'Features'" :feature="hit" />
+              <SearchUnitHit v-if="hit.category === 'واحدها'" :unit="hit" />
+              <SearchFeatureHit v-else-if="hit.category === 'ویژگی‌ها'" :feature="hit" />
             </button>
           </li>
         </ul>
@@ -154,8 +154,8 @@ function onSelect(index?: number) {
   const i = index === undefined ? currentHitIndex.value : index;
   if (!hits.value.length) return;
   const item = hits.value[i];
-  if (item.category === "Units") emit("select-unit", item.id);
-  if (item.category === "Features") {
+  if (item.category === "واحدها") emit("select-unit", item.id);
+  if (item.category === "ویژگی‌ها") {
     if (item.type === "layer") emit("select-layer", item.id);
     else emit("select-feature", item.id, item._pid);
   }

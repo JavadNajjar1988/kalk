@@ -66,7 +66,7 @@ function convertBasicUnitNode2UnitNodeInfo(
   basicUnitNode: BasicUnitNode,
   options: Partial<OrbChartOptions>,
 ): UnitNodeInfo {
-  let symb: ms.Symbol;
+  let symb: import("milsymbol").Symbol;
   const symbolOptions = { size: options.symbolSize, ...basicUnitNode.unit.symbolOptions };
   if (options.symbolGenerator) {
     symb = options.symbolGenerator(basicUnitNode.unit.sidc, symbolOptions);

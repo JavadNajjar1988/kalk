@@ -67,12 +67,12 @@
                         :item="item"
                       />
                       <CommandPaletteImageLayerItem
-                        v-else-if="item.category === 'لایه‌های نقشه'"
+                        v-else-if="item.category === 'Map layers'"
                         :active="active"
                         :item="item"
                       />
                       <CommandPaletteEventItem
-                        v-else-if="item.category === 'رویدادها'"
+                        v-else-if="item.category === 'Events'"
                         :active="active"
                         :item="item"
                       />
@@ -83,7 +83,7 @@
                         :center="mapCenter"
                       />
                       <CommandPaletteActionItem
-                        v-else-if="item.category === 'عملیات'"
+                        v-else-if="item.category === 'Actions'"
                         :active="active"
                         :item="item"
                       />
@@ -192,7 +192,7 @@ interface ExtendedPhotonSearchResult extends PhotonSearchResult {
 
 const groupedHits = ref<
   | ReturnType<typeof search>["groups"]
-  | Map<"Places", ExtendedPhotonSearchResult[]>
+  | Map<"مکان‌ها", ExtendedPhotonSearchResult[]>
   | Map<"Actions", ActionSearchResult[]>
 >();
 const mapCenter = ref<number[] | null | undefined>();
@@ -232,7 +232,7 @@ watch(
 watch([() => isActionSearch.value, () => query.value.trim()], async ([isa, q]) => {
   if (!isa) return;
   const filteredActions = q ? searchActions(q) : actionItems;
-  groupedHits.value = new Map([["عملیات", filteredActions]]);
+  groupedHits.value = new Map([["Actions", filteredActions]]);
   hitCount.value = filteredActions.length;
 });
 
@@ -252,13 +252,13 @@ function onSelect(
     } else {
       emit("select-feature", item.id);
     }
-  } else if (item.category === "لایه‌های نقشه") {
+  } else if (item.category === "Map layers") {
     emit("select-image-layer", item.id);
-  } else if (item.category === "رویدادها") {
+  } else if (item.category === "Events") {
     emit("select-event", item);
   } else if (item.category === "مکان‌ها") {
     emit("select-place", item);
-  } else if (item.category === "عملیات") {
+  } else if (item.category === "Actions") {
     emit("select-action", item.action);
   }
   open.value = false;

@@ -30,7 +30,7 @@ export interface NewSelectItem<T = string | number> {
 }
 
 export interface SearchResult {
-  category: "واحدها" | "ویژگی‌ها" | "رویدادها" | "مکان‌ها" | "عملیات" | "لایه‌های نقشه";
+  category: "واحدها" | "ویژگی‌ها" | "رویدادها" | "مکان‌ها" | "عملیات" | "لایه‌های نقشه" | "Map layers" | "Events" | "Actions";
   index: number;
   id: string | number;
   score: number;

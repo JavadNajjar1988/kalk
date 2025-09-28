@@ -49,6 +49,7 @@ export function createUnitStyle(unit: NUnit, symbolOptions: UnitSymbolOptions): 
     ...textAmplifiers,
     ...symbolSettings.symbolOptions,
     ...symbolOptions,
+    direction: typeof textAmplifiers.direction === 'string' ? parseFloat(textAmplifiers.direction) : textAmplifiers.direction,
   });
   return createMilSymbolStyle(milSymbol);
 }

@@ -82,6 +82,7 @@ export function useScenarioExport(options: Partial<UseScenarioExportOptions> = {
           description,
           ...(unit.textAmplifiers ?? {}),
           ...symbolOptions,
+          direction: typeof symbolOptions.direction === 'number' ? symbolOptions.direction.toString() : symbolOptions.direction,
         },
         { id: options.includeId ? id : undefined },
       );
@@ -223,7 +224,7 @@ export function useScenarioExport(options: Partial<UseScenarioExportOptions> = {
 
     const zipData = zipSync(data);
     await saveBlobToLocalFile(
-      new Blob([zipData], {
+      new Blob([zipData as BlobPart], {
         type: "application/vnd.google-earth.kmz",
       }),
       "scenario.kmz",

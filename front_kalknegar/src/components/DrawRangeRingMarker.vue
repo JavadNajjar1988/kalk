@@ -28,7 +28,9 @@ watchEffect(
 
 function drawRing(el: HTMLCanvasElement, color: string) {
   if (!el) return;
-  const vectorContext = toContext(el.getContext("2d"), {
+  const context = el.getContext("2d");
+  if (!context) return;
+  const vectorContext = toContext(context, {
     size: [props.size * 2, props.size * 2],
   });
 

@@ -30,3 +30,14 @@ export function useScenario() {
 
 export type TScenario = UnwrapRef<ReturnType<typeof useScenario>>["scenario"];
 export type TGeo = ReturnType<typeof useGeo>;
+
+// Setter function for scenario store initialization
+export function setScenarioStore(store: NewScenarioStore) {
+  globalStoreRef.value = store;
+}
+
+// Backward-compatible alias expected by components
+export function useScenarioStore() {
+  const { scenario } = useScenario();
+  return scenario.value;
+}

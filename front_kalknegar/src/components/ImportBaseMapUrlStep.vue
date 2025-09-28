@@ -54,10 +54,6 @@ async function onAdd() {
       const layer = addMapLayer("XYZLayer", scn.geo);
       scn.geo.updateMapLayer(layer.id, {
         url: xyzUrl.value,
-        tileLayerOptions: {
-          minZoom: minZoom.value,
-          maxZoom: maxZoom.value,
-        },
       });
     } else if (layerType.value === "TileJSONLayer") {
       const layer = addMapLayer("TileJSONLayer", scn.geo);

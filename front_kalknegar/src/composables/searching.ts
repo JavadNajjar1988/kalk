@@ -95,7 +95,7 @@ export function useScenarioSearch(
             target: htmlTagEscape(u.target),
           }),
           score: u.score,
-          category: "لایه‌های نقشه",
+          category: "Map layers",
         }) as MapLayerSearchResult,
     );
   }
@@ -118,7 +118,7 @@ export function useScenarioSearch(
             target: htmlTagEscape(u.target),
           }),
           score: u.score,
-          category: "رویدادها",
+          category: "Events",
         }) as EventSearchResult,
     );
   }
@@ -230,7 +230,7 @@ export function useActionSearch() {
             target: htmlTagEscape(u.target),
           }),
           score: u.score,
-          category: "عملیات",
+          category: "Actions",
         }) as ActionSearchResult,
     );
   }
@@ -240,7 +240,7 @@ export function useActionSearch() {
     actionItems: actionItems.map(
       (a, i): ActionSearchResult => ({
         ...a,
-        category: "عملیات",
+        category: "Actions",
         index: i,
         id: i,
         name: a.label,

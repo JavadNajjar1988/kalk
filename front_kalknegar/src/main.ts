@@ -7,11 +7,9 @@ import { router } from "./router";
 import persianNumberDirectives from "@/utils/persianNumberDirective";
 
 // Import React integration bridge with error handling
-try {
-  import("./integrations/react-bridge");
-} catch (error) {
+import("./integrations/react-bridge").catch((error) => {
   console.warn("React bridge integration failed to load:", error);
-}
+});
 
 // Create and mount Vue app with error handling
 try {

@@ -216,7 +216,7 @@ function onAddPoint() {
   const name = `Point ${(activeLayer.features.length ?? 0) + 1}`;
 
   const newFeature: ScenarioFeature = {
-    type: "فیچر",
+    type: "Feature",
     id: nanoid(),
     meta: {
       type: "Point",
