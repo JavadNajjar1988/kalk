@@ -1,4 +1,4 @@
-import React, { memo } from 'react';
+import React, { memo, useMemo, useCallback } from 'react';
 import { Box, Typography, Paper, Grid, TextField, FormControl, InputLabel, Select, MenuItem, FormControlLabel, Switch } from '@mui/material';
 import HelpTooltip from '../shared/HelpTooltip';
 import { ExtendedCustomFieldDefinition } from '../types/FieldEditTypes';
@@ -9,6 +9,47 @@ interface AssistivePropertiesProps {
 }
 
 const AssistiveProperties: React.FC<AssistivePropertiesProps> = ({ formData, onChange }) => {
+  // Memoize suggestions value for performance
+  const suggestionsValue = useMemo(() => {
+    if (!formData.suggestions || !Array.isArray(formData.suggestions)) return '';
+    return formData.suggestions.join('\n');
+  }, [formData.suggestions]);
+
+  // Memoize suggestions change handler
+  const handleSuggestionsChange = useCallback((value: string) => {
+    onChange('suggestions', value.split('\n').filter(s => s.trim()));
+  }, [onChange]);
+
+  // Memoize suggestions toggle handler
+  const handleSuggestionsToggle = useCallback((checked: boolean) => {
+    onChange('suggestions', checked ? [''] : []);
+  }, [onChange]);
+
+  // Memoize auto complete toggle handler
+  const handleAutoCompleteToggle = useCallback((checked: boolean) => {
+    onChange('enableAutoComplete', checked);
+  }, [onChange]);
+
+  // Memoize multiple values toggle handler
+  const handleMultipleValuesToggle = useCallback((checked: boolean) => {
+    onChange('enableMultipleValues', checked);
+  }, [onChange]);
+
+  // Memoize multi value separator change handler
+  const handleMultiValueSeparatorChange = useCallback((value: string) => {
+    onChange('multiValueSeparator', value);
+  }, [onChange]);
+
+  // Memoize spell check change handler
+  const handleSpellCheckChange = useCallback((value: string) => {
+    onChange('spellcheck', value);
+  }, [onChange]);
+
+  // Memoize custom dictionary change handler
+  const handleCustomDictionaryChange = useCallback((value: string) => {
+    onChange('customDictionary', value);
+  }, [onChange]);
+
   return (
     <Paper
       sx={{
@@ -33,7 +74,7 @@ const AssistiveProperties: React.FC<AssistivePropertiesProps> = ({ formData, onC
               control={
                 <Switch
                   checked={formData.suggestions && formData.suggestions.length > 0}
-                  onChange={(e) => onChange('suggestions', e.target.checked ? [''] : [])}
+                  onChange={(e) => handleSuggestionsToggle(e.target.checked)}
                   size="small"
                 />
               }
@@ -49,8 +90,8 @@ const AssistiveProperties: React.FC<AssistivePropertiesProps> = ({ formData, onC
             <TextField
               fullWidth
               label="پیشنهادات (هر خط یک مورد)"
-              value={Array.isArray(formData.suggestions) ? formData.suggestions.join('\n') : formData.suggestions || ''}
-              onChange={(e) => onChange('suggestions', e.target.value.split('\n'))}
+              value={suggestionsValue}
+              onChange={(e) => handleSuggestionsChange(e.target.value)}
               multiline
               rows={4}
               placeholder="پیشنهاد ۱&#10;پیشنهاد ۲&#10;پیشنهاد ۳"
@@ -71,7 +112,7 @@ const AssistiveProperties: React.FC<AssistivePropertiesProps> = ({ formData, onC
               control={
                 <Switch
                   checked={formData.enableAutoComplete || false}
-                  onChange={(e) => onChange('enableAutoComplete', e.target.checked)}
+                  onChange={(e) => handleAutoCompleteToggle(e.target.checked)}
                   size="small"
                 />
               }
@@ -92,7 +133,7 @@ const AssistiveProperties: React.FC<AssistivePropertiesProps> = ({ formData, onC
               control={
                 <Switch
                   checked={formData.enableMultipleValues || false}
-                  onChange={(e) => onChange('enableMultipleValues', e.target.checked)}
+                  onChange={(e) => handleMultipleValuesToggle(e.target.checked)}
                   size="small"
                 />
               }
@@ -109,7 +150,7 @@ const AssistiveProperties: React.FC<AssistivePropertiesProps> = ({ formData, onC
               <InputLabel>جداکننده</InputLabel>
               <Select
                 value={formData.multiValueSeparator || 'comma'}
-                onChange={(e) => onChange('multiValueSeparator', e.target.value)}
+                onChange={(e) => handleMultiValueSeparatorChange(e.target.value)}
                 label="جداکننده"
                 sx={{
                   background: 'rgba(255, 255, 255, 0.8)',
@@ -131,7 +172,7 @@ const AssistiveProperties: React.FC<AssistivePropertiesProps> = ({ formData, onC
             <InputLabel>غلط‌یاب</InputLabel>
             <Select
               value={formData.spellcheck || 'off'}
-              onChange={(e) => onChange('spellcheck', e.target.value)}
+              onChange={(e) => handleSpellCheckChange(e.target.value)}
               label="غلط‌یاب"
               sx={{
                 background: 'rgba(255, 255, 255, 0.8)',
@@ -153,7 +194,7 @@ const AssistiveProperties: React.FC<AssistivePropertiesProps> = ({ formData, onC
               fullWidth
               label="واژه‌نامه سفارشی (با کاما جدا کنید)"
               value={formData.customDictionary || ''}
-              onChange={(e) => onChange('customDictionary', e.target.value)}
+              onChange={(e) => handleCustomDictionaryChange(e.target.value)}
               placeholder="واژه ۱, واژه ۲, واژه ۳"
               sx={{
                 '& .MuiOutlinedInput-root': {

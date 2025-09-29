@@ -1,4 +1,4 @@
-import React, { memo, useEffect } from 'react';
+import React, { memo, useEffect, useMemo, useCallback } from 'react';
 import { Box, Typography, Paper, Grid, TextField, FormControl, InputLabel, Select, MenuItem, FormControlLabel, Switch } from '@mui/material';
 import HelpTooltip from '../shared/HelpTooltip';
 import { ExtendedCustomFieldDefinition } from '../types/FieldEditTypes';
@@ -9,6 +9,18 @@ interface DisplayPropertiesProps {
 }
 
 const DisplayProperties: React.FC<DisplayPropertiesProps> = ({ formData, onChange }) => {
+  // Memoize display properties configuration
+  const displayConfig = useMemo(() => ({
+    variant: formData.variant || 'plain',
+    selectionAid: formData.selectionAid || 'none',
+    size: formData.size || 'md',
+    icon: formData.icon || '',
+    prefix: formData.prefix || '',
+    suffix: formData.suffix || '',
+    counterDisplay: formData.counterDisplay || 'off',
+    copyButton: formData.copyButton || false
+  }), [formData.variant, formData.selectionAid, formData.size, formData.icon, formData.prefix, formData.suffix, formData.counterDisplay, formData.copyButton]);
+
   // Handle display type changes that might affect options
   useEffect(() => {
     // If display type changes to one that supports options, and we don't have options yet,
@@ -21,15 +33,38 @@ const DisplayProperties: React.FC<DisplayPropertiesProps> = ({ formData, onChang
     }
   }, [formData.variant, formData.type, formData.options, onChange]);
 
-  // Handle variant change - also update displayType for consistency
-  const handleVariantChange = (value: string) => {
-    // Use a single onChange call to update both properties atomically
+  // Optimized change handlers
+  const handleVariantChange = useCallback((value: string) => {
     onChange('variant', value);
-    // Update displayType in the next tick to avoid race condition
-    setTimeout(() => {
-      onChange('displayType', value);
-    }, 0);
-  };
+  }, [onChange]);
+
+  const handleSelectionAidChange = useCallback((value: string) => {
+    onChange('selectionAid', value);
+  }, [onChange]);
+
+  const handleSizeChange = useCallback((value: string) => {
+    onChange('size', value);
+  }, [onChange]);
+
+  const handleIconChange = useCallback((value: string) => {
+    onChange('icon', value);
+  }, [onChange]);
+
+  const handlePrefixChange = useCallback((value: string) => {
+    onChange('prefix', value);
+  }, [onChange]);
+
+  const handleSuffixChange = useCallback((value: string) => {
+    onChange('suffix', value);
+  }, [onChange]);
+
+  const handleCounterDisplayChange = useCallback((value: string) => {
+    onChange('counterDisplay', value);
+  }, [onChange]);
+
+  const handleCopyButtonChange = useCallback((value: boolean) => {
+    onChange('copyButton', value);
+  }, [onChange]);
 
   return (
     <Paper
@@ -53,7 +88,7 @@ const DisplayProperties: React.FC<DisplayPropertiesProps> = ({ formData, onChang
           <FormControl fullWidth>
             <InputLabel>نوع نمایش</InputLabel>
             <Select
-              value={formData.variant || 'plain'}
+              value={displayConfig.variant}
               onChange={(e) => handleVariantChange(e.target.value)}
               label="نوع نمایش"
               sx={{
@@ -80,8 +115,8 @@ const DisplayProperties: React.FC<DisplayPropertiesProps> = ({ formData, onChang
             <FormControl fullWidth>
               <InputLabel>کمک انتخاب</InputLabel>
               <Select
-                value={formData.selectionAid || 'none'}
-                onChange={(e) => onChange('selectionAid', e.target.value)}
+                value={displayConfig.selectionAid}
+                onChange={(e) => handleSelectionAidChange(e.target.value)}
                 label="کمک انتخاب"
                 sx={{
                   background: 'rgba(255, 255, 255, 0.8)',
@@ -106,8 +141,8 @@ const DisplayProperties: React.FC<DisplayPropertiesProps> = ({ formData, onChang
           <FormControl fullWidth>
             <InputLabel>اندازه</InputLabel>
             <Select
-              value={formData.size || 'md'}
-              onChange={(e) => onChange('size', e.target.value)}
+              value={displayConfig.size}
+              onChange={(e) => handleSizeChange(e.target.value)}
               label="اندازه"
               sx={{
                 background: 'rgba(255, 255, 255, 0.8)',
@@ -127,8 +162,8 @@ const DisplayProperties: React.FC<DisplayPropertiesProps> = ({ formData, onChang
           <TextField
             fullWidth
             label="آیکون"
-            value={formData.icon || ''}
-            onChange={(e) => onChange('icon', e.target.value)}
+            value={displayConfig.icon}
+            onChange={(e) => handleIconChange(e.target.value)}
             placeholder="🔤"
             sx={{
               '& .MuiOutlinedInput-root': {
@@ -144,8 +179,8 @@ const DisplayProperties: React.FC<DisplayPropertiesProps> = ({ formData, onChang
           <TextField
             fullWidth
             label="پیشوند"
-            value={formData.prefix || ''}
-            onChange={(e) => onChange('prefix', e.target.value)}
+            value={displayConfig.prefix}
+            onChange={(e) => handlePrefixChange(e.target.value)}
             placeholder="مثال: $"
             sx={{
               '& .MuiOutlinedInput-root': {
@@ -160,8 +195,8 @@ const DisplayProperties: React.FC<DisplayPropertiesProps> = ({ formData, onChang
           <TextField
             fullWidth
             label="پسوند"
-            value={formData.suffix || ''}
-            onChange={(e) => onChange('suffix', e.target.value)}
+            value={displayConfig.suffix}
+            onChange={(e) => handleSuffixChange(e.target.value)}
             placeholder="مثال: تومان"
             sx={{
               '& .MuiOutlinedInput-root': {
@@ -177,8 +212,8 @@ const DisplayProperties: React.FC<DisplayPropertiesProps> = ({ formData, onChang
           <FormControl fullWidth>
             <InputLabel>نمایش شمارنده</InputLabel>
             <Select
-              value={formData.counterDisplay || 'off'}
-              onChange={(e) => onChange('counterDisplay', e.target.value)}
+              value={displayConfig.counterDisplay}
+              onChange={(e) => handleCounterDisplayChange(e.target.value)}
               label="نمایش شمارنده"
               sx={{
                 background: 'rgba(255, 255, 255, 0.8)',
@@ -198,8 +233,8 @@ const DisplayProperties: React.FC<DisplayPropertiesProps> = ({ formData, onChang
             <FormControlLabel
               control={
                 <Switch
-                  checked={formData.copyButton || false}
-                  onChange={(e) => onChange('copyButton', e.target.checked)}
+                  checked={displayConfig.copyButton}
+                  onChange={(e) => handleCopyButtonChange(e.target.checked)}
                   size="small"
                 />
               }

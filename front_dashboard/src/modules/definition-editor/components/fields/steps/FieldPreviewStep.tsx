@@ -11,18 +11,10 @@ import {
   useMediaQuery,
   Divider,
   Paper,
-  Chip,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  Checkbox,
-  FormControlLabel,
-  Switch
+  Chip
 } from '@mui/material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import { FieldPreviewStepProps } from '../types/FieldEditTypes';
-import { ExtendedCustomFieldDefinition } from '../types/FieldEditTypes';
 import { validateFieldDefinition, ValidationError } from '../utils/fieldValidation';
 import { LiveFieldPreview } from './LiveFieldPreview.tsx';
 import { FieldEnhancer } from '../processors/FieldEnhancer';
@@ -33,7 +25,6 @@ export const FieldPreviewStep = memo<FieldPreviewStepProps>(({ formData, origina
   const [validationWarnings, setValidationWarnings] = useState<ValidationError[]>([]);
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
-  const isTablet = useMediaQuery(theme.breakpoints.between('sm', 'md'));
 
   // Validate field definition when formData changes
   useEffect(() => {
@@ -45,7 +36,7 @@ export const FieldPreviewStep = memo<FieldPreviewStepProps>(({ formData, origina
   const accordionEnhancedHandler = useMemo(() => {
     return FieldEnhancer.createEnhancedChangeHandler(
       formData,
-      (fieldId: string, value: string) => {
+      (_fieldId: string, value: string) => {
         setAccordionPreviewValue(value);
       },
       {
@@ -168,7 +159,7 @@ export const FieldPreviewStep = memo<FieldPreviewStepProps>(({ formData, origina
                 />
               )}
               {/* Show active processing features for accordion too */}
-              {(formData.caseTransform || formData.trimExtraSpaces || formData.characterControl) && (
+              {(formData.caseTransform || formData.trimWhitespace || formData.characterControl) && (
                 <Box sx={{ 
                   mt: 2, 
                   p: isMobile ? 1 : 1.5, 
@@ -206,7 +197,7 @@ export const FieldPreviewStep = memo<FieldPreviewStepProps>(({ formData, origina
                         تبدیل حروف: {formData.caseTransform}
                       </Typography>
                     )}
-                    {formData.trimExtraSpaces && (
+                    {formData.trimWhitespace && (
                       <Typography 
                         variant="caption" 
                         sx={{ 
@@ -292,8 +283,8 @@ export const FieldPreviewStep = memo<FieldPreviewStepProps>(({ formData, origina
       </Paper>
       
       {/* Content Control Properties */}
-      {(formData.characterControl || formData.caseTransform || formData.trimExtraSpaces || 
-        formData.convertNumbers || formData.fixHalfSpace || formData.allowEmoji || formData.allowMarkdown) && (
+      {(formData.characterControl || formData.caseTransform || formData.trimWhitespace || 
+        formData.normalizeDigits || formData.fixZWNJ || formData.allowEmoji || formData.allowMarkdown) && (
         <Paper sx={{ p: 2, mb: 3, borderRadius: 2, backgroundColor: 'rgba(74, 144, 226, 0.05)' }}>
           <Typography variant="h6" sx={{ mb: 2, color: '#4A90E2', display: 'flex', alignItems: 'center' }}>
             ⚙️ کنترل محتوا
@@ -310,17 +301,17 @@ export const FieldPreviewStep = memo<FieldPreviewStepProps>(({ formData, origina
               </Box>
               <Box sx={{ mb: 1 }}>
                 <Typography variant="body2" sx={{ fontWeight: 600, color: '#64748B' }}>حذف فاصله اضافی</Typography>
-                <Typography variant="body1">{formData.trimExtraSpaces ? 'بله' : 'خیر'}</Typography>
+                <Typography variant="body1">{formData.trimWhitespace ? 'بله' : 'خیر'}</Typography>
               </Box>
               <Box sx={{ mb: 1 }}>
                 <Typography variant="body2" sx={{ fontWeight: 600, color: '#64748B' }}>تبدیل اعداد</Typography>
-                <Typography variant="body1">{formData.convertNumbers ? 'بله' : 'خیر'}</Typography>
+                <Typography variant="body1">{formData.normalizeDigits ? 'بله' : 'خیر'}</Typography>
               </Box>
             </Grid>
             <Grid item xs={12} md={6}>
               <Box sx={{ mb: 1 }}>
                 <Typography variant="body2" sx={{ fontWeight: 600, color: '#64748B' }}>اصلاح نیم‌فاصله</Typography>
-                <Typography variant="body1">{formData.fixHalfSpace ? 'بله' : 'خیر'}</Typography>
+                <Typography variant="body1">{formData.fixZWNJ ? 'بله' : 'خیر'}</Typography>
               </Box>
               <Box sx={{ mb: 1 }}>
                 <Typography variant="body2" sx={{ fontWeight: 600, color: '#64748B' }}>اجازه ایموجی</Typography>
@@ -336,7 +327,7 @@ export const FieldPreviewStep = memo<FieldPreviewStepProps>(({ formData, origina
       )}
       
       {/* Assistive Properties */}
-      {(formData.enableSuggestions || formData.autoComplete || formData.enableMultipleValues || formData.spellCheck !== 'off') && (
+      {(formData.suggestions && formData.suggestions.length > 0 || formData.autoComplete || formData.enableMultipleValues || formData.spellcheck !== 'off') && (
         <Paper sx={{ p: 2, mb: 3, borderRadius: 2, backgroundColor: 'rgba(74, 144, 226, 0.05)' }}>
           <Typography variant="h6" sx={{ mb: 2, color: '#4A90E2', display: 'flex', alignItems: 'center' }}>
             🎆 ویژگی‌های کمکی
@@ -345,13 +336,13 @@ export const FieldPreviewStep = memo<FieldPreviewStepProps>(({ formData, origina
             <Grid item xs={12} md={6}>
               <Box sx={{ mb: 1 }}>
                 <Typography variant="body2" sx={{ fontWeight: 600, color: '#64748B' }}>لیست پیشنهاد</Typography>
-                <Typography variant="body1">{formData.enableSuggestions ? 'بله' : 'خیر'}</Typography>
+                <Typography variant="body1">{formData.suggestions && formData.suggestions.length > 0 ? 'بله' : 'خیر'}</Typography>
               </Box>
               <Box sx={{ mb: 1 }}>
                 <Typography variant="body2" sx={{ fontWeight: 600, color: '#64748B' }}>تکمیل خودکار</Typography>
                 <Typography variant="body1">{formData.autoComplete ? 'بله' : 'خیر'}</Typography>
               </Box>
-              {formData.enableSuggestions && formData.suggestions && (
+              {formData.suggestions && formData.suggestions.length > 0 && (
                 <Box sx={{ mb: 1 }}>
                   <Typography variant="body2" sx={{ fontWeight: 600, color: '#64748B' }}>پیشنهادات</Typography>
                   <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
@@ -376,13 +367,13 @@ export const FieldPreviewStep = memo<FieldPreviewStepProps>(({ formData, origina
                 <>
                   <Box sx={{ mb: 1 }}>
                     <Typography variant="body2" sx={{ fontWeight: 600, color: '#64748B' }}>جداکننده</Typography>
-                    <Chip label={formData.multipleSeparator || '-'} size="small" sx={{ bgcolor: 'rgba(74, 144, 226, 0.1)', color: '#4A90E2' }} />
+                    <Chip label={formData.multiValueSeparator || '-'} size="small" sx={{ bgcolor: 'rgba(74, 144, 226, 0.1)', color: '#4A90E2' }} />
                   </Box>
                 </>
               )}
               <Box sx={{ mb: 1 }}>
                 <Typography variant="body2" sx={{ fontWeight: 600, color: '#64748B' }}>غلط‌یاب</Typography>
-                <Chip label={formData.spellCheck || '-'} size="small" sx={{ bgcolor: 'rgba(74, 144, 226, 0.1)', color: '#4A90E2' }} />
+                <Chip label={formData.spellcheck || '-'} size="small" sx={{ bgcolor: 'rgba(74, 144, 226, 0.1)', color: '#4A90E2' }} />
               </Box>
             </Grid>
           </Grid>
@@ -450,8 +441,8 @@ export const FieldPreviewStep = memo<FieldPreviewStepProps>(({ formData, origina
       )}
       
       {/* Security & Storage Properties */}
-      {(formData.enableSensitiveDataDetection || formData.enableInappropriateWordsDetection || 
-        formData.searchable || formData.filterable || formData.storeRawAndNormalized) && (
+      {(formData.piiCheck?.enabled || formData.profanityCheck?.enabled || 
+        formData.indexing?.searchable || formData.indexing?.filterable || formData.storeRawAndNormalized) && (
         <Paper sx={{ p: 2, mb: 3, borderRadius: 2, backgroundColor: 'rgba(74, 144, 226, 0.05)' }}>
           <Typography variant="h6" sx={{ mb: 2, color: '#4A90E2', display: 'flex', alignItems: 'center' }}>
             🔒 امنیت و ذخیره‌سازی
@@ -460,37 +451,37 @@ export const FieldPreviewStep = memo<FieldPreviewStepProps>(({ formData, origina
             <Grid item xs={12} md={6}>
               <Box sx={{ mb: 1 }}>
                 <Typography variant="body2" sx={{ fontWeight: 600, color: '#64748B' }}>تشخیص اطلاعات حساس</Typography>
-                <Typography variant="body1">{formData.enableSensitiveDataDetection ? 'بله' : 'خیر'}</Typography>
+                <Typography variant="body1">{formData.piiCheck?.enabled ? 'بله' : 'خیر'}</Typography>
               </Box>
-              {formData.enableSensitiveDataDetection && (
+              {formData.piiCheck?.enabled && (
                 <Box sx={{ mb: 1 }}>
                   <Typography variant="body2" sx={{ fontWeight: 600, color: '#64748B' }}>عمل</Typography>
-                  <Chip label={formData.sensitiveDataAction || '-'} size="small" sx={{ bgcolor: 'rgba(74, 144, 226, 0.1)', color: '#4A90E2' }} />
+                  <Chip label={formData.piiCheck.action || '-'} size="small" sx={{ bgcolor: 'rgba(74, 144, 226, 0.1)', color: '#4A90E2' }} />
                 </Box>
               )}
               <Box sx={{ mb: 1 }}>
                 <Typography variant="body2" sx={{ fontWeight: 600, color: '#64748B' }}>تشخیص کلمات نامناسب</Typography>
-                <Typography variant="body1">{formData.enableInappropriateWordsDetection ? 'بله' : 'خیر'}</Typography>
+                <Typography variant="body1">{formData.profanityCheck?.enabled ? 'بله' : 'خیر'}</Typography>
               </Box>
-              {formData.enableInappropriateWordsDetection && (
+              {formData.profanityCheck?.enabled && (
                 <Box sx={{ mb: 1 }}>
                   <Typography variant="body2" sx={{ fontWeight: 600, color: '#64748B' }}>عمل</Typography>
-                  <Chip label={formData.inappropriateWordsAction || '-'} size="small" sx={{ bgcolor: 'rgba(74, 144, 226, 0.1)', color: '#4A90E2' }} />
+                  <Chip label={formData.profanityCheck.action || '-'} size="small" sx={{ bgcolor: 'rgba(74, 144, 226, 0.1)', color: '#4A90E2' }} />
                 </Box>
               )}
             </Grid>
             <Grid item xs={12} md={6}>
               <Box sx={{ mb: 1 }}>
                 <Typography variant="body2" sx={{ fontWeight: 600, color: '#64748B' }}>قابل جستجو</Typography>
-                <Typography variant="body1">{formData.searchable ? 'بله' : 'خیر'}</Typography>
+                <Typography variant="body1">{formData.indexing?.searchable ? 'بله' : 'خیر'}</Typography>
               </Box>
               <Box sx={{ mb: 1 }}>
                 <Typography variant="body2" sx={{ fontWeight: 600, color: '#64748B' }}>قابل فیلتر</Typography>
-                <Typography variant="body1">{formData.filterable ? 'بله' : 'خیر'}</Typography>
+                <Typography variant="body1">{formData.indexing?.filterable ? 'بله' : 'خیر'}</Typography>
               </Box>
               <Box sx={{ mb: 1 }}>
                 <Typography variant="body2" sx={{ fontWeight: 600, color: '#64748B' }}>آنالایزر جستجو</Typography>
-                <Chip label={formData.searchAnalyzer || '-'} size="small" sx={{ bgcolor: 'rgba(74, 144, 226, 0.1)', color: '#4A90E2' }} />
+                <Chip label={formData.analyzer || '-'} size="small" sx={{ bgcolor: 'rgba(74, 144, 226, 0.1)', color: '#4A90E2' }} />
               </Box>
               <Box sx={{ mb: 1 }}>
                 <Typography variant="body2" sx={{ fontWeight: 600, color: '#64748B' }}>ذخیره خام و نرمال</Typography>

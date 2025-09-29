@@ -59,6 +59,26 @@ export class FieldValueProcessor {
         priority: 10
       });
 
+      this.pipeline.registerProcessor(new CharacterValidators.ValidationRulesProcessor(), {
+        enabled: true,
+        priority: 15
+      });
+
+      this.pipeline.registerProcessor(new CharacterValidators.UniqueValidationProcessor(), {
+        enabled: true,
+        priority: 25
+      });
+
+      this.pipeline.registerProcessor(new CharacterValidators.ConditionalRulesProcessor(), {
+        enabled: true,
+        priority: 30
+      });
+
+      this.pipeline.registerProcessor(new CharacterValidators.ControlRulesProcessor(), {
+        enabled: true,
+        priority: 35
+      });
+
       this.pipeline.registerProcessor(new ContentTransformers.CaseTransformer(), {
         enabled: true,
         priority: 20
@@ -198,19 +218,19 @@ export class FieldValueProcessor {
         processedValue = this.applyCaseTransform(processedValue, field.caseTransform);
       }
 
-      if (field.trimExtraSpaces) {
+      if (field.trimWhitespace) {
         processedValue = this.applySpaceTrimming(processedValue);
       }
 
       if (field.characterControl && field.characterControl !== 'all') {
-        processedValue = this.applyCharacterControl(processedValue, field.characterControl);
+        processedValue = this.applyCharacterControl(processedValue, field.characterControl, field.customRegex);
       }
 
-      if (field.convertNumbers) {
+      if (field.normalizeDigits) {
         processedValue = this.applyNumberConversion(processedValue);
       }
 
-      if (field.fixHalfSpace) {
+      if (field.fixZWNJ) {
         processedValue = this.applyHalfSpaceFix(processedValue);
       }
 
@@ -251,15 +271,27 @@ export class FieldValueProcessor {
    * Apply character control
    * اعمال کنترل کاراکتر
    */
-  private applyCharacterControl(value: string, control: string): string {
+  private applyCharacterControl(value: string, control: string, customRegex?: string): string {
     switch (control) {
-      case 'letters-only':
+      case 'letters':
         return value.replace(/[^a-zA-Z\u0600-\u06FF\s]/g, '');
-      case 'letters-numbers':
+      case 'alphanumeric':
         return value.replace(/[^a-zA-Z0-9\u0600-\u06FF\u06F0-\u06F9\s]/g, '');
       case 'custom':
-        // Will be handled by custom regex validator
+        if (customRegex) {
+          try {
+            // For custom regex, we need to filter out characters that DON'T match the pattern
+            // So we need to invert the logic - keep only characters that match
+            const regex = new RegExp(customRegex, 'g');
+            const matches = value.match(regex);
+            return matches ? matches.join('') : '';
+          } catch (error) {
+            console.warn('Invalid custom regex:', customRegex);
+            return value;
+          }
+        }
         return value;
+      case 'all':
       default:
         return value;
     }
@@ -340,9 +372,10 @@ export class FieldValueProcessor {
       type: field.type,
       characterControl: field.characterControl,
       caseTransform: field.caseTransform,
-      trimExtraSpaces: field.trimExtraSpaces,
-      convertNumbers: field.convertNumbers,
-      fixHalfSpace: field.fixHalfSpace
+      trimWhitespace: field.trimWhitespace,
+      normalizeDigits: field.normalizeDigits,
+      fixZWNJ: field.fixZWNJ,
+      customRegex: field.customRegex
     });
     
     const optionsFingerprint = JSON.stringify(options);

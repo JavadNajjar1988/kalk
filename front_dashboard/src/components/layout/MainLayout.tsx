@@ -131,6 +131,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
     },
     { 
       id: 'orbat-mapper', 
+      id: 'orbat-mapper', 
       label: 'کالک نگار', 
       icon: <MilitaryTech />, 
       path: '/dashboard/orbat-mapper',

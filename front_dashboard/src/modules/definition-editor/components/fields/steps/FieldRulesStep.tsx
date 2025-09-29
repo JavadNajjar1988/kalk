@@ -24,6 +24,69 @@ export const FieldRulesStep = memo<FieldRulesStepProps>(({
   formData,
   onChange: handleChange,
 }) => {
+  // Helper function to validate JavaScript rule
+  const isValidJavaScriptRule = (rule: string): boolean => {
+    if (!rule || rule.trim() === '') return false;
+    
+    try {
+      // Basic syntax validation
+      new Function('formData', `return ${rule}`);
+      return true;
+    } catch (error) {
+      return false;
+    }
+  };
+
+  // Helper function to validate default value
+  const isValidDefaultValue = (value: string, fieldType: string): boolean => {
+    if (!value) return true;
+
+    switch (fieldType) {
+      case 'text':
+      case 'email':
+      case 'password':
+      case 'textarea':
+      case 'text-english':
+      case 'text-numeric':
+        return typeof value === 'string';
+      
+      case 'number':
+        return !isNaN(Number(value));
+      
+      case 'date':
+        return !isNaN(Date.parse(value));
+      
+      case 'boolean':
+        return value === 'true' || value === 'false';
+      
+      case 'select':
+      case 'multiselect':
+        return Array.isArray(value) || typeof value === 'string';
+      
+      default:
+        return true;
+    }
+  };
+
+  // Helper function to check control rules conflicts
+  const checkControlRulesConflicts = (): string[] => {
+    const conflicts: string[] = [];
+    
+    if (formData.controlRules?.lockAfterSave && formData.controlRules?.readOnly) {
+      conflicts.push('قفل بعد از ذخیره با فقط خواندنی تداخل دارد');
+    }
+    
+    if (formData.controlRules?.lockAfterSave && formData.editableAfterSave === false) {
+      conflicts.push('قفل بعد از ذخیره با غیرقابل ویرایش بعد از ذخیره تداخل دارد');
+    }
+    
+    if (formData.controlRules?.readOnly && formData.editableAfterSave === true) {
+      conflicts.push('فقط خواندنی با قابل ویرایش بعد از ذخیره تداخل دارد');
+    }
+    
+    return conflicts;
+  };
+
   return (
     <Box>
       <Box sx={{ textAlign: 'center', mb: 4 }}>
@@ -97,32 +160,74 @@ export const FieldRulesStep = memo<FieldRulesStepProps>(({
             </Box>
             <Grid container spacing={2}>
               <Grid item xs={6}>
-                <TextField
-                  fullWidth
-                  type="number"
-                  label="حداقل طول"
-                  value={formData.validationRules?.minLength || ''}
-                  onChange={(e) => {
-                    const rules = formData.validationRules || {};
-                    handleChange('validationRules', { ...rules, minLength: parseInt(e.target.value) || undefined });
-                  }}
-                  placeholder="مثلاً 3"
-                  sx={{ '& .MuiOutlinedInput-root': { background: 'rgba(255, 255, 255, 0.8)' } }}
-                />
+                <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                  <TextField
+                    fullWidth
+                    type="number"
+                    label="حداقل طول"
+                    value={formData.validationRules?.minLength || ''}
+                    onChange={(e) => {
+                      const rules = formData.validationRules || {};
+                      const minLength = parseInt(e.target.value) || undefined;
+                      const maxLength = rules.maxLength;
+                      
+                      // Validate minLength <= maxLength
+                      if (minLength && maxLength && minLength > maxLength) {
+                        // Show error but still allow the change
+                        console.warn('حداقل طول نمی‌تواند بیشتر از حداکثر طول باشد');
+                      }
+                      
+                      handleChange('validationRules', { ...rules, minLength });
+                    }}
+                    placeholder="مثلاً 3"
+                    error={formData.validationRules?.minLength && formData.validationRules?.maxLength && 
+                           formData.validationRules.minLength > formData.validationRules.maxLength}
+                    helperText={formData.validationRules?.minLength && formData.validationRules?.maxLength && 
+                                formData.validationRules.minLength > formData.validationRules.maxLength ? 
+                                'حداقل طول نمی‌تواند بیشتر از حداکثر طول باشد' : ''}
+                    sx={{ '& .MuiOutlinedInput-root': { background: 'rgba(255, 255, 255, 0.8)' } }}
+                  />
+                  <HelpTooltip
+                    title="حداقل طول"
+                    description="حداقل تعداد کاراکترهای مجاز برای ورودی."
+                    example="برای نام کاربری حداقل 3 کاراکتر"
+                  />
+                </Box>
               </Grid>
               <Grid item xs={6}>
-                <TextField
-                  fullWidth
-                  type="number"
-                  label="حداکثر طول"
-                  value={formData.validationRules?.maxLength || ''}
-                  onChange={(e) => {
-                    const rules = formData.validationRules || {};
-                    handleChange('validationRules', { ...rules, maxLength: parseInt(e.target.value) || undefined });
-                  }}
-                  placeholder="مثلاً 255"
-                  sx={{ '& .MuiOutlinedInput-root': { background: 'rgba(255, 255, 255, 0.8)' } }}
-                />
+                <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                  <TextField
+                    fullWidth
+                    type="number"
+                    label="حداکثر طول"
+                    value={formData.validationRules?.maxLength || ''}
+                    onChange={(e) => {
+                      const rules = formData.validationRules || {};
+                      const maxLength = parseInt(e.target.value) || undefined;
+                      const minLength = rules.minLength;
+                      
+                      // Validate minLength <= maxLength
+                      if (minLength && maxLength && minLength > maxLength) {
+                        // Show error but still allow the change
+                        console.warn('حداقل طول نمی‌تواند بیشتر از حداکثر طول باشد');
+                      }
+                      
+                      handleChange('validationRules', { ...rules, maxLength });
+                    }}
+                    placeholder="مثلاً 255"
+                    error={formData.validationRules?.minLength && formData.validationRules?.maxLength && 
+                           formData.validationRules.minLength > formData.validationRules.maxLength}
+                    helperText={formData.validationRules?.minLength && formData.validationRules?.maxLength && 
+                                formData.validationRules.minLength > formData.validationRules.maxLength ? 
+                                'حداقل طول نمی‌تواند بیشتر از حداکثر طول باشد' : ''}
+                    sx={{ '& .MuiOutlinedInput-root': { background: 'rgba(255, 255, 255, 0.8)' } }}
+                  />
+                  <HelpTooltip
+                    title="حداکثر طول"
+                    description="حداکثر تعداد کاراکترهای مجاز برای ورودی."
+                    example="برای توضیحات حداکثر 500 کاراکتر"
+                  />
+                </Box>
               </Grid>
             </Grid>
           </Grid>
@@ -141,30 +246,72 @@ export const FieldRulesStep = memo<FieldRulesStepProps>(({
             </Box>
             <Grid container spacing={2}>
               <Grid item xs={8}>
-                <TextField
-                  fullWidth
-                  label="الگوی Regex"
-                  value={formData.validationRules?.pattern || ''}
-                  onChange={(e) => {
-                    const rules = formData.validationRules || {};
-                    handleChange('validationRules', { ...rules, pattern: e.target.value });
-                  }}
-                  placeholder="مثلاً ^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$ برای ایمیل"
-                  sx={{ '& .MuiOutlinedInput-root': { background: 'rgba(255, 255, 255, 0.8)' } }}
-                />
+                <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                  <TextField
+                    fullWidth
+                    label="الگوی Regex"
+                    value={formData.validationRules?.pattern || ''}
+                    onChange={(e) => {
+                      const rules = formData.validationRules || {};
+                      const pattern = e.target.value;
+                      
+                      // Validate regex pattern
+                      let isValidPattern = true;
+                      if (pattern) {
+                        try {
+                          new RegExp(pattern);
+                        } catch {
+                          isValidPattern = false;
+                        }
+                      }
+                      
+                      handleChange('validationRules', { ...rules, pattern: pattern || undefined });
+                    }}
+                    placeholder="مثلاً ^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$ برای ایمیل"
+                    error={formData.validationRules?.pattern ? (() => {
+                      try {
+                        new RegExp(formData.validationRules.pattern);
+                        return false;
+                      } catch {
+                        return true;
+                      }
+                    })() : false}
+                    helperText={formData.validationRules?.pattern ? (() => {
+                      try {
+                        new RegExp(formData.validationRules.pattern);
+                        return '';
+                      } catch {
+                        return 'الگوی Regex نامعتبر است';
+                      }
+                    })() : ''}
+                    sx={{ '& .MuiOutlinedInput-root': { background: 'rgba(255, 255, 255, 0.8)' } }}
+                  />
+                  <HelpTooltip
+                    title="الگوی Regex"
+                    description="الگوی منظم برای اعتبارسنجی فرمت ورودی."
+                    example="^[0-9]{10}$ برای کد ملی 10 رقمی"
+                  />
+                </Box>
               </Grid>
               <Grid item xs={4}>
-                <TextField
-                  fullWidth
-                  label="پیام خطا"
-                  value={formData.validationRules?.patternMessage || ''}
-                  onChange={(e) => {
-                    const rules = formData.validationRules || {};
-                    handleChange('validationRules', { ...rules, patternMessage: e.target.value });
-                  }}
-                  placeholder="فرمت ایمیل نامعتبر است"
-                  sx={{ '& .MuiOutlinedInput-root': { background: 'rgba(255, 255, 255, 0.8)' } }}
-                />
+                <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                  <TextField
+                    fullWidth
+                    label="پیام خطا"
+                    value={formData.validationRules?.patternMessage || ''}
+                    onChange={(e) => {
+                      const rules = formData.validationRules || {};
+                      handleChange('validationRules', { ...rules, patternMessage: e.target.value || undefined });
+                    }}
+                    placeholder="فرمت ایمیل نامعتبر است"
+                    sx={{ '& .MuiOutlinedInput-root': { background: 'rgba(255, 255, 255, 0.8)' } }}
+                  />
+                  <HelpTooltip
+                    title="پیام خطا"
+                    description="پیام خطای سفارشی برای الگوی نامعتبر."
+                    example="فرمت کد ملی صحیح نیست"
+                  />
+                </Box>
               </Grid>
             </Grid>
           </Grid>
@@ -242,62 +389,88 @@ export const FieldRulesStep = memo<FieldRulesStepProps>(({
             {formData.conditionalRules?.visibility?.enabled && (
               <Grid container spacing={2} sx={{ mt: 1 }}>
                 <Grid item xs={4}>
-                  <TextField
-                    fullWidth
-                    label="فیلد وابسته"
-                    value={formData.conditionalRules?.visibility?.dependsOn || ''}
-                    onChange={(e) => {
-                      const conditional = formData.conditionalRules || {};
-                      const visibility = conditional.visibility || {};
-                      handleChange('conditionalRules', { 
-                        ...conditional, 
-                        visibility: { ...visibility, dependsOn: e.target.value }
-                      });
-                    }}
-                    placeholder="field_id"
-                    sx={{ '& .MuiOutlinedInput-root': { background: 'rgba(255, 255, 255, 0.8)' } }}
-                  />
-                </Grid>
-                <Grid item xs={4}>
-                  <FormControl fullWidth>
-                    <InputLabel>شرط</InputLabel>
-                    <Select
-                      value={formData.conditionalRules?.visibility?.condition || 'equals'}
+                  <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                    <TextField
+                      fullWidth
+                      label="فیلد وابسته"
+                      value={formData.conditionalRules?.visibility?.dependsOn || ''}
                       onChange={(e) => {
                         const conditional = formData.conditionalRules || {};
                         const visibility = conditional.visibility || {};
                         handleChange('conditionalRules', { 
                           ...conditional, 
-                          visibility: { ...visibility, condition: e.target.value }
+                          visibility: { ...visibility, dependsOn: e.target.value }
                         });
                       }}
-                      label="شرط"
-                      sx={{ background: 'rgba(255, 255, 255, 0.8)' }}
-                    >
-                      <MenuItem value="equals">برابر</MenuItem>
-                      <MenuItem value="not_equals">مخالف</MenuItem>
-                      <MenuItem value="contains">شامل</MenuItem>
-                      <MenuItem value="not_contains">غیرشامل</MenuItem>
-                      <MenuItem value="empty">خالی</MenuItem>
-                      <MenuItem value="not_empty">غیرخالی</MenuItem>
-                    </Select>
-                  </FormControl>
+                      placeholder="field_id"
+                      error={formData.conditionalRules?.visibility?.dependsOn ? 
+                        !formData.conditionalRules.visibility.dependsOn.trim() : false}
+                      helperText={formData.conditionalRules?.visibility?.dependsOn ? 
+                        (!formData.conditionalRules.visibility.dependsOn.trim() ? 
+                          'نام فیلد وابسته نمی‌تواند خالی باشد' : '') : ''}
+                      sx={{ '& .MuiOutlinedInput-root': { background: 'rgba(255, 255, 255, 0.8)' } }}
+                    />
+                    <HelpTooltip
+                      title="فیلد وابسته"
+                      description="نام فیلدی که شرط بر اساس آن بررسی می‌شود."
+                      example="userType یا status"
+                    />
+                  </Box>
                 </Grid>
                 <Grid item xs={4}>
-                  <TextField
-                    fullWidth
-                    label="مقدار شرط"
-                    value={formData.conditionalRules?.visibility?.value || ''}
-                    onChange={(e) => {
-                      const conditional = formData.conditionalRules || {};
-                      const visibility = conditional.visibility || {};
-                      handleChange('conditionalRules', { 
-                        ...conditional, 
-                        visibility: { ...visibility, value: e.target.value }
-                      });
-                    }}
-                    sx={{ '& .MuiOutlinedInput-root': { background: 'rgba(255, 255, 255, 0.8)' } }}
-                  />
+                  <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                    <FormControl fullWidth>
+                      <InputLabel>شرط</InputLabel>
+                      <Select
+                        value={formData.conditionalRules?.visibility?.condition || 'equals'}
+                        onChange={(e) => {
+                          const conditional = formData.conditionalRules || {};
+                          const visibility = conditional.visibility || {};
+                          handleChange('conditionalRules', { 
+                            ...conditional, 
+                            visibility: { ...visibility, condition: e.target.value }
+                          });
+                        }}
+                        label="شرط"
+                        sx={{ background: 'rgba(255, 255, 255, 0.8)' }}
+                      >
+                        <MenuItem value="equals">برابر</MenuItem>
+                        <MenuItem value="not_equals">مخالف</MenuItem>
+                        <MenuItem value="contains">شامل</MenuItem>
+                        <MenuItem value="not_contains">غیرشامل</MenuItem>
+                        <MenuItem value="empty">خالی</MenuItem>
+                        <MenuItem value="not_empty">غیرخالی</MenuItem>
+                      </Select>
+                    </FormControl>
+                    <HelpTooltip
+                      title="شرط"
+                      description="نوع شرط برای مقایسه با مقدار فیلد وابسته."
+                      example="برابر: مقدار دقیقاً همان باشد"
+                    />
+                  </Box>
+                </Grid>
+                <Grid item xs={4}>
+                  <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                    <TextField
+                      fullWidth
+                      label="مقدار شرط"
+                      value={formData.conditionalRules?.visibility?.value || ''}
+                      onChange={(e) => {
+                        const conditional = formData.conditionalRules || {};
+                        const visibility = conditional.visibility || {};
+                        handleChange('conditionalRules', { 
+                          ...conditional, 
+                          visibility: { ...visibility, value: e.target.value }
+                        });
+                      }}
+                      sx={{ '& .MuiOutlinedInput-root': { background: 'rgba(255, 255, 255, 0.8)' } }}
+                    />
+                    <HelpTooltip
+                      title="مقدار شرط"
+                      description="مقداری که با فیلد وابسته مقایسه می‌شود."
+                      example="VIP یا active"
+                    />
+                  </Box>
                 </Grid>
               </Grid>
             )}
@@ -333,62 +506,293 @@ export const FieldRulesStep = memo<FieldRulesStepProps>(({
             {formData.conditionalRules?.enable?.enabled && (
               <Grid container spacing={2} sx={{ mt: 1 }}>
                 <Grid item xs={4}>
-                  <TextField
-                    fullWidth
-                    label="فیلد وابسته"
-                    value={formData.conditionalRules?.enable?.dependsOn || ''}
-                    onChange={(e) => {
-                      const conditional = formData.conditionalRules || {};
-                      const enable = conditional.enable || {};
-                      handleChange('conditionalRules', { 
-                        ...conditional, 
-                        enable: { ...enable, dependsOn: e.target.value }
-                      });
-                    }}
-                    placeholder="field_id"
-                    sx={{ '& .MuiOutlinedInput-root': { background: 'rgba(255, 255, 255, 0.8)' } }}
-                  />
-                </Grid>
-                <Grid item xs={4}>
-                  <FormControl fullWidth>
-                    <InputLabel>شرط</InputLabel>
-                    <Select
-                      value={formData.conditionalRules?.enable?.condition || 'equals'}
+                  <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                    <TextField
+                      fullWidth
+                      label="فیلد وابسته"
+                      value={formData.conditionalRules?.enable?.dependsOn || ''}
                       onChange={(e) => {
                         const conditional = formData.conditionalRules || {};
                         const enable = conditional.enable || {};
                         handleChange('conditionalRules', { 
                           ...conditional, 
-                          enable: { ...enable, condition: e.target.value }
+                          enable: { ...enable, dependsOn: e.target.value }
                         });
                       }}
-                      label="شرط"
-                      sx={{ background: 'rgba(255, 255, 255, 0.8)' }}
-                    >
-                      <MenuItem value="equals">برابر</MenuItem>
-                      <MenuItem value="not_equals">مخالف</MenuItem>
-                      <MenuItem value="contains">شامل</MenuItem>
-                      <MenuItem value="not_contains">غیرشامل</MenuItem>
-                      <MenuItem value="empty">خالی</MenuItem>
-                      <MenuItem value="not_empty">غیرخالی</MenuItem>
-                    </Select>
-                  </FormControl>
+                      placeholder="field_id"
+                      error={formData.conditionalRules?.enable?.dependsOn ? 
+                        !formData.conditionalRules.enable.dependsOn.trim() : false}
+                      helperText={formData.conditionalRules?.enable?.dependsOn ? 
+                        (!formData.conditionalRules.enable.dependsOn.trim() ? 
+                          'نام فیلد وابسته نمی‌تواند خالی باشد' : '') : ''}
+                      sx={{ '& .MuiOutlinedInput-root': { background: 'rgba(255, 255, 255, 0.8)' } }}
+                    />
+                    <HelpTooltip
+                      title="فیلد وابسته"
+                      description="نام فیلدی که شرط فعال‌سازی بر اساس آن بررسی می‌شود."
+                      example="userRole یا isActive"
+                    />
+                  </Box>
                 </Grid>
                 <Grid item xs={4}>
-                  <TextField
-                    fullWidth
-                    label="مقدار شرط"
-                    value={formData.conditionalRules?.enable?.value || ''}
+                  <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                    <FormControl fullWidth>
+                      <InputLabel>شرط</InputLabel>
+                      <Select
+                        value={formData.conditionalRules?.enable?.condition || 'equals'}
+                        onChange={(e) => {
+                          const conditional = formData.conditionalRules || {};
+                          const enable = conditional.enable || {};
+                          handleChange('conditionalRules', { 
+                            ...conditional, 
+                            enable: { ...enable, condition: e.target.value }
+                          });
+                        }}
+                        label="شرط"
+                        sx={{ background: 'rgba(255, 255, 255, 0.8)' }}
+                      >
+                        <MenuItem value="equals">برابر</MenuItem>
+                        <MenuItem value="not_equals">مخالف</MenuItem>
+                        <MenuItem value="contains">شامل</MenuItem>
+                        <MenuItem value="not_contains">غیرشامل</MenuItem>
+                        <MenuItem value="empty">خالی</MenuItem>
+                        <MenuItem value="not_empty">غیرخالی</MenuItem>
+                      </Select>
+                    </FormControl>
+                    <HelpTooltip
+                      title="شرط"
+                      description="نوع شرط برای فعال‌سازی فیلد."
+                      example="برابر: مقدار دقیقاً همان باشد"
+                    />
+                  </Box>
+                </Grid>
+                <Grid item xs={4}>
+                  <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                    <TextField
+                      fullWidth
+                      label="مقدار شرط"
+                      value={formData.conditionalRules?.enable?.value || ''}
+                      onChange={(e) => {
+                        const conditional = formData.conditionalRules || {};
+                        const enable = conditional.enable || {};
+                        handleChange('conditionalRules', { 
+                          ...conditional, 
+                          enable: { ...enable, value: e.target.value }
+                        });
+                      }}
+                      sx={{ '& .MuiOutlinedInput-root': { background: 'rgba(255, 255, 255, 0.8)' } }}
+                    />
+                    <HelpTooltip
+                      title="مقدار شرط"
+                      description="مقداری که برای فعال‌سازی فیلد مورد نیاز است."
+                      example="admin یا true"
+                    />
+                  </Box>
+                </Grid>
+              </Grid>
+            )}
+          </Grid>
+          
+          {/* Conditional Required */}
+          <Grid item xs={12}>
+            <Box sx={{ display: 'flex', alignItems: 'center' }}>
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={formData.conditionalRules?.required?.enabled || false}
                     onChange={(e) => {
                       const conditional = formData.conditionalRules || {};
-                      const enable = conditional.enable || {};
+                      const required = conditional.required || {};
                       handleChange('conditionalRules', { 
                         ...conditional, 
-                        enable: { ...enable, value: e.target.value }
+                        required: { ...required, enabled: e.target.checked }
                       });
                     }}
-                    sx={{ '& .MuiOutlinedInput-root': { background: 'rgba(255, 255, 255, 0.8)' } }}
+                    size="small"
                   />
+                }
+                label="اجباری بودن شرطی"
+                sx={{ mb: 1 }}
+              />
+              <HelpTooltip
+                title="اجباری بودن شرطی"
+                description="اجباری یا اختیاری بودن فیلد بر اساس شرط خاص."
+                example="اگر نوع=VIP باشد، فیلد اجباری شود"
+              />
+            </Box>
+            {formData.conditionalRules?.required?.enabled && (
+              <Grid container spacing={2} sx={{ mt: 1 }}>
+                <Grid item xs={4}>
+                  <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                    <TextField
+                      fullWidth
+                      label="فیلد وابسته"
+                      value={formData.conditionalRules?.required?.dependsOn || ''}
+                      onChange={(e) => {
+                        const conditional = formData.conditionalRules || {};
+                        const required = conditional.required || {};
+                        handleChange('conditionalRules', { 
+                          ...conditional, 
+                          required: { ...required, dependsOn: e.target.value }
+                        });
+                      }}
+                      placeholder="field_id"
+                      error={formData.conditionalRules?.required?.dependsOn ? 
+                        !formData.conditionalRules.required.dependsOn.trim() : false}
+                      helperText={formData.conditionalRules?.required?.dependsOn ? 
+                        (!formData.conditionalRules.required.dependsOn.trim() ? 
+                          'نام فیلد وابسته نمی‌تواند خالی باشد' : '') : ''}
+                      sx={{ '& .MuiOutlinedInput-root': { background: 'rgba(255, 255, 255, 0.8)' } }}
+                    />
+                    <HelpTooltip
+                      title="فیلد وابسته"
+                      description="نام فیلدی که شرط اجباری بودن بر اساس آن بررسی می‌شود."
+                      example="userType یا membership"
+                    />
+                  </Box>
+                </Grid>
+                <Grid item xs={4}>
+                  <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                    <FormControl fullWidth>
+                      <InputLabel>شرط</InputLabel>
+                      <Select
+                        value={formData.conditionalRules?.required?.condition || 'equals'}
+                        onChange={(e) => {
+                          const conditional = formData.conditionalRules || {};
+                          const required = conditional.required || {};
+                          handleChange('conditionalRules', { 
+                            ...conditional, 
+                            required: { ...required, condition: e.target.value }
+                          });
+                        }}
+                        label="شرط"
+                        sx={{ background: 'rgba(255, 255, 255, 0.8)' }}
+                      >
+                        <MenuItem value="equals">برابر</MenuItem>
+                        <MenuItem value="not_equals">مخالف</MenuItem>
+                        <MenuItem value="contains">شامل</MenuItem>
+                        <MenuItem value="not_contains">غیرشامل</MenuItem>
+                        <MenuItem value="empty">خالی</MenuItem>
+                        <MenuItem value="not_empty">غیرخالی</MenuItem>
+                      </Select>
+                    </FormControl>
+                    <HelpTooltip
+                      title="شرط"
+                      description="نوع شرط برای اجباری کردن فیلد."
+                      example="برابر: مقدار دقیقاً همان باشد"
+                    />
+                  </Box>
+                </Grid>
+                <Grid item xs={4}>
+                  <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                    <TextField
+                      fullWidth
+                      label="مقدار شرط"
+                      value={formData.conditionalRules?.required?.value || ''}
+                      onChange={(e) => {
+                        const conditional = formData.conditionalRules || {};
+                        const required = conditional.required || {};
+                        handleChange('conditionalRules', { 
+                          ...conditional, 
+                          required: { ...required, value: e.target.value }
+                        });
+                      }}
+                      sx={{ '& .MuiOutlinedInput-root': { background: 'rgba(255, 255, 255, 0.8)' } }}
+                    />
+                    <HelpTooltip
+                      title="مقدار شرط"
+                      description="مقداری که برای اجباری کردن فیلد مورد نیاز است."
+                      example="premium یا VIP"
+                    />
+                  </Box>
+                </Grid>
+              </Grid>
+            )}
+          </Grid>
+          
+          {/* Conditional Custom */}
+          <Grid item xs={12}>
+            <Box sx={{ display: 'flex', alignItems: 'center' }}>
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={formData.conditionalRules?.custom?.enabled || false}
+                    onChange={(e) => {
+                      const conditional = formData.conditionalRules || {};
+                      const custom = conditional.custom || {};
+                      handleChange('conditionalRules', { 
+                        ...conditional, 
+                        custom: { ...custom, enabled: e.target.checked }
+                      });
+                    }}
+                    size="small"
+                  />
+                }
+                label="قانون سفارشی"
+                sx={{ mb: 1 }}
+              />
+              <HelpTooltip
+                title="قانون سفارشی"
+                description="تعریف قانون سفارشی با JavaScript برای اعتبارسنجی."
+                example="formData.age >= 18 && formData.country === 'IR'"
+              />
+            </Box>
+            {formData.conditionalRules?.custom?.enabled && (
+              <Grid container spacing={2} sx={{ mt: 1 }}>
+                <Grid item xs={12}>
+                  <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                    <TextField
+                      fullWidth
+                      label="قانون JavaScript"
+                      value={formData.conditionalRules?.custom?.rule || ''}
+                      onChange={(e) => {
+                        const conditional = formData.conditionalRules || {};
+                        const custom = conditional.custom || {};
+                        handleChange('conditionalRules', { 
+                          ...conditional, 
+                          custom: { ...custom, rule: e.target.value }
+                        });
+                      }}
+                      placeholder="formData.age >= 18"
+                      multiline
+                      rows={3}
+                      error={formData.conditionalRules?.custom?.rule ? 
+                        !isValidJavaScriptRule(formData.conditionalRules.custom.rule) : false}
+                      helperText={formData.conditionalRules?.custom?.rule ? 
+                        (!isValidJavaScriptRule(formData.conditionalRules.custom.rule) ? 
+                          'قانون JavaScript نامعتبر است' : '') : ''}
+                      sx={{ '& .MuiOutlinedInput-root': { background: 'rgba(255, 255, 255, 0.8)' } }}
+                    />
+                    <HelpTooltip
+                      title="قانون JavaScript"
+                      description="کد JavaScript برای اعتبارسنجی سفارشی."
+                      example="formData.age >= 18 && formData.country === 'IR'"
+                    />
+                  </Box>
+                </Grid>
+                <Grid item xs={12}>
+                  <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                    <TextField
+                      fullWidth
+                      label="پیام خطا"
+                      value={formData.conditionalRules?.custom?.message || ''}
+                      onChange={(e) => {
+                        const conditional = formData.conditionalRules || {};
+                        const custom = conditional.custom || {};
+                        handleChange('conditionalRules', { 
+                          ...conditional, 
+                          custom: { ...custom, message: e.target.value }
+                        });
+                      }}
+                      placeholder="شرط تعریف شده برقرار نیست"
+                      sx={{ '& .MuiOutlinedInput-root': { background: 'rgba(255, 255, 255, 0.8)' } }}
+                    />
+                    <HelpTooltip
+                      title="پیام خطا"
+                      description="پیام خطای سفارشی برای قانون JavaScript."
+                      example="سن باید حداقل 18 سال باشد"
+                    />
+                  </Box>
                 </Grid>
               </Grid>
             )}
@@ -425,6 +829,11 @@ export const FieldRulesStep = memo<FieldRulesStepProps>(({
                   handleChange('controlRules', { ...control, defaultValue: e.target.value });
                 }}
                 placeholder="مقدار پیش‌فرض فیلد"
+                error={formData.controlRules?.defaultValue ? 
+                  !isValidDefaultValue(formData.controlRules.defaultValue, formData.type) : false}
+                helperText={formData.controlRules?.defaultValue ? 
+                  (!isValidDefaultValue(formData.controlRules.defaultValue, formData.type) ? 
+                    `مقدار پیش‌فرض با نوع فیلد ${formData.type} سازگار نیست` : '') : ''}
                 sx={{ '& .MuiOutlinedInput-root': { background: 'rgba(255, 255, 255, 0.8)' } }}
               />
               <HelpTooltip
@@ -447,6 +856,7 @@ export const FieldRulesStep = memo<FieldRulesStepProps>(({
                       handleChange('controlRules', { ...control, lockAfterSave: e.target.checked });
                     }}
                     size="small"
+                    color={checkControlRulesConflicts().length > 0 ? 'error' : 'primary'}
                   />
                 }
                 label="غیرقابل ویرایش بعد از ثبت"
@@ -457,6 +867,11 @@ export const FieldRulesStep = memo<FieldRulesStepProps>(({
                 example="برای فیلدهای مهم و غیرقابل تغییر استفاده شود"
               />
             </Box>
+            {checkControlRulesConflicts().length > 0 && (
+              <Typography variant="caption" color="error" sx={{ mt: 1, display: 'block' }}>
+                {checkControlRulesConflicts()[0]}
+              </Typography>
+            )}
           </Grid>
           
           {/* Read Only */}
@@ -471,6 +886,7 @@ export const FieldRulesStep = memo<FieldRulesStepProps>(({
                       handleChange('controlRules', { ...control, readOnly: e.target.checked });
                     }}
                     size="small"
+                    color={checkControlRulesConflicts().length > 0 ? 'error' : 'primary'}
                   />
                 }
                 label="فقط خواندنی"
@@ -481,6 +897,176 @@ export const FieldRulesStep = memo<FieldRulesStepProps>(({
                 example="برای نمایش اطلاعات محاسبه شده یا اطلاعات سیستمی"
               />
             </Box>
+            {checkControlRulesConflicts().length > 0 && (
+              <Typography variant="caption" color="error" sx={{ mt: 1, display: 'block' }}>
+                {checkControlRulesConflicts()[0]}
+              </Typography>
+            )}
+          </Grid>
+
+          {/* Advanced Control Rules */}
+          <Grid item xs={12}>
+            <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+              <Typography variant="body2" sx={{ fontWeight: 600, color: '#64748B' }}>
+                قوانین پیشرفته کنترلی
+              </Typography>
+              <HelpTooltip
+                title="قوانین پیشرفته کنترلی"
+                description="قوانین شرطی و پیشرفته برای کنترل فیلد."
+                example="مقدار پیش‌فرض شرطی، قفل شرطی، فقط خواندنی شرطی"
+              />
+            </Box>
+            
+            {/* Conditional Default Value */}
+            <Grid container spacing={2} sx={{ mb: 2 }}>
+              <Grid item xs={12} md={6}>
+                <FormControlLabel
+                  control={
+                    <Switch
+                      checked={formData.controlRules?.advanced?.enableConditionalDefault || false}
+                      onChange={(e) => {
+                        const control = formData.controlRules || {};
+                        const advanced = control.advanced || {};
+                        handleChange('controlRules', { 
+                          ...control, 
+                          advanced: { ...advanced, enableConditionalDefault: e.target.checked }
+                        });
+                      }}
+                      size="small"
+                    />
+                  }
+                  label="مقدار پیش‌فرض شرطی"
+                />
+              </Grid>
+              {formData.controlRules?.advanced?.enableConditionalDefault && (
+                <Grid item xs={12} md={6}>
+                  <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                    <TextField
+                      fullWidth
+                      label="مقدار پیش‌فرض شرطی"
+                      value={formData.controlRules?.advanced?.conditionalDefaultValue || ''}
+                      onChange={(e) => {
+                        const control = formData.controlRules || {};
+                        const advanced = control.advanced || {};
+                        handleChange('controlRules', { 
+                          ...control, 
+                          advanced: { ...advanced, conditionalDefaultValue: e.target.value }
+                        });
+                      }}
+                      placeholder="مقدار پیش‌فرض بر اساس شرط"
+                      sx={{ '& .MuiOutlinedInput-root': { background: 'rgba(255, 255, 255, 0.8)' } }}
+                    />
+                    <HelpTooltip
+                      title="مقدار پیش‌فرض شرطی"
+                      description="مقدار پیش‌فرض که بر اساس شرط خاص تنظیم می‌شود."
+                      example="اگر نوع کاربر admin باشد، مقدار پیش‌فرض 'مدیر'"
+                    />
+                  </Box>
+                </Grid>
+              )}
+            </Grid>
+
+            {/* Conditional Lock */}
+            <Grid container spacing={2} sx={{ mb: 2 }}>
+              <Grid item xs={12} md={6}>
+                <FormControlLabel
+                  control={
+                    <Switch
+                      checked={formData.controlRules?.advanced?.enableConditionalLock || false}
+                      onChange={(e) => {
+                        const control = formData.controlRules || {};
+                        const advanced = control.advanced || {};
+                        handleChange('controlRules', { 
+                          ...control, 
+                          advanced: { ...advanced, enableConditionalLock: e.target.checked }
+                        });
+                      }}
+                      size="small"
+                    />
+                  }
+                  label="قفل شرطی"
+                />
+              </Grid>
+              {formData.controlRules?.advanced?.enableConditionalLock && (
+                <Grid item xs={12} md={6}>
+                  <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                    <TextField
+                      fullWidth
+                      label="قانون قفل شرطی"
+                      value={formData.controlRules?.advanced?.conditionalLockRule || ''}
+                      onChange={(e) => {
+                        const control = formData.controlRules || {};
+                        const advanced = control.advanced || {};
+                        handleChange('controlRules', { 
+                          ...control, 
+                          advanced: { ...advanced, conditionalLockRule: e.target.value }
+                        });
+                      }}
+                      placeholder="قانون JavaScript برای قفل شرطی"
+                      multiline
+                      rows={2}
+                      sx={{ '& .MuiOutlinedInput-root': { background: 'rgba(255, 255, 255, 0.8)' } }}
+                    />
+                    <HelpTooltip
+                      title="قانون قفل شرطی"
+                      description="کد JavaScript برای قفل کردن فیلد بر اساس شرط."
+                      example="formData.status === 'approved'"
+                    />
+                  </Box>
+                </Grid>
+              )}
+            </Grid>
+
+            {/* Conditional Read Only */}
+            <Grid container spacing={2}>
+              <Grid item xs={12} md={6}>
+                <FormControlLabel
+                  control={
+                    <Switch
+                      checked={formData.controlRules?.advanced?.enableConditionalReadOnly || false}
+                      onChange={(e) => {
+                        const control = formData.controlRules || {};
+                        const advanced = control.advanced || {};
+                        handleChange('controlRules', { 
+                          ...control, 
+                          advanced: { ...advanced, enableConditionalReadOnly: e.target.checked }
+                        });
+                      }}
+                      size="small"
+                    />
+                  }
+                  label="فقط خواندنی شرطی"
+                />
+              </Grid>
+              {formData.controlRules?.advanced?.enableConditionalReadOnly && (
+                <Grid item xs={12} md={6}>
+                  <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                    <TextField
+                      fullWidth
+                      label="قانون فقط خواندنی شرطی"
+                      value={formData.controlRules?.advanced?.conditionalReadOnlyRule || ''}
+                      onChange={(e) => {
+                        const control = formData.controlRules || {};
+                        const advanced = control.advanced || {};
+                        handleChange('controlRules', { 
+                          ...control, 
+                          advanced: { ...advanced, conditionalReadOnlyRule: e.target.value }
+                        });
+                      }}
+                      placeholder="قانون JavaScript برای فقط خواندنی شرطی"
+                      multiline
+                      rows={2}
+                      sx={{ '& .MuiOutlinedInput-root': { background: 'rgba(255, 255, 255, 0.8)' } }}
+                    />
+                    <HelpTooltip
+                      title="قانون فقط خواندنی شرطی"
+                      description="کد JavaScript برای فقط خواندنی کردن فیلد بر اساس شرط."
+                      example="formData.userRole === 'viewer'"
+                    />
+                  </Box>
+                </Grid>
+              )}
+            </Grid>
           </Grid>
         </Grid>
       </Paper>

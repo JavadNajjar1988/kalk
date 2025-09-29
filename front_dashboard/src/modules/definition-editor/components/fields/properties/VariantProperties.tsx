@@ -1,4 +1,4 @@
-import React, { memo, useEffect } from 'react';
+import React, { memo, useEffect, useMemo, useCallback } from 'react';
 import { Box, Typography, Paper, Grid, TextField, FormControl, InputLabel, Select, MenuItem, FormControlLabel, Switch, Button } from '@mui/material';
 import HelpTooltip from '../shared/HelpTooltip';
 import { ExtendedCustomFieldDefinition } from '../types/FieldEditTypes';
@@ -11,6 +11,157 @@ interface VariantPropertiesProps {
 const VariantProperties: React.FC<VariantPropertiesProps> = ({ formData, onChange }) => {
   // Handle variant-specific property visibility
   const currentVariant = formData.variant || 'plain';
+
+  // Memoize variant properties configuration
+  const variantConfig = useMemo(() => ({
+    // Textarea properties
+    textareaRows: formData.textareaRows || 3,
+    textareaMaxRows: formData.textareaMaxRows || 10,
+    textareaResize: formData.textareaResize || 'both',
+    
+    // Richtext properties
+    richtextToolbar: formData.richtextToolbar || ['bold', 'italic', 'underline'],
+    richtextHeight: formData.richtextHeight || 200,
+    
+    // Chips properties
+    chipsColor: formData.chipsColor || 'default',
+    chipsVariant: formData.chipsVariant || 'filled',
+    chipsDeletable: formData.chipsDeletable || false,
+    chipsMaxCount: formData.chipsMaxCount || 0,
+    
+    // Pill properties
+    pillColor: formData.pillColor || 'default',
+    pillSize: formData.pillSize || 'medium',
+    
+    // Popover properties
+    popoverTrigger: formData.popoverTrigger || 'click',
+    popoverSize: formData.popoverSize || 'medium',
+    popoverPosition: formData.popoverPosition || 'top',
+    
+    // Inline properties
+    inlineLabelPosition: formData.inlineLabelPosition || 'left',
+    inlineLabelWidth: formData.inlineLabelWidth || 30,
+    inlineSpacing: formData.inlineSpacing || 'normal',
+    
+    // Accordion properties
+    accordionTitle: formData.accordionTitle || '',
+    accordionDisplayMode: formData.accordionDisplayMode || 'title',
+    
+    // Options management
+    options: formData.options || [],
+    newOptionText: formData.newOptionText || ''
+  }), [
+    formData.textareaRows, formData.textareaMaxRows, formData.textareaResize,
+    formData.richtextToolbar, formData.richtextHeight,
+    formData.chipsColor, formData.chipsVariant, formData.chipsDeletable, formData.chipsMaxCount,
+    formData.pillColor, formData.pillSize,
+    formData.popoverTrigger, formData.popoverSize, formData.popoverPosition,
+    formData.inlineLabelPosition, formData.inlineLabelWidth, formData.inlineSpacing,
+    formData.accordionTitle, formData.accordionDisplayMode,
+    formData.options, formData.newOptionText
+  ]);
+
+  // Optimized change handlers
+  const handleTextareaRowsChange = useCallback((value: string) => {
+    const numValue = value ? parseInt(value) : 3;
+    onChange('textareaRows', isNaN(numValue) ? 3 : numValue);
+  }, [onChange]);
+
+  const handleTextareaMaxRowsChange = useCallback((value: string) => {
+    const numValue = value ? parseInt(value) : 10;
+    onChange('textareaMaxRows', isNaN(numValue) ? 10 : numValue);
+  }, [onChange]);
+
+  const handleTextareaResizeChange = useCallback((value: string) => {
+    onChange('textareaResize', value);
+  }, [onChange]);
+
+  const handleRichtextHeightChange = useCallback((value: string) => {
+    onChange('richtextHeight', parseInt(value));
+  }, [onChange]);
+
+  const handleRichtextToolbarChange = useCallback((value: string) => {
+    onChange('richtextToolbar', value.split(',').map(item => item.trim()).filter(item => item));
+  }, [onChange]);
+
+  const handleChipsColorChange = useCallback((value: string) => {
+    onChange('chipsColor', value);
+  }, [onChange]);
+
+  const handleChipsVariantChange = useCallback((value: string) => {
+    onChange('chipsVariant', value);
+  }, [onChange]);
+
+  const handleChipsDeletableChange = useCallback((value: boolean) => {
+    onChange('chipsDeletable', value);
+  }, [onChange]);
+
+  const handleChipsMaxCountChange = useCallback((value: string) => {
+    const numValue = value ? parseInt(value) : 0;
+    onChange('chipsMaxCount', isNaN(numValue) ? 0 : numValue);
+  }, [onChange]);
+
+  const handlePillColorChange = useCallback((value: string) => {
+    onChange('pillColor', value);
+  }, [onChange]);
+
+  const handlePillSizeChange = useCallback((value: string) => {
+    onChange('pillSize', value);
+  }, [onChange]);
+
+  const handlePopoverTriggerChange = useCallback((value: string) => {
+    onChange('popoverTrigger', value);
+  }, [onChange]);
+
+  const handlePopoverSizeChange = useCallback((value: string) => {
+    onChange('popoverSize', value);
+  }, [onChange]);
+
+  const handlePopoverPositionChange = useCallback((value: string) => {
+    onChange('popoverPosition', value);
+  }, [onChange]);
+
+  const handleInlineLabelPositionChange = useCallback((value: string) => {
+    onChange('inlineLabelPosition', value);
+  }, [onChange]);
+
+  const handleInlineLabelWidthChange = useCallback((value: string) => {
+    const numValue = value ? parseInt(value) : 30;
+    onChange('inlineLabelWidth', isNaN(numValue) ? 30 : numValue);
+  }, [onChange]);
+
+  const handleInlineSpacingChange = useCallback((value: string) => {
+    onChange('inlineSpacing', value);
+  }, [onChange]);
+
+  const handleAccordionTitleChange = useCallback((value: string) => {
+    onChange('accordionTitle', value);
+  }, [onChange]);
+
+  const handleAccordionDisplayModeChange = useCallback((value: string) => {
+    onChange('accordionDisplayMode', value);
+  }, [onChange]);
+
+  const handleNewOptionTextChange = useCallback((value: string) => {
+    onChange('newOptionText', value);
+  }, [onChange]);
+
+  const handleAddOption = useCallback(() => {
+    if (variantConfig.newOptionText?.trim()) {
+      const currentOptions = variantConfig.options;
+      onChange('options', [...currentOptions, { 
+        id: Date.now().toString(), 
+        label: variantConfig.newOptionText.trim(),
+        value: variantConfig.newOptionText.trim().toLowerCase().replace(/\s+/g, '_')
+      }]);
+      onChange('newOptionText', '');
+    }
+  }, [variantConfig.newOptionText, variantConfig.options, onChange]);
+
+  const handleDeleteOption = useCallback((index: number) => {
+    const updatedOptions = variantConfig.options.filter((_, i) => i !== index);
+    onChange('options', updatedOptions);
+  }, [variantConfig.options, onChange]);
   
   // Update properties when variant changes
   useEffect(() => {
@@ -76,12 +227,8 @@ const VariantProperties: React.FC<VariantPropertiesProps> = ({ formData, onChang
                 fullWidth
                 label="تعداد ردیف‌ها"
                 type="number"
-                value={formData.textareaRows || 3}
-                onChange={(e) => {
-                  const value = e.target.value;
-                  const numValue = value ? parseInt(value) : 3;
-                  onChange('textareaRows', isNaN(numValue) ? 3 : numValue);
-                }}
+                value={variantConfig.textareaRows}
+                onChange={(e) => handleTextareaRowsChange(e.target.value)}
                 inputProps={{ min: 1, max: 20 }}
                 sx={{
                   '& .MuiOutlinedInput-root': {
@@ -104,12 +251,8 @@ const VariantProperties: React.FC<VariantPropertiesProps> = ({ formData, onChang
                 fullWidth
                 label="حداکثر ردیف‌ها"
                 type="number"
-                value={formData.textareaMaxRows || 10}
-                onChange={(e) => {
-                  const value = e.target.value;
-                  const numValue = value ? parseInt(value) : 10;
-                  onChange('textareaMaxRows', isNaN(numValue) ? 10 : numValue);
-                }}
+                value={variantConfig.textareaMaxRows}
+                onChange={(e) => handleTextareaMaxRowsChange(e.target.value)}
                 inputProps={{ min: 1, max: 50 }}
                 sx={{
                   '& .MuiOutlinedInput-root': {
@@ -130,8 +273,8 @@ const VariantProperties: React.FC<VariantPropertiesProps> = ({ formData, onChang
             <FormControl fullWidth>
               <InputLabel>قابلیت تغییر اندازه</InputLabel>
               <Select
-                value={formData.textareaResize || 'both'}
-                onChange={(e) => onChange('textareaResize', e.target.value)}
+                value={variantConfig.textareaResize}
+                onChange={(e) => handleTextareaResizeChange(e.target.value)}
                 label="قابلیت تغییر اندازه"
                 sx={{
                   background: 'rgba(255, 255, 255, 0.8)',
@@ -156,8 +299,8 @@ const VariantProperties: React.FC<VariantPropertiesProps> = ({ formData, onChang
               fullWidth
               label="ارتفاع ویرایشگر (پیکسل)"
               type="number"
-              value={formData.richtextHeight || 200}
-              onChange={(e) => onChange('richtextHeight', parseInt(e.target.value))}
+              value={variantConfig.richtextHeight}
+              onChange={(e) => handleRichtextHeightChange(e.target.value)}
               inputProps={{ min: 100, max: 1000 }}
               sx={{
                 '& .MuiOutlinedInput-root': {
@@ -172,8 +315,8 @@ const VariantProperties: React.FC<VariantPropertiesProps> = ({ formData, onChang
             <TextField
               fullWidth
               label="ابزارهای نوار ابزار (با کاما جدا کنید)"
-              value={formData.richtextToolbar?.join(', ') || 'bold,italic,underline'}
-              onChange={(e) => onChange('richtextToolbar', e.target.value.split(',').map(item => item.trim()).filter(item => item))}
+              value={variantConfig.richtextToolbar.join(', ')}
+              onChange={(e) => handleRichtextToolbarChange(e.target.value)}
               placeholder="bold,italic,underline,list,link"
               sx={{
                 '& .MuiOutlinedInput-root': {
@@ -193,8 +336,8 @@ const VariantProperties: React.FC<VariantPropertiesProps> = ({ formData, onChang
             <FormControl fullWidth>
               <InputLabel>رنگ چیپ‌ها</InputLabel>
               <Select
-                value={formData.chipsColor || 'default'}
-                onChange={(e) => onChange('chipsColor', e.target.value)}
+                value={variantConfig.chipsColor}
+                onChange={(e) => handleChipsColorChange(e.target.value)}
                 label="رنگ چیپ‌ها"
                 sx={{
                   background: 'rgba(255, 255, 255, 0.8)',
@@ -212,8 +355,8 @@ const VariantProperties: React.FC<VariantPropertiesProps> = ({ formData, onChang
             <FormControl fullWidth>
               <InputLabel>سبک چیپ‌ها</InputLabel>
               <Select
-                value={formData.chipsVariant || 'filled'}
-                onChange={(e) => onChange('chipsVariant', e.target.value)}
+                value={variantConfig.chipsVariant}
+                onChange={(e) => handleChipsVariantChange(e.target.value)}
                 label="سبک چیپ‌ها"
                 sx={{
                   background: 'rgba(255, 255, 255, 0.8)',
@@ -231,8 +374,8 @@ const VariantProperties: React.FC<VariantPropertiesProps> = ({ formData, onChang
               <FormControlLabel
                 control={
                   <Switch
-                    checked={formData.chipsDeletable || false}
-                    onChange={(e) => onChange('chipsDeletable', e.target.checked)}
+                    checked={variantConfig.chipsDeletable}
+                    onChange={(e) => handleChipsDeletableChange(e.target.checked)}
                     size="small"
                   />
                 }
@@ -246,12 +389,8 @@ const VariantProperties: React.FC<VariantPropertiesProps> = ({ formData, onChang
               fullWidth
               label="حداکثر تعداد"
               type="number"
-              value={formData.chipsMaxCount || ''}
-              onChange={(e) => {
-                const value = e.target.value;
-                const numValue = value ? parseInt(value) : 0;
-                onChange('chipsMaxCount', isNaN(numValue) ? 0 : numValue);
-              }}
+              value={variantConfig.chipsMaxCount}
+              onChange={(e) => handleChipsMaxCountChange(e.target.value)}
               inputProps={{ min: 1 }}
               sx={{
                 '& .MuiOutlinedInput-root': {
@@ -271,8 +410,8 @@ const VariantProperties: React.FC<VariantPropertiesProps> = ({ formData, onChang
               <TextField
                 fullWidth
                 label="گزینه جدید"
-                value={formData.newOptionText || ''}
-                onChange={(e) => onChange('newOptionText', e.target.value)}
+                value={variantConfig.newOptionText}
+                onChange={(e) => handleNewOptionTextChange(e.target.value)}
                 placeholder="متن گزینه جدید"
                 sx={{
                   '& .MuiOutlinedInput-root': {
@@ -283,18 +422,8 @@ const VariantProperties: React.FC<VariantPropertiesProps> = ({ formData, onChang
               />
               <Button
                 variant="contained"
-                onClick={() => {
-                  if (formData.newOptionText?.trim()) {
-                    const currentOptions = formData.options || [];
-                    onChange('options', [...currentOptions, { 
-                      id: Date.now().toString(), 
-                      label: formData.newOptionText.trim(),
-                      value: formData.newOptionText.trim().toLowerCase().replace(/\s+/g, '_')
-                    }]);
-                    onChange('newOptionText', '');
-                  }
-                }}
-                disabled={!formData.newOptionText?.trim()}
+                onClick={handleAddOption}
+                disabled={!variantConfig.newOptionText?.trim()}
                 sx={{
                   minWidth: 120,
                   background: 'linear-gradient(135deg, #4A90E2, #7BB3F0)',
@@ -308,9 +437,9 @@ const VariantProperties: React.FC<VariantPropertiesProps> = ({ formData, onChang
             </Box>
             
             {/* Display existing options */}
-            {formData.options && formData.options.length > 0 && (
+            {variantConfig.options && variantConfig.options.length > 0 && (
               <Box sx={{ maxHeight: 200, overflowY: 'auto' }}>
-            {formData.options.map((option, index) => (
+            {variantConfig.options.map((option, index) => (
               <Box
                 key={typeof option === 'string' ? index : (option as any).id || index}
                 sx={{
@@ -330,10 +459,7 @@ const VariantProperties: React.FC<VariantPropertiesProps> = ({ formData, onChang
                     <Button
                       size="small"
                       color="error"
-                      onClick={() => {
-                        const updatedOptions = formData.options?.filter((_, i) => i !== index) || [];
-                        onChange('options', updatedOptions);
-                      }}
+                      onClick={() => handleDeleteOption(index)}
                     >
                       حذف
                     </Button>
@@ -352,8 +478,8 @@ const VariantProperties: React.FC<VariantPropertiesProps> = ({ formData, onChang
             <FormControl fullWidth>
               <InputLabel>رنگ پِل</InputLabel>
               <Select
-                value={formData.pillColor || 'default'}
-                onChange={(e) => onChange('pillColor', e.target.value)}
+                value={variantConfig.pillColor}
+                onChange={(e) => handlePillColorChange(e.target.value)}
                 label="رنگ پِل"
                 sx={{
                   background: 'rgba(255, 255, 255, 0.8)',
@@ -374,8 +500,8 @@ const VariantProperties: React.FC<VariantPropertiesProps> = ({ formData, onChang
             <FormControl fullWidth>
               <InputLabel>اندازه پِل</InputLabel>
               <Select
-                value={formData.pillSize || 'medium'}
-                onChange={(e) => onChange('pillSize', e.target.value)}
+                value={variantConfig.pillSize}
+                onChange={(e) => handlePillSizeChange(e.target.value)}
                 label="اندازه پِل"
                 sx={{
                   background: 'rgba(255, 255, 255, 0.8)',
@@ -397,8 +523,8 @@ const VariantProperties: React.FC<VariantPropertiesProps> = ({ formData, onChang
               <TextField
                 fullWidth
                 label="گزینه جدید"
-                value={formData.newOptionText || ''}
-                onChange={(e) => onChange('newOptionText', e.target.value)}
+                value={variantConfig.newOptionText}
+                onChange={(e) => handleNewOptionTextChange(e.target.value)}
                 placeholder="متن گزینه جدید"
                 sx={{
                   '& .MuiOutlinedInput-root': {
@@ -409,18 +535,8 @@ const VariantProperties: React.FC<VariantPropertiesProps> = ({ formData, onChang
               />
               <Button
                 variant="contained"
-                onClick={() => {
-                  if (formData.newOptionText?.trim()) {
-                    const currentOptions = formData.options || [];
-                    onChange('options', [...currentOptions, { 
-                      id: Date.now().toString(), 
-                      label: formData.newOptionText.trim(),
-                      value: formData.newOptionText.trim().toLowerCase().replace(/\s+/g, '_')
-                    }]);
-                    onChange('newOptionText', '');
-                  }
-                }}
-                disabled={!formData.newOptionText?.trim()}
+                onClick={handleAddOption}
+                disabled={!variantConfig.newOptionText?.trim()}
                 sx={{
                   minWidth: 120,
                   background: 'linear-gradient(135deg, #4A90E2, #7BB3F0)',
@@ -434,9 +550,9 @@ const VariantProperties: React.FC<VariantPropertiesProps> = ({ formData, onChang
             </Box>
             
             {/* Display existing options */}
-            {formData.options && formData.options.length > 0 && (
+            {variantConfig.options && variantConfig.options.length > 0 && (
               <Box sx={{ maxHeight: 200, overflowY: 'auto' }}>
-            {formData.options.map((option, index) => (
+            {variantConfig.options.map((option, index) => (
               <Box
                 key={typeof option === 'string' ? index : (option as any).id || index}
                 sx={{
@@ -456,10 +572,7 @@ const VariantProperties: React.FC<VariantPropertiesProps> = ({ formData, onChang
                     <Button
                       size="small"
                       color="error"
-                      onClick={() => {
-                        const updatedOptions = formData.options?.filter((_, i) => i !== index) || [];
-                        onChange('options', updatedOptions);
-                      }}
+                      onClick={() => handleDeleteOption(index)}
                     >
                       حذف
                     </Button>
@@ -478,8 +591,8 @@ const VariantProperties: React.FC<VariantPropertiesProps> = ({ formData, onChang
             <FormControl fullWidth>
               <InputLabel>رویداد فعال‌سازی</InputLabel>
               <Select
-                value={formData.popoverTrigger || 'click'}
-                onChange={(e) => onChange('popoverTrigger', e.target.value)}
+                value={variantConfig.popoverTrigger}
+                onChange={(e) => handlePopoverTriggerChange(e.target.value)}
                 label="رویداد فعال‌سازی"
                 sx={{
                   background: 'rgba(255, 255, 255, 0.8)',
@@ -496,8 +609,8 @@ const VariantProperties: React.FC<VariantPropertiesProps> = ({ formData, onChang
             <FormControl fullWidth>
               <InputLabel>اندازه پاپ‌اور</InputLabel>
               <Select
-                value={formData.popoverSize || 'medium'}
-                onChange={(e) => onChange('popoverSize', e.target.value)}
+                value={variantConfig.popoverSize}
+                onChange={(e) => handlePopoverSizeChange(e.target.value)}
                 label="اندازه پاپ‌اور"
                 sx={{
                   background: 'rgba(255, 255, 255, 0.8)',
@@ -515,8 +628,8 @@ const VariantProperties: React.FC<VariantPropertiesProps> = ({ formData, onChang
             <FormControl fullWidth>
               <InputLabel>موقعیت پاپ‌اور</InputLabel>
               <Select
-                value={formData.popoverPosition || 'top'}
-                onChange={(e) => onChange('popoverPosition', e.target.value)}
+                value={variantConfig.popoverPosition}
+                onChange={(e) => handlePopoverPositionChange(e.target.value)}
                 label="موقعیت پاپ‌اور"
                 sx={{
                   background: 'rgba(255, 255, 255, 0.8)',
@@ -540,8 +653,8 @@ const VariantProperties: React.FC<VariantPropertiesProps> = ({ formData, onChang
             <FormControl fullWidth>
               <InputLabel>موقعیت برچسب</InputLabel>
               <Select
-                value={formData.inlineLabelPosition || 'left'}
-                onChange={(e) => onChange('inlineLabelPosition', e.target.value)}
+                value={variantConfig.inlineLabelPosition}
+                onChange={(e) => handleInlineLabelPositionChange(e.target.value)}
                 label="موقعیت برچسب"
                 sx={{
                   background: 'rgba(255, 255, 255, 0.8)',
@@ -559,12 +672,8 @@ const VariantProperties: React.FC<VariantPropertiesProps> = ({ formData, onChang
               fullWidth
               label="عرض برچسب (درصد)"
               type="number"
-              value={formData.inlineLabelWidth || 30}
-              onChange={(e) => {
-                const value = e.target.value;
-                const numValue = value ? parseInt(value) : 30;
-                onChange('inlineLabelWidth', isNaN(numValue) ? 30 : numValue);
-              }}
+              value={variantConfig.inlineLabelWidth}
+              onChange={(e) => handleInlineLabelWidthChange(e.target.value)}
               inputProps={{ min: 10, max: 90 }}
               sx={{
                 '& .MuiOutlinedInput-root': {
@@ -579,8 +688,8 @@ const VariantProperties: React.FC<VariantPropertiesProps> = ({ formData, onChang
             <FormControl fullWidth>
               <InputLabel>فاصله‌گذاری</InputLabel>
               <Select
-                value={formData.inlineSpacing || 'normal'}
-                onChange={(e) => onChange('inlineSpacing', e.target.value)}
+                value={variantConfig.inlineSpacing}
+                onChange={(e) => handleInlineSpacingChange(e.target.value)}
                 label="فاصله‌گذاری"
                 sx={{
                   background: 'rgba(255, 255, 255, 0.8)',
@@ -603,8 +712,8 @@ const VariantProperties: React.FC<VariantPropertiesProps> = ({ formData, onChang
             <TextField
               fullWidth
               label="عنوان آکاردئون"
-              value={formData.accordionTitle || ''}
-              onChange={(e) => onChange('accordionTitle', e.target.value)}
+              value={variantConfig.accordionTitle}
+              onChange={(e) => handleAccordionTitleChange(e.target.value)}
               placeholder="عنوان آکاردئون"
               sx={{
                 '& .MuiOutlinedInput-root': {
@@ -619,8 +728,8 @@ const VariantProperties: React.FC<VariantPropertiesProps> = ({ formData, onChang
             <FormControl fullWidth>
               <InputLabel>حالت نمایش آکاردئون</InputLabel>
               <Select
-                value={formData.accordionDisplayMode || 'title'}
-                onChange={(e) => onChange('accordionDisplayMode', e.target.value)}
+                value={variantConfig.accordionDisplayMode}
+                onChange={(e) => handleAccordionDisplayModeChange(e.target.value)}
                 label="حالت نمایش آکاردئون"
                 sx={{
                   background: 'rgba(255, 255, 255, 0.8)',
@@ -642,8 +751,8 @@ const VariantProperties: React.FC<VariantPropertiesProps> = ({ formData, onChang
               <TextField
                 fullWidth
                 label="گزینه جدید"
-                value={formData.newOptionText || ''}
-                onChange={(e) => onChange('newOptionText', e.target.value)}
+                value={variantConfig.newOptionText}
+                onChange={(e) => handleNewOptionTextChange(e.target.value)}
                 placeholder="متن گزینه جدید"
                 sx={{
                   '& .MuiOutlinedInput-root': {
@@ -654,18 +763,8 @@ const VariantProperties: React.FC<VariantPropertiesProps> = ({ formData, onChang
               />
               <Button
                 variant="contained"
-                onClick={() => {
-                  if (formData.newOptionText?.trim()) {
-                    const currentOptions = formData.options || [];
-                    onChange('options', [...currentOptions, { 
-                      id: Date.now().toString(), 
-                      label: formData.newOptionText.trim(),
-                      value: formData.newOptionText.trim().toLowerCase().replace(/\s+/g, '_')
-                    }]);
-                    onChange('newOptionText', '');
-                  }
-                }}
-                disabled={!formData.newOptionText?.trim()}
+                onClick={handleAddOption}
+                disabled={!variantConfig.newOptionText?.trim()}
                 sx={{
                   minWidth: 120,
                   background: 'linear-gradient(135deg, #4A90E2, #7BB3F0)',
@@ -679,9 +778,9 @@ const VariantProperties: React.FC<VariantPropertiesProps> = ({ formData, onChang
             </Box>
             
             {/* Display existing options */}
-            {formData.options && formData.options.length > 0 && (
+            {variantConfig.options && variantConfig.options.length > 0 && (
               <Box sx={{ maxHeight: 200, overflowY: 'auto' }}>
-            {formData.options.map((option, index) => (
+            {variantConfig.options.map((option, index) => (
               <Box
                 key={typeof option === 'string' ? index : (option as any).id || index}
                 sx={{
@@ -701,10 +800,7 @@ const VariantProperties: React.FC<VariantPropertiesProps> = ({ formData, onChang
                     <Button
                       size="small"
                       color="error"
-                      onClick={() => {
-                        const updatedOptions = formData.options?.filter((_, i) => i !== index) || [];
-                        onChange('options', updatedOptions);
-                      }}
+                      onClick={() => handleDeleteOption(index)}
                     >
                       حذف
                     </Button>
