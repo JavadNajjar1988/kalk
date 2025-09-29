@@ -1,5 +1,7 @@
 <template>
-  <div class="border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800 rounded-xl border-2 text-sm shadow-lg">
+  <div
+    class="bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border border-border rounded-xl text-sm shadow-lg"
+  >
     <slot />
   </div>
-</template>
+  </template>

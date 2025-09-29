@@ -11,7 +11,10 @@ const isOpen = defineModel<boolean>();
 </script>
 <template>
   <Sheet v-model:open="isOpen" :side="left ? 'left' : 'right'">
-    <SheetContent :side="left ? 'left' : 'right'" class="overflow-y-auto pb-6">
+    <SheetContent
+      :side="left ? 'left' : 'right'"
+      class="overflow-y-auto pb-6 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border border-border shadow-xl sm:rounded-l-2xl sm:max-w-[720px] w-full"
+    >
       <SheetHeader class="">
         <SheetTitle>
           <slot name="title">{{ title }}</slot>

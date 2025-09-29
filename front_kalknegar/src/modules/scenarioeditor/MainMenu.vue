@@ -175,10 +175,10 @@ const { measurementUnit } = storeToRefs(useMeasurementsStore());
             <DropdownMenuSubTrigger inset>فرمت مختصات</DropdownMenuSubTrigger>
             <DropdownMenuSubContent>
               <DropdownMenuRadioGroup v-model="coordinateFormat">
-                <DropdownMenuRadioItem value="dms" @select.prevent
+                <DropdownMenuRadioItem value="DegreeMinuteSeconds" @select.prevent
                   >درجه، دقیقه، ثانیه
                 </DropdownMenuRadioItem>
-                <DropdownMenuRadioItem value="dd" @select.prevent
+                <DropdownMenuRadioItem value="DecimalDegrees" @select.prevent
                   >درجه اعشاری
                 </DropdownMenuRadioItem>
                 <DropdownMenuRadioItem value="MGRS" @select.prevent

@@ -21,7 +21,6 @@ import type { EntityId } from "@/types/base";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { breakpointsTailwind, useBreakpoints } from "@vueuse/core";
 import { useActiveUnitStore } from "@/stores/dragStore";
-import CloseButton from "@/components/CloseButton.vue";
 import { useUiStore } from "@/stores/uiStore";
 import UnitBreadcrumbItem from "@/modules/scenarioeditor/UnitBreadcrumbItem.vue";
 import type { BreadcrumbItemType } from "@/modules/scenarioeditor/types";
@@ -169,10 +168,6 @@ onUnmounted(() => {
     class="relative flex border-b p-4 sm:p-3"
     :class="isDragged ? 'bg-gray-200' : 'bg-sidebar'"
   >
-    <CloseButton
-      @click="uiSettings.showOrbatBreadcrumbs = false"
-      class="absolute top-2 right-2 hidden sm:block"
-    />
     <div class="sm:flex sm:items-center sm:justify-center">
       <Breadcrumb class="w-max">
         <BreadcrumbList>

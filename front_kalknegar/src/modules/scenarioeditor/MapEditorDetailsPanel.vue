@@ -1,11 +1,11 @@
 <template>
   <div class="">
     <aside
-      class="bg-white dark:bg-slate-800 border-rose-200 dark:border-slate-600 pointer-events-auto relative mt-4 flex max-h-[70vh] flex-col overflow-clip rounded-2xl border-2 shadow-xl"
+      class="pointer-events-auto relative mt-4 flex max-h-[70vh] flex-col overflow-clip rounded-2xl bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border border-border shadow-xl"
       :style="{ width: widthStore.detailsWidth + 'px' }"
     >
       <CloseButton class="absolute top-1 right-1 z-99" @click="emit('close')" />
-      <div class="flex-auto overflow-auto p-6 bg-gradient-to-b from-white to-rose-50 dark:from-slate-800 dark:to-slate-900">
+      <div class="flex-auto overflow-auto p-6 bg-transparent text-foreground">
         <slot />
       </div>
       <PanelResizeHandle
