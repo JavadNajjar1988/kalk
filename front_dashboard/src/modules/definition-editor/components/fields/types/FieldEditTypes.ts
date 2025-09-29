@@ -10,34 +10,86 @@ export type FieldType = 'text' | 'number' | 'date' | 'select' | 'multiselect' | 
   // Complex data field types
   'array-text' | 'key-value' | 'grouped';
 
+// Number field specific properties
+export interface NumberFieldProperties {
+  // Content properties
+  numberType?: 'integer' | 'decimal';
+  minValue?: number;
+  maxValue?: number;
+  step?: number;
+  decimalPrecision?: number;
+  displayFormat?: {
+    thousandSeparator?: boolean;
+    thousandSymbol?: string;
+    decimalSeparator?: 'dot' | 'comma';
+    autoFormat?: 'currency' | 'percentage' | 'none';
+  };
+  defaultValue?: number;
+  
+  // Helper properties
+  enableAutoComplete?: boolean;
+  enableSpinner?: boolean;
+  enableMiniChart?: boolean;
+  enableMultipleValues?: boolean;
+  multiValueSeparator?: 'comma' | 'space' | 'semicolon';
+  
+  // Behavior properties
+  editableAfterSave?: boolean;
+  enableAutoSave?: boolean;
+  autoSaveDelay?: number;
+  enableConditionalDisplay?: boolean;
+  conditionalDisplayField?: string;
+  conditionalDisplayOperator?: 'equals' | 'not_equals' | 'greater_than' | 'less_than';
+  conditionalDisplayValue?: string;
+  enableConditionalEnable?: boolean;
+  conditionalEnableField?: string;
+  conditionalEnableOperator?: 'equals' | 'not_equals' | 'greater_than' | 'less_than';
+  conditionalEnableValue?: string;
+  autoCalculation?: {
+    enabled: boolean;
+    formula?: string;
+  };
+  
+  // Security properties
+  indexing?: {
+    searchable?: boolean;
+    filterable?: boolean;
+    sortable?: boolean;
+  };
+  storeRawAndNormalized?: boolean;
+  sensitiveDataDetection?: {
+    enabled: boolean;
+    action?: 'warn' | 'block';
+    patterns?: string[];
+  };
+  
+  // Display properties
+  displayType?: 'simple' | 'slider' | 'spinner' | 'progress';
+  size?: 'small' | 'medium' | 'large' | 'full';
+  showCounter?: boolean;
+  icon?: {
+    prefix?: string;
+    suffix?: string;
+  };
+  statusColor?: {
+    positive?: string;
+    negative?: string;
+    zero?: string;
+  };
+  readOnlyStyle?: 'normal' | 'disabled' | 'simple';
+  errorStyle?: 'below' | 'tooltip' | 'inline';
+}
+
 // Extended interface for additional text field properties
 export interface ExtendedCustomFieldDefinition extends CustomFieldDefinition {
-  // Toggle enablers for optional properties
-  enablePlaceholder?: boolean;
-  enableDefaultValue?: boolean;
-  enableHelpText?: boolean;
-  enableLengthLimits?: boolean;
-  enableCharsetControl?: boolean;
-  enableCaseTransform?: boolean;
-  enableCustomRegex?: boolean;
-  enableWhitespaceControl?: boolean;
-  enableDigitNormalization?: boolean;
-  enableZWNJPolicy?: boolean;
-  enableEmojiPolicy?: boolean;
-  enableHTMLPolicy?: boolean;
-  enableMarkdownPolicy?: boolean;
+  // Required fields for all field types
+  name: string;
+  englishName: string;
+  type: FieldType;
   
-  // Helper features toggles
-  enableSuggestions?: boolean;
-  enableAutoComplete?: boolean;
-  enableMultiValue?: boolean;
-  enableSpellcheck?: boolean;
+  // Number field specific properties
+  numberField?: NumberFieldProperties;
   
-  // Display features toggles
-  enableVariant?: boolean;
-  enableSelectionAid?: boolean;
-  enableVisualEnhancements?: boolean;
-  enableStyleConfig?: boolean;
   
   // Text field specific properties
   placeholder?: string;
@@ -47,23 +99,22 @@ export interface ExtendedCustomFieldDefinition extends CustomFieldDefinition {
   // Content properties
   minLength?: number;
   maxLength?: number;
-  allowedCharset?: 'letters' | 'alphanumeric' | 'all' | 'custom';
   caseTransform?: 'none' | 'lowercase' | 'uppercase' | 'capitalize';
   
   // Content control properties
-  characterControl?: 'letters-only' | 'letters-numbers' | 'all' | 'custom';
-  trimExtraSpaces?: boolean;
-  convertNumbers?: boolean;
-  fixHalfSpace?: boolean;
+  characterControl?: 'letters' | 'alphanumeric' | 'all' | 'custom';
+  trimWhitespace?: boolean;
+  normalizeDigits?: boolean;
+  fixZWNJ?: boolean;
   allowEmoji?: boolean;
   allowMarkdown?: boolean;
   
   // Assistive properties
   suggestions?: string[];
-  autoComplete?: boolean;
+  enableAutoComplete?: boolean;
   enableMultipleValues?: boolean;
-  multipleSeparator?: 'comma' | 'enter' | 'space' | 'semicolon';
-  spellCheck?: 'off' | 'persian' | 'english' | 'both' | 'custom';
+  multiValueSeparator?: 'comma' | 'enter' | 'space' | 'semicolon';
+  spellcheck?: 'off' | 'fa' | 'en' | 'custom';
   customDictionary?: string;
   
   // Behavior properties
@@ -80,7 +131,7 @@ export interface ExtendedCustomFieldDefinition extends CustomFieldDefinition {
   conditionalEnableOperator?: 'equals' | 'not_equals' | 'contains' | 'not_contains' | 'empty' | 'not_empty';
   conditionalEnableValue?: string;
   
-  // Security properties
+  // Security properties (legacy - use piiCheck and profanityCheck instead)
   enableSensitiveDataDetection?: boolean;
   sensitiveDataAction?: 'warn' | 'block' | 'mask';
   enableInappropriateWordsDetection?: boolean;
@@ -88,21 +139,15 @@ export interface ExtendedCustomFieldDefinition extends CustomFieldDefinition {
   searchable?: boolean;
   filterable?: boolean;
   searchAnalyzer?: 'standard' | 'persian' | 'custom';
-  storeRawAndNormalized?: boolean;
   
   // Display properties
-  displayType?: 'normal' | 'accordion' | 'multiline' | 'rich-text' | 'inline' | 'chips' | 'pill' | 'masked' | 'popover';
-  selectionHelper?: 'none' | 'single' | 'multiple';
+  variant?: 'plain' | 'accordion' | 'textarea' | 'richtext' | 'inline' | 'chips' | 'pill' | 'masked' | 'popover';
+  selectionAid?: 'none' | 'single' | 'multi';
   size?: 'sm' | 'md' | 'lg' | 'full';
   icon?: string;
   prefix?: string;
   suffix?: string;
   counterDisplay?: 'off' | 'bottom' | 'inside';
-  showCopyButton?: boolean;
-  
-  // Display features
-  variant?: 'plain' | 'accordion' | 'textarea' | 'richtext' | 'inline' | 'chips' | 'pill' | 'masked' | 'popover';
-  selectionAid?: 'none' | 'single' | 'multi';
   copyButton?: boolean;
   readOnlyStyle?: 'normal' | 'disabled' | 'plain';
   validationMessageStyle?: 'bottom' | 'tooltip' | 'inline';
@@ -140,6 +185,7 @@ export interface ExtendedCustomFieldDefinition extends CustomFieldDefinition {
   inlineLabelWidth?: number;
   inlineSpacing?: 'compact' | 'normal' | 'comfortable';
   
+  
   // Behavior and Logic features
   debounceTime?: number;
   conditionalVisibility?: {
@@ -171,6 +217,7 @@ export interface ExtendedCustomFieldDefinition extends CustomFieldDefinition {
     filterable?: boolean;
   };
   analyzer?: 'standard' | 'persian';
+  storeRawAndNormalized?: boolean;
   
   // Rules features
   validationRules?: {
@@ -180,29 +227,77 @@ export interface ExtendedCustomFieldDefinition extends CustomFieldDefinition {
     patternMessage?: string;
     unique?: boolean;
   };
+  controlRules?: {
+    defaultValue?: string;
+    lockAfterSave?: boolean;
+    readOnly?: boolean;
+    conditional?: {
+      enabled: boolean;
+      dependsOn?: string;
+      condition?: 'equals' | 'not_equals' | 'contains' | 'not_contains' | 'empty' | 'not_empty' | 'greater_than' | 'less_than';
+      value?: string;
+      logic?: 'AND' | 'OR';
+      conditions?: Array<{
+        dependsOn?: string;
+        condition?: 'equals' | 'not_equals' | 'contains' | 'not_contains' | 'empty' | 'not_empty' | 'greater_than' | 'less_than';
+        value?: string;
+      }>;
+    };
+    advanced?: {
+      enableConditionalDefault?: boolean;
+      conditionalDefaultValue?: string;
+      enableConditionalLock?: boolean;
+      conditionalLockRule?: string;
+      enableConditionalReadOnly?: boolean;
+      conditionalReadOnlyRule?: string;
+    };
+  };
   conditionalRules?: {
     visibility?: {
       enabled: boolean;
       dependsOn?: string;
-      condition?: 'equals' | 'not_equals' | 'contains' | 'not_contains' | 'empty' | 'not_empty';
+      condition?: 'equals' | 'not_equals' | 'contains' | 'not_contains' | 'empty' | 'not_empty' | 'greater_than' | 'less_than';
       value?: string;
+      logic?: 'AND' | 'OR';
+      conditions?: Array<{
+        dependsOn?: string;
+        condition?: 'equals' | 'not_equals' | 'contains' | 'not_contains' | 'empty' | 'not_empty' | 'greater_than' | 'less_than';
+        value?: string;
+      }>;
     };
     enable?: {
       enabled: boolean;
       dependsOn?: string;
-      condition?: 'equals' | 'not_equals' | 'contains' | 'not_contains' | 'empty' | 'not_empty';
+      condition?: 'equals' | 'not_equals' | 'contains' | 'not_contains' | 'empty' | 'not_empty' | 'greater_than' | 'less_than';
       value?: string;
+      logic?: 'AND' | 'OR';
+      conditions?: Array<{
+        dependsOn?: string;
+        condition?: 'equals' | 'not_equals' | 'contains' | 'not_contains' | 'empty' | 'not_empty' | 'greater_than' | 'less_than';
+        value?: string;
+      }>;
     };
     required?: {
       enabled: boolean;
       dependsOn?: string;
-      condition?: 'equals' | 'not_equals' | 'contains' | 'not_contains' | 'empty' | 'not_empty';
+      condition?: 'equals' | 'not_equals' | 'contains' | 'not_contains' | 'empty' | 'not_empty' | 'greater_than' | 'less_than';
       value?: string;
+      logic?: 'AND' | 'OR';
+      conditions?: Array<{
+        dependsOn?: string;
+        condition?: 'equals' | 'not_equals' | 'contains' | 'not_contains' | 'empty' | 'not_empty' | 'greater_than' | 'less_than';
+        value?: string;
+      }>;
     };
     custom?: {
       enabled: boolean;
       rule?: string;
       message?: string;
+      logic?: 'AND' | 'OR';
+      rules?: Array<{
+        rule?: string;
+        message?: string;
+      }>;
     };
   };
 }

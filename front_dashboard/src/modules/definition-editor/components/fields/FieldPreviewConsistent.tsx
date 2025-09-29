@@ -10,8 +10,7 @@ import {
 } from '@mui/material';
 import PreviewIcon from '@mui/icons-material/Preview';
 import { CustomField } from '../../types/equipment';
-import { ExtendedCustomFieldDefinition } from './types/FieldEditTypes';
-import { LiveFieldPreview } from './steps/LiveFieldPreview';
+import FieldRenderer from './FieldRenderer';
 
 interface FieldPreviewConsistentProps {
   fields: CustomField[];
@@ -26,86 +25,6 @@ const FieldPreviewConsistent: React.FC<FieldPreviewConsistentProps> = ({
   description = 'نمایش فرم ایجاد شده بر اساس فیلدهای تعریف شده',
   nodeName,
 }) => {
-  // Convert CustomField to ExtendedCustomFieldDefinition for LiveFieldPreview
-  const convertToExtendedField = (field: CustomField): ExtendedCustomFieldDefinition => {
-    // Create a copy to avoid modifying the original
-    const extendedField = { ...field } as ExtendedCustomFieldDefinition;
-    
-    // Add any missing properties that LiveFieldPreview might expect
-    if (!extendedField.direction) {
-      extendedField.direction = 'rtl';
-    }
-    
-    // Map properties that might have different names or need default values
-    if (field.placeholder !== undefined) {
-      extendedField.placeholder = field.placeholder;
-    }
-    
-    if (field.helpText !== undefined) {
-      extendedField.helpText = field.helpText;
-    }
-    
-    if (field.options !== undefined) {
-      extendedField.options = field.options;
-    }
-    
-    // Set default values for properties that might be missing
-    if (extendedField.displayType === undefined) {
-      extendedField.displayType = 'normal';
-    }
-    
-    if (extendedField.size === undefined) {
-      extendedField.size = 'md';
-    }
-    
-    if (extendedField.variant === undefined) {
-      // Set variant based on displayType for better consistency
-      switch (extendedField.displayType) {
-        case 'accordion':
-          extendedField.variant = 'accordion';
-          break;
-        case 'multiline':
-          extendedField.variant = 'textarea';
-          break;
-        case 'rich-text':
-          extendedField.variant = 'richtext';
-          break;
-        case 'inline':
-          extendedField.variant = 'inline';
-          break;
-        case 'chips':
-          extendedField.variant = 'chips';
-          break;
-        case 'pill':
-          extendedField.variant = 'pill';
-          break;
-        case 'masked':
-          extendedField.variant = 'masked';
-          break;
-        case 'popover':
-          extendedField.variant = 'popover';
-          break;
-        default:
-          extendedField.variant = 'plain';
-      }
-    }
-    
-    // Ensure textarea properties are set for textarea variants
-    if (extendedField.variant === 'textarea' && extendedField.textareaRows === undefined) {
-      extendedField.textareaRows = 4;
-    }
-    
-    // Ensure other variant-specific properties have defaults
-    if (extendedField.variant === 'chips' && extendedField.chipsColor === undefined) {
-      extendedField.chipsColor = 'default';
-    }
-    
-    if (extendedField.variant === 'pill' && extendedField.pillColor === undefined) {
-      extendedField.pillColor = 'default';
-    }
-    
-    return extendedField;
-  };
 
   return (
     <Paper 
@@ -158,8 +77,8 @@ const FieldPreviewConsistent: React.FC<FieldPreviewConsistentProps> = ({
           [...fields].sort((a, b) => a.order - b.order)
             .map((field) => (
               <Grid item xs={12} sm={6} key={field.id}>
-                <LiveFieldPreview 
-                  formData={convertToExtendedField(field)} 
+                <FieldRenderer 
+                  field={field} 
                 />
               </Grid>
             ))

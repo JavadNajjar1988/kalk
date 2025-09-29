@@ -1,4 +1,4 @@
-import React, { memo } from 'react';
+import React, { memo, useMemo, useCallback } from 'react';
 import { Box, Typography, Paper, Grid, TextField, FormControl, InputLabel, Select, MenuItem, FormControlLabel, Switch } from '@mui/material';
 import HelpTooltip from '../shared/HelpTooltip';
 
@@ -8,6 +8,47 @@ interface AssistivePropertiesProps {
 }
 
 const AssistiveProperties: React.FC<AssistivePropertiesProps> = ({ formData, onChange }) => {
+  // Memoize suggestions value for performance
+  const suggestionsValue = useMemo(() => {
+    if (!formData.suggestions || !Array.isArray(formData.suggestions)) return '';
+    return formData.suggestions.join('\n');
+  }, [formData.suggestions]);
+
+  // Memoize suggestions change handler
+  const handleSuggestionsChange = useCallback((value: string) => {
+    onChange('suggestions', value.split('\n').filter(s => s.trim()));
+  }, [onChange]);
+
+  // Memoize suggestions toggle handler
+  const handleSuggestionsToggle = useCallback((checked: boolean) => {
+    onChange('suggestions', checked ? [''] : []);
+  }, [onChange]);
+
+  // Memoize auto complete toggle handler
+  const handleAutoCompleteToggle = useCallback((checked: boolean) => {
+    onChange('enableAutoComplete', checked);
+  }, [onChange]);
+
+  // Memoize multiple values toggle handler
+  const handleMultipleValuesToggle = useCallback((checked: boolean) => {
+    onChange('enableMultipleValues', checked);
+  }, [onChange]);
+
+  // Memoize multi value separator change handler
+  const handleMultiValueSeparatorChange = useCallback((value: string) => {
+    onChange('multiValueSeparator', value);
+  }, [onChange]);
+
+  // Memoize spell check change handler
+  const handleSpellCheckChange = useCallback((value: string) => {
+    onChange('spellcheck', value);
+  }, [onChange]);
+
+  // Memoize custom dictionary change handler
+  const handleCustomDictionaryChange = useCallback((value: string) => {
+    onChange('customDictionary', value);
+  }, [onChange]);
+
   return (
     <Paper
       sx={{
@@ -31,8 +72,8 @@ const AssistiveProperties: React.FC<AssistivePropertiesProps> = ({ formData, onC
             <FormControlLabel
               control={
                 <Switch
-                  checked={formData.enableSuggestions || false}
-                  onChange={(e) => onChange('enableSuggestions', e.target.checked)}
+                  checked={formData.suggestions && formData.suggestions.length > 0}
+                  onChange={(e) => handleSuggestionsToggle(e.target.checked)}
                   size="small"
                 />
               }
@@ -48,8 +89,8 @@ const AssistiveProperties: React.FC<AssistivePropertiesProps> = ({ formData, onC
             <TextField
               fullWidth
               label="پیشنهادات (هر خط یک مورد)"
-              value={formData.suggestions || ''}
-              onChange={(e) => onChange('suggestions', e.target.value)}
+              value={suggestionsValue}
+              onChange={(e) => handleSuggestionsChange(e.target.value)}
               multiline
               rows={4}
               placeholder="پیشنهاد ۱&#10;پیشنهاد ۲&#10;پیشنهاد ۳"
@@ -69,8 +110,8 @@ const AssistiveProperties: React.FC<AssistivePropertiesProps> = ({ formData, onC
             <FormControlLabel
               control={
                 <Switch
-                  checked={formData.autoComplete || false}
-                  onChange={(e) => onChange('autoComplete', e.target.checked)}
+                  checked={formData.enableAutoComplete || false}
+                  onChange={(e) => handleAutoCompleteToggle(e.target.checked)}
                   size="small"
                 />
               }
@@ -91,7 +132,7 @@ const AssistiveProperties: React.FC<AssistivePropertiesProps> = ({ formData, onC
               control={
                 <Switch
                   checked={formData.enableMultipleValues || false}
-                  onChange={(e) => onChange('enableMultipleValues', e.target.checked)}
+                  onChange={(e) => handleMultipleValuesToggle(e.target.checked)}
                   size="small"
                 />
               }
@@ -107,8 +148,8 @@ const AssistiveProperties: React.FC<AssistivePropertiesProps> = ({ formData, onC
             <FormControl fullWidth>
               <InputLabel>جداکننده</InputLabel>
               <Select
-                value={formData.multipleSeparator || 'comma'}
-                onChange={(e) => onChange('multipleSeparator', e.target.value)}
+                value={formData.multiValueSeparator || 'comma'}
+                onChange={(e) => handleMultiValueSeparatorChange(e.target.value)}
                 label="جداکننده"
                 sx={{
                   background: 'rgba(255, 255, 255, 0.8)',
@@ -129,8 +170,8 @@ const AssistiveProperties: React.FC<AssistivePropertiesProps> = ({ formData, onC
           <FormControl fullWidth>
             <InputLabel>غلط‌یاب</InputLabel>
             <Select
-              value={formData.spellCheck || 'off'}
-              onChange={(e) => onChange('spellCheck', e.target.value)}
+              value={formData.spellcheck || 'off'}
+              onChange={(e) => handleSpellCheckChange(e.target.value)}
               label="غلط‌یاب"
               sx={{
                 background: 'rgba(255, 255, 255, 0.8)',
@@ -145,6 +186,25 @@ const AssistiveProperties: React.FC<AssistivePropertiesProps> = ({ formData, onC
             </Select>
           </FormControl>
         </Grid>
+
+        {/* Custom Dictionary */}
+        {formData.spellcheck === 'custom' && (
+          <Grid item xs={12}>
+            <TextField
+              fullWidth
+              label="واژه‌نامه سفارشی (با کاما جدا کنید)"
+              value={formData.customDictionary || ''}
+              onChange={(e) => handleCustomDictionaryChange(e.target.value)}
+              placeholder="واژه ۱, واژه ۲, واژه ۳"
+              sx={{
+                '& .MuiOutlinedInput-root': {
+                  background: 'rgba(255, 255, 255, 0.8)',
+                  backdropFilter: 'blur(10px)',
+                },
+              }}
+            />
+          </Grid>
+        )}
       </Grid>
     </Paper>
   );

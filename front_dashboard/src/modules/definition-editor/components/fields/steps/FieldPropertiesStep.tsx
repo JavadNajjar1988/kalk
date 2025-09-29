@@ -1,4 +1,4 @@
-import React, { memo } from 'react';
+import React, { memo, useState } from 'react';
 import {
   Box,
   Typography,
@@ -11,7 +11,16 @@ import {
   MenuItem,
   FormControlLabel,
   Switch,
+  Stepper,
+  Step,
+  StepLabel,
+  StepContent,
+  Button,
+  Accordion,
+  AccordionSummary,
+  AccordionDetails,
 } from '@mui/material';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import { FieldPropertiesStepProps } from '../types/FieldEditTypes';
 import HelpTooltip from '../shared/HelpTooltip';
 import ContentControlProperties from '../properties/ContentControlProperties';
@@ -21,25 +30,47 @@ import SecurityStorageProperties from '../properties/SecurityStorageProperties';
 import DisplayProperties from '../properties/DisplayProperties';
 import SelectOptionsProperties from '../properties/SelectOptionsProperties';
 import SelectFieldProperties from '../properties/SelectFieldProperties';
+import VariantProperties from '../properties/VariantProperties';
+import MaskProperties from '../properties/MaskProperties';
+import { NumberBasicProperties } from '../properties/NumberBasicProperties';
+import { NumberContentProperties } from '../properties/NumberContentProperties';
+import { NumberHelperProperties } from '../properties/NumberHelperProperties';
+import { NumberBehaviorProperties } from '../properties/NumberBehaviorProperties';
+import { NumberSecurityProperties } from '../properties/NumberSecurityProperties';
+import { NumberDisplayProperties } from '../properties/NumberDisplayProperties';
 
 const FieldPropertiesStep: React.FC<FieldPropertiesStepProps> = ({ formData, onChange }) => {
-  // Determine which properties component to show based on field type
-  const renderFieldSpecificProperties = () => {
-    if (formData.type === 'select' || formData.type === 'multiselect') {
-      return <SelectFieldProperties formData={formData} onChange={onChange} />;
-    }
-    
-    return (
-      <>
-        <ContentControlProperties formData={formData} onChange={(key, value) => onChange(key as any, value)} />
-        <AssistiveProperties formData={formData} onChange={(key, value) => onChange(key as any, value)} />
-        <BehaviorLogicProperties formData={formData} onChange={(key, value) => onChange(key as any, value)} />
-        <SecurityStorageProperties formData={formData} onChange={(key, value) => onChange(key as any, value)} />
-        <DisplayProperties formData={formData} onChange={(key, value) => onChange(key as any, value)} />
-        <SelectOptionsProperties formData={formData} onChange={(key, value) => onChange(key as any, value)} />
-      </>
-    );
+  const [activeStep, setActiveStep] = useState(0);
+  const [expandedAccordion, setExpandedAccordion] = useState<string | false>('basic');
+
+  const handleAccordionChange = (panel: string) => (event: React.SyntheticEvent, isExpanded: boolean) => {
+    setExpandedAccordion(isExpanded ? panel : false);
   };
+
+  // Determine which properties component to show based on field type
+  const getFieldSpecificProperties = () => {
+    const isTextBased = formData.type === 'text' || formData.type === 'email' || formData.type === 'password' || formData.type === 'textarea';
+    const isSelectBased = formData.type === 'select' || formData.type === 'multiselect';
+    const isNumber = formData.type === 'number';
+    const isBoolean = formData.type === 'boolean';
+
+    return {
+      isTextBased,
+      isSelectBased,
+      isNumber,
+      isBoolean,
+      hasContentControl: isTextBased,
+      hasAssistive: isTextBased,
+      hasBehavior: true,
+      hasSecurity: isTextBased || isNumber,
+      hasDisplay: true,
+      hasVariant: isTextBased,
+      hasMask: isTextBased,
+      hasSelectOptions: isSelectBased
+    };
+  };
+
+  const fieldProps = getFieldSpecificProperties();
 
   return (
     <Box role="region" aria-label="مرحله ویژگی‌های فیلد">
@@ -61,196 +92,383 @@ const FieldPropertiesStep: React.FC<FieldPropertiesStepProps> = ({ formData, onC
           مشخصات و تنظیمات فیلد را تعریف کنید
         </Typography>
       </Box>
-      
-      {/* ویژگی‌های عمومی - اجباری */}
-      <Paper
-        sx={{
-          p: 3,
-          mb: 3,
-          borderRadius: '12px',
-          background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(248, 250, 252, 0.8) 100%)',
-          backdropFilter: 'blur(10px)',
-          border: '1px solid rgba(135, 206, 250, 0.2)',
-          boxShadow: '0 4px 16px rgba(135, 206, 250, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.8)',
-        }}
-        role="region"
-        aria-label="ویژگی‌های عمومی"
-      >
-        <Typography variant="h6" sx={{ mb: 3, color: '#4A90E2', fontWeight: 600 }}>
-          ویژگی‌های عمومی
+
+      {/* Navigation Guide */}
+      <Box sx={{ mb: 3, p: 2, bgcolor: 'rgba(74, 144, 226, 0.05)', borderRadius: 2, border: '1px solid rgba(74, 144, 226, 0.2)' }}>
+        <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 600, color: '#4A90E2' }}>
+          راهنمای تنظیمات فیلد
         </Typography>
-        
-        <Grid container spacing={3}>
-          <Grid item xs={12} md={6}>
-            <TextField
-              fullWidth
-              label="عنوان *"
-              value={formData.name}
-              onChange={(e) => onChange('name', e.target.value)}
-              required
-              error={!formData.name}
-              helperText={!formData.name ? 'عنوان فیلد اجباری است' : ''}
-              sx={{
-                '& .MuiOutlinedInput-root': {
-                  background: 'rgba(255, 255, 255, 0.8)',
-                  backdropFilter: 'blur(10px)',
-                  '&:hover': { boxShadow: '0 4px 12px rgba(74, 144, 226, 0.15)' },
-                  '&.Mui-focused': { boxShadow: '0 0 0 3px rgba(74, 144, 226, 0.1)' },
-                },
-              }}
-              aria-label="عنوان فیلد"
-              aria-required="true"
-            />
-          </Grid>
-          
-          <Grid item xs={12} md={6}>
-            <TextField
-              fullWidth
-              label="کلید یکتا *"
-              value={formData.englishName}
-              onChange={(e) => onChange('englishName', e.target.value)}
-              required
-              error={!formData.englishName}
-              helperText={!formData.englishName ? 'کلید یکتا اجباری است' : 'فقط حروف انگلیسی، اعداد و _ مجاز است'}
-              placeholder="field_name"
-              sx={{
-                '& .MuiOutlinedInput-root': {
-                  background: 'rgba(255, 255, 255, 0.8)',
-                  backdropFilter: 'blur(10px)',
-                  '&:hover': { boxShadow: '0 4px 12px rgba(74, 144, 226, 0.15)' },
-                  '&.Mui-focused': { boxShadow: '0 0 0 3px rgba(74, 144, 226, 0.1)' },
-                },
-              }}
-              aria-label="کلید یکتا فیلد"
-              aria-required="true"
-            />
-          </Grid>
-          
-          <Grid item xs={12} md={6}>
-            <FormControl fullWidth>
-              <InputLabel>جهت متن</InputLabel>
-              <Select
-                value={formData.direction || 'auto'}
-                onChange={(e) => onChange('direction', e.target.value)}
-                label="جهت متن"
-                sx={{
-                  background: 'rgba(255, 255, 255, 0.8)',
-                  backdropFilter: 'blur(10px)',
-                }}
-                aria-label="جهت متن"
-              >
-                <MenuItem value="auto">خودکار</MenuItem>
-                <MenuItem value="rtl">راست‌به‌چپ</MenuItem>
-                <MenuItem value="ltr">چپ‌به‌راست</MenuItem>
-              </Select>
-            </FormControl>
-          </Grid>
-        </Grid>
-      </Paper>
-      
-      {/* ویژگی‌های اختیاری */}
-      <Paper
-        sx={{
-          p: 3,
-          mb: 3,
-          borderRadius: '12px',
-          background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(248, 250, 252, 0.8) 100%)',
-          backdropFilter: 'blur(10px)',
-          border: '1px solid rgba(135, 206, 250, 0.2)',
-          boxShadow: '0 4px 16px rgba(135, 206, 250, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.8)',
-        }}
-        role="region"
-        aria-label="ویژگی‌های اختیاری"
-      >
-        <Typography variant="h6" sx={{ mb: 3, color: '#4A90E2', fontWeight: 600 }}>
-          ویژگی‌های اختیاری
+        <Typography variant="body2" color="text.secondary">
+          برای تنظیم فیلد، ابتدا ویژگی‌های پایه را تکمیل کنید، سپس سایر بخش‌ها را بر اساس نیاز تنظیم کنید.
         </Typography>
-        
-        <Grid container spacing={3}>
-          {/* Placeholder */}
-          <Grid item xs={12}>
-            <Box sx={{ display: 'flex', alignItems: 'center' }}>
-              <FormControlLabel
-                control={
-                  <Switch
-                    checked={formData.enablePlaceholder || false}
-                    onChange={(e) => onChange('enablePlaceholder', e.target.checked)}
-                    size="small"
-                    aria-label="فعال کردن راهنما"
-                  />
-                }
-                label="راهنما"
-                sx={{ mb: 1 }}
-              />
-              <HelpTooltip
-                title="راهنما"
-                description="کمک می‌کند کاربر بفهمد چه چیزی بنویسد؛ با تایپ محو می‌شود."
-                example="«مثلاً: توضیح کوتاه…»"
-              />
-            </Box>
-            {formData.enablePlaceholder && (
+      </Box>
+      
+      {/* Basic Properties - Always First */}
+      <Accordion 
+        expanded={expandedAccordion === 'basic'} 
+        onChange={handleAccordionChange('basic')}
+        sx={{ mb: 2, borderRadius: '12px !important', '&:before': { display: 'none' } }}
+      >
+        <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+          <Typography variant="h6" sx={{ color: '#4A90E2', fontWeight: 600 }}>
+            📝 ویژگی‌های پایه (اجباری)
+          </Typography>
+        </AccordionSummary>
+        <AccordionDetails>
+          <Grid container spacing={3}>
+            <Grid item xs={12} md={6}>
               <TextField
                 fullWidth
-                label="متن راهنما"
-                value={formData.placeholder || ''}
-                onChange={(e) => onChange('placeholder', e.target.value)}
-                placeholder="مثال: نام خود را وارد کنید"
+                label="عنوان *"
+                value={formData.name}
+                onChange={(e) => onChange('name', e.target.value)}
+                required
+                error={!formData.name}
+                helperText={!formData.name ? 'عنوان فیلد اجباری است' : ''}
                 sx={{
                   '& .MuiOutlinedInput-root': {
                     background: 'rgba(255, 255, 255, 0.8)',
                     backdropFilter: 'blur(10px)',
+                    '&:hover': { boxShadow: '0 4px 12px rgba(74, 144, 226, 0.15)' },
+                    '&.Mui-focused': { boxShadow: '0 0 0 3px rgba(74, 144, 226, 0.1)' },
                   },
                 }}
-                aria-label="متن راهنما"
+                aria-label="عنوان فیلد"
+                aria-required="true"
               />
-            )}
-          </Grid>
-          
-          {/* Help Text */}
-          <Grid item xs={12}>
-            <Box sx={{ display: 'flex', alignItems: 'center' }}>
-              <FormControlLabel
-                control={
-                  <Switch
-                    checked={formData.enableHelpText || false}
-                    onChange={(e) => onChange('enableHelpText', e.target.checked)}
-                    size="small"
-                    aria-label="فعال کردن توضیح کوتاه زیر فیلد"
-                  />
-                }
-                label="توضیح کوتاه زیر فیلد"
-                sx={{ mb: 1 }}
-              />
-              <HelpTooltip
-                title="توضیح کوتاه زیر فیلد"
-                description="راهنمای ثابت زیر فیلد برای قوانین/نکات."
-                example="«حداکثر ۱۴۰ کاراکتر.»"
-              />
-            </Box>
-            {formData.enableHelpText && (
+            </Grid>
+            
+            <Grid item xs={12} md={6}>
               <TextField
                 fullWidth
-                label="متن راهنما"
-                value={formData.helpText || ''}
-                onChange={(e) => onChange('helpText', e.target.value)}
-                multiline
-                rows={2}
-                placeholder="توضیح کوتاه که زیر فیلد نمایش داده می‌شود"
+                label="کلید یکتا *"
+                value={formData.englishName}
+                onChange={(e) => onChange('englishName', e.target.value)}
+                required
+                error={!formData.englishName}
+                helperText={!formData.englishName ? 'کلید یکتا اجباری است' : 'فقط حروف انگلیسی، اعداد و _ مجاز است'}
+                placeholder="field_name"
                 sx={{
                   '& .MuiOutlinedInput-root': {
                     background: 'rgba(255, 255, 255, 0.8)',
                     backdropFilter: 'blur(10px)',
+                    '&:hover': { boxShadow: '0 4px 12px rgba(74, 144, 226, 0.15)' },
+                    '&.Mui-focused': { boxShadow: '0 0 0 3px rgba(74, 144, 226, 0.1)' },
                   },
                 }}
-                aria-label="توضیح کوتاه زیر فیلد"
+                aria-label="کلید یکتا فیلد"
+                aria-required="true"
               />
+            </Grid>
+            
+            {formData.type !== 'number' && (
+              <Grid item xs={12} md={6}>
+                <FormControl fullWidth>
+                  <InputLabel>جهت متن</InputLabel>
+                  <Select
+                    value={formData.direction || 'auto'}
+                    onChange={(e) => onChange('direction', e.target.value as any)}
+                    label="جهت متن"
+                    sx={{
+                      background: 'rgba(255, 255, 255, 0.8)',
+                      backdropFilter: 'blur(10px)',
+                    }}
+                    aria-label="جهت متن"
+                  >
+                    <MenuItem value="auto">خودکار</MenuItem>
+                    <MenuItem value="rtl">راست‌به‌چپ</MenuItem>
+                    <MenuItem value="ltr">چپ‌به‌راست</MenuItem>
+                  </Select>
+                </FormControl>
+              </Grid>
             )}
           </Grid>
-        </Grid>
-      </Paper>
-      
-      {/* Field Specific Properties */}
-      {renderFieldSpecificProperties()}
+        </AccordionDetails>
+      </Accordion>
+
+      {/* Optional Properties */}
+      <Accordion 
+        expanded={expandedAccordion === 'optional'} 
+        onChange={handleAccordionChange('optional')}
+        sx={{ mb: 2, borderRadius: '12px !important', '&:before': { display: 'none' } }}
+      >
+        <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+          <Typography variant="h6" sx={{ color: '#4A90E2', fontWeight: 600 }}>
+            💡 ویژگی‌های اختیاری
+          </Typography>
+        </AccordionSummary>
+        <AccordionDetails>
+          <Grid container spacing={3}>
+            {/* Placeholder */}
+            <Grid item xs={12}>
+              <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                <FormControlLabel
+                  control={
+                    <Switch
+                      checked={formData.enablePlaceholder || false}
+                      onChange={(e) => onChange('enablePlaceholder', e.target.checked)}
+                      size="small"
+                      aria-label="فعال کردن راهنما"
+                    />
+                  }
+                  label="راهنما"
+                  sx={{ mb: 1 }}
+                />
+                <HelpTooltip
+                  title="راهنما"
+                  description="کمک می‌کند کاربر بفهمد چه چیزی بنویسد؛ با تایپ محو می‌شود."
+                  example="«مثلاً: توضیح کوتاه…»"
+                />
+              </Box>
+              {formData.enablePlaceholder && (
+                <TextField
+                  fullWidth
+                  label="متن راهنما"
+                  value={formData.placeholder || ''}
+                  onChange={(e) => onChange('placeholder', e.target.value)}
+                  placeholder="مثال: نام خود را وارد کنید"
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      background: 'rgba(255, 255, 255, 0.8)',
+                      backdropFilter: 'blur(10px)',
+                    },
+                  }}
+                  aria-label="متن راهنما"
+                />
+              )}
+            </Grid>
+            
+            {/* Help Text */}
+            <Grid item xs={12}>
+              <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                <FormControlLabel
+                  control={
+                    <Switch
+                      checked={formData.enableHelpText || false}
+                      onChange={(e) => onChange('enableHelpText', e.target.checked)}
+                      size="small"
+                      aria-label="فعال کردن توضیح کوتاه زیر فیلد"
+                    />
+                  }
+                  label="توضیح کوتاه زیر فیلد"
+                  sx={{ mb: 1 }}
+                />
+                <HelpTooltip
+                  title="توضیح کوتاه زیر فیلد"
+                  description="راهنمای ثابت زیر فیلد برای قوانین/نکات."
+                  example="«حداکثر ۱۴۰ کاراکتر.»"
+                />
+              </Box>
+              {formData.enableHelpText && (
+                <TextField
+                  fullWidth
+                  label="متن راهنما"
+                  value={formData.helpText || ''}
+                  onChange={(e) => onChange('helpText', e.target.value)}
+                  multiline
+                  rows={2}
+                  placeholder="توضیح کوتاه که زیر فیلد نمایش داده می‌شود"
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      background: 'rgba(255, 255, 255, 0.8)',
+                      backdropFilter: 'blur(10px)',
+                    },
+                  }}
+                  aria-label="توضیح کوتاه زیر فیلد"
+                />
+              )}
+            </Grid>
+          </Grid>
+        </AccordionDetails>
+      </Accordion>
+
+      {/* Content Control Properties - Text Fields Only */}
+      {fieldProps.hasContentControl && (
+        <Accordion 
+          expanded={expandedAccordion === 'content'} 
+          onChange={handleAccordionChange('content')}
+          sx={{ mb: 2, borderRadius: '12px !important', '&:before': { display: 'none' } }}
+        >
+          <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+            <Typography variant="h6" sx={{ color: '#4A90E2', fontWeight: 600 }}>
+              🔒 کنترل محتوا
+            </Typography>
+          </AccordionSummary>
+          <AccordionDetails>
+            <ContentControlProperties formData={formData} onChange={onChange} />
+          </AccordionDetails>
+        </Accordion>
+      )}
+
+      {/* Assistive Properties - Text Fields Only */}
+      {fieldProps.hasAssistive && (
+        <Accordion 
+          expanded={expandedAccordion === 'assistive'} 
+          onChange={handleAccordionChange('assistive')}
+          sx={{ mb: 2, borderRadius: '12px !important', '&:before': { display: 'none' } }}
+        >
+          <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+            <Typography variant="h6" sx={{ color: '#4A90E2', fontWeight: 600 }}>
+              🎯 ویژگی‌های کمکی
+            </Typography>
+          </AccordionSummary>
+          <AccordionDetails>
+            <AssistiveProperties formData={formData} onChange={onChange} />
+          </AccordionDetails>
+        </Accordion>
+      )}
+
+      {/* Number Content Properties - Number Fields Only */}
+      {formData.type === 'number' && (
+        <Accordion 
+          expanded={expandedAccordion === 'number-content'} 
+          onChange={handleAccordionChange('number-content')}
+          sx={{ mb: 2, borderRadius: '12px !important', '&:before': { display: 'none' } }}
+        >
+          <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+            <Typography variant="h6" sx={{ color: '#4A90E2', fontWeight: 600 }}>
+              🔢 ویژگی‌های محتوایی عددی
+            </Typography>
+          </AccordionSummary>
+          <AccordionDetails>
+            <NumberContentProperties formData={formData} onChange={onChange} />
+          </AccordionDetails>
+        </Accordion>
+      )}
+
+      {/* Number Helper Properties - Number Fields Only */}
+      {formData.type === 'number' && (
+        <Accordion 
+          expanded={expandedAccordion === 'number-helper'} 
+          onChange={handleAccordionChange('number-helper')}
+          sx={{ mb: 2, borderRadius: '12px !important', '&:before': { display: 'none' } }}
+        >
+          <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+            <Typography variant="h6" sx={{ color: '#4A90E2', fontWeight: 600 }}>
+              🛠️ ویژگی‌های کمکی عددی
+            </Typography>
+          </AccordionSummary>
+          <AccordionDetails>
+            <NumberHelperProperties formData={formData} onChange={onChange} />
+          </AccordionDetails>
+        </Accordion>
+      )}
+
+      {/* Display Properties - All Fields */}
+      <Accordion 
+        expanded={expandedAccordion === 'display'} 
+        onChange={handleAccordionChange('display')}
+        sx={{ mb: 2, borderRadius: '12px !important', '&:before': { display: 'none' } }}
+      >
+        <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+          <Typography variant="h6" sx={{ color: '#4A90E2', fontWeight: 600 }}>
+            🎨 ویژگی‌های نمایشی
+          </Typography>
+        </AccordionSummary>
+        <AccordionDetails>
+          {formData.type === 'number' ? (
+            <NumberDisplayProperties formData={formData} onChange={onChange} />
+          ) : (
+            <DisplayProperties formData={formData} onChange={onChange} />
+          )}
+        </AccordionDetails>
+      </Accordion>
+
+      {/* Variant Properties - Text Fields Only */}
+      {fieldProps.hasVariant && (
+        <Accordion 
+          expanded={expandedAccordion === 'variant'} 
+          onChange={handleAccordionChange('variant')}
+          sx={{ mb: 2, borderRadius: '12px !important', '&:before': { display: 'none' } }}
+        >
+          <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+            <Typography variant="h6" sx={{ color: '#4A90E2', fontWeight: 600 }}>
+              🔧 ویژگی‌های تخصصی نوع نمایش
+            </Typography>
+          </AccordionSummary>
+          <AccordionDetails>
+            <VariantProperties formData={formData} onChange={onChange} />
+          </AccordionDetails>
+        </Accordion>
+      )}
+
+      {/* Mask Properties - Text Fields Only */}
+      {fieldProps.hasMask && (
+        <Accordion 
+          expanded={expandedAccordion === 'mask'} 
+          onChange={handleAccordionChange('mask')}
+          sx={{ mb: 2, borderRadius: '12px !important', '&:before': { display: 'none' } }}
+        >
+          <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+            <Typography variant="h6" sx={{ color: '#4A90E2', fontWeight: 600 }}>
+              🎭 ویژگی‌های ماسک‌گذاری
+            </Typography>
+          </AccordionSummary>
+          <AccordionDetails>
+            <MaskProperties formData={formData} onChange={onChange} />
+          </AccordionDetails>
+        </Accordion>
+      )}
+
+      {/* Behavior and Logic Properties - All Fields */}
+      <Accordion 
+        expanded={expandedAccordion === 'behavior'} 
+        onChange={handleAccordionChange('behavior')}
+        sx={{ mb: 2, borderRadius: '12px !important', '&:before': { display: 'none' } }}
+      >
+        <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+          <Typography variant="h6" sx={{ color: '#4A90E2', fontWeight: 600 }}>
+            ⚙️ رفتار و منطق
+          </Typography>
+        </AccordionSummary>
+        <AccordionDetails>
+          {formData.type === 'number' ? (
+            <NumberBehaviorProperties formData={formData} onChange={onChange} />
+          ) : (
+            <BehaviorLogicProperties formData={formData} onChange={onChange} />
+          )}
+        </AccordionDetails>
+      </Accordion>
+
+      {/* Security and Storage Properties - Text and Number Fields */}
+      {fieldProps.hasSecurity && (
+        <Accordion 
+          expanded={expandedAccordion === 'security'} 
+          onChange={handleAccordionChange('security')}
+          sx={{ mb: 2, borderRadius: '12px !important', '&:before': { display: 'none' } }}
+        >
+          <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+            <Typography variant="h6" sx={{ color: '#4A90E2', fontWeight: 600 }}>
+              🔐 امنیت و ذخیره‌سازی
+            </Typography>
+          </AccordionSummary>
+          <AccordionDetails>
+            {formData.type === 'number' ? (
+              <NumberSecurityProperties formData={formData} onChange={onChange} />
+            ) : (
+              <SecurityStorageProperties formData={formData} onChange={onChange} />
+            )}
+          </AccordionDetails>
+        </Accordion>
+      )}
+
+      {/* Select Field Properties - Select Fields Only */}
+      {fieldProps.isSelectBased && (
+        <Accordion 
+          expanded={expandedAccordion === 'select'} 
+          onChange={handleAccordionChange('select')}
+          sx={{ mb: 2, borderRadius: '12px !important', '&:before': { display: 'none' } }}
+        >
+          <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+            <Typography variant="h6" sx={{ color: '#4A90E2', fontWeight: 600 }}>
+              📋 ویژگی‌های فیلد انتخابی
+            </Typography>
+          </AccordionSummary>
+          <AccordionDetails>
+            <SelectFieldProperties formData={formData} onChange={onChange} />
+          </AccordionDetails>
+        </Accordion>
+      )}
     </Box>
   );
 };

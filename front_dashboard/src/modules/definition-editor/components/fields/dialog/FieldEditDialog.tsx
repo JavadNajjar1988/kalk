@@ -20,11 +20,10 @@ import FieldSelectionPage from '../steps/FieldSelectionPage';
 import StepIndicator from '../steps/StepIndicator';
 import FieldTypeSelection from '../steps/FieldTypeSelection';
 import FieldPropertiesStep from '../steps/FieldPropertiesStep';
-import NumericFieldPropertiesStep from '../steps/NumericFieldPropertiesStep';
 import { FieldRulesStep } from '../steps/FieldRulesStep';
-import NumericFieldRulesStep from '../steps/NumericFieldRulesStep';
+import { NumberFieldRulesStep } from '../steps/NumberFieldRulesStep';
 import { FieldPreviewStep } from '../steps/FieldPreviewStep';
-import NumericFieldPreviewStep from '../steps/NumericFieldPreviewStep';
+import NumberFieldPreviewStep from '../steps/NumberFieldPreviewStep';
 
 const FieldEditDialog: React.FC<FieldEditDialogProps> = ({
   open,
@@ -35,7 +34,6 @@ const FieldEditDialog: React.FC<FieldEditDialogProps> = ({
 }) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
-  const isTablet = useMediaQuery(theme.breakpoints.between('sm', 'md'));
   
   const [formData, setFormData] = useState<ExtendedCustomFieldDefinition | null>(null);
   const [currentPage, setCurrentPage] = useState<'selection' | 'create' | 'ready'>('selection');
@@ -206,7 +204,7 @@ const FieldEditDialog: React.FC<FieldEditDialogProps> = ({
           )}
 
           {currentStep === 2 && formData.type === 'number' && (
-            <NumericFieldPropertiesStep formData={formData} onChange={handleChange} />
+            <FieldPropertiesStep formData={formData} onChange={handleChange} />
           )}
 
           {currentStep === 3 && formData.type === 'text' && (
@@ -214,7 +212,7 @@ const FieldEditDialog: React.FC<FieldEditDialogProps> = ({
           )}
 
           {currentStep === 3 && formData.type === 'number' && (
-            <NumericFieldRulesStep formData={formData} onChange={handleChange} />
+            <NumberFieldRulesStep formData={formData} onChange={handleChange} />
           )}
 
           {currentStep === 4 && formData.type === 'text' && (
@@ -222,7 +220,7 @@ const FieldEditDialog: React.FC<FieldEditDialogProps> = ({
           )}
 
           {currentStep === 4 && formData.type === 'number' && (
-            <NumericFieldPreviewStep formData={formData} />
+            <NumberFieldPreviewStep formData={formData} originalType={field?.type} />
           )}
         </Box>
 

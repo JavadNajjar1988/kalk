@@ -1,4 +1,4 @@
-import React, { memo, useEffect } from 'react';
+import React, { memo, useEffect, useMemo, useCallback } from 'react';
 import { Box, Typography, Paper, Grid, TextField, FormControl, InputLabel, Select, MenuItem, FormControlLabel, Switch } from '@mui/material';
 import HelpTooltip from '../shared/HelpTooltip';
 
@@ -8,6 +8,18 @@ interface DisplayPropertiesProps {
 }
 
 const DisplayProperties: React.FC<DisplayPropertiesProps> = ({ formData, onChange }) => {
+  // Memoize display properties configuration
+  const displayConfig = useMemo(() => ({
+    variant: formData.variant || 'plain',
+    selectionAid: formData.selectionAid || 'none',
+    size: formData.size || 'md',
+    icon: formData.icon || '',
+    prefix: formData.prefix || '',
+    suffix: formData.suffix || '',
+    counterDisplay: formData.counterDisplay || 'off',
+    copyButton: formData.copyButton || false
+  }), [formData.variant, formData.selectionAid, formData.size, formData.icon, formData.prefix, formData.suffix, formData.counterDisplay, formData.copyButton]);
+
   // Handle display type changes that might affect options
   useEffect(() => {
     // If display type changes to one that supports options, and we don't have options yet,
@@ -18,7 +30,40 @@ const DisplayProperties: React.FC<DisplayPropertiesProps> = ({ formData, onChang
     if (supportsOptionsDisplay && isTextType && !formData.options) {
       onChange('options', []);
     }
-  }, [formData.displayType, formData.type, formData.options, onChange]);
+  }, [formData.variant, formData.type, formData.options, onChange]);
+
+  // Optimized change handlers
+  const handleVariantChange = useCallback((value: string) => {
+    onChange('variant', value);
+  }, [onChange]);
+
+  const handleSelectionAidChange = useCallback((value: string) => {
+    onChange('selectionAid', value);
+  }, [onChange]);
+
+  const handleSizeChange = useCallback((value: string) => {
+    onChange('size', value);
+  }, [onChange]);
+
+  const handleIconChange = useCallback((value: string) => {
+    onChange('icon', value);
+  }, [onChange]);
+
+  const handlePrefixChange = useCallback((value: string) => {
+    onChange('prefix', value);
+  }, [onChange]);
+
+  const handleSuffixChange = useCallback((value: string) => {
+    onChange('suffix', value);
+  }, [onChange]);
+
+  const handleCounterDisplayChange = useCallback((value: string) => {
+    onChange('counterDisplay', value);
+  }, [onChange]);
+
+  const handleCopyButtonChange = useCallback((value: boolean) => {
+    onChange('copyButton', value);
+  }, [onChange]);
 
   return (
     <Paper
@@ -42,8 +87,8 @@ const DisplayProperties: React.FC<DisplayPropertiesProps> = ({ formData, onChang
           <FormControl fullWidth>
             <InputLabel>نوع نمایش</InputLabel>
             <Select
-              value={formData.displayType || 'normal'}
-              onChange={(e) => onChange('displayType', e.target.value)}
+              value={displayConfig.variant}
+              onChange={(e) => handleVariantChange(e.target.value)}
               label="نوع نمایش"
               sx={{
                 background: 'rgba(255, 255, 255, 0.8)',
@@ -65,22 +110,29 @@ const DisplayProperties: React.FC<DisplayPropertiesProps> = ({ formData, onChang
 
         {/* Selection Helper */}
         <Grid item xs={12} md={6}>
-          <FormControl fullWidth>
-            <InputLabel>کمک انتخاب</InputLabel>
-            <Select
-              value={formData.selectionHelper || 'none'}
-              onChange={(e) => onChange('selectionHelper', e.target.value)}
-              label="کمک انتخاب"
-              sx={{
-                background: 'rgba(255, 255, 255, 0.8)',
-                backdropFilter: 'blur(10px)',
-              }}
-            >
-              <MenuItem value="none">هیچ</MenuItem>
-              <MenuItem value="single">انتخاب تکی</MenuItem>
-              <MenuItem value="multiple">انتخاب چندتایی</MenuItem>
-            </Select>
-          </FormControl>
+          <Box sx={{ display: 'flex', alignItems: 'center' }}>
+            <FormControl fullWidth>
+              <InputLabel>کمک انتخاب</InputLabel>
+              <Select
+                value={displayConfig.selectionAid}
+                onChange={(e) => handleSelectionAidChange(e.target.value)}
+                label="کمک انتخاب"
+                sx={{
+                  background: 'rgba(255, 255, 255, 0.8)',
+                  backdropFilter: 'blur(10px)',
+                }}
+              >
+                <MenuItem value="none">هیچ</MenuItem>
+                <MenuItem value="single">انتخاب تکی</MenuItem>
+                <MenuItem value="multi">انتخاب چندتایی</MenuItem>
+              </Select>
+            </FormControl>
+            <HelpTooltip
+              title="کمک انتخاب"
+              description="نوع کمک انتخاب برای فیلد"
+              example="انتخاب تکی یا چندتایی"
+            />
+          </Box>
         </Grid>
 
         {/* Size */}
@@ -88,8 +140,8 @@ const DisplayProperties: React.FC<DisplayPropertiesProps> = ({ formData, onChang
           <FormControl fullWidth>
             <InputLabel>اندازه</InputLabel>
             <Select
-              value={formData.size || 'medium'}
-              onChange={(e) => onChange('size', e.target.value)}
+              value={displayConfig.size}
+              onChange={(e) => handleSizeChange(e.target.value)}
               label="اندازه"
               sx={{
                 background: 'rgba(255, 255, 255, 0.8)',
@@ -109,8 +161,8 @@ const DisplayProperties: React.FC<DisplayPropertiesProps> = ({ formData, onChang
           <TextField
             fullWidth
             label="آیکون"
-            value={formData.icon || ''}
-            onChange={(e) => onChange('icon', e.target.value)}
+            value={displayConfig.icon}
+            onChange={(e) => handleIconChange(e.target.value)}
             placeholder="🔤"
             sx={{
               '& .MuiOutlinedInput-root': {
@@ -126,8 +178,8 @@ const DisplayProperties: React.FC<DisplayPropertiesProps> = ({ formData, onChang
           <TextField
             fullWidth
             label="پیشوند"
-            value={formData.prefix || ''}
-            onChange={(e) => onChange('prefix', e.target.value)}
+            value={displayConfig.prefix}
+            onChange={(e) => handlePrefixChange(e.target.value)}
             placeholder="مثال: $"
             sx={{
               '& .MuiOutlinedInput-root': {
@@ -142,8 +194,8 @@ const DisplayProperties: React.FC<DisplayPropertiesProps> = ({ formData, onChang
           <TextField
             fullWidth
             label="پسوند"
-            value={formData.suffix || ''}
-            onChange={(e) => onChange('suffix', e.target.value)}
+            value={displayConfig.suffix}
+            onChange={(e) => handleSuffixChange(e.target.value)}
             placeholder="مثال: تومان"
             sx={{
               '& .MuiOutlinedInput-root': {
@@ -159,8 +211,8 @@ const DisplayProperties: React.FC<DisplayPropertiesProps> = ({ formData, onChang
           <FormControl fullWidth>
             <InputLabel>نمایش شمارنده</InputLabel>
             <Select
-              value={formData.counterDisplay || 'off'}
-              onChange={(e) => onChange('counterDisplay', e.target.value)}
+              value={displayConfig.counterDisplay}
+              onChange={(e) => handleCounterDisplayChange(e.target.value)}
               label="نمایش شمارنده"
               sx={{
                 background: 'rgba(255, 255, 255, 0.8)',
@@ -180,8 +232,8 @@ const DisplayProperties: React.FC<DisplayPropertiesProps> = ({ formData, onChang
             <FormControlLabel
               control={
                 <Switch
-                  checked={formData.showCopyButton || false}
-                  onChange={(e) => onChange('showCopyButton', e.target.checked)}
+                  checked={displayConfig.copyButton}
+                  onChange={(e) => handleCopyButtonChange(e.target.checked)}
                   size="small"
                 />
               }

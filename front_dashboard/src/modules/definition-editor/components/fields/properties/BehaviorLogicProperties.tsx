@@ -1,4 +1,4 @@
-import React, { memo } from 'react';
+import React, { memo, useCallback } from 'react';
 import { Box, Typography, Paper, Grid, TextField, FormControl, InputLabel, Select, MenuItem, FormControlLabel, Switch } from '@mui/material';
 import HelpTooltip from '../shared/HelpTooltip';
 
@@ -8,6 +8,68 @@ interface BehaviorLogicPropertiesProps {
 }
 
 const BehaviorLogicProperties: React.FC<BehaviorLogicPropertiesProps> = ({ formData, onChange }) => {
+  // Memoize editable after save toggle handler
+  const handleEditableAfterSaveToggle = useCallback((checked: boolean) => {
+    onChange('editableAfterSave', checked);
+  }, [onChange]);
+
+  // Memoize auto save toggle handler
+  const handleAutoSaveToggle = useCallback((checked: boolean) => {
+    onChange('enableAutoSave', checked);
+  }, [onChange]);
+
+  // Memoize auto save delay change handler
+  const handleAutoSaveDelayChange = useCallback((value: string) => {
+    const numValue = value ? parseInt(value) : 300;
+    onChange('autoSaveDelay', isNaN(numValue) ? 300 : numValue);
+  }, [onChange]);
+
+  // Memoize auto save interval change handler
+  const handleAutoSaveIntervalChange = useCallback((value: string) => {
+    const numValue = value ? parseInt(value) : 30;
+    onChange('autoSaveInterval', isNaN(numValue) ? 30 : numValue);
+  }, [onChange]);
+
+  // Memoize conditional display toggle handler
+  const handleConditionalDisplayToggle = useCallback((checked: boolean) => {
+    onChange('enableConditionalDisplay', checked);
+  }, [onChange]);
+
+  // Memoize conditional display field change handler
+  const handleConditionalDisplayFieldChange = useCallback((value: string) => {
+    onChange('conditionalDisplayField', value);
+  }, [onChange]);
+
+  // Memoize conditional display operator change handler
+  const handleConditionalDisplayOperatorChange = useCallback((value: string) => {
+    onChange('conditionalDisplayOperator', value);
+  }, [onChange]);
+
+  // Memoize conditional display value change handler
+  const handleConditionalDisplayValueChange = useCallback((value: string) => {
+    onChange('conditionalDisplayValue', value);
+  }, [onChange]);
+
+  // Memoize conditional enable toggle handler
+  const handleConditionalEnableToggle = useCallback((checked: boolean) => {
+    onChange('enableConditionalEnable', checked);
+  }, [onChange]);
+
+  // Memoize conditional enable field change handler
+  const handleConditionalEnableFieldChange = useCallback((value: string) => {
+    onChange('conditionalEnableField', value);
+  }, [onChange]);
+
+  // Memoize conditional enable operator change handler
+  const handleConditionalEnableOperatorChange = useCallback((value: string) => {
+    onChange('conditionalEnableOperator', value);
+  }, [onChange]);
+
+  // Memoize conditional enable value change handler
+  const handleConditionalEnableValueChange = useCallback((value: string) => {
+    onChange('conditionalEnableValue', value);
+  }, [onChange]);
+
   return (
     <Paper
       sx={{
@@ -31,8 +93,8 @@ const BehaviorLogicProperties: React.FC<BehaviorLogicPropertiesProps> = ({ formD
             <FormControlLabel
               control={
                 <Switch
-                  checked={formData.editableAfterSave || true}
-                  onChange={(e) => onChange('editableAfterSave', e.target.checked)}
+                  checked={formData.editableAfterSave !== undefined ? formData.editableAfterSave : true}
+                  onChange={(e) => handleEditableAfterSaveToggle(e.target.checked)}
                   size="small"
                 />
               }
@@ -53,7 +115,7 @@ const BehaviorLogicProperties: React.FC<BehaviorLogicPropertiesProps> = ({ formD
               control={
                 <Switch
                   checked={formData.enableAutoSave || false}
-                  onChange={(e) => onChange('enableAutoSave', e.target.checked)}
+                  onChange={(e) => handleAutoSaveToggle(e.target.checked)}
                   size="small"
                 />
               }
@@ -72,9 +134,9 @@ const BehaviorLogicProperties: React.FC<BehaviorLogicPropertiesProps> = ({ formD
                   fullWidth
                   label="تأخیر (ثانیه)"
                   type="number"
-                  value={formData.autoSaveDelay || 3}
-                  onChange={(e) => onChange('autoSaveDelay', parseInt(e.target.value))}
-                  inputProps={{ min: 1, max: 60 }}
+                  value={formData.autoSaveDelay || 300}
+                  onChange={(e) => handleAutoSaveDelayChange(e.target.value)}
+                  inputProps={{ min: 100, max: 10000, step: 100 }}
                   sx={{
                     '& .MuiOutlinedInput-root': {
                       background: 'rgba(255, 255, 255, 0.8)',
@@ -89,7 +151,7 @@ const BehaviorLogicProperties: React.FC<BehaviorLogicPropertiesProps> = ({ formD
                   label="فاصله ذخیره (ثانیه)"
                   type="number"
                   value={formData.autoSaveInterval || 30}
-                  onChange={(e) => onChange('autoSaveInterval', parseInt(e.target.value))}
+                  onChange={(e) => handleAutoSaveIntervalChange(e.target.value)}
                   inputProps={{ min: 10, max: 600 }}
                   sx={{
                     '& .MuiOutlinedInput-root': {
@@ -110,7 +172,7 @@ const BehaviorLogicProperties: React.FC<BehaviorLogicPropertiesProps> = ({ formD
               control={
                 <Switch
                   checked={formData.enableConditionalDisplay || false}
-                  onChange={(e) => onChange('enableConditionalDisplay', e.target.checked)}
+                  onChange={(e) => handleConditionalDisplayToggle(e.target.checked)}
                   size="small"
                 />
               }
@@ -129,7 +191,7 @@ const BehaviorLogicProperties: React.FC<BehaviorLogicPropertiesProps> = ({ formD
                   fullWidth
                   label="فیلد مرجع"
                   value={formData.conditionalDisplayField || ''}
-                  onChange={(e) => onChange('conditionalDisplayField', e.target.value)}
+                  onChange={(e) => handleConditionalDisplayFieldChange(e.target.value)}
                   placeholder="نام فیلد"
                   sx={{
                     '& .MuiOutlinedInput-root': {
@@ -144,7 +206,7 @@ const BehaviorLogicProperties: React.FC<BehaviorLogicPropertiesProps> = ({ formD
                   <InputLabel>شرط</InputLabel>
                   <Select
                     value={formData.conditionalDisplayOperator || 'equals'}
-                    onChange={(e) => onChange('conditionalDisplayOperator', e.target.value)}
+                    onChange={(e) => handleConditionalDisplayOperatorChange(e.target.value)}
                     label="شرط"
                     sx={{
                       background: 'rgba(255, 255, 255, 0.8)',
@@ -165,7 +227,7 @@ const BehaviorLogicProperties: React.FC<BehaviorLogicPropertiesProps> = ({ formD
                   fullWidth
                   label="مقدار"
                   value={formData.conditionalDisplayValue || ''}
-                  onChange={(e) => onChange('conditionalDisplayValue', e.target.value)}
+                  onChange={(e) => handleConditionalDisplayValueChange(e.target.value)}
                   sx={{
                     '& .MuiOutlinedInput-root': {
                       background: 'rgba(255, 255, 255, 0.8)',
@@ -185,7 +247,7 @@ const BehaviorLogicProperties: React.FC<BehaviorLogicPropertiesProps> = ({ formD
               control={
                 <Switch
                   checked={formData.enableConditionalEnable || false}
-                  onChange={(e) => onChange('enableConditionalEnable', e.target.checked)}
+                  onChange={(e) => handleConditionalEnableToggle(e.target.checked)}
                   size="small"
                 />
               }
@@ -204,7 +266,7 @@ const BehaviorLogicProperties: React.FC<BehaviorLogicPropertiesProps> = ({ formD
                   fullWidth
                   label="فیلد مرجع"
                   value={formData.conditionalEnableField || ''}
-                  onChange={(e) => onChange('conditionalEnableField', e.target.value)}
+                  onChange={(e) => handleConditionalEnableFieldChange(e.target.value)}
                   placeholder="نام فیلد"
                   sx={{
                     '& .MuiOutlinedInput-root': {
@@ -219,7 +281,7 @@ const BehaviorLogicProperties: React.FC<BehaviorLogicPropertiesProps> = ({ formD
                   <InputLabel>شرط</InputLabel>
                   <Select
                     value={formData.conditionalEnableOperator || 'equals'}
-                    onChange={(e) => onChange('conditionalEnableOperator', e.target.value)}
+                    onChange={(e) => handleConditionalEnableOperatorChange(e.target.value)}
                     label="شرط"
                     sx={{
                       background: 'rgba(255, 255, 255, 0.8)',
@@ -240,7 +302,7 @@ const BehaviorLogicProperties: React.FC<BehaviorLogicPropertiesProps> = ({ formD
                   fullWidth
                   label="مقدار"
                   value={formData.conditionalEnableValue || ''}
-                  onChange={(e) => onChange('conditionalEnableValue', e.target.value)}
+                  onChange={(e) => handleConditionalEnableValueChange(e.target.value)}
                   sx={{
                     '& .MuiOutlinedInput-root': {
                       background: 'rgba(255, 255, 255, 0.8)',
