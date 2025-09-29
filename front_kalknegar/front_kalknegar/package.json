@@ -1,0 +1,16 @@
+{
+  "devDependencies": {
+    "@iconify-prerendered/vue-mdi": "^0.28.1737398331",
+    "@vitejs/plugin-vue": "^6.0.1",
+    "filenamify": "^7.0.0",
+    "fuzzysort": "^3.1.0",
+    "milsymbol": "^3.0.3",
+    "ol": "^10.6.1",
+    "unist-builder": "^4.0.0",
+    "vite": "^7.1.7",
+    "vite-plugin-vue-devtools": "^8.0.2",
+    "vue-tsc": "^3.1.0",
+    "xast-util-to-xml": "^4.0.0",
+    "xastscript": "^4.0.0"
+  }
+}

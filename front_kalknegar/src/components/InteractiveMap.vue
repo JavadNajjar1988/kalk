@@ -6,61 +6,25 @@
 
 <script setup lang="ts">
 import { onMounted, onUnmounted } from 'vue';
+import * as am5 from '@amcharts/amcharts5';
+import * as am5map from '@amcharts/amcharts5/map';
+import am5geodata_worldLow from '@amcharts/amcharts5-geodata/worldLow';
+import am5themes_Animated from '@amcharts/amcharts5/themes/Animated';
 
-let root: any = null;
+let root: am5.Root | null = null;
 
 onMounted(() => {
-  // Load amCharts 5 scripts dynamically
-  loadAmChartsScripts().then(() => {
-    initializeMap();
-  });
+  initializeMap();
 });
 
 onUnmounted(() => {
   if (root) {
     root.dispose();
+    root = null;
   }
 });
 
-function loadAmChartsScripts(): Promise<void> {
-  return new Promise((resolve, reject) => {
-    // Check if amCharts is already loaded
-    if (window.am5) {
-      resolve();
-      return;
-    }
-
-    const scripts = [
-      'https://cdn.amcharts.com/lib/5/index.js',
-      'https://cdn.amcharts.com/lib/5/map.js',
-      'https://cdn.amcharts.com/lib/5/geodata/worldLow.js',
-      'https://cdn.amcharts.com/lib/5/themes/Animated.js'
-    ];
-
-    let loadedCount = 0;
-    const totalScripts = scripts.length;
-
-    scripts.forEach(src => {
-      const script = document.createElement('script');
-      script.src = src;
-      script.onload = () => {
-        loadedCount++;
-        if (loadedCount === totalScripts) {
-          resolve();
-        }
-      };
-      script.onerror = reject;
-      document.head.appendChild(script);
-    });
-  });
-}
-
 function initializeMap() {
-  const am5 = window.am5;
-  const am5map = window.am5map;
-  const am5themes_Animated = window.am5themes_Animated;
-  const am5geodata_worldLow = window.am5geodata_worldLow;
-
   // Create root element
   root = am5.Root.new("chartdiv");
 
@@ -84,7 +48,7 @@ function initializeMap() {
   // Create main polygon series for countries
   const polygonSeries = chart.series.push(
     am5map.MapPolygonSeries.new(root, {
-      geoJSON: am5geodata_worldLow,
+      geoJSON: am5geodata_worldLow as any,
       exclude: ["AQ"]
     })
   );
@@ -97,32 +61,32 @@ function initializeMap() {
   const pointSeries = chart.series.push(am5map.ClusteredPointSeries.new(root, {}));
 
   // Set clustered bullet
-  pointSeries.set("clusteredBullet", function(root: any) {
-    const container = am5.Container.new(root, {
+  pointSeries.set("clusteredBullet", function(rootLocal: am5.Root) {
+    const container = am5.Container.new(rootLocal, {
       cursorOverStyle: "pointer"
     });
 
-    const circle1 = container.children.push(am5.Circle.new(root, {
+    container.children.push(am5.Circle.new(rootLocal, {
       radius: 8,
       tooltipY: 0,
       fill: am5.color(0xff8c00)
     }));
 
-    const circle2 = container.children.push(am5.Circle.new(root, {
+    container.children.push(am5.Circle.new(rootLocal, {
       radius: 12,
       fillOpacity: 0.3,
       tooltipY: 0,
       fill: am5.color(0xff8c00)
     }));
 
-    const circle3 = container.children.push(am5.Circle.new(root, {
+    container.children.push(am5.Circle.new(rootLocal, {
       radius: 16,
       fillOpacity: 0.3,
       tooltipY: 0,
       fill: am5.color(0xff8c00)
     }));
 
-    const label = container.children.push(am5.Label.new(root, {
+    container.children.push(am5.Label.new(rootLocal, {
       centerX: am5.p50,
       centerY: am5.p50,
       fill: am5.color(0xffffff),
@@ -135,21 +99,21 @@ function initializeMap() {
       pointSeries.zoomToCluster(e.target.dataItem);
     });
 
-    return am5.Bullet.new(root, {
+    return am5.Bullet.new(rootLocal, {
       sprite: container
     });
   });
 
   // Create regular bullets
   pointSeries.bullets.push(function() {
-    const circle = am5.Circle.new(root, {
+    const circle = am5.Circle.new(root as am5.Root, {
       radius: 6,
       tooltipY: 0,
       fill: am5.color(0xff8c00),
       tooltipText: "{title}"
     });
 
-    return am5.Bullet.new(root, {
+    return am5.Bullet.new(root as am5.Root, {
       sprite: circle
     });
   });
@@ -195,15 +159,5 @@ function initializeMap() {
 
   // Set initial view to Iran
   chart.zoomToGeoPoint({ latitude: 32.4279, longitude: 53.6880 }, 5);
-}
-
-// Declare global types for amCharts
-declare global {
-  interface Window {
-    am5: any;
-    am5map: any;
-    am5themes_Animated: any;
-    am5geodata_worldLow: any;
-  }
 }
 </script>
