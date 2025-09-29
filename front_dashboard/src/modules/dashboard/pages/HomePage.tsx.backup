@@ -279,12 +279,13 @@ const DashboardStats: React.FC = () => {
               display: 'flex',
               flexDirection: 'column',
               justifyContent: 'stretch',
+              height: '150px', // ارتفاع ثابت
             }}
           >
             <CardContent sx={{ 
               p: 2.5, 
-              minHeight: 110, 
-              height: '100%', 
+              height: '100%',
+              minHeight: '140px', // ارتفاع ثابت
               display: 'flex', 
               flexDirection: 'column', 
               justifyContent: 'space-between',
@@ -353,7 +354,7 @@ const DashboardStats: React.FC = () => {
               </Box>
 
               {/* Chart section */}
-              <Box sx={{ width: '100%', mt: 'auto' }}>
+              <Box sx={{ width: '100%', mt: 'auto', minHeight: '60px' }}> {/* ارتفاع ثابت برای بخش چارت */}
                 {/* نمودار سناریوهای فعال */}
                 {stat.title === t('dashboard.stats.activeScenarios') && (
                   <Box>
@@ -387,68 +388,64 @@ const DashboardStats: React.FC = () => {
                     </Box>
                     
                     <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <Typography 
-                        variant="caption" 
-                        sx={{ 
-                          fontWeight: 600,
-                          fontSize: '0.7rem',
-                          color: '#ff9800',
-                        }}
-                      >
-                        <FarsiNumber>{scenarioStats.activePercent}</FarsiNumber>% {t('dashboard.stats.active')}
-                      </Typography>
-                      <Typography 
-                        variant="caption" 
-                        sx={{ 
-                          fontWeight: 600,
-                          fontSize: '0.7rem',
-                          color: 'text.secondary',
-                        }}
-                      >
-                        <FarsiNumber>{scenarioStats.inactivePercent}</FarsiNumber>% {t('dashboard.stats.inactive')}
-                      </Typography>
+                      <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                        <FarsiNumber sx={{ fontWeight: 600, fontSize: '0.7rem', color: '#ff9800', minWidth: '30px' }}>
+                          {scenarioStats.activePercent}
+                        </FarsiNumber>
+                        <Typography variant="caption" sx={{ fontSize: '0.7rem', color: '#ff9800', marginLeft: '2px' }}>
+                          % {t('dashboard.stats.active')}
+                        </Typography>
+                      </Box>
+                      <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                        <FarsiNumber sx={{ fontWeight: 600, fontSize: '0.7rem', color: 'text.secondary', minWidth: '30px' }}>
+                          {scenarioStats.inactivePercent}
+                        </FarsiNumber>
+                        <Typography variant="caption" sx={{ fontSize: '0.7rem', color: 'text.secondary', marginLeft: '2px' }}>
+                          % {t('dashboard.stats.inactive')}
+                        </Typography>
+                      </Box>
                     </Box>
                     
                     {/* محتوای کشویی */}
                     <Collapse in={expandedCards[stat.title]} timeout={400} unmountOnExit appear>
                       <Fade in={expandedCards[stat.title]} timeout={400} appear>
                         <Box sx={{ 
-                          mt: 2, 
-                          pt: 2, 
+                          mt: 1.5, 
+                          pt: 1.5, 
                           borderTop: `1px solid ${theme.palette.divider}`,
-                          animation: expandedCards[stat.title] ? 'fadeInUp 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94)' : 'none',
+                          animation: expandedCards[stat.title] ? 'fadeInUp 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)' : 'none',
                           '@keyframes fadeInUp': {
-                            from: { opacity: 0, transform: 'translateY(-15px)', visibility: 'hidden' },
+                            from: { opacity: 0, transform: 'translateY(-10px)', visibility: 'hidden' },
                             to: { opacity: 1, transform: 'translateY(0)', visibility: 'visible' },
                           },
                         }}>
-                          <Grid container spacing={2}>
+                          <Grid container spacing={1}>
                             <Grid item xs={4}>
-                              <Box sx={{ textAlign: 'center' }}>
-                                <FarsiNumber variant="h6" sx={{ fontWeight: 700, color: 'text.primary' }}>
+                              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 0.5 }}>
+                                <FarsiNumber variant="body2" sx={{ fontWeight: 700, color: 'text.primary', minWidth: '20px', textAlign: 'center' }}>
                                   {scenarioStats.total}
                                 </FarsiNumber>
-                                <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '0.65rem' }}>
+                                <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '0.7rem' }}>
                                   {t('dashboard.stats.totalScenarios')}
                                 </Typography>
                               </Box>
                             </Grid>
                             <Grid item xs={4}>
-                              <Box sx={{ textAlign: 'center' }}>
-                                <FarsiNumber variant="h6" sx={{ fontWeight: 700, color: 'success.main' }}>
+                              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 0.5 }}>
+                                <FarsiNumber variant="body2" sx={{ fontWeight: 700, color: 'success.main', minWidth: '20px', textAlign: 'center' }}>
                                   {scenarioStats.activeCount}
                                 </FarsiNumber>
-                                <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '0.65rem' }}>
+                                <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '0.7rem' }}>
                                   {t('dashboard.stats.active')}
                                 </Typography>
                               </Box>
                             </Grid>
                             <Grid item xs={4}>
-                              <Box sx={{ textAlign: 'center' }}>
-                                <FarsiNumber variant="h6" sx={{ fontWeight: 700, color: 'error.main' }}>
+                              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 0.5 }}>
+                                <FarsiNumber variant="body2" sx={{ fontWeight: 700, color: 'error.main', minWidth: '20px', textAlign: 'center' }}>
                                   {scenarioStats.inactiveCount}
                                 </FarsiNumber>
-                                <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '0.65rem' }}>
+                                <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '0.7rem' }}>
                                   {t('dashboard.stats.inactive')}
                                 </Typography>
                               </Box>
@@ -493,58 +490,54 @@ const DashboardStats: React.FC = () => {
                     </Box>
                     
                     <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <Typography 
-                        variant="caption" 
-                        sx={{ 
-                          fontWeight: 600,
-                          fontSize: '0.7rem',
-                          color: 'success.main',
-                        }}
-                      >
-                        <FarsiNumber>{forceStats.iranianPercent}</FarsiNumber>% {t('dashboard.stats.iranian')}
-                      </Typography>
-                      <Typography 
-                        variant="caption" 
-                        sx={{ 
-                          fontWeight: 600,
-                          fontSize: '0.7rem',
-                          color: 'text.secondary',
-                        }}
-                      >
-                        <FarsiNumber>{forceStats.foreignPercent}</FarsiNumber>% {t('dashboard.stats.foreign')}
-                      </Typography>
+                      <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                        <FarsiNumber sx={{ fontWeight: 600, fontSize: '0.7rem', color: 'success.main', minWidth: '30px' }}>
+                          {forceStats.iranianPercent}
+                        </FarsiNumber>
+                        <Typography variant="caption" sx={{ fontSize: '0.7rem', color: 'success.main', marginLeft: '2px' }}>
+                          % {t('dashboard.stats.iranian')}
+                        </Typography>
+                      </Box>
+                      <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                        <FarsiNumber sx={{ fontWeight: 600, fontSize: '0.7rem', color: 'text.secondary', minWidth: '30px' }}>
+                          {forceStats.foreignPercent}
+                        </FarsiNumber>
+                        <Typography variant="caption" sx={{ fontSize: '0.7rem', color: 'text.secondary', marginLeft: '2px' }}>
+                          % {t('dashboard.stats.foreign')}
+                        </Typography>
+                      </Box>
                     </Box>
                     
                     {/* محتوای کشویی */}
                     <Collapse in={expandedCards[stat.title]} timeout={400} unmountOnExit appear>
                       <Fade in={expandedCards[stat.title]} timeout={400} appear>
                         <Box sx={{ 
-                          mt: 2, 
-                          pt: 2, 
+                          mt: 1.5, 
+                          pt: 1.5, 
                           borderTop: `1px solid ${theme.palette.divider}`,
-                          animation: expandedCards[stat.title] ? 'fadeInUp 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94)' : 'none',
+                          animation: expandedCards[stat.title] ? 'fadeInUp 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)' : 'none',
                           '@keyframes fadeInUp': {
-                            from: { opacity: 0, transform: 'translateY(-15px)', visibility: 'hidden' },
+                            from: { opacity: 0, transform: 'translateY(-10px)', visibility: 'hidden' },
                             to: { opacity: 1, transform: 'translateY(0)', visibility: 'visible' },
                           },
                         }}>
-                          <Grid container spacing={2}>
+                          <Grid container spacing={1}>
                             <Grid item xs={6}>
-                              <Box sx={{ textAlign: 'center' }}>
-                                <FarsiNumber variant="h6" sx={{ fontWeight: 700, color: 'success.main' }}>
+                              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 0.5 }}>
+                                <FarsiNumber variant="body2" sx={{ fontWeight: 700, color: 'success.main', minWidth: '20px', textAlign: 'center' }}>
                                   {forceStats.iranianCount}
                                 </FarsiNumber>
-                                <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '0.65rem' }}>
+                                <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '0.7rem' }}>
                                   {t('dashboard.stats.iran')}
                                 </Typography>
                               </Box>
                             </Grid>
                             <Grid item xs={6}>
-                              <Box sx={{ textAlign: 'center' }}>
-                                <FarsiNumber variant="h6" sx={{ fontWeight: 700, color: 'success.main' }}>
+                              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 0.5 }}>
+                                <FarsiNumber variant="body2" sx={{ fontWeight: 700, color: 'success.main', minWidth: '20px', textAlign: 'center' }}>
                                   {forceStats.foreignCount}
                                 </FarsiNumber>
-                                <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '0.65rem' }}>
+                                <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '0.7rem' }}>
                                   {t('dashboard.stats.otherCountries')}
                                 </Typography>
                               </Box>
@@ -559,8 +552,36 @@ const DashboardStats: React.FC = () => {
                 {/* نمودار عملیات در حال اجرا */}
                 {stat.title === t('dashboard.stats.ongoingOperations') && (
                   <Box>
-                    <Box className="bar-chart" sx={{ display: 'flex', gap: 1, alignItems: 'end', height: 25, mb: 0.5, overflow: 'hidden' }}>
-                      {[
+                    <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: 25, mt: 0.5 }}>
+                      <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
+                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                          <FarsiNumber sx={{ fontWeight: 600, fontSize: '0.7rem', color: 'success.main', minWidth: '20px' }}>
+                            {operationStats.commanderCount}
+                          </FarsiNumber>
+                          <Typography variant="caption" sx={{ fontSize: '0.7rem', color: 'success.main', marginLeft: '2px' }}>
+                            {t('dashboard.stats.commander')}
+                          </Typography>
+                        </Box>
+                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                          <FarsiNumber sx={{ fontWeight: 600, fontSize: '0.7rem', color: '#2196f3', minWidth: '20px' }}>
+                            {operationStats.operatorCount}
+                          </FarsiNumber>
+                          <Typography variant="caption" sx={{ fontSize: '0.7rem', color: '#2196f3', marginLeft: '2px' }}>
+                            {t('dashboard.stats.operator')}
+                          </Typography>
+                        </Box>
+                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                          <FarsiNumber sx={{ fontWeight: 600, fontSize: '0.7rem', color: 'warning.main', minWidth: '20px' }}>
+                            {operationStats.viewerCount}
+                          </FarsiNumber>
+                          <Typography variant="caption" sx={{ fontSize: '0.7rem', color: 'warning.main', marginLeft: '2px' }}>
+                            {t('dashboard.stats.viewer')}
+                          </Typography>
+                        </Box>
+                      </Box>
+                    </Box>
+                    
+                    {/* محتوای کشویی */}
                         { role: 'commander', color: theme.palette.success.main, gradient: `linear-gradient(180deg, ${theme.palette.success.light}, ${theme.palette.success.main})`, label: t('dashboard.stats.commander'), count: operationStats.commanderCount },
                         { role: 'operator', color: '#2196f3', gradient: `linear-gradient(180deg, #64b5f6, #2196f3)`, label: t('dashboard.stats.operator'), count: operationStats.operatorCount },
                         { role: 'viewer', color: theme.palette.warning.main, gradient: `linear-gradient(180deg, ${theme.palette.warning.light}, ${theme.palette.warning.main})`, label: t('dashboard.stats.viewer'), count: operationStats.viewerCount },
@@ -587,7 +608,7 @@ const DashboardStats: React.FC = () => {
                                 } : {},
                               }}
                             />
-                            <Typography className="bar-label" variant="caption" sx={{ color: 'text.secondary', textAlign: 'center' }}>
+                            <Typography className="bar-label" variant="caption" sx={{ color: 'text.secondary', textAlign: 'center', minWidth: '50px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                               {item.label}
                             </Typography>
                           </Box>
@@ -599,42 +620,42 @@ const DashboardStats: React.FC = () => {
                     <Collapse in={expandedCards[stat.title]} timeout={400} unmountOnExit appear>
                       <Fade in={expandedCards[stat.title]} timeout={400} appear>
                         <Box sx={{ 
-                          mt: 2, 
-                          pt: 2, 
+                          mt: 1.5, 
+                          pt: 1.5, 
                           borderTop: `1px solid ${theme.palette.divider}`,
-                          animation: expandedCards[stat.title] ? 'fadeInUp 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94)' : 'none',
+                          animation: expandedCards[stat.title] ? 'fadeInUp 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)' : 'none',
                           '@keyframes fadeInUp': {
-                            from: { opacity: 0, transform: 'translateY(-15px)', visibility: 'hidden' },
+                            from: { opacity: 0, transform: 'translateY(-10px)', visibility: 'hidden' },
                             to: { opacity: 1, transform: 'translateY(0)', visibility: 'visible' },
                           },
                         }}>
-                          <Grid container spacing={2}>
+                          <Grid container spacing={1}>
                             <Grid item xs={4}>
-                              <Box sx={{ textAlign: 'center' }}>
-                                <FarsiNumber variant="h6" sx={{ fontWeight: 700, color: 'success.main' }}>
+                              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 0.5 }}>
+                                <FarsiNumber variant="body2" sx={{ fontWeight: 700, color: 'success.main', minWidth: '20px', textAlign: 'center' }}>
                                   {operationStats.commanderCount}
                                 </FarsiNumber>
-                                <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '0.65rem' }}>
+                                <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '0.7rem' }}>
                                   {t('dashboard.stats.commander')}
                                 </Typography>
                               </Box>
                             </Grid>
                             <Grid item xs={4}>
-                              <Box sx={{ textAlign: 'center' }}>
-                                <FarsiNumber variant="h6" sx={{ fontWeight: 700, color: '#2196f3' }}>
+                              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 0.5 }}>
+                                <FarsiNumber variant="body2" sx={{ fontWeight: 700, color: '#2196f3', minWidth: '20px', textAlign: 'center' }}>
                                   {operationStats.operatorCount}
                                 </FarsiNumber>
-                                <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '0.65rem' }}>
+                                <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '0.7rem' }}>
                                   {t('dashboard.stats.operator')}
                                 </Typography>
                               </Box>
                             </Grid>
                             <Grid item xs={4}>
-                              <Box sx={{ textAlign: 'center' }}>
-                                <FarsiNumber variant="h6" sx={{ fontWeight: 700, color: 'warning.main' }}>
+                              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 0.5 }}>
+                                <FarsiNumber variant="body2" sx={{ fontWeight: 700, color: 'warning.main', minWidth: '20px', textAlign: 'center' }}>
                                   {operationStats.viewerCount}
                                 </FarsiNumber>
-                                <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '0.65rem' }}>
+                                <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '0.7rem' }}>
                                   {t('dashboard.stats.viewer')}
                                 </Typography>
                               </Box>
@@ -664,14 +685,19 @@ const DashboardStats: React.FC = () => {
                           fontSize: '0.85rem',
                           display: 'flex',
                           alignItems: 'center',
-                          gap: 0.5
+                          gap: 0.5,
+                          minWidth: 0, // برای اجازه دادن به text-overflow
                         }}
                       >
-                        {t('dashboard.stats.todayAlerts')}
-                        <FarsiNumber sx={{ fontWeight: 700, fontSize: '0.9rem' }}>
+                        <span style={{ minWidth: '80px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          {t('dashboard.stats.todayAlerts')}
+                        </span>
+                        <FarsiNumber sx={{ fontWeight: 700, fontSize: '0.9rem', minWidth: '20px', textAlign: 'center' }}>
                           {alertStats.todayCount}
                         </FarsiNumber>
-                        {t('dashboard.stats.alertItems')}
+                        <span style={{ minWidth: '40px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          {t('dashboard.stats.alertItems')}
+                        </span>
                       </Typography>
                     </Box>
                     
@@ -679,43 +705,43 @@ const DashboardStats: React.FC = () => {
                     <Collapse in={expandedCards[stat.title]} timeout={400} unmountOnExit appear>
                       <Fade in={expandedCards[stat.title]} timeout={400} appear>
                         <Box sx={{ 
-                          mt: 2, 
-                          pt: 2, 
+                          mt: 1.5, 
+                          pt: 1.5, 
                           borderTop: `1px solid ${theme.palette.divider}`,
-                          animation: expandedCards[stat.title] ? 'fadeInUp 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94)' : 'none',
+                          animation: expandedCards[stat.title] ? 'fadeInUp 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)' : 'none',
                           '@keyframes fadeInUp': {
-                            from: { opacity: 0, transform: 'translateY(-15px)', visibility: 'hidden' },
+                            from: { opacity: 0, transform: 'translateY(-10px)', visibility: 'hidden' },
                             to: { opacity: 1, transform: 'translateY(0)', visibility: 'visible' },
                           },
                         }}>
-                          <Grid container spacing={2}>
+                          <Grid container spacing={1}>
                             <Grid item xs={4}>
-                              <Box sx={{ textAlign: 'center' }}>
-                                <FarsiNumber variant="h6" sx={{ fontWeight: 700, color: 'warning.main' }}>
-                                  {alertStats.todayCount}
+                              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 0.5 }}>
+                                <FarsiNumber variant="body2" sx={{ fontWeight: 700, color: 'success.main', minWidth: '20px', textAlign: 'center' }}>
+                                  {operationStats.commanderCount}
                                 </FarsiNumber>
-                                <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '0.65rem' }}>
-                                  {t('dashboard.stats.today')}
+                                <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '0.7rem' }}>
+                                  {t('dashboard.stats.commander')}
                                 </Typography>
                               </Box>
                             </Grid>
                             <Grid item xs={4}>
-                              <Box sx={{ textAlign: 'center' }}>
-                                <FarsiNumber variant="h6" sx={{ fontWeight: 700, color: 'warning.main' }}>
-                                  {alertStats.weekCount}
+                              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 0.5 }}>
+                                <FarsiNumber variant="body2" sx={{ fontWeight: 700, color: '#2196f3', minWidth: '20px', textAlign: 'center' }}>
+                                  {operationStats.operatorCount}
                                 </FarsiNumber>
-                                <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '0.65rem' }}>
-                                  {t('dashboard.stats.thisWeek')}
+                                <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '0.7rem' }}>
+                                  {t('dashboard.stats.operator')}
                                 </Typography>
                               </Box>
                             </Grid>
                             <Grid item xs={4}>
-                              <Box sx={{ textAlign: 'center' }}>
-                                <FarsiNumber variant="h6" sx={{ fontWeight: 700, color: 'warning.main' }}>
-                                  {alertStats.monthCount}
+                              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 0.5 }}>
+                                <FarsiNumber variant="body2" sx={{ fontWeight: 700, color: 'warning.main', minWidth: '20px', textAlign: 'center' }}>
+                                  {operationStats.viewerCount}
                                 </FarsiNumber>
-                                <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '0.65rem' }}>
-                                  {t('dashboard.stats.thisMonth')}
+                                <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '0.7rem' }}>
+                                  {t('dashboard.stats.viewer')}
                                 </Typography>
                               </Box>
                             </Grid>

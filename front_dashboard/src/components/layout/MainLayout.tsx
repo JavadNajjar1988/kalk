@@ -86,36 +86,47 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
   const [searchValue, setSearchValue] = useState('');
   const [notifDialogOpen, setNotifDialogOpen] = useState(false);
   const [notifDialogData, setNotifDialogData] = useState<any>(null);
-  const [labelsVisible, setLabelsVisible] = useState(!layout.sidebarCollapsed);
-  const [showDateTime, setShowDateTime] = useState(!layout.sidebarCollapsed);
+  // حذف stateهای جداگانه و استفاده از یک state واحد برای مدیریت نمایش المان‌ها
+  const [sidebarElementsVisible, setSidebarElementsVisible] = useState({
+    labels: !layout.sidebarCollapsed,
+    dateTime: !layout.sidebarCollapsed
+  });
 
 
   useEffect(() => {
     setShowLabels(!layout.sidebarCollapsed);
-    setShowDateTime(!layout.sidebarCollapsed);
+    setSidebarElementsVisible({
+      labels: !layout.sidebarCollapsed,
+      dateTime: !layout.sidebarCollapsed
+    });
   }, []);
 
+  // مدیریت انیمیشن باز و بسته شدن المان‌های منو با استفاده از یک state واحد
   useEffect(() => {
-    let timeout: NodeJS.Timeout;
+    let labelsTimeout: NodeJS.Timeout;
+    let dateTimeTimeout: NodeJS.Timeout;
+    
     if (!layout.sidebarCollapsed) {
-      // وقتی منو باز می‌شود، بعد از اتمام transition لیبل‌ها را نمایش بده
-      timeout = setTimeout(() => setShowLabels(true), 250);
+      // وقتی منو باز می‌شود، لیبل‌ها را با تاخیر نمایش بده
+      labelsTimeout = setTimeout(() => {
+        setShowLabels(true);
+        setSidebarElementsVisible(prev => ({ ...prev, labels: true }));
+      }, 250);
+      
+      // نمایش ساعت و تاریخ با تاخیر بعد از لیبل‌ها
+      dateTimeTimeout = setTimeout(() => {
+        setSidebarElementsVisible(prev => ({ ...prev, dateTime: true }));
+      }, 500);
     } else {
-      // وقتی منو بسته می‌شود، بلافاصله لیبل‌ها را مخفی کن
+      // وقتی منو بسته می‌شود، بلافاصله المان‌ها را مخفی کن
+      setSidebarElementsVisible({ labels: false, dateTime: false });
       setShowLabels(false);
     }
-    return () => clearTimeout(timeout);
-  }, [layout.sidebarCollapsed]);
-
-  useEffect(() => {
-    let timeout: NodeJS.Timeout;
-    if (!layout.sidebarCollapsed) {
-      // نمایش ساعت و تاریخ با تاخیر ۰.۵ ثانیه بعد از باز شدن منو
-      timeout = setTimeout(() => setShowDateTime(true), 500);
-    } else {
-      setShowDateTime(false);
-    }
-    return () => clearTimeout(timeout);
+    
+    return () => {
+      clearTimeout(labelsTimeout);
+      clearTimeout(dateTimeTimeout);
+    };
   }, [layout.sidebarCollapsed]);
 
   const unreadCount = unreadNotifications.length;
@@ -223,22 +234,16 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
 
   const handleSidebarToggle = () => {
     if (!layout.sidebarCollapsed) {
-      setShowDateTime(false);
-      setTimeout(() => {
-        setShowLabels(false);
-        setLabelsVisible(false);
-        setTimeout(() => {
-          dispatch(toggleSidebar());
-        }, 150);
-      }, 100);
+      // بستن منو
+      setSidebarElementsVisible({ labels: false, dateTime: false });
+      setShowLabels(false);
+      dispatch(toggleSidebar());
     } else {
+      // باز کردن منو
       dispatch(toggleSidebar());
       setTimeout(() => {
         setShowLabels(true);
-        setLabelsVisible(true);
-        setTimeout(() => {
-          setShowDateTime(true);
-        }, 100);
+        setSidebarElementsVisible({ labels: true, dateTime: true });
       }, 500);
     }
   };
@@ -628,7 +633,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
                 </ListItemIcon>
                 {/* باکس ثابت برای لیبل */}
                 <Box sx={{ width: 120, minWidth: 0, transition: 'width 0.25s cubic-bezier(0.25, 0.46, 0.45, 0.94)' }}>
-                  <Fade in={labelsVisible} timeout={250} unmountOnExit={false}>
+                  <Fade in={sidebarElementsVisible.labels} timeout={250} unmountOnExit={false}>
                     <ListItemText
                       primary={item.label}
                       sx={{
@@ -664,7 +669,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
           bgcolor: 'transparent',
           width: '100%',
         }}>
-          <Fade in={showDateTime} timeout={400}>
+          <Fade in={sidebarElementsVisible.dateTime} timeout={400}>
             <Box sx={{ width: '100%' }}>
               {!layout.sidebarCollapsed && (
                 <PersianDateTime 
