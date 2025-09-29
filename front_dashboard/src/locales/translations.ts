@@ -110,6 +110,21 @@ export const translations = {
         availableForcesSubtitle: '{iranianPercent}% ایرانی | {foreignPercent}% خارجی',
         ongoingOperationsSubtitle: '{commanderCount} فرمانده | {operatorCount} اپراتور | {viewerCount} بیننده',
         securityAlertsSubtitle: '{todayPercent}% امروز | {weekCount} این هفته',
+        todayAlerts: 'هشدارهای امروز:',
+        alertItems: 'مورد',
+        today: 'امروز',
+        thisWeek: 'این هفته',
+        thisMonth: 'این ماه',
+        commander: 'فرمانده',
+        operator: 'اپراتور',
+        viewer: 'بیننده',
+        iranian: 'ایرانی',
+        foreign: 'خارجی',
+        iran: 'ایران',
+        otherCountries: 'کشورهای دیگر',
+        totalScenarios: 'کل سناریوها',
+        active: 'فعال',
+        inactive: 'غیرفعال',
       },
       welcome: {
         title: 'خوش آمدید',
@@ -140,6 +155,7 @@ export const translations = {
         settings: 'تنظیمات',
         userManagement: 'مدیریت کاربران',
         securityAlerts: 'هشدارهای امنیتی',
+        orbatMapper: 'نقشه‌کش آرایش نبرد',
       },
       systemStatus: {
         title: 'وضعیت سیستم',
@@ -155,6 +171,12 @@ export const translations = {
         systemUpdate: 'به‌روزرسانی سیستم در تاریخ ۱۴۰۲/۰۸/۱۵',
         trainingSuccess: 'عملیات آموزشی با موفقیت به پایان رسید',
       },
+      notifications: {
+        archiveAllSuccess: 'همه فعالیت‌ها آرشیو شدند',
+        unarchiveAllSuccess: 'آرشیو همه فعالیت‌ها لغو شد',
+        starAllSuccess: 'همه فعالیت‌ها ستاره‌دار شدند',
+        unstarAllSuccess: 'ستاره‌دار کردن همه فعالیت‌ها لغو شد',
+      },
       tooltips: {
         update: 'بروزرسانی',
         settings: 'تنظیمات',
@@ -164,6 +186,9 @@ export const translations = {
       menu: {
         archiveAll: 'آرشیو همه',
         starAll: 'ستاره‌دار کردن همه',
+        unarchiveAll: 'لغو آرشیو همه',
+        unstarAll: 'لغو ستاره‌دار کردن همه',
+        deselectAll: 'لغو انتخاب همه'  // ترجمه جدید
       }
     },
     scenarios: {
@@ -814,10 +839,25 @@ export const translations = {
         availableForces: 'Available Forces',
         ongoingOperations: 'Ongoing Operations',
         securityAlerts: 'Security Alerts',
-        activeScenariosSubtitle: '{activePercent}% active | {inactiveCount} inactive',
-        availableForcesSubtitle: '{iranianPercent}% Iranian | {foreignPercent}% foreign',
+        activeScenariosSubtitle: '{activePercent}٪ active | {inactiveCount} inactive',
+        availableForcesSubtitle: '{iranianPercent}٪ Iranian | {foreignPercent}٪ foreign',
         ongoingOperationsSubtitle: '{commanderCount} Cmdr. | {operatorCount} Op. | {viewerCount} Viewer',
-        securityAlertsSubtitle: '{todayPercent}% today | {weekCount} this week',
+        securityAlertsSubtitle: '{todayPercent}٪ today | {weekCount} this week',
+        todayAlerts: 'Today\'s Alerts:',
+        alertItems: 'items',
+        today: 'Today',
+        thisWeek: 'This Week',
+        thisMonth: 'This Month',
+        commander: 'Commander',
+        operator: 'Operator',
+        viewer: 'Viewer',
+        iranian: 'Iranian',
+        foreign: 'Foreign',
+        iran: 'Iran',
+        otherCountries: 'Other Countries',
+        totalScenarios: 'Total Scenarios',
+        active: 'Active',
+        inactive: 'Inactive',
       },
       welcome: {
         title: 'Welcome',
@@ -848,6 +888,7 @@ export const translations = {
         settings: 'Settings',
         userManagement: 'User Management',
         securityAlerts: 'Security Alerts',
+        orbatMapper: 'ORBAT Mapper',
       },
       systemStatus: {
         title: 'System Status',
@@ -872,6 +913,15 @@ export const translations = {
       menu: {
         archiveAll: 'Archive All',
         starAll: 'Star All',
+        unarchiveAll: 'Unarchive All',
+        unstarAll: 'Unstar All',
+        deselectAll: 'Deselect All'
+      },
+      notifications: {
+        archiveAllSuccess: 'All activities have been archived',
+        unarchiveAllSuccess: 'Archiving of all activities has been canceled',
+        starAllSuccess: 'All activities have been starred',
+        unstarAllSuccess: 'Starring of all activities has been canceled',
       }
     },
     scenarios: {
@@ -1151,6 +1201,21 @@ export const translations = {
         availableForcesSubtitle: '{iranianPercent}٪ إيراني | {foreignPercent}٪ أجنبي',
         ongoingOperationsSubtitle: '{commanderCount} قائد | {operatorCount} مشغل | {viewerCount} مشاهد',
         securityAlertsSubtitle: '{todayPercent}٪ اليوم | {weekCount} هذا الأسبوع',
+        todayAlerts: 'تنبيهات اليوم:',
+        alertItems: 'عناصر',
+        today: 'اليوم',
+        thisWeek: 'هذا الأسبوع',
+        thisMonth: 'هذا الشهر',
+        commander: 'قائد',
+        operator: 'مشغل',
+        viewer: 'مشاهد',
+        iranian: 'إيراني',
+        foreign: 'أجنبي',
+        iran: 'إيران',
+        otherCountries: 'دول أخرى',
+        totalScenarios: 'إجمالي السيناريوهات',
+        active: 'نشط',
+        inactive: 'غير نشط',
       },
       welcome: {
         title: 'أهلاً بك',
@@ -1181,6 +1246,7 @@ export const translations = {
         settings: 'الإعدادات',
         userManagement: 'إدارة المستخدمين',
         securityAlerts: 'التنبيهات الأمنية',
+        orbatMapper: 'مخطط الهيكل التنظيمي',
       },
       systemStatus: {
         title: 'حالة النظام',
@@ -1193,7 +1259,7 @@ export const translations = {
       importantNotices: 'ملاحظات هامة',
       alerts: {
         securityThreat: 'تم تحديد تهديد أمني في المنطقة الشمالية',
-        systemUpdate: 'تحديث النظام بتاريخ ٠٦-١١-٢٠٢٣',
+        systemUpdate: 'تحديث النظام بتاريخ ٠٦-٢٠٢٣',
         trainingSuccess: 'اكتملت العملية التدريبية بنجاح',
       },
       tooltips: {
@@ -1203,8 +1269,17 @@ export const translations = {
         archive: 'أرشفة',
       },
       menu: {
-        archiveAll: 'آرشیو همه',
-        starAll: 'ستاره‌دار کردن همه',
+        archiveAll: 'أرشفة الكل',
+        starAll: 'تمييز الكل بنجمة',
+        unarchiveAll: 'إلغاء أرشفة الكل',
+        unstarAll: 'إلغاء تمييز الكل بنجمة',
+        deselectAll: 'إلغاء تحديد الكل'
+      },
+      notifications: {
+        archiveAllSuccess: 'تم أرشفة جميع الأنشطة',
+        unarchiveAllSuccess: 'تم إلغاء أرشفة جميع الأنشطة',
+        starAllSuccess: 'تم وضع نجمة على جميع الأنشطة',
+        unstarAllSuccess: 'تم إلغاء وضع النجمة على جميع الأنشطة',
       }
     },
     scenarios: {
@@ -1287,7 +1362,18 @@ export const translations = {
         comingSoon: 'هذا القسم سيكون متاحا قريبا',
       },
       equipment: {
-        categories: {}
+        categories: {
+          armor: 'الدروع',
+          transport: 'النقل',
+          artillery: 'المدفعية',
+          air_defense: 'الدفاع الجوي',
+          engineer: 'الهندسة',
+          aircraft: 'الطيران',
+          helicopter: 'المروحية',
+          naval: 'البحري',
+          missile: 'الصواريخ',
+          electronic: 'الإلكترونية',
+        }
       },
 
       maps: {
@@ -1327,122 +1413,122 @@ export const translations = {
     },
     // Users Module
     users: {
-      pageTitle: 'User Management',
-      pageDescription: 'Manage and organize system users',
-      addUser: 'Add New User',
-      searchPlaceholder: 'Search users...',
-      noUsers: 'No users found',
-      loading: 'Loading...',
+      pageTitle: 'إدارة المستخدمين',
+      pageDescription: 'إدارة وتنظيم مستخدمي النظام',
+      addUser: 'إضافة مستخدم جديد',
+      searchPlaceholder: 'البحث في المستخدمين...',
+      noUsers: 'لم يتم العثور على مستخدمين',
+      loading: 'جار التحميل...',
       
       // View and Operations
       viewMode: {
-        table: 'Table View',
-        card: 'Card View',
-        tableTooltip: 'Table View',
-        cardTooltip: 'Card View'
+        table: 'عرض جدولي',
+        card: 'عرض بطاقات',
+        tableTooltip: 'عرض جدولي',
+        cardTooltip: 'عرض بطاقات'
       },
       
       // Filters
       filters: {
-        title: 'Filters and Search',
-        clearAll: 'Clear Filters',
-        search: 'Search',
-        status: 'Status',
-        role: 'Role',
-        accessLevel: 'Access Level',
-        nationality: 'Nationality',
-        all: 'All'
+        title: 'الفلاتر والبحث',
+        clearAll: 'مسح الفلاتر',
+        search: 'بحث',
+        status: 'الحالة',
+        role: 'الدور',
+        accessLevel: 'مستوى الوصول',
+        nationality: 'الجنسية',
+        all: 'الكل'
       },
       
       // Users Table
       table: {
-        rowNumber: 'Row',
-        userCode: 'User Code',
-        fullName: 'Full Name',
-        nationality: 'Nationality',
-        role: 'Role',
-        accessLevel: 'Access Level',
-        status: 'Status',
-        actions: 'Actions'
+        rowNumber: 'الصف',
+        userCode: 'رمز المستخدم',
+        fullName: 'الاسم الكامل',
+        nationality: 'الجنسية',
+        role: 'الدور',
+        accessLevel: 'مستوى الوصول',
+        status: 'الحالة',
+        actions: 'الإجراءات'
       },
       
       // Quick Actions
       quickActions: {
-        title: 'Quick Actions',
-        changePassword: 'Change Password',
-        changePasswordDesc: 'Set a new password for user',
-        updateAccess: 'Update Access Level',
-        updateAccessDesc: 'Edit user role and access level',
-        toggleActive: 'Toggle Status',
-        activateUser: 'Activate User',
-        deactivateUser: 'Deactivate User',
-        activateDesc: 'User will be able to log in',
-        deactivateDesc: 'User will not be able to log in',
+        title: 'إجراءات سريعة',
+        changePassword: 'تغيير كلمة المرور',
+        changePasswordDesc: 'تعيين كلمة مرور جديدة للمستخدم',
+        updateAccess: 'تحديث مستوى الوصول',
+        updateAccessDesc: 'تعديل دور المستخدم ومستوى الوصول',
+        toggleActive: 'تبديل الحالة',
+        activateUser: 'تفعيل المستخدم',
+        deactivateUser: 'تعطيل المستخدم',
+        activateDesc: 'سيتمكن المستخدم من تسجيل الدخول',
+        deactivateDesc: 'لن يتمكن المستخدم من تسجيل الدخول',
         
         // Password Form
         passwordForm: {
-          newPassword: 'New Password',
-          confirmPassword: 'Confirm New Password',
-          passwordMismatch: 'Password and confirmation do not match',
-          passwordRequirements: 'New password must be at least 8 characters and include letters, numbers, and symbols.'
+          newPassword: 'كلمة المرور الجديدة',
+          confirmPassword: 'تأكيد كلمة المرور الجديدة',
+          passwordMismatch: 'كلمة المرور والتأكيد غير متطابقين',
+          passwordRequirements: 'يجب أن تكون كلمة المرور الجديدة على الأقل 8 أحرف وتشمل حروف وأرقام ورموز.'
         },
         
         // Access Form
         accessForm: {
-          systemRole: 'System Role',
-          accessLevel: 'Access Level',
-          currentPermissions: 'Current Permissions',
-          accessWarning: 'Changing access level will affect user capabilities.'
+          systemRole: 'دور النظام',
+          accessLevel: 'مستوى الوصول',
+          currentPermissions: 'الأذونات الحالية',
+          accessWarning: 'تغيير مستوى الوصول سيؤثر على قدرات المستخدم.'
         },
         
         // Status Confirmation
         statusConfirm: {
-          user: 'User',
-          userCode: 'User Code',
-          role: 'Role',
-          currentStatus: 'Current Status',
-          deactivateWarning: 'By deactivating this user, they will not be able to log in to the system.',
-          activateInfo: 'By activating this user, they will be able to log in to the system.'
+          user: 'المستخدم',
+          userCode: 'رمز المستخدم',
+          role: 'الدور',
+          currentStatus: 'الحالة الحالية',
+          deactivateWarning: 'بتعطيل هذا المستخدم، لن يتمكن من تسجيل الدخول إلى النظام.',
+          activateInfo: 'بتفعيل هذا المستخدم، سيتمكن من تسجيل الدخول إلى النظام.'
         },
         
         // Buttons
         buttons: {
-          back: 'Back',
-          cancel: 'Cancel',
-          confirm: 'Confirm',
-          processing: 'Processing...'
+          back: 'رجوع',
+          cancel: 'إلغاء',
+          confirm: 'تأكيد',
+          processing: 'جار المعالجة...'
         }
       },
       
       // General Actions
       actions: {
-        view: 'View Details',
-        edit: 'Edit',
-        delete: 'Delete',
-        quickActions: 'Quick Actions'
+        view: 'عرض التفاصيل',
+        edit: 'تعديل',
+        delete: 'حذف',
+        quickActions: 'إجراءات سريعة'
       },
       
       status: {
-        active: 'Active',
-        inactive: 'Inactive',
-        pending: 'Pending',
-        suspended: 'Suspended'
+        active: 'نشط',
+        inactive: 'غير نشط',
+        pending: 'قيد الانتظار',
+        suspended: 'معلق'
       },
       form: {
-        personalInfo: 'Personal Information',
-        contactInfo: 'Contact Information',
-        legalInfo: 'Legal Information',
-        fullName: 'Full Name',
-        nationalId: 'National ID',
-        gender: 'Gender',
-        nationality: 'Nationality',
-        birthDate: 'Birth Date',
-        mobile: 'Mobile Number',
-        email: 'Email',
-        address: 'Address',
-        postalCode: 'Postal Code',
-        status: 'Status',
-        isActive: 'Active User'
+        personalInfo: 'المعلومات الشخصية',
+        contactInfo: 'معلومات الاتصال',
+        legalInfo: 'المعلومات القانونية',
+        fullName: 'الاسم الكامل',
+        nationalId: 'الرقم الوطني',
+        gender: 'الجنس',
+        nationality: 'الجنسية',
+        birthDate: 'تاريخ الميلاد',
+        mobile: 'رقم الجوال',
+        email: 'البريد الإلكتروني',
+        address: 'العنوان',
+        postalCode: 'الرمز البريدي',
+        status: 'الحالة',
+        isActive: 'مستخدم نشط'
       }
     },
     // Resources Module

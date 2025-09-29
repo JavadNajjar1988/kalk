@@ -96,6 +96,15 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({ onClose, onRequestClose }
         break;
     }
   };
+  
+  // اضافه کردن useEffect برای پاکسازی stateها
+  React.useEffect(() => {
+    // ریست کردن stateها هنگام بسته شدن پنل
+    return () => {
+      setIsClosing(false);
+      setFadeStates([false, false, false, false, false]);
+    };
+  }, []);
 
   const handleThemeModeChange = (mode: 'light' | 'dark' | 'auto') => {
     dispatch(setThemeMode(mode));
@@ -137,16 +146,27 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({ onClose, onRequestClose }
     }
   }, [isClosing]);
 
-  // هنگام بسته شدن: ابتدا fadeها را خاموش کن، بعد از اتمام، onRequestClose را صدا بزن
+  // هنگام بسته شدن: بستن فوری بدون تاخیر برای هماهنگی با عملکرد داشبورد
   const handleClose = () => {
+    // تنظیم state isClosing برای مدیریت صحیح انیمیشن
     setIsClosing(true);
-    setFadeStates([false, false, false, false, false]);
-    setTimeout(() => {
-      setIsClosing(false);
-      if (onRequestClose) onRequestClose();
-      else onClose();
-    }, STAGGER_DELAYS[STAGGER_DELAYS.length - 1] + 350); // 350ms مدت fade آخر
+    
+    // بستن فوری بدون تاخیر برای هماهنگی با عملکرد داشبورد
+    if (onRequestClose) onRequestClose();
+    else onClose();
   };
+  
+  // اضافه کردن useEffect برای مدیریت انیمیشن بسته شدن
+  React.useEffect(() => {
+    if (isClosing) {
+      // ریست کردن fadeStates بعد از بسته شدن
+      const timer = setTimeout(() => {
+        setFadeStates([false, false, false, false, false]);
+      }, 300);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [isClosing]);
 
   return (
     <Paper sx={{ 
@@ -432,4 +452,4 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({ onClose, onRequestClose }
   );
 };
 
-export default SettingsPanel; 
+export default SettingsPanel;
