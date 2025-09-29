@@ -57,7 +57,7 @@ export interface CustomField {
   suggestions?: string[];
   autoComplete?: boolean;
   multiValue?: boolean;
-  multiValueSeparator?: 'comma' | 'enter' | 'space';
+  multiValueSeparator?: 'comma' | 'enter' | 'space' | 'semicolon';
   spellcheck?: 'fa' | 'en' | 'custom' | 'off';
   customDictionary?: string;
   
@@ -68,7 +68,7 @@ export interface CustomField {
   icon?: string;
   prefix?: string;
   suffix?: string;
-  counterDisplay?: 'bottom' | 'inside' | 'off';
+  counterDisplay?: 'off' | 'bottom' | 'inside';
   copyButton?: boolean;
   readOnlyStyle?: 'normal' | 'disabled' | 'plain';
   validationMessageStyle?: 'bottom' | 'tooltip' | 'inline';
@@ -139,9 +139,20 @@ export interface CustomField {
   
   // Behavior and Logic features
   editableAfterSave?: boolean; // قفل‌شدن بعد از ثبت / قابل‌ویرایش‌بودن
-  debounceTime?: number; // زمان تأخیر (میلی‌ثانیه)
-  enableAutosave?: boolean; // ذخیرهٔ خودکار
-  autosaveInterval?: number; // فاصله زمانی ذخیره خودکار (ثانیه)
+  enableAutoSave?: boolean; // ذخیرهٔ خودکار
+  autoSaveDelay?: number; // زمان تأخیر (میلی‌ثانیه)
+  autoSaveInterval?: number; // فاصله زمانی ذخیره خودکار (ثانیه)
+  // Conditional properties (separate fields for UI compatibility)
+  enableConditionalDisplay?: boolean;
+  conditionalDisplayField?: string;
+  conditionalDisplayOperator?: 'equals' | 'not_equals' | 'contains' | 'not_contains' | 'empty' | 'not_empty';
+  conditionalDisplayValue?: string;
+  enableConditionalEnable?: boolean;
+  conditionalEnableField?: string;
+  conditionalEnableOperator?: 'equals' | 'not_equals' | 'greater_than' | 'less_than' | 'contains' | 'not_contains' | 'empty' | 'not_empty';
+  conditionalEnableValue?: string;
+  
+  // Legacy conditional properties (object structure)
   conditionalVisibility?: {
     enabled: boolean;
     fieldId?: string; // فیلد مرجع
@@ -192,6 +203,26 @@ export interface CustomField {
     defaultValue?: string;
     lockAfterSave?: boolean;
     readOnly?: boolean;
+    conditional?: {
+      enabled: boolean;
+      dependsOn?: string;
+      condition?: 'equals' | 'not_equals' | 'contains' | 'not_contains' | 'empty' | 'not_empty' | 'greater_than' | 'less_than';
+      value?: string;
+      logic?: 'AND' | 'OR';
+      conditions?: Array<{
+        dependsOn?: string;
+        condition?: 'equals' | 'not_equals' | 'contains' | 'not_contains' | 'empty' | 'not_empty' | 'greater_than' | 'less_than';
+        value?: string;
+      }>;
+    };
+    advanced?: {
+      enableConditionalDefault?: boolean;
+      conditionalDefaultValue?: string;
+      enableConditionalLock?: boolean;
+      conditionalLockRule?: string;
+      enableConditionalReadOnly?: boolean;
+      conditionalReadOnlyRule?: string;
+    };
   };
 }
 
@@ -277,7 +308,7 @@ export interface CustomFieldDefinition {
   suggestions?: string[];
   autoComplete?: boolean;
   multiValue?: boolean;
-  multiValueSeparator?: 'comma' | 'enter' | 'space';
+  multiValueSeparator?: 'comma' | 'enter' | 'space' | 'semicolon';
   spellcheck?: 'fa' | 'en' | 'custom' | 'off';
   customDictionary?: string;
   
@@ -288,7 +319,7 @@ export interface CustomFieldDefinition {
   icon?: string;
   prefix?: string;
   suffix?: string;
-  counterDisplay?: 'bottom' | 'inside' | 'off';
+  counterDisplay?: 'off' | 'bottom' | 'inside';
   copyButton?: boolean;
   readOnlyStyle?: 'normal' | 'disabled' | 'plain';
   validationMessageStyle?: 'bottom' | 'tooltip' | 'inline';
@@ -359,9 +390,20 @@ export interface CustomFieldDefinition {
   
   // Behavior and Logic features
   editableAfterSave?: boolean; // قفل‌شدن بعد از ثبت / قابل‌ویرایش‌بودن
-  debounceTime?: number; // زمان تأخیر (میلی‌ثانیه)
-  enableAutosave?: boolean; // ذخیرهٔ خودکار
-  autosaveInterval?: number; // فاصله زمانی ذخیره خودکار (ثانیه)
+  enableAutoSave?: boolean; // ذخیرهٔ خودکار
+  autoSaveDelay?: number; // زمان تأخیر (میلی‌ثانیه)
+  autoSaveInterval?: number; // فاصله زمانی ذخیره خودکار (ثانیه)
+  // Conditional properties (separate fields for UI compatibility)
+  enableConditionalDisplay?: boolean;
+  conditionalDisplayField?: string;
+  conditionalDisplayOperator?: 'equals' | 'not_equals' | 'contains' | 'not_contains' | 'empty' | 'not_empty';
+  conditionalDisplayValue?: string;
+  enableConditionalEnable?: boolean;
+  conditionalEnableField?: string;
+  conditionalEnableOperator?: 'equals' | 'not_equals' | 'greater_than' | 'less_than' | 'contains' | 'not_contains' | 'empty' | 'not_empty';
+  conditionalEnableValue?: string;
+  
+  // Legacy conditional properties (object structure)
   conditionalVisibility?: {
     enabled: boolean;
     fieldId?: string; // فیلد مرجع
@@ -412,5 +454,25 @@ export interface CustomFieldDefinition {
     defaultValue?: string;
     lockAfterSave?: boolean;
     readOnly?: boolean;
+    conditional?: {
+      enabled: boolean;
+      dependsOn?: string;
+      condition?: 'equals' | 'not_equals' | 'contains' | 'not_contains' | 'empty' | 'not_empty' | 'greater_than' | 'less_than';
+      value?: string;
+      logic?: 'AND' | 'OR';
+      conditions?: Array<{
+        dependsOn?: string;
+        condition?: 'equals' | 'not_equals' | 'contains' | 'not_contains' | 'empty' | 'not_empty' | 'greater_than' | 'less_than';
+        value?: string;
+      }>;
+    };
+    advanced?: {
+      enableConditionalDefault?: boolean;
+      conditionalDefaultValue?: string;
+      enableConditionalLock?: boolean;
+      conditionalLockRule?: string;
+      enableConditionalReadOnly?: boolean;
+      conditionalReadOnlyRule?: string;
+    };
   };
 }

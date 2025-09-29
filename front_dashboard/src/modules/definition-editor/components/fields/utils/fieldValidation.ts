@@ -95,8 +95,8 @@ const validateDisplayTypeCompatibility = (
   
   // Define compatible display types for each field type
   const compatibleDisplayTypes: Record<string, string[]> = {
-    'text': ['normal', 'accordion', 'multiline', 'rich-text', 'inline', 'chips', 'pill', 'masked', 'popover'],
-    'textarea': ['normal', 'accordion', 'multiline', 'rich-text'],
+    'text': ['normal', 'accordion', 'multiline', 'rich-text', 'richtext', 'inline', 'chips', 'pill', 'masked', 'popover'],
+    'textarea': ['normal', 'accordion', 'multiline', 'rich-text', 'richtext'],
     'select': ['normal', 'chips', 'pill'],
     'multiselect': ['normal', 'chips', 'pill'],
     'number': ['normal', 'inline'],

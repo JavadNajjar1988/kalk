@@ -227,15 +227,14 @@ export class FieldEnhancer {
   static fieldNeedsProcessing(field: ExtendedCustomFieldDefinition): boolean {
     return !!(
       field.caseTransform && field.caseTransform !== 'none' ||
-      field.trimExtraSpaces ||
-      field.convertNumbers ||
-      field.fixHalfSpace ||
+      field.trimWhitespace ||
+      field.normalizeDigits ||
+      field.fixZWNJ ||
       field.characterControl && field.characterControl !== 'all' ||
-      field.allowedCharset && field.allowedCharset !== 'all' ||
       field.customRegex ||
-      field.enableSuggestions ||
-      field.enableSensitiveDataDetection ||
-      field.enableInappropriateWordsDetection
+      field.suggestions && field.suggestions.length > 0 ||
+      field.piiCheck?.enabled ||
+      field.profanityCheck?.enabled
     );
   }
 

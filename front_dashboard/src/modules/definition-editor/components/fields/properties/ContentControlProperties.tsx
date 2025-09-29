@@ -9,6 +9,16 @@ interface ContentControlPropertiesProps {
 }
 
 const ContentControlProperties: React.FC<ContentControlPropertiesProps> = ({ formData, onChange }) => {
+  // Helper function to validate regex
+  const isValidRegex = (regex: string): boolean => {
+    try {
+      new RegExp(regex);
+      return true;
+    } catch {
+      return false;
+    }
+  };
+
   return (
     <Paper
       sx={{
@@ -30,65 +40,87 @@ const ContentControlProperties: React.FC<ContentControlPropertiesProps> = ({ for
       <Grid container spacing={3}>
         {/* Character Control */}
         <Grid item xs={12} md={6}>
-          <FormControl fullWidth>
-            <InputLabel>کنترل نوع کاراکترها</InputLabel>
-            <Select
-              value={formData.characterControl || 'all'}
-              onChange={(e) => onChange('characterControl', e.target.value as any)}
-              label="کنترل نوع کاراکترها"
-              sx={{
-                background: 'rgba(255, 255, 255, 0.8)',
-                backdropFilter: 'blur(10px)',
-              }}
-              aria-label="کنترل نوع کاراکترها"
-            >
-              <MenuItem value="letters">فقط حروف</MenuItem>
-              <MenuItem value="alphanumeric">حروف + اعداد</MenuItem>
-              <MenuItem value="all">همه کاراکترها</MenuItem>
-              <MenuItem value="custom">سفارشی</MenuItem>
-            </Select>
-          </FormControl>
+          <Box sx={{ display: 'flex', alignItems: 'center' }}>
+            <FormControl fullWidth>
+              <InputLabel>کنترل نوع کاراکترها</InputLabel>
+              <Select
+                value={formData.characterControl || 'all'}
+                onChange={(e) => onChange('characterControl', e.target.value as any)}
+                label="کنترل نوع کاراکترها"
+                sx={{
+                  background: 'rgba(255, 255, 255, 0.8)',
+                  backdropFilter: 'blur(10px)',
+                }}
+                aria-label="کنترل نوع کاراکترها"
+              >
+                <MenuItem value="letters">فقط حروف</MenuItem>
+                <MenuItem value="alphanumeric">حروف + اعداد</MenuItem>
+                <MenuItem value="all">همه کاراکترها</MenuItem>
+                <MenuItem value="custom">سفارشی</MenuItem>
+              </Select>
+            </FormControl>
+            <HelpTooltip
+              title="کنترل نوع کاراکترها"
+              description="محدود کردن نوع کاراکترهای مجاز در فیلد"
+              example="letters: فقط حروف فارسی و انگلیسی"
+            />
+          </Box>
         </Grid>
 
         {/* Case Transform */}
         <Grid item xs={12} md={6}>
-          <FormControl fullWidth>
-            <InputLabel>تبدیل حروف</InputLabel>
-            <Select
-              value={formData.caseTransform || 'none'}
-              onChange={(e) => onChange('caseTransform', e.target.value as any)}
-              label="تبدیل حروف"
-              sx={{
-                background: 'rgba(255, 255, 255, 0.8)',
-                backdropFilter: 'blur(10px)',
-              }}
-              aria-label="تبدیل حروف"
-            >
-              <MenuItem value="none">بدون تغییر</MenuItem>
-              <MenuItem value="lowercase">همه کوچک</MenuItem>
-              <MenuItem value="uppercase">همه بزرگ</MenuItem>
-              <MenuItem value="capitalize">حرف اول بزرگ</MenuItem>
-            </Select>
-          </FormControl>
+          <Box sx={{ display: 'flex', alignItems: 'center' }}>
+            <FormControl fullWidth>
+              <InputLabel>تبدیل حروف</InputLabel>
+              <Select
+                value={formData.caseTransform || 'none'}
+                onChange={(e) => onChange('caseTransform', e.target.value as any)}
+                label="تبدیل حروف"
+                sx={{
+                  background: 'rgba(255, 255, 255, 0.8)',
+                  backdropFilter: 'blur(10px)',
+                }}
+                aria-label="تبدیل حروف"
+              >
+                <MenuItem value="none">بدون تغییر</MenuItem>
+                <MenuItem value="lowercase">همه کوچک</MenuItem>
+                <MenuItem value="uppercase">همه بزرگ</MenuItem>
+                <MenuItem value="capitalize">حرف اول بزرگ</MenuItem>
+              </Select>
+            </FormControl>
+            <HelpTooltip
+              title="تبدیل حروف"
+              description="نوع تبدیل حروف برای متن ورودی"
+              example="lowercase: 'HELLO' → 'hello'"
+            />
+          </Box>
         </Grid>
 
         {/* Custom Regex for Character Control */}
         {formData.characterControl === 'custom' && (
           <Grid item xs={12}>
-            <TextField
-              fullWidth
-              label="الگوی regex سفارشی"
-              value={formData.customRegex || ''}
-              onChange={(e) => onChange('customRegex', e.target.value)}
-              placeholder="^[a-zA-Z0-9]+$"
-              helperText="الگوی regex برای محدود کردن کاراکترهای مجاز"
-              sx={{
-                '& .MuiOutlinedInput-root': {
-                  background: 'rgba(255, 255, 255, 0.8)',
-                  backdropFilter: 'blur(10px)',
-                },
-              }}
-            />
+            <Box sx={{ display: 'flex', alignItems: 'center' }}>
+              <TextField
+                fullWidth
+                label="الگوی regex سفارشی"
+                value={formData.customRegex || ''}
+                onChange={(e) => onChange('customRegex', e.target.value)}
+                placeholder="^[a-zA-Z0-9]+$"
+                helperText="الگوی regex برای محدود کردن کاراکترهای مجاز"
+                error={!!(formData.customRegex && !isValidRegex(formData.customRegex))}
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    background: 'rgba(255, 255, 255, 0.8)',
+                    backdropFilter: 'blur(10px)',
+                  },
+                }}
+              />
+              <HelpTooltip
+                title="الگوی regex سفارشی"
+                description="الگوی regex برای محدود کردن کاراکترهای مجاز"
+                example="^[a-zA-Z0-9]+$ برای حروف و اعداد"
+              />
+            </Box>
           </Grid>
         )}
 

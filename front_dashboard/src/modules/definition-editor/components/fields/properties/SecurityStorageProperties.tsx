@@ -1,4 +1,4 @@
-import React, { memo } from 'react';
+import React, { memo, useMemo, useCallback } from 'react';
 import { Box, Typography, Paper, Grid, FormControl, InputLabel, Select, MenuItem, FormControlLabel, Switch, TextField } from '@mui/material';
 import HelpTooltip from '../shared/HelpTooltip';
 import { ExtendedCustomFieldDefinition } from '../types/FieldEditTypes';
@@ -9,6 +9,97 @@ interface SecurityStoragePropertiesProps {
 }
 
 const SecurityStorageProperties: React.FC<SecurityStoragePropertiesProps> = ({ formData, onChange }) => {
+  // Memoize PII check configuration
+  const piiCheckConfig = useMemo(() => ({
+    enabled: formData.piiCheck?.enabled || false,
+    action: formData.piiCheck?.action || 'warn',
+    patterns: formData.piiCheck?.patterns || []
+  }), [formData.piiCheck]);
+
+  // Memoize profanity check configuration
+  const profanityCheckConfig = useMemo(() => ({
+    enabled: formData.profanityCheck?.enabled || false,
+    action: formData.profanityCheck?.action || 'warn',
+    customWords: formData.profanityCheck?.customWords || []
+  }), [formData.profanityCheck]);
+
+  // Memoize indexing configuration
+  const indexingConfig = useMemo(() => ({
+    searchable: formData.indexing?.searchable || false,
+    filterable: formData.indexing?.filterable || false
+  }), [formData.indexing]);
+
+  // Memoize analyzer configuration
+  const analyzerConfig = useMemo(() => formData.analyzer || 'standard', [formData.analyzer]);
+
+  // Memoize store raw and normalized configuration
+  const storeRawAndNormalizedConfig = useMemo(() => formData.storeRawAndNormalized || false, [formData.storeRawAndNormalized]);
+
+  // Optimized change handlers
+  const handlePiiCheckToggle = useCallback((enabled: boolean) => {
+    onChange('piiCheck', { 
+      ...formData.piiCheck, 
+      enabled 
+    });
+  }, [formData.piiCheck, onChange]);
+
+  const handlePiiCheckActionChange = useCallback((action: string) => {
+    onChange('piiCheck', { 
+      ...formData.piiCheck, 
+      action: action as 'block' | 'warn'
+    });
+  }, [formData.piiCheck, onChange]);
+
+  const handlePiiCheckPatternsChange = useCallback((patterns: string) => {
+    onChange('piiCheck', { 
+      ...formData.piiCheck, 
+      patterns: patterns.split(',').map(p => p.trim()).filter(p => p)
+    });
+  }, [formData.piiCheck, onChange]);
+
+  const handleProfanityCheckToggle = useCallback((enabled: boolean) => {
+    onChange('profanityCheck', { 
+      ...formData.profanityCheck, 
+      enabled 
+    });
+  }, [formData.profanityCheck, onChange]);
+
+  const handleProfanityCheckActionChange = useCallback((action: string) => {
+    onChange('profanityCheck', { 
+      ...formData.profanityCheck, 
+      action: action as 'block' | 'warn'
+    });
+  }, [formData.profanityCheck, onChange]);
+
+  const handleProfanityCheckWordsChange = useCallback((words: string) => {
+    onChange('profanityCheck', { 
+      ...formData.profanityCheck, 
+      customWords: words.split(',').map(w => w.trim()).filter(w => w)
+    });
+  }, [formData.profanityCheck, onChange]);
+
+  const handleIndexingSearchableChange = useCallback((searchable: boolean) => {
+    onChange('indexing', { 
+      ...formData.indexing, 
+      searchable 
+    });
+  }, [formData.indexing, onChange]);
+
+  const handleIndexingFilterableChange = useCallback((filterable: boolean) => {
+    onChange('indexing', { 
+      ...formData.indexing, 
+      filterable 
+    });
+  }, [formData.indexing, onChange]);
+
+  const handleAnalyzerChange = useCallback((analyzer: string) => {
+    onChange('analyzer', analyzer as 'standard' | 'persian');
+  }, [onChange]);
+
+  const handleStoreRawAndNormalizedChange = useCallback((storeRawAndNormalized: boolean) => {
+    onChange('storeRawAndNormalized', storeRawAndNormalized);
+  }, [onChange]);
+
   return (
     <Paper
       sx={{
@@ -32,11 +123,8 @@ const SecurityStorageProperties: React.FC<SecurityStoragePropertiesProps> = ({ f
             <FormControlLabel
               control={
                 <Switch
-                  checked={formData.piiCheck?.enabled || false}
-                  onChange={(e) => onChange('piiCheck', { 
-                    ...formData.piiCheck, 
-                    enabled: e.target.checked 
-                  })}
+                  checked={piiCheckConfig.enabled}
+                  onChange={(e) => handlePiiCheckToggle(e.target.checked)}
                   size="small"
                 />
               }
@@ -48,17 +136,14 @@ const SecurityStorageProperties: React.FC<SecurityStoragePropertiesProps> = ({ f
               example="تشخیص 'ali@gmail.com' یا '0123456789'"
             />
           </Box>
-          {formData.piiCheck?.enabled && (
+          {piiCheckConfig.enabled && (
             <Grid container spacing={2}>
               <Grid item xs={12}>
                 <FormControl fullWidth>
                   <InputLabel>عمل</InputLabel>
                   <Select
-                    value={formData.piiCheck.action || 'warn'}
-                    onChange={(e) => onChange('piiCheck', { 
-                      ...formData.piiCheck, 
-                      action: e.target.value as any
-                    })}
+                    value={piiCheckConfig.action}
+                    onChange={(e) => handlePiiCheckActionChange(e.target.value)}
                     label="عمل"
                     sx={{
                       background: 'rgba(255, 255, 255, 0.8)',
@@ -74,11 +159,8 @@ const SecurityStorageProperties: React.FC<SecurityStoragePropertiesProps> = ({ f
                 <TextField
                   fullWidth
                   label="الگوهای سفارشی (با کاما جدا کنید)"
-                  value={formData.piiCheck.patterns?.join(', ') || ''}
-                  onChange={(e) => onChange('piiCheck', { 
-                    ...formData.piiCheck, 
-                    patterns: e.target.value.split(',').map(p => p.trim()).filter(p => p)
-                  })}
+                  value={piiCheckConfig.patterns.join(', ')}
+                  onChange={(e) => handlePiiCheckPatternsChange(e.target.value)}
                   placeholder="الگوی ۱, الگوی ۲, الگوی ۳"
                   sx={{
                     '& .MuiOutlinedInput-root': {
@@ -98,11 +180,8 @@ const SecurityStorageProperties: React.FC<SecurityStoragePropertiesProps> = ({ f
             <FormControlLabel
               control={
                 <Switch
-                  checked={formData.profanityCheck?.enabled || false}
-                  onChange={(e) => onChange('profanityCheck', { 
-                    ...formData.profanityCheck, 
-                    enabled: e.target.checked 
-                  })}
+                  checked={profanityCheckConfig.enabled}
+                  onChange={(e) => handleProfanityCheckToggle(e.target.checked)}
                   size="small"
                 />
               }
@@ -114,17 +193,14 @@ const SecurityStorageProperties: React.FC<SecurityStoragePropertiesProps> = ({ f
               example="تشخیص و فیلتر کلمات غیرمجاز"
             />
           </Box>
-          {formData.profanityCheck?.enabled && (
+          {profanityCheckConfig.enabled && (
             <Grid container spacing={2}>
               <Grid item xs={12}>
                 <FormControl fullWidth>
                   <InputLabel>عمل</InputLabel>
                   <Select
-                    value={formData.profanityCheck.action || 'warn'}
-                    onChange={(e) => onChange('profanityCheck', { 
-                      ...formData.profanityCheck, 
-                      action: e.target.value as any
-                    })}
+                    value={profanityCheckConfig.action}
+                    onChange={(e) => handleProfanityCheckActionChange(e.target.value)}
                     label="عمل"
                     sx={{
                       background: 'rgba(255, 255, 255, 0.8)',
@@ -140,11 +216,8 @@ const SecurityStorageProperties: React.FC<SecurityStoragePropertiesProps> = ({ f
                 <TextField
                   fullWidth
                   label="کلمات سفارشی (با کاما جدا کنید)"
-                  value={formData.profanityCheck.customWords?.join(', ') || ''}
-                  onChange={(e) => onChange('profanityCheck', { 
-                    ...formData.profanityCheck, 
-                    customWords: e.target.value.split(',').map(w => w.trim()).filter(w => w)
-                  })}
+                  value={profanityCheckConfig.customWords.join(', ')}
+                  onChange={(e) => handleProfanityCheckWordsChange(e.target.value)}
                   placeholder="کلمه ۱, کلمه ۲, کلمه ۳"
                   sx={{
                     '& .MuiOutlinedInput-root': {
@@ -167,11 +240,8 @@ const SecurityStorageProperties: React.FC<SecurityStoragePropertiesProps> = ({ f
             <FormControlLabel
               control={
                 <Switch
-                  checked={formData.indexing?.searchable || false}
-                  onChange={(e) => onChange('indexing', { 
-                    ...formData.indexing, 
-                    searchable: e.target.checked 
-                  })}
+                  checked={indexingConfig.searchable}
+                  onChange={(e) => handleIndexingSearchableChange(e.target.checked)}
                   size="small"
                 />
               }
@@ -180,11 +250,8 @@ const SecurityStorageProperties: React.FC<SecurityStoragePropertiesProps> = ({ f
             <FormControlLabel
               control={
                 <Switch
-                  checked={formData.indexing?.filterable || false}
-                  onChange={(e) => onChange('indexing', { 
-                    ...formData.indexing, 
-                    filterable: e.target.checked 
-                  })}
+                  checked={indexingConfig.filterable}
+                  onChange={(e) => handleIndexingFilterableChange(e.target.checked)}
                   size="small"
                 />
               }
@@ -198,8 +265,8 @@ const SecurityStorageProperties: React.FC<SecurityStoragePropertiesProps> = ({ f
           <FormControl fullWidth>
             <InputLabel>آنالایزر جستجو</InputLabel>
             <Select
-              value={formData.analyzer || 'standard'}
-              onChange={(e) => onChange('analyzer', e.target.value)}
+              value={analyzerConfig}
+              onChange={(e) => handleAnalyzerChange(e.target.value)}
               label="آنالایزر جستجو"
               sx={{
                 background: 'rgba(255, 255, 255, 0.8)',
@@ -218,8 +285,8 @@ const SecurityStorageProperties: React.FC<SecurityStoragePropertiesProps> = ({ f
             <FormControlLabel
               control={
                 <Switch
-                  checked={formData.storeRawAndNormalized || false}
-                  onChange={(e) => onChange('storeRawAndNormalized', e.target.checked)}
+                  checked={storeRawAndNormalizedConfig}
+                  onChange={(e) => handleStoreRawAndNormalizedChange(e.target.checked)}
                   size="small"
                 />
               }
