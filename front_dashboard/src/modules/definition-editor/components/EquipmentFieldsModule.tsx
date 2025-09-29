@@ -14,15 +14,16 @@ import {
 
 // Components
 import TreePathPicker from './common/TreePathPicker';
-import FieldManager from './fields/FieldManager';
-import FieldPreview from './fields/FieldPreview';
 import EquipmentTreeExportImport from './EquipmentTreeExportImport';
+import FieldPreview from './fields/FieldPreview';
+import FieldPreviewConsistent from './fields/FieldPreviewConsistent';
+import NodeFieldManager from './fields/NodeFieldManager';
 
 // Icons
 import AccountTreeIcon from '@mui/icons-material/AccountTree';
-import ListAltIcon from '@mui/icons-material/ListAlt';
-import PreviewIcon from '@mui/icons-material/Preview';
 import FileDownloadIcon from '@mui/icons-material/FileDownload';
+import VisibilityIcon from '@mui/icons-material/Visibility';
+import EditIcon from '@mui/icons-material/Edit';
 
 // Redux
 import { 
@@ -31,17 +32,19 @@ import {
 } from '../store/equipmentFieldsSlice';
 
 // Types
-import { DefinitionCategory, TreeNode } from '../types/equipment';
+import { DefinitionCategory, TreeNode, CustomField } from '../types/equipment';
 
 interface EquipmentFieldsModuleProps {
   category: DefinitionCategory;
   treeData: TreeNode[];
   onTreeDataChange?: (newTreeData: TreeNode[]) => void;
+  showFieldPreview?: boolean;
 }
 
 const EquipmentFieldsModule: React.FC<EquipmentFieldsModuleProps> = ({ 
   treeData,
-  onTreeDataChange
+  onTreeDataChange,
+  showFieldPreview = true
 }) => {
   
   // حالت‌های کامپوننت
@@ -50,6 +53,7 @@ const EquipmentFieldsModule: React.FC<EquipmentFieldsModuleProps> = ({
   const [selectedPath, setSelectedPath] = useState<string[]>([]);
   const [selectedNode, setSelectedNode] = useState<TreeNode | null>(null);
   const [localTreeData, setLocalTreeData] = useState<TreeNode[]>(treeData);
+  const [useConsistentPreview, setUseConsistentPreview] = useState<boolean>(true);
 
   // همگام‌سازی state داخلی با ورودی وقتی که از بیرون تغییر می‌کند
   React.useEffect(() => {
@@ -175,11 +179,11 @@ const EquipmentFieldsModule: React.FC<EquipmentFieldsModuleProps> = ({
       {/* عنوان و توضیحات */}
       <Box sx={{ mb: 3 }}>
         <Typography variant="h5" fontWeight={600} color="primary">
-          مدیریت فیلدها
+          مدیریت ساختار درختی
         </Typography>
         <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-          در این بخش می‌توانید فیلدهای سفارشی را برای دسته‌بندی‌های مختلف مدیریت کنید.
-          فیلدهای تعریف شده در هر گره به تمام زیرمجموعه‌های آن به ارث می‌رسند و در فرم‌های مربوطه استفاده خواهند شد.
+          در این بخش می‌توانید ساختار درختی دسته‌بندی‌ها را مشاهده و مدیریت کنید.
+          از تب «پیش‌نمایش فیلدها» برای مشاهده فیلدهای گره انتخاب‌شده و از «خروجی/ورودی» برای به‌روزرسانی داده‌ها استفاده کنید.
         </Typography>
       </Box>
       
@@ -196,17 +200,19 @@ const EquipmentFieldsModule: React.FC<EquipmentFieldsModuleProps> = ({
             iconPosition="start"
           />
           <Tab 
-            icon={<ListAltIcon />} 
+            icon={<EditIcon />} 
             label="مدیریت فیلدها" 
             iconPosition="start"
             disabled={!selectedNode}
           />
-          <Tab 
-            icon={<PreviewIcon />} 
-            label="پیش‌نمایش فرم" 
-            iconPosition="start"
-            disabled={!selectedNode}
-          />
+          {showFieldPreview && (
+            <Tab 
+              icon={<VisibilityIcon />} 
+              label="پیش‌نمایش فیلدها" 
+              iconPosition="start"
+              disabled={!selectedNode}
+            />
+          )}
           <Tab 
             icon={<FileDownloadIcon />} 
             label="خروجی/ورودی" 
@@ -238,64 +244,41 @@ const EquipmentFieldsModule: React.FC<EquipmentFieldsModuleProps> = ({
                 <strong>مسیر انتخاب شده:</strong> {getFullPathNames(selectedPath)}
               </Typography>
               <Typography variant="caption">
-                فیلدهای تعریف شده در این گره به تمام زیرمجموعه‌های آن به ارث می‌رسند.
+                در این بخش می‌توانید فیلدهای گره انتخاب‌شده را تعریف، ویرایش و مدیریت کنید.
               </Typography>
             </Alert>
             
-            <FieldManager
+            <NodeFieldManager
               nodeId={selectedNode.id}
-              fields={customFields}
-              title={`مدیریت فیلدهای ${selectedNode.name}`}
-              description="فیلدهای مورد نیاز برای این گره را تعریف کنید"
               nodeName={selectedNode.name}
-              enableSmartFieldBuilder={true}
+              fields={customFields}
             />
-            
-            <Box sx={{ mt: 2, display: 'flex', justifyContent: 'flex-end' }}>
-              <Button 
-                onClick={() => setActiveTab(2)}
-                variant="outlined"
-                color="primary"
-              >
-                مشاهده پیش‌نمایش
-              </Button>
-            </Box>
           </Box>
         )}
         
-        {/* تب پیش‌نمایش فرم */}
-        {activeTab === 2 && selectedNode && (
+        {/* تب پیش‌نمایش فیلدها */}
+        {showFieldPreview && activeTab === 2 && selectedNode && (
           <Box>
             <Alert severity="info" sx={{ mb: 3 }}>
               <Typography variant="body2">
                 <strong>مسیر انتخاب شده:</strong> {getFullPathNames(selectedPath)}
               </Typography>
               <Typography variant="caption">
-                این پیش‌نمایش نشان‌دهنده فرمی است که کاربران در ماژول منابع برای این نوع تجهیزات مشاهده خواهند کرد.
+                این پیش‌نمایش نشان‌دهنده فیلدهای موجود در این گره است که از فایل‌های JSON یا Redux بارگذاری شده‌اند.
               </Typography>
             </Alert>
             
-            <FieldPreview
-              fields={customFields}
-              title={`فرم ${selectedNode.name}`}
-              description="پیش‌نمایش فرم ایجاد شده بر اساس فیلدهای تعریف شده"
+            <FieldPreviewConsistent
+              fields={customFields as CustomField[]}
+              title={`فیلدهای ${selectedNode.name}`}
+              description="پیش‌نمایش فیلدهای موجود در این گره"
               nodeName={selectedNode.name}
             />
-            
-            <Box sx={{ mt: 2, display: 'flex', justifyContent: 'flex-end' }}>
-              <Button 
-                onClick={() => setActiveTab(1)}
-                variant="outlined"
-                color="primary"
-              >
-                بازگشت به مدیریت فیلدها
-              </Button>
-            </Box>
           </Box>
         )}
         
         {/* تب خروجی/ورودی */}
-        {activeTab === 3 && (
+        {activeTab === (showFieldPreview ? 3 : 2) && (
           <EquipmentTreeExportImport
             treeData={localTreeData}
             onTreeDataChange={handleTreeDataChange}
@@ -303,7 +286,7 @@ const EquipmentFieldsModule: React.FC<EquipmentFieldsModuleProps> = ({
         )}
         
         {/* حالت بدون انتخاب */}
-        {(activeTab !== 0 && activeTab !== 3 && !selectedNode) && (
+        {(activeTab !== 0 && activeTab !== (showFieldPreview ? 3 : 2) && !selectedNode) && (
           <Alert severity="warning">
             ابتدا یک مسیر در ساختار درختی تجهیزات انتخاب کنید.
           </Alert>
@@ -313,9 +296,9 @@ const EquipmentFieldsModule: React.FC<EquipmentFieldsModuleProps> = ({
       {/* راهنمای کاربری */}
       <Divider sx={{ mb: 2 }} />
       <Typography variant="body2" color="text.secondary">
-        <strong>راهنما:</strong> ابتدا مسیر مورد نظر خود را در ساختار درختی انتخاب کنید، سپس فیلدهای مورد نیاز را تعریف نمایید.
-        فیلدهای تعریف شده در هر گره به تمام زیرمجموعه‌های آن به ارث می‌رسند و در فرم‌های مربوطه استفاده خواهند شد.
-        از قابلیت Reference Fields برای اتصال فیلدها به دسته‌بندی‌های دیگر استفاده کنید.
+        <strong>راهنما:</strong> ابتدا مسیر مورد نظر خود را در ساختار درختی انتخاب کنید.
+        سپس از تب «مدیریت فیلدها» برای تعریف و ویرایش فیلدهای گره استفاده کنید.
+        از تب «پیش‌نمایش فیلدها» برای مشاهده فیلدها و از «خروجی/ورودی» برای مدیریت داده‌ها استفاده کنید.
       </Typography>
     </Paper>
   );

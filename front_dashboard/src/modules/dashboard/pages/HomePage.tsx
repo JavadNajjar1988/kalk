@@ -54,6 +54,7 @@ import {
   Visibility,
   Public,
   ExpandMore,
+  Radar as RadarIcon,
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { useAppSelector, useAppDispatch } from '@/store';
@@ -776,6 +777,13 @@ const HomePage: React.FC = () => {
         color: '#2e7d32',
         onClick: () => navigate('/dashboard/map'),
         roles: ['admin', 'commander', 'operator', 'viewer'],
+      },
+      {
+        title: 'نقشه‌کش آرایش نبرد',
+        icon: <RadarIcon />,
+        color: '#d32f2f',
+        onClick: () => navigate('/dashboard/orbat-mapper'),
+        roles: ['admin', 'commander', 'operator'],
       },
       {
         title: t('dashboard.quickActions.reporting'),

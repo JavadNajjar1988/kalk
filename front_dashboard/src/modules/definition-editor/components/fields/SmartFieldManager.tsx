@@ -12,9 +12,8 @@ import {
   AutoFixHigh as SmartIcon
 } from '@mui/icons-material';
 
-// Smart Field Builder imports
-import { SmartFieldBuilder } from '../smart-field-builder';
-import { SmartFieldConfig } from '../smart-field-builder/types';
+// Smart Field Builder disabled
+type SmartFieldConfig = never;
 
 // Legacy field type (for compatibility)
 import { CustomField } from '../../types/equipment';
@@ -42,7 +41,7 @@ const SmartFieldManager: React.FC<SmartFieldManagerProps> = ({
   
   // State management
   const [isBuilderOpen, setIsBuilderOpen] = useState(false);
-  const [editingField, setEditingField] = useState<SmartFieldConfig | null>(null);
+  const [editingField, setEditingField] = useState<any>(null);
 
   // Convert CustomField to SmartFieldConfig for editing
   const convertCustomFieldToSmart = (customField: CustomField): SmartFieldConfig => {
@@ -175,34 +174,14 @@ const SmartFieldManager: React.FC<SmartFieldManagerProps> = ({
 
   // Handle edit existing field
   const handleEditField = (field: CustomField) => {
-    const smartField = convertCustomFieldToSmart(field);
-    setEditingField(smartField);
-    setIsBuilderOpen(true);
+    // disabled
+    setEditingField(null);
+    setIsBuilderOpen(false);
   };
 
   // Handle field save from builder
   const handleFieldSave = useCallback((config: SmartFieldConfig | SmartFieldConfig[]) => {
-    const configs = Array.isArray(config) ? config : [config];
-    
-    configs.forEach((smartField) => {
-      const customField = convertSmartFieldToCustom(smartField);
-      
-      if (editingField) {
-        // Update existing field
-        if (onFieldsChange) {
-          const updatedFields = fields.map(field => 
-            field.id === editingField.id ? customField : field
-          );
-          onFieldsChange(updatedFields);
-        }
-      } else {
-        // Add new field
-        if (onFieldsChange) {
-          onFieldsChange([...fields, customField]);
-        }
-      }
-    });
-    
+    // disabled
     setIsBuilderOpen(false);
     setEditingField(null);
   }, [editingField, fields, onFieldsChange]);
@@ -315,15 +294,7 @@ const SmartFieldManager: React.FC<SmartFieldManagerProps> = ({
         </Fab>
       )}
 
-      {/* Smart Field Builder Dialog */}
-      <SmartFieldBuilder
-        open={isBuilderOpen}
-        onClose={handleBuilderClose}
-        onSave={handleFieldSave}
-        existingFields={fields.map(convertCustomFieldToSmart)}
-        editingField={editingField}
-        categoryContext={categoryContext}
-      />
+      {/* Smart Field Builder disabled */}
     </Box>
   );
 };

@@ -4,7 +4,10 @@
  */
 
 // Main Smart Field Builder component
-export { default as SmartFieldBuilder } from './SmartFieldBuilder';
+// Provide a neutral stub to satisfy existing imports without enabling functionality
+import React from 'react';
+
+export const SmartFieldBuilder: React.FC<any> = () => null;
 
 // Components
 export { default as BuilderModeSelector } from './components/BuilderModeSelector';
@@ -20,8 +23,7 @@ export { default as DataSourceStep } from './components/wizard/steps/DataSourceS
 export { default as PreviewStep } from './components/wizard/steps/PreviewStep';
 
 // Store
-export { default as smartFieldBuilderSlice } from '../../store/smartFieldBuilderSlice';
-export * from '../../store/smartFieldBuilderSlice';
+// Slice exports disabled intentionally
 
 // Types
 export * from './types';

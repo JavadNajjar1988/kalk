@@ -204,6 +204,19 @@
   }
 }
 
+/* Dashboard specific styles */
+.dashboard-layout {
+  @apply min-h-screen bg-background;
+}
+
+.dashboard-header {
+  @apply fixed top-0 left-0 right-0 z-50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b border-border;
+}
+
+.dashboard-sidebar {
+  @apply fixed top-16 right-0 z-40 transition-transform duration-300 ease-in-out;
+}
+
 /*
   The default border color has changed to `currentcolor` in Tailwind CSS v4,
   so we've added these compatibility styles to make sure everything still

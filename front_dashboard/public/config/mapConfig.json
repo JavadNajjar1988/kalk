@@ -1,0 +1,31 @@
+[
+  {
+    "layerSourceType": "osm",
+    "title": "OpenStreetMap",
+    "name": "osm",
+    "sourceOptions": {
+      "crossOrigin": "anonymous"
+    },
+    "visible": true
+  },
+  {
+    "layerSourceType": "xyz",
+    "title": "OpenStreetMap (Persian)",
+    "name": "osm-fa",
+    "sourceOptions": {
+      "url": "https://{a-c}.tile.openstreetmap.fr/osmfr/{z}/{x}/{y}.png",
+      "crossOrigin": "anonymous"
+    },
+    "visible": false
+  },
+  {
+    "layerSourceType": "xyz",
+    "title": "Satellite",
+    "name": "satellite",
+    "sourceOptions": {
+      "url": "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+      "crossOrigin": "anonymous"
+    },
+    "visible": false
+  }
+]

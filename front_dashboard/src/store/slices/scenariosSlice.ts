@@ -10,6 +10,8 @@ import {
   AnalysisType,
   AnalysisResult
 } from '@/types';
+import { scenarioApiService, ScenarioFormData } from '@/services/api/scenarioApiService';
+import { ApiClientError } from '@/services/api/baseApiClient';
 
 
 // وضعیت اولیه
@@ -33,22 +35,21 @@ const initialState: ScenariosState = {
   lastAnalysisResult: null,
 };
 
-// برای توسعه فعلی، از داده‌های ثابت استفاده می‌کنیم تا بعداً به API متصل شود
+// برای توسعه فعلی، از API service استفاده می‌کنیم
 const MOCK_API_DELAY = 500;
 
-// Thunks
+// Thunks - Updated to use API service
 export const fetchScenarios = createAsyncThunk(
   'scenarios/fetchScenarios',
   async (_, { rejectWithValue }) => {
     try {
-      // در نسخه نهایی، به API متصل می‌شود
-      // const response = await axios.get('/api/scenarios');
-      // return response.data;
-      
-      await new Promise(resolve => setTimeout(resolve, MOCK_API_DELAY));
-      return mockScenarios;
+      const scenarios = await scenarioApiService.getScenarios();
+      return scenarios;
     } catch (error: any) {
-      return rejectWithValue(error.response?.data?.message || 'خطا در دریافت سناریوها');
+      const message = error instanceof ApiClientError 
+        ? error.message 
+        : 'خطا در دریافت سناریوها';
+      return rejectWithValue(message);
     }
   }
 );
@@ -57,60 +58,28 @@ export const fetchScenarioById = createAsyncThunk(
   'scenarios/fetchScenarioById',
   async (id: string, { rejectWithValue }) => {
     try {
-      // در نسخه نهایی، به API متصل می‌شود
-      // const response = await axios.get(`/api/scenarios/${id}`);
-      // return response.data;
-      
-      await new Promise(resolve => setTimeout(resolve, MOCK_API_DELAY));
-      const scenario = mockScenarios.find(s => s.id === id);
-      
-      if (!scenario) {
-        throw new Error('سناریو یافت نشد');
-      }
-      
+      const scenario = await scenarioApiService.getScenarioById(id);
       return scenario;
     } catch (error: any) {
-      return rejectWithValue(error.response?.data?.message || 'خطا در دریافت سناریو');
+      const message = error instanceof ApiClientError 
+        ? error.message 
+        : 'خطا در دریافت سناریو';
+      return rejectWithValue(message);
     }
   }
 );
 
 export const createScenario = createAsyncThunk(
   'scenarios/createScenario',
-  async (scenarioData: Partial<EnhancedScenario>, { rejectWithValue }) => {
+  async (scenarioData: ScenarioFormData, { rejectWithValue }) => {
     try {
-      // در نسخه نهایی، به API متصل می‌شود
-      // const response = await axios.post('/api/scenarios', scenarioData);
-      // return response.data;
-      
-      await new Promise(resolve => setTimeout(resolve, MOCK_API_DELAY));
-      
-      const newScenario: EnhancedScenario = {
-        id: `scenario-${Date.now()}`,
-        name: scenarioData.name || 'سناریوی جدید',
-        description: scenarioData.description || '',
-        startTime: scenarioData.startTime || new Date().toISOString(),
-        endTime: scenarioData.endTime,
-        status: scenarioData.status || ScenarioStatus.DRAFT,
-        units: scenarioData.units || [],
-        layers: scenarioData.layers || [],
-        events: scenarioData.events || [],
-        objectives: scenarioData.objectives || [],
-        metadata: scenarioData.metadata || {},
-        phases: scenarioData.phases || [],
-        environmentalConditions: scenarioData.environmentalConditions || [],
-        terrainAnalysis: scenarioData.terrainAnalysis,
-        battleInformation: scenarioData.battleInformation,
-        commandStructure: scenarioData.commandStructure,
-        simulationSettings: scenarioData.simulationSettings,
-        executionStatus: ExecutionStatus.NOT_STARTED,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      };
-      
+      const newScenario = await scenarioApiService.createScenario(scenarioData);
       return newScenario;
     } catch (error: any) {
-      return rejectWithValue(error.response?.data?.message || 'خطا در ایجاد سناریو');
+      const message = error instanceof ApiClientError 
+        ? error.message 
+        : 'خطا در ایجاد سناریو';
+      return rejectWithValue(message);
     }
   }
 );
@@ -119,14 +88,13 @@ export const updateScenario = createAsyncThunk(
   'scenarios/updateScenario',
   async ({ id, updates }: { id: string; updates: Partial<EnhancedScenario> }, { rejectWithValue }) => {
     try {
-      // در نسخه نهایی، به API متصل می‌شود
-      // const response = await axios.put(`/api/scenarios/${id}`, updates);
-      // return response.data;
-      
-      await new Promise(resolve => setTimeout(resolve, MOCK_API_DELAY));
-      return { id, updates };
+      const updatedScenario = await scenarioApiService.updateScenario(id, updates);
+      return { id, scenario: updatedScenario };
     } catch (error: any) {
-      return rejectWithValue(error.response?.data?.message || 'خطا در به‌روزرسانی سناریو');
+      const message = error instanceof ApiClientError 
+        ? error.message 
+        : 'خطا در به‌روزرسانی سناریو';
+      return rejectWithValue(message);
     }
   }
 );
@@ -135,13 +103,13 @@ export const deleteScenario = createAsyncThunk(
   'scenarios/deleteScenario',
   async (id: string, { rejectWithValue }) => {
     try {
-      // در نسخه نهایی، به API متصل می‌شود
-      // await axios.delete(`/api/scenarios/${id}`);
-      
-      await new Promise(resolve => setTimeout(resolve, MOCK_API_DELAY));
+      await scenarioApiService.deleteScenario(id);
       return id;
     } catch (error: any) {
-      return rejectWithValue(error.response?.data?.message || 'خطا در حذف سناریو');
+      const message = error instanceof ApiClientError 
+        ? error.message 
+        : 'خطا در حذف سناریو';
+      return rejectWithValue(message);
     }
   }
 );
@@ -357,15 +325,15 @@ const scenariosSlice = createSlice({
       state.error = null;
     });
     builder.addCase(updateScenario.fulfilled, (state, action) => {
-      const { id, updates } = action.payload;
-      const index = state.scenarios.findIndex((scenario) => scenario.id === id);
+      const { id, scenario } = action.payload;
+      const index = state.scenarios.findIndex((s) => s.id === id);
       
       if (index !== -1) {
-        state.scenarios[index] = { ...state.scenarios[index], ...updates, updatedAt: new Date().toISOString() };
+        state.scenarios[index] = scenario;
       }
       
       if (state.currentScenario?.id === id) {
-        state.currentScenario = { ...state.currentScenario, ...updates, updatedAt: new Date().toISOString() };
+        state.currentScenario = scenario;
       }
       
       state.isLoading = false;
@@ -654,4 +622,4 @@ const mockScenarios: EnhancedScenario[] = [
     updatedAt: '2023-11-05T13:20:00Z',
     executionStatus: ExecutionStatus.NOT_STARTED
   }
-]; 
+];

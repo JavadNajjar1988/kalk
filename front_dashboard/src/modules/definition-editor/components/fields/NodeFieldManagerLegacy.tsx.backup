@@ -1,0 +1,3716 @@
+import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
+  // Toggle enablers for optional properties
+  enablePlaceholder?: boolean;
+  enableDefaultValue?: boolean;
+  enableHelpText?: boolean;
+  enableLengthLimits?: boolean;
+  enableCharsetControl?: boolean;
+  enableCaseTransform?: boolean;
+  enableCustomRegex?: boolean;
+  enableWhitespaceControl?: boolean;
+  enableDigitNormalization?: boolean;
+  enableZWNJPolicy?: boolean;
+  enableEmojiPolicy?: boolean;
+  enableHTMLPolicy?: boolean;
+  enableMarkdownPolicy?: boolean;
+  
+  // Helper features toggles
+  enableSuggestions?: boolean;
+  enableAutoComplete?: boolean;
+  enableMultiValue?: boolean;
+  enableSpellcheck?: boolean;
+  
+  // Display features toggles
+  enableVariant?: boolean;
+  enableSelectionAid?: boolean;
+  enableVisualEnhancements?: boolean;
+  enableStyleConfig?: boolean;
+  
+  // Text field specific properties
+  placeholder?: string;
+  helpText?: string;
+  direction?: 'auto' | 'rtl' | 'ltr';
+  
+  // Content properties
+  minLength?: number;
+  maxLength?: number;
+  allowedCharset?: 'letters' | 'alphanumeric' | 'all' | 'custom';
+  caseTransform?: 'none' | 'lowercase' | 'uppercase' | 'capitalize';
+  
+  // Advanced properties
+  trimWhitespace?: boolean;
+  normalizeDigits?: boolean;
+  fixZWNJ?: boolean;
+  allowEmoji?: boolean;
+  allowMarkdown?: boolean;
+  suggestions?: string[];
+  autoComplete?: boolean;
+  multiValue?: boolean;
+  multiValueSeparator?: 'comma' | 'enter' | 'space';
+  spellcheck?: 'fa' | 'en' | 'custom' | 'off';
+  customDictionary?: string;
+  
+  // Display features
+  variant?: 'plain' | 'accordion' | 'textarea' | 'richtext' | 'inline' | 'chips' | 'pill' | 'masked' | 'popover';
+  selectionAid?: 'none' | 'single' | 'multi';
+  size?: 'sm' | 'md' | 'lg' | 'full';
+  icon?: string;
+  prefix?: string;
+  suffix?: string;
+  counterDisplay?: 'bottom' | 'inside' | 'off';
+  copyButton?: boolean;
+  readOnlyStyle?: 'normal' | 'disabled' | 'plain';
+  validationMessageStyle?: 'bottom' | 'tooltip' | 'inline';
+  maskPattern?: string;
+  accordionTitle?: string;
+  accordionDisplayMode?: 'title' | 'options'; // Controls whether to show title or options in accordion
+  newOptionText?: string; // Temporary field for adding new options
+  
+  // Textarea variant properties
+  textareaRows?: number;
+  textareaMaxRows?: number;
+  textareaResize?: 'none' | 'both' | 'horizontal' | 'vertical';
+  
+  // Richtext variant properties
+  richtextToolbar?: string[];
+  richtextHeight?: number;
+  
+  // Chips variant properties
+  chipsColor?: 'default' | 'primary' | 'secondary';
+  chipsVariant?: 'filled' | 'outlined';
+  chipsDeletable?: boolean;
+  chipsMaxCount?: number;
+  
+  // Pill variant properties
+  pillColor?: 'default' | 'primary' | 'secondary' | 'success' | 'warning' | 'error';
+  pillSize?: 'small' | 'medium';
+  
+  // Popover variant properties
+  popoverTrigger?: 'click' | 'hover';
+  popoverSize?: 'small' | 'medium' | 'large';
+  popoverPosition?: 'top' | 'bottom' | 'left' | 'right';
+  
+  // Inline variant properties
+  inlineLabelPosition?: 'left' | 'top';
+  inlineLabelWidth?: number;
+  inlineSpacing?: 'compact' | 'normal' | 'comfortable';
+  
+  // Behavior and Logic features
+  editableAfterSave?: boolean;
+  debounceTime?: number;
+  enableAutosave?: boolean;
+  autosaveInterval?: number;
+  conditionalVisibility?: {
+    enabled: boolean;
+    fieldId?: string;
+    condition?: 'equals' | 'not_equals' | 'contains' | 'not_contains' | 'empty' | 'not_empty';
+    value?: string;
+  };
+  conditionalEnable?: {
+    enabled: boolean;
+    fieldId?: string;
+    condition?: 'equals' | 'not_equals' | 'contains' | 'not_contains' | 'empty' | 'not_empty';
+    value?: string;
+  };
+  
+  // Security and Storage features
+  piiCheck?: {
+    enabled: boolean;
+    action?: 'block' | 'warn';
+    patterns?: string[];
+  };
+  profanityCheck?: {
+    enabled: boolean;
+    action?: 'block' | 'warn';
+    customWords?: string[];
+  };
+  indexing?: {
+    searchable?: boolean;
+    filterable?: boolean;
+  };
+  analyzer?: 'standard' | 'persian';
+  storeRawAndNormalized?: boolean;
+  
+  // Rules features
+  validationRules?: {
+    minLength?: number;
+    maxLength?: number;
+    pattern?: string;
+    patternMessage?: string;
+    unique?: boolean;
+  };
+  conditionalRules?: {
+    visibility?: {
+      enabled: boolean;
+      dependsOn?: string;
+      condition?: 'equals' | 'not_equals' | 'contains' | 'not_contains' | 'empty' | 'not_empty';
+      value?: string;
+    };
+    enable?: {
+      enabled: boolean;
+      dependsOn?: string;
+      condition?: 'equals' | 'not_equals' | 'contains' | 'not_contains' | 'empty' | 'not_empty';
+      value?: string;
+    };
+  };
+  controlRules?: {
+    defaultValue?: string;
+    lockAfterSave?: boolean;
+    readOnly?: boolean;
+  };
+}
+
+interface NodeFieldManagerProps {
+  nodeId: string;
+  nodeName: string;
+  fields: ExtendedCustomFieldDefinition[];
+}
+
+const NodeFieldManager: React.FC<NodeFieldManagerProps> = ({
+  nodeId,
+  nodeName,
+  fields = [],
+}) => {
+  const dispatch = useDispatch();
+  const [localFields, setLocalFields] = useState<ExtendedCustomFieldDefinition[]>(fields);
+  const [openDialog, setOpenDialog] = useState(false);
+  const [editingField, setEditingField] = useState<ExtendedCustomFieldDefinition | null>(null);
+  const [isEditing, setIsEditing] = useState(false);
+
+  // Sync fields when props change
+  useEffect(() => {
+    setLocalFields(fields);
+  }, [fields]);
+
+  // Handle adding new field
+  const handleAddField = () => {
+    setEditingField({
+      id: '',
+      name: '',
+      englishName: '',
+      type: 'text',
+      isRequired: false,
+      defaultValue: '',
+      order: localFields.length + 1,
+    });
+    setIsEditing(false);
+    setOpenDialog(true);
+  };
+
+  // Handle editing existing field
+  const handleEditField = (field: ExtendedCustomFieldDefinition) => {
+    setEditingField({ ...field });
+    setIsEditing(true);
+    setOpenDialog(true);
+  };
+
+  // Handle deleting field
+  const handleDeleteField = (fieldId: string) => {
+    const newFields = localFields.filter(f => f.id !== fieldId);
+    setLocalFields(newFields);
+    dispatch(setCustomFieldDefinitions({ nodeId, fields: newFields }));
+  };
+
+  // Handle saving field
+  const handleSaveField = (field: ExtendedCustomFieldDefinition) => {
+    let newFields: ExtendedCustomFieldDefinition[];
+    
+    if (isEditing) {
+      newFields = localFields.map(f => f.id === field.id ? field : f);
+    } else {
+      // Generate unique ID for new field
+      const newId = `field_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      const newField = { ...field, id: newId };
+      newFields = [...localFields, newField];
+    }
+    
+    // Convert ExtendedCustomFieldDefinition to CustomFieldDefinition for Redux storage
+    const reduxFields = newFields.map(field => {
+      const {
+        // Remove the toggle enablers that are only used in the modal
+        enablePlaceholder, enableDefaultValue, enableHelpText, enableLengthLimits,
+        enableCharsetControl, enableCaseTransform, enableCustomRegex, enableWhitespaceControl,
+        enableDigitNormalization, enableZWNJPolicy, enableEmojiPolicy, enableHTMLPolicy,
+        enableMarkdownPolicy, enableSuggestions, enableAutoComplete, enableMultiValue,
+        enableSpellcheck, enableVariant, enableSelectionAid, enableVisualEnhancements,
+        enableStyleConfig,
+        ...customFieldDefinition
+      } = field;
+      
+      return customFieldDefinition as CustomFieldDefinition;
+    });
+    
+    setLocalFields(newFields);
+    dispatch(setCustomFieldDefinitions({ nodeId, fields: reduxFields }));
+    setOpenDialog(false);
+  };
+
+  // Get field type label
+  const getFieldTypeLabel = (type: FieldType): string => {
+    const labels: Record<FieldType, string> = {
+      'text': 'متن ساده',
+      'number': 'عدد',
+      'email': 'ایمیل',
+      'phone': 'شماره تلفن',
+      'date': 'تاریخ',
+      'boolean': 'بولین (بله/خیر)',
+      'select': 'انتخاب از لیست',
+      'multiselect': 'انتخاب چندگانه',
+      'textarea': 'متن چندخطی',
+      'file': 'فایل',
+      'password': 'رمز عبور',
+      'social': 'شبکه اجتماعی',
+      'reference': 'مرجع',
+      'text-english': 'متن انگلیسی',
+      'text-numeric': 'متن عددی',
+      'conditional-national-id': 'کد ملی شرطی',
+      'phone-array': 'آرایه شماره تلفن',
+      'address-array': 'آرایه آدرس',
+      'hierarchical-address': 'آدرس سلسله‌مراتبی',
+      'name-split': 'تفکیک نام',
+      'full-name-dual': 'نام دوزبانه',
+      'array-text': 'آرایه متن',
+      'key-value': 'کلید-مقدار',
+      'grouped': 'گروه‌بندی شده',
+    };
+    return labels[type] || type;
+  };
+
+  return (
+    <Box>
+      {/* Header */}
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+        <Box>
+          <Typography variant="h6" gutterBottom>
+            مدیریت فیلدهای گره: {nodeName}
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            تعداد فیلدهای تعریف شده: {localFields.length}
+          </Typography>
+        </Box>
+        <Button
+          variant="contained"
+          startIcon={<AddIcon />}
+          onClick={handleAddField}
+          sx={{ minWidth: 150 }}
+        >
+          افزودن فیلد جدید
+        </Button>
+      </Box>
+
+      {/* Fields List */}
+      {localFields.length === 0 ? (
+        <Alert severity="info" sx={{ textAlign: 'center' }}>
+          <Typography variant="h6" gutterBottom>
+            هیچ فیلدی تعریف نشده است
+          </Typography>
+          <Typography variant="body2">
+            برای شروع، فیلد جدیدی اضافه کنید
+          </Typography>
+        </Alert>
+      ) : (
+        <Grid container spacing={2}>
+          {localFields.map((field) => (
+            <Grid item xs={12} key={field.id}>
+              <Paper 
+                sx={{ 
+                  p: 2, 
+                  border: '1px solid',
+                  borderColor: 'divider',
+                  '&:hover': {
+                    borderColor: 'primary.main',
+                    boxShadow: 1,
+                  },
+                }}
+              >
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                  <Box sx={{ flex: 1 }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                      <Typography variant="h6">
+                        {field.name}
+                      </Typography>
+                      <Chip
+                        size="small"
+                        label={getFieldTypeLabel(field.type)}
+                        color="primary"
+                        variant="outlined"
+                      />
+                      {field.isRequired && (
+                        <Chip
+                          size="small"
+                          label="اجباری"
+                          color="error"
+                          variant="outlined"
+                        />
+                      )}
+                    </Box>
+                    <Typography variant="body2" color="text.secondary" gutterBottom>
+                      نام انگلیسی: {field.englishName}
+                    </Typography>
+                  </Box>
+                  <Box sx={{ display: 'flex', gap: 1 }}>
+                    <IconButton
+                      size="small"
+                      onClick={() => handleEditField(field)}
+                      color="primary"
+                    >
+                      <EditIcon />
+                    </IconButton>
+                    <IconButton
+                      size="small"
+                      onClick={() => handleDeleteField(field.id)}
+                      color="error"
+                    >
+                      <DeleteIcon />
+                    </IconButton>
+                  </Box>
+                </Box>
+              </Paper>
+            </Grid>
+          ))}
+        </Grid>
+      )}
+
+      {/* Field Edit Dialog */}
+      <FieldEditDialog
+        open={openDialog}
+        field={editingField}
+        isEditing={isEditing}
+        onClose={() => setOpenDialog(false)}
+        onSave={handleSaveField}
+      />
+    </Box>
+  );
+};
+
+// Field Edit Dialog Component
+interface FieldEditDialogProps {
+  open: boolean;
+  field: ExtendedCustomFieldDefinition | null;
+  isEditing: boolean;
+  onClose: () => void;
+  onSave: (field: ExtendedCustomFieldDefinition) => void;
+}
+
+const FieldEditDialog: React.FC<FieldEditDialogProps> = ({
+  open,
+  field,
+  isEditing,
+  onClose,
+  onSave,
+}) => {
+  const [formData, setFormData] = useState<ExtendedCustomFieldDefinition | null>(null);
+  const [currentPage, setCurrentPage] = useState<'selection' | 'create' | 'ready'>('selection');
+  const [currentStep, setCurrentStep] = useState(1);
+
+  useEffect(() => {
+    if (field) {
+      setFormData({ ...field });
+      if (isEditing) {
+        setCurrentPage('create');
+        setCurrentStep(4); // Go to preview for editing
+      }
+    }
+  }, [field, isEditing]);
+
+  const handleSubmit = () => {
+    if (formData && formData.name && formData.englishName) {
+      onSave(formData);
+      setCurrentPage('selection');
+      setCurrentStep(1);
+    }
+  };
+
+  const handleChange = (key: keyof ExtendedCustomFieldDefinition, value: any) => {
+    if (formData) {
+      setFormData({ ...formData, [key]: value });
+    }
+  };
+
+  const handleClose = () => {
+    onClose();
+    setCurrentPage('selection');
+    setCurrentStep(1);
+  };
+
+  const handleCreateField = () => {
+    setFormData({
+      id: '',
+      name: '',
+      englishName: '',
+      type: 'text',
+      isRequired: false,
+      defaultValue: '',
+      order: 1,
+    });
+    setCurrentPage('create');
+    setCurrentStep(1);
+  };
+
+  const handleNextStep = () => {
+    if (currentStep < 4) {
+      setCurrentStep(currentStep + 1);
+    }
+  };
+
+  const handlePrevStep = () => {
+    if (currentStep > 1) {
+      setCurrentStep(currentStep - 1);
+    }
+  };
+
+  const renderSelectionPage = () => (
+    <Box 
+      sx={{ 
+        p: 4,
+        background: 'linear-gradient(135deg, rgba(240, 248, 255, 0.9) 0%, rgba(230, 245, 255, 0.8) 100%)',
+        backdropFilter: 'blur(20px)',
+        borderRadius: '16px',
+        position: 'relative',
+        '&::before': {
+          content: '""',
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'linear-gradient(45deg, rgba(135, 206, 250, 0.1) 0%, rgba(173, 216, 230, 0.15) 50%, rgba(176, 224, 230, 0.1) 100%)',
+          borderRadius: '16px',
+          zIndex: -1,
+        }
+      }}
+    >
+      <Box sx={{ textAlign: 'center', mb: 4 }}>
+        <Typography 
+          variant="h4" 
+          gutterBottom 
+          sx={{ 
+            fontWeight: 700,
+            background: 'linear-gradient(45deg, #4A90E2 30%, #7BB3F0 90%)',
+            backgroundClip: 'text',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+            textShadow: '0 2px 4px rgba(135, 206, 250, 0.3)',
+          }}
+        >
+          نحوه ایجاد فیلد را انتخاب کنید
+        </Typography>
+        <Typography 
+          variant="body1" 
+          color="text.secondary"
+          sx={{ 
+            fontSize: '1.1rem',
+            opacity: 0.8,
+          }}
+        >
+          با استفاده از ابزارهای زیر فیلد مورد نظر خود را بسازید
+        </Typography>
+      </Box>
+      
+      <Grid container spacing={4} sx={{ mt: 2 }}>
+        <Grid item xs={6}>
+          <Paper
+            sx={{
+              p: 4,
+              textAlign: 'center',
+              cursor: 'pointer',
+              borderRadius: '20px',
+              background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(240, 248, 255, 0.8) 100%)',
+              backdropFilter: 'blur(10px)',
+              border: '2px solid rgba(135, 206, 250, 0.3)',
+              boxShadow: '0 8px 32px rgba(135, 206, 250, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.8)',
+              position: 'relative',
+              overflow: 'hidden',
+              transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+              '&::before': {
+                content: '""',
+                position: 'absolute',
+                top: 0,
+                left: '-100%',
+                width: '100%',
+                height: '100%',
+                background: 'linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent)',
+                transition: 'left 0.6s',
+              },
+              '&:hover': {
+                transform: 'translateY(-8px) scale(1.02)',
+                boxShadow: '0 20px 40px rgba(135, 206, 250, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.9)',
+                border: '2px solid rgba(135, 206, 250, 0.6)',
+                '&::before': {
+                  left: '100%',
+                },
+              },
+            }}
+            onClick={handleCreateField}
+          >
+            <Box 
+              sx={{ 
+                fontSize: '4rem', 
+                mb: 3,
+                filter: 'drop-shadow(0 4px 8px rgba(74, 144, 226, 0.3))',
+                animation: 'float 3s ease-in-out infinite',
+                '@keyframes float': {
+                  '0%, 100%': { transform: 'translateY(0px)' },
+                  '50%': { transform: 'translateY(-10px)' },
+                },
+              }}
+            >
+              🛠️
+            </Box>
+            <Typography 
+              variant="h5" 
+              gutterBottom
+              sx={{ 
+                fontWeight: 700,
+                color: '#4A90E2',
+                textShadow: '0 2px 4px rgba(74, 144, 226, 0.2)',
+              }}
+            >
+              ساخت فیلد
+            </Typography>
+            <Typography 
+              variant="body1" 
+              sx={{ 
+                color: 'text.secondary',
+                lineHeight: 1.6,
+                fontSize: '1rem',
+              }}
+            >
+              فیلد جدید را از ابتدا بسازید
+            </Typography>
+          </Paper>
+        </Grid>
+        
+        <Grid item xs={6}>
+          <Paper
+            sx={{
+              p: 4,
+              textAlign: 'center',
+              cursor: 'pointer',
+              borderRadius: '20px',
+              background: 'linear-gradient(135deg, rgba(248, 250, 252, 0.6) 0%, rgba(241, 245, 249, 0.4) 100%)',
+              backdropFilter: 'blur(10px)',
+              border: '2px solid rgba(203, 213, 225, 0.5)',
+              boxShadow: '0 8px 32px rgba(148, 163, 184, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.6)',
+              position: 'relative',
+              overflow: 'hidden',
+              transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+              opacity: 0.7,
+              '&::before': {
+                content: '""',
+                position: 'absolute',
+                top: 0,
+                left: '-100%',
+                width: '100%',
+                height: '100%',
+                background: 'linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent)',
+                transition: 'left 0.6s',
+              },
+              '&:hover': {
+                opacity: 0.9,
+                transform: 'translateY(-4px) scale(1.01)',
+                boxShadow: '0 16px 32px rgba(148, 163, 184, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.7)',
+                '&::before': {
+                  left: '100%',
+                },
+              },
+            }}
+            onClick={() => setCurrentPage('ready')}
+          >
+            <Box 
+              sx={{ 
+                fontSize: '4rem', 
+                mb: 3,
+                filter: 'drop-shadow(0 4px 8px rgba(148, 163, 184, 0.3))',
+                animation: 'pulse 2s ease-in-out infinite',
+                '@keyframes pulse': {
+                  '0%, 100%': { transform: 'scale(1)' },
+                  '50%': { transform: 'scale(1.05)' },
+                },
+              }}
+            >
+              📦
+            </Box>
+            <Typography 
+              variant="h5" 
+              gutterBottom
+              sx={{ 
+                fontWeight: 700,
+                color: '#64748B',
+                textShadow: '0 2px 4px rgba(100, 116, 139, 0.2)',
+              }}
+            >
+              فیلد آماده
+            </Typography>
+            <Typography 
+              variant="body1" 
+              sx={{ 
+                color: 'text.secondary',
+                lineHeight: 1.6,
+                fontSize: '1rem',
+              }}
+            >
+              از فیلدهای از پیش تعریف شده استفاده کنید
+            </Typography>
+            <Chip 
+              label="به زودی" 
+              size="small" 
+              sx={{ 
+                mt: 2, 
+                bgcolor: 'rgba(148, 163, 184, 0.2)',
+                color: '#64748B',
+                fontWeight: 500,
+              }} 
+            />
+          </Paper>
+        </Grid>
+      </Grid>
+    </Box>
+  );
+
+  const renderCreateField = () => {
+    if (!formData) return null;
+
+    const steps = [
+      { number: 1, title: 'انتخاب نوع فیلد' },
+      { number: 2, title: 'ویژگی‌های فیلد' },
+      { number: 3, title: 'قوانین فیلد' },
+      { number: 4, title: 'پیش‌نمایش' },
+    ];
+
+    return (
+      <Box
+        sx={{
+          background: 'linear-gradient(135deg, rgba(240, 248, 255, 0.95) 0%, rgba(230, 245, 255, 0.9) 100%)',
+          backdropFilter: 'blur(20px)',
+          borderRadius: '16px',
+          overflow: 'hidden',
+          position: 'relative',
+          '&::before': {
+            content: '""',
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: 'linear-gradient(45deg, rgba(135, 206, 250, 0.05) 0%, rgba(173, 216, 230, 0.1) 50%, rgba(176, 224, 230, 0.05) 100%)',
+            zIndex: -1,
+          }
+        }}
+      >
+        {/* Step Indicator */}
+        <Box 
+          sx={{ 
+            p: 3, 
+            borderBottom: '1px solid rgba(135, 206, 250, 0.2)',
+            background: 'linear-gradient(90deg, rgba(255, 255, 255, 0.8) 0%, rgba(240, 248, 255, 0.6) 100%)',
+            backdropFilter: 'blur(10px)',
+          }}
+        >
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            {steps.map((step, index) => (
+              <Box
+                key={step.number}
+                sx={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  flex: 1,
+                  position: 'relative',
+                }}
+              >
+                {/* Connection Line */}
+                {index < steps.length - 1 && (
+                  <Box
+                    sx={{
+                      position: 'absolute',
+                      top: 16,
+                      left: '50%',
+                      width: '100%',
+                      height: '2px',
+                      background: currentStep > step.number 
+                        ? 'linear-gradient(90deg, #4A90E2, #7BB3F0)'
+                        : 'rgba(135, 206, 250, 0.3)',
+                      zIndex: 0,
+                    }}
+                  />
+                )}
+                
+                <Box
+                  sx={{
+                    width: 40,
+                    height: 40,
+                    borderRadius: '50%',
+                    background: currentStep >= step.number 
+                      ? 'linear-gradient(135deg, #4A90E2, #7BB3F0)'
+                      : 'linear-gradient(135deg, rgba(255, 255, 255, 0.9), rgba(248, 250, 252, 0.8))',
+                    color: currentStep >= step.number ? 'white' : '#64748B',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontWeight: 'bold',
+                    fontSize: '1.1rem',
+                    mb: 2,
+                    border: currentStep >= step.number 
+                      ? '2px solid rgba(255, 255, 255, 0.3)' 
+                      : '2px solid rgba(135, 206, 250, 0.3)',
+                    boxShadow: currentStep >= step.number
+                      ? '0 4px 16px rgba(74, 144, 226, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.3)'
+                      : '0 4px 16px rgba(135, 206, 250, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.8)',
+                    backdropFilter: 'blur(10px)',
+                    transition: 'all 0.3s ease',
+                    zIndex: 1,
+                  }}
+                >
+                  {step.number}
+                </Box>
+                <Typography
+                  variant="caption"
+                  sx={{
+                    color: currentStep >= step.number ? '#4A90E2' : '#64748B',
+                    textAlign: 'center',
+                    fontWeight: currentStep >= step.number ? 600 : 500,
+                    textShadow: '0 1px 2px rgba(255, 255, 255, 0.8)',
+                    fontSize: '0.85rem',
+                  }}
+                >
+                  {step.title}
+                </Typography>
+              </Box>
+            ))}
+          </Box>
+        </Box>
+
+        {/* Step Content */}
+        <Box sx={{ p: 4, minHeight: 400 }}>
+          {currentStep === 1 && (
+            <Box>
+              <Box sx={{ textAlign: 'center', mb: 4 }}>
+                <Typography 
+                  variant="h5" 
+                  gutterBottom
+                  sx={{
+                    fontWeight: 700,
+                    background: 'linear-gradient(45deg, #4A90E2 30%, #7BB3F0 90%)',
+                    backgroundClip: 'text',
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent',
+                  }}
+                >
+                  انتخاب نوع فیلد
+                </Typography>
+                <Typography variant="body1" color="text.secondary" sx={{ fontSize: '1.1rem', opacity: 0.8 }}>
+                  نوع فیلد مورد نظر خود را انتخاب کنید
+                </Typography>
+              </Box>
+              
+              <Grid container spacing={3}>
+                <Grid item xs={4}>
+                  <Paper
+                    sx={{
+                      p: 3,
+                      borderRadius: '16px',
+                      background: formData.type === 'text' 
+                        ? 'linear-gradient(135deg, rgba(74, 144, 226, 0.1) 0%, rgba(123, 179, 240, 0.05) 100%)'
+                        : 'linear-gradient(135deg, rgba(255, 255, 255, 0.8) 0%, rgba(248, 250, 252, 0.6) 100%)',
+                      border: formData.type === 'text' ? '2px solid rgba(74, 144, 226, 0.3)' : '2px solid rgba(203, 213, 225, 0.3)',
+                      cursor: 'pointer',
+                      backdropFilter: 'blur(10px)',
+                      boxShadow: formData.type === 'text'
+                        ? '0 8px 32px rgba(74, 144, 226, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.8)'
+                        : '0 8px 32px rgba(148, 163, 184, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.6)',
+                      transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                      textAlign: 'center',
+                      '&:hover': {
+                        transform: 'translateY(-4px)',
+                        boxShadow: '0 16px 40px rgba(74, 144, 226, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.9)',
+                        border: '2px solid rgba(74, 144, 226, 0.5)',
+                      },
+                    }}
+                    onClick={() => handleChange('type', 'text')}
+                  >
+                    <Box 
+                      sx={{ 
+                        fontSize: '3rem',
+                        mb: 2,
+                        filter: 'drop-shadow(0 4px 8px rgba(74, 144, 226, 0.3))',
+                        animation: formData.type === 'text' ? 'bounce 2s ease-in-out infinite' : 'none',
+                        '@keyframes bounce': {
+                          '0%, 20%, 50%, 80%, 100%': { transform: 'translateY(0)' },
+                          '40%': { transform: 'translateY(-10px)' },
+                          '60%': { transform: 'translateY(-5px)' },
+                        },
+                      }}
+                    >
+                      📝
+                    </Box>
+                    <Typography 
+                      variant="h6" 
+                      sx={{ 
+                        fontWeight: 700,
+                        color: formData.type === 'text' ? '#4A90E2' : '#64748B',
+                        mb: 1,
+                      }}
+                    >
+                      فیلد متنی
+                    </Typography>
+                    <Typography 
+                      variant="body2" 
+                      sx={{ color: 'text.secondary', fontSize: '0.9rem' }}
+                    >
+                      برای ورود متن و کاراکتر
+                    </Typography>
+                    {formData.type === 'text' && (
+                      <Chip 
+                        label="انتخاب شده" 
+                        size="small"
+                        sx={{ 
+                          mt: 2,
+                          bgcolor: 'rgba(74, 144, 226, 0.1)',
+                          color: '#4A90E2',
+                          fontWeight: 600,
+                        }} 
+                      />
+                    )}
+                  </Paper>
+                </Grid>
+                
+                <Grid item xs={4}>
+                  <Paper
+                    sx={{
+                      p: 3,
+                      borderRadius: '16px',
+                      background: formData.type === 'number' 
+                        ? 'linear-gradient(135deg, rgba(74, 144, 226, 0.1) 0%, rgba(123, 179, 240, 0.05) 100%)'
+                        : 'linear-gradient(135deg, rgba(255, 255, 255, 0.8) 0%, rgba(248, 250, 252, 0.6) 100%)',
+                      border: formData.type === 'number' ? '2px solid rgba(74, 144, 226, 0.3)' : '2px solid rgba(203, 213, 225, 0.3)',
+                      cursor: 'pointer',
+                      backdropFilter: 'blur(10px)',
+                      boxShadow: formData.type === 'number'
+                        ? '0 8px 32px rgba(74, 144, 226, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.8)'
+                        : '0 8px 32px rgba(148, 163, 184, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.6)',
+                      transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                      textAlign: 'center',
+                      opacity: 0.6,
+                      '&:hover': {
+                        opacity: 0.8,
+                        transform: 'translateY(-2px)',
+                      },
+                    }}
+                    onClick={() => {}}
+                  >
+                    <Box sx={{ fontSize: '3rem', mb: 2, filter: 'drop-shadow(0 4px 8px rgba(148, 163, 184, 0.3))' }}>🔢</Box>
+                    <Typography variant="h6" sx={{ fontWeight: 700, color: '#64748B', mb: 1 }}>
+                      فیلد عددی
+                    </Typography>
+                    <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: '0.9rem' }}>
+                      برای ورود اعداد و محاسبات
+                    </Typography>
+                    <Chip 
+                      label="به زودی" 
+                      size="small"
+                      sx={{ 
+                        mt: 2,
+                        bgcolor: 'rgba(148, 163, 184, 0.2)',
+                        color: '#64748B',
+                        fontWeight: 500,
+                      }} 
+                    />
+                  </Paper>
+                </Grid>
+                
+                <Grid item xs={4}>
+                  <Paper
+                    sx={{
+                      p: 3,
+                      borderRadius: '16px',
+                      background: formData.type === 'reference' 
+                        ? 'linear-gradient(135deg, rgba(74, 144, 226, 0.1) 0%, rgba(123, 179, 240, 0.05) 100%)'
+                        : 'linear-gradient(135deg, rgba(255, 255, 255, 0.8) 0%, rgba(248, 250, 252, 0.6) 100%)',
+                      border: formData.type === 'reference' ? '2px solid rgba(74, 144, 226, 0.3)' : '2px solid rgba(203, 213, 225, 0.3)',
+                      cursor: 'pointer',
+                      backdropFilter: 'blur(10px)',
+                      boxShadow: formData.type === 'reference'
+                        ? '0 8px 32px rgba(74, 144, 226, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.8)'
+                        : '0 8px 32px rgba(148, 163, 184, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.6)',
+                      transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                      textAlign: 'center',
+                      opacity: 0.6,
+                      '&:hover': {
+                        opacity: 0.8,
+                        transform: 'translateY(-2px)',
+                      },
+                    }}
+                    onClick={() => {}}
+                  >
+                    <Box sx={{ fontSize: '3rem', mb: 2, filter: 'drop-shadow(0 4px 8px rgba(148, 163, 184, 0.3))' }}>🔗</Box>
+                    <Typography variant="h6" sx={{ fontWeight: 700, color: '#64748B', mb: 1 }}>
+                      فیلد مرجع
+                    </Typography>
+                    <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: '0.9rem' }}>
+                      برای ارجاع به سایر داده‌ها
+                    </Typography>
+                    <Chip 
+                      label="به زودی" 
+                      size="small"
+                      sx={{ 
+                        mt: 2,
+                        bgcolor: 'rgba(148, 163, 184, 0.2)',
+                        color: '#64748B',
+                        fontWeight: 500,
+                      }} 
+                    />
+                  </Paper>
+                </Grid>
+              </Grid>
+            </Box>
+          )}
+
+          {currentStep === 2 && (
+            <Box>
+              <Box sx={{ textAlign: 'center', mb: 4 }}>
+                <Typography 
+                  variant="h5" 
+                  gutterBottom
+                  sx={{
+                    fontWeight: 700,
+                    background: 'linear-gradient(45deg, #4A90E2 30%, #7BB3F0 90%)',
+                    backgroundClip: 'text',
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent',
+                  }}
+                >
+                  ویژگی‌های فیلد متنی
+                </Typography>
+                <Typography variant="body1" color="text.secondary" sx={{ fontSize: '1.1rem', opacity: 0.8, mb: 4 }}>
+                  مشخصات و تنظیمات فیلد را تعریف کنید
+                </Typography>
+              </Box>
+              
+              {/* ویژگی‌های عمومی - اجباری */}
+              <Paper
+                sx={{
+                  p: 3,
+                  mb: 3,
+                  borderRadius: '12px',
+                  background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(248, 250, 252, 0.8) 100%)',
+                  backdropFilter: 'blur(10px)',
+                  border: '1px solid rgba(135, 206, 250, 0.2)',
+                  boxShadow: '0 4px 16px rgba(135, 206, 250, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.8)',
+                }}
+              >
+                <Typography variant="h6" sx={{ mb: 3, color: '#4A90E2', fontWeight: 600 }}>
+                  ویژگی‌های عمومی
+                </Typography>
+                
+                <Grid container spacing={3}>
+                  <Grid item xs={12} md={6}>
+                    <TextField
+                      fullWidth
+                      label="عنوان *"
+                      value={formData.name}
+                      onChange={(e) => handleChange('name', e.target.value)}
+                      required
+                      error={!formData.name}
+                      helperText={!formData.name ? 'عنوان فیلد اجباری است' : ''}
+                      sx={{
+                        '& .MuiOutlinedInput-root': {
+                          background: 'rgba(255, 255, 255, 0.8)',
+                          backdropFilter: 'blur(10px)',
+                          '&:hover': { boxShadow: '0 4px 12px rgba(74, 144, 226, 0.15)' },
+                          '&.Mui-focused': { boxShadow: '0 0 0 3px rgba(74, 144, 226, 0.1)' },
+                        },
+                      }}
+                    />
+                  </Grid>
+                  
+                  <Grid item xs={12} md={6}>
+                    <TextField
+                      fullWidth
+                      label="کلید یکتا *"
+                      value={formData.englishName}
+                      onChange={(e) => handleChange('englishName', e.target.value)}
+                      required
+                      error={!formData.englishName}
+                      helperText={!formData.englishName ? 'کلید یکتا اجباری است' : 'فقط حروف انگلیسی، اعداد و _ مجاز است'}
+                      placeholder="field_name"
+                      sx={{
+                        '& .MuiOutlinedInput-root': {
+                          background: 'rgba(255, 255, 255, 0.8)',
+                          backdropFilter: 'blur(10px)',
+                          '&:hover': { boxShadow: '0 4px 12px rgba(74, 144, 226, 0.15)' },
+                          '&.Mui-focused': { boxShadow: '0 0 0 3px rgba(74, 144, 226, 0.1)' },
+                        },
+                      }}
+                    />
+                  </Grid>
+                  
+                  <Grid item xs={12} md={6}>
+                    <FormControl fullWidth>
+                      <InputLabel>جهت متن</InputLabel>
+                      <Select
+                        value={formData.direction || 'auto'}
+                        onChange={(e) => handleChange('direction', e.target.value)}
+                        label="جهت متن"
+                        sx={{
+                          background: 'rgba(255, 255, 255, 0.8)',
+                          backdropFilter: 'blur(10px)',
+                        }}
+                      >
+                        <MenuItem value="auto">خودکار</MenuItem>
+                        <MenuItem value="rtl">راست‌به‌چپ</MenuItem>
+                        <MenuItem value="ltr">چپ‌به‌راست</MenuItem>
+                      </Select>
+                    </FormControl>
+                  </Grid>
+                </Grid>
+              </Paper>
+              
+              {/* ویژگی‌های اختیاری */}
+              <Paper
+                sx={{
+                  p: 3,
+                  mb: 3,
+                  borderRadius: '12px',
+                  background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(248, 250, 252, 0.8) 100%)',
+                  backdropFilter: 'blur(10px)',
+                  border: '1px solid rgba(135, 206, 250, 0.2)',
+                  boxShadow: '0 4px 16px rgba(135, 206, 250, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.8)',
+                }}
+              >
+                <Typography variant="h6" sx={{ mb: 3, color: '#4A90E2', fontWeight: 600 }}>
+                  ویژگی‌های اختیاری
+                </Typography>
+                
+                <Grid container spacing={3}>
+                  {/* Placeholder */}
+                  <Grid item xs={12}>
+                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                      <FormControlLabel
+                        control={
+                          <Switch
+                            checked={formData.enablePlaceholder || false}
+                            onChange={(e) => handleChange('enablePlaceholder', e.target.checked)}
+                            size="small"
+                          />
+                        }
+                        label="راهنما"
+                        sx={{ mb: 1 }}
+                      />
+                      <HelpTooltip
+                        title="راهنما"
+                        description="کمک می‌کند کاربر بفهمد چه چیزی بنویسد؛ با تایپ محو می‌شود."
+                        example="«مثلاً: توضیح کوتاه…»"
+                      />
+                    </Box>
+                    {formData.enablePlaceholder && (
+                      <TextField
+                        fullWidth
+                        label="متن راهنما"
+                        value={formData.placeholder || ''}
+                        onChange={(e) => handleChange('placeholder', e.target.value)}
+                        placeholder="مثال: نام خود را وارد کنید"
+                        sx={{
+                          '& .MuiOutlinedInput-root': {
+                            background: 'rgba(255, 255, 255, 0.8)',
+                            backdropFilter: 'blur(10px)',
+                          },
+                        }}
+                      />
+                    )}
+                  </Grid>
+                  
+                  {/* Help Text */}
+                  <Grid item xs={12}>
+                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                      <FormControlLabel
+                        control={
+                          <Switch
+                            checked={formData.enableHelpText || false}
+                            onChange={(e) => handleChange('enableHelpText', e.target.checked)}
+                            size="small"
+                          />
+                        }
+                        label="توضیح کوتاه زیر فیلد"
+                        sx={{ mb: 1 }}
+                      />
+                      <HelpTooltip
+                        title="توضیح کوتاه زیر فیلد"
+                        description="راهنمای ثابت زیر فیلد برای قوانین/نکات."
+                        example="«حداکثر ۱۴۰ کاراکتر.»"
+                      />
+                    </Box>
+                    {formData.enableHelpText && (
+                      <TextField
+                        fullWidth
+                        label="متن راهنما"
+                        value={formData.helpText || ''}
+                        onChange={(e) => handleChange('helpText', e.target.value)}
+                        multiline
+                        rows={2}
+                        placeholder="توضیح کوتاه که زیر فیلد نمایش داده می‌شود"
+                        sx={{
+                          '& .MuiOutlinedInput-root': {
+                            background: 'rgba(255, 255, 255, 0.8)',
+                            backdropFilter: 'blur(10px)',
+                          },
+                        }}
+                      />
+                    )}
+                  </Grid>
+                </Grid>
+              </Paper>
+              
+              {/* ویژگی‌های محتوایی */}
+              <Paper
+                sx={{
+                  p: 3,
+                  borderRadius: '12px',
+                  background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(248, 250, 252, 0.8) 100%)',
+                  backdropFilter: 'blur(10px)',
+                  border: '1px solid rgba(135, 206, 250, 0.2)',
+                  boxShadow: '0 4px 16px rgba(135, 206, 250, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.8)',
+                }}
+              >
+                <Typography variant="h6" sx={{ mb: 3, color: '#4A90E2', fontWeight: 600 }}>
+                  ویژگی‌های محتوایی
+                </Typography>
+                
+                <Grid container spacing={3}>
+                  {/* Character Set */}
+                  <Grid item xs={12}>
+                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                      <FormControlLabel
+                        control={
+                          <Switch
+                            checked={formData.enableCharsetControl || false}
+                            onChange={(e) => handleChange('enableCharsetControl', e.target.checked)}
+                            size="small"
+                          />
+                        }
+                        label="کنترل نوع کاراکترها"
+                        sx={{ mb: 2 }}
+                      />
+                      <HelpTooltip
+                        title="کنترل نوع کاراکترها"
+                        description="محدودکردن نوع ورودی: فقط حروف، حروف+عدد، یا همه."
+                        example="«فقط حروف و اعداد مجازند.»"
+                      />
+                    </Box>
+                    {formData.enableCharsetControl && (
+                      <FormControl fullWidth>
+                        <InputLabel>نوع کاراکترهای مجاز</InputLabel>
+                        <Select
+                          value={formData.allowedCharset || 'all'}
+                          onChange={(e) => handleChange('allowedCharset', e.target.value)}
+                          label="نوع کاراکترهای مجاز"
+                          sx={{ background: 'rgba(255, 255, 255, 0.8)' }}
+                        >
+                          <MenuItem value="letters">فقط حروف</MenuItem>
+                          <MenuItem value="alphanumeric">حروف + عدد</MenuItem>
+                          <MenuItem value="all">همه کاراکترها</MenuItem>
+                          <MenuItem value="custom">سفارشی (با Regex)</MenuItem>
+                        </Select>
+                      </FormControl>
+                    )}
+                  </Grid>
+                  
+                  {/* Case Transform */}
+                  <Grid item xs={12}>
+                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                      <FormControlLabel
+                        control={
+                          <Switch
+                            checked={formData.enableCaseTransform || false}
+                            onChange={(e) => handleChange('enableCaseTransform', e.target.checked)}
+                            size="small"
+                          />
+                        }
+                        label="تبدیل حروف"
+                        sx={{ mb: 2 }}
+                      />
+                      <HelpTooltip
+                        title="تبدیل حروف"
+                        description="یکپارچه‌سازی حروف: بدون تغییر/همه کوچک/همه بزرگ/حرف اول بزرگ."
+                        example="«john doe ← John doe»"
+                      />
+                    </Box>
+                    {formData.enableCaseTransform && (
+                      <FormControl fullWidth>
+                        <InputLabel>نوع تبدیل</InputLabel>
+                        <Select
+                          value={formData.caseTransform || 'none'}
+                          onChange={(e) => handleChange('caseTransform', e.target.value)}
+                          label="نوع تبدیل"
+                          sx={{ background: 'rgba(255, 255, 255, 0.8)' }}
+                        >
+                          <MenuItem value="none">بدون تغییر</MenuItem>
+                          <MenuItem value="lowercase">همه کوچک</MenuItem>
+                          <MenuItem value="uppercase">همه بزرگ</MenuItem>
+                          <MenuItem value="capitalize">حرف اول بزرگ</MenuItem>
+                        </Select>
+                      </FormControl>
+                    )}
+                  </Grid>
+                  
+                  {/* Additional Options */}
+                  <Grid item xs={12}>
+                    <Typography variant="subtitle2" sx={{ mb: 2, fontWeight: 600, color: '#64748B' }}>
+                      گزینه‌های اضافی:
+                    </Typography>
+                    
+                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
+                      <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                        <FormControlLabel
+                          control={
+                            <Switch
+                              checked={formData.trimWhitespace || false}
+                              onChange={(e) => handleChange('trimWhitespace', e.target.checked)}
+                              size="small"
+                            />
+                          }
+                          label="حذف فاصله‌های اضافی"
+                        />
+                        <HelpTooltip
+                          title="حذف فاصله‌های اضافی"
+                          description="فاصله‌های تکراری و ابتدا/انتها خودکار حذف می‌شود."
+                          example="«  سلام    دنیا  ← سلام دنیا»"
+                        />
+                      </Box>
+                      
+                      <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                        <FormControlLabel
+                          control={
+                            <Switch
+                              checked={formData.normalizeDigits || false}
+                              onChange={(e) => handleChange('normalizeDigits', e.target.checked)}
+                              size="small"
+                            />
+                          }
+                          label="تبدیل اعداد فارسی/انگلیسی"
+                        />
+                        <HelpTooltip
+                          title="تبدیل اعداد فارسی/انگلیسی"
+                          description="ارقام ورودی به قالب دلخواه نرمال می‌شوند."
+                          example="«۱۲۳ → 123»"
+                        />
+                      </Box>
+                      
+                      <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                        <FormControlLabel
+                          control={
+                            <Switch
+                              checked={formData.fixZWNJ || false}
+                              onChange={(e) => handleChange('fixZWNJ', e.target.checked)}
+                              size="small"
+                            />
+                          }
+                          label="اصلاح نیم‌فاصله"
+                        />
+                        <HelpTooltip
+                          title="اصلاح نیم‌فاصله"
+                          description="نیم‌فاصله‌های نادرست در فارسی اصلاح/یکنواخت می‌شود."
+                          example="«می باشد → می‌شود»"
+                        />
+                      </Box>
+                      
+                      <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                        <FormControlLabel
+                          control={
+                            <Switch
+                              checked={formData.allowEmoji || false}
+                              onChange={(e) => handleChange('allowEmoji', e.target.checked)}
+                              size="small"
+                            />
+                          }
+                          label="اجازه ایموجی"
+                        />
+                        <HelpTooltip
+                          title="اجازه ایموجی"
+                          description="تعیین مجازبودن کاراکترهای Emoji."
+                          example="«😊 مجاز است / مسدود می‌شود»"
+                        />
+                      </Box>
+                      
+                      <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                        <FormControlLabel
+                          control={
+                            <Switch
+                              checked={formData.allowMarkdown || false}
+                              onChange={(e) => handleChange('allowMarkdown', e.target.checked)}
+                              size="small"
+                            />
+                          }
+                          label="اجازه Markdown"
+                        />
+                        <HelpTooltip
+                          title="اجازه Markdown"
+                          description="اجازهٔ نشانه‌گذاری ساده متن‌غنی (با Sanitization)."
+                          example="«*پررنگ*، _کج_»"
+                        />
+                      </Box>
+                    </Box>
+                  </Grid>
+                </Grid>
+              </Paper>
+              
+              {/* ویژگی‌های کمکی */}
+              <Paper
+                sx={{
+                  p: 3,
+                  mb: 3,
+                  borderRadius: '12px',
+                  background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(248, 250, 252, 0.8) 100%)',
+                  backdropFilter: 'blur(10px)',
+                  border: '1px solid rgba(135, 206, 250, 0.2)',
+                  boxShadow: '0 4px 16px rgba(135, 206, 250, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.8)',
+                }}
+              >
+                <Typography variant="h6" sx={{ mb: 3, color: '#4A90E2', fontWeight: 600 }}>
+                  ویژگی‌های کمکی
+                </Typography>
+                
+                <Grid container spacing={3}>
+                  {/* Suggestions */}
+                  <Grid item xs={12}>
+                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                      <FormControlLabel
+                        control={
+                          <Switch
+                            checked={formData.enableSuggestions || false}
+                            onChange={(e) => handleChange('enableSuggestions', e.target.checked)}
+                            size="small"
+                          />
+                        }
+                        label="لیست پیشنهاد"
+                        sx={{ mb: 2 }}
+                      />
+                      <HelpTooltip
+                        title="لیست پیشنهاد"
+                        description="پیشنهادهای آماده برای ورود سریع/یکنواخت."
+                        example="«پیگیری شد»، «تماس بگیرد»"
+                      />
+                    </Box>
+                    {formData.enableSuggestions && (
+                      <TextField
+                        fullWidth
+                        label="پیشنهادها (هر خط یک پیشنهاد)"
+                        value={formData.suggestions?.join('\n') || ''}
+                        onChange={(e) => handleChange('suggestions', e.target.value.split('\n').filter(s => s.trim()))}
+                        multiline
+                        rows={3}
+                        placeholder="مثال:\nنام اول\nنام دوم\nنام سوم"
+                        sx={{ '& .MuiOutlinedInput-root': { background: 'rgba(255, 255, 255, 0.8)' } }}
+                      />
+                    )}
+                  </Grid>
+                  
+                  {/* Auto-Complete */}
+                  <Grid item xs={12} md={6}>
+                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                      <FormControlLabel
+                        control={
+                          <Switch
+                            checked={formData.autoComplete || false}
+                            onChange={(e) => handleChange('autoComplete', e.target.checked)}
+                            size="small"
+                          />
+                        }
+                        label="تکمیل خودکار"
+                      />
+                      <HelpTooltip
+                        title="تکمیل خودکار"
+                        description="با تایپ کاربر، از پیشنهادها کامل می‌کند."
+                        example="تایپ «پیگ…» → «پیگیری شد»"
+                      />
+                    </Box>
+                  </Grid>
+                  
+                  {/* Multi-Value */}
+                  <Grid item xs={12}>
+                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                      <FormControlLabel
+                        control={
+                          <Switch
+                            checked={formData.enableMultiValue || false}
+                            onChange={(e) => handleChange('enableMultiValue', e.target.checked)}
+                            size="small"
+                          />
+                        }
+                        label="مقدار چندگانه"
+                        sx={{ mb: 2 }}
+                      />
+                      <HelpTooltip
+                        title="مقدار چندگانه"
+                        description="امکان چند ورودی در یک فیلد با جداکننده."
+                        example="«تهران, اصفهان, شیراز»"
+                      />
+                    </Box>
+                    {formData.enableMultiValue && (
+                      <Box sx={{ mt: 2 }}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                          <Typography variant="body2" sx={{ mr: 2, fontWeight: 500 }}>
+                            جداکننده:
+                          </Typography>
+                          <HelpTooltip
+                            title="جداکننده‌ها"
+                            description="کنترل نحوهٔ تفکیک مقادیر چندگانه."
+                            example="«Enter» هر مورد را ثبت کند."
+                          />
+                        </Box>
+                        <FormControl fullWidth>
+                          <InputLabel>جداکننده</InputLabel>
+                          <Select
+                            value={formData.multiValueSeparator || 'comma'}
+                            onChange={(e) => handleChange('multiValueSeparator', e.target.value)}
+                            label="جداکننده"
+                            sx={{ background: 'rgba(255, 255, 255, 0.8)' }}
+                          >
+                            <MenuItem value="comma">کاما (,)</MenuItem>
+                            <MenuItem value="enter">اینتر</MenuItem>
+                            <MenuItem value="space">فاصله</MenuItem>
+                          </Select>
+                        </FormControl>
+                      </Box>
+                    )}
+                  </Grid>
+                  
+                  {/* Spellcheck */}
+                  <Grid item xs={12}>
+                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                      <FormControlLabel
+                        control={
+                          <Switch
+                            checked={formData.enableSpellcheck || false}
+                            onChange={(e) => handleChange('enableSpellcheck', e.target.checked)}
+                            size="small"
+                          />
+                        }
+                        label="غلط‌یاب"
+                        sx={{ mb: 2 }}
+                      />
+                      <HelpTooltip
+                        title="غلط‌یاب"
+                        description="بررسی املای کلمات (fa/en/سفارشی/خاموش)."
+                        example="زیرخط قرمز برای کلمهٔ مشکوک."
+                      />
+                    </Box>
+                    {formData.enableSpellcheck && (
+                      <Grid container spacing={2}>
+                        <Grid item xs={6}>
+                          <FormControl fullWidth>
+                            <InputLabel>زبان فرهنگ لغت</InputLabel>
+                            <Select
+                              value={formData.spellcheck || 'fa'}
+                              onChange={(e) => handleChange('spellcheck', e.target.value)}
+                              label="زبان فرهنگ لغت"
+                              sx={{ background: 'rgba(255, 255, 255, 0.8)' }}
+                            >
+                              <MenuItem value="fa">فارسی</MenuItem>
+                              <MenuItem value="en">انگلیسی</MenuItem>
+                              <MenuItem value="custom">سفارشی</MenuItem>
+                              <MenuItem value="off">خاموش</MenuItem>
+                            </Select>
+                          </FormControl>
+                        </Grid>
+                        {formData.spellcheck === 'custom' && (
+                          <Grid item xs={6}>
+                            <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                              <TextField
+                                fullWidth
+                                label="فرهنگ لغت سفارشی"
+                                value={formData.customDictionary || ''}
+                                onChange={(e) => handleChange('customDictionary', e.target.value)}
+                                placeholder="کلمات مجاز با کاما جدا شده"
+                                sx={{ '& .MuiOutlinedInput-root': { background: 'rgba(255, 255, 255, 0.8)' } }}
+                              />
+                              <HelpTooltip
+                                title="فرهنگ لغت سفارشی"
+                                description="افزودن واژگان سازمانی به غلط‌یاب."
+                                example="اضافه‌کردن نام برند داخلی."
+                              />
+                            </Box>
+                          </Grid>
+                        )}
+                      </Grid>
+                    )}
+                  </Grid>
+                </Grid>
+              </Paper>
+              
+              {/* ویژگی‌های رفتار و منطق */}
+              <Paper
+                sx={{
+                  p: 3,
+                  mb: 3,
+                  borderRadius: '12px',
+                  background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(248, 250, 252, 0.8) 100%)',
+                  backdropFilter: 'blur(10px)',
+                  border: '1px solid rgba(135, 206, 250, 0.2)',
+                  boxShadow: '0 4px 16px rgba(135, 206, 250, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.8)',
+                }}
+              >
+                <Typography variant="h6" sx={{ mb: 3, color: '#4A90E2', fontWeight: 600 }}>
+                  رفتار و منطق
+                </Typography>
+                
+                <Grid container spacing={3}>
+                  {/* Editable After Save */}
+                  <Grid item xs={12}>
+                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                      <FormControlLabel
+                        control={
+                          <Switch
+                            checked={formData.editableAfterSave !== false}
+                            onChange={(e) => handleChange('editableAfterSave', e.target.checked)}
+                            size="small"
+                          />
+                        }
+                        label="قابل‌ویرایش بعد از ثبت"
+                        sx={{ mb: 1 }}
+                      />
+                      <HelpTooltip
+                        title="قابل‌ویرایش بعد از ثبت"
+                        description="قفل یا بازبودن ویرایش پس از ذخیره."
+                        example="«پس از تأیید نهایی، غیرقابل‌ویرایش.»"
+                      />
+                    </Box>
+                  </Grid>
+                  
+                  {/* Debounce & Autosave */}
+                  <Grid item xs={12}>
+                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                      <FormControlLabel
+                        control={
+                          <Switch
+                            checked={formData.enableAutosave || false}
+                            onChange={(e) => handleChange('enableAutosave', e.target.checked)}
+                            size="small"
+                          />
+                        }
+                        label="ذخیره خودکار"
+                        sx={{ mb: 1 }}
+                      />
+                      <HelpTooltip
+                        title="ذخیره خودکار"
+                        description="ذخیرهٔ خودکار بعد از مکث تایپ یا بازهٔ زمانی."
+                        example="«۳۰۰ms دی‌بونس، هر ۵s ذخیره.»"
+                      />
+                    </Box>
+                    {formData.enableAutosave && (
+                      <Grid container spacing={2} sx={{ mt: 1 }}>
+                        <Grid item xs={6}>
+                          <TextField
+                            fullWidth
+                            type="number"
+                            label="زمان تأخیر (میلی‌ثانیه)"
+                            value={formData.debounceTime || 500}
+                            onChange={(e) => handleChange('debounceTime', parseInt(e.target.value) || 500)}
+                            placeholder="500"
+                            sx={{ '& .MuiOutlinedInput-root': { background: 'rgba(255, 255, 255, 0.8)' } }}
+                          />
+                        </Grid>
+                        <Grid item xs={6}>
+                          <TextField
+                            fullWidth
+                            type="number"
+                            label="فاصله ذخیره (ثانیه)"
+                            value={formData.autosaveInterval || 30}
+                            onChange={(e) => handleChange('autosaveInterval', parseInt(e.target.value) || 30)}
+                            placeholder="30"
+                            sx={{ '& .MuiOutlinedInput-root': { background: 'rgba(255, 255, 255, 0.8)' } }}
+                          />
+                        </Grid>
+                      </Grid>
+                    )}
+                  </Grid>
+                </Grid>
+              </Paper>
+              
+              {/* ویژگی‌های امنیت و ذخیره‌سازی */}
+              <Paper
+                sx={{
+                  p: 3,
+                  mb: 3,
+                  borderRadius: '12px',
+                  background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(248, 250, 252, 0.8) 100%)',
+                  backdropFilter: 'blur(10px)',
+                  border: '1px solid rgba(135, 206, 250, 0.2)',
+                  boxShadow: '0 4px 16px rgba(135, 206, 250, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.8)',
+                }}
+              >
+                <Typography variant="h6" sx={{ mb: 3, color: '#4A90E2', fontWeight: 600 }}>
+                  امنیت و ذخیره‌سازی
+                </Typography>
+                
+                <Grid container spacing={3}>
+                  {/* PII Check */}
+                  <Grid item xs={12}>
+                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                      <FormControlLabel
+                        control={
+                          <Switch
+                            checked={formData.piiCheck?.enabled || false}
+                            onChange={(e) => {
+                              const pii = formData.piiCheck || {};
+                              handleChange('piiCheck', { ...pii, enabled: e.target.checked });
+                            }}
+                            size="small"
+                          />
+                        }
+                        label="تشخیص اطلاعات حساس"
+                        sx={{ mb: 1 }}
+                      />
+                      <HelpTooltip
+                        title="تشخیص اطلاعات حساس"
+                        description="شناسایی ایمیل/شماره ملی/… و هشدار/مسدود."
+                        example="«example@mail.com → هشدار»"
+                      />
+                    </Box>
+                    {formData.piiCheck?.enabled && (
+                      <Grid container spacing={2} sx={{ mt: 1 }}>
+                        <Grid item xs={6}>
+                          <FormControl fullWidth>
+                            <InputLabel>عمل</InputLabel>
+                            <Select
+                              value={formData.piiCheck?.action || 'warn'}
+                              onChange={(e) => {
+                                const pii = formData.piiCheck || {};
+                                handleChange('piiCheck', { ...pii, action: e.target.value });
+                              }}
+                              label="عمل"
+                              sx={{ background: 'rgba(255, 255, 255, 0.8)' }}
+                            >
+                              <MenuItem value="warn">هشدار</MenuItem>
+                              <MenuItem value="block">مسدود</MenuItem>
+                            </Select>
+                          </FormControl>
+                        </Grid>
+                        <Grid item xs={6}>
+                          <TextField
+                            fullWidth
+                            label="الگوهای سفارشی"
+                            value={(formData.piiCheck?.patterns || []).join(', ')}
+                            onChange={(e) => {
+                              const pii = formData.piiCheck || {};
+                              handleChange('piiCheck', { ...pii, patterns: e.target.value.split(',').map(p => p.trim()) });
+                            }}
+                            placeholder="الگوها را با کاما جدا کنید"
+                            sx={{ '& .MuiOutlinedInput-root': { background: 'rgba(255, 255, 255, 0.8)' } }}
+                          />
+                        </Grid>
+                      </Grid>
+                    )}
+                  </Grid>
+                  
+                  {/* Profanity Check */}
+                  <Grid item xs={12}>
+                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                      <FormControlLabel
+                        control={
+                          <Switch
+                            checked={formData.profanityCheck?.enabled || false}
+                            onChange={(e) => {
+                              const profanity = formData.profanityCheck || {};
+                              handleChange('profanityCheck', { ...profanity, enabled: e.target.checked });
+                            }}
+                            size="small"
+                          />
+                        }
+                        label="تشخیص کلمات نامناسب"
+                        sx={{ mb: 1 }}
+                      />
+                      <HelpTooltip
+                        title="تشخیص کلمات نامناسب"
+                        description="شناسایی واژگان نامناسب؛ هشدار/مسدود."
+                        example="«لیست کلمات سفارشی سازمان»"
+                      />
+                    </Box>
+                    {formData.profanityCheck?.enabled && (
+                      <Grid container spacing={2} sx={{ mt: 1 }}>
+                        <Grid item xs={6}>
+                          <FormControl fullWidth>
+                            <InputLabel>عمل</InputLabel>
+                            <Select
+                              value={formData.profanityCheck?.action || 'warn'}
+                              onChange={(e) => {
+                                const profanity = formData.profanityCheck || {};
+                                handleChange('profanityCheck', { ...profanity, action: e.target.value });
+                              }}
+                              label="عمل"
+                              sx={{ background: 'rgba(255, 255, 255, 0.8)' }}
+                            >
+                              <MenuItem value="warn">هشدار</MenuItem>
+                              <MenuItem value="block">مسدود</MenuItem>
+                            </Select>
+                          </FormControl>
+                        </Grid>
+                        <Grid item xs={6}>
+                          <TextField
+                            fullWidth
+                            label="کلمات سفارشی"
+                            value={(formData.profanityCheck?.customWords || []).join(', ')}
+                            onChange={(e) => {
+                              const profanity = formData.profanityCheck || {};
+                              handleChange('profanityCheck', { ...profanity, customWords: e.target.value.split(',').map(w => w.trim()) });
+                            }}
+                            placeholder="کلمات را با کاما جدا کنید"
+                            sx={{ '& .MuiOutlinedInput-root': { background: 'rgba(255, 255, 255, 0.8)' } }}
+                          />
+                        </Grid>
+                      </Grid>
+                    )}
+                  </Grid>
+                  
+                  {/* Indexing */}
+                  <Grid item xs={12}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                      <Typography variant="body2" sx={{ fontWeight: 600, color: '#64748B' }}>
+                        نمایه‌سازی
+                      </Typography>
+                      <HelpTooltip
+                        title="نمایه‌سازی"
+                        description="قابلیت جست‌وجو و فیلتر روی این فیلد."
+                        example="«این فیلد در نتایج جست‌وجو می‌آید»"
+                      />
+                    </Box>
+                    <Grid container spacing={2}>
+                      <Grid item xs={6}>
+                        <FormControlLabel
+                          control={
+                            <Switch
+                              checked={formData.indexing?.searchable !== false}
+                              onChange={(e) => {
+                                const indexing = formData.indexing || {};
+                                handleChange('indexing', { ...indexing, searchable: e.target.checked });
+                              }}
+                              size="small"
+                            />
+                          }
+                          label="قابل جستجو"
+                        />
+                      </Grid>
+                      <Grid item xs={6}>
+                        <FormControlLabel
+                          control={
+                            <Switch
+                              checked={formData.indexing?.filterable !== false}
+                              onChange={(e) => {
+                                const indexing = formData.indexing || {};
+                                handleChange('indexing', { ...indexing, filterable: e.target.checked });
+                              }}
+                              size="small"
+                            />
+                          }
+                          label="قابل فیلتر"
+                        />
+                      </Grid>
+                    </Grid>
+                  </Grid>
+                  
+                  {/* Analyzer */}
+                  <Grid item xs={12} md={6}>
+                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                      <FormControl fullWidth>
+                        <InputLabel>آنالایزر جستجو</InputLabel>
+                        <Select
+                          value={formData.analyzer || 'standard'}
+                          onChange={(e) => handleChange('analyzer', e.target.value)}
+                          label="آنالایزر جستجو"
+                          sx={{ background: 'rgba(255, 255, 255, 0.8)' }}
+                        >
+                          <MenuItem value="standard">استاندارد</MenuItem>
+                          <MenuItem value="persian">فارسی</MenuItem>
+                        </Select>
+                      </FormControl>
+                      <HelpTooltip
+                        title="آنالایزر جست‌وجو"
+                        description="بهبود تطبیق جست‌وجو با زبان/ریشه‌یابی."
+                        example="«می‌روم ≈ رفتن (fa analyzer)»"
+                      />
+                    </Box>
+                  </Grid>
+                  
+                  {/* Store Raw & Normalized */}
+                  <Grid item xs={12} md={6}>
+                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                      <FormControlLabel
+                        control={
+                          <Switch
+                            checked={formData.storeRawAndNormalized || false}
+                            onChange={(e) => handleChange('storeRawAndNormalized', e.target.checked)}
+                            size="small"
+                          />
+                        }
+                        label="ذخیره نسخه خام و نرمال‌شده"
+                      />
+                      <HelpTooltip
+                        title="ذخیره نسخه خام و نرمال‌شده"
+                        description="نگه‌داری مقدار ورودی و نسخهٔ استاندارد شده."
+                        example="مقدار خام: ۱۲۳ و نرمال: 123"
+                      />
+                    </Box>
+                  </Grid>
+                </Grid>
+              </Paper>
+              <Paper
+                sx={{
+                  p: 3,
+                  borderRadius: '12px',
+                  background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(248, 250, 252, 0.8) 100%)',
+                  backdropFilter: 'blur(10px)',
+                  border: '1px solid rgba(135, 206, 250, 0.2)',
+                  boxShadow: '0 4px 16px rgba(135, 206, 250, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.8)',
+                }}
+              >
+                <Typography variant="h6" sx={{ mb: 3, color: '#4A90E2', fontWeight: 600 }}>
+                  ویژگی‌های نمایشی
+                </Typography>
+                
+                <Grid container spacing={3}>
+                  {/* Variant */}
+                  <Grid item xs={12}>
+                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                      <FormControlLabel
+                        control={
+                          <Switch
+                            checked={formData.enableVariant || false}
+                            onChange={(e) => handleChange('enableVariant', e.target.checked)}
+                            size="small"
+                          />
+                        }
+                        label="نوع نمایش"
+                        sx={{ mb: 2 }}
+                      />
+                      <HelpTooltip
+                        title="نوع نمایش"
+                        description="الگوی UI فیلد: ساده/آکاردئونی/چندخطی/متن‌غنی/درجا/چیپ‌ها/پِل/ماسک/پاپ‌اور."
+                        example="«یادداشت طولانی ⇒ TextArea»"
+                      />
+                    </Box>
+                    {formData.enableVariant && (
+                      <FormControl fullWidth>
+                        <InputLabel>نوع نمایش</InputLabel>
+                        <Select
+                          value={formData.variant || 'plain'}
+                          onChange={(e) => handleChange('variant', e.target.value)}
+                          label="نوع نمایش"
+                          sx={{ background: 'rgba(255, 255, 255, 0.8)' }}
+                        >
+                          <MenuItem value="plain">معمولی</MenuItem>
+                          <MenuItem value="accordion">آکاردئونی</MenuItem>
+                          <MenuItem value="textarea">چندخطی</MenuItem>
+                          <MenuItem value="richtext">متن غنی</MenuItem>
+                          <MenuItem value="inline">ویرایش درجا</MenuItem>
+                          <MenuItem value="chips">چیپ‌ها</MenuItem>
+                          <MenuItem value="pill">پِل/بج</MenuItem>
+                          <MenuItem value="masked">ماسک‌شده</MenuItem>
+                          <MenuItem value="popover">پاپ‌اور/مودال</MenuItem>
+                        </Select>
+                      </FormControl>
+                    )}
+                  </Grid>
+                  
+                  {/* Accordion Configuration */}
+                  {formData.enableVariant && formData.variant === 'accordion' && (
+                    <>
+                      {/* Accordion Display Mode */}
+                      <Grid item xs={12}>
+                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                          <FormControl fullWidth>
+                            <InputLabel>نحوه نمایش آکاردئون</InputLabel>
+                            <Select
+                              value={formData.accordionDisplayMode || 'title'}
+                              onChange={(e) => handleChange('accordionDisplayMode', e.target.value)}
+                              label="نحوه نمایش آکاردئون"
+                              sx={{ background: 'rgba(255, 255, 255, 0.8)' }}
+                            >
+                              <MenuItem value="title">نمایش عنوان ثابت</MenuItem>
+                              <MenuItem value="options">نمایش گزینه‌های انتخابی</MenuItem>
+                            </Select>
+                          </FormControl>
+                          <HelpTooltip
+                            title="نحوه نمایش آکاردئون"
+                            description="تعیین کنید که آکاردئون فقط عنوان نمایش دهد یا گزینه‌هایی برای انتخاب ارائه کند."
+                            example="«عنوان ثابت: نمایش اطلاعات / گزینه‌های انتخابی: انتخاب از لیست»"
+                          />
+                        </Box>
+                      </Grid>
+                      
+                      {/* Accordion Title - Only when title mode */}
+                      {formData.accordionDisplayMode === 'title' && (
+                        <Grid item xs={12}>
+                          <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                            <TextField
+                              fullWidth
+                              label="عنوان آکاردئون"
+                              value={formData.accordionTitle || ''}
+                              onChange={(e) => handleChange('accordionTitle', e.target.value)}
+                              placeholder="عنوان نمایش‌داده‌شده روی آکاردئون"
+                              sx={{ '& .MuiOutlinedInput-root': { background: 'rgba(255, 255, 255, 0.8)' } }}
+                            />
+                            <HelpTooltip
+                              title="عنوان آکاردئون"
+                              description="عنوانی که روی سکشن جمع‌شونده نمایش می‌دهد (فقط نمایشی)."
+                              example="«توضیحات پیشرفته»"
+                            />
+                          </Box>
+                        </Grid>
+                      )}
+                      
+                      {/* Accordion Options - Only when options mode */}
+                      {formData.accordionDisplayMode === 'options' && (
+                        <Grid item xs={12}>
+                          <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                            <Typography variant="subtitle2" sx={{ color: 'text.secondary' }}>
+                              گزینه‌های انتخابی آکاردئون
+                            </Typography>
+                            <HelpTooltip
+                              title="گزینه‌های انتخابی آکاردئون"
+                              description="گزینه‌هایی که کاربر می‌تواند از داخل آکاردئون انتخاب کند."
+                              example="«ویژگی عمومی، ویژگی تخصصی، سایر ویژگی‌ها»"
+                            />
+                          </Box>
+                          
+                          {/* Options List */}
+                          <Box sx={{ mb: 2 }}>
+                            {(formData.options || []).map((option, index) => (
+                              <Box
+                                key={index}
+                                sx={{
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  gap: 1,
+                                  mb: 1,
+                                  p: 1,
+                                  border: '1px solid',
+                                  borderColor: 'divider',
+                                  borderRadius: 1,
+                                  backgroundColor: 'rgba(255, 255, 255, 0.8)'
+                                }}
+                              >
+                                <TextField
+                                  fullWidth
+                                  size="small"
+                                  value={option}
+                                  onChange={(e) => {
+                                    const newOptions = [...(formData.options || [])];
+                                    newOptions[index] = e.target.value;
+                                    handleChange('options', newOptions);
+                                  }}
+                                  placeholder={`گزینه ${index + 1}`}
+                                  variant="outlined"
+                                />
+                                <IconButton
+                                  size="small"
+                                  color="error"
+                                  onClick={() => {
+                                    const newOptions = [...(formData.options || [])];
+                                    newOptions.splice(index, 1);
+                                    handleChange('options', newOptions);
+                                  }}
+                                  sx={{ minWidth: 'auto', p: 0.5 }}
+                                >
+                                  ✕
+                                </IconButton>
+                              </Box>
+                            ))}
+                            
+                            {(!formData.options || formData.options.length === 0) && (
+                              <Typography
+                                variant="body2"
+                                color="text.secondary"
+                                sx={{ textAlign: 'center', py: 2, fontStyle: 'italic' }}
+                              >
+                                هنوز گزینه‌ای اضافه نشده است
+                              </Typography>
+                            )}
+                          </Box>
+                          
+                          {/* Add New Option */}
+                          <Box sx={{ display: 'flex', gap: 1 }}>
+                            <TextField
+                              fullWidth
+                              size="small"
+                              placeholder="گزینه جدید را بنویسید..."
+                              value={formData.newOptionText || ''}
+                              onChange={(e) => handleChange('newOptionText', e.target.value)}
+                              onKeyPress={(e) => {
+                                if (e.key === 'Enter' && formData.newOptionText?.trim()) {
+                                  const newOptions = [...(formData.options || []), formData.newOptionText.trim()];
+                                  handleChange('options', newOptions);
+                                  handleChange('newOptionText', '');
+                                }
+                              }}
+                              sx={{ '& .MuiOutlinedInput-root': { background: 'rgba(255, 255, 255, 0.9)' } }}
+                            />
+                            <Button
+                              variant="outlined"
+                              size="small"
+                              onClick={() => {
+                                if (formData.newOptionText?.trim()) {
+                                  const newOptions = [...(formData.options || []), formData.newOptionText.trim()];
+                                  handleChange('options', newOptions);
+                                  handleChange('newOptionText', '');
+                                }
+                              }}
+                              disabled={!formData.newOptionText?.trim()}
+                              sx={{ minWidth: 'auto', px: 2 }}
+                            >
+                              افزودن
+                            </Button>
+                          </Box>
+                        </Grid>
+                      )}
+                    </>
+                  )}
+                  
+                  {/* Mask Pattern */}
+                  {formData.enableVariant && formData.variant === 'masked' && (
+                    <Grid item xs={12}>
+                      <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                        <TextField
+                          fullWidth
+                          label="الگوی ماسک"
+                          value={formData.maskPattern || ''}
+                          onChange={(e) => handleChange('maskPattern', e.target.value)}
+                          placeholder="مثال: ####-##-## (# = رقم)"
+                          sx={{ '& .MuiOutlinedInput-root': { background: 'rgba(255, 255, 255, 0.8)' } }}
+                        />
+                        <HelpTooltip
+                          title="الگوی ماسک"
+                          description="اجبار به فرم خاصِ نمایش/ورود."
+                          example="«####-##-##» برای تاریخ"
+                        />
+                      </Box>
+                    </Grid>
+                  )}
+                  
+                  {/* Textarea Configuration */}
+                  {formData.enableVariant && formData.variant === 'textarea' && (
+                    <>
+                      <Grid item xs={12}>
+                        <Typography variant="subtitle2" sx={{ color: 'text.secondary', mb: 2 }}>
+                          تنظیمات متن چندخطی
+                        </Typography>
+                      </Grid>
+                      
+                      <Grid item xs={6}>
+                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                          <TextField
+                            fullWidth
+                            type="number"
+                            label="تعداد خطوط"
+                            value={formData.textareaRows || 4}
+                            onChange={(e) => handleChange('textareaRows', parseInt(e.target.value) || 4)}
+                            inputProps={{ min: 2, max: 20 }}
+                            sx={{ '& .MuiOutlinedInput-root': { background: 'rgba(255, 255, 255, 0.8)' } }}
+                          />
+                          <HelpTooltip
+                            title="تعداد خطوط"
+                            description="تعداد خطوط قابل مشاهده در متن چندخطی."
+                            example="«4 = 4 خط»"
+                          />
+                        </Box>
+                      </Grid>
+                      
+                      <Grid item xs={6}>
+                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                          <TextField
+                            fullWidth
+                            type="number"
+                            label="حداکثر خطوط"
+                            value={formData.textareaMaxRows || 10}
+                            onChange={(e) => handleChange('textareaMaxRows', parseInt(e.target.value) || 10)}
+                            inputProps={{ min: formData.textareaRows || 4, max: 50 }}
+                            sx={{ '& .MuiOutlinedInput-root': { background: 'rgba(255, 255, 255, 0.8)' } }}
+                          />
+                          <HelpTooltip
+                            title="حداکثر خطوط"
+                            description="حداکثر خطوط قابل گسترش (اگر قابلیت تغییر اندازه فعال باشد)."
+                            example="«10 = تا 10 خط قابل گسترش»"
+                          />
+                        </Box>
+                      </Grid>
+                      
+                      <Grid item xs={12}>
+                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                          <FormControl fullWidth>
+                            <InputLabel>قابلیت تغییر اندازه</InputLabel>
+                            <Select
+                              value={formData.textareaResize || 'vertical'}
+                              onChange={(e) => handleChange('textareaResize', e.target.value)}
+                              label="قابلیت تغییر اندازه"
+                              sx={{ background: 'rgba(255, 255, 255, 0.8)' }}
+                            >
+                              <MenuItem value="none">بدون تغییر اندازه</MenuItem>
+                              <MenuItem value="vertical">عمودی (ارتفاع)</MenuItem>
+                              <MenuItem value="horizontal">افقی (عرض)</MenuItem>
+                              <MenuItem value="both">هر دو</MenuItem>
+                            </Select>
+                          </FormControl>
+                          <HelpTooltip
+                            title="قابلیت تغییر اندازه"
+                            description="کاربر می‌تواند اندازه متن چندخطی را تغییر دهد."
+                            example="«عمودی: فقط ارتفاع قابل تغییر»"
+                          />
+                        </Box>
+                      </Grid>
+                    </>
+                  )}
+                  
+                  {/* Richtext Configuration */}
+                  {formData.enableVariant && formData.variant === 'richtext' && (
+                    <>
+                      <Grid item xs={12}>
+                        <Typography variant="subtitle2" sx={{ color: 'text.secondary', mb: 2 }}>
+                          تنظیمات متن غنی
+                        </Typography>
+                      </Grid>
+                      
+                      <Grid item xs={12}>
+                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                          <TextField
+                            fullWidth
+                            type="number"
+                            label="ارتفاع ویرایشگر (پیکسل)"
+                            value={formData.richtextHeight || 300}
+                            onChange={(e) => handleChange('richtextHeight', parseInt(e.target.value) || 300)}
+                            inputProps={{ min: 200, max: 800 }}
+                            sx={{ '& .MuiOutlinedInput-root': { background: 'rgba(255, 255, 255, 0.8)' } }}
+                          />
+                          <HelpTooltip
+                            title="ارتفاع ویرایشگر"
+                            description="ارتفاع محیط ویرایش متن غنی به پیکسل."
+                            example="«300 = 300 پیکسل ارتفاع»"
+                          />
+                        </Box>
+                      </Grid>
+                      
+                      <Grid item xs={12}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                          <Typography variant="subtitle2" sx={{ color: 'text.secondary' }}>
+                            ابزارهای نوار ابزار
+                          </Typography>
+                          <HelpTooltip
+                            title="ابزارهای نوار ابزار"
+                            description="ابزارهای قابل دسترس در ویرایشگر متن غنی."
+                            example="«بولد، ایتالیک، لینک، لیست»"
+                          />
+                        </Box>
+                        
+                        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 2 }}>
+                          {[
+                            { value: 'bold', label: 'بولد' },
+                            { value: 'italic', label: 'ایتالیک' },
+                            { value: 'underline', label: 'زیرخط' },
+                            { value: 'link', label: 'لینک' },
+                            { value: 'list', label: 'لیست' },
+                            { value: 'quote', label: 'نقل قول' },
+                            { value: 'code', label: 'کد' },
+                            { value: 'image', label: 'تصویر' }
+                          ].map((tool) => {
+                            const toolbarArray = formData.richtextToolbar || [];
+                            const isSelected = toolbarArray.includes(tool.value);
+                            
+                            return (
+                              <Chip
+                                key={tool.value}
+                                label={tool.label}
+                                variant={isSelected ? 'filled' : 'outlined'}
+                                color={isSelected ? 'primary' : 'default'}
+                                clickable
+                                onClick={() => {
+                                  const currentToolbar = formData.richtextToolbar || [];
+                                  const newToolbar = isSelected 
+                                    ? currentToolbar.filter(t => t !== tool.value)
+                                    : [...currentToolbar, tool.value];
+                                  handleChange('richtextToolbar', newToolbar);
+                                }}
+                                size="small"
+                              />
+                            );
+                          })}
+                        </Box>
+                      </Grid>
+                    </>
+                  )}
+                  
+                  {/* Chips Configuration */}
+                  {formData.enableVariant && formData.variant === 'chips' && (
+                    <>
+                      <Grid item xs={12}>
+                        <Typography variant="subtitle2" sx={{ color: 'text.secondary', mb: 2 }}>
+                          تنظیمات چیپ‌ها
+                        </Typography>
+                      </Grid>
+                      
+                      <Grid item xs={4}>
+                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                          <FormControl fullWidth>
+                            <InputLabel>رنگ چیپ</InputLabel>
+                            <Select
+                              value={formData.chipsColor || 'default'}
+                              onChange={(e) => handleChange('chipsColor', e.target.value)}
+                              label="رنگ چیپ"
+                              sx={{ background: 'rgba(255, 255, 255, 0.8)' }}
+                            >
+                              <MenuItem value="default">پیش‌فرض</MenuItem>
+                              <MenuItem value="primary">اصلی</MenuItem>
+                              <MenuItem value="secondary">ثانویه</MenuItem>
+                            </Select>
+                          </FormControl>
+                          <HelpTooltip
+                            title="رنگ چیپ"
+                            description="رنگ پایه چیپ‌های نمایشی."
+                            example="«اصلی: آبی برند»"
+                          />
+                        </Box>
+                      </Grid>
+                      
+                      <Grid item xs={4}>
+                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                          <FormControl fullWidth>
+                            <InputLabel>نوع چیپ</InputLabel>
+                            <Select
+                              value={formData.chipsVariant || 'filled'}
+                              onChange={(e) => handleChange('chipsVariant', e.target.value)}
+                              label="نوع چیپ"
+                              sx={{ background: 'rgba(255, 255, 255, 0.8)' }}
+                            >
+                              <MenuItem value="filled">پرشده</MenuItem>
+                              <MenuItem value="outlined">حاشیه‌دار</MenuItem>
+                            </Select>
+                          </FormControl>
+                          <HelpTooltip
+                            title="نوع چیپ"
+                            description="نحوه نمایش چیپ‌ها: پرشده یا حاشیه‌دار."
+                            example="«پرشده: رنگ زمینه دارد»"
+                          />
+                        </Box>
+                      </Grid>
+                      
+                      <Grid item xs={4}>
+                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                          <TextField
+                            fullWidth
+                            type="number"
+                            label="حداکثر تعداد"
+                            value={formData.chipsMaxCount || 10}
+                            onChange={(e) => handleChange('chipsMaxCount', parseInt(e.target.value) || 10)}
+                            inputProps={{ min: 1, max: 50 }}
+                            sx={{ '& .MuiOutlinedInput-root': { background: 'rgba(255, 255, 255, 0.8)' } }}
+                          />
+                          <HelpTooltip
+                            title="حداکثر تعداد"
+                            description="حداکثر تعداد چیپ‌های قابل نمایش."
+                            example="«10 = بیشتر نمایش نمی‌دهد»"
+                          />
+                        </Box>
+                      </Grid>
+                      
+                      <Grid item xs={12}>
+                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                          <FormControlLabel
+                            control={
+                              <Switch
+                                checked={formData.chipsDeletable ?? true}
+                                onChange={(e) => handleChange('chipsDeletable', e.target.checked)}
+                                size="small"
+                              />
+                            }
+                            label="قابل حذف"
+                          />
+                          <HelpTooltip
+                            title="قابل حذف"
+                            description="کاربر می‌تواند چیپ‌ها را حذف کند."
+                            example="«ایکس برای حذف»"
+                          />
+                        </Box>
+                      </Grid>
+                    </>
+                  )}
+                  
+                  {/* Pill Configuration */}
+                  {formData.enableVariant && formData.variant === 'pill' && (
+                    <>
+                      <Grid item xs={12}>
+                        <Typography variant="subtitle2" sx={{ color: 'text.secondary', mb: 2 }}>
+                          تنظیمات پِل/بج
+                        </Typography>
+                      </Grid>
+                      
+                      <Grid item xs={6}>
+                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                          <FormControl fullWidth>
+                            <InputLabel>رنگ پِل</InputLabel>
+                            <Select
+                              value={formData.pillColor || 'primary'}
+                              onChange={(e) => handleChange('pillColor', e.target.value)}
+                              label="رنگ پِل"
+                              sx={{ background: 'rgba(255, 255, 255, 0.8)' }}
+                            >
+                              <MenuItem value="default">پیش‌فرض</MenuItem>
+                              <MenuItem value="primary">اصلی</MenuItem>
+                              <MenuItem value="secondary">ثانویه</MenuItem>
+                              <MenuItem value="success">موفقیت</MenuItem>
+                              <MenuItem value="warning">هشدار</MenuItem>
+                              <MenuItem value="error">خطا</MenuItem>
+                            </Select>
+                          </FormControl>
+                          <HelpTooltip
+                            title="رنگ پِل"
+                            description="رنگ پِل نمایشی مقدار."
+                            example="«موفقیت: سبز»"
+                          />
+                        </Box>
+                      </Grid>
+                      
+                      <Grid item xs={6}>
+                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                          <FormControl fullWidth>
+                            <InputLabel>اندازه پِل</InputLabel>
+                            <Select
+                              value={formData.pillSize || 'medium'}
+                              onChange={(e) => handleChange('pillSize', e.target.value)}
+                              label="اندازه پِل"
+                              sx={{ background: 'rgba(255, 255, 255, 0.8)' }}
+                            >
+                              <MenuItem value="small">کوچک</MenuItem>
+                              <MenuItem value="medium">متوسط</MenuItem>
+                            </Select>
+                          </FormControl>
+                          <HelpTooltip
+                            title="اندازه پِل"
+                            description="اندازه پِل نمایشی."
+                            example="«کوچک = compact»"
+                          />
+                        </Box>
+                      </Grid>
+                    </>
+                  )}
+                  
+                  {/* Popover Configuration */}
+                  {formData.enableVariant && formData.variant === 'popover' && (
+                    <>
+                      <Grid item xs={12}>
+                        <Typography variant="subtitle2" sx={{ color: 'text.secondary', mb: 2 }}>
+                          تنظیمات پاپ‌اور/مودال
+                        </Typography>
+                      </Grid>
+                      
+                      <Grid item xs={4}>
+                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                          <FormControl fullWidth>
+                            <InputLabel>نحوه بازشدن</InputLabel>
+                            <Select
+                              value={formData.popoverTrigger || 'click'}
+                              onChange={(e) => handleChange('popoverTrigger', e.target.value)}
+                              label="نحوه بازشدن"
+                              sx={{ background: 'rgba(255, 255, 255, 0.8)' }}
+                            >
+                              <MenuItem value="click">کلیک</MenuItem>
+                              <MenuItem value="hover">هاور</MenuItem>
+                            </Select>
+                          </FormControl>
+                          <HelpTooltip
+                            title="نحوه بازشدن"
+                            description="چگونه پاپ‌اور باز می‌شود."
+                            example="«کلیک: با کلیک»"
+                          />
+                        </Box>
+                      </Grid>
+                      
+                      <Grid item xs={4}>
+                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                          <FormControl fullWidth>
+                            <InputLabel>اندازه پاپ‌اور</InputLabel>
+                            <Select
+                              value={formData.popoverSize || 'medium'}
+                              onChange={(e) => handleChange('popoverSize', e.target.value)}
+                              label="اندازه پاپ‌اور"
+                              sx={{ background: 'rgba(255, 255, 255, 0.8)' }}
+                            >
+                              <MenuItem value="small">کوچک</MenuItem>
+                              <MenuItem value="medium">متوسط</MenuItem>
+                              <MenuItem value="large">بزرگ</MenuItem>
+                            </Select>
+                          </FormControl>
+                          <HelpTooltip
+                            title="اندازه پاپ‌اور"
+                            description="عرض و ارتفاع پاپ‌اور."
+                            example="«بزرگ = fullscreen»"
+                          />
+                        </Box>
+                      </Grid>
+                      
+                      <Grid item xs={4}>
+                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                          <FormControl fullWidth>
+                            <InputLabel>موقعیت</InputLabel>
+                            <Select
+                              value={formData.popoverPosition || 'bottom'}
+                              onChange={(e) => handleChange('popoverPosition', e.target.value)}
+                              label="موقعیت"
+                              sx={{ background: 'rgba(255, 255, 255, 0.8)' }}
+                            >
+                              <MenuItem value="top">بالا</MenuItem>
+                              <MenuItem value="bottom">پایین</MenuItem>
+                              <MenuItem value="left">چپ</MenuItem>
+                              <MenuItem value="right">راست</MenuItem>
+                            </Select>
+                          </FormControl>
+                          <HelpTooltip
+                            title="موقعیت"
+                            description="محل ظاهرشدن پاپ‌اور."
+                            example="«پایین: زیر دکمه»"
+                          />
+                        </Box>
+                      </Grid>
+                    </>
+                  )}
+                  
+                  {/* Inline Configuration */}
+                  {formData.enableVariant && formData.variant === 'inline' && (
+                    <>
+                      <Grid item xs={12}>
+                        <Typography variant="subtitle2" sx={{ color: 'text.secondary', mb: 2 }}>
+                          تنظیمات ویرایش درجا
+                        </Typography>
+                      </Grid>
+                      
+                      <Grid item xs={4}>
+                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                          <FormControl fullWidth>
+                            <InputLabel>موقعیت برچسب</InputLabel>
+                            <Select
+                              value={formData.inlineLabelPosition || 'left'}
+                              onChange={(e) => handleChange('inlineLabelPosition', e.target.value)}
+                              label="موقعیت برچسب"
+                              sx={{ background: 'rgba(255, 255, 255, 0.8)' }}
+                            >
+                              <MenuItem value="left">چپ</MenuItem>
+                              <MenuItem value="top">بالا</MenuItem>
+                            </Select>
+                          </FormControl>
+                          <HelpTooltip
+                            title="موقعیت برچسب"
+                            description="برچسب کجا نمایش داده شود."
+                            example="«چپ: کنار فیلد»"
+                          />
+                        </Box>
+                      </Grid>
+                      
+                      <Grid item xs={4}>
+                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                          <TextField
+                            fullWidth
+                            type="number"
+                            label="عرض برچسب (پیکسل)"
+                            value={formData.inlineLabelWidth || 120}
+                            onChange={(e) => handleChange('inlineLabelWidth', parseInt(e.target.value) || 120)}
+                            inputProps={{ min: 80, max: 300 }}
+                            sx={{ '& .MuiOutlinedInput-root': { background: 'rgba(255, 255, 255, 0.8)' } }}
+                          />
+                          <HelpTooltip
+                            title="عرض برچسب"
+                            description="عرض ناحیه برچسب به پیکسل."
+                            example="«120 = 120 پیکسل»"
+                          />
+                        </Box>
+                      </Grid>
+                      
+                      <Grid item xs={4}>
+                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                          <FormControl fullWidth>
+                            <InputLabel>فاصله‌گذاری</InputLabel>
+                            <Select
+                              value={formData.inlineSpacing || 'normal'}
+                              onChange={(e) => handleChange('inlineSpacing', e.target.value)}
+                              label="فاصله‌گذاری"
+                              sx={{ background: 'rgba(255, 255, 255, 0.8)' }}
+                            >
+                              <MenuItem value="compact">فشرده</MenuItem>
+                              <MenuItem value="normal">عادی</MenuItem>
+                              <MenuItem value="comfortable">راحت</MenuItem>
+                            </Select>
+                          </FormControl>
+                          <HelpTooltip
+                            title="فاصله‌گذاری"
+                            description="فضای بین عناصر."
+                            example="«راحت = فضای بیشتر»"
+                          />
+                        </Box>
+                      </Grid>
+                    </>
+                  )}
+                  
+                  {/* Selection Aid */}
+                  <Grid item xs={12}>
+                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                      <FormControlLabel
+                        control={
+                          <Switch
+                            checked={formData.enableSelectionAid || false}
+                            onChange={(e) => handleChange('enableSelectionAid', e.target.checked)}
+                            size="small"
+                          />
+                        }
+                        label="کمک انتخاب"
+                        sx={{ mb: 2 }}
+                      />
+                      <HelpTooltip
+                        title="کمک انتخاب"
+                        description="کمکِ انتخاب از پیشنهادها (تکی/چندتایی) برای پرکردن متن."
+                        example="«انتخاب چند برچسب از لیست»"
+                      />
+                    </Box>
+                    {formData.enableSelectionAid && (
+                      <FormControl fullWidth>
+                        <InputLabel>نوع کمک انتخاب</InputLabel>
+                        <Select
+                          value={formData.selectionAid || 'none'}
+                          onChange={(e) => handleChange('selectionAid', e.target.value)}
+                          label="نوع کمک انتخاب"
+                          sx={{ background: 'rgba(255, 255, 255, 0.8)' }}
+                        >
+                          <MenuItem value="none">بدون کمک</MenuItem>
+                          <MenuItem value="single">انتخاب تکی از پیشنهادها</MenuItem>
+                          <MenuItem value="multi">انتخاب چندتایی از پیشنهادها</MenuItem>
+                        </Select>
+                      </FormControl>
+                    )}
+                  </Grid>
+                  
+                  {/* Visual Enhancements */}
+                  <Grid item xs={12}>
+                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                      <FormControlLabel
+                        control={
+                          <Switch
+                            checked={formData.enableVisualEnhancements || false}
+                            onChange={(e) => handleChange('enableVisualEnhancements', e.target.checked)}
+                            size="small"
+                          />
+                        }
+                        label="تنظیمات ظاهری"
+                        sx={{ mb: 2 }}
+                      />
+                      <HelpTooltip
+                        title="تنظیمات ظاهری"
+                        description="اندازه، آیکون، پیشوند/پسوند، شمارنده و دکمه کپی."
+                        example="اندازه کوچک/متوسط/بزرگ/کامل"
+                      />
+                    </Box>
+                    {formData.enableVisualEnhancements && (
+                      <Grid container spacing={2}>
+                        <Grid item xs={6} md={3}>
+                          <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                            <FormControl fullWidth>
+                              <InputLabel>اندازه</InputLabel>
+                              <Select
+                                value={formData.size || 'md'}
+                                onChange={(e) => handleChange('size', e.target.value)}
+                                label="اندازه"
+                                sx={{ background: 'rgba(255, 255, 255, 0.8)' }}
+                              >
+                                <MenuItem value="sm">کوچک</MenuItem>
+                                <MenuItem value="md">متوسط</MenuItem>
+                                <MenuItem value="lg">بزرگ</MenuItem>
+                                <MenuItem value="full">کامل</MenuItem>
+                              </Select>
+                            </FormControl>
+                            <HelpTooltip
+                              title="اندازه"
+                              description="کنترل عرض/بلندای ورودی در فرم."
+                              example="«کامنت ⇒ بزرگ/کامل»"
+                            />
+                          </Box>
+                        </Grid>
+                        
+                        <Grid item xs={6} md={3}>
+                          <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                            <TextField
+                              fullWidth
+                              label="آیکون"
+                              value={formData.icon || ''}
+                              onChange={(e) => handleChange('icon', e.target.value)}
+                              placeholder="نام آیکون"
+                              sx={{ '& .MuiOutlinedInput-root': { background: 'rgba(255, 255, 255, 0.8)' } }}
+                            />
+                            <HelpTooltip
+                              title="آیکون / پیشوند / پسوند"
+                              description="نشانهٔ بصری یا متن ثابت قبل/بعد از ورودی."
+                              example="«پسوند: .iran»"
+                            />
+                          </Box>
+                        </Grid>
+                        
+                        <Grid item xs={6} md={3}>
+                          <TextField
+                            fullWidth
+                            label="پیشوند"
+                            value={formData.prefix || ''}
+                            onChange={(e) => handleChange('prefix', e.target.value)}
+                            placeholder="متن پیشوند"
+                            sx={{ '& .MuiOutlinedInput-root': { background: 'rgba(255, 255, 255, 0.8)' } }}
+                          />
+                        </Grid>
+                        
+                        <Grid item xs={6} md={3}>
+                          <TextField
+                            fullWidth
+                            label="پسوند"
+                            value={formData.suffix || ''}
+                            onChange={(e) => handleChange('suffix', e.target.value)}
+                            placeholder="متن پسوند"
+                            sx={{ '& .MuiOutlinedInput-root': { background: 'rgba(255, 255, 255, 0.8)' } }}
+                          />
+                        </Grid>
+                        
+                        <Grid item xs={6}>
+                          <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                            <FormControl fullWidth>
+                              <InputLabel>نمایش شمارنده</InputLabel>
+                              <Select
+                                value={formData.counterDisplay || 'off'}
+                                onChange={(e) => handleChange('counterDisplay', e.target.value)}
+                                label="نمایش شمارنده"
+                                sx={{ background: 'rgba(255, 255, 255, 0.8)' }}
+                              >
+                                <MenuItem value="off">خاموش</MenuItem>
+                                <MenuItem value="bottom">پایین فیلد</MenuItem>
+                                <MenuItem value="inside">داخل فیلد</MenuItem>
+                              </Select>
+                            </FormControl>
+                            <HelpTooltip
+                              title="نمایش شمارنده"
+                              description="شمارندهٔ کاراکتر برای محدودیت‌ها."
+                              example="«۱۲/۱۴۰»"
+                            />
+                          </Box>
+                        </Grid>
+                        
+                        <Grid item xs={6}>
+                          <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                            <FormControlLabel
+                              control={
+                                <Switch
+                                  checked={formData.copyButton || false}
+                                  onChange={(e) => handleChange('copyButton', e.target.checked)}
+                                  size="small"
+                                />
+                              }
+                              label="دکمه کپی"
+                            />
+                            <HelpTooltip
+                              title="دکمه کپی"
+                              description="کپی سریع مقدار فیلد به کلیپ‌بورد."
+                              example="«کپی شناسه»"
+                            />
+                          </Box>
+                        </Grid>
+                      </Grid>
+                    )}
+                  </Grid>
+                  
+                  {/* Style Configuration */}
+                  <Grid item xs={12}>
+                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                      <FormControlLabel
+                        control={
+                          <Switch
+                            checked={formData.enableStyleConfig || false}
+                            onChange={(e) => handleChange('enableStyleConfig', e.target.checked)}
+                            size="small"
+                          />
+                        }
+                        label="تنظیمات استایل"
+                        sx={{ mb: 2 }}
+                      />
+                      <HelpTooltip
+                        title="تنظیمات استایل"
+                        description="ظاهر فیلد هنگام read-only و نحوه نمایش پیام خطا."
+                        example="محل/نوع نمایش پیام اعتبارسنجی"
+                      />
+                    </Box>
+                    {formData.enableStyleConfig && (
+                      <Grid container spacing={2}>
+                        <Grid item xs={6}>
+                          <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                            <FormControl fullWidth>
+                              <InputLabel>استایل فقط‌خواندنی</InputLabel>
+                              <Select
+                                value={formData.readOnlyStyle || 'normal'}
+                                onChange={(e) => handleChange('readOnlyStyle', e.target.value)}
+                                label="استایل فقط‌خواندنی"
+                                sx={{ background: 'rgba(255, 255, 255, 0.8)' }}
+                              >
+                                <MenuItem value="normal">عادی</MenuItem>
+                                <MenuItem value="disabled">غیرفعال</MenuItem>
+                                <MenuItem value="plain">ساده</MenuItem>
+                              </Select>
+                            </FormControl>
+                            <HelpTooltip
+                              title="استایل فقط‌خواندنی"
+                              description="ظاهر فیلد هنگام read-only."
+                              example="«رنگ کم‌رنگ و بدون Border»"
+                            />
+                          </Box>
+                        </Grid>
+                        
+                        <Grid item xs={6}>
+                          <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                            <FormControl fullWidth>
+                              <InputLabel>استایل پیام خطا</InputLabel>
+                              <Select
+                                value={formData.validationMessageStyle || 'bottom'}
+                                onChange={(e) => handleChange('validationMessageStyle', e.target.value)}
+                                label="استایل پیام خطا"
+                                sx={{ background: 'rgba(255, 255, 255, 0.8)' }}
+                              >
+                                <MenuItem value="bottom">زیر فیلد</MenuItem>
+                                <MenuItem value="tooltip">راهنمای ابزار</MenuItem>
+                                <MenuItem value="inline">درون خط</MenuItem>
+                              </Select>
+                            </FormControl>
+                            <HelpTooltip
+                              title="استایل پیام خطا"
+                              description="محل/نوع نمایش پیام اعتبارسنجی."
+                              example="«پیام قرمز زیر فیلد»"
+                            />
+                          </Box>
+                        </Grid>
+                      </Grid>
+                    )}
+                  </Grid>
+                </Grid>
+              </Paper>
+            </Box>
+          )}
+
+          {currentStep === 3 && (
+            <Box>
+              <Box sx={{ textAlign: 'center', mb: 4 }}>
+                <Typography 
+                  variant="h5" 
+                  gutterBottom
+                  sx={{
+                    fontWeight: 700,
+                    background: 'linear-gradient(45deg, #4A90E2 30%, #7BB3F0 90%)',
+                    backgroundClip: 'text',
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent',
+                  }}
+                >
+                  قوانین حاکم بر فیلد
+                </Typography>
+                <Typography variant="body1" color="text.secondary" sx={{ fontSize: '1.1rem', opacity: 0.8, mb: 4 }}>
+                  قوانین اعتبارسنجی، وابستگی و کنترلی برای این فیلد تعریف کنید
+                </Typography>
+              </Box>
+              
+              {/* قوانین اعتبارسنجی */}
+              <Paper
+                sx={{
+                  p: 3,
+                  mb: 3,
+                  borderRadius: '12px',
+                  background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(248, 250, 252, 0.8) 100%)',
+                  backdropFilter: 'blur(10px)',
+                  border: '1px solid rgba(135, 206, 250, 0.2)',
+                  boxShadow: '0 4px 16px rgba(135, 206, 250, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.8)',
+                }}
+              >
+                <Typography variant="h6" sx={{ mb: 3, color: '#4A90E2', fontWeight: 600 }}>
+                  قوانین اعتبارسنجی
+                </Typography>
+                
+                <Grid container spacing={3}>
+                  {/* Required */}
+                  <Grid item xs={12}>
+                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                      <FormControlLabel
+                        control={
+                          <Switch
+                            checked={formData.isRequired || false}
+                            onChange={(e) => handleChange('isRequired', e.target.checked)}
+                            size="small"
+                          />
+                        }
+                        label="الزامی بودن"
+                      />
+                      <HelpTooltip
+                        title="الزامی بودن"
+                        description="این فیلد باید حتماً پر شود و نمی‌توان خالی باشد."
+                        example="با فعال بودن این گزینه، کاربر باید حتماً این فیلد را پر کند"
+                      />
+                    </Box>
+                  </Grid>
+                  
+                  {/* Length Validation */}
+                  <Grid item xs={12}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                      <Typography variant="body2" sx={{ fontWeight: 600, color: '#64748B' }}>
+                        طول متن
+                      </Typography>
+                      <HelpTooltip
+                        title="طول متن"
+                        description="تعیین حداقل/حداکثر تعداد کاراکترهای ورودی."
+                        example="«حداقل ۳ و حداکثر ۵۰ کاراکتر.»"
+                      />
+                    </Box>
+                    <Grid container spacing={2}>
+                      <Grid item xs={6}>
+                        <TextField
+                          fullWidth
+                          type="number"
+                          label="حداقل طول"
+                          value={formData.validationRules?.minLength || ''}
+                          onChange={(e) => {
+                            const rules = formData.validationRules || {};
+                            handleChange('validationRules', { ...rules, minLength: parseInt(e.target.value) || undefined });
+                          }}
+                          placeholder="مثلاً 3"
+                          sx={{ '& .MuiOutlinedInput-root': { background: 'rgba(255, 255, 255, 0.8)' } }}
+                        />
+                      </Grid>
+                      <Grid item xs={6}>
+                        <TextField
+                          fullWidth
+                          type="number"
+                          label="حداکثر طول"
+                          value={formData.validationRules?.maxLength || ''}
+                          onChange={(e) => {
+                            const rules = formData.validationRules || {};
+                            handleChange('validationRules', { ...rules, maxLength: parseInt(e.target.value) || undefined });
+                          }}
+                          placeholder="مثلاً 255"
+                          sx={{ '& .MuiOutlinedInput-root': { background: 'rgba(255, 255, 255, 0.8)' } }}
+                        />
+                      </Grid>
+                    </Grid>
+                  </Grid>
+                  
+                  {/* Pattern Validation */}
+                  <Grid item xs={12}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                      <Typography variant="body2" sx={{ fontWeight: 600, color: '#64748B' }}>
+                        الگوی متن
+                      </Typography>
+                      <HelpTooltip
+                        title="الگوی متن"
+                        description="الگوی خاص برای بررسی فرمت ورودی کاربر."
+                        example="برای ایمیل: ^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
+                      />
+                    </Box>
+                    <Grid container spacing={2}>
+                      <Grid item xs={8}>
+                        <TextField
+                          fullWidth
+                          label="الگوی Regex"
+                          value={formData.validationRules?.pattern || ''}
+                          onChange={(e) => {
+                            const rules = formData.validationRules || {};
+                            handleChange('validationRules', { ...rules, pattern: e.target.value });
+                          }}
+                          placeholder="مثلاً ^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$ برای ایمیل"
+                          sx={{ '& .MuiOutlinedInput-root': { background: 'rgba(255, 255, 255, 0.8)' } }}
+                        />
+                      </Grid>
+                      <Grid item xs={4}>
+                        <TextField
+                          fullWidth
+                          label="پیام خطا"
+                          value={formData.validationRules?.patternMessage || ''}
+                          onChange={(e) => {
+                            const rules = formData.validationRules || {};
+                            handleChange('validationRules', { ...rules, patternMessage: e.target.value });
+                          }}
+                          placeholder="فرمت ایمیل نامعتبر است"
+                          sx={{ '& .MuiOutlinedInput-root': { background: 'rgba(255, 255, 255, 0.8)' } }}
+                        />
+                      </Grid>
+                    </Grid>
+                  </Grid>
+                  
+                  {/* Unique */}
+                  <Grid item xs={12}>
+                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                      <FormControlLabel
+                        control={
+                          <Switch
+                            checked={formData.validationRules?.unique || false}
+                            onChange={(e) => {
+                              const rules = formData.validationRules || {};
+                              handleChange('validationRules', { ...rules, unique: e.target.checked });
+                            }}
+                            size="small"
+                          />
+                        }
+                        label="یونیک بودن (مقدار تکراری نباشد)"
+                      />
+                      <HelpTooltip
+                        title="یونیک بودن"
+                        description="مقدار ورودی باید در تمام رکوردها یکتا باشد."
+                        example="هر کد ملی فقط یک بار قابل استفاده است"
+                      />
+                    </Box>
+                  </Grid>
+                </Grid>
+              </Paper>
+              
+              {/* قوانین وابستگی */}
+              <Paper
+                sx={{
+                  p: 3,
+                  mb: 3,
+                  borderRadius: '12px',
+                  background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(248, 250, 252, 0.8) 100%)',
+                  backdropFilter: 'blur(10px)',
+                  border: '1px solid rgba(135, 206, 250, 0.2)',
+                  boxShadow: '0 4px 16px rgba(135, 206, 250, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.8)',
+                }}
+              >
+                <Typography variant="h6" sx={{ mb: 3, color: '#4A90E2', fontWeight: 600 }}>
+                  قوانین وابستگی
+                </Typography>
+                
+                <Grid container spacing={3}>
+                  {/* Conditional Visibility */}
+                  <Grid item xs={12}>
+                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                      <FormControlLabel
+                        control={
+                          <Switch
+                            checked={formData.conditionalRules?.visibility?.enabled || false}
+                            onChange={(e) => {
+                              const conditional = formData.conditionalRules || {};
+                              const visibility = conditional.visibility || {};
+                              handleChange('conditionalRules', { 
+                                ...conditional, 
+                                visibility: { ...visibility, enabled: e.target.checked }
+                              });
+                            }}
+                            size="small"
+                          />
+                        }
+                        label="نمایش شرطی"
+                        sx={{ mb: 1 }}
+                      />
+                      <HelpTooltip
+                        title="نمایش شرطی"
+                        description="نمایش یا مخفی کردن فیلد بر اساس مقدار فیلد دیگر."
+                        example="اگر نوع=VIP باشد، فیلد تخفیف نمایش داده شود"
+                      />
+                    </Box>
+                    {formData.conditionalRules?.visibility?.enabled && (
+                      <Grid container spacing={2} sx={{ mt: 1 }}>
+                        <Grid item xs={4}>
+                          <TextField
+                            fullWidth
+                            label="فیلد وابسته"
+                            value={formData.conditionalRules?.visibility?.dependsOn || ''}
+                            onChange={(e) => {
+                              const conditional = formData.conditionalRules || {};
+                              const visibility = conditional.visibility || {};
+                              handleChange('conditionalRules', { 
+                                ...conditional, 
+                                visibility: { ...visibility, dependsOn: e.target.value }
+                              });
+                            }}
+                            placeholder="field_id"
+                            sx={{ '& .MuiOutlinedInput-root': { background: 'rgba(255, 255, 255, 0.8)' } }}
+                          />
+                        </Grid>
+                        <Grid item xs={4}>
+                          <FormControl fullWidth>
+                            <InputLabel>شرط</InputLabel>
+                            <Select
+                              value={formData.conditionalRules?.visibility?.condition || 'equals'}
+                              onChange={(e) => {
+                                const conditional = formData.conditionalRules || {};
+                                const visibility = conditional.visibility || {};
+                                handleChange('conditionalRules', { 
+                                  ...conditional, 
+                                  visibility: { ...visibility, condition: e.target.value }
+                                });
+                              }}
+                              label="شرط"
+                              sx={{ background: 'rgba(255, 255, 255, 0.8)' }}
+                            >
+                              <MenuItem value="equals">برابر</MenuItem>
+                              <MenuItem value="not_equals">مخالف</MenuItem>
+                              <MenuItem value="contains">شامل</MenuItem>
+                              <MenuItem value="not_contains">غیرشامل</MenuItem>
+                              <MenuItem value="empty">خالی</MenuItem>
+                              <MenuItem value="not_empty">غیرخالی</MenuItem>
+                            </Select>
+                          </FormControl>
+                        </Grid>
+                        <Grid item xs={4}>
+                          <TextField
+                            fullWidth
+                            label="مقدار شرط"
+                            value={formData.conditionalRules?.visibility?.value || ''}
+                            onChange={(e) => {
+                              const conditional = formData.conditionalRules || {};
+                              const visibility = conditional.visibility || {};
+                              handleChange('conditionalRules', { 
+                                ...conditional, 
+                                visibility: { ...visibility, value: e.target.value }
+                              });
+                            }}
+                            sx={{ '& .MuiOutlinedInput-root': { background: 'rgba(255, 255, 255, 0.8)' } }}
+                          />
+                        </Grid>
+                      </Grid>
+                    )}
+                  </Grid>
+                  
+                  {/* Conditional Enable */}
+                  <Grid item xs={12}>
+                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                      <FormControlLabel
+                        control={
+                          <Switch
+                            checked={formData.conditionalRules?.enable?.enabled || false}
+                            onChange={(e) => {
+                              const conditional = formData.conditionalRules || {};
+                              const enable = conditional.enable || {};
+                              handleChange('conditionalRules', { 
+                                ...conditional, 
+                                enable: { ...enable, enabled: e.target.checked }
+                              });
+                            }}
+                            size="small"
+                          />
+                        }
+                        label="فعال‌سازی شرطی"
+                        sx={{ mb: 1 }}
+                      />
+                      <HelpTooltip
+                        title="فعال‌سازی شرطی"
+                        description="فعال یا غیرفعال کردن فیلد بر اساس شرط خاص."
+                        example="اگر وضعیت=باز باشد، فیلد قابل ویرایش شود"
+                      />
+                    </Box>
+                    {formData.conditionalRules?.enable?.enabled && (
+                      <Grid container spacing={2} sx={{ mt: 1 }}>
+                        <Grid item xs={4}>
+                          <TextField
+                            fullWidth
+                            label="فیلد وابسته"
+                            value={formData.conditionalRules?.enable?.dependsOn || ''}
+                            onChange={(e) => {
+                              const conditional = formData.conditionalRules || {};
+                              const enable = conditional.enable || {};
+                              handleChange('conditionalRules', { 
+                                ...conditional, 
+                                enable: { ...enable, dependsOn: e.target.value }
+                              });
+                            }}
+                            placeholder="field_id"
+                            sx={{ '& .MuiOutlinedInput-root': { background: 'rgba(255, 255, 255, 0.8)' } }}
+                          />
+                        </Grid>
+                        <Grid item xs={4}>
+                          <FormControl fullWidth>
+                            <InputLabel>شرط</InputLabel>
+                            <Select
+                              value={formData.conditionalRules?.enable?.condition || 'equals'}
+                              onChange={(e) => {
+                                const conditional = formData.conditionalRules || {};
+                                const enable = conditional.enable || {};
+                                handleChange('conditionalRules', { 
+                                  ...conditional, 
+                                  enable: { ...enable, condition: e.target.value }
+                                });
+                              }}
+                              label="شرط"
+                              sx={{ background: 'rgba(255, 255, 255, 0.8)' }}
+                            >
+                              <MenuItem value="equals">برابر</MenuItem>
+                              <MenuItem value="not_equals">مخالف</MenuItem>
+                              <MenuItem value="contains">شامل</MenuItem>
+                              <MenuItem value="not_contains">غیرشامل</MenuItem>
+                              <MenuItem value="empty">خالی</MenuItem>
+                              <MenuItem value="not_empty">غیرخالی</MenuItem>
+                            </Select>
+                          </FormControl>
+                        </Grid>
+                        <Grid item xs={4}>
+                          <TextField
+                            fullWidth
+                            label="مقدار شرط"
+                            value={formData.conditionalRules?.enable?.value || ''}
+                            onChange={(e) => {
+                              const conditional = formData.conditionalRules || {};
+                              const enable = conditional.enable || {};
+                              handleChange('conditionalRules', { 
+                                ...conditional, 
+                                enable: { ...enable, value: e.target.value }
+                              });
+                            }}
+                            sx={{ '& .MuiOutlinedInput-root': { background: 'rgba(255, 255, 255, 0.8)' } }}
+                          />
+                        </Grid>
+                      </Grid>
+                    )}
+                  </Grid>
+                </Grid>
+              </Paper>
+              
+              {/* قوانین کنترلی */}
+              <Paper
+                sx={{
+                  p: 3,
+                  mb: 3,
+                  borderRadius: '12px',
+                  background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(248, 250, 252, 0.8) 100%)',
+                  backdropFilter: 'blur(10px)',
+                  border: '1px solid rgba(135, 206, 250, 0.2)',
+                  boxShadow: '0 4px 16px rgba(135, 206, 250, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.8)',
+                }}
+              >
+                <Typography variant="h6" sx={{ mb: 3, color: '#4A90E2', fontWeight: 600 }}>
+                  قوانین کنترلی
+                </Typography>
+                
+                <Grid container spacing={3}>
+                  {/* Default Value */}
+                  <Grid item xs={12}>
+                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                      <TextField
+                        fullWidth
+                        label="مقدار پیش‌فرض"
+                        value={formData.controlRules?.defaultValue || ''}
+                        onChange={(e) => {
+                          const control = formData.controlRules || {};
+                          handleChange('controlRules', { ...control, defaultValue: e.target.value });
+                        }}
+                        placeholder="مقدار پیش‌فرض فیلد"
+                        sx={{ '& .MuiOutlinedInput-root': { background: 'rgba(255, 255, 255, 0.8)' } }}
+                      />
+                      <HelpTooltip
+                        title="مقدار پیش‌فرض"
+                        description="مقداری که از قبل در فیلد نمایش داده می‌شود."
+                        example="برای فیلد وضعیت، مقدار پیش‌فرض 'در انتظار' باشد"
+                      />
+                    </Box>
+                  </Grid>
+                  
+                  {/* Lock After Save */}
+                  <Grid item xs={12} md={6}>
+                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                      <FormControlLabel
+                        control={
+                          <Switch
+                            checked={formData.controlRules?.lockAfterSave || false}
+                            onChange={(e) => {
+                              const control = formData.controlRules || {};
+                              handleChange('controlRules', { ...control, lockAfterSave: e.target.checked });
+                            }}
+                            size="small"
+                          />
+                        }
+                        label="غیرقابل ویرایش بعد از ثبت"
+                      />
+                      <HelpTooltip
+                        title="غیرقابل ویرایش بعد از ثبت"
+                        description="پس از ذخیره اولیه، فیلد قابل ویرایش نباشد."
+                        example="برای فیلدهای مهم و غیرقابل تغییر استفاده شود"
+                      />
+                    </Box>
+                  </Grid>
+                  
+                  {/* Read Only */}
+                  <Grid item xs={12} md={6}>
+                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                      <FormControlLabel
+                        control={
+                          <Switch
+                            checked={formData.controlRules?.readOnly || false}
+                            onChange={(e) => {
+                              const control = formData.controlRules || {};
+                              handleChange('controlRules', { ...control, readOnly: e.target.checked });
+                            }}
+                            size="small"
+                          />
+                        }
+                        label="فقط خواندنی"
+                      />
+                      <HelpTooltip
+                        title="فقط خواندنی"
+                        description="فیلد فقط قابل مشاهده است و نمی‌توان آن را ویرایش کرد."
+                        example="برای نمایش اطلاعات محاسبه شده یا اطلاعات سیستمی"
+                      />
+                    </Box>
+                  </Grid>
+                </Grid>
+              </Paper>
+            </Box>
+          )}
+
+          {currentStep === 4 && (
+            <Box>
+              <Box sx={{ textAlign: 'center', mb: 4 }}>
+                <Typography 
+                  variant="h5" 
+                  gutterBottom
+                  sx={{
+                    fontWeight: 700,
+                    background: 'linear-gradient(45deg, #4A90E2 30%, #7BB3F0 90%)',
+                    backgroundClip: 'text',
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent',
+                  }}
+                >
+                  پیش‌نمایش فیلد
+                </Typography>
+                <Typography variant="body1" color="text.secondary" sx={{ fontSize: '1.1rem', opacity: 0.8, mb: 4 }}>
+                  بررسی نهایی فیلد ایجاد شده
+                </Typography>
+              </Box>
+              
+              <Paper 
+                sx={{ 
+                  p: 4,
+                  borderRadius: '16px',
+                  background: 'linear-gradient(135deg, rgba(74, 144, 226, 0.05) 0%, rgba(123, 179, 240, 0.02) 100%)',
+                  backdropFilter: 'blur(10px)',
+                  border: '2px solid rgba(74, 144, 226, 0.2)',
+                  boxShadow: '0 8px 32px rgba(74, 144, 226, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.8)',
+                  position: 'relative',
+                  overflow: 'hidden',
+                  '&::before': {
+                    content: '""',
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    background: 'linear-gradient(45deg, rgba(135, 206, 250, 0.05) 0%, rgba(173, 216, 230, 0.08) 50%, rgba(176, 224, 230, 0.05) 100%)',
+                    zIndex: -1,
+                  }
+                }}
+              >
+                <Typography 
+                  variant="body1" 
+                  color="text.secondary" 
+                  gutterBottom
+                  sx={{ 
+                    textAlign: 'center',
+                    fontSize: '1.1rem',
+                    fontWeight: 500,
+                    mb: 3,
+                  }}
+                >
+                  پیش‌نمایش فیلد ایجاد شده:
+                </Typography>
+                
+                <Box 
+                  sx={{ 
+                    p: 3,
+                    borderRadius: '12px',
+                    background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(248, 250, 252, 0.8) 100%)',
+                    backdropFilter: 'blur(10px)',
+                    border: '1px solid rgba(135, 206, 250, 0.3)',
+                    boxShadow: '0 4px 16px rgba(135, 206, 250, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.8)',
+                  }}
+                >
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
+                    <Box sx={{ fontSize: '2rem', filter: 'drop-shadow(0 2px 4px rgba(74, 144, 226, 0.3))' }}>📝</Box>
+                    <Box sx={{ flex: 1 }}>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 1 }}>
+                        <Typography 
+                          variant="h5" 
+                          sx={{ 
+                            fontWeight: 700,
+                            color: '#4A90E2',
+                          }}
+                        >
+                          {formData.name}
+                        </Typography>
+                        {formData.isRequired && (
+                          <Chip 
+                            size="small" 
+                            label="اجباری" 
+                            sx={{
+                              bgcolor: 'linear-gradient(135deg, #ff6b6b, #ee5a52)',
+                              color: 'white',
+                              fontWeight: 600,
+                              boxShadow: '0 2px 8px rgba(255, 107, 107, 0.3)',
+                            }}
+                          />
+                        )}
+                      </Box>
+                      
+                      <Box sx={{ display: 'grid', gap: 2, mt: 2 }}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                          <Typography variant="body2" sx={{ fontWeight: 600, color: '#64748B', minWidth: 100 }}>
+                            نوع:
+                          </Typography>
+                          <Chip 
+                            label={getFieldTypeLabel(formData.type)} 
+                            size="small"
+                            sx={{
+                              bgcolor: 'rgba(74, 144, 226, 0.1)',
+                              color: '#4A90E2',
+                              fontWeight: 500,
+                            }}
+                          />
+                        </Box>
+                        
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                          <Typography variant="body2" sx={{ fontWeight: 600, color: '#64748B', minWidth: 100 }}>
+                            نام انگلیسی:
+                          </Typography>
+                          <Typography variant="body2" sx={{ color: '#374151', fontWeight: 500 }}>
+                            {formData.englishName}
+                          </Typography>
+                        </Box>
+                        
+                        {formData.defaultValue && (
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                            <Typography variant="body2" sx={{ fontWeight: 600, color: '#64748B', minWidth: 100 }}>
+                              مقدار پیش‌فرض:
+                            </Typography>
+                            <Typography variant="body2" sx={{ color: '#374151', fontWeight: 500 }}>
+                              {formData.defaultValue}
+                            </Typography>
+                          </Box>
+                        )}
+                      </Box>
+                    </Box>
+                  </Box>
+                </Box>
+              </Paper>
+            </Box>
+          )}
+        </Box>
+
+        {/* Navigation Buttons */}
+        <Box 
+          sx={{ 
+            p: 3, 
+            borderTop: '1px solid rgba(135, 206, 250, 0.2)',
+            background: 'linear-gradient(90deg, rgba(255, 255, 255, 0.8) 0%, rgba(240, 248, 255, 0.6) 100%)',
+            backdropFilter: 'blur(10px)',
+            display: 'flex', 
+            justifyContent: 'space-between',
+          }}
+        >
+          <Button
+            onClick={() => {
+              if (currentStep === 1) {
+                setCurrentPage('selection');
+              } else {
+                handlePrevStep();
+              }
+            }}
+            sx={{
+              borderRadius: '12px',
+              px: 3,
+              py: 1.5,
+              background: 'linear-gradient(135deg, rgba(148, 163, 184, 0.1) 0%, rgba(203, 213, 225, 0.05) 100%)',
+              backdropFilter: 'blur(10px)',
+              border: '1px solid rgba(148, 163, 184, 0.2)',
+              color: '#64748B',
+              fontWeight: 600,
+              '&:hover': {
+                background: 'linear-gradient(135deg, rgba(148, 163, 184, 0.15) 0%, rgba(203, 213, 225, 0.1) 100%)',
+                transform: 'translateY(-2px)',
+                boxShadow: '0 4px 12px rgba(148, 163, 184, 0.2)',
+              },
+            }}
+          >
+            {currentStep === 1 ? 'بازگشت' : 'مرحله قبل'}
+          </Button>
+          
+          {currentStep < 4 ? (
+            <Button
+              variant="contained"
+              onClick={handleNextStep}
+              disabled={currentStep === 2 && (!formData.name || !formData.englishName)}
+              sx={{
+                borderRadius: '12px',
+                px: 4,
+                py: 1.5,
+                background: 'linear-gradient(135deg, #4A90E2, #7BB3F0)',
+                backdropFilter: 'blur(10px)',
+                border: '1px solid rgba(255, 255, 255, 0.2)',
+                fontWeight: 600,
+                fontSize: '1rem',
+                boxShadow: '0 4px 16px rgba(74, 144, 226, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.2)',
+                '&:hover': {
+                  background: 'linear-gradient(135deg, #3A7BD5, #6BA8E8)',
+                  transform: 'translateY(-2px)',
+                  boxShadow: '0 8px 24px rgba(74, 144, 226, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.3)',
+                },
+                '&:disabled': {
+                  background: 'linear-gradient(135deg, rgba(148, 163, 184, 0.3) 0%, rgba(203, 213, 225, 0.2) 100%)',
+                  color: 'rgba(100, 116, 139, 0.6)',
+                },
+              }}
+            >
+              مرحله بعد
+            </Button>
+          ) : (
+            <Button
+              variant="contained"
+              onClick={handleSubmit}
+              startIcon={<SaveIcon />}
+              disabled={!formData.name || !formData.englishName}
+              sx={{
+                borderRadius: '12px',
+                px: 4,
+                py: 1.5,
+                background: 'linear-gradient(135deg, #10B981, #34D399)',
+                backdropFilter: 'blur(10px)',
+                border: '1px solid rgba(255, 255, 255, 0.2)',
+                fontWeight: 600,
+                fontSize: '1rem',
+                boxShadow: '0 4px 16px rgba(16, 185, 129, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.2)',
+                '&:hover': {
+                  background: 'linear-gradient(135deg, #059669, #10B981)',
+                  transform: 'translateY(-2px)',
+                  boxShadow: '0 8px 24px rgba(16, 185, 129, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.3)',
+                },
+                '&:disabled': {
+                  background: 'linear-gradient(135deg, rgba(148, 163, 184, 0.3) 0%, rgba(203, 213, 225, 0.2) 100%)',
+                  color: 'rgba(100, 116, 139, 0.6)',
+                },
+              }}
+            >
+              {isEditing ? 'ذخیره تغییرات' : 'افزودن فیلد'}
+            </Button>
+          )}
+        </Box>
+      </Box>
+    );
+  };
+
+  const renderReadyFields = () => (
+    <Box 
+      sx={{ 
+        p: 4,
+        background: 'linear-gradient(135deg, rgba(240, 248, 255, 0.9) 0%, rgba(230, 245, 255, 0.8) 100%)',
+        backdropFilter: 'blur(20px)',
+        borderRadius: '16px',
+        textAlign: 'center',
+        position: 'relative',
+        '&::before': {
+          content: '""',
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'linear-gradient(45deg, rgba(135, 206, 250, 0.05) 0%, rgba(173, 216, 230, 0.08) 50%, rgba(176, 224, 230, 0.05) 100%)',
+          borderRadius: '16px',
+          zIndex: -1,
+        }
+      }}
+    >
+      <Box sx={{ mb: 4 }}>
+        <Typography 
+          variant="h4" 
+          gutterBottom
+          sx={{
+            fontWeight: 700,
+            color: '#64748B',
+            textShadow: '0 2px 4px rgba(100, 116, 139, 0.2)',
+          }}
+        >
+          فیلدهای آماده
+        </Typography>
+      </Box>
+      
+      <Paper
+        sx={{
+          p: 4,
+          borderRadius: '16px',
+          background: 'linear-gradient(135deg, rgba(148, 163, 184, 0.05) 0%, rgba(203, 213, 225, 0.02) 100%)',
+          backdropFilter: 'blur(10px)',
+          border: '2px solid rgba(148, 163, 184, 0.1)',
+          boxShadow: '0 8px 32px rgba(148, 163, 184, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.8)',
+        }}
+      >
+        <Box sx={{ fontSize: '3rem', mb: 3, filter: 'drop-shadow(0 4px 8px rgba(148, 163, 184, 0.3))' }}>⏰</Box>
+        <Alert 
+          severity="info"
+          sx={{
+            background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(248, 250, 252, 0.8) 100%)',
+            backdropFilter: 'blur(10px)',
+            border: '1px solid rgba(148, 163, 184, 0.2)',
+            borderRadius: '12px',
+            fontSize: '1.1rem',
+            '& .MuiAlert-icon': {
+              color: '#64748B',
+            },
+          }}
+        >
+          <Typography variant="h6" sx={{ fontWeight: 600, color: '#64748B', mb: 1 }}>
+            به زودی در دسترس!
+          </Typography>
+          فیلدهای از پیش تعریف شده و آماده در نسخه‌های آینده اضافه خواهد شد
+        </Alert>
+      </Paper>
+      
+      <Box sx={{ mt: 4 }}>
+        <Button 
+          onClick={() => setCurrentPage('selection')}
+          sx={{
+            borderRadius: '12px',
+            px: 4,
+            py: 1.5,
+            background: 'linear-gradient(135deg, rgba(148, 163, 184, 0.1) 0%, rgba(203, 213, 225, 0.05) 100%)',
+            backdropFilter: 'blur(10px)',
+            border: '1px solid rgba(148, 163, 184, 0.2)',
+            color: '#64748B',
+            fontWeight: 600,
+            '&:hover': {
+              background: 'linear-gradient(135deg, rgba(148, 163, 184, 0.15) 0%, rgba(203, 213, 225, 0.1) 100%)',
+              transform: 'translateY(-2px)',
+              boxShadow: '0 4px 12px rgba(148, 163, 184, 0.2)',
+            },
+          }}
+        >
+          بازگشت
+        </Button>
+      </Box>
+    </Box>
+  );
+
+  return (
+    <Dialog 
+      open={open} 
+      onClose={handleClose} 
+      maxWidth="lg" 
+      fullWidth
+      sx={{
+        '& .MuiDialog-paper': {
+          borderRadius: '20px',
+          background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(240, 248, 255, 0.9) 100%)',
+          backdropFilter: 'blur(20px)',
+          border: '1px solid rgba(135, 206, 250, 0.2)',
+          boxShadow: '0 20px 60px rgba(135, 206, 250, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.8)',
+          overflow: 'hidden',
+          position: 'relative',
+          '&::before': {
+            content: '""',
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: 'linear-gradient(45deg, rgba(135, 206, 250, 0.03) 0%, rgba(173, 216, 230, 0.05) 50%, rgba(176, 224, 230, 0.03) 100%)',
+            zIndex: -1,
+          }
+        },
+        '& .MuiBackdrop-root': {
+          backgroundColor: 'rgba(135, 206, 250, 0.1)',
+          backdropFilter: 'blur(4px)',
+        },
+      }}
+    >
+      <DialogTitle
+        sx={{
+          background: 'linear-gradient(90deg, rgba(255, 255, 255, 0.9) 0%, rgba(240, 248, 255, 0.7) 100%)',
+          backdropFilter: 'blur(10px)',
+          borderBottom: '1px solid rgba(135, 206, 250, 0.2)',
+          textAlign: 'center',
+          py: 3,
+        }}
+      >
+        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 2 }}>
+          <Typography 
+            variant="h4" 
+            sx={{
+              fontWeight: 700,
+              background: 'linear-gradient(45deg, #4A90E2 30%, #7BB3F0 90%)',
+              backgroundClip: 'text',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+            }}
+          >
+            {currentPage === 'selection' && (isEditing ? 'ویرایش فیلد' : 'افزودن فیلد جدید')}
+            {currentPage === 'create' && 'ساخت فیلد جدید'}
+            {currentPage === 'ready' && 'فیلدهای آماده'}
+          </Typography>
+        </Box>
+      </DialogTitle>
+      <DialogContent sx={{ p: 0 }}>
+        {currentPage === 'selection' && renderSelectionPage()}
+        {currentPage === 'create' && renderCreateField()}
+        {currentPage === 'ready' && renderReadyFields()}
+      </DialogContent>
+      {currentPage === 'selection' && (
+        <DialogActions
+          sx={{
+            background: 'linear-gradient(90deg, rgba(255, 255, 255, 0.8) 0%, rgba(240, 248, 255, 0.6) 100%)',
+            backdropFilter: 'blur(10px)',
+            borderTop: '1px solid rgba(135, 206, 250, 0.2)',
+            p: 3,
+          }}
+        >
+          <Button 
+            onClick={handleClose} 
+            startIcon={<CancelIcon />}
+            sx={{
+              borderRadius: '12px',
+              px: 3,
+              py: 1.5,
+              background: 'linear-gradient(135deg, rgba(148, 163, 184, 0.1) 0%, rgba(203, 213, 225, 0.05) 100%)',
+              backdropFilter: 'blur(10px)',
+              border: '1px solid rgba(148, 163, 184, 0.2)',
+              color: '#64748B',
+              fontWeight: 600,
+              '&:hover': {
+                background: 'linear-gradient(135deg, rgba(148, 163, 184, 0.15) 0%, rgba(203, 213, 225, 0.1) 100%)',
+                transform: 'translateY(-2px)',
+                boxShadow: '0 4px 12px rgba(148, 163, 184, 0.2)',
+              },
+            }}
+          >
+            انصراف
+          </Button>
+        </DialogActions>
+      )}
+    </Dialog>
+  );
+
+  function getFieldTypeLabel(type: FieldType): string {
+    const labels: Record<FieldType, string> = {
+      'text': 'متن ساده',
+      'number': 'عدد',
+      'email': 'ایمیل',
+      'phone': 'شماره تلفن',
+      'date': 'تاریخ',
+      'boolean': 'بولین (بله/خیر)',
+      'select': 'انتخاب از لیست',
+      'multiselect': 'انتخاب چندگانه',
+      'textarea': 'متن چندخطی',
+      'file': 'فایل',
+      'password': 'رمز عبور',
+      'social': 'شبکه اجتماعی',
+      'reference': 'مرجع',
+      'text-english': 'متن انگلیسی',
+      'text-numeric': 'متن عددی',
+      'conditional-national-id': 'کد ملی شرطی',
+      'phone-array': 'آرایه شماره تلفن',
+      'address-array': 'آرایه آدرس',
+      'hierarchical-address': 'آدرس سلسله‌مراتبی',
+      'name-split': 'تفکیک نام',
+      'full-name-dual': 'نام دوزبانه',
+      'array-text': 'آرایه متن',
+      'key-value': 'کلید-مقدار',
+      'grouped': 'گروه‌بندی شده',
+    };
+    return labels[type] || type;
+  }
+};
+
+export default NodeFieldManager;

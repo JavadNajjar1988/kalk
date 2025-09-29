@@ -13,18 +13,30 @@ import {
   Switch,
   Typography,
   Chip,
-  Alert
+  Alert,
+  Accordion,
+  AccordionSummary,
+  AccordionDetails
 } from '@mui/material';
+import {
+  ExpandMore as ExpandMoreIcon
+} from '@mui/icons-material';
 
 // Types
-import type { 
-  FieldConstructorConfig, 
-  BaseFieldType,
-  DataSourceComponent,
-  InputEnhancementComponent,
-  DisplayComponent,
-  ValidationComponent
-} from '../../types/fieldConstructor';
+// import type { 
+//   FieldConstructorConfig, 
+//   BaseFieldType,
+//   DataSourceComponent,
+//   InputEnhancementComponent,
+//   DisplayComponent,
+//   ValidationComponent
+// } from '../../types/fieldConstructor';
+
+type BaseFieldType = string;
+type InputEnhancementComponent = any;
+type DataSourceComponent = any;
+type ValidationComponent = any;
+type DisplayComponent = any;
 
 interface SingleFieldPreviewProps {
   field: {
@@ -104,7 +116,7 @@ const SingleFieldPreview: React.FC<SingleFieldPreviewProps> = ({
               disabled={disabled}
               label={field.name}
             >
-              {options.map((option) => (
+              {options.map((option: any) => (
                 <MenuItem key={option.id} value={option.value}>
                   {option.label}
                 </MenuItem>

@@ -42,7 +42,6 @@ import {
   Category as CategoryIcon,
   Edit as EditIcon,
   AccountBox,
-  Assignment as AssignmentIcon,
 } from '@mui/icons-material';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAppSelector, useAppDispatch } from '@/store';
@@ -130,10 +129,10 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
       roles: ['admin', 'commander', 'operator']
     },
     { 
-      id: 'map-viewer', 
+      id: 'orbat-mapper', 
       label: 'کالک نگار', 
-      icon: <Map />, 
-      path: '/dashboard/map-viewer',
+      icon: <MilitaryTech />, 
+      path: '/dashboard/orbat-mapper',
       roles: ['admin', 'commander', 'operator']
     },
     { 

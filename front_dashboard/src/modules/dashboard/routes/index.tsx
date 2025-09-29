@@ -31,8 +31,7 @@ import ReferenceCategorySelectorComprehensiveTest from '@/components/test/Refere
 import FinalIntegrationTest from '@/components/test/FinalIntegrationTest';
 import TestsPage from '@/components/test/TestsPage';
 import SmartFieldPreviewSyncTest from '@/test/SmartFieldPreviewSyncTest';
-import ScenarioManagementRoutes from '../../scenario-management/routes';
-import MapViewerRoutes from '../../map-viewer/routes';
+import OrbatMapperModule from '../../orbat-mapper/index';
 
  
 import DefinitionEditorRoutes from '../../definition-editor/routes';
@@ -59,16 +58,12 @@ const DashboardRoutes: React.FC = () => {
         </Route>
         <Route path="resources" element={<ResourcesPage />} />
 
+        {/* ماژول ORBAT Mapper */}
+        <Route path="orbat-mapper/*" element={<OrbatMapperModule />} />
         
         <Route path="definition-editor/*" element={<DefinitionEditorRoutes />} />
         <Route path="military-symbol-generator" element={<MilitarySymbolGeneratorPage />} />
         <Route path="users/*" element={<UsersRoutes />} />
-        
-        {/* Map Viewer Module */}
-        <Route path="map-viewer/*" element={<MapViewerRoutes />} />
-        
-        {/* Scenario Management Module */}
-        <Route path="scenario-management/*" element={<ScenarioManagementRoutes />} />
         
         {/* روت‌های تست */}
         <Route path="test" element={<TestsPage />} />
