@@ -198,10 +198,10 @@ const onUnitClick = (unit: NUnit, event: MouseEvent) => {
 </script>
 
 <template>
-  <li :id="'ou-' + unit.id" class="relative text-gray-900 dark:text-gray-400">
+  <li :id="'ou-' + unit.id" class="relative text-gray-900 dark:text-gray-400" dir="rtl">
     <div
       ref="itemRef"
-      class="group relative flex items-center justify-between border-l-2 py-1 pl-2 hover:bg-gray-200 sm:pl-0 dark:hover:bg-gray-700"
+      class="group relative flex items-center justify-between border-r-2 py-1 pr-2 hover:bg-gray-200 sm:pr-0 dark:hover:bg-gray-700"
       @dblclick="isOpen = !isOpen"
       @click="onUnitClick(unit, $event)"
       :class="[
@@ -211,7 +211,7 @@ const onUnitClick = (unit: NUnit, event: MouseEvent) => {
         isActiveParent ? 'border-red-800 bg-red-50' : 'border-transparent',
       ]"
     >
-      <div class="flex items-center space-x-1">
+      <div class="flex items-center gap-1 flex-row-reverse">
         <div class="h-6 w-6">
           <button v-if="isParent" @click.stop="isOpen = !isOpen" class="">
             <ChevronRightIcon
@@ -223,8 +223,8 @@ const onUnitClick = (unit: NUnit, event: MouseEvent) => {
             />
           </button>
         </div>
-        <button class="flex items-center space-x-1 text-sm">
-          <div class="flex items-center space-x-1" :class="{ 'opacity-20': isDragged }">
+        <button class="flex items-center gap-1 text-sm flex-row-reverse">
+          <div class="flex items-center gap-1 flex-row-reverse" :class="{ 'opacity-20': isDragged }">
             <div
               class="relative flex cursor-move justify-center"
               :style="{ width: settingsStore.orbatIconSize + 'pt' }"
@@ -237,14 +237,14 @@ const onUnitClick = (unit: NUnit, event: MouseEvent) => {
               />
               <span
                 v-if="unit.reinforcedStatus"
-                class="absolute -top-2 -right-2.5 text-xs font-medium"
+                class="absolute -top-2 -left-2.5 text-xs font-medium"
                 >{{
                   mapReinforcedStatus2Field(unit.reinforcedStatus, { compact: true })
                 }}</span
               >
             </div>
             <span
-              class="flex-auto pl-1 text-left"
+              class="flex-auto pr-1 text-right"
               :class="{
                 'font-medium': isActiveUnit,
               }"
@@ -264,7 +264,7 @@ const onUnitClick = (unit: NUnit, event: MouseEvent) => {
       </div>
       <TreeDropIndicator v-if="instruction" :instruction="instruction" />
     </div>
-    <ul v-if="isOpen" class="ml-6 pb-1" ref="subTree">
+    <ul v-if="isOpen" class="mr-6 pb-1" ref="subTree">
       <OrbatTreeItem
         :item="subUnit"
         :level="props.level ? props.level + 1 : 1"

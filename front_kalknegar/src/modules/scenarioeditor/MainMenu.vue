@@ -49,19 +49,19 @@ const { measurementUnit } = storeToRefs(useMeasurementsStore());
 
 <template>
   <DropdownMenu>
-    <DropdownMenuTrigger as="div" class="bg-gradient-to-r from-blue-100 to-purple-100 dark:from-slate-700 dark:to-slate-600 relative rounded-xl px-3 py-2 transition-all duration-200 hover:shadow-lg">
+    <DropdownMenuTrigger as="div" dir="rtl" class="bg-white dark:bg-slate-700 relative rounded-lg px-3 py-1.5 transition-all duration-200 hover:bg-gray-50 dark:hover:bg-slate-600 border border-gray-200 dark:border-slate-600">
       <button class="group flex items-center">
-       
-        <span class="ml-2 hidden font-medium tracking-tight text-slate-700 dark:text-slate-200 sm:block">کالک نگار</span>
+        
+        <span class="mr-2 hidden font-medium tracking-tight text-slate-700 dark:text-slate-200 sm:block">کالک نگار</span>
         <ChevronDownIcon
-          class="ml-1 h-5 w-5 text-slate-600 dark:text-slate-300 group-hover:text-slate-800 dark:group-hover:text-slate-100 transition-colors duration-200"
+          class="mr-1 h-5 w-5 text-slate-600 dark:text-slate-300 group-hover:text-slate-800 dark:group-hover:text-slate-100 transition-colors duration-200"
           aria-hidden="true"
         />
       </button>
     </DropdownMenuTrigger>
-    <DropdownMenuContent class="" align="start" :side-offset="10">
+    <DropdownMenuContent class="text-right" align="end" :side-offset="10" dir="rtl">
       <DropdownMenuItem as-child>
-        <router-link :to="{ name: LANDING_PAGE_ROUTE }" class="font-medium"
+        <router-link :to="{ name: LANDING_PAGE_ROUTE }" class="font-medium flex w-full justify-end text-right"
           >خانه
         </router-link>
       </DropdownMenuItem>
@@ -69,7 +69,6 @@ const { measurementUnit } = storeToRefs(useMeasurementsStore());
       <DropdownMenuSeparator />
       <DropdownMenuItem @select="emit('uiAction', 'showSearch')"
         >جستجو
-        <DropdownMenuShortcut class="ml-4">Ctrl/⌘ K</DropdownMenuShortcut>
       </DropdownMenuItem>
       <DropdownMenuSeparator />
       <DropdownMenuSub>
@@ -115,16 +114,16 @@ const { measurementUnit } = storeToRefs(useMeasurementsStore());
         <DropdownMenuSubContent>
           <DropdownMenuItem @select="undo()" :disabled="!canUndo">
             بازگردانی
-            <DropdownMenuShortcut class="ml-4">Ctrl/⌘ Z</DropdownMenuShortcut>
+            <DropdownMenuShortcut class="mr-4">Ctrl/⌘ Z</DropdownMenuShortcut>
           </DropdownMenuItem>
           <DropdownMenuItem @select="redo()" :disabled="!canRedo">
             تکرار
-            <DropdownMenuShortcut class="ml-4">Ctrl/⌘ shift Z</DropdownMenuShortcut>
+            <DropdownMenuShortcut class="mr-4">Ctrl/⌘ shift Z</DropdownMenuShortcut>
           </DropdownMenuItem>
         </DropdownMenuSubContent>
       </DropdownMenuSub>
       <DropdownMenuSub>
-        <DropdownMenuSubTrigger><span class="mr-4">نمایش</span></DropdownMenuSubTrigger>
+        <DropdownMenuSubTrigger><span>نمایش</span></DropdownMenuSubTrigger>
         <DropdownMenuSubContent>
           <DropdownMenuCheckboxItem v-model="uiSettings.showToolbar" @select.prevent
             >نوار ابزار نقشه

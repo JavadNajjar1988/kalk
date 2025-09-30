@@ -1,14 +1,14 @@
 <template>
   <div class="bg-background flex h-dvh flex-col overflow-hidden" ref="dropZoneRef">
     <nav
-      class="dashboard-header flex shrink-0 items-center justify-between py-3 pr-6 pl-8 text-foreground print:hidden"
+      class="dashboard-header flex shrink-0 items-center justify-between py-2 pr-4 pl-6 text-foreground print:hidden bg-white dark:bg-slate-800 border-b border-gray-200 dark:border-slate-700"
     >
       <div class="flex min-w-0 flex-auto items-center">
         <div class="flex min-w-0 flex-auto items-center">
           <MainMenu @action="onScenarioAction" @ui-action="onUiAction" />
           <button
             type="button"
-            class="hidden truncate pl-3 text-slate-600 dark:text-gray-400 hover:text-slate-800 dark:hover:text-gray-200 sm:block transition-colors duration-200"
+            class="hidden truncate pl-3 mr-4 text-slate-600 dark:text-gray-400 hover:text-slate-800 dark:hover:text-gray-200 sm:block transition-colors duration-200"
             @click="showInfo()"
           >
             {{ activeScenario.store.state.info.name }}
@@ -20,16 +20,16 @@
         
         <button
           @click="showSearch = true"
-          class="inline-flex items-center justify-center rounded-xl p-2.5 text-slate-600 dark:text-gray-400 hover:bg-blue-50 dark:hover:bg-slate-700 hover:text-slate-800 dark:hover:text-white focus:ring-2 focus:ring-blue-300 dark:focus:ring-white focus:outline-hidden focus:ring-inset transition-all duration-200"
+          class="inline-flex items-center justify-center rounded-lg p-2 text-slate-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-600 hover:text-slate-800 dark:hover:text-white focus:ring-2 focus:ring-blue-300 dark:focus:ring-white focus:outline-hidden focus:ring-inset transition-all duration-200"
         >
           <SearchIcon class="block h-6 w-6" />
         </button>
-        <div class="flex items-center rounded-2xl bg-purple-50 dark:bg-slate-700 px-2 py-1 border border-purple-200 dark:border-slate-600">
+        <div class="flex items-center rounded-lg bg-gray-50 dark:bg-slate-700 px-1 py-0.5 border border-gray-200 dark:border-slate-600">
           <router-link
             :to="{ name: MAP_EDIT_MODE_ROUTE }"
             title="حالت ویرایش نقشه"
             exact-active-class="text-green-600 bg-green-100 dark:text-green-400 dark:bg-green-900/30"
-            class="inline-flex items-center justify-center rounded-xl p-2 text-slate-600 dark:text-gray-400 hover:bg-green-50 dark:hover:bg-slate-600 hover:text-green-600 dark:hover:text-green-400 focus:ring-2 focus:ring-green-300 dark:focus:ring-white focus:outline-hidden focus:ring-inset transition-all duration-200"
+            class="inline-flex items-center justify-center rounded-md p-1.5 text-slate-600 dark:text-gray-400 hover:bg-green-50 dark:hover:bg-slate-600 hover:text-green-600 dark:hover:text-green-400 focus:ring-2 focus:ring-green-300 dark:focus:ring-white focus:outline-hidden focus:ring-inset transition-all duration-200"
           >
             <GlobeAltIcon class="h-6 w-6" />
           </router-link>
@@ -37,7 +37,7 @@
             :to="{ name: GRID_EDIT_ROUTE }"
             title="حالت ویرایش جدول"
             exact-active-class="text-blue-600 bg-blue-100 dark:text-blue-400 dark:bg-blue-900/30"
-            class="inline-flex items-center justify-center rounded-xl p-2 text-slate-600 dark:text-gray-400 hover:bg-blue-50 dark:hover:bg-slate-600 hover:text-blue-600 dark:hover:text-blue-400 focus:ring-2 focus:ring-blue-300 dark:focus:ring-white focus:outline-hidden focus:ring-inset transition-all duration-200"
+            class="inline-flex items-center justify-center rounded-md p-1.5 text-slate-600 dark:text-gray-400 hover:bg-blue-50 dark:hover:bg-slate-600 hover:text-blue-600 dark:hover:text-blue-400 focus:ring-2 focus:ring-blue-300 dark:focus:ring-white focus:outline-hidden focus:ring-inset transition-all duration-200"
           >
             <TableIcon class="h-6 w-6" />
           </router-link>
@@ -45,7 +45,7 @@
             :to="{ name: CHART_EDIT_MODE_ROUTE }"
             title="حالت ویرایش نمودار"
             exact-active-class="text-orange-600 bg-orange-100 dark:text-orange-400 dark:bg-orange-900/30"
-            class="inline-flex items-center justify-center rounded-xl p-2 text-slate-600 dark:text-gray-400 hover:bg-orange-50 dark:hover:bg-slate-600 hover:text-orange-600 dark:hover:text-orange-400 focus:ring-2 focus:ring-orange-300 dark:focus:ring-white focus:outline-hidden focus:ring-inset transition-all duration-200"
+            class="inline-flex items-center justify-center rounded-md p-1.5 text-slate-600 dark:text-gray-400 hover:bg-orange-50 dark:hover:bg-slate-600 hover:text-orange-600 dark:hover:text-orange-400 focus:ring-2 focus:ring-orange-300 dark:focus:ring-white focus:outline-hidden focus:ring-inset transition-all duration-200"
           >
             <IconSitemap class="h-6 w-6" />
           </router-link>
@@ -53,7 +53,7 @@
         <div class="flex items-center">
           <button
             @click="undo()"
-            class="hidden items-center justify-center rounded-xl p-2 text-slate-600 dark:text-gray-400 hover:bg-yellow-50 dark:hover:bg-slate-700 hover:text-yellow-600 dark:hover:text-yellow-400 focus:ring-2 focus:ring-yellow-300 dark:focus:ring-white focus:outline-hidden focus:ring-inset disabled:opacity-40 disabled:cursor-not-allowed sm:block transition-all duration-200"
+            class="hidden items-center justify-center rounded-lg p-1.5 text-slate-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-600 hover:text-slate-800 dark:hover:text-white focus:ring-2 focus:ring-yellow-300 dark:focus:ring-white focus:outline-hidden focus:ring-inset disabled:opacity-40 disabled:cursor-not-allowed sm:block transition-all duration-200"
             title="لغو عمل (ctrl+z)"
             :disabled="!canUndo"
           >
@@ -61,7 +61,7 @@
           </button>
           <button
             @click="redo()"
-            class="hidden items-center justify-center rounded-xl p-2 text-slate-600 dark:text-gray-400 hover:bg-teal-50 dark:hover:bg-slate-700 hover:text-teal-600 dark:hover:text-teal-400 focus:ring-2 focus:ring-teal-300 dark:focus:ring-white focus:outline-hidden focus:ring-inset disabled:opacity-40 disabled:cursor-not-allowed sm:block transition-all duration-200"
+            class="hidden items-center justify-center rounded-lg p-1.5 text-slate-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-600 hover:text-slate-800 dark:hover:text-white focus:ring-2 focus:ring-teal-300 dark:focus:ring-white focus:outline-hidden focus:ring-inset disabled:opacity-40 disabled:cursor-not-allowed sm:block transition-all duration-200"
             title="انجام مجدد عمل"
             :disabled="!canRedo"
           >
@@ -70,14 +70,14 @@
         </div>
         <button
           @click="showKeyboardShortcuts"
-          class="hidden items-center justify-center rounded-xl p-2 text-slate-600 dark:text-gray-400 hover:bg-pink-50 dark:hover:bg-slate-700 hover:text-pink-600 dark:hover:text-pink-400 focus:ring-2 focus:ring-pink-300 dark:focus:ring-white focus:outline-hidden focus:ring-inset sm:block transition-all duration-200"
+          class="hidden items-center justify-center rounded-lg p-1.5 text-slate-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-600 hover:text-slate-800 dark:hover:text-white focus:ring-2 focus:ring-pink-300 dark:focus:ring-white focus:outline-hidden focus:ring-inset sm:block transition-all duration-200"
           title="نمایش میانبرهای صفحه کلید"
         >
           <IconKeyboard class="block h-6 w-6" />
         </button>
 
         <button
-          class="inline-flex items-center justify-center rounded-xl p-2.5 text-slate-600 dark:text-gray-400 hover:bg-red-50 dark:hover:bg-slate-700 hover:text-red-600 dark:hover:text-red-400 focus:ring-2 focus:ring-red-300 dark:focus:ring-white focus:outline-hidden focus:ring-inset transition-all duration-200"
+          class="inline-flex items-center justify-center rounded-lg p-1.5 text-slate-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-600 hover:text-slate-800 dark:hover:text-white focus:ring-2 focus:ring-red-300 dark:focus:ring-white focus:outline-hidden focus:ring-inset transition-all duration-200"
           @click="isOpen = !isOpen"
         >
           <MenuIcon class="block h-6 w-6" />

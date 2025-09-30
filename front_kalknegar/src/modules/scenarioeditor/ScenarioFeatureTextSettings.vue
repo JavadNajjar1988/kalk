@@ -2,7 +2,7 @@
 import { computed } from "vue";
 import type { SimpleStyleSpec, TextStyleSpec } from "@/geo/simplestyle";
 import type { ScenarioFeature } from "@/types/scenarioGeoModels";
-import ToggleField from "@/components/ToggleField.vue";
+import CheckboxField from "@/components/CheckboxField.vue";
 import SimpleSelect from "@/components/SimpleSelect.vue";
 import NumberInputGroup from "@/components/NumberInputGroup.vue";
 import ZoomSelector from "@/components/ZoomSelector.vue";
@@ -56,9 +56,9 @@ function updateValue(
 }
 </script>
 <template>
-  <div class="col-span-2 -mb-6 font-semibold">متن</div>
+  <div class="col-span-2 -mb-6 font-semibold" dir="rtl">متن</div>
   <div class="self-end">برچسب</div>
-  <ToggleField
+  <CheckboxField
     class="mt-4"
     :model-value="marker['showLabel']"
     @update:model-value="updateValue('showLabel', $event)"

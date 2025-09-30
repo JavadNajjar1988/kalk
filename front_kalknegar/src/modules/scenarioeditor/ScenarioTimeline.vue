@@ -114,6 +114,27 @@ let maxCount = 1;
 let histogram: { t: number; count: number }[] = [];
 
 const minorWidth = computed(() => majorWidth.value / (24 / minorStep.value));
+
+// Responsive font sizing based on zoom level
+const majorFontClass = computed(() => {
+  if (majorWidth.value < 90) return "text-xs";
+  if (majorWidth.value < 140) return "text-sm";
+  return "text-base";
+});
+const minorFontClass = computed(() => {
+  if (minorWidth.value < 22) return "text-[0.6rem]";
+  if (minorWidth.value < 36) return "text-[0.7rem]";
+  return "text-sm";
+});
+
+// Hide/skip labels when zoomed out to avoid overlaps
+const showMajorLabels = computed(() => majorWidth.value >= 60);
+const showMinorLabels = computed(() => minorWidth.value >= 14);
+const minorLabelStep = computed(() => {
+  if (minorWidth.value < 18) return 4; // every 4th minor tick
+  if (minorWidth.value < 28) return 2; // every 2nd minor tick
+  return 1; // all
+});
 const currentTimestamp = ref(0);
 const animate = ref(false);
 const hoveredX = ref(0);
@@ -148,7 +169,7 @@ function updateTicks(
     label: majorFormatter(+d),
     timestamp: +d,
     id: `major-${+d}-${index}`, // شناسه یکتا برای هر tick
-  })).reverse();
+  }));
 
   const hourRange = utcHour.range(start, end, minorStep);
   const minorFormatter = getMinorFormatter(majorWidth);
@@ -156,7 +177,7 @@ function updateTicks(
     label: minorFormatter(+d),
     timestamp: +d,
     id: `minor-${+d}-${index}`, // شناسه یکتا برای هر tick
-  })).reverse();
+  }));
   return { minDate: start, maxDate: end };
 }
 
@@ -385,6 +406,7 @@ function onContextMenuAction(action: string, options?: Record<string, any>) {
     <div
       ref="el"
       class="bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-border mb-2 w-full sm:max-w-3xl lg:max-w-5xl mx-auto transform overflow-hidden border rounded-xl shadow text-xs transition-all select-none relative text-foreground"
+      style="direction: ltr; text-align: left;"
       @pointerdown="onPointerDown"
       @pointerup="onPointerUp"
       @pointermove="onPointerMove"
@@ -441,19 +463,21 @@ function onContextMenuAction(action: string, options?: Record<string, any>) {
             v-for="tick in majorTicks"
             :key="tick.id"
             class="border-border flex-none border-r border-b pl-1 pr-1 py-1 text-center whitespace-nowrap box-border transition-opacity duration-200"
+            :class="majorFontClass"
             :style="`width: ${majorWidth}px`"
           >
-            {{ tick.label }}
+            <template v-if="showMajorLabels">{{ tick.label }}</template>
           </div>
         </div>
         <div class="flex justify-center text-sm">
           <div
-            v-for="tick in minorTicks"
+            v-for="(tick, idx) in minorTicks"
             :key="tick.id"
             class="text-muted-foreground border-border min-h-[1.25rem] flex-none border-r pl-1 pr-1 py-0.5 text-center whitespace-nowrap box-border transition-opacity duration-200"
+            :class="minorFontClass"
             :style="`width: ${minorWidth}px`"
           >
-            {{ tick.label }}
+            <template v-if="showMinorLabels && idx % minorLabelStep === 0">{{ tick.label }}</template>
           </div>
         </div>
       </div>

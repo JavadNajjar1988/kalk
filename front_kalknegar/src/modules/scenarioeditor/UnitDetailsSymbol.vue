@@ -7,7 +7,7 @@ import MilitarySymbol from "@/components/MilitarySymbol.vue";
 import { Sidc } from "@/symbology/sidc";
 import { Dimension, symbolSetToDimension } from "@/symbology/values";
 import TextAmpInput from "@/modules/scenarioeditor/TextAmpInput.vue";
-import ToggleField from "@/components/ToggleField.vue";
+import CheckboxField from "@/components/CheckboxField.vue";
 import { type TextAmpKey, textAmpMap } from "@/symbology/milsymbwrapper";
 import type { TextAmplifiers } from "@/types/scenarioModels";
 import { useSelectedItems } from "@/stores/selectedStore";
@@ -130,9 +130,9 @@ function handleReset() {
 <template>
   <section class="-mx-4 sm:mx-0">
     <div>
-      <header class="my-4 flex items-center justify-between">
+      <header class="my-4 flex items-center justify-between" dir="rtl">
         <p />
-        <ToggleField v-model="overrideName">بازنویسی نام</ToggleField>
+        <CheckboxField v-model="overrideName">بازنویسی نام</CheckboxField>
       </header>
       <form @submit.prevent="onSubmit">
         <div class="grid grid-cols-3 grid-rows-5">

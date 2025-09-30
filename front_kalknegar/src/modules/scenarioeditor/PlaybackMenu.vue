@@ -29,9 +29,9 @@ const playback = usePlaybackStore();
 </script>
 
 <template>
-  <div class="items-center rounded-lg bg-white-800 px-1 sm:flex">
+  <div class="items-center rounded-lg bg-gray-50 dark:bg-slate-700 px-1 py-0.5 border border-gray-200 dark:border-slate-600 sm:flex">
     <button
-      class="inline-flex items-center justify-center rounded-md p-1.5 text-gray-400 hover:bg-gray-700 hover:text-white focus:ring-2 focus:ring-white focus:outline-hidden focus:ring-inset disabled:opacity-50 sm:block"
+      class="inline-flex items-center justify-center rounded-md p-1.5 text-slate-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-600 hover:text-slate-800 dark:hover:text-white focus:ring-2 focus:ring-white focus:outline-hidden focus:ring-inset disabled:opacity-50 sm:block"
       title="بازگردانی عمل (ctrl+z)"
       @click="playback.togglePlayback()"
     >
@@ -40,7 +40,7 @@ const playback = usePlaybackStore();
     </button>
     <DropdownMenu>
       <DropdownMenuTrigger
-        class="items-center justify-center rounded-md p-1.5 text-gray-400 hover:bg-gray-700 hover:text-white focus:ring-2 focus:ring-white focus:outline-hidden focus:ring-inset disabled:opacity-50 sm:block"
+        class="items-center justify-center rounded-md p-1.5 text-slate-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-600 hover:text-slate-800 dark:hover:text-white focus:ring-2 focus:ring-white focus:outline-hidden focus:ring-inset disabled:opacity-50 sm:block"
         ><IconChevronDown class="block h-6 w-6"
       /></DropdownMenuTrigger>
       <DropdownMenuContent :side-offset="10">

@@ -25,38 +25,95 @@
             <MagnifyingGlassIcon class="h-5 w-5 text-gray-500" />
           </IconButton>
         </header>
-        <section v-if="!isMobile" class="flex flex-auto justify-between p-2">
-          <MapEditorDesktopPanel v-if="showLeftPanel" @close="toggleLeftPanel()" />
-          <div v-else>
-            <button
-              type="button"
-              @click="toggleLeftPanel()"
-              title="نمایش پنل"
-              class="bg-opacity-70 pointer-events-auto absolute -my-12 rounded bg-white p-1 text-gray-600 hover:text-gray-900"
-            >
-              <ShowPanelIcon class="h-7 w-7" />
-            </button>
-          </div>
-          <MapEditorDetailsPanel v-if="showDetailsPanel" @close="onCloseDetailsPanel()">
-            <ScenarioFeatureDetails
-              v-if="activeDetailsPanel === 'feature'"
-              :selected-ids="selectedFeatureIds"
-            />
-            <UnitDetails
-              v-else-if="activeDetailsPanel === 'unit'"
-              :unit-id="activeUnitId || [...selectedUnitIds][0]"
-            />
-            <ScenarioEventDetails
-              v-else-if="activeDetailsPanel === 'event'"
-              :event-id="activeScenarioEventId!"
-            />
-            <ScenarioMapLayerDetails
-              v-else-if="activeDetailsPanel === 'mapLayer'"
-              :layer-id="activeMapLayerId!"
-            />
-            <ScenarioInfoPanel v-else-if="activeDetailsPanel === 'scenario'" />
-          </MapEditorDetailsPanel>
-          <div v-else></div>
+        <section v-if="!isMobile" class="flex flex-auto justify-between p-2" style="direction: ltr;">
+          <template v-if="rtlPanels">
+            <!-- Left side: details panel in RTL layout -->
+            <MapEditorDetailsPanel v-if="showDetailsPanel" @close="onCloseDetailsPanel()">
+              <ScenarioFeatureDetails
+                v-if="activeDetailsPanel === 'feature'"
+                :selected-ids="selectedFeatureIds"
+              />
+              <UnitDetails
+                v-else-if="activeDetailsPanel === 'unit'"
+                :unit-id="activeUnitId || [...selectedUnitIds][0]"
+              />
+              <ScenarioEventDetails
+                v-else-if="activeDetailsPanel === 'event'"
+                :event-id="activeScenarioEventId!"
+              />
+              <ScenarioMapLayerDetails
+                v-else-if="activeDetailsPanel === 'mapLayer'"
+                :layer-id="activeMapLayerId!"
+              />
+              <ScenarioInfoPanel v-else-if="activeDetailsPanel === 'scenario'" />
+            </MapEditorDetailsPanel>
+            <div v-else>
+              <button
+                type="button"
+                @click="onOpenDetailsPanel()"
+                title="نمایش پنل"
+                class="bg-opacity-70 pointer-events-auto absolute -my-12 left-0 rounded bg-white p-1 text-gray-600 hover:text-gray-900"
+              >
+                <ShowPanelIcon class="h-7 w-7" />
+              </button>
+            </div>
+
+            <!-- Right side: orbat panel in RTL layout -->
+            <MapEditorDesktopPanel v-if="showLeftPanel" @close="toggleLeftPanel()" />
+            <div v-else>
+              <button
+                type="button"
+                @click="toggleLeftPanel()"
+                title="نمایش پنل آرایش نبرد"
+                class="bg-opacity-70 pointer-events-auto absolute top-1/2 -translate-y-1/2 -right-2 rounded-full bg-white/90 p-1.5 text-gray-600 shadow hover:text-gray-900"
+              >
+                <ShowPanelIcon class="h-6 w-6 rotate-180" />
+              </button>
+            </div>
+          </template>
+          <template v-else>
+            <!-- Original LTR layout: left = orbat panel, right = details -->
+            <MapEditorDesktopPanel v-if="showLeftPanel" @close="toggleLeftPanel()" />
+            <div v-else>
+              <button
+                type="button"
+                @click="toggleLeftPanel()"
+                title="نمایش پنل"
+                class="bg-opacity-70 pointer-events-auto absolute top-1/2 -translate-y-1/2 -left-2 rounded-full bg-white/90 p-1.5 text-gray-600 shadow hover:text-gray-900"
+              >
+                <ShowPanelIcon class="h-6 w-6" />
+              </button>
+            </div>
+            <MapEditorDetailsPanel v-if="showDetailsPanel" @close="onCloseDetailsPanel()">
+              <ScenarioFeatureDetails
+                v-if="activeDetailsPanel === 'feature'"
+                :selected-ids="selectedFeatureIds"
+              />
+              <UnitDetails
+                v-else-if="activeDetailsPanel === 'unit'"
+                :unit-id="activeUnitId || [...selectedUnitIds][0]"
+              />
+              <ScenarioEventDetails
+                v-else-if="activeDetailsPanel === 'event'"
+                :event-id="activeScenarioEventId!"
+              />
+              <ScenarioMapLayerDetails
+                v-else-if="activeDetailsPanel === 'mapLayer'"
+                :layer-id="activeMapLayerId!"
+              />
+              <ScenarioInfoPanel v-else-if="activeDetailsPanel === 'scenario'" />
+            </MapEditorDetailsPanel>
+            <div v-else>
+              <button
+                type="button"
+                @click="onOpenDetailsPanel()"
+                title="نمایش پنل"
+                class="bg-opacity-70 pointer-events-auto absolute top-1/2 -translate-y-1/2 -right-2 rounded-full bg-white/90 p-1.5 text-gray-600 shadow hover:text-gray-900"
+              >
+                <ShowPanelIcon class="h-6 w-6 rotate-180" />
+              </button>
+            </div>
+          </template>
         </section>
       </main>
       <!-- Floating breadcrumb pill (top-center) -->
@@ -217,6 +274,8 @@ const activeUnitStore = useActiveUnitStore();
 const ui = useUiStore();
 const playback = usePlaybackStore();
 const breadcrumbOpen = shallowRef(false);
+// For fa-IR UI, prefer details on the left and orbat on the right
+const rtlPanels = true;
 
 const mapRef = shallowRef<OLMap>();
 const featureSelectInteractionRef = shallowRef<Select>();
@@ -264,6 +323,10 @@ const showDetailsPanel = computed(() => {
       showScenarioInfo.value,
   );
 });
+
+function onOpenDetailsPanel() {
+  showScenarioInfo.value = true;
+}
 
 onUnmounted(() => {
   activeUnitStore.clearActiveUnit();

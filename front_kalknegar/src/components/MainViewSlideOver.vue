@@ -19,16 +19,16 @@
             label="اندازه نماد آرایش نبرد"
             v-model="settings.orbatIconSize"
           />
-          <ToggleField v-model="settings.orbatShortName"
+          <CheckboxField v-model="settings.orbatShortName"
             >استفاده از نام‌های کوتاه در آرایش نبرد
-          </ToggleField>
-          <ToggleField v-model="symbolSettings.simpleStatusModifier"
+          </CheckboxField>
+          <CheckboxField v-model="symbolSettings.simpleStatusModifier"
             >استفاده از تغییردهنده وضعیت ساده
-          </ToggleField>
-          <ToggleField v-model="uiSettings.debugMode">حالت اشکال‌یابی</ToggleField>
-          <ToggleField v-if="uiSettings.debugMode" v-model="isDarkMode"
+          </CheckboxField>
+          <CheckboxField v-model="uiSettings.debugMode">حالت اشکال‌یابی</CheckboxField>
+          <CheckboxField v-if="uiSettings.debugMode" v-model="isDarkMode"
             >حالت تاریک
-          </ToggleField>
+          </CheckboxField>
         </div>
       </TabItem>
       <TabItem label="زمان و تاریخ">
@@ -47,7 +47,7 @@ import TabItem from "./TabItem.vue";
 import { useSettingsStore, useSymbolSettingsStore } from "@/stores/settingsStore";
 import NumberInputGroup from "./NumberInputGroup.vue";
 import MapSettingsPanel from "@/components/MapSettingsPanel.vue";
-import ToggleField from "@/components/ToggleField.vue";
+import CheckboxField from "@/components/CheckboxField.vue";
 import { useUiStore } from "@/stores/uiStore";
 import TimeDateSettingsPanel from "@/components/TimeDateSettingsPanel.vue";
 

@@ -1,6 +1,7 @@
 <template>
   <aside
-    class="pointer-events-auto relative -mt-12 hidden max-h-[80vh] overflow-auto rounded-2xl md:block bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border border-border shadow-xl"
+    class="pointer-events-auto relative hidden max-h-[80vh] overflow-auto rounded-2xl md:block bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border border-border shadow-xl mt-2 text-right"
+    dir="rtl"
     :style="{ width: orbatPanelWidth + 'px' }"
   >
     <TabGroup
@@ -10,7 +11,9 @@
       :selected-index="activeTabIndex"
       @change="changeTab"
     >
-      <TabList class="flex flex-0 justify-between border-b border-border bg-muted/40 rounded-t-2xl">
+      <TabList
+        class="flex flex-0 justify-between border-b border-border bg-muted/40 rounded-t-2xl rtl:flex-row-reverse"
+      >
         <div class="flex flex-auto items-center justify-evenly">
           <Tab
             as="template"

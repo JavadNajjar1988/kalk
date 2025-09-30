@@ -219,22 +219,17 @@ const toggleOpen = () => {
 };
 </script>
 <template>
-  <div class="pl-4">
+  <div class="pr-4" dir="rtl">
     <header
       ref="dropRef"
       :id="`os-${side.id}`"
-      class="group relative -ml-4 flex items-center justify-between border-t-2 border-b-2 border-gray-300 bg-gray-200 py-0 pl-4 dark:border-gray-600 dark:bg-gray-700"
+      class="group relative -mr-4 flex items-center justify-between border-t-2 border-b-2 border-gray-300 bg-gray-200/80 backdrop-blur-sm py-1 pr-3 dark:border-gray-600 dark:bg-gray-700/70"
     >
-      <IconDrag
-        class="size-6 flex-none cursor-move text-gray-500 group-focus-within:opacity-100 group-hover:opacity-100 sm:-ml-3 sm:opacity-0"
-        ref="dragRef"
-      />
-
       <button
         @click="toggleOpen"
-        class="flex w-full items-center justify-between text-left"
+        class="flex w-full items-center justify-between text-right"
       >
-        <span class="text-sm font-medium text-gray-900 dark:text-gray-200">
+        <span class="text-sm font-semibold text-gray-900 dark:text-gray-200">
           {{ side.name }}
         </span>
         <ChevronUpIcon
@@ -242,43 +237,51 @@ const toggleOpen = () => {
           class="size-5 text-gray-400 group-hover:text-gray-900"
         />
       </button>
-      <button
-        type="button"
-        class="ml-1 flex-none text-gray-400 hover:text-gray-700"
-        title="تغییر وضعیت نمایش"
-        @click="onSideAction(isHidden ? SideActions.Show : SideActions.Hide)"
-      >
-        <IconEyeOff v-if="isHidden" class="h-5 w-5" />
-        <IconEye class="h-5 w-5" v-else />
-      </button>
-      <Toggle
-        v-if="!hideFilter"
-        v-model="showFilter"
-        v-slot="{ pressed }"
-        title="تغییر فیلتر آرایش نبرد"
-        class="ml-1 text-gray-400 hover:text-gray-900"
-      >
-        <span class="sr-only">تغییر فیلتر آرایش نبرد</span>
-        <IconFilterVariantPlus v-if="pressed" class="h-5 w-5" aria-hidden="true" />
-        <IconFilterVariant v-else class="h-5 w-5" aria-hidden="true" />
-      </Toggle>
-      <IconLockOutline v-if="isLocked" class="size-6 text-gray-400" />
-
-      <SideDropdownMenu
-        @action="onSideAction"
-        :is-locked="isLocked"
-        :is-hidden="isHidden"
-      />
+      <div class="flex items-center gap-2 pl-2">
+        <button
+          type="button"
+          class="flex-none text-gray-400 hover:text-gray-700"
+          title="تغییر وضعیت نمایش"
+          @click="onSideAction(isHidden ? SideActions.Show : SideActions.Hide)"
+        >
+          <IconEyeOff v-if="isHidden" class="h-5 w-5" />
+          <IconEye class="h-5 w-5" v-else />
+        </button>
+        <Toggle
+          v-if="!hideFilter"
+          v-model="showFilter"
+          v-slot="{ pressed }"
+          title="تغییر فیلتر آرایش نبرد"
+          class="flex-none text-gray-400 hover:text-gray-900"
+        >
+          <span class="sr-only">تغییر فیلتر آرایش نبرد</span>
+          <IconFilterVariantPlus v-if="pressed" class="h-5 w-5" aria-hidden="true" />
+          <IconFilterVariant v-else class="h-5 w-5" aria-hidden="true" />
+        </Toggle>
+        <IconLockOutline v-if="isLocked" class="size-5 text-gray-400" />
+        <SideDropdownMenu
+          @action="onSideAction"
+          :is-locked="isLocked"
+          :is-hidden="isHidden"
+        />
+        <span
+          ref="dragRef"
+          class="flex-none cursor-grab active:cursor-grabbing text-gray-500 hover:text-gray-700"
+          title="جابجایی"
+        >
+          <IconDrag class="size-5" />
+        </span>
+      </div>
       <TreeDropIndicator v-if="instruction" :instruction="instruction" class="z-10" />
     </header>
     <EditSideForm
       v-if="showEditSideForm"
       :side-id="side.id"
       @close="showEditSideForm = false"
-      class="-ml-6"
+      class="-mr-6"
     />
     <div v-show="isOpen">
-      <div v-if="showFilter" class="mt-4 mr-10">
+      <div v-if="showFilter" class="mt-4 ml-10">
         <FilterQueryInput
           v-model="filterQuery"
           v-model:location-filter="hasLocationFilter"

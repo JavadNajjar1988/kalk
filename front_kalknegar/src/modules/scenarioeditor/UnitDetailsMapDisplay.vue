@@ -16,7 +16,7 @@ import SimpleSelect from "@/components/SimpleSelect.vue";
 import { useToeActions } from "@/composables/scenarioActions";
 import { useSelectedItems } from "@/stores/selectedStore";
 import PanelHeading from "@/components/PanelHeading.vue";
-import ToggleField from "@/components/ToggleField.vue";
+import CheckboxField from "@/components/CheckboxField.vue";
 import { useMapViewStore } from "@/stores/mapViewStore";
 import ZoomSelector from "@/components/ZoomSelector.vue";
 import { type VisibilityStyleSpec } from "@/geo/simplestyle";
@@ -253,10 +253,10 @@ function updateVisibilityStyle(style: Partial<VisibilityStyleSpec>) {
 }
 </script>
 <template>
-  <PanelDataGrid class="mt-4">
+  <PanelDataGrid class="mt-4" dir="rtl">
     <div class="col-span-2 mt-2 -mb-6 font-semibold">نمایش</div>
     <div class="self-end">محدودیت</div>
-    <ToggleField class="mt-4" v-model="limitVisibility" />
+    <CheckboxField class="mt-4" v-model="limitVisibility" />
     <template v-if="limitVisibility">
       <div>سطوح زوم</div>
       <ZoomSelector v-model="range" class="mt-4 flex-auto" />

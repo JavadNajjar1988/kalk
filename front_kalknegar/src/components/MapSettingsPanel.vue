@@ -1,14 +1,10 @@
 <template>
   <div class="space-y-4 p-1">
-    <ToggleField v-model="uiSettings.showToolbar">نمایش نوار ابزار</ToggleField>
-    <ToggleField v-model="uiSettings.showTimeline">نمایش خط زمان</ToggleField>
-    <ToggleField v-model="uiSettings.showOrbatBreadcrumbs"
-      >نمایش مسیر آرایش نبرد</ToggleField
-    >
-    <ToggleField v-model="settings.showScaleLine">نمایش خط مقیاس</ToggleField>
-    <ToggleField v-model="settings.showLocation"
-      >نمایش موقعیت نشانگر ماوس
-    </ToggleField>
+    <CheckboxField v-model="uiSettings.showToolbar">نمایش نوار ابزار</CheckboxField>
+    <CheckboxField v-model="uiSettings.showTimeline">نمایش خط زمان</CheckboxField>
+    <CheckboxField v-model="uiSettings.showOrbatBreadcrumbs">نمایش مسیر آرایش نبرد</CheckboxField>
+    <CheckboxField v-model="settings.showScaleLine">نمایش خط مقیاس</CheckboxField>
+    <CheckboxField v-model="settings.showLocation">نمایش موقعیت نشانگر ماوس</CheckboxField>
     <section>
       <p class="text-base leading-loose font-medium text-gray-900">فرمت مختصات</p>
       <RadioGroupList
@@ -27,7 +23,7 @@
   </div>
 </template>
 <script setup lang="ts">
-import ToggleField from "@/components/ToggleField.vue";
+import CheckboxField from "@/components/CheckboxField.vue";
 import { useMapSettingsStore } from "@/stores/mapSettingsStore";
 import type { RadioGroupItem } from "@/components/types";
 import type { CoordinateFormatType } from "@/composables/geoShowLocation";

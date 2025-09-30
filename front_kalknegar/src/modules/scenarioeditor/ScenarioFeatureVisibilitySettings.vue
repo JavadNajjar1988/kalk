@@ -2,7 +2,7 @@
 import { computed } from "vue";
 import type { SimpleStyleSpec, VisibilityStyleSpec } from "@/geo/simplestyle";
 import { type ScenarioFeature } from "@/types/scenarioGeoModels";
-import ToggleField from "@/components/ToggleField.vue";
+import CheckboxField from "@/components/CheckboxField.vue";
 import ZoomSelector from "@/components/ZoomSelector.vue";
 
 const props = defineProps<{ feature: ScenarioFeature }>();
@@ -31,9 +31,9 @@ const range = computed({
 });
 </script>
 <template>
-  <div class="col-span-2 mt-2 -mb-6 font-semibold">قابلیت مشاهده</div>
+  <div class="col-span-2 mt-2 -mb-6 font-semibold" dir="rtl">قابلیت مشاهده</div>
   <div class="self-end">محدودیت</div>
-  <ToggleField
+  <CheckboxField
     class="mt-4"
     :model-value="marker['limitVisibility']"
     @update:model-value="updateValue('limitVisibility', $event)"
