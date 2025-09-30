@@ -209,6 +209,10 @@
               :dropdownOpen="dropdownOpen"
               @toggle-dropdown="toggleDropdown"
               @new-scenario="newScenario"
+              @delete-scenario="deleteScenario"
+              @edit-scenario="editScenario"
+              @run-scenario="runScenario"
+              @download-scenario="downloadScenario"
             />
             
             <div class="text-center mt-8">
@@ -267,6 +271,27 @@ const toggleDropdown = (cardId) => {
 // New scenario creation
 const newScenario = () => {
   router.push({ name: NEW_SCENARIO_ROUTE });
+};
+
+// Scenario actions
+const deleteScenario = (scenarioId) => {
+  console.log('حذف سناریو:', scenarioId);
+  // TODO: Implement delete functionality
+};
+
+const editScenario = (scenarioId) => {
+  console.log('ویرایش سناریو:', scenarioId);
+  // TODO: Implement edit functionality
+};
+
+const downloadScenario = (scenarioId) => {
+  console.log('دانلود سناریو:', scenarioId);
+  // TODO: Implement download functionality
+};
+
+const runScenario = (scenarioId) => {
+  console.log('اجرای سناریو:', scenarioId);
+  // TODO: Implement run functionality
 };
 
 // Theme toggle function

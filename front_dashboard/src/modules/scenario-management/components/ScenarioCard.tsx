@@ -193,19 +193,11 @@ const ScenarioCard: React.FC<ScenarioCardProps> = ({
       >
         <MenuItem onClick={() => handleAction('open')}>
           <PlayArrowIcon sx={{ mr: 1, fontSize: 20 }} />
-          باز کردن
-        </MenuItem>
-        <MenuItem onClick={() => handleAction('edit')}>
-          <EditIcon sx={{ mr: 1, fontSize: 20 }} />
-          ویرایش
+          اجرا
         </MenuItem>
         <MenuItem onClick={() => handleAction('duplicate')}>
           <ContentCopyIcon sx={{ mr: 1, fontSize: 20 }} />
-          کپی کردن
-        </MenuItem>
-        <MenuItem onClick={() => handleAction('download')}>
-          <DownloadIcon sx={{ mr: 1, fontSize: 20 }} />
-          دانلود
+          کپی
         </MenuItem>
         <MenuItem 
           onClick={() => handleAction('delete')}

@@ -55,6 +55,7 @@ import {
   Warning,
   Error as ErrorIcon,
   Info,
+  ContentCopy,
 } from '@mui/icons-material';
 import { useAppDispatch, useAppSelector } from '@/store';
 import { 
@@ -579,6 +580,39 @@ const ScenariosPage: React.FC = () => {
           {t('scenarios.menu.viewDetails')}
         </MenuItem>
         
+        <MenuItem onClick={() => {
+          if (menuScenario) {
+            // Handle execute action
+            console.log('Execute scenario', menuScenario.id);
+          }
+          handleMenuClose();
+        }}>
+          <PlayArrow sx={{ mr: 1 }} />
+          اجرا
+        </MenuItem>
+        
+        <MenuItem onClick={() => {
+          if (menuScenario) {
+            // Handle copy action
+            console.log('Copy scenario', menuScenario.id);
+          }
+          handleMenuClose();
+        }}>
+          <ContentCopy sx={{ mr: 1 }} />
+          کپی
+        </MenuItem>
+        
+        <MenuItem 
+          onClick={() => {
+            setDeleteConfirmOpen(true);
+            handleMenuClose();
+          }}
+          sx={{ color: 'error.main' }}
+        >
+          <Delete sx={{ mr: 1 }} />
+          حذف
+        </MenuItem>
+        
         {canEdit && (
           <MenuItem onClick={() => {
             setSelectedScenario(menuScenario || undefined);
@@ -590,18 +624,6 @@ const ScenariosPage: React.FC = () => {
           </MenuItem>
         )}
 
-        {canEdit && (
-          <MenuItem 
-            onClick={() => {
-              setDeleteConfirmOpen(true);
-              handleMenuClose();
-            }}
-            sx={{ color: 'error.main' }}
-          >
-            <Delete sx={{ mr: 1 }} />
-            {t('scenarios.menu.delete')}
-          </MenuItem>
-        )}
       </Menu>
 
       {/* دیالوگ ایجاد/ویرایش */}

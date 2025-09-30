@@ -30,6 +30,7 @@ export interface ScenarioCardProps {
 export interface DemoScenarioCardProps {
   scenario: DemoScenario;
   onClick: () => void;
+  onAction?: (action: string) => void;
   dense?: boolean;
 }
 

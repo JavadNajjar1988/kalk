@@ -10,16 +10,47 @@ import {
   CardMedia,
   Typography,
   Box,
-  useTheme
+  useTheme,
+  IconButton,
+  Menu,
+  MenuItem
 } from '@mui/material';
+import {
+  MoreVert as MoreVertIcon,
+  PlayArrow as PlayArrowIcon,
+  ContentCopy as ContentCopyIcon,
+  Delete as DeleteIcon
+} from '@mui/icons-material';
 import { DemoScenarioCardProps } from '../types';
 
 const DemoScenarioCard: React.FC<DemoScenarioCardProps> = ({
   scenario,
   onClick,
+  onAction,
   dense = false
 }) => {
   const theme = useTheme();
+  const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
+  const open = Boolean(anchorEl);
+
+  const handleMenuClick = (event: React.MouseEvent<HTMLElement>) => {
+    event.stopPropagation();
+    setAnchorEl(event.currentTarget);
+  };
+
+  const handleMenuClose = () => {
+    setAnchorEl(null);
+  };
+
+  const handleAction = (action: string) => {
+    handleMenuClose();
+    // Handle actions like delete, copy, execute
+    if (onAction) {
+      onAction(action);
+    } else {
+      console.log(`Demo scenario action: ${action}`, scenario.id);
+    }
+  };
 
   return (
     <Card
@@ -67,19 +98,33 @@ const DemoScenarioCard: React.FC<DemoScenarioCardProps> = ({
           p: dense ? 2 : 3
         }}
       >
-        {/* Title */}
-        <Typography
-          variant={dense ? 'subtitle2' : 'h6'}
-          component="h3"
-          sx={{
-            fontWeight: 600,
-            color: theme.palette.text.primary,
-            mb: 1,
-            lineHeight: 1.2
-          }}
-        >
-          {scenario.name}
-        </Typography>
+        {/* Header with menu */}
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1 }}>
+          <Typography
+            variant={dense ? 'subtitle2' : 'h6'}
+            component="h3"
+            sx={{
+              fontWeight: 600,
+              color: theme.palette.text.primary,
+              mb: 1,
+              lineHeight: 1.2
+            }}
+          >
+            {scenario.name}
+          </Typography>
+          
+          {/* Three-dot menu */}
+          <IconButton
+            size="small"
+            onClick={handleMenuClick}
+            sx={{ 
+              opacity: 0.7,
+              '&:hover': { opacity: 1 }
+            }}
+          >
+            <MoreVertIcon fontSize="small" />
+          </IconButton>
+        </Box>
 
         {/* Summary */}
         <Typography
@@ -112,6 +157,35 @@ const DemoScenarioCard: React.FC<DemoScenarioCardProps> = ({
           </Typography>
         </Box>
       </CardContent>
+
+      {/* Actions Menu */}
+      <Menu
+        anchorEl={anchorEl}
+        open={open}
+        onClose={handleMenuClose}
+        onClick={(e) => e.stopPropagation()}
+        PaperProps={{
+          sx: {
+            minWidth: 180
+          }
+        }}
+      >
+        <MenuItem onClick={() => handleAction('execute')}>
+          <PlayArrowIcon sx={{ mr: 1, fontSize: 20 }} />
+          اجرا
+        </MenuItem>
+        <MenuItem onClick={() => handleAction('copy')}>
+          <ContentCopyIcon sx={{ mr: 1, fontSize: 20 }} />
+          کپی
+        </MenuItem>
+        <MenuItem 
+          onClick={() => handleAction('delete')}
+          sx={{ color: 'error.main' }}
+        >
+          <DeleteIcon sx={{ mr: 1, fontSize: 20 }} />
+          حذف
+        </MenuItem>
+      </Menu>
     </Card>
   );
 };

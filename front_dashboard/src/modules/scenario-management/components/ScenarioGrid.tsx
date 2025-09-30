@@ -125,6 +125,7 @@ const ScenarioGrid: React.FC<ScenarioGridProps> = ({
               <DemoScenarioCard
                 scenario={scenario}
                 onClick={() => onDemoScenarioSelect(scenario.id)}
+                onAction={(action: string) => onScenarioAction(action, scenario.id)}
               />
             </Grid>
           ))}

@@ -5,25 +5,37 @@
     <template v-if="activeTab === 'all' || activeTab === 'recent'">
       <!-- عملیات بیت المقدس -->
       <div class="group relative bg-gradient-to-br from-white via-white to-blue-50/30 dark:from-slate-800 dark:via-slate-800 dark:to-slate-700 rounded-2xl border border-slate-200/60 dark:border-slate-700/60 hover:border-blue-300/70 dark:hover:border-blue-600/50 shadow-lg hover:shadow-xl transition-all duration-400 cursor-pointer hover:-translate-y-1 backdrop-blur-sm">
-        <div class="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+        <div class="absolute top-3 left-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
           <div class="relative">
             <button @click="$emit('toggle-dropdown', 1)" class="p-1.5 rounded-full bg-white/80 dark:bg-slate-700/80 hover:bg-white dark:hover:bg-slate-600 transition-all duration-200 shadow-md">
               <svg class="h-3.5 w-3.5 text-slate-600 dark:text-slate-300" fill="currentColor" viewBox="0 0 20 20">
                 <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
               </svg>
             </button>
-            <div v-if="dropdownOpen === 1" class="absolute top-full left-0 mt-1.5 w-40 bg-white/95 dark:bg-slate-800/95 backdrop-blur-lg rounded-xl shadow-xl border border-slate-200 dark:border-slate-600 py-1.5 z-20 animate-in fade-in duration-200">
-              <button class="w-full text-right px-3 py-2 text-xs hover:bg-slate-50 dark:hover:bg-slate-700/50 flex items-center gap-2.5 transition-colors duration-200">
-                <svg class="h-3.5 w-3.5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+             <div v-if="dropdownOpen === 1" class="absolute top-full left-0 mt-1.5 w-40 bg-white/95 dark:bg-slate-800/95 backdrop-blur-lg rounded-xl shadow-xl border border-slate-200 dark:border-slate-600 py-1.5 z-[99999] animate-in fade-in duration-200">
+               <button @click="$emit('edit-scenario', 1)" class="w-full text-right px-3 py-2 text-xs hover:bg-blue-50 dark:hover:bg-blue-900/20 flex items-center gap-2.5 transition-colors duration-200 text-blue-600 dark:text-blue-400">
+                 <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                 </svg>
+                 <span class="font-medium">ویرایش</span>
+               </button>
+               <button @click="$emit('run-scenario', 1)" class="w-full text-right px-3 py-2 text-xs hover:bg-purple-50 dark:hover:bg-purple-900/20 flex items-center gap-2.5 transition-colors duration-200 text-purple-600 dark:text-purple-400">
+                 <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h1m4 0h1m-6 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                 </svg>
+                 <span class="font-medium">اجرا</span>
+               </button>
+               <button @click="$emit('download-scenario', 1)" class="w-full text-right px-3 py-2 text-xs hover:bg-green-50 dark:hover:bg-green-900/20 flex items-center gap-2.5 transition-colors duration-200 text-green-600 dark:text-green-400">
+                 <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                 </svg>
                 <span class="font-medium">دانلود</span>
               </button>
-              <button class="w-full text-right px-3 py-2 text-xs hover:bg-slate-50 dark:hover:bg-slate-700/50 flex items-center gap-2.5 transition-colors duration-200">
-                <svg class="h-3.5 w-3.5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+               <button @click="$emit('delete-scenario', 1)" class="w-full text-right px-3 py-2 text-xs hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center gap-2.5 transition-colors duration-200 text-red-600 dark:text-red-400">
+                 <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                 </svg>
-                <span class="font-medium">کپی</span>
+                 <span class="font-medium">حذف</span>
               </button>
             </div>
           </div>
@@ -62,6 +74,41 @@
       
       <!-- عملیات مرصاد -->
       <div class="group relative bg-gradient-to-br from-white via-white to-emerald-50/30 dark:from-slate-800 dark:via-slate-800 dark:to-slate-700 rounded-2xl border border-slate-200/60 dark:border-slate-700/60 hover:border-emerald-300/70 dark:hover:border-emerald-600/50 shadow-lg hover:shadow-xl transition-all duration-400 cursor-pointer hover:-translate-y-1 backdrop-blur-sm">
+        <div class="absolute top-3 left-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+          <div class="relative">
+            <button @click="$emit('toggle-dropdown', 2)" class="p-1.5 rounded-full bg-white/80 dark:bg-slate-700/80 hover:bg-white dark:hover:bg-slate-600 transition-all duration-200 shadow-md">
+              <svg class="h-3.5 w-3.5 text-slate-600 dark:text-slate-300" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
+              </svg>
+            </button>
+             <div v-if="dropdownOpen === 2" class="absolute top-full left-0 mt-1.5 w-40 bg-white/95 dark:bg-slate-800/95 backdrop-blur-lg rounded-xl shadow-xl border border-slate-200 dark:border-slate-600 py-1.5 z-[99999] animate-in fade-in duration-200">
+               <button @click="$emit('edit-scenario', 2)" class="w-full text-right px-3 py-2 text-xs hover:bg-blue-50 dark:hover:bg-blue-900/20 flex items-center gap-2.5 transition-colors duration-200 text-blue-600 dark:text-blue-400">
+                 <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                 </svg>
+                 <span class="font-medium">ویرایش</span>
+               </button>
+               <button @click="$emit('run-scenario', 2)" class="w-full text-right px-3 py-2 text-xs hover:bg-purple-50 dark:hover:bg-purple-900/20 flex items-center gap-2.5 transition-colors duration-200 text-purple-600 dark:text-purple-400">
+                 <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h1m4 0h1m-6 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                 </svg>
+                 <span class="font-medium">اجرا</span>
+               </button>
+               <button @click="$emit('download-scenario', 2)" class="w-full text-right px-3 py-2 text-xs hover:bg-green-50 dark:hover:bg-green-900/20 flex items-center gap-2.5 transition-colors duration-200 text-green-600 dark:text-green-400">
+                 <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                 </svg>
+                 <span class="font-medium">دانلود</span>
+               </button>
+               <button @click="$emit('delete-scenario', 2)" class="w-full text-right px-3 py-2 text-xs hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center gap-2.5 transition-colors duration-200 text-red-600 dark:text-red-400">
+                 <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                 </svg>
+                 <span class="font-medium">حذف</span>
+               </button>
+             </div>
+          </div>
+        </div>
         <div class="p-4">
           <div class="flex items-center gap-3 mb-4">
             <div class="h-10 w-10 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-500 flex items-center justify-center shadow-md shadow-emerald-500/20">
@@ -98,6 +145,41 @@
     <template v-if="activeTab === 'all' || activeTab === 'samples'">
       <!-- آزادسازی خرمشهر – عملیات بیت‌المقدس -->
       <div class="group relative bg-white dark:bg-slate-800 rounded-2xl overflow-hidden border border-slate-200/60 dark:border-slate-700/60 hover:border-teal-400/70 dark:hover:border-teal-500/70 shadow-lg hover:shadow-xl transition-all duration-400 hover:-translate-y-1">
+        <div class="absolute top-3 left-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10">
+          <div class="relative">
+            <button @click="$emit('toggle-dropdown', 3)" class="p-1.5 rounded-full bg-white/80 dark:bg-slate-700/80 hover:bg-white dark:hover:bg-slate-600 transition-all duration-200 shadow-md">
+              <svg class="h-3.5 w-3.5 text-slate-600 dark:text-slate-300" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
+              </svg>
+            </button>
+             <div v-if="dropdownOpen === 3" class="absolute top-full left-0 mt-1.5 w-40 bg-white/95 dark:bg-slate-800/95 backdrop-blur-lg rounded-xl shadow-xl border border-slate-200 dark:border-slate-600 py-1.5 z-[99999] animate-in fade-in duration-200">
+               <button @click="$emit('edit-scenario', 3)" class="w-full text-right px-3 py-2 text-xs hover:bg-blue-50 dark:hover:bg-blue-900/20 flex items-center gap-2.5 transition-colors duration-200 text-blue-600 dark:text-blue-400">
+                 <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                 </svg>
+                 <span class="font-medium">ویرایش</span>
+               </button>
+               <button @click="$emit('run-scenario', 3)" class="w-full text-right px-3 py-2 text-xs hover:bg-purple-50 dark:hover:bg-purple-900/20 flex items-center gap-2.5 transition-colors duration-200 text-purple-600 dark:text-purple-400">
+                 <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h1m4 0h1m-6 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                 </svg>
+                 <span class="font-medium">اجرا</span>
+               </button>
+               <button @click="$emit('download-scenario', 3)" class="w-full text-right px-3 py-2 text-xs hover:bg-green-50 dark:hover:bg-green-900/20 flex items-center gap-2.5 transition-colors duration-200 text-green-600 dark:text-green-400">
+                 <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                 </svg>
+                 <span class="font-medium">دانلود</span>
+               </button>
+               <button @click="$emit('delete-scenario', 3)" class="w-full text-right px-3 py-2 text-xs hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center gap-2.5 transition-colors duration-200 text-red-600 dark:text-red-400">
+                 <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                 </svg>
+                 <span class="font-medium">حذف</span>
+               </button>
+             </div>
+          </div>
+        </div>
         <router-link :to="getScenarioTo('Operation_Beit_ol_Moqaddas_1982_FA')" class="block h-full" draggable="false">
           <div class="relative h-40 overflow-hidden">
             <img
@@ -140,6 +222,41 @@
       
       <!-- عملیات مرصاد -->
       <div class="group relative bg-white dark:bg-slate-800 rounded-2xl overflow-hidden border border-slate-200/60 dark:border-slate-700/60 hover:border-teal-400/70 dark:hover:border-teal-500/70 shadow-lg hover:shadow-xl transition-all duration-400 hover:-translate-y-1">
+        <div class="absolute top-3 left-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10">
+          <div class="relative">
+            <button @click="$emit('toggle-dropdown', 4)" class="p-1.5 rounded-full bg-white/80 dark:bg-slate-700/80 hover:bg-white dark:hover:bg-slate-600 transition-all duration-200 shadow-md">
+              <svg class="h-3.5 w-3.5 text-slate-600 dark:text-slate-300" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
+              </svg>
+            </button>
+             <div v-if="dropdownOpen === 4" class="absolute top-full left-0 mt-1.5 w-40 bg-white/95 dark:bg-slate-800/95 backdrop-blur-lg rounded-xl shadow-xl border border-slate-200 dark:border-slate-600 py-1.5 z-[99999] animate-in fade-in duration-200">
+               <button @click="$emit('edit-scenario', 4)" class="w-full text-right px-3 py-2 text-xs hover:bg-blue-50 dark:hover:bg-blue-900/20 flex items-center gap-2.5 transition-colors duration-200 text-blue-600 dark:text-blue-400">
+                 <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                 </svg>
+                 <span class="font-medium">ویرایش</span>
+               </button>
+               <button @click="$emit('run-scenario', 4)" class="w-full text-right px-3 py-2 text-xs hover:bg-purple-50 dark:hover:bg-purple-900/20 flex items-center gap-2.5 transition-colors duration-200 text-purple-600 dark:text-purple-400">
+                 <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h1m4 0h1m-6 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                 </svg>
+                 <span class="font-medium">اجرا</span>
+               </button>
+               <button @click="$emit('download-scenario', 4)" class="w-full text-right px-3 py-2 text-xs hover:bg-green-50 dark:hover:bg-green-900/20 flex items-center gap-2.5 transition-colors duration-200 text-green-600 dark:text-green-400">
+                 <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                 </svg>
+                 <span class="font-medium">دانلود</span>
+               </button>
+               <button @click="$emit('delete-scenario', 4)" class="w-full text-right px-3 py-2 text-xs hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center gap-2.5 transition-colors duration-200 text-red-600 dark:text-red-400">
+                 <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                 </svg>
+                 <span class="font-medium">حذف</span>
+               </button>
+             </div>
+          </div>
+        </div>
         <router-link :to="getScenarioTo('Operation_Mersad_1988_FA')" class="block h-full" draggable="false">
           <div class="relative h-40 overflow-hidden">
             <img
@@ -285,8 +402,42 @@
               <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">اخیر</td>
               <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">۲ روز پیش</td>
               <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                <button class="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300 ml-4">ادامه کار</button>
-                <button class="text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-300">⋮</button>
+                <div class="flex items-center gap-2">
+                  <button class="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300">ادامه کار</button>
+                  <div class="relative">
+                    <button @click="$emit('toggle-dropdown', 5)" class="p-1 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200">
+                      <svg class="h-4 w-4 text-gray-600 dark:text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
+                      </svg>
+                    </button>
+                     <div v-if="dropdownOpen === 5" class="absolute top-full right-0 mt-1 w-40 bg-white/95 dark:bg-slate-800/95 backdrop-blur-lg rounded-xl shadow-xl border border-slate-200 dark:border-slate-600 py-1.5 z-[99999] animate-in fade-in duration-200">
+                       <button @click="$emit('edit-scenario', 5)" class="w-full text-right px-3 py-2 text-xs hover:bg-blue-50 dark:hover:bg-blue-900/20 flex items-center gap-2.5 transition-colors duration-200 text-blue-600 dark:text-blue-400">
+                         <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                         </svg>
+                         <span class="font-medium">ویرایش</span>
+                       </button>
+                       <button @click="$emit('run-scenario', 5)" class="w-full text-right px-3 py-2 text-xs hover:bg-purple-50 dark:hover:bg-purple-900/20 flex items-center gap-2.5 transition-colors duration-200 text-purple-600 dark:text-purple-400">
+                         <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h1m4 0h1m-6 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                         </svg>
+                         <span class="font-medium">اجرا</span>
+                       </button>
+                       <button @click="$emit('download-scenario', 5)" class="w-full text-right px-3 py-2 text-xs hover:bg-green-50 dark:hover:bg-green-900/20 flex items-center gap-2.5 transition-colors duration-200 text-green-600 dark:text-green-400">
+                         <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                         </svg>
+                         <span class="font-medium">دانلود</span>
+                       </button>
+                       <button @click="$emit('delete-scenario', 5)" class="w-full text-right px-3 py-2 text-xs hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center gap-2.5 transition-colors duration-200 text-red-600 dark:text-red-400">
+                         <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                         </svg>
+                         <span class="font-medium">حذف</span>
+                       </button>
+                     </div>
+                  </div>
+                </div>
               </td>
             </tr>
             <tr class="hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors duration-200">
@@ -307,8 +458,42 @@
               <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">اخیر</td>
               <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">۱ هفته پیش</td>
               <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                <button class="text-green-600 hover:text-green-900 dark:text-green-400 dark:hover:text-green-300 ml-4">مشاهده</button>
-                <button class="text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-300">⋮</button>
+                <div class="flex items-center gap-2">
+                  <button class="text-green-600 hover:text-green-900 dark:text-green-400 dark:hover:text-green-300">مشاهده</button>
+                  <div class="relative">
+                    <button @click="$emit('toggle-dropdown', 6)" class="p-1 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200">
+                      <svg class="h-4 w-4 text-gray-600 dark:text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
+                      </svg>
+                    </button>
+                     <div v-if="dropdownOpen === 6" class="absolute top-full right-0 mt-1 w-40 bg-white/95 dark:bg-slate-800/95 backdrop-blur-lg rounded-xl shadow-xl border border-slate-200 dark:border-slate-600 py-1.5 z-[99999] animate-in fade-in duration-200">
+                       <button @click="$emit('edit-scenario', 6)" class="w-full text-right px-3 py-2 text-xs hover:bg-blue-50 dark:hover:bg-blue-900/20 flex items-center gap-2.5 transition-colors duration-200 text-blue-600 dark:text-blue-400">
+                         <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                         </svg>
+                         <span class="font-medium">ویرایش</span>
+                       </button>
+                       <button @click="$emit('run-scenario', 6)" class="w-full text-right px-3 py-2 text-xs hover:bg-purple-50 dark:hover:bg-purple-900/20 flex items-center gap-2.5 transition-colors duration-200 text-purple-600 dark:text-purple-400">
+                         <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h1m4 0h1m-6 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                         </svg>
+                         <span class="font-medium">اجرا</span>
+                       </button>
+                       <button @click="$emit('download-scenario', 6)" class="w-full text-right px-3 py-2 text-xs hover:bg-green-50 dark:hover:bg-green-900/20 flex items-center gap-2.5 transition-colors duration-200 text-green-600 dark:text-green-400">
+                         <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                         </svg>
+                         <span class="font-medium">دانلود</span>
+                       </button>
+                       <button @click="$emit('delete-scenario', 6)" class="w-full text-right px-3 py-2 text-xs hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center gap-2.5 transition-colors duration-200 text-red-600 dark:text-red-400">
+                         <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                         </svg>
+                         <span class="font-medium">حذف</span>
+                       </button>
+                     </div>
+                  </div>
+                </div>
               </td>
             </tr>
           </template>
@@ -332,7 +517,42 @@
               <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">نمونه</td>
               <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">-</td>
               <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                <div class="flex items-center gap-2">
                 <router-link :to="getScenarioTo('Operation_Beit_ol_Moqaddas_1982_FA')" class="text-teal-600 hover:text-teal-900 dark:text-teal-400 dark:hover:text-teal-300">مشاهده</router-link>
+                  <div class="relative">
+                    <button @click="$emit('toggle-dropdown', 7)" class="p-1 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200">
+                      <svg class="h-4 w-4 text-gray-600 dark:text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
+                      </svg>
+                    </button>
+                     <div v-if="dropdownOpen === 7" class="absolute top-full right-0 mt-1 w-40 bg-white/95 dark:bg-slate-800/95 backdrop-blur-lg rounded-xl shadow-xl border border-slate-200 dark:border-slate-600 py-1.5 z-[99999] animate-in fade-in duration-200">
+                       <button @click="$emit('edit-scenario', 7)" class="w-full text-right px-3 py-2 text-xs hover:bg-blue-50 dark:hover:bg-blue-900/20 flex items-center gap-2.5 transition-colors duration-200 text-blue-600 dark:text-blue-400">
+                         <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                         </svg>
+                         <span class="font-medium">ویرایش</span>
+                       </button>
+                       <button @click="$emit('run-scenario', 7)" class="w-full text-right px-3 py-2 text-xs hover:bg-purple-50 dark:hover:bg-purple-900/20 flex items-center gap-2.5 transition-colors duration-200 text-purple-600 dark:text-purple-400">
+                         <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h1m4 0h1m-6 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                         </svg>
+                         <span class="font-medium">اجرا</span>
+                       </button>
+                       <button @click="$emit('download-scenario', 7)" class="w-full text-right px-3 py-2 text-xs hover:bg-green-50 dark:hover:bg-green-900/20 flex items-center gap-2.5 transition-colors duration-200 text-green-600 dark:text-green-400">
+                         <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                         </svg>
+                         <span class="font-medium">دانلود</span>
+                       </button>
+                       <button @click="$emit('delete-scenario', 7)" class="w-full text-right px-3 py-2 text-xs hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center gap-2.5 transition-colors duration-200 text-red-600 dark:text-red-400">
+                         <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                         </svg>
+                         <span class="font-medium">حذف</span>
+                       </button>
+                     </div>
+                  </div>
+                </div>
               </td>
             </tr>
             <tr class="hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors duration-200">
@@ -353,7 +573,42 @@
               <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">نمونه</td>
               <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">-</td>
               <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                <div class="flex items-center gap-2">
                 <router-link :to="getScenarioTo('Operation_Mersad_1988_FA')" class="text-teal-600 hover:text-teal-900 dark:text-teal-400 dark:hover:text-teal-300">مشاهده</router-link>
+                  <div class="relative">
+                    <button @click="$emit('toggle-dropdown', 8)" class="p-1 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200">
+                      <svg class="h-4 w-4 text-gray-600 dark:text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
+                      </svg>
+                    </button>
+                     <div v-if="dropdownOpen === 8" class="absolute top-full right-0 mt-1 w-40 bg-white/95 dark:bg-slate-800/95 backdrop-blur-lg rounded-xl shadow-xl border border-slate-200 dark:border-slate-600 py-1.5 z-[99999] animate-in fade-in duration-200">
+                       <button @click="$emit('edit-scenario', 8)" class="w-full text-right px-3 py-2 text-xs hover:bg-blue-50 dark:hover:bg-blue-900/20 flex items-center gap-2.5 transition-colors duration-200 text-blue-600 dark:text-blue-400">
+                         <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                         </svg>
+                         <span class="font-medium">ویرایش</span>
+                       </button>
+                       <button @click="$emit('run-scenario', 8)" class="w-full text-right px-3 py-2 text-xs hover:bg-purple-50 dark:hover:bg-purple-900/20 flex items-center gap-2.5 transition-colors duration-200 text-purple-600 dark:text-purple-400">
+                         <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h1m4 0h1m-6 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                         </svg>
+                         <span class="font-medium">اجرا</span>
+                       </button>
+                       <button @click="$emit('download-scenario', 8)" class="w-full text-right px-3 py-2 text-xs hover:bg-green-50 dark:hover:bg-green-900/20 flex items-center gap-2.5 transition-colors duration-200 text-green-600 dark:text-green-400">
+                         <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                         </svg>
+                         <span class="font-medium">دانلود</span>
+                       </button>
+                       <button @click="$emit('delete-scenario', 8)" class="w-full text-right px-3 py-2 text-xs hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center gap-2.5 transition-colors duration-200 text-red-600 dark:text-red-400">
+                         <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                         </svg>
+                         <span class="font-medium">حذف</span>
+                       </button>
+                     </div>
+                  </div>
+                </div>
               </td>
             </tr>
           </template>
@@ -380,6 +635,10 @@ defineEmits<{
   'toggle-dropdown': [id: number]
   'new-scenario': []
   'load-scenario': [scenario: any]
+  'delete-scenario': [id: number]
+  'edit-scenario': [id: number]
+  'run-scenario': [id: number]
+  'download-scenario': [id: number]
 }>()
 
 const router = useRouter();
