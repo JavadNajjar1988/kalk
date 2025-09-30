@@ -19,7 +19,7 @@ interface Props {
   width: number;
   left?: boolean;
 }
-const props = withDefaults(defineProps<Props>(), { left: false });
+const props = withDefaults(defineProps<Props>(), { left: true });
 const emit = defineEmits(["update", "dragging", "reset"]);
 
 const isDragging = ref(false);

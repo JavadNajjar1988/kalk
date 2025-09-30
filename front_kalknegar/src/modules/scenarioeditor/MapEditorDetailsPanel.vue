@@ -12,7 +12,7 @@
         :width="widthStore.detailsWidth"
         @update="widthStore.detailsWidth = $event"
         @reset="widthStore.resetDetailsWidth()"
-        left
+        :left="false"
       />
     </aside>
   </div>
