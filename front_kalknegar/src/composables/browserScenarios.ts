@@ -1,5 +1,6 @@
 import { computed, onMounted, ref } from "vue";
-import { type ScenarioMetadata, useIndexedDb } from "@/scenariostore/localdb";
+import { type ScenarioMetadata } from "@/scenariostore/localdb";
+import { scenarioApiService } from "@/services/api/scenarioApiService";
 import type { MenuItemData } from "@/components/types";
 import type { StoredScenarioAction } from "@/types/constants";
 import { MAP_EDIT_MODE_ROUTE } from "@/router/names";
@@ -60,8 +61,8 @@ export function useBrowserScenarios() {
   ]);
 
   async function onAction(action: StoredScenarioAction, scenario: ScenarioMetadata) {
-    const { deleteScenario, listScenarios, duplicateScenario, downloadAsJson } =
-      await useIndexedDb();
+    const { /* deleteScenario, listScenarios, duplicateScenario, */ downloadAsJson } =
+      await (await import("@/scenariostore/localdb")).useIndexedDb();
     switch (action) {
       case "open":
         await router.push({
@@ -75,21 +76,28 @@ export function useBrowserScenarios() {
             `آیا مطمئن هستید که می‌خواهید سناریوی "${scenario.name}" را برای همیشه حذف کنید؟`,
           )
         ) {
-          await deleteScenario(scenario.id);
+          await scenarioApiService.remove(scenario.id);
         }
         break;
       case "download":
         await downloadAsJson(scenario.id);
         break;
       case "duplicate":
-        await duplicateScenario(scenario.id);
+        {
+          const scn = await scenarioApiService.get(scenario.id);
+          // حذف شناسه برای ایجاد
+          const { id: _oldId, meta, ...rest } = scn as any;
+          await scenarioApiService.create({ ...(rest as any), id: crypto.randomUUID() } as any);
+        }
         break;
     }
 
     await reloadScenarios();
 
     async function reloadScenarios() {
-      storedScenarios.value = await listScenarios();
+      const items = await scenarioApiService.list();
+      // list() از نوع ScenarioMetadata نیست دقیقاً، اما میدان‌های متناظر را دارد
+      storedScenarios.value = items as unknown as ScenarioMetadata[];
       storedScenarios.value.reverse();
     }
   }
@@ -125,8 +133,8 @@ export function useBrowserScenarios() {
   }
 
   onMounted(async () => {
-    const { listScenarios } = await useIndexedDb();
-    storedScenarios.value = await listScenarios();
+    const items = await scenarioApiService.list();
+    storedScenarios.value = items as unknown as ScenarioMetadata[];
     storedScenarios.value.reverse();
   });
 

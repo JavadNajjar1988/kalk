@@ -38,6 +38,7 @@ import {
   SCENARIO_FILE_VERSION,
 } from "@/config/constants";
 import { useIndexedDb } from "@/scenariostore/localdb";
+import { scenarioApiService } from "@/services/api/scenarioApiService";
 import { klona } from "klona";
 import { saveBlobToLocalFile } from "@/utils/files";
 
@@ -363,22 +364,21 @@ export function useScenarioIO(store: ShallowRef<NewScenarioStore>) {
   }
 
   async function saveToIndexedDb() {
-    const { putScenario } = await useIndexedDb();
     const scn = serializeToObject();
     if (scn.id.startsWith("demo-")) {
       scn.id = nanoid();
       store.value.state.id = scn.id;
     }
-    return await putScenario(scn);
+    const saved = await scenarioApiService.save(scn);
+    return saved.id;
   }
 
   async function duplicateScenario() {
-    const { putScenario } = await useIndexedDb();
     const scn = serializeToObject();
     scn.id = nanoid();
     scn.name = `${scn.name} (copy)`;
-    await putScenario(scn);
-    return scn.id;
+    const created = await scenarioApiService.create(scn);
+    return created.id;
   }
 
   function loadFromLocalStorage(key = LOCALSTORAGE_KEY) {

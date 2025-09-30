@@ -304,7 +304,7 @@ import StandardIdentitySelect from "@/components/StandardIdentitySelect.vue";
 import SimpleDivider from "@/components/SimpleDivider.vue";
 import type { SymbolItem, SymbolValue } from "@/types/constants";
 import { echelonItems } from "@/symbology/helpers";
-import { useIndexedDb } from "@/scenariostore/localdb";
+import { scenarioApiService } from "@/services/api/scenarioApiService";
 import SymbolCodeSelect from "@/components/SymbolCodeSelect.vue";
 import { Button } from "@/components/ui/button";
 import NewMilitarySymbol from "@/components/NewMilitarySymbol.vue";
@@ -432,8 +432,8 @@ async function create() {
   }
   clearUndoRedoStack();
 
-  const { addScenario } = await useIndexedDb();
-  const scenarioId = await addScenario(scenario.value.io.serializeToObject());
+  const created = await scenarioApiService.create(scenario.value.io.serializeToObject());
+  const scenarioId = created.id;
 
   await router.push({ name: MAP_EDIT_MODE_ROUTE, params: { scenarioId } });
 }

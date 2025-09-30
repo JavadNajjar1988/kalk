@@ -1,11 +1,7 @@
 <template>
   <div class="bg-background flex h-dvh flex-col overflow-hidden" ref="dropZoneRef">
     <nav
-<<<<<<< Updated upstream
       class="dashboard-header flex shrink-0 items-center justify-between py-2 pr-4 pl-6 text-foreground print:hidden bg-white dark:bg-slate-800 border-b border-gray-200 dark:border-slate-700"
-=======
-      class="dashboard-header flex shrink-0 items-center justify-between rounded-b-2xl py-2 pr-4 pl-4 text-foreground print:hidden"
->>>>>>> Stashed changes
     >
       <div class="flex min-w-0 flex-auto items-center">
         <div class="flex min-w-0 flex-auto items-center">
@@ -101,7 +97,7 @@
     <GlobalEvents
       v-if="shortcutsEnabled"
       :filter="inputEventFilter"
-      @keyup.?="showKeyboardShortcuts"
+      @keyup="onGeneralKeyup"
       @keydown.ctrl.k.prevent="showSearch = true"
       @keydown.meta.k.prevent="showSearch = true"
       @keyup.prevent.alt.k="showSearch = true"
@@ -428,6 +424,13 @@ function onUiAction(action: UiAction) {
 
 function showKeyboardShortcuts() {
   shortcutsModalVisible.value = true;
+}
+
+function onGeneralKeyup(event: KeyboardEvent) {
+  // نمایش میانبرها وقتی کلید '?' فشرده می‌شود (Shift + '/')
+  if (event.key === '?' || (event.shiftKey && event.key === '/')) {
+    showKeyboardShortcuts();
+  }
 }
 
 watchOnce(

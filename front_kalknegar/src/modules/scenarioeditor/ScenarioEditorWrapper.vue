@@ -4,7 +4,7 @@ import { useScenario } from "@/scenariostore";
 import { onBeforeRouteLeave } from "vue-router";
 import { ref, watch } from "vue";
 import { useSelectedItems } from "@/stores/selectedStore";
-import { useIndexedDb } from "@/scenariostore/localdb";
+import { scenarioApiService } from "@/services/api/scenarioApiService";
 import { useEventListener } from "@vueuse/core";
 import ScenarioNotFoundPage from "@/modules/scenarioeditor/ScenarioNotFoundPage.vue";
 
@@ -29,15 +29,19 @@ watch(
       }
       localReady.value = true;
     } else {
-      const { loadScenario } = await useIndexedDb();
-      const idbscenario = await loadScenario(newScenarioId);
-      if (idbscenario) {
-        scenario.value.io.loadFromObject(idbscenario);
-        selectedItems.clear();
-        selectedItems.showScenarioInfo.value = true;
-      } else {
+      try {
+        const scn = await scenarioApiService.get(newScenarioId);
+        if (scn) {
+          scenario.value.io.loadFromObject(scn);
+          selectedItems.clear();
+          selectedItems.showScenarioInfo.value = true;
+        } else {
+          scenarioNotFound.value = true;
+          console.error("Scenario not found");
+        }
+      } catch (e) {
         scenarioNotFound.value = true;
-        console.error("Scenario not found in indexeddb");
+        console.error("Scenario not found");
       }
       localReady.value = true;
     }
