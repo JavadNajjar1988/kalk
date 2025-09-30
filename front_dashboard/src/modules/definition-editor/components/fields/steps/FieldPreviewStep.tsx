@@ -492,6 +492,97 @@ export const FieldPreviewStep = memo<FieldPreviewStepProps>(({ formData, origina
         </Paper>
       )}
       
+      {/* Reference Field Properties */}
+      {formData.type === 'reference' && formData.referenceConfig && (
+        <Paper sx={{ p: 2, mb: 3, borderRadius: 2, backgroundColor: 'rgba(74, 144, 226, 0.05)' }}>
+          <Typography variant="h6" sx={{ mb: 2, color: '#4A90E2', display: 'flex', alignItems: 'center' }}>
+            🔗 ویژگی‌های فیلد مرجع
+          </Typography>
+          <Grid container spacing={isMobile ? 1 : 2}>
+            <Grid item xs={12} md={6}>
+              <Box sx={{ mb: 1 }}>
+                <Typography variant="body2" sx={{ fontWeight: 600, color: '#64748B' }}>نوع منبع داده</Typography>
+                <Chip label={formData.referenceConfig.dataSource?.type || '-'} size="small" sx={{ bgcolor: 'rgba(74, 144, 226, 0.1)', color: '#4A90E2' }} />
+              </Box>
+              {formData.referenceConfig.dataSource?.type === 'static' && (
+                <>
+                  <Box sx={{ mb: 1 }}>
+                    <Typography variant="body2" sx={{ fontWeight: 600, color: '#64748B' }}>تعداد آیتم‌های ثابت</Typography>
+                    <Typography variant="body1">{formData.referenceConfig.dataSource.static?.items?.length || 0}</Typography>
+                  </Box>
+                </>
+              )}
+              {formData.referenceConfig.dataSource?.type === 'table' && (
+                <>
+                  <Box sx={{ mb: 1 }}>
+                    <Typography variant="body2" sx={{ fontWeight: 600, color: '#64748B' }}>نام جدول</Typography>
+                    <Typography variant="body1">{formData.referenceConfig.dataSource.table?.tableName || '-'}</Typography>
+                  </Box>
+                  <Box sx={{ mb: 1 }}>
+                    <Typography variant="body2" sx={{ fontWeight: 600, color: '#64748B' }}>کلید مرجع</Typography>
+                    <Typography variant="body1">{formData.referenceConfig.dataSource.table?.valueField || '-'}</Typography>
+                  </Box>
+                  <Box sx={{ mb: 1 }}>
+                    <Typography variant="body2" sx={{ fontWeight: 600, color: '#64748B' }}>فیلدهای نمایشی</Typography>
+                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                      {formData.referenceConfig.dataSource.table?.displayFields?.map((field, index) => (
+                        <Chip key={index} label={field} size="small" sx={{ bgcolor: 'rgba(74, 144, 226, 0.1)', color: '#4A90E2' }} />
+                      ))}
+                    </Box>
+                  </Box>
+                </>
+              )}
+              {formData.referenceConfig.dataSource?.type === 'api' && (
+                <>
+                  <Box sx={{ mb: 1 }}>
+                    <Typography variant="body2" sx={{ fontWeight: 600, color: '#64748B' }}>Endpoint</Typography>
+                    <Typography variant="body1">{formData.referenceConfig.dataSource.api?.endpoint || '-'}</Typography>
+                  </Box>
+                  <Box sx={{ mb: 1 }}>
+                    <Typography variant="body2" sx={{ fontWeight: 600, color: '#64748B' }}>کلید مرجع</Typography>
+                    <Typography variant="body1">{formData.referenceConfig.dataSource.api?.valueField || '-'}</Typography>
+                  </Box>
+                  <Box sx={{ mb: 1 }}>
+                    <Typography variant="body2" sx={{ fontWeight: 600, color: '#64748B' }}>فیلدهای نمایشی</Typography>
+                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                      {formData.referenceConfig.dataSource.api?.displayFields?.map((field, index) => (
+                        <Chip key={index} label={field} size="small" sx={{ bgcolor: 'rgba(74, 144, 226, 0.1)', color: '#4A90E2' }} />
+                      ))}
+                    </Box>
+                  </Box>
+                </>
+              )}
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <Box sx={{ mb: 1 }}>
+                <Typography variant="body2" sx={{ fontWeight: 600, color: '#64748B' }}>انتخاب چندگانه</Typography>
+                <Typography variant="body1">{formData.referenceConfig.selection?.multiple ? 'بله' : 'خیر'}</Typography>
+              </Box>
+              <Box sx={{ mb: 1 }}>
+                <Typography variant="body2" sx={{ fontWeight: 600, color: '#64748B' }}>اجازه ورود دستی</Typography>
+                <Typography variant="body1">{formData.referenceConfig.behavior?.allowCustomEntry ? 'بله' : 'خیر'}</Typography>
+              </Box>
+              <Box sx={{ mb: 1 }}>
+                <Typography variant="body2" sx={{ fontWeight: 600, color: '#64748B' }}>جستجو فعال</Typography>
+                <Typography variant="body1">{formData.referenceConfig.assistive?.searchable ? 'بله' : 'خیر'}</Typography>
+              </Box>
+              <Box sx={{ mb: 1 }}>
+                <Typography variant="body2" sx={{ fontWeight: 600, color: '#64748B' }}>فیلتر فعال</Typography>
+                <Typography variant="body1">{formData.referenceConfig.assistive?.filterable ? 'بله' : 'خیر'}</Typography>
+              </Box>
+              <Box sx={{ mb: 1 }}>
+                <Typography variant="body2" sx={{ fontWeight: 600, color: '#64748B' }}>Lazy Loading</Typography>
+                <Typography variant="body1">{formData.referenceConfig.dynamic?.lazyLoading ? 'بله' : 'خیر'}</Typography>
+              </Box>
+              <Box sx={{ mb: 1 }}>
+                <Typography variant="body2" sx={{ fontWeight: 600, color: '#64748B' }}>Cascading</Typography>
+                <Typography variant="body1">{formData.referenceConfig.dynamic?.cascading ? 'بله' : 'خیر'}</Typography>
+              </Box>
+            </Grid>
+          </Grid>
+        </Paper>
+      )}
+
       {/* Display Properties */}
       {(formData.displayType || formData.size || formData.icon || formData.prefix || formData.suffix || 
         formData.counterDisplay || formData.showCopyButton) && (

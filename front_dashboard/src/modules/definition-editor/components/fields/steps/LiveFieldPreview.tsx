@@ -12,7 +12,10 @@ import {
   Switch,
   Typography,
   Chip,
-  Autocomplete
+  Autocomplete,
+  Button,
+  Paper,
+  Grid
 } from '@mui/material';
 import { 
   Accordion, 
@@ -20,8 +23,12 @@ import {
   AccordionDetails 
 } from '@mui/material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import SearchIcon from '@mui/icons-material/Search';
+import FilterListIcon from '@mui/icons-material/FilterList';
 import { ExtendedCustomFieldDefinition, FieldType } from '../types/FieldEditTypes';
 import { FieldEnhancer } from '../processors/FieldEnhancer';
+import { useReferenceData } from '@/hooks/useReferenceData';
+import { useAvailableReferenceCategories } from '@/hooks/useReferenceData';
 
 // Define the option type
 type FieldOption = string | { value: string; label: string; description?: string };
@@ -30,6 +37,326 @@ interface LiveFieldPreviewProps {
   formData: ExtendedCustomFieldDefinition;
   originalType?: FieldType;
 }
+
+// Category Reference Field Component
+interface CategoryReferenceFieldProps {
+  formData: ExtendedCustomFieldDefinition;
+  fieldValue: string;
+  handleValueChange: (value: string) => void;
+  isDisabled: boolean;
+  fieldErrors: string[];
+  validationErrors: string[];
+}
+
+const CategoryReferenceField: React.FC<CategoryReferenceFieldProps> = ({
+  formData,
+  fieldValue,
+  handleValueChange,
+  isDisabled,
+  fieldErrors,
+  validationErrors
+}) => {
+  const [searchTerm, setSearchTerm] = useState('');
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
+  const [userFilters, setUserFilters] = useState<{[key: string]: any}>({});
+  const [showFilters, setShowFilters] = useState(false);
+
+  // Debounce search term
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
+
+  const refConfig = formData.referenceConfig;
+  const categoryId = refConfig?.dataSource?.category?.categoryId;
+  const sections = refConfig?.dataSource?.category?.sections || 'both';
+  const isMultiSelect = refConfig?.selection?.multiple || false;
+  const allowCustomEntry = refConfig?.behavior?.allowCustomEntry || false;
+  const adminFilter = refConfig?.adminFilter || [];
+  const displayFields = refConfig?.displayFields || ['name'];
+  const primaryDisplayField = refConfig?.primaryDisplayField || 'name';
+  const searchFields = refConfig?.searchFields || 'name,englishName,description';
+
+  // Get reference data
+  const {
+    data: referenceData,
+    loading: referenceLoading,
+    error: referenceError,
+    searchItems
+  } = useReferenceData(categoryId, sections);
+
+  // Get available categories for display
+  const { categories } = useAvailableReferenceCategories();
+  const selectedCategory = categories.find(cat => cat.id === categoryId);
+
+  // Apply admin filters with proper conflict resolution
+  const filteredData = useMemo(() => {
+    if (!referenceData?.items) return [];
+    
+    let items = referenceData.items;
+    
+    // Apply admin filters in priority order
+    const filters = [];
+    
+    // Priority 1: Specific node selection (highest priority)
+    if (adminFilter?.specificNodes?.enabled && adminFilter.specificNodes.nodeIds.length > 0) {
+      filters.push((item: any) => adminFilter.specificNodes.nodeIds.includes(item.id));
+    }
+    
+    // Priority 2: Level-based filtering
+    if (adminFilter?.levelLimit?.enabled) {
+      const maxLevel = adminFilter.levelLimit.maxLevel;
+      filters.push((item: any) => (item.level || 0) <= maxLevel);
+    }
+    
+    // Priority 3: Category-based filtering
+    if (adminFilter?.categoryFilter?.enabled && adminFilter.categoryFilter.allowedCategories.length > 0) {
+      filters.push((item: any) => {
+        const itemCategory = item.category || item.type || 'default';
+        return adminFilter.categoryFilter.allowedCategories.includes(itemCategory);
+      });
+    }
+    
+    // Priority 4: Advanced JSON filters (lowest priority)
+    if (adminFilter?.advancedFilter && adminFilter.advancedFilter.length > 0) {
+      filters.push((item: any) => {
+        return adminFilter.advancedFilter.every(filter => {
+          const itemValue = item[filter.field];
+          switch (filter.op) {
+            case 'eq': return itemValue === filter.value;
+            case 'neq': return itemValue !== filter.value;
+            case 'gt': return itemValue > filter.value;
+            case 'lt': return itemValue < filter.value;
+            case 'gte': return itemValue >= filter.value;
+            case 'lte': return itemValue <= filter.value;
+            case 'contains': return String(itemValue).includes(String(filter.value));
+            case 'in': return Array.isArray(filter.value) && filter.value.includes(itemValue);
+            default: return true;
+          }
+        });
+      });
+    }
+    
+    // Apply all filters
+    items = items.filter(item => filters.every(filter => filter(item)));
+    
+    // Apply user filters
+    if (Object.keys(userFilters).length > 0) {
+      items = items.filter(item => {
+        return Object.entries(userFilters).every(([field, value]) => {
+          if (!value) return true;
+          return String(item[field] || '').toLowerCase().includes(String(value).toLowerCase());
+        });
+      });
+    }
+    
+    // Apply search
+    if (debouncedSearchTerm) {
+      const searchFieldsArray = searchFields.split(',').map(f => f.trim());
+      items = items.filter(item => {
+        return searchFieldsArray.some(field => {
+          const fieldValue = item[field];
+          return fieldValue && String(fieldValue).toLowerCase().includes(debouncedSearchTerm.toLowerCase());
+        });
+      });
+    }
+    
+    return items;
+  }, [referenceData?.items, adminFilter, userFilters, debouncedSearchTerm, searchFields]);
+
+  // Get available filter fields
+  const availableFilterFields = useMemo(() => {
+    if (!referenceData?.items || referenceData.items.length === 0) return [];
+    
+    const fields = new Set<string>();
+    referenceData.items.forEach(item => {
+      Object.keys(item).forEach(key => {
+        if (displayFields.includes(key) && typeof item[key] === 'string') {
+          fields.add(key);
+        }
+      });
+    });
+    
+    return Array.from(fields);
+  }, [referenceData?.items, displayFields]);
+
+  // Handle selection change
+  const handleSelectionChange = (selectedItems: any[]) => {
+    if (isMultiSelect) {
+      const values = selectedItems.map(item => item.id).join(',');
+      handleValueChange(values);
+    } else {
+      const value = selectedItems.length > 0 ? selectedItems[0].id : '';
+      handleValueChange(value);
+    }
+  };
+
+  // Get selected items
+  const selectedItems = useMemo(() => {
+    if (!fieldValue) return [];
+    
+    const selectedIds = isMultiSelect ? fieldValue.split(',').filter(Boolean) : [fieldValue];
+    return filteredData.filter(item => selectedIds.includes(item.id));
+  }, [fieldValue, filteredData, isMultiSelect]);
+
+  if (referenceError) {
+    return (
+      <TextField
+        fullWidth
+        label={formData.name + (formData.isRequired ? ' *' : '')}
+        placeholder="خطا در بارگذاری داده‌ها"
+        value=""
+        disabled
+        error
+        helperText={referenceError}
+      />
+    );
+  }
+
+  if (!categoryId) {
+    return (
+      <TextField
+        fullWidth
+        label={formData.name + (formData.isRequired ? ' *' : '')}
+        placeholder="دسته‌بندی انتخاب نشده"
+        value=""
+        disabled
+        error
+        helperText="لطفاً دسته‌بندی مرجع را انتخاب کنید"
+      />
+    );
+  }
+
+  return (
+    <Box>
+      {/* Search and Filter Controls */}
+      <Box sx={{ mb: 2, display: 'flex', gap: 1, alignItems: 'center' }}>
+        <TextField
+          fullWidth
+          size="small"
+          placeholder="جستجو در داده‌ها..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          InputProps={{
+            startAdornment: <SearchIcon sx={{ mr: 1, color: 'text.secondary' }} />
+          }}
+        />
+        <Button
+          size="small"
+          variant="outlined"
+          startIcon={<FilterListIcon />}
+          onClick={() => setShowFilters(!showFilters)}
+        >
+          فیلتر
+        </Button>
+      </Box>
+
+      {/* User Filters Panel */}
+      {showFilters && availableFilterFields.length > 0 && (
+        <Paper sx={{ p: 2, mb: 2, bgcolor: 'grey.50' }}>
+          <Typography variant="subtitle2" sx={{ mb: 1 }}>
+            فیلترهای کاربر:
+          </Typography>
+          <Grid container spacing={1}>
+            {availableFilterFields.map(field => (
+              <Grid item xs={12} sm={6} md={4} key={field}>
+                <TextField
+                  fullWidth
+                  size="small"
+                  label={field}
+                  value={userFilters[field] || ''}
+                  onChange={useCallback((e) => setUserFilters(prev => ({
+                    ...prev,
+                    [field]: e.target.value
+                  })), [field])}
+                />
+              </Grid>
+            ))}
+          </Grid>
+        </Paper>
+      )}
+
+      {/* Category Info */}
+      {selectedCategory && (
+        <Box sx={{ mb: 1, display: 'flex', alignItems: 'center', gap: 1 }}>
+          <Typography variant="caption" color="text.secondary">
+            {selectedCategory.icon} {selectedCategory.name}
+          </Typography>
+          <Chip label={`${filteredData.length} آیتم`} size="small" />
+        </Box>
+      )}
+
+      {/* Autocomplete Field */}
+      <Autocomplete
+        multiple={isMultiSelect}
+        freeSolo={allowCustomEntry}
+        options={filteredData}
+        getOptionLabel={(option) => {
+          if (typeof option === 'string') return option;
+          return option[primaryDisplayField] || option.name || option.id;
+        }}
+        value={selectedItems}
+        onChange={(_, newValue) => {
+          if (isMultiSelect) {
+            handleSelectionChange(Array.isArray(newValue) ? newValue : []);
+          } else {
+            handleSelectionChange(Array.isArray(newValue) ? newValue.slice(0, 1) : []);
+          }
+        }}
+        onInputChange={(_, newInputValue) => {
+          if (allowCustomEntry) {
+            setSearchTerm(newInputValue);
+          }
+        }}
+        loading={referenceLoading}
+        disabled={isDisabled}
+        renderInput={(params) => (
+          <TextField
+            {...params}
+            fullWidth
+            label={formData.name + (formData.isRequired ? ' *' : '')}
+            placeholder={formData.placeholder || 'انتخاب از دسته‌بندی...'}
+            helperText={
+              validationErrors.length > 0 ? validationErrors[0] : 
+              (fieldErrors.length > 0 ? fieldErrors[0] : 
+              (formData.helpText || ''))
+            }
+            error={fieldErrors.length > 0 || validationErrors.length > 0}
+          />
+        )}
+        renderOption={(props, option) => (
+          <Box component="li" {...props}>
+            <Box>
+              <Typography variant="body1">
+                {option[primaryDisplayField] || option.name || option.id}
+              </Typography>
+              {option.description && (
+                <Typography variant="caption" color="text.secondary">
+                  {option.description}
+                </Typography>
+              )}
+            </Box>
+          </Box>
+        )}
+        renderTags={(value, getTagProps) => (
+          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+            {value.map((option, index) => (
+              <Chip
+                {...getTagProps({ index })}
+                key={option.id}
+                label={option[primaryDisplayField] || option.name || option.id}
+                size="small"
+              />
+            ))}
+          </Box>
+        )}
+      />
+    </Box>
+  );
+};
 
 export const LiveFieldPreview: React.FC<LiveFieldPreviewProps> = ({ formData }) => {
   const [fieldValue, setFieldValue] = useState('');
@@ -1500,6 +1827,227 @@ export const LiveFieldPreview: React.FC<LiveFieldPreviewProps> = ({ formData }) 
               />
             }
             label={formData.name + (formData.isRequired ? ' *' : '')}
+          />
+        );
+      
+      case 'reference':
+        // Handle reference field with different display types
+        const refConfig = formData.referenceConfig;
+        const dataSource = refConfig?.dataSource;
+        
+        if (!dataSource) {
+          return (
+            <TextField
+              fullWidth
+              label={formData.name + (formData.isRequired ? ' *' : '')}
+              placeholder="منبع داده تعریف نشده"
+              value=""
+              disabled
+              error
+              helperText="منبع داده برای فیلد مرجع تعریف نشده است"
+              sx={{
+                '& .MuiOutlinedInput-root': {
+                  background: 'rgba(255, 255, 255, 0.8)',
+                  backdropFilter: 'blur(10px)',
+                }
+              }}
+            />
+          );
+        }
+
+        // Handle category data source
+        if (dataSource.type === 'category') {
+          return (
+            <CategoryReferenceField
+              formData={formData}
+              fieldValue={fieldValue}
+              handleValueChange={handleValueChange}
+              isDisabled={isDisabled}
+              fieldErrors={fieldErrors}
+              validationErrors={validationErrors}
+            />
+          );
+        }
+
+        // Handle different data source types
+        if (dataSource.type === 'static') {
+          const staticItems = dataSource.static?.items || [];
+          const isMultiSelect = refConfig?.selection?.multiple || false;
+          const allowCustomEntry = refConfig?.behavior?.allowCustomEntry || false;
+          
+          if (isMultiSelect) {
+            return (
+              <FormControl fullWidth error={fieldErrors.length > 0}>
+                <InputLabel>{formData.name + (formData.isRequired ? ' *' : '')}</InputLabel>
+                <Select
+                  multiple
+                  value={fieldValue ? fieldValue.split(',') : []}
+                  onChange={(e) => handleValueChange((e.target.value as string[]).join(','))}
+                  label={formData.name + (formData.isRequired ? ' *' : '')}
+                  renderValue={(selected) => (
+                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                      {(selected as string[]).map((value) => (
+                        <Chip key={value} label={value} size="small" />
+                      ))}
+                    </Box>
+                  )}
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      background: 'rgba(255, 255, 255, 0.8)',
+                      backdropFilter: 'blur(10px)',
+                      '&:hover': { boxShadow: '0 4px 12px rgba(74, 144, 226, 0.15)' },
+                      '&.Mui-focused': { boxShadow: '0 0 0 3px rgba(74, 144, 226, 0.1)' },
+                    }
+                  }}
+                >
+                  {staticItems.map((item: any, index: number) => (
+                    <MenuItem key={index} value={item.value || item.label || item}>
+                      <Checkbox checked={fieldValue?.split(',').includes(item.value || item.label || item)} />
+                      <Typography>{item.label || item.value || item}</Typography>
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            );
+          } else {
+            // Single select with autocomplete for better UX
+            return (
+              <Autocomplete
+                options={staticItems}
+                getOptionLabel={(option) => option.label || option.value || option}
+                value={staticItems.find(item => item.value === fieldValue) || null}
+                onChange={(_, newValue) => {
+                  handleValueChange(newValue?.value || '');
+                }}
+                freeSolo={allowCustomEntry}
+                onInputChange={(_, newInputValue) => {
+                  if (allowCustomEntry) {
+                    handleValueChange(newInputValue);
+                  }
+                }}
+                renderInput={(params) => (
+                  <TextField
+                    {...params}
+                    label={formData.name + (formData.isRequired ? ' *' : '')}
+                    placeholder={formData.placeholder || 'انتخاب کنید...'}
+                    error={fieldErrors.length > 0}
+                    helperText={fieldErrors.length > 0 ? fieldErrors[0] : formData.helpText}
+                    sx={{
+                      '& .MuiOutlinedInput-root': {
+                        background: 'rgba(255, 255, 255, 0.8)',
+                        backdropFilter: 'blur(10px)',
+                        '&:hover': { boxShadow: '0 4px 12px rgba(74, 144, 226, 0.15)' },
+                        '&.Mui-focused': { boxShadow: '0 0 0 3px rgba(74, 144, 226, 0.1)' },
+                      }
+                    }}
+                  />
+                )}
+                renderOption={(props, option) => (
+                  <Box component="li" {...props}>
+                    <Typography>{option.label || option.value || option}</Typography>
+                  </Box>
+                )}
+              />
+            );
+          }
+        } else if (dataSource.type === 'table') {
+          // Simulate table data source
+          return (
+            <Autocomplete
+              freeSolo={refConfig?.behavior?.allowCustomEntry || false}
+              options={[
+                { value: '1', label: 'گزینه 1 (جدول)' },
+                { value: '2', label: 'گزینه 2 (جدول)' },
+                { value: '3', label: 'گزینه 3 (جدول)' }
+              ]}
+              value={fieldValue ? { value: fieldValue, label: fieldValue } : null}
+              onChange={(_event, newValue) => {
+                handleValueChange(newValue ? (typeof newValue === 'string' ? newValue : newValue.value) : '');
+              }}
+              onInputChange={(_event, newInputValue) => {
+                if (refConfig?.behavior?.allowCustomEntry) {
+                  handleValueChange(newInputValue);
+                }
+              }}
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  fullWidth
+                  label={formData.name + (formData.isRequired ? ' *' : '')}
+                  placeholder={formData.placeholder || 'جستجو در جدول...'}
+                  helperText={validationErrors.length > 0 ? validationErrors[0] : (fieldErrors.length > 0 ? fieldErrors[0] : (formData.helpText || ''))}
+                  error={fieldErrors.length > 0 || validationErrors.length > 0}
+                  disabled={isDisabled}
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      background: 'rgba(255, 255, 255, 0.8)',
+                      backdropFilter: 'blur(10px)',
+                      '&:hover': { boxShadow: '0 4px 12px rgba(74, 144, 226, 0.15)' },
+                      '&.Mui-focused': { boxShadow: '0 0 0 3px rgba(74, 144, 226, 0.1)' },
+                    }
+                  }}
+                />
+              )}
+            />
+          );
+        } else if (dataSource.type === 'api') {
+          // Simulate API data source
+          return (
+            <Autocomplete
+              freeSolo={refConfig?.behavior?.allowCustomEntry || false}
+              options={[
+                { value: 'api1', label: 'گزینه 1 (API)' },
+                { value: 'api2', label: 'گزینه 2 (API)' },
+                { value: 'api3', label: 'گزینه 3 (API)' }
+              ]}
+              value={fieldValue ? { value: fieldValue, label: fieldValue } : null}
+              onChange={(_event, newValue) => {
+                handleValueChange(newValue ? (typeof newValue === 'string' ? newValue : newValue.value) : '');
+              }}
+              onInputChange={(_event, newInputValue) => {
+                if (refConfig?.behavior?.allowCustomEntry) {
+                  handleValueChange(newInputValue);
+                }
+              }}
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  fullWidth
+                  label={formData.name + (formData.isRequired ? ' *' : '')}
+                  placeholder={formData.placeholder || 'جستجو در API...'}
+                  helperText={validationErrors.length > 0 ? validationErrors[0] : (fieldErrors.length > 0 ? fieldErrors[0] : (formData.helpText || ''))}
+                  error={fieldErrors.length > 0 || validationErrors.length > 0}
+                  disabled={isDisabled}
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      background: 'rgba(255, 255, 255, 0.8)',
+                      backdropFilter: 'blur(10px)',
+                      '&:hover': { boxShadow: '0 4px 12px rgba(74, 144, 226, 0.15)' },
+                      '&.Mui-focused': { boxShadow: '0 0 0 3px rgba(74, 144, 226, 0.1)' },
+                    }
+                  }}
+                />
+              )}
+            />
+          );
+        }
+        
+        // Fallback for unknown data source types
+        return (
+          <TextField
+            fullWidth
+            label={formData.name + (formData.isRequired ? ' *' : '')}
+            placeholder="نوع منبع داده پشتیبانی نمی‌شود"
+            value=""
+            disabled
+            error
+            helperText="نوع منبع داده پشتیبانی نمی‌شود"
+            sx={{
+              '& .MuiOutlinedInput-root': {
+                background: 'rgba(255, 255, 255, 0.8)',
+                backdropFilter: 'blur(10px)',
+              }
+            }}
           />
         );
       

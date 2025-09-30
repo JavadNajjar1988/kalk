@@ -45,6 +45,14 @@ export const NumberBehaviorProperties = memo<NumberBehaviorPropertiesProps>(({
       </Box>
       
       <Grid container spacing={2}>
+        {/* راهنمای تقدم قوانین */}
+        {(formData.controlRules?.readOnly || formData.controlRules?.lockAfterSave) && (
+          <Grid item xs={12}>
+            <Box sx={{ p: 1.5, border: '1px dashed', borderColor: 'warning.main', borderRadius: 1, color: 'warning.main', fontSize: 13 }}>
+              اولویت اجرا: «فقط‌خواندنی / قفل بعد از ثبت» &gt; «فعال‌سازی شرطی» &gt; «قابل‌ویرایش بعد از ثبت»
+            </Box>
+          </Grid>
+        )}
         {/* قابل‌ویرایش بعد از ثبت */}
         <Grid item xs={12} md={6}>
           <Box sx={{ display: 'flex', alignItems: 'center' }}>
@@ -58,6 +66,12 @@ export const NumberBehaviorProperties = memo<NumberBehaviorPropertiesProps>(({
               }
               label="قابل‌ویرایش بعد از ثبت"
             />
+            {/* conflict hint with control rules */}
+            {(formData.controlRules?.readOnly || formData.controlRules?.lockAfterSave) && (
+              <Box sx={{ ml: 1, color: 'warning.main', fontSize: 12 }}>
+                توجه: اولویت با «فقط‌خواندنی» یا «قفل بعد از ثبت» است.
+              </Box>
+            )}
             <HelpTooltip
               title="قابل‌ویرایش بعد از ثبت"
               description="امکان ویرایش فیلد پس از ذخیره اولیه."
@@ -100,6 +114,12 @@ export const NumberBehaviorProperties = memo<NumberBehaviorPropertiesProps>(({
                 placeholder="2"
                 sx={{ '& .MuiOutlinedInput-root': { background: 'rgba(255, 255, 255, 0.8)' } }}
               />
+              {/* delay range hint */}
+              {((numberField.autoSaveDelay ?? 0) > 0 && (numberField.autoSaveDelay as number) < 0.5) || ((numberField.autoSaveDelay as number) > 60) ? (
+                <Box sx={{ ml: 1, color: 'error.main', fontSize: 12 }}>
+                  مقدار تاخیر باید بین ۰٫۵ تا ۶۰ ثانیه باشد.
+                </Box>
+              ) : null}
               <HelpTooltip
                 title="تاخیر ذخیره خودکار"
                 description="مدت زمان انتظار قبل از ذخیره خودکار."
@@ -142,6 +162,11 @@ export const NumberBehaviorProperties = memo<NumberBehaviorPropertiesProps>(({
                 placeholder="field_id"
                 sx={{ '& .MuiOutlinedInput-root': { background: 'rgba(255, 255, 255, 0.8)' } }}
               />
+              {numberField.conditionalDisplayField !== undefined && !String(numberField.conditionalDisplayField).trim() && (
+                <Box sx={{ ml: 1, color: 'error.main', fontSize: 12 }}>
+                  نام فیلد وابسته نمی‌تواند خالی باشد.
+                </Box>
+              )}
               <HelpTooltip
                 title="فیلد وابسته"
                 description="نام فیلدی که شرط نمایش بر اساس آن بررسی می‌شود."
@@ -232,6 +257,11 @@ export const NumberBehaviorProperties = memo<NumberBehaviorPropertiesProps>(({
                 placeholder="field_id"
                 sx={{ '& .MuiOutlinedInput-root': { background: 'rgba(255, 255, 255, 0.8)' } }}
               />
+              {numberField.conditionalEnableField !== undefined && !String(numberField.conditionalEnableField).trim() && (
+                <Box sx={{ ml: 1, color: 'error.main', fontSize: 12 }}>
+                  نام فیلد وابسته نمی‌تواند خالی باشد.
+                </Box>
+              )}
               <HelpTooltip
                 title="فیلد وابسته"
                 description="نام فیلدی که شرط فعال‌سازی بر اساس آن بررسی می‌شود."

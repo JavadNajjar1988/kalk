@@ -2,20 +2,12 @@ import React, { memo, useState } from 'react';
 import {
   Box,
   Typography,
-  Paper,
   Grid,
   TextField,
   FormControl,
   InputLabel,
   Select,
   MenuItem,
-  FormControlLabel,
-  Switch,
-  Stepper,
-  Step,
-  StepLabel,
-  StepContent,
-  Button,
   Accordion,
   AccordionSummary,
   AccordionDetails,
@@ -28,22 +20,22 @@ import AssistiveProperties from '../properties/AssistiveProperties';
 import BehaviorLogicProperties from '../properties/BehaviorLogicProperties';
 import SecurityStorageProperties from '../properties/SecurityStorageProperties';
 import DisplayProperties from '../properties/DisplayProperties';
-import SelectOptionsProperties from '../properties/SelectOptionsProperties';
+// import SelectOptionsProperties from '../properties/SelectOptionsProperties';
 import SelectFieldProperties from '../properties/SelectFieldProperties';
 import VariantProperties from '../properties/VariantProperties';
 import MaskProperties from '../properties/MaskProperties';
-import { NumberBasicProperties } from '../properties/NumberBasicProperties';
+// import { NumberBasicProperties } from '../properties/NumberBasicProperties';
 import { NumberContentProperties } from '../properties/NumberContentProperties';
 import { NumberHelperProperties } from '../properties/NumberHelperProperties';
 import { NumberBehaviorProperties } from '../properties/NumberBehaviorProperties';
 import { NumberSecurityProperties } from '../properties/NumberSecurityProperties';
 import { NumberDisplayProperties } from '../properties/NumberDisplayProperties';
+import ReferenceFieldProperties from '../properties/ReferenceFieldProperties';
 
 const FieldPropertiesStep: React.FC<FieldPropertiesStepProps> = ({ formData, onChange }) => {
-  const [activeStep, setActiveStep] = useState(0);
   const [expandedAccordion, setExpandedAccordion] = useState<string | false>('basic');
 
-  const handleAccordionChange = (panel: string) => (event: React.SyntheticEvent, isExpanded: boolean) => {
+  const handleAccordionChange = (panel: string) => (_event: React.SyntheticEvent, isExpanded: boolean) => {
     setExpandedAccordion(isExpanded ? panel : false);
   };
 
@@ -72,6 +64,35 @@ const FieldPropertiesStep: React.FC<FieldPropertiesStepProps> = ({ formData, onC
 
   const fieldProps = getFieldSpecificProperties();
 
+  // Show only reference properties when type is reference
+  if (formData.type === 'reference') {
+    return (
+      <Box role="region" aria-label="مرحله ویژگی‌های فیلد مرجع">
+        <Box sx={{ textAlign: 'center', mb: 4 }}>
+          <Typography 
+            variant="h5" 
+            gutterBottom
+            sx={{
+              fontWeight: 700,
+              background: 'linear-gradient(45deg, #4A90E2 30%, #7BB3F0 90%)',
+              backgroundClip: 'text',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+            }}
+          >
+            ویژگی‌های فیلد مرجع
+          </Typography>
+          <Typography variant="body1" color="text.secondary" sx={{ fontSize: '1.1rem', opacity: 0.8, mb: 4 }}>
+            مشخصات و تنظیمات فیلد را تعریف کنید
+          </Typography>
+        </Box>
+
+        {/* Render reference accordions directly */}
+        <ReferenceFieldProperties formData={formData} onChange={onChange} />
+      </Box>
+    );
+  }
+
   return (
     <Box role="region" aria-label="مرحله ویژگی‌های فیلد">
       <Box sx={{ textAlign: 'center', mb: 4 }}>
@@ -86,7 +107,13 @@ const FieldPropertiesStep: React.FC<FieldPropertiesStepProps> = ({ formData, onC
             WebkitTextFillColor: 'transparent',
           }}
         >
-          ویژگی‌های فیلد {formData.type === 'select' || formData.type === 'multiselect' ? 'انتخابی' : 'متنی'}
+          {(() => {
+            const t = formData.type as any;
+            if (t === 'reference') return 'ویژگی‌های فیلد مرجع';
+            if (t === 'select' || t === 'multiselect') return 'ویژگی‌های فیلد انتخابی';
+            if (t === 'number') return 'ویژگی‌های فیلد عددی';
+            return 'ویژگی‌های فیلد متنی';
+          })()}
         </Typography>
         <Typography variant="body1" color="text.secondary" sx={{ fontSize: '1.1rem', opacity: 0.8, mb: 4 }}>
           مشخصات و تنظیمات فیلد را تعریف کنید
@@ -102,7 +129,7 @@ const FieldPropertiesStep: React.FC<FieldPropertiesStepProps> = ({ formData, onC
           برای تنظیم فیلد، ابتدا ویژگی‌های پایه را تکمیل کنید، سپس سایر بخش‌ها را بر اساس نیاز تنظیم کنید.
         </Typography>
       </Box>
-      
+
       {/* Basic Properties - Always First */}
       <Accordion 
         expanded={expandedAccordion === 'basic'} 
@@ -161,7 +188,7 @@ const FieldPropertiesStep: React.FC<FieldPropertiesStepProps> = ({ formData, onC
               />
             </Grid>
             
-            {formData.type !== 'number' && (
+            {(formData.type !== 'number' && (formData.type as any) !== 'reference') && (
               <Grid item xs={12} md={6}>
                 <FormControl fullWidth>
                   <InputLabel>جهت متن</InputLabel>
@@ -199,88 +226,64 @@ const FieldPropertiesStep: React.FC<FieldPropertiesStepProps> = ({ formData, onC
         </AccordionSummary>
         <AccordionDetails>
           <Grid container spacing={3}>
-            {/* Placeholder */}
+            {/* Placeholder always available */}
             <Grid item xs={12}>
               <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                <FormControlLabel
-                  control={
-                    <Switch
-                      checked={formData.enablePlaceholder || false}
-                      onChange={(e) => onChange('enablePlaceholder', e.target.checked)}
-                      size="small"
-                      aria-label="فعال کردن راهنما"
-                    />
-                  }
-                  label="راهنما"
-                  sx={{ mb: 1 }}
-                />
+                <Typography variant="subtitle2" sx={{ mr: 1 }}>راهنما</Typography>
                 <HelpTooltip
                   title="راهنما"
                   description="کمک می‌کند کاربر بفهمد چه چیزی بنویسد؛ با تایپ محو می‌شود."
                   example="«مثلاً: توضیح کوتاه…»"
                 />
               </Box>
-              {formData.enablePlaceholder && (
-                <TextField
-                  fullWidth
-                  label="متن راهنما"
-                  value={formData.placeholder || ''}
-                  onChange={(e) => onChange('placeholder', e.target.value)}
-                  placeholder="مثال: نام خود را وارد کنید"
-                  sx={{
-                    '& .MuiOutlinedInput-root': {
-                      background: 'rgba(255, 255, 255, 0.8)',
-                      backdropFilter: 'blur(10px)',
-                    },
-                  }}
-                  aria-label="متن راهنما"
-                />
-              )}
+              <TextField
+                fullWidth
+                label="متن راهنما"
+                value={formData.placeholder || ''}
+                onChange={(e) => onChange('placeholder', e.target.value)}
+                placeholder="مثال: نام خود را وارد کنید"
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    background: 'rgba(255, 255, 255, 0.8)',
+                    backdropFilter: 'blur(10px)',
+                  },
+                }}
+                aria-label="متن راهنما"
+              />
             </Grid>
-            
-            {/* Help Text */}
+
+            {/* Help Text always available */}
             <Grid item xs={12}>
               <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                <FormControlLabel
-                  control={
-                    <Switch
-                      checked={formData.enableHelpText || false}
-                      onChange={(e) => onChange('enableHelpText', e.target.checked)}
-                      size="small"
-                      aria-label="فعال کردن توضیح کوتاه زیر فیلد"
-                    />
-                  }
-                  label="توضیح کوتاه زیر فیلد"
-                  sx={{ mb: 1 }}
-                />
+                <Typography variant="subtitle2" sx={{ mr: 1 }}>توضیح کوتاه زیر فیلد</Typography>
                 <HelpTooltip
                   title="توضیح کوتاه زیر فیلد"
                   description="راهنمای ثابت زیر فیلد برای قوانین/نکات."
                   example="«حداکثر ۱۴۰ کاراکتر.»"
                 />
               </Box>
-              {formData.enableHelpText && (
-                <TextField
-                  fullWidth
-                  label="متن راهنما"
-                  value={formData.helpText || ''}
-                  onChange={(e) => onChange('helpText', e.target.value)}
-                  multiline
-                  rows={2}
-                  placeholder="توضیح کوتاه که زیر فیلد نمایش داده می‌شود"
-                  sx={{
-                    '& .MuiOutlinedInput-root': {
-                      background: 'rgba(255, 255, 255, 0.8)',
-                      backdropFilter: 'blur(10px)',
-                    },
-                  }}
-                  aria-label="توضیح کوتاه زیر فیلد"
-                />
-              )}
+              <TextField
+                fullWidth
+                label="متن راهنما"
+                value={formData.helpText || ''}
+                onChange={(e) => onChange('helpText', e.target.value)}
+                multiline
+                rows={2}
+                placeholder="توضیح کوتاه که زیر فیلد نمایش داده می‌شود"
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    background: 'rgba(255, 255, 255, 0.8)',
+                    backdropFilter: 'blur(10px)',
+                  },
+                }}
+                aria-label="توضیح کوتاه زیر فیلد"
+              />
             </Grid>
           </Grid>
         </AccordionDetails>
       </Accordion>
+
+      
 
       {/* Content Control Properties - Text Fields Only */}
       {fieldProps.hasContentControl && (

@@ -22,7 +22,6 @@ import FieldPropertiesStep from '../steps/FieldPropertiesStep';
 import { FieldRulesStep } from '../steps/FieldRulesStep';
 import { NumberFieldRulesStep } from '../steps/NumberFieldRulesStep';
 import { FieldPreviewStep } from '../steps/FieldPreviewStep';
-import NumberFieldPreviewStep from '../steps/NumberFieldPreviewStep';
 
 const FieldEditDialog: React.FC<FieldEditDialogProps> = ({
   open,
@@ -189,28 +188,20 @@ const FieldEditDialog: React.FC<FieldEditDialogProps> = ({
             <FieldTypeSelection formData={formData} onChange={handleChange} />
           )}
 
-          {currentStep === 2 && formData.type === 'text' && (
+          {currentStep === 2 && (
             <FieldPropertiesStep formData={formData} onChange={handleChange} />
           )}
 
-          {currentStep === 2 && formData.type === 'number' && (
-            <FieldPropertiesStep formData={formData} onChange={handleChange} />
+          {currentStep === 3 && (
+            formData.type === 'number' ? (
+              <NumberFieldRulesStep formData={formData} onChange={handleChange} />
+            ) : (
+              <FieldRulesStep formData={formData} onChange={handleChange} />
+            )
           )}
 
-          {currentStep === 3 && formData.type === 'text' && (
-            <FieldRulesStep formData={formData} onChange={handleChange} />
-          )}
-
-          {currentStep === 3 && formData.type === 'number' && (
-            <NumberFieldRulesStep formData={formData} onChange={handleChange} />
-          )}
-
-          {currentStep === 4 && formData.type === 'text' && (
+          {currentStep === 4 && (
             <FieldPreviewStep formData={formData} originalType={field?.type} />
-          )}
-
-          {currentStep === 4 && formData.type === 'number' && (
-            <NumberFieldPreviewStep formData={formData} originalType={field?.type} />
           )}
         </Box>
 

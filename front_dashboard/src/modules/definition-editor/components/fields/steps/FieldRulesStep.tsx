@@ -1,4 +1,4 @@
-import React, { memo } from 'react';
+import { memo } from 'react';
 import {
   Box,
   Grid,
@@ -101,7 +101,13 @@ export const FieldRulesStep = memo<FieldRulesStepProps>(({
             WebkitTextFillColor: 'transparent',
           }}
         >
-          قوانین حاکم بر فیلد
+          {(() => {
+            const t = formData.type as any;
+            if (t === 'number') return 'قوانین فیلد عددی';
+            if (t === 'select' || t === 'multiselect') return 'قوانین فیلد انتخابی';
+            if (t === 'reference') return 'قوانین فیلد مرجع';
+            return 'قوانین فیلد متنی';
+          })()}
         </Typography>
         <Typography variant="body1" color="text.secondary" sx={{ fontSize: '1.1rem', opacity: 0.8, mb: 4 }}>
           قوانین اعتبارسنجی، وابستگی و کنترلی برای این فیلد تعریف کنید
@@ -146,6 +152,79 @@ export const FieldRulesStep = memo<FieldRulesStepProps>(({
             </Box>
           </Grid>
           
+          {/* Reference-only: Max selection for multiselect */}
+          {(formData.type as any) === 'reference' && (formData.referenceConfig?.selection?.multiple || formData.referenceConfig?.multiSelect) && (
+            <Grid item xs={12} md={6}>
+              <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                <TextField
+                  fullWidth
+                  type="number"
+                  label="حداکثر تعداد انتخاب (N)"
+                  value={formData.referenceConfig?.selection?.maxSelected ?? ''}
+                  onChange={(e) => {
+                    const ref = formData.referenceConfig || {} as any;
+                    const sel = ref.selection || {};
+                    const maxSelected = Math.max(0, parseInt(e.target.value) || 0);
+                    handleChange('referenceConfig', { ...ref, selection: { ...sel, maxSelected } });
+                  }}
+                  placeholder="مثلاً 3"
+                  sx={{ '& .MuiOutlinedInput-root': { background: 'rgba(255, 255, 255, 0.8)' } }}
+                />
+                <HelpTooltip
+                  title="حداکثر تعداد انتخاب"
+                  description="در حالت چندانتخابی، تعداد حداکثری آیتم‌های قابل انتخاب."
+                  example="حداکثر 3 شهر"
+                />
+              </Box>
+            </Grid>
+          )}
+
+          {/* Reference-only: Must exist in source */}
+          {(formData.type as any) === 'reference' && (
+            <Grid item xs={12}>
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={formData.validationRules?.mustExistInSource || false}
+                    onChange={(e) => {
+                      const rules = formData.validationRules || {};
+                      handleChange('validationRules', { ...rules, mustExistInSource: e.target.checked });
+                    }}
+                    size="small"
+                  />
+                }
+                label="وجود در منبع (اعتبارسنجی مقدار)"
+              />
+            </Grid>
+          )}
+
+          {/* Reference-only: Selection pattern */}
+          {(formData.type as any) === 'reference' && (
+            <Grid item xs={12} md={8}>
+              <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                <TextField
+                  fullWidth
+                  label="الگوی انتخاب (مثلاً id > 100)"
+                  value={formData.validationRules?.selectionPattern || ''}
+                  onChange={(e) => {
+                    const rules = formData.validationRules || {};
+                    handleChange('validationRules', { ...rules, selectionPattern: e.target.value || undefined });
+                  }}
+                  placeholder="مثلاً item.id > 100"
+                  sx={{ '& .MuiOutlinedInput-root': { background: 'rgba(255, 255, 255, 0.8)' } }}
+                />
+                <HelpTooltip
+                  title="الگوی انتخاب"
+                  description="قانونی برای معتبر بودن گزینه‌های قابل انتخاب."
+                  example="فقط آیتم‌هایی که اولویت>10 یا id>100"
+                />
+              </Box>
+            </Grid>
+          )}
+
+          {/* Length Validation (hidden for reference) */}
+          {(formData.type as any) !== 'reference' && (
+          <>
           {/* Length Validation */}
           <Grid item xs={12}>
             <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
@@ -169,21 +248,17 @@ export const FieldRulesStep = memo<FieldRulesStepProps>(({
                     onChange={(e) => {
                       const rules = formData.validationRules || {};
                       const minLength = parseInt(e.target.value) || undefined;
-                      const maxLength = rules.maxLength;
+                      // keep maxLength for error calc via state
                       
-                      // Validate minLength <= maxLength
-                      if (minLength && maxLength && minLength > maxLength) {
-                        // Show error but still allow the change
-                        console.warn('حداقل طول نمی‌تواند بیشتر از حداکثر طول باشد');
-                      }
+                      // Validate minLength <= maxLength (handled by error prop)
                       
                       handleChange('validationRules', { ...rules, minLength });
                     }}
                     placeholder="مثلاً 3"
-                    error={formData.validationRules?.minLength && formData.validationRules?.maxLength && 
-                           formData.validationRules.minLength > formData.validationRules.maxLength}
-                    helperText={formData.validationRules?.minLength && formData.validationRules?.maxLength && 
-                                formData.validationRules.minLength > formData.validationRules.maxLength ? 
+                    error={!!(formData.validationRules?.minLength !== undefined && formData.validationRules?.maxLength !== undefined && 
+                           (formData.validationRules.minLength as number) > (formData.validationRules.maxLength as number))}
+                    helperText={formData.validationRules?.minLength !== undefined && formData.validationRules?.maxLength !== undefined && 
+                                (formData.validationRules.minLength as number) > (formData.validationRules.maxLength as number) ? 
                                 'حداقل طول نمی‌تواند بیشتر از حداکثر طول باشد' : ''}
                     sx={{ '& .MuiOutlinedInput-root': { background: 'rgba(255, 255, 255, 0.8)' } }}
                   />
@@ -204,21 +279,17 @@ export const FieldRulesStep = memo<FieldRulesStepProps>(({
                     onChange={(e) => {
                       const rules = formData.validationRules || {};
                       const maxLength = parseInt(e.target.value) || undefined;
-                      const minLength = rules.minLength;
+                      // keep minLength for error calc via state
                       
-                      // Validate minLength <= maxLength
-                      if (minLength && maxLength && minLength > maxLength) {
-                        // Show error but still allow the change
-                        console.warn('حداقل طول نمی‌تواند بیشتر از حداکثر طول باشد');
-                      }
+                      // Validate minLength <= maxLength (handled by error prop)
                       
                       handleChange('validationRules', { ...rules, maxLength });
                     }}
                     placeholder="مثلاً 255"
-                    error={formData.validationRules?.minLength && formData.validationRules?.maxLength && 
-                           formData.validationRules.minLength > formData.validationRules.maxLength}
-                    helperText={formData.validationRules?.minLength && formData.validationRules?.maxLength && 
-                                formData.validationRules.minLength > formData.validationRules.maxLength ? 
+                    error={!!(formData.validationRules?.minLength !== undefined && formData.validationRules?.maxLength !== undefined && 
+                           (formData.validationRules.minLength as number) > (formData.validationRules.maxLength as number))}
+                    helperText={formData.validationRules?.minLength !== undefined && formData.validationRules?.maxLength !== undefined && 
+                                (formData.validationRules.minLength as number) > (formData.validationRules.maxLength as number) ? 
                                 'حداقل طول نمی‌تواند بیشتر از حداکثر طول باشد' : ''}
                     sx={{ '& .MuiOutlinedInput-root': { background: 'rgba(255, 255, 255, 0.8)' } }}
                   />
@@ -254,16 +325,6 @@ export const FieldRulesStep = memo<FieldRulesStepProps>(({
                     onChange={(e) => {
                       const rules = formData.validationRules || {};
                       const pattern = e.target.value;
-                      
-                      // Validate regex pattern
-                      let isValidPattern = true;
-                      if (pattern) {
-                        try {
-                          new RegExp(pattern);
-                        } catch {
-                          isValidPattern = false;
-                        }
-                      }
                       
                       handleChange('validationRules', { ...rules, pattern: pattern || undefined });
                     }}
@@ -315,8 +376,11 @@ export const FieldRulesStep = memo<FieldRulesStepProps>(({
               </Grid>
             </Grid>
           </Grid>
+          </>
+          )}
           
           {/* Unique */}
+          {(formData.type as any) !== 'reference' && (
           <Grid item xs={12}>
             <Box sx={{ display: 'flex', alignItems: 'center' }}>
               <FormControlLabel
@@ -339,6 +403,7 @@ export const FieldRulesStep = memo<FieldRulesStepProps>(({
               />
             </Box>
           </Grid>
+          )}
         </Grid>
       </Paper>
       
@@ -710,93 +775,95 @@ export const FieldRulesStep = memo<FieldRulesStepProps>(({
             )}
           </Grid>
           
-          {/* Conditional Custom */}
-          <Grid item xs={12}>
-            <Box sx={{ display: 'flex', alignItems: 'center' }}>
-              <FormControlLabel
-                control={
-                  <Switch
-                    checked={formData.conditionalRules?.custom?.enabled || false}
-                    onChange={(e) => {
-                      const conditional = formData.conditionalRules || {};
-                      const custom = conditional.custom || {};
-                      handleChange('conditionalRules', { 
-                        ...conditional, 
-                        custom: { ...custom, enabled: e.target.checked }
-                      });
-                    }}
-                    size="small"
-                  />
-                }
-                label="قانون سفارشی"
-                sx={{ mb: 1 }}
-              />
-              <HelpTooltip
-                title="قانون سفارشی"
-                description="تعریف قانون سفارشی با JavaScript برای اعتبارسنجی."
-                example="formData.age >= 18 && formData.country === 'IR'"
-              />
-            </Box>
-            {formData.conditionalRules?.custom?.enabled && (
-              <Grid container spacing={2} sx={{ mt: 1 }}>
-                <Grid item xs={12}>
-                  <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                    <TextField
-                      fullWidth
-                      label="قانون JavaScript"
-                      value={formData.conditionalRules?.custom?.rule || ''}
+          {/* Conditional Custom (remove for reference fields per requirement) */}
+          {(formData.type as any) !== 'reference' && (
+            <Grid item xs={12}>
+              <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                <FormControlLabel
+                  control={
+                    <Switch
+                      checked={formData.conditionalRules?.custom?.enabled || false}
                       onChange={(e) => {
                         const conditional = formData.conditionalRules || {};
                         const custom = conditional.custom || {};
                         handleChange('conditionalRules', { 
                           ...conditional, 
-                          custom: { ...custom, rule: e.target.value }
+                          custom: { ...custom, enabled: e.target.checked }
                         });
                       }}
-                      placeholder="formData.age >= 18"
-                      multiline
-                      rows={3}
-                      error={formData.conditionalRules?.custom?.rule ? 
-                        !isValidJavaScriptRule(formData.conditionalRules.custom.rule) : false}
-                      helperText={formData.conditionalRules?.custom?.rule ? 
-                        (!isValidJavaScriptRule(formData.conditionalRules.custom.rule) ? 
-                          'قانون JavaScript نامعتبر است' : '') : ''}
-                      sx={{ '& .MuiOutlinedInput-root': { background: 'rgba(255, 255, 255, 0.8)' } }}
+                      size="small"
                     />
-                    <HelpTooltip
-                      title="قانون JavaScript"
-                      description="کد JavaScript برای اعتبارسنجی سفارشی."
-                      example="formData.age >= 18 && formData.country === 'IR'"
-                    />
-                  </Box>
+                  }
+                  label="قانون سفارشی"
+                  sx={{ mb: 1 }}
+                />
+                <HelpTooltip
+                  title="قانون سفارشی"
+                  description="تعریف قانون سفارشی با JavaScript برای اعتبارسنجی."
+                  example="formData.age >= 18 && formData.country === 'IR'"
+                />
+              </Box>
+              {formData.conditionalRules?.custom?.enabled && (
+                <Grid container spacing={2} sx={{ mt: 1 }}>
+                  <Grid item xs={12}>
+                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                      <TextField
+                        fullWidth
+                        label="قانون JavaScript"
+                        value={formData.conditionalRules?.custom?.rule || ''}
+                        onChange={(e) => {
+                          const conditional = formData.conditionalRules || {};
+                          const custom = conditional.custom || {};
+                          handleChange('conditionalRules', { 
+                            ...conditional, 
+                            custom: { ...custom, rule: e.target.value }
+                          });
+                        }}
+                        placeholder="formData.age >= 18"
+                        multiline
+                        rows={3}
+                        error={formData.conditionalRules?.custom?.rule ? 
+                          !isValidJavaScriptRule(formData.conditionalRules.custom.rule) : false}
+                        helperText={formData.conditionalRules?.custom?.rule ? 
+                          (!isValidJavaScriptRule(formData.conditionalRules.custom.rule) ? 
+                            'قانون JavaScript نامعتبر است' : '') : ''}
+                        sx={{ '& .MuiOutlinedInput-root': { background: 'rgba(255, 255, 255, 0.8)' } }}
+                      />
+                      <HelpTooltip
+                        title="قانون JavaScript"
+                        description="کد JavaScript برای اعتبارسنجی سفارشی."
+                        example="formData.age >= 18 && formData.country === 'IR'"
+                      />
+                    </Box>
+                  </Grid>
+                  <Grid item xs={12}>
+                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                      <TextField
+                        fullWidth
+                        label="پیام خطا"
+                        value={formData.conditionalRules?.custom?.message || ''}
+                        onChange={(e) => {
+                          const conditional = formData.conditionalRules || {};
+                          const custom = conditional.custom || {};
+                          handleChange('conditionalRules', { 
+                            ...conditional, 
+                            custom: { ...custom, message: e.target.value }
+                          });
+                        }}
+                        placeholder="شرط تعریف شده برقرار نیست"
+                        sx={{ '& .MuiOutlinedInput-root': { background: 'rgba(255, 255, 255, 0.8)' } }}
+                      />
+                      <HelpTooltip
+                        title="پیام خطا"
+                        description="پیام خطای سفارشی برای قانون JavaScript."
+                        example="سن باید حداقل 18 سال باشد"
+                      />
+                    </Box>
+                  </Grid>
                 </Grid>
-                <Grid item xs={12}>
-                  <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                    <TextField
-                      fullWidth
-                      label="پیام خطا"
-                      value={formData.conditionalRules?.custom?.message || ''}
-                      onChange={(e) => {
-                        const conditional = formData.conditionalRules || {};
-                        const custom = conditional.custom || {};
-                        handleChange('conditionalRules', { 
-                          ...conditional, 
-                          custom: { ...custom, message: e.target.value }
-                        });
-                      }}
-                      placeholder="شرط تعریف شده برقرار نیست"
-                      sx={{ '& .MuiOutlinedInput-root': { background: 'rgba(255, 255, 255, 0.8)' } }}
-                    />
-                    <HelpTooltip
-                      title="پیام خطا"
-                      description="پیام خطای سفارشی برای قانون JavaScript."
-                      example="سن باید حداقل 18 سال باشد"
-                    />
-                  </Box>
-                </Grid>
-              </Grid>
-            )}
-          </Grid>
+              )}
+            </Grid>
+          )}
         </Grid>
       </Paper>
       

@@ -43,23 +43,37 @@ export class UniqueValidationProcessor implements IFieldProcessor {
 
     try {
       if (field.validationRules?.unique) {
-        const value = String(currentValue);
+        const raw = String(currentValue);
+        const numberField: any = (field as any).numberField || {};
+        const enableMultipleValues = !!numberField.enableMultipleValues;
+        const getSeparator = () => {
+          const sep = numberField.multiValueSeparator || 'comma';
+          if (sep === 'space') return ' ';
+          if (sep === 'semicolon') return ';';
+          return ',';
+        };
+
+        const values = enableMultipleValues ? raw.split(getSeparator()).map(p => p.trim()).filter(Boolean) : [raw];
+
         const fieldKey = `${field.englishName || field.name}`;
-        
-        // Initialize field storage if not exists
         if (!UniqueValidationProcessor.uniqueValues.has(fieldKey)) {
           UniqueValidationProcessor.uniqueValues.set(fieldKey, new Set());
         }
-        
         const fieldValues = UniqueValidationProcessor.uniqueValues.get(fieldKey)!;
-        
-        // Check if value already exists
-        if (fieldValues.has(value)) {
-          validationErrors.push('این مقدار قبلاً استفاده شده است');
-          suggestions.push('مقدار یکتای دیگری وارد کنید');
-        } else {
-          // Add value to storage (in real app, this would be a database insert)
-          fieldValues.add(value);
+
+        for (const v of values) {
+          if (fieldValues.has(v)) {
+            validationErrors.push('این مقدار قبلاً استفاده شده است');
+            suggestions.push('مقدار یکتای دیگری وارد کنید');
+            break;
+          }
+        }
+
+        if (validationErrors.length === 0) {
+          // Add values to storage (demo only)
+          for (const v of values) {
+            fieldValues.add(v);
+          }
         }
       }
 

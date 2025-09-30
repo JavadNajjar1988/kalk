@@ -94,7 +94,7 @@ export const NumberDependencyRules = memo<NumberDependencyRulesProps>(({
             <Grid container spacing={2} sx={{ mt: 1 }}>
               <Grid item xs={4}>
                 <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                  <TextField
+              <TextField
                     fullWidth
                     label="فیلد وابسته"
                     value={conditionalRules.visibility?.dependsOn || ''}
@@ -104,7 +104,7 @@ export const NumberDependencyRules = memo<NumberDependencyRulesProps>(({
                       !conditionalRules.visibility.dependsOn.trim() : false}
                     helperText={conditionalRules.visibility?.dependsOn ? 
                       (!conditionalRules.visibility.dependsOn.trim() ? 
-                        'نام فیلد وابسته نمی‌تواند خالی باشد' : '') : ''}
+                        'نام فیلد وابسته نمی‌تواند خالی باشد' : 'برای اطمینان از صحت، نام دقیق فیلد را وارد کنید') : ''}
                     sx={{ '& .MuiOutlinedInput-root': { background: 'rgba(255, 255, 255, 0.8)' } }}
                   />
                   <HelpTooltip
@@ -128,6 +128,10 @@ export const NumberDependencyRules = memo<NumberDependencyRulesProps>(({
                       <MenuItem value="not_equals">مخالف</MenuItem>
                       <MenuItem value="greater_than">بزرگتر از</MenuItem>
                       <MenuItem value="less_than">کوچکتر از</MenuItem>
+                      <MenuItem value="greater_equal">بزرگتر یا مساوی</MenuItem>
+                      <MenuItem value="less_equal">کوچکتر یا مساوی</MenuItem>
+                      <MenuItem value="empty">خالی</MenuItem>
+                      <MenuItem value="not_empty">غیرخالی</MenuItem>
                       <MenuItem value="contains">شامل</MenuItem>
                       <MenuItem value="not_contains">غیرشامل</MenuItem>
                     </Select>
@@ -193,7 +197,7 @@ export const NumberDependencyRules = memo<NumberDependencyRulesProps>(({
                       !conditionalRules.enable.dependsOn.trim() : false}
                     helperText={conditionalRules.enable?.dependsOn ? 
                       (!conditionalRules.enable.dependsOn.trim() ? 
-                        'نام فیلد وابسته نمی‌تواند خالی باشد' : '') : ''}
+                        'نام فیلد وابسته نمی‌تواند خالی باشد' : 'برای اطمینان از صحت، نام دقیق فیلد را وارد کنید') : ''}
                     sx={{ '& .MuiOutlinedInput-root': { background: 'rgba(255, 255, 255, 0.8)' } }}
                   />
                   <HelpTooltip
@@ -217,6 +221,10 @@ export const NumberDependencyRules = memo<NumberDependencyRulesProps>(({
                       <MenuItem value="not_equals">مخالف</MenuItem>
                       <MenuItem value="greater_than">بزرگتر از</MenuItem>
                       <MenuItem value="less_than">کوچکتر از</MenuItem>
+                      <MenuItem value="greater_equal">بزرگتر یا مساوی</MenuItem>
+                      <MenuItem value="less_equal">کوچکتر یا مساوی</MenuItem>
+                      <MenuItem value="empty">خالی</MenuItem>
+                      <MenuItem value="not_empty">غیرخالی</MenuItem>
                       <MenuItem value="contains">شامل</MenuItem>
                       <MenuItem value="not_contains">غیرشامل</MenuItem>
                     </Select>

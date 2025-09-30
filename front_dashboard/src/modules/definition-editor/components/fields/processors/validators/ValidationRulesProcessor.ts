@@ -92,6 +92,92 @@ export class ValidationRulesProcessor implements IFieldProcessor {
             console.log(`Unique validation check for value: ${value}`);
           }
         }
+
+        // Number-specific validations
+        if (field.type === 'number') {
+          const numberField: any = (field as any).numberField || {};
+          const enableMultipleValues = !!numberField.enableMultipleValues;
+
+          const getSeparator = () => {
+            const sep = numberField.multiValueSeparator || 'comma';
+            if (sep === 'space') return ' ';
+            if (sep === 'semicolon') return ';';
+            return ',';
+          };
+
+          const checkSingle = (raw: string): string | null => {
+            const trimmed = (raw || '').trim();
+            if (!trimmed) return 'مقدار نامعتبر است';
+
+            const num = Number(trimmed.replace(/,/g, ''));
+            if (Number.isNaN(num)) return 'عدد نامعتبر است';
+
+            // min/max
+            if (numberField.minValue !== undefined && num < numberField.minValue) {
+              return `حداقل مقدار مجاز ${numberField.minValue} است`;
+            }
+            if (numberField.maxValue !== undefined && num > numberField.maxValue) {
+              return `حداکثر مقدار مجاز ${numberField.maxValue} است`;
+            }
+
+            // numberType
+            const nt = numberField.numberType as ('integer'|'decimal'|'positive'|'negative'|undefined);
+            if (nt === 'integer' && !Number.isInteger(num)) {
+              return 'فقط اعداد صحیح مجاز است';
+            }
+            if (nt === 'positive' && !(num > 0)) {
+              return 'فقط اعداد مثبت مجاز است';
+            }
+            if (nt === 'negative' && !(num < 0)) {
+              return 'فقط اعداد منفی مجاز است';
+            }
+
+            // decimal precision
+            if (numberField.decimalPrecision !== undefined) {
+              const dotIdx = trimmed.indexOf('.');
+              if (dotIdx >= 0) {
+                const decimals = trimmed.length - dotIdx - 1;
+                if (decimals > numberField.decimalPrecision) {
+                  return `حداکثر ${numberField.decimalPrecision} رقم اعشار مجاز است`;
+                }
+              } else if (nt === 'decimal' || nt === undefined) {
+                // ok
+              }
+            }
+
+            // pattern per-item (if defined)
+            if (rules.pattern) {
+              const isOk = this.validatePattern(trimmed, rules.pattern);
+              if (!isOk) return rules.patternMessage || 'فرمت وارد شده صحیح نیست';
+            }
+
+            return null;
+          };
+
+          if (enableMultipleValues) {
+            const sep = getSeparator();
+            const items = value.split(sep).map(p => p.trim()).filter(Boolean);
+            if (field.isRequired && items.length === 0) {
+              validationErrors.push('حداقل یک مقدار باید وارد شود');
+            }
+            for (const item of items) {
+              const err = checkSingle(item);
+              if (err) { validationErrors.push(err); break; }
+            }
+          } else {
+            if (field.isRequired && (!value || value.trim() === '')) {
+              validationErrors.push('این فیلد اجباری است');
+            } else if (value && value.trim() !== '') {
+              const err = checkSingle(value);
+              if (err) validationErrors.push(err);
+            }
+          }
+
+          // misconfiguration: min>max
+          if (numberField.minValue !== undefined && numberField.maxValue !== undefined && numberField.minValue > numberField.maxValue) {
+            validationErrors.push('پیکربندی نامعتبر: حداقل مقدار بزرگ‌تر از حداکثر مقدار است');
+          }
+        }
       }
 
       return {

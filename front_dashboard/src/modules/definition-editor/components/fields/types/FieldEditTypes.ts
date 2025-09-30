@@ -13,7 +13,7 @@ export type FieldType = 'text' | 'number' | 'date' | 'select' | 'multiselect' | 
 // Number field specific properties
 export interface NumberFieldProperties {
   // Content properties
-  numberType?: 'integer' | 'decimal';
+  numberType?: 'integer' | 'decimal' | 'positive' | 'negative';
   minValue?: number;
   maxValue?: number;
   step?: number;
@@ -95,6 +95,8 @@ export interface ExtendedCustomFieldDefinition extends CustomFieldDefinition {
   placeholder?: string;
   helpText?: string;
   direction?: 'auto' | 'rtl' | 'ltr';
+  enablePlaceholder?: boolean;
+  enableHelpText?: boolean;
   
   // Content properties
   minLength?: number;
@@ -219,6 +221,100 @@ export interface ExtendedCustomFieldDefinition extends CustomFieldDefinition {
   };
   analyzer?: 'standard' | 'persian';
   storeRawAndNormalized?: boolean;
+
+  // Reference field specific properties
+  referenceConfig?: {
+    // Data source definition
+    dataSource?: {
+      type: 'static' | 'table' | 'api' | 'category';
+      static?: {
+        items: Array<{ value: string; label: string; extra?: Record<string, any> }>;
+      };
+      table?: {
+        tableName: string;
+        valueField: string; // id/code
+        displayFields: string[]; // columns to show
+        defaultFilter?: Array<{ field: string; op: 'eq' | 'neq' | 'gt' | 'lt' | 'contains'; value: string | number | boolean }>;
+        sort?: { by: 'alphabetical' | 'priority' | 'custom'; field?: string; direction?: 'asc' | 'desc' };
+      };
+      api?: {
+        endpoint: string;
+        method?: 'GET' | 'POST';
+        queryParam?: string; // search param name for type-ahead
+        params?: Record<string, string | number | boolean>;
+        headers?: Record<string, string>;
+        valueField: string; // id/code key in response
+        displayFields: string[]; // label keys in response
+        defaultFilter?: Array<{ field: string; op: 'eq' | 'neq' | 'gt' | 'lt' | 'contains'; value: string | number | boolean }>;
+        sort?: { by: 'alphabetical' | 'priority' | 'custom'; field?: string; direction?: 'asc' | 'desc' };
+        lazy?: boolean; // load on search
+      };
+      category?: {
+        categoryId: string; // ID of the category from useAvailableReferenceCategories
+        sections: 'hierarchy' | 'data' | 'both'; // Which sections to display
+      };
+    };
+    // Admin filter for limiting displayed data
+    adminFilter?: {
+      // Level-based filtering
+      levelLimit?: {
+        enabled: boolean;
+        maxLevel: number;
+      };
+      // Specific node selection
+      specificNodes?: {
+        enabled: boolean;
+        nodeIds: string[];
+      };
+      // Category-based filtering
+      categoryFilter?: {
+        enabled: boolean;
+        allowedCategories: string[];
+      };
+      // Advanced JSON filter
+      advancedFilter?: Array<{ field: string; op: 'eq' | 'neq' | 'gt' | 'lt' | 'contains' | 'in' | 'lte' | 'gte'; value: string | number | boolean | string[] }>;
+    };
+    // Display fields configuration
+    displayFields?: string[]; // Fields that user can see and search
+    primaryDisplayField?: string; // Main field for display label
+    searchFields?: string; // Comma-separated fields for search
+    showDescription?: boolean; // Show description in results
+    // Selection and behavior configuration
+    selection?: {
+      multiple?: boolean;
+      maxSelected?: number;
+    };
+    behavior?: {
+      allowCustomEntry?: boolean;
+    };
+    // Selection mode
+    multiSelect?: boolean;
+    allowUserCreate?: boolean;
+    // Dynamics
+    cascading?: {
+      enabled: boolean;
+      dependsOnField?: string; // e.g., province -> city
+      mapping?: { parentKey?: string; childKey?: string };
+    };
+    lazyLoading?: boolean;
+    // Assistive features
+    enableSearch?: boolean; // search-as-you-type
+    userFilterEnabled?: boolean;
+    showResultCount?: boolean;
+    pinnedItems?: Array<{ value: string; label: string }>;
+    // Security & storage
+    displayColumnsWhitelist?: string[];
+    mandatoryFilters?: Array<{ field: string; op: 'eq' | 'neq' | 'gt' | 'lt' | 'contains'; value: string | number | boolean }>;
+    indexing?: { searchable?: boolean; filterable?: boolean };
+    storeRawAndDisplay?: boolean; // store id and label
+    // Display
+    displayType?: 'dropdown' | 'autocomplete' | 'dialog' | 'tree' | 'chips';
+    showSelectedCount?: boolean;
+    pinFrequentOnTop?: boolean;
+    size?: 'small' | 'medium' | 'large' | 'full';
+    iconPrefix?: string;
+    iconSuffix?: string;
+  };
   
   // Rules features
   validationRules?: {
@@ -227,6 +323,9 @@ export interface ExtendedCustomFieldDefinition extends CustomFieldDefinition {
     pattern?: string;
     patternMessage?: string;
     unique?: boolean;
+    // Reference-specific validations
+    mustExistInSource?: boolean; // Selected value must exist in data source
+    selectionPattern?: string; // e.g., id > 100
   };
   controlRules?: {
     defaultValue?: string;

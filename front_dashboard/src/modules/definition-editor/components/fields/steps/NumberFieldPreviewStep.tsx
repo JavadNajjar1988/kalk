@@ -14,7 +14,10 @@ import {
 } from '@mui/material';
 import Autocomplete from '@mui/material/Autocomplete';
 import Button from '@mui/material/Button';
+import CircularProgress from '@mui/material/CircularProgress';
+import LinearProgress from '@mui/material/LinearProgress';
 import { ExtendedCustomFieldDefinition } from '../types/FieldEditTypes';
+import type { NumberFieldProperties } from '../types/FieldEditTypes';
 
 interface NumberFieldPreviewStepProps {
   formData: ExtendedCustomFieldDefinition;
@@ -31,8 +34,19 @@ const NumberFieldPreviewStep: React.FC<NumberFieldPreviewStepProps> = ({
   const [isVisible, setIsVisible] = useState(true);
   const [isEnabled, setIsEnabled] = useState(true);
 
-  const numberField = formData?.numberField || {};
+  const numberField: NumberFieldProperties = (formData?.numberField as NumberFieldProperties) || {} as NumberFieldProperties;
   const isMulti = !!numberField.enableMultipleValues;
+  const muiSize = numberField.size === 'small' ? 'small' : 'medium';
+
+  // Status color calculation
+  const computeStatusColor = (valueNum: number): string | undefined => {
+    if (!numberField.statusColor) return undefined;
+    if (isNaN(valueNum)) return undefined;
+    if (valueNum > 0 && numberField.statusColor.positive) return numberField.statusColor.positive;
+    if (valueNum < 0 && numberField.statusColor.negative) return numberField.statusColor.negative;
+    if (valueNum === 0 && numberField.statusColor.zero) return numberField.statusColor.zero;
+    return undefined;
+  };
 
   const getSeparatorChar = (): string => {
     const sep = numberField.multiValueSeparator || 'comma';
@@ -228,80 +242,39 @@ const NumberFieldPreviewStep: React.FC<NumberFieldPreviewStepProps> = ({
   const isReadOnly = formData?.controlRules?.readOnly || false;
   const isLocked = formData?.controlRules?.lockAfterSave || false;
   const editableAfterSave = formData?.numberField?.editableAfterSave !== false;
-  const isDisabled = !isEnabled || isReadOnly || isLocked || !editableAfterSave;
+  let isDisabled = !isEnabled || isReadOnly || isLocked || !editableAfterSave;
+  // readOnlyStyle effects
+  const readOnlyStyle = numberField.readOnlyStyle || 'normal';
+  if (readOnlyStyle === 'disabled') {
+    isDisabled = true;
+  }
 
 
   return (
     <Box>
-      <Box sx={{ textAlign: 'center', mb: 4 }}>
-        <Typography 
-          variant="h5" 
-          gutterBottom
-          sx={{
-            fontWeight: 700,
-            background: 'linear-gradient(45deg, #4A90E2 30%, #7BB3F0 90%)',
-            backgroundClip: 'text',
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent',
-          }}
-        >
+      {/* Header aligned with text preview style */}
+      <Box sx={{ textAlign: 'center', mb: 3 }}>
+        <Typography variant="h5" gutterBottom sx={{ fontWeight: 700 }}>
           پیش‌نمایش فیلد عددی
         </Typography>
-        <Typography variant="body1" color="text.secondary" sx={{ fontSize: '1.1rem', opacity: 0.8, mb: 4 }}>
+        <Typography variant="body2" color="text.secondary">
           نتیجه نهایی تنظیمات فیلد عددی شما
         </Typography>
       </Box>
 
-      {/* Controls for testing */}
-      <Paper
-        sx={{
-          p: 3,
-          mb: 3,
-          borderRadius: '12px',
-          background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(248, 250, 252, 0.8) 100%)',
-          backdropFilter: 'blur(10px)',
-          border: '1px solid rgba(135, 206, 250, 0.2)',
-          boxShadow: '0 4px 16px rgba(135, 206, 250, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.8)',
-        }}
-      >
-        <Typography variant="h6" sx={{ mb: 2, color: '#4A90E2', fontWeight: 600 }}>
+      {/* Controls - compact card */}
+      <Paper sx={{ p: 2.5, mb: 2.5, borderRadius: 2 }}>
+        <Typography variant="subtitle1" sx={{ mb: 1.5, fontWeight: 600 }}>
           کنترل‌های نمایش
         </Typography>
         <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
-          <FormControlLabel
-            control={
-              <Switch
-                checked={isVisible}
-                onChange={(e) => setIsVisible(e.target.checked)}
-                size="small"
-              />
-            }
-            label="نمایش فیلد"
-          />
-          <FormControlLabel
-            control={
-              <Switch
-                checked={isEnabled}
-                onChange={(e) => setIsEnabled(e.target.checked)}
-                size="small"
-              />
-            }
-            label="فعال بودن فیلد"
-          />
+          <FormControlLabel control={<Switch checked={isVisible} onChange={(e) => setIsVisible(e.target.checked)} size="small" />} label="نمایش فیلد" />
+          <FormControlLabel control={<Switch checked={isEnabled} onChange={(e) => setIsEnabled(e.target.checked)} size="small" />} label="فعال بودن فیلد" />
         </Box>
       </Paper>
 
-      {/* Field Preview */}
-      <Paper
-        sx={{
-          p: 4,
-          borderRadius: '16px',
-          background: 'linear-gradient(135deg, rgba(248, 250, 252, 0.9) 0%, rgba(241, 245, 249, 0.8) 100%)',
-          backdropFilter: 'blur(10px)',
-          border: '1px solid rgba(203, 213, 225, 0.3)',
-          mb: 3,
-        }}
-      >
+      {/* Field Preview - neutral card */}
+      <Paper sx={{ p: 3, borderRadius: 2, mb: 2.5 }}>
         <Typography variant="h6" sx={{ mb: 3, color: '#4A90E2', fontWeight: 600 }}>
           پیش‌نمایش فیلد
         </Typography>
@@ -339,11 +312,12 @@ const NumberFieldPreviewStep: React.FC<NumberFieldPreviewStepProps> = ({
                   max={numberField.maxValue || 100}
                   step={numberField.step || 1}
                   disabled={isDisabled}
+                  size={muiSize as any}
                   valueLabelDisplay="auto"
                   sx={{ mb: 2 }}
                 />
-                <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-                  مقدار: {fieldValue}
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }} title={validationErrors[0] || ''}>
+                  مقدار: <span style={{ color: computeStatusColor(parseFloat(fieldValue)) }}>{fieldValue}</span>
                 </Typography>
                 {/* Show helpText below slider when no validation errors */}
                 {validationErrors.length === 0 && formData.helpText && formData.helpText.trim() && (
@@ -354,6 +328,79 @@ const NumberFieldPreviewStep: React.FC<NumberFieldPreviewStepProps> = ({
                 {/* Show validation error below slider */}
                 {validationErrors.length > 0 && (
                   <Typography variant="caption" color="error">
+                    {validationErrors[0]}
+                  </Typography>
+                )}
+              </Box>
+            ) : numberField.displayType === 'progress' ? (
+              <Box sx={{ p: 2 }}>
+                <Typography variant="body2" sx={{ mb: 1 }}>
+                  {formData.name}
+                </Typography>
+                {numberField.size === 'full' ? (
+                  <LinearProgress
+                    variant="determinate"
+                    value={(() => {
+                      const min = numberField.minValue ?? 0;
+                      const max = numberField.maxValue ?? 100;
+                      const v = parseFloat(fieldValue) || 0;
+                      const pct = ((v - min) * 100) / (max - min || 1);
+                      return Math.min(100, Math.max(0, pct));
+                    })()}
+                    sx={{ height: 8, borderRadius: 4 }}
+                  />
+                ) : (
+                  <CircularProgress
+                    variant="determinate"
+                    value={(() => {
+                      const min = numberField.minValue ?? 0;
+                      const max = numberField.maxValue ?? 100;
+                      const v = parseFloat(fieldValue) || 0;
+                      const pct = ((v - min) * 100) / (max - min || 1);
+                      return Math.min(100, Math.max(0, pct));
+                    })()}
+                    size={numberField.size === 'small' ? 28 : numberField.size === 'large' ? 64 : 40}
+                  />
+                )}
+              </Box>
+            ) : numberField.displayType === 'spinner' ? (
+              <Box>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <Button
+                    size="small"
+                    variant="outlined"
+                    disabled={isDisabled}
+                    onClick={() => {
+                      const step = numberField.step ?? 1;
+                      const next = (parseFloat(fieldValue) || 0) - step;
+                      handleValueChange(String(next));
+                    }}
+                  >
+                    −
+                  </Button>
+                  <TextField
+                    sx={{ maxWidth: 160 }}
+                    size={muiSize as any}
+                    value={fieldValue}
+                    onChange={(e) => handleValueChange(e.target.value)}
+                    disabled={isDisabled}
+                    type="number"
+                  />
+                  <Button
+                    size="small"
+                    variant="outlined"
+                    disabled={isDisabled}
+                    onClick={() => {
+                      const step = numberField.step ?? 1;
+                      const next = (parseFloat(fieldValue) || 0) + step;
+                      handleValueChange(String(next));
+                    }}
+                  >
+                    +
+                  </Button>
+                </Box>
+                {validationErrors.length > 0 && (
+                  <Typography variant="caption" color="error" sx={{ mt: 0.5, display: 'block' }}>
                     {validationErrors[0]}
                   </Typography>
                 )}
@@ -381,6 +428,7 @@ const NumberFieldPreviewStep: React.FC<NumberFieldPreviewStepProps> = ({
                       <TextField
                         {...params}
                         fullWidth
+                        size={muiSize as any}
                         label={`${formData.name}${formData.isRequired ? ' *' : ''}`}
                         placeholder={formData.placeholder || 'عدد وارد کنید'}
                         helperText={
@@ -390,12 +438,14 @@ const NumberFieldPreviewStep: React.FC<NumberFieldPreviewStepProps> = ({
                         }
                         error={validationErrors.length > 0}
                         type="number"
+                        title={numberField.errorStyle === 'tooltip' && validationErrors[0] ? validationErrors[0] : ''}
                       />
                     )}
                   />
                 ) : (
                   <TextField
                     fullWidth
+                    size={muiSize as any}
                     label={`${formData.name}${formData.isRequired ? ' *' : ''}`}
                     placeholder={formData.placeholder || 'عدد وارد کنید'}
                     helperText={
@@ -437,13 +487,15 @@ const NumberFieldPreviewStep: React.FC<NumberFieldPreviewStepProps> = ({
                         backdropFilter: 'blur(10px)',
                         '&:hover': { boxShadow: '0 4px 12px rgba(74, 144, 226, 0.15)' },
                         '&.Mui-focused': { boxShadow: '0 0 0 3px rgba(74, 144, 226, 0.1)' },
+                        ...(readOnlyStyle === 'simple' ? { background: 'transparent', boxShadow: 'none' } : {}),
                       },
+                      ...(numberField.statusColor ? { borderLeft: `3px solid ${computeStatusColor(parseFloat(fieldValue)) || 'transparent'}` } : {}),
                     }}
                   />
                 )}
 
                 {/* Spinner controls (single value only) */}
-                {numberField.enableSpinner && !isMulti && (
+                {numberField.enableSpinner && !isMulti && (numberField.displayType as string) !== 'spinner' && (
                   <Box sx={{ mt: 1, display: 'flex', gap: 1 }}>
                     <Button
                       size="small"
@@ -473,7 +525,7 @@ const NumberFieldPreviewStep: React.FC<NumberFieldPreviewStepProps> = ({
                 )}
 
                 {/* Mini chart (compact slider) */}
-                {numberField.enableMiniChart && !isMulti && (
+                {numberField.enableMiniChart && !isMulti && (numberField.displayType as string) !== 'slider' && (
                   <Box sx={{ mt: 2 }}>
                     <Slider
                       size="small"
@@ -511,24 +563,15 @@ const NumberFieldPreviewStep: React.FC<NumberFieldPreviewStepProps> = ({
             {/* Show counter if enabled */}
             {numberField.showCounter && (
               <Typography variant="caption" sx={{ mt: 1, display: 'block' }}>
-                {fieldValue} / {numberField.maxValue || '∞'}
+                {isMulti ? `${(fieldValue || '').split(getSeparatorChar()).filter(p => p.trim()).length} آیتم` : `${fieldValue || 0} / ${numberField.maxValue ?? '∞'}`}
               </Typography>
             )}
           </Box>
         )}
       </Paper>
 
-      {/* Field Summary */}
-      <Paper
-        sx={{
-          p: 3,
-          borderRadius: '12px',
-          background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(248, 250, 252, 0.8) 100%)',
-          backdropFilter: 'blur(10px)',
-          border: '1px solid rgba(135, 206, 250, 0.2)',
-          boxShadow: '0 4px 16px rgba(135, 206, 250, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.8)',
-        }}
-      >
+      {/* Field Summary - compact */}
+      <Paper sx={{ p: 2.5, borderRadius: 2 }}>
         <Typography variant="h6" sx={{ mb: 3, color: '#4A90E2', fontWeight: 600 }}>
           خلاصه تنظیمات
         </Typography>

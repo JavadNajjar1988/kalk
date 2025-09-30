@@ -112,6 +112,11 @@ export const NumberHelperProperties = memo<NumberHelperPropertiesProps>(({
               }
               label="کلیدهای افزایش/کاهش"
             />
+            {numberField.enableMultipleValues && numberField.enableSpinner && (
+              <Box sx={{ ml: 1, color: 'warning.main', fontSize: 12 }}>
+                در حالت چندمقداری، کلیدهای +/− فقط روی مقدار کل اعمال می‌شود.
+              </Box>
+            )}
             <HelpTooltip
               title="کلیدهای افزایش/کاهش"
               description="نمایش دکمه‌های + و - برای تغییر مقدار."
@@ -133,6 +138,11 @@ export const NumberHelperProperties = memo<NumberHelperPropertiesProps>(({
               }
               label="نمایش نمودار کوچک"
             />
+            {formData.numberField?.displayType === 'slider' && numberField.enableMiniChart && (
+              <Box sx={{ ml: 1, color: 'error.main', fontSize: 12 }}>
+                فعال بودن «نمایش نمودار کوچک» با نمایش اصلی اسلایدر ممکن است موجب تداخل شود.
+              </Box>
+            )}
             <HelpTooltip
               title="نمایش نمودار کوچک"
               description="نمایش نمودار یا اسلایدر برای انتخاب سریع مقدار."

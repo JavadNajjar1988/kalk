@@ -12,6 +12,7 @@ import {
   InputLabel,
   Select,
   MenuItem,
+  FormHelperText,
 } from '@mui/material';
 import { ExtendedCustomFieldDefinition } from '../types/FieldEditTypes';
 import HelpTooltip from '../shared/HelpTooltip';
@@ -40,6 +41,16 @@ export const NumberSecurityProperties = memo<NumberSecurityPropertiesProps>(({
     const sensitiveDataDetection = numberField.sensitiveDataDetection || { enabled: false };
     handleNumberFieldChange('sensitiveDataDetection', { ...sensitiveDataDetection, [key]: value });
   };
+
+  // Helpers for validation warnings
+  const patterns = numberField.sensitiveDataDetection?.patterns || [];
+  const hasInvalidRegex = patterns.some(p => {
+    try { if (p) new RegExp(p); return false; } catch { return true; }
+  });
+  const isBlockingWithoutPatterns = numberField.sensitiveDataDetection?.enabled && numberField.sensitiveDataDetection?.action === 'block' && patterns.length === 0;
+  const rawAndSensitiveConflict = !!numberField.storeRawAndNormalized && !!numberField.sensitiveDataDetection?.enabled;
+  const indexingRisk = !!numberField.sensitiveDataDetection?.enabled && (numberField.indexing?.searchable || numberField.indexing?.filterable || numberField.indexing?.sortable);
+  const patternsSizeTooLarge = patterns.join(',').length > 2000 || patterns.length > 20;
 
   return (
     <Box>
@@ -126,6 +137,11 @@ export const NumberSecurityProperties = memo<NumberSecurityPropertiesProps>(({
               }
               label="ذخیره نسخه خام و نرمال‌شده"
             />
+            {rawAndSensitiveConflict && (
+              <Box sx={{ ml: 1, color: 'warning.main', fontSize: 12 }}>
+                هشدار: ذخیره نسخه خام با تشخیص اطلاعات حساس فعال ممکن است ریسک حریم‌خصوصی ایجاد کند.
+              </Box>
+            )}
             <HelpTooltip
               title="ذخیره نسخه خام و نرمال‌شده"
               description="ذخیره هم نسخه اصلی و هم نسخه پردازش شده."
@@ -170,6 +186,11 @@ export const NumberSecurityProperties = memo<NumberSecurityPropertiesProps>(({
                   <MenuItem value="warn">هشدار</MenuItem>
                   <MenuItem value="block">مسدود</MenuItem>
                 </Select>
+                {isBlockingWithoutPatterns && (
+                  <FormHelperText error>
+                    برای حالت «مسدود»، تعریف حداقل یک الگوی تشخیص لازم است.
+                  </FormHelperText>
+                )}
               </FormControl>
               <HelpTooltip
                 title="عمل تشخیص"
@@ -197,6 +218,19 @@ export const NumberSecurityProperties = memo<NumberSecurityPropertiesProps>(({
                 rows={2}
                 sx={{ '& .MuiOutlinedInput-root': { background: 'rgba(255, 255, 255, 0.8)' } }}
               />
+              {(hasInvalidRegex || patternsSizeTooLarge || indexingRisk) && (
+                <Box sx={{ ml: 1 }}>
+                  {hasInvalidRegex && (
+                    <FormHelperText error>حداقل یک الگوی Regex نامعتبر است.</FormHelperText>
+                  )}
+                  {patternsSizeTooLarge && (
+                    <FormHelperText error>حجم/تعداد الگوها بیش از حد مجاز است (حداکثر ۲۰ الگو یا ۲۰۰۰ کاراکتر).</FormHelperText>
+                  )}
+                  {indexingRisk && (
+                    <FormHelperText error>فعال بودن نمایه‌سازی همراه با تشخیص اطلاعات حساس می‌تواند ریسک حریم‌خصوصی ایجاد کند.</FormHelperText>
+                  )}
+                </Box>
+              )}
               <HelpTooltip
                 title="الگوهای تشخیص"
                 description="الگوهای Regex برای تشخیص اطلاعات حساس."

@@ -109,6 +109,45 @@ export class ConditionalRulesProcessor implements IFieldProcessor {
     }
   }
 
+  // Evaluate single condition with type-safe comparison
+  private evaluateCondition(left: any, operator: string, right: any): boolean {
+    // handle empty/not_empty
+    if (operator === 'empty') return !left || String(left).trim() === '';
+    if (operator === 'not_empty') return !!(left && String(left).trim() !== '');
+
+    const normalizeNumber = (raw: any): number | null => {
+      if (raw === null || raw === undefined) return null;
+      const s = String(raw).replace(/,/g, '');
+      const n = Number(s);
+      return Number.isNaN(n) ? null : n;
+    };
+
+    const ln = normalizeNumber(left);
+    const rn = normalizeNumber(right);
+    const bothNumeric = ln !== null && rn !== null;
+
+    switch (operator) {
+      case 'equals':
+        return bothNumeric ? ln === rn : String(left) === String(right);
+      case 'not_equals':
+        return bothNumeric ? ln !== rn : String(left) !== String(right);
+      case 'greater_than':
+        return bothNumeric ? (ln! > rn!) : String(left) > String(right);
+      case 'less_than':
+        return bothNumeric ? (ln! < rn!) : String(left) < String(right);
+      case 'greater_equal':
+        return bothNumeric ? (ln! >= rn!) : String(left) >= String(right);
+      case 'less_equal':
+        return bothNumeric ? (ln! <= rn!) : String(left) <= String(right);
+      case 'contains':
+        return String(left).includes(String(right));
+      case 'not_contains':
+        return !String(left).includes(String(right));
+      default:
+        return false;
+    }
+  }
+
   /**
    * Process visibility rule
    * پردازش قانون نمایش

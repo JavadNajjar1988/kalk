@@ -1,5 +1,5 @@
 import React, { memo, useEffect } from 'react';
-import { Box, Typography, Paper, Grid, Chip } from '@mui/material';
+import { Box, Typography, Paper, Grid } from '@mui/material';
 import { FieldTypeSelectionProps } from '../types/FieldEditTypes';
 
 const FieldTypeSelection: React.FC<FieldTypeSelectionProps> = ({ formData, onChange }) => {
@@ -96,18 +96,7 @@ const FieldTypeSelection: React.FC<FieldTypeSelectionProps> = ({ formData, onCha
             >
               برای ورود متن و کاراکتر
             </Typography>
-            {formData.type === 'text' && (
-              <Chip 
-                label="انتخاب شده" 
-                size="small"
-                sx={{ 
-                  mt: 2,
-                  bgcolor: 'rgba(74, 144, 226, 0.1)',
-                  color: '#4A90E2',
-                  fontWeight: 600,
-                }} 
-              />
-            )}
+            {/* Badge removed to keep size uniform; selection indicated by color only */}
           </Paper>
         </Grid>
         
@@ -166,29 +155,7 @@ const FieldTypeSelection: React.FC<FieldTypeSelectionProps> = ({ formData, onCha
             >
               برای ورود اعداد و محاسبات
             </Typography>
-            {formData.type === 'number' ? (
-              <Chip 
-                label="انتخاب شده" 
-                size="small"
-                sx={{ 
-                  mt: 2,
-                  bgcolor: 'rgba(74, 144, 226, 0.1)',
-                  color: '#4A90E2',
-                  fontWeight: 600,
-                }} 
-              />
-            ) : (
-              <Chip 
-                label="فعال" 
-                size="small"
-                sx={{ 
-                  mt: 2,
-                  bgcolor: 'rgba(34, 197, 94, 0.1)',
-                  color: '#16a34a',
-                  fontWeight: 500,
-                }} 
-              />
-            )}
+            {/* Badges removed to keep size uniform; selection indicated by color only */}
           </Paper>
         </Grid>
         
@@ -208,31 +175,43 @@ const FieldTypeSelection: React.FC<FieldTypeSelectionProps> = ({ formData, onCha
                 : '0 8px 32px rgba(148, 163, 184, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.6)',
               transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
               textAlign: 'center',
-              opacity: 0.6,
               '&:hover': {
-                opacity: 0.8,
-                transform: 'translateY(-2px)',
+                transform: 'translateY(-4px)',
+                boxShadow: '0 16px 40px rgba(74, 144, 226, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.9)',
+                border: '2px solid rgba(74, 144, 226, 0.5)',
               },
             }}
-            onClick={() => {}}
+            onClick={() => handleTypeChange('reference')}
           >
-            <Box sx={{ fontSize: '3rem', mb: 2, filter: 'drop-shadow(0 4px 8px rgba(148, 163, 184, 0.3))' }}>🔗</Box>
-            <Typography variant="h6" sx={{ fontWeight: 700, color: '#64748B', mb: 1 }}>
+            <Box 
+              sx={{ 
+                fontSize: '3rem', 
+                mb: 2, 
+                filter: 'drop-shadow(0 4px 8px rgba(74, 144, 226, 0.3))',
+                animation: formData.type === 'reference' ? 'bounce 2s ease-in-out infinite' : 'none',
+                '@keyframes bounce': {
+                  '0%, 20%, 50%, 80%, 100%': { transform: 'translateY(0)' },
+                  '40%': { transform: 'translateY(-10px)' },
+                  '60%': { transform: 'translateY(-5px)' },
+                },
+              }}
+            >
+              🔗
+            </Box>
+            <Typography 
+              variant="h6" 
+              sx={{ 
+                fontWeight: 700, 
+                color: formData.type === 'reference' ? '#4A90E2' : '#64748B', 
+                mb: 1 
+              }}
+            >
               فیلد مرجع
             </Typography>
             <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: '0.9rem' }}>
               برای ارجاع به سایر داده‌ها
             </Typography>
-            <Chip 
-              label="به زودی" 
-              size="small"
-              sx={{ 
-                mt: 2,
-                bgcolor: 'rgba(148, 163, 184, 0.2)',
-                color: '#64748B',
-                fontWeight: 500,
-              }} 
-            />
+            {/* Badges removed to keep size uniform; selection indicated by color only */}
           </Paper>
         </Grid>
       </Grid>
