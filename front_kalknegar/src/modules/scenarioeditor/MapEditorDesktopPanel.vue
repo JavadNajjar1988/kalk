@@ -1,29 +1,29 @@
 <template>
   <aside
-    class="pointer-events-auto relative -mt-12 hidden max-h-[80vh] overflow-auto rounded-2xl border-2 border-teal-200 dark:border-slate-600 shadow-xl md:block bg-white dark:bg-slate-800"
+    class="pointer-events-auto relative -mt-12 hidden max-h-[80vh] overflow-auto rounded-2xl md:block bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border border-border shadow-xl"
     :style="{ width: orbatPanelWidth + 'px' }"
   >
     <TabGroup
       as="div"
-      class="hover-none:mr-3 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 mr-1.5 flex h-full flex-auto flex-col"
+      class="hover-none:mr-3 bg-transparent text-foreground mr-1.5 flex h-full flex-auto flex-col"
       :class="{ hidden: !showBottomPanel }"
       :selected-index="activeTabIndex"
       @change="changeTab"
     >
-      <TabList class="flex flex-0 justify-between border-b border-teal-200 dark:border-slate-600 bg-gradient-to-r from-teal-50 to-cyan-50 dark:from-slate-700 dark:to-slate-600 rounded-t-2xl">
+      <TabList class="flex flex-0 justify-between border-b border-border bg-muted/40 rounded-t-2xl">
         <div class="flex flex-auto items-center justify-evenly">
           <Tab
             as="template"
-            v-for="tab in ['آرایش نبرد', 'رویدادها', 'لایه‌ها', 'تنظیمات', 'فیلتر']"
+            v-for="tab in ['آرایش نبرد', 'رویدادها', 'لایه‌ها', 'فیلتر']"
             :key="tab"
             v-slot="{ selected }"
           >
             <button
               :class="[
                 selected
-                  ? 'border-teal-500 text-teal-600 dark:text-teal-400 bg-white dark:bg-slate-700'
-                  : 'border-transparent text-slate-500 hover:border-teal-300 hover:text-teal-600 dark:text-slate-400 dark:hover:text-teal-400',
-                'w-1/2 border-b-2 px-3 py-3 text-center text-sm font-medium rounded-t-lg transition-all duration-200',
+                  ? 'text-primary border-b-2 border-primary bg-background/70'
+                  : 'text-muted-foreground hover:text-foreground',
+                'w-1/2 px-2.5 py-2.5 text-center text-[0.9rem] font-medium rounded-t-lg transition-all duration-200',
               ]"
             >
               {{ tab }}
@@ -32,7 +32,7 @@
         </div>
         <CloseButton @click="emit('close')" class="mt-1 mr-1" />
       </TabList>
-      <TabPanels class="flex-auto overflow-y-auto bg-gradient-to-b from-white to-gray-50 dark:from-slate-800 dark:to-slate-900">
+      <TabPanels class="flex-auto overflow-y-auto bg-transparent">
         <TabPanel :unmount="false" class="pb-10">
           <OrbatPanel />
         </TabPanel>
@@ -40,7 +40,6 @@
           <ScenarioEventsPanel @event-click="onEventClick" />
         </TabPanel>
         <TabPanel class="p-4 pb-10"><ScenarioLayersTabPanel /></TabPanel>
-        <TabPanel class="p-4 pb-10" :unmount="false"> <ScenarioSettingsPanel /></TabPanel>
         <TabPanel :unmount="false"><ScenarioFiltersTabPanel /></TabPanel>
       </TabPanels>
     </TabGroup>
@@ -66,7 +65,7 @@ import { defineAsyncComponent, onMounted, onUnmounted } from "vue";
 import { type ScenarioEvent } from "@/types/scenarioModels";
 import { useSelectedItems } from "@/stores/selectedStore";
 import PanelResizeHandle from "@/components/PanelResizeHandle.vue";
-import ScenarioSettingsPanel from "@/modules/scenarioeditor/ScenarioSettingsPanel.vue";
+// Removed settings from left panel; settings moved to right drawer
 
 const ScenarioFiltersTabPanel = defineAsyncComponent(
   () => import("@/modules/scenarioeditor/ScenarioFiltersTabPanel.vue"),

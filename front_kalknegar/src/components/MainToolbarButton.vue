@@ -3,8 +3,8 @@
     type="button"
     variant="ghost"
     size="icon"
-    class="hover:bg-army2/50"
-    :class="active ? 'bg-army2' : ''"
+    class="text-foreground hover:bg-muted/60 hover:text-foreground transition-colors"
+    :class="active ? 'bg-primary/15 text-primary ring-1 ring-primary/30' : ''"
   >
     <slot />
   </Button>

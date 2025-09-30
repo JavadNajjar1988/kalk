@@ -116,7 +116,7 @@ export const ScenarioNavigationBar: React.FC<ScenarioNavigationBarProps> = ({
   };
 
   const handleHelp = () => {
-    window.open('#', '_blank');
+    window.open('https://docs.orbat-mapper.app/guide/about-orbat-mapper', '_blank');
   };
 
   // Mode icons

@@ -1748,16 +1748,9 @@ export const LiveFieldPreview: React.FC<LiveFieldPreviewProps> = ({ formData }) 
           <FormControl fullWidth error={fieldErrors.length > 0}>
             <InputLabel>{formData.name + (formData.isRequired ? ' *' : '')}</InputLabel>
             <Select
-              value={formData.selectionAid === 'multi' ? (fieldValue ? fieldValue.split(',') : []) : fieldValue}
-              onChange={(e) => {
-                if (formData.selectionAid === 'multi') {
-                  handleValueChange(Array.isArray(e.target.value) ? e.target.value.join(',') : '');
-                } else {
-                  handleValueChange(e.target.value as string);
-                }
-              }}
+              value={fieldValue}
+              onChange={(e) => handleValueChange(e.target.value as string)}
               label={formData.name + (formData.isRequired ? ' *' : '')}
-              multiple={formData.selectionAid === 'multi'}
               sx={{
                 '& .MuiOutlinedInput-root': {
                   background: 'rgba(255, 255, 255, 0.8)',

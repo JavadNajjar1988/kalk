@@ -1,11 +1,10 @@
 import React, { memo, useMemo, useCallback } from 'react';
 import { Box, Typography, Paper, Grid, FormControl, InputLabel, Select, MenuItem, FormControlLabel, Switch, TextField } from '@mui/material';
 import HelpTooltip from '../shared/HelpTooltip';
-import { ExtendedCustomFieldDefinition } from '../types/FieldEditTypes';
 
 interface SecurityStoragePropertiesProps {
-  formData: ExtendedCustomFieldDefinition;
-  onChange: (key: keyof ExtendedCustomFieldDefinition, value: any) => void;
+  formData: any;
+  onChange: (key: string, value: any) => void;
 }
 
 const SecurityStorageProperties: React.FC<SecurityStoragePropertiesProps> = ({ formData, onChange }) => {
@@ -275,6 +274,7 @@ const SecurityStorageProperties: React.FC<SecurityStoragePropertiesProps> = ({ f
             >
               <MenuItem value="standard">استاندارد</MenuItem>
               <MenuItem value="persian">فارسی</MenuItem>
+              <MenuItem value="custom">سفارشی</MenuItem>
             </Select>
           </FormControl>
         </Grid>

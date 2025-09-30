@@ -384,7 +384,7 @@ function onContextMenuAction(action: string, options?: Record<string, any>) {
   >
     <div
       ref="el"
-      class="bg-sidebar border-border mb-2 w-full transform overflow-hidden border-t text-sm transition-all select-none relative"
+      class="bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-border mb-2 w-full sm:max-w-3xl lg:max-w-5xl mx-auto transform overflow-hidden border rounded-xl shadow text-xs transition-all select-none relative text-foreground"
       @pointerdown="onPointerDown"
       @pointerup="onPointerUp"
       @pointermove="onPointerMove"
@@ -394,11 +394,11 @@ function onContextMenuAction(action: string, options?: Record<string, any>) {
       @mouseleave="showHoverMarker = false"
       @contextmenu="onContextMenu"
     >
-      <div class="bg-sidebar flex h-3.5 items-center justify-center overflow-clip">
-        <IconTriangleDown class="h-4 w-4 scale-x-150 transform text-red-900" />
+      <div class="bg-muted/60 flex h-6 items-center justify-center overflow-clip">
+        <IconTriangleDown class="h-5 w-5 scale-x-150 transform text-primary" />
       </div>
       <div
-        class="touch-none text-sm select-none"
+        class="touch-none text-sm select-none will-change-transform"
         :class="animate ? 'transition-all' : 'transition-none'"
         :style="`transform:translate(${totalXOffset}px)`"
       >
@@ -436,21 +436,21 @@ function onContextMenuAction(action: string, options?: Record<string, any>) {
             :style="`width: ${timelineWidth}px`"
           ></div>
         </div>
-        <div class="border-muted-foreground flex justify-center">
+        <div class="border-border flex justify-center text-foreground text-base">
           <div
             v-for="tick in majorTicks"
             :key="tick.id"
-            class="border-muted-foreground flex-none border-r border-b pl-0.5 text-center"
+            class="border-border flex-none border-r border-b pl-1 pr-1 py-1 text-center whitespace-nowrap box-border transition-opacity duration-200"
             :style="`width: ${majorWidth}px`"
           >
             {{ tick.label }}
           </div>
         </div>
-        <div class="flex justify-center text-xs">
+        <div class="flex justify-center text-sm">
           <div
             v-for="tick in minorTicks"
             :key="tick.id"
-            class="text-muted-foreground border-muted-foreground min-h-[1rem] flex-none border-r pl-0.5 text-center"
+            class="text-muted-foreground border-border min-h-[1.25rem] flex-none border-r pl-1 pr-1 py-0.5 text-center whitespace-nowrap box-border transition-opacity duration-200"
             :style="`width: ${minorWidth}px`"
           >
             {{ tick.label }}
@@ -460,15 +460,31 @@ function onContextMenuAction(action: string, options?: Record<string, any>) {
 
       <p
         v-if="showHoverMarker && !isDragging"
-        class="absolute top-0 right-1 hidden p-0 text-xs text-red-900 select-none sm:block dark:text-red-600"
+        class="absolute top-0 right-1 hidden p-0 text-[0.72rem] text-primary select-none sm:block"
       >
         {{ formattedHoveredDate }}
       </p>
       <div
         v-if="showHoverMarker"
-        class="hover-hover:flex absolute top-0 w-0.5 bg-red-900/50 dark:bg-red-600/50 pointer-events-none"
+        class="hover-hover:flex absolute top-0 w-0.5 bg-primary/50 pointer-events-none"
         :style="`left: ${hoveredX}px; height: 100%`"
       />
+
+      <!-- Hover tooltip -->
+      <div
+        v-if="showHoverMarker && !isDragging && formattedHoveredDate"
+        class="absolute -top-6 translate-x-1 bg-popover text-popover-foreground border border-border rounded px-1.5 py-0.5 text-[0.7rem] shadow"
+        :style="`left: ${Math.max(8, Math.min(hoveredX - 24, (el?.getBoundingClientRect()?.width || 0) - 72))}px;`"
+      >
+        {{ formattedHoveredDate }}
+      </div>
+
+      <!-- Compact controls -->
+      <div class="absolute left-1 top-1 hidden gap-1 sm:flex">
+        <button type="button" class="rounded bg-muted/60 px-1.5 py-0.5 text-[0.7rem] hover:bg-muted" @click.stop="majorWidth = Math.max(majorWidth - 40, 55)">-</button>
+        <button type="button" class="rounded bg-muted/60 px-1.5 py-0.5 text-[0.7rem] hover:bg-muted" @click.stop="majorWidth += 40">+</button>
+        <button type="button" class="rounded bg-primary/15 px-1.5 py-0.5 text-[0.7rem] text-primary hover:bg-primary/20" @click.stop="setCurrentTime(Date.now())">اکنون</button>
+      </div>
     </div>
   </TimelineContextMenu>
 </template>

@@ -65,6 +65,7 @@ import { getRandomQuote } from '@/config/quotes';
 import { getRandomMartyr } from '@/config/martyrs';
 import { convertToFarsiNumber } from '@/utils/numberUtils';
 import FarsiTypography from '@/components/common/FarsiTypography';
+import FarsiNumber from '@/components/common/FarsiNumber';
 import { useTranslation } from '@/hooks/useTranslation';
 
 // تایپ‌های مورد نیاز برای کارت‌های آماری
@@ -104,59 +105,147 @@ const DashboardStats: React.FC = () => {
     { isActive: true, nationality: 'iranian', role: 'operator', lastLogin: new Date() },
   ];
 
+  // محاسبه آمار سناریوها
+  const scenarioStats = useMemo(() => {
+    const total = scenarios.length;
+    const activeCount = scenarios.filter(s => s.status === 'active').length;
+    const inactiveCount = total - activeCount;
+    const activePercent = total > 0 ? Math.round((activeCount / total) * 100) : 0;
+    const inactivePercent = total > 0 ? 100 - activePercent : 0;
+    
+    return {
+      total,
+      activeCount,
+      inactiveCount,
+      activePercent,
+      inactivePercent
+    };
+  }, [scenarios]);
+
+  // محاسبه آمار نیروها
+  const forceStats = useMemo(() => {
+    const total = mockUsers.length;
+    const iranianCount = mockUsers.filter(u => u.nationality === 'iranian').length;
+    const foreignCount = total - iranianCount;
+    const iranianPercent = total > 0 ? Math.round((iranianCount / total) * 100) : 0;
+    const foreignPercent = total > 0 ? 100 - iranianPercent : 0;
+    
+    return {
+      total,
+      iranianCount,
+      foreignCount,
+      iranianPercent,
+      foreignPercent
+    };
+  }, [mockUsers]);
+
+  // تعریف داده‌های نمونه برای عملیات‌ها
+  const mockOperations = [
+    { role: 'commander', count: 3 },
+    { role: 'operator', count: 4 },
+    { role: 'viewer', count: 1 },
+  ];
+  
+  // محاسبه آمار عملیات‌ها
+  const operationStats = useMemo(() => {
+    const total = mockOperations.reduce((sum, op) => sum + op.count, 0);
+    const commanderCount = mockOperations.find(op => op.role === 'commander')?.count || 0;
+    const operatorCount = mockOperations.find(op => op.role === 'operator')?.count || 0;
+    const viewerCount = mockOperations.find(op => op.role === 'viewer')?.count || 0;
+    
+    return {
+      total,
+      commanderCount,
+      operatorCount,
+      viewerCount
+    };
+  }, [mockOperations]);
+  
+  // تعریف داده‌های نمونه برای هشدارهای امنیتی
+  const mockAlerts = [
+    { id: '1', severity: 'critical', timestamp: '2024-07-29T10:30:00Z', acknowledged: false },
+    { id: '2', severity: 'high', timestamp: '2024-07-29T09:15:00Z', acknowledged: false },
+    { id: '3', severity: 'high', timestamp: '2024-07-28T14:00:00Z', acknowledged: true },
+    { id: '4', severity: 'medium', timestamp: '2024-07-28T22:05:00Z', acknowledged: true },
+    { id: '5', severity: 'low', timestamp: '2024-07-29T11:00:00Z', acknowledged: false },
+  ];
+  
+  // محاسبه آمار هشدارهای امنیتی
+  const alertStats = useMemo(() => {
+    const now = new Date();
+    const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const startOfWeek = new Date(now.getFullYear(), now.getMonth(), now.getDate() - now.getDay());
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    
+    const todayCount = mockAlerts.filter(alert => 
+      new Date(alert.timestamp) >= startOfDay
+    ).length;
+    
+    const weekCount = mockAlerts.filter(alert => 
+      new Date(alert.timestamp) >= startOfWeek
+    ).length;
+    
+    const monthCount = mockAlerts.filter(alert => 
+      new Date(alert.timestamp) >= startOfMonth
+    ).length;
+    
+    const total = mockAlerts.length;
+    const todayPercent = total > 0 ? Math.round((todayCount / total) * 100) : 0;
+    
+    return {
+      total,
+      todayCount,
+      weekCount,
+      monthCount,
+      todayPercent
+    };
+  }, [mockAlerts]);
+
   const stats: StatItem[] = [
     {
       title: t('dashboard.stats.activeScenarios'),
-      value: scenarios.length || 8,
+      value: scenarioStats.total,
       icon: <AssignmentIcon />,
-      color: 'warning', // تغییر از primary به warning (زرد)
+      color: 'warning',
       gradient: 'linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%)',
-      subtitle: (() => {
-        const activeCount = Math.floor((scenarios.length || 8) * 0.75);
-        const inactiveCount = (scenarios.length || 8) - activeCount;
-        const activePercent = scenarios.length > 0 ? Math.round((activeCount / (scenarios.length || 8)) * 100) : 75;
-        return t('dashboard.stats.activeScenariosSubtitle', { activePercent: activePercent.toLocaleString('fa-IR'), inactiveCount: inactiveCount.toLocaleString('fa-IR') });
-      })(),
+      subtitle: t('dashboard.stats.activeScenariosSubtitle', { 
+        activePercent: scenarioStats.activePercent.toLocaleString('fa-IR'), 
+        inactiveCount: scenarioStats.inactiveCount.toLocaleString('fa-IR') 
+      }),
     },
     {
       title: t('dashboard.stats.availableForces'),
-      value: 245,
+      value: forceStats.total,
       icon: <PeopleIcon />,
       color: 'success',
       gradient: 'linear-gradient(135deg, #e8f5e8 0%, #c8e6c9 100%)',
-      subtitle: (() => {
-        const iranianCount = Math.floor(245 * 0.75);
-        const foreignCount = 245 - iranianCount;
-        const iranianPercent = Math.round((iranianCount / 245) * 100);
-        const foreignPercent = Math.round((foreignCount / 245) * 100);
-        return t('dashboard.stats.availableForcesSubtitle', { iranianPercent: iranianPercent.toLocaleString('fa-IR'), foreignPercent: foreignPercent.toLocaleString('fa-IR') });
-      })(),
+      subtitle: t('dashboard.stats.availableForcesSubtitle', { 
+        iranianPercent: forceStats.iranianPercent.toLocaleString('fa-IR'), 
+        foreignPercent: forceStats.foreignPercent.toLocaleString('fa-IR') 
+      }),
     },
     {
       title: t('dashboard.stats.ongoingOperations'),
-      value: 8,
+      value: operationStats.total,
       icon: <MapIcon />,
       color: 'error',
       gradient: 'linear-gradient(135deg, #ffebee 0%, #ffcdd2 100%)',
-      subtitle: (() => {
-        const commanderCount = 3;
-        const operatorCount = 4;
-        const viewerCount = 1;
-        return t('dashboard.stats.ongoingOperationsSubtitle', { commanderCount: commanderCount.toLocaleString('fa-IR'), operatorCount: operatorCount.toLocaleString('fa-IR'), viewerCount: viewerCount.toLocaleString('fa-IR') });
-      })(),
+      subtitle: t('dashboard.stats.ongoingOperationsSubtitle', { 
+        commanderCount: operationStats.commanderCount.toLocaleString('fa-IR'), 
+        operatorCount: operationStats.operatorCount.toLocaleString('fa-IR'), 
+        viewerCount: operationStats.viewerCount.toLocaleString('fa-IR') 
+      }),
     },
     {
       title: t('dashboard.stats.securityAlerts'),
-      value: 2,
+      value: alertStats.total,
       icon: <Security />,
       color: 'info',
       gradient: 'linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%)',
-      subtitle: (() => {
-        const todayCount = 5;
-        const weekCount = 12;
-        const todayPercent = Math.round((todayCount / 32) * 100);
-        return t('dashboard.stats.securityAlertsSubtitle', { todayPercent: todayPercent.toLocaleString('fa-IR'), weekCount: weekCount.toLocaleString('fa-IR') });
-      })(),
+      subtitle: t('dashboard.stats.securityAlertsSubtitle', { 
+        todayPercent: alertStats.todayPercent.toLocaleString('fa-IR'), 
+        weekCount: alertStats.weekCount.toLocaleString('fa-IR') 
+      }),
     },
   ];
 
@@ -279,7 +368,7 @@ const DashboardStats: React.FC = () => {
                       <Box
                         sx={{
                           height: '100%',
-                          width: '75%',
+                          width: `${scenarioStats.activePercent}%`,
                           background: 'linear-gradient(90deg, #ffb74d, #ff9800, #f57c00)', // گرادیان زرد ثابت
                           borderRadius: 4,
                           position: 'relative',
@@ -303,10 +392,10 @@ const DashboardStats: React.FC = () => {
                         sx={{ 
                           fontWeight: 600,
                           fontSize: '0.7rem',
-                          color: '#ff9800', // رنگ متن زرد ثابت
+                          color: '#ff9800',
                         }}
                       >
-                        ۷۵% فعال
+                        <FarsiNumber>{scenarioStats.activePercent}</FarsiNumber>% {t('dashboard.stats.active')}
                       </Typography>
                       <Typography 
                         variant="caption" 
@@ -316,7 +405,7 @@ const DashboardStats: React.FC = () => {
                           color: 'text.secondary',
                         }}
                       >
-                        ۲۵% غیرفعال
+                        <FarsiNumber>{scenarioStats.inactivePercent}</FarsiNumber>% {t('dashboard.stats.inactive')}
                       </Typography>
                     </Box>
                     
@@ -336,31 +425,31 @@ const DashboardStats: React.FC = () => {
                           <Grid container spacing={2}>
                             <Grid item xs={4}>
                               <Box sx={{ textAlign: 'center' }}>
-                                <Typography variant="h6" sx={{ fontWeight: 700, color: 'text.primary' }}>
-                                  {(scenarios.length || 8).toLocaleString('fa-IR')}
-                                </Typography>
+                                <FarsiNumber variant="h6" sx={{ fontWeight: 700, color: 'text.primary' }}>
+                                  {scenarioStats.total}
+                                </FarsiNumber>
                                 <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '0.65rem' }}>
-                                  کل سناریوها
+                                  {t('dashboard.stats.totalScenarios')}
                                 </Typography>
                               </Box>
                             </Grid>
                             <Grid item xs={4}>
                               <Box sx={{ textAlign: 'center' }}>
-                                <Typography variant="h6" sx={{ fontWeight: 700, color: 'success.main' }}>
-                                  {Math.floor((scenarios.length || 8) * 0.75).toLocaleString('fa-IR')}
-                                </Typography>
+                                <FarsiNumber variant="h6" sx={{ fontWeight: 700, color: 'success.main' }}>
+                                  {scenarioStats.activeCount}
+                                </FarsiNumber>
                                 <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '0.65rem' }}>
-                                  فعال
+                                  {t('dashboard.stats.active')}
                                 </Typography>
                               </Box>
                             </Grid>
                             <Grid item xs={4}>
                               <Box sx={{ textAlign: 'center' }}>
-                                <Typography variant="h6" sx={{ fontWeight: 700, color: 'error.main' }}>
-                                  {Math.ceil((scenarios.length || 8) * 0.25).toLocaleString('fa-IR')}
-                                </Typography>
+                                <FarsiNumber variant="h6" sx={{ fontWeight: 700, color: 'error.main' }}>
+                                  {scenarioStats.inactiveCount}
+                                </FarsiNumber>
                                 <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '0.65rem' }}>
-                                  غیرفعال
+                                  {t('dashboard.stats.inactive')}
                                 </Typography>
                               </Box>
                             </Grid>
@@ -385,7 +474,7 @@ const DashboardStats: React.FC = () => {
                       <Box
                         sx={{
                           height: '100%',
-                          width: '75%',
+                          width: `${forceStats.iranianPercent}%`,
                           background: `linear-gradient(90deg, ${alpha(theme.palette.success.main, 0.8)}, ${theme.palette.success.main}, ${theme.palette.success.dark})`,
                           borderRadius: 4,
                           position: 'relative',
@@ -412,7 +501,7 @@ const DashboardStats: React.FC = () => {
                           color: 'success.main',
                         }}
                       >
-                        ۷۵% ایرانی
+                        <FarsiNumber>{forceStats.iranianPercent}</FarsiNumber>% {t('dashboard.stats.iranian')}
                       </Typography>
                       <Typography 
                         variant="caption" 
@@ -422,7 +511,7 @@ const DashboardStats: React.FC = () => {
                           color: 'text.secondary',
                         }}
                       >
-                        ۲۵% خارجی
+                        <FarsiNumber>{forceStats.foreignPercent}</FarsiNumber>% {t('dashboard.stats.foreign')}
                       </Typography>
                     </Box>
                     
@@ -442,21 +531,21 @@ const DashboardStats: React.FC = () => {
                           <Grid container spacing={2}>
                             <Grid item xs={6}>
                               <Box sx={{ textAlign: 'center' }}>
-                                <Typography variant="h6" sx={{ fontWeight: 700, color: 'success.main' }}>
-                                  {(184).toLocaleString('fa-IR')}
-                                </Typography>
+                                <FarsiNumber variant="h6" sx={{ fontWeight: 700, color: 'success.main' }}>
+                                  {forceStats.iranianCount}
+                                </FarsiNumber>
                                 <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '0.65rem' }}>
-                                  ایران
+                                  {t('dashboard.stats.iran')}
                                 </Typography>
                               </Box>
                             </Grid>
                             <Grid item xs={6}>
                               <Box sx={{ textAlign: 'center' }}>
-                                <Typography variant="h6" sx={{ fontWeight: 700, color: 'success.main' }}>
-                                  {(61).toLocaleString('fa-IR')}
-                                </Typography>
+                                <FarsiNumber variant="h6" sx={{ fontWeight: 700, color: 'success.main' }}>
+                                  {forceStats.foreignCount}
+                                </FarsiNumber>
                                 <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '0.65rem' }}>
-                                  سایر کشورها
+                                  {t('dashboard.stats.otherCountries')}
                                 </Typography>
                               </Box>
                             </Grid>
@@ -472,9 +561,9 @@ const DashboardStats: React.FC = () => {
                   <Box>
                     <Box className="bar-chart" sx={{ display: 'flex', gap: 1, alignItems: 'end', height: 25, mb: 0.5, overflow: 'hidden' }}>
                       {[
-                        { role: 'commander', color: theme.palette.success.main, gradient: `linear-gradient(180deg, ${theme.palette.success.light}, ${theme.palette.success.main})`, label: 'فرمانده', count: 3 },
-                        { role: 'operator', color: '#2196f3', gradient: `linear-gradient(180deg, #64b5f6, #2196f3)`, label: 'اپراتور', count: 4 },
-                        { role: 'viewer', color: theme.palette.warning.main, gradient: `linear-gradient(180deg, ${theme.palette.warning.light}, ${theme.palette.warning.main})`, label: 'بیننده', count: 1 },
+                        { role: 'commander', color: theme.palette.success.main, gradient: `linear-gradient(180deg, ${theme.palette.success.light}, ${theme.palette.success.main})`, label: t('dashboard.stats.commander'), count: operationStats.commanderCount },
+                        { role: 'operator', color: '#2196f3', gradient: `linear-gradient(180deg, #64b5f6, #2196f3)`, label: t('dashboard.stats.operator'), count: operationStats.operatorCount },
+                        { role: 'viewer', color: theme.palette.warning.main, gradient: `linear-gradient(180deg, ${theme.palette.warning.light}, ${theme.palette.warning.main})`, label: t('dashboard.stats.viewer'), count: operationStats.viewerCount },
                       ].map(item => {
                         const actualHeight = item.count > 0 ? Math.min(item.count * 6, 18) : 2;
                         return (
@@ -522,31 +611,31 @@ const DashboardStats: React.FC = () => {
                           <Grid container spacing={2}>
                             <Grid item xs={4}>
                               <Box sx={{ textAlign: 'center' }}>
-                                <Typography variant="h6" sx={{ fontWeight: 700, color: 'success.main' }}>
-                                  ۳
-                                </Typography>
+                                <FarsiNumber variant="h6" sx={{ fontWeight: 700, color: 'success.main' }}>
+                                  {operationStats.commanderCount}
+                                </FarsiNumber>
                                 <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '0.65rem' }}>
-                                  فرمانده
+                                  {t('dashboard.stats.commander')}
                                 </Typography>
                               </Box>
                             </Grid>
                             <Grid item xs={4}>
                               <Box sx={{ textAlign: 'center' }}>
-                                <Typography variant="h6" sx={{ fontWeight: 700, color: '#2196f3' }}>
-                                  ۴
-                                </Typography>
+                                <FarsiNumber variant="h6" sx={{ fontWeight: 700, color: '#2196f3' }}>
+                                  {operationStats.operatorCount}
+                                </FarsiNumber>
                                 <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '0.65rem' }}>
-                                  اپراتور
+                                  {t('dashboard.stats.operator')}
                                 </Typography>
                               </Box>
                             </Grid>
                             <Grid item xs={4}>
                               <Box sx={{ textAlign: 'center' }}>
-                                <Typography variant="h6" sx={{ fontWeight: 700, color: 'warning.main' }}>
-                                  ۱
-                                </Typography>
+                                <FarsiNumber variant="h6" sx={{ fontWeight: 700, color: 'warning.main' }}>
+                                  {operationStats.viewerCount}
+                                </FarsiNumber>
                                 <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '0.65rem' }}>
-                                  بیننده
+                                  {t('dashboard.stats.viewer')}
                                 </Typography>
                               </Box>
                             </Grid>
@@ -578,11 +667,11 @@ const DashboardStats: React.FC = () => {
                           gap: 0.5
                         }}
                       >
-                        هشدار فعال امروز
-                        <span style={{ fontWeight: 700, fontSize: '0.9rem' }}>
-                          ۲
-                        </span>
-                        مورد
+                        {t('dashboard.stats.todayAlerts')}
+                        <FarsiNumber sx={{ fontWeight: 700, fontSize: '0.9rem' }}>
+                          {alertStats.todayCount}
+                        </FarsiNumber>
+                        {t('dashboard.stats.alertItems')}
                       </Typography>
                     </Box>
                     
@@ -602,31 +691,31 @@ const DashboardStats: React.FC = () => {
                           <Grid container spacing={2}>
                             <Grid item xs={4}>
                               <Box sx={{ textAlign: 'center' }}>
-                                <Typography variant="h6" sx={{ fontWeight: 700, color: 'warning.main' }}>
-                                  ۲
-                                </Typography>
+                                <FarsiNumber variant="h6" sx={{ fontWeight: 700, color: 'warning.main' }}>
+                                  {alertStats.todayCount}
+                                </FarsiNumber>
                                 <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '0.65rem' }}>
-                                  امروز
+                                  {t('dashboard.stats.today')}
                                 </Typography>
                               </Box>
                             </Grid>
                             <Grid item xs={4}>
                               <Box sx={{ textAlign: 'center' }}>
-                                <Typography variant="h6" sx={{ fontWeight: 700, color: 'warning.main' }}>
-                                  ۷
-                                </Typography>
+                                <FarsiNumber variant="h6" sx={{ fontWeight: 700, color: 'warning.main' }}>
+                                  {alertStats.weekCount}
+                                </FarsiNumber>
                                 <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '0.65rem' }}>
-                                  این هفته
+                                  {t('dashboard.stats.thisWeek')}
                                 </Typography>
                               </Box>
                             </Grid>
                             <Grid item xs={4}>
                               <Box sx={{ textAlign: 'center' }}>
-                                <Typography variant="h6" sx={{ fontWeight: 700, color: 'warning.main' }}>
-                                  ۱۵
-                                </Typography>
+                                <FarsiNumber variant="h6" sx={{ fontWeight: 700, color: 'warning.main' }}>
+                                  {alertStats.monthCount}
+                                </FarsiNumber>
                                 <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '0.65rem' }}>
-                                  این ماه
+                                  {t('dashboard.stats.thisMonth')}
                                 </Typography>
                               </Box>
                             </Grid>
@@ -658,10 +747,27 @@ const HomePage: React.FC = () => {
   const [settingsAnchorEl, setSettingsAnchorEl] = useState<null | HTMLElement>(null);
   const [starredActivities, setStarredActivities] = useState<number[]>([]);
   const [archivedActivities, setArchivedActivities] = useState<number[]>([]);
+  const [showArchived, setShowArchived] = useState(false);
+  const [selectedActivities, setSelectedActivities] = useState<number[]>([]); // State جدید برای فعالیت‌های انتخاب شده
+
+  // تعریف انیمیشن spin
+  const spinKeyframes = `
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+  `;
 
   const handleRefreshActivities = () => {
     setActivitiesLoading(true);
-    setTimeout(() => setActivitiesLoading(false), 1000);
+    // فرض می‌کنیم که یک تابع fetchRecentActivities وجود داره که داده‌های جدید رو می‌گیره
+    // این تابع باید از یک API یا store واقعی داده بگیره
+    setTimeout(() => {
+      // اینجا باید داده‌های جدید رو از API یا store بگیریم
+      // برای مثال:
+      // dispatch(fetchRecentActivities());
+      setActivitiesLoading(false);
+    }, 1000);
   };
   const handleSettingsOpen = (event: React.MouseEvent<HTMLElement>) => {
     setSettingsAnchorEl(event.currentTarget);
@@ -670,37 +776,68 @@ const HomePage: React.FC = () => {
     setSettingsAnchorEl(null);
   };
 
-  const handleToggleStar = (id: number) => {
-    setStarredActivities(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]);
-  };
-  const handleToggleArchive = (id: number) => {
-    setArchivedActivities(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]);
-  };
-
-  useEffect(() => {
-    // دریافت سناریوها
-    dispatch(fetchScenarios());
-    
-    // نمایش پیام خوش‌آمدگویی (فقط اگر کاربر موجود باشه)
-    if (user) {
-      dispatch(addNotification({
-        type: 'success',
-        title: t('dashboard.welcome.title'),
-        message: t('dashboard.welcome.message', { name: user?.name || user?.username }),
-        read: false,
-        priority: 'medium',
-        autoHide: true
-      }));
+  // تابع‌های جدید برای گزینه‌های منو
+  const handleArchiveAll = () => {
+    // آرشیو کردن فعالیت‌ها بر اساس انتخاب کاربر
+    if (selectedActivities.length > 0) {
+      // اگر فعالیتی انتخاب شده بود، فقط اون‌ها آرشیو بشن
+      setArchivedActivities(prev => {
+        const newArchived = [...prev];
+        selectedActivities.forEach(id => {
+          if (!newArchived.includes(id)) {
+            newArchived.push(id);
+          }
+        });
+        return newArchived;
+      });
+      
+      // پاک کردن لیست انتخاب‌ها
+      setSelectedActivities([]);
+    } else {
+      // اگر فعالیتی انتخاب نشده بود، همه فعالیت‌ها آرشیو بشن
+      const allActivityIds = recentActivities.map(activity => activity.id);
+      setArchivedActivities(prev => {
+        const newArchived = [...prev];
+        allActivityIds.forEach(id => {
+          if (!newArchived.includes(id)) {
+            newArchived.push(id);
+          }
+        });
+        return newArchived;
+      });
     }
     
-    // انتخاب یک سخن تصادفی و یک شهید تصادفی
-    setQuote(getRandomQuote());
-    setMartyr(getRandomMartyr());
-  }, [dispatch, user]);
+    setShowArchived(false);
+    handleSettingsClose();
+    
+    // نمایش پیام موفقیت
+    dispatch(addNotification({
+      type: 'success',
+      title: 'عملیات موفق',
+      message: selectedActivities.length > 0 
+        ? 'فعالیت‌های انتخاب شده آرشیو شدند' 
+        : 'همه فعالیت‌ها آرشیو شدند',
+      read: false,
+      priority: 'medium',
+      autoHide: true
+    }));
+  };
 
-  // فعالیت‌های اخیر بر اساس نقش کاربر
-  const recentActivities = useMemo(() => {
-    const allActivities = [
+  const handleUnarchiveAll = () => {
+    // لغو آرشیو کردن همه فعالیت‌ها
+    // تعریف نوع Activity
+    type Activity = {
+      id: number;
+      title: string;
+      description: string;
+      time: string;
+      avatar: React.ReactNode;
+      color: string;
+      roles: string[];
+    };
+    
+    // داده‌های نمونه برای allActivities
+    const allActivities: Activity[] = [
       {
         id: 1,
         title: t('dashboard.activities.newScenario'),
@@ -756,10 +893,198 @@ const HomePage: React.FC = () => {
         roles: ['admin', 'commander'],
       },
     ];
+    
+    const allActivityIds = allActivities.map(activity => activity.id);
+    setArchivedActivities(prev => prev.filter(id => !allActivityIds.includes(id)));
+    setShowArchived(true);
+    handleSettingsClose();
+    
+    // نمایش پیام موفقیت
+    dispatch(addNotification({
+      type: 'success',
+      title: 'عملیات موفق',
+      message: 'آرشیو همه فعالیت‌ها لغو شد',
+      read: false,
+      priority: 'medium',
+      autoHide: true
+    }));
+  };
 
+  const handleStarAll = () => {
+    // ستاره‌دار کردن همه فعالیت‌ها (جلوگیری از ستاره‌دار کردن دوباره فعالیت‌های ستاره‌دار شده)
+    const allActivityIds = recentActivities.map(activity => activity.id);
+    setStarredActivities(prev => {
+      const newStarred = [...prev];
+      allActivityIds.forEach(id => {
+        if (!newStarred.includes(id)) {
+          newStarred.push(id);
+        }
+      });
+      return newStarred;
+    });
+    handleSettingsClose();
+    
+    // نمایش پیام موفقیت
+    dispatch(addNotification({
+      type: 'success',
+      title: 'عملیات موفق',
+      message: 'همه فعالیت‌ها ستاره‌دار شدند',
+      read: false,
+      priority: 'medium',
+      autoHide: true
+    }));
+  };
+
+  const handleUnstarAll = () => {
+    // لغو ستاره‌دار کردن همه فعالیت‌ها
+    const allActivityIds = recentActivities.map(activity => activity.id);
+    setStarredActivities(prev => prev.filter(id => !allActivityIds.includes(id)));
+    handleSettingsClose();
+    
+    // نمایش پیام موفقیت
+    dispatch(addNotification({
+      type: 'success',
+      title: 'عملیات موفق',
+      message: 'ستاره‌دار کردن همه فعالیت‌ها لغو شد',
+      read: false,
+      priority: 'medium',
+      autoHide: true
+    }));
+  };
+
+  const handleViewAllActivities = () => {
+    navigate('/dashboard/notifications');
+  };
+
+  const handleToggleStar = (id: number) => {
+    setStarredActivities(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]);
+  };
+  
+  // تغییر تابع handleToggleArchive برای انتخاب فعالیت‌ها
+  const handleToggleArchive = (id: number) => {
+    setSelectedActivities(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]);
+  };
+
+  // تابع جدید برای لغو انتخاب همه فعالیت‌ها
+  const handleDeselectAll = () => {
+    setSelectedActivities([]);
+    handleSettingsClose();
+    
+    // نمایش پیام موفقیت
+    dispatch(addNotification({
+      type: 'success',
+      title: 'عملیات موفق',
+      message: 'انتخاب همه فعالیت‌ها لغو شد',
+      read: false,
+      priority: 'medium',
+      autoHide: true
+    }));
+  };
+
+  useEffect(() => {
+    // دریافت سناریوها
+    dispatch(fetchScenarios());
+    
+    // نمایش پیام خوش‌آمدگویی (فقط اگر کاربر موجود باشه)
+    if (user) {
+      dispatch(addNotification({
+        type: 'success',
+        title: t('dashboard.welcome.title'),
+        message: t('dashboard.welcome.message', { name: user?.name || user?.username }),
+        read: false,
+        priority: 'medium',
+        autoHide: true
+      }));
+    }
+    
+    // انتخاب یک سخن تصادفی و یک شهید تصادفی
+    setQuote(getRandomQuote());
+    setMartyr(getRandomMartyr());
+  }, [dispatch, user]);
+
+  // فعالیت‌های اخیر بر اساس نقش کاربر
+  const recentActivities = useMemo(() => {
+    // فرض می‌کنیم که allActivities از یک API یا store واقعی گرفته میشه
+    // const allActivities = useAppSelector(selectAllActivities);
+    
+    // برای رفع خطای TypeScript، یک تایپ برای activity تعریف می‌کنیم
+    type Activity = {
+      id: number;
+      title: string;
+      description: string;
+      time: string;
+      avatar: React.ReactNode;
+      color: string;
+      roles: string[];
+    };
+    
+    // داده‌های نمونه برای allActivities
+    const allActivities: Activity[] = [
+      {
+        id: 1,
+        title: t('dashboard.activities.newScenario'),
+        description: t('dashboard.activities.newScenarioDesc'),
+        time: t('dashboard.activities.time.minutes', { count: 5 }),
+        avatar: <AssignmentIcon />,
+        color: '#1976d2',
+        roles: ['admin', 'commander', 'operator', 'viewer'],
+      },
+      {
+        id: 2,
+        title: t('dashboard.activities.forceMoved'),
+        description: t('dashboard.activities.forceMovedDesc'),
+        time: t('dashboard.activities.time.minutes', { count: 15 }),
+        avatar: <PeopleIcon />,
+        color: '#2e7d32',
+        roles: ['admin', 'commander', 'operator'],
+      },
+      {
+        id: 3,
+        title: t('dashboard.activities.mapUpdated'),
+        description: t('dashboard.activities.mapUpdatedDesc'),
+        time: t('dashboard.activities.time.minutes', { count: 30 }),
+        avatar: <MapIcon />,
+        color: '#ed6c02',
+        roles: ['admin', 'commander', 'operator', 'viewer'],
+      },
+      {
+        id: 4,
+        title: t('dashboard.activities.securityReport'),
+        description: t('dashboard.activities.securityReportDesc'),
+        time: t('dashboard.activities.time.hours', { count: 1 }),
+        avatar: <Security />,
+        color: '#d32f2f',
+        roles: ['admin', 'commander'],
+      },
+      {
+        id: 5,
+        title: t('dashboard.activities.newUser'),
+        description: t('dashboard.activities.newUserDesc'),
+        time: t('dashboard.activities.time.hours', { count: 2 }),
+        avatar: <Group />,
+        color: '#9c27b0',
+        roles: ['admin'],
+      },
+      {
+        id: 6,
+        title: t('dashboard.activities.readinessReport'),
+        description: t('dashboard.activities.readinessReportDesc'),
+        time: t('dashboard.activities.time.hours', { count: 3 }),
+        avatar: <CheckCircle />,
+        color: '#009688',
+        roles: ['admin', 'commander'],
+      },
+    ];
+    
+    // اگر showArchived true باشد، همه فعالیت‌ها نمایش داده می‌شوند
+    // در غیر این صورت، فقط فعالیت‌های آرشیو نشده نمایش داده می‌شوند
+    const filteredActivities = showArchived 
+      ? allActivities 
+      : allActivities.filter(activity => !archivedActivities.includes(activity.id));
+    
     // فیلتر فعالیت‌ها بر اساس نقش کاربر
-    return allActivities.filter(activity => user && activity.roles.includes(user.role));
-  }, [user, t]);
+    return filteredActivities.filter(activity => user && activity.roles.includes(user.role));
+  }, [user, archivedActivities, showArchived, t]);
 
   // دسترسی سریع بر اساس نقش کاربر
   const quickActions = useMemo(() => {
@@ -779,7 +1104,7 @@ const HomePage: React.FC = () => {
         roles: ['admin', 'commander', 'operator', 'viewer'],
       },
       {
-        title: 'نقشه‌کش آرایش نبرد',
+        title: t('dashboard.quickActions.orbatMapper'),
         icon: <RadarIcon />,
         color: '#d32f2f',
         onClick: () => navigate('/dashboard/orbat-mapper'),
@@ -789,7 +1114,7 @@ const HomePage: React.FC = () => {
         title: t('dashboard.quickActions.reporting'),
         icon: <TrendingUp />,
         color: '#ed6c02',
-        onClick: () => {},
+        onClick: () => navigate('/dashboard/reports'),
         roles: ['admin', 'commander', 'operator'],
       },
       {
@@ -1025,7 +1350,13 @@ const HomePage: React.FC = () => {
                 <Tooltip title={t('dashboard.tooltips.update')}>
                   <span>
                     <IconButton size="small" onClick={handleRefreshActivities} disabled={activitiesLoading}>
-                      <Refresh sx={activitiesLoading ? { animation: 'spin 1s linear infinite' } : {}} />
+                      <Refresh sx={activitiesLoading ? { 
+                        animation: 'spin 1s linear infinite',
+                        '@keyframes spin': {
+                          '0%': { transform: 'rotate(0deg)' },
+                          '100%': { transform: 'rotate(360deg)' }
+                        }
+                      } : {}} />
                     </IconButton>
                   </span>
                 </Tooltip>
@@ -1035,9 +1366,12 @@ const HomePage: React.FC = () => {
                   </IconButton>
                 </Tooltip>
                 <Menu anchorEl={settingsAnchorEl} open={Boolean(settingsAnchorEl)} onClose={handleSettingsClose}>
-                  <MenuItem onClick={handleSettingsClose}>{t('dashboard.menu.archiveAll')}</MenuItem>
-                  <MenuItem onClick={handleSettingsClose}>{t('dashboard.menu.starAll')}</MenuItem>
-                  <MenuItem onClick={handleSettingsClose}>{t('dashboard.viewAllActivities')}</MenuItem>
+                  <MenuItem onClick={handleArchiveAll}>{t('dashboard.menu.archiveAll')}</MenuItem>
+                  <MenuItem onClick={handleUnarchiveAll}>{t('dashboard.menu.unarchiveAll')}</MenuItem>
+                  <MenuItem onClick={handleStarAll}>{t('dashboard.menu.starAll')}</MenuItem>
+                  <MenuItem onClick={handleUnstarAll}>{t('dashboard.menu.unstarAll')}</MenuItem>
+                  <MenuItem onClick={handleDeselectAll}>{t('dashboard.menu.deselectAll')}</MenuItem>
+                  <MenuItem onClick={handleViewAllActivities}>{t('dashboard.viewAllActivities')}</MenuItem>
                 </Menu>
               </Box>
             </Box>
@@ -1085,7 +1419,7 @@ const HomePage: React.FC = () => {
                     }
                   />
                   <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
-                    <Tooltip title={t('dashboard.tooltips.star')}>
+                    <Tooltip title={t('dashboard.tooltips.star')} placement="right">
                       <IconButton size="small" onClick={() => handleToggleStar(activity.id)}>
                         {starredActivities.includes(activity.id) ? (
                           <Star sx={{ fontSize: 18, color: 'warning.main' }} />
@@ -1094,9 +1428,11 @@ const HomePage: React.FC = () => {
                         )}
                       </IconButton>
                     </Tooltip>
-                    <Tooltip title={t('dashboard.tooltips.archive')}>
+                    <Tooltip title={t('dashboard.tooltips.archive')} placement="right">
                       <IconButton size="small" onClick={() => handleToggleArchive(activity.id)}>
-                        {archivedActivities.includes(activity.id) ? (
+                        {selectedActivities.includes(activity.id) ? (
+                          <Archive sx={{ fontSize: 18, color: 'primary.main' }} />
+                        ) : archivedActivities.includes(activity.id) ? (
                           <Archive sx={{ fontSize: 18, color: 'info.main' }} />
                         ) : (
                           <Archive sx={{ fontSize: 18, color: 'grey.400' }} />
@@ -1108,7 +1444,7 @@ const HomePage: React.FC = () => {
               ))}
             </List>
             <Box sx={{ p: 2, textAlign: 'center' }}>
-              <Button variant="text" color="primary">
+              <Button variant="text" color="primary" onClick={handleViewAllActivities}>
                 {t('dashboard.viewAllActivities')}
               </Button>
             </Box>

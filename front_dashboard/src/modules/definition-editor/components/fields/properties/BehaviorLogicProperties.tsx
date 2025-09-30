@@ -1,11 +1,10 @@
 import React, { memo, useCallback } from 'react';
 import { Box, Typography, Paper, Grid, TextField, FormControl, InputLabel, Select, MenuItem, FormControlLabel, Switch } from '@mui/material';
 import HelpTooltip from '../shared/HelpTooltip';
-import { ExtendedCustomFieldDefinition } from '../types/FieldEditTypes';
 
 interface BehaviorLogicPropertiesProps {
-  formData: ExtendedCustomFieldDefinition;
-  onChange: (key: keyof ExtendedCustomFieldDefinition, value: any) => void;
+  formData: any;
+  onChange: (key: string, value: any) => void;
 }
 
 const BehaviorLogicProperties: React.FC<BehaviorLogicPropertiesProps> = ({ formData, onChange }) => {
@@ -133,7 +132,7 @@ const BehaviorLogicProperties: React.FC<BehaviorLogicPropertiesProps> = ({ formD
               <Grid item xs={6}>
                 <TextField
                   fullWidth
-                  label="تأخیر (میلی‌ثانیه)"
+                  label="تأخیر (ثانیه)"
                   type="number"
                   value={formData.autoSaveDelay || 300}
                   onChange={(e) => handleAutoSaveDelayChange(e.target.value)}
@@ -166,7 +165,7 @@ const BehaviorLogicProperties: React.FC<BehaviorLogicPropertiesProps> = ({ formD
           )}
         </Grid>
 
-        {/* Conditional Visibility */}
+        {/* Conditional Display */}
         <Grid item xs={12}>
           <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
             <FormControlLabel
@@ -291,8 +290,6 @@ const BehaviorLogicProperties: React.FC<BehaviorLogicPropertiesProps> = ({ formD
                   >
                     <MenuItem value="equals">برابر</MenuItem>
                     <MenuItem value="not_equals">نابرابر</MenuItem>
-                    <MenuItem value="greater_than">بزرگتر از</MenuItem>
-                    <MenuItem value="less_than">کوچکتر از</MenuItem>
                     <MenuItem value="contains">شامل</MenuItem>
                     <MenuItem value="not_contains">شامل نباشد</MenuItem>
                     <MenuItem value="empty">خالی</MenuItem>

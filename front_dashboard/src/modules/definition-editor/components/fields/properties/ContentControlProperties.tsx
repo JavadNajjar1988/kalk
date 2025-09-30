@@ -1,11 +1,10 @@
 import React, { memo } from 'react';
-import { Box, Typography, Paper, Grid, TextField, FormControl, InputLabel, Select, MenuItem, FormControlLabel, Switch } from '@mui/material';
+import { Box, Typography, Paper, Grid, FormControl, InputLabel, Select, MenuItem, FormControlLabel, Switch } from '@mui/material';
 import HelpTooltip from '../shared/HelpTooltip';
-import { ExtendedCustomFieldDefinition } from '../types/FieldEditTypes';
 
 interface ContentControlPropertiesProps {
-  formData: ExtendedCustomFieldDefinition;
-  onChange: (key: keyof ExtendedCustomFieldDefinition, value: any) => void;
+  formData: any;
+  onChange: (key: string, value: any) => void;
 }
 
 const ContentControlProperties: React.FC<ContentControlPropertiesProps> = ({ formData, onChange }) => {
@@ -131,8 +130,8 @@ const ContentControlProperties: React.FC<ContentControlPropertiesProps> = ({ for
               <FormControlLabel
                 control={
                   <Switch
-                    checked={formData.trimWhitespace || false}
-                    onChange={(e) => onChange('trimWhitespace', e.target.checked)}
+                    checked={formData.trimExtraSpaces || false}
+                    onChange={(e) => onChange('trimExtraSpaces', e.target.checked)}
                     size="small"
                     aria-label="حذف فاصله‌های اضافی"
                   />
@@ -150,8 +149,8 @@ const ContentControlProperties: React.FC<ContentControlPropertiesProps> = ({ for
               <FormControlLabel
                 control={
                   <Switch
-                    checked={formData.normalizeDigits || false}
-                    onChange={(e) => onChange('normalizeDigits', e.target.checked)}
+                    checked={formData.convertNumbers || false}
+                    onChange={(e) => onChange('convertNumbers', e.target.checked)}
                     size="small"
                     aria-label="تبدیل اعداد فارسی/انگلیسی"
                   />
@@ -169,8 +168,8 @@ const ContentControlProperties: React.FC<ContentControlPropertiesProps> = ({ for
               <FormControlLabel
                 control={
                   <Switch
-                    checked={formData.fixZWNJ || false}
-                    onChange={(e) => onChange('fixZWNJ', e.target.checked)}
+                    checked={formData.fixHalfSpace || false}
+                    onChange={(e) => onChange('fixHalfSpace', e.target.checked)}
                     size="small"
                     aria-label="اصلاح نیم‌فاصله"
                   />

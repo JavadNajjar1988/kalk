@@ -15,6 +15,7 @@ import {
 import { Cancel as CancelIcon, Save as SaveIcon } from '@mui/icons-material';
 import { FieldEditDialogProps } from '../types/FieldEditTypes';
 import { ExtendedCustomFieldDefinition } from '../types/FieldEditTypes';
+import { validateFieldDefinition, ValidationError } from '../utils/fieldValidation';
 import FieldSelectionPage from '../steps/FieldSelectionPage';
 import StepIndicator from '../steps/StepIndicator';
 import FieldTypeSelection from '../steps/FieldTypeSelection';
@@ -36,6 +37,7 @@ const FieldEditDialog: React.FC<FieldEditDialogProps> = ({
   const [formData, setFormData] = useState<ExtendedCustomFieldDefinition | null>(null);
   const [currentPage, setCurrentPage] = useState<'selection' | 'create' | 'ready'>('selection');
   const [currentStep, setCurrentStep] = useState(1);
+  const [validationErrors, setValidationErrors] = useState<ValidationError[]>([]);
   const dialogRef = useRef<HTMLDivElement>(null);
   const firstFocusableRef = useRef<HTMLButtonElement>(null);
 
@@ -63,11 +65,20 @@ const FieldEditDialog: React.FC<FieldEditDialogProps> = ({
   }, [open, currentPage, currentStep]);
 
   const handleSubmit = () => {
-    // Always save the field as it appears in the live preview
-    if (formData) {
-      onSave(formData);
-      setCurrentPage('selection');
-      setCurrentStep(1);
+    if (formData && formData.name && formData.englishName) {
+      // Validate field definition with type conversion support
+      const originalType = field?.type;
+      const validationResult = validateFieldDefinition(formData, originalType);
+      
+      if (validationResult.isValid) {
+        onSave(formData);
+        setCurrentPage('selection');
+        setCurrentStep(1);
+        setValidationErrors([]);
+      } else {
+        setValidationErrors(validationResult.errors);
+        // Stay on current step to show validation errors
+      }
     }
   };
 
@@ -80,15 +91,14 @@ const FieldEditDialog: React.FC<FieldEditDialogProps> = ({
       { number: 3, title: `قوانین فیلد ${fieldTypeText}` },
       { number: 4, title: `پیش‌نمایش فیلد ${fieldTypeText}` },
     ];
-  }, [formData?.type, formData?.name, formData?.englishName]);
+  }, [formData?.type]);
 
   // Memoize change handler to prevent child re-renders
   const handleChange = useCallback((key: keyof ExtendedCustomFieldDefinition, value: any) => {
-    setFormData(prevData => {
-      if (!prevData) return prevData;
-      return { ...prevData, [key]: value };
-    });
-  }, []);
+    if (formData) {
+      setFormData({ ...formData, [key]: value });
+    }
+  }, [formData]);
 
   const handleClose = () => {
     onClose();
@@ -267,7 +277,7 @@ const FieldEditDialog: React.FC<FieldEditDialogProps> = ({
                     boxShadow: 'none',
                   },
                 }}
-                disabled={false}
+                disabled={!formData || !formData.name || !formData.englishName || !formData.name.trim() || !formData.englishName.trim()}
                 aria-label="ذخیره فیلد"
               >
                 {isMobile ? 'ذخیره' : 'ذخیره فیلد'}

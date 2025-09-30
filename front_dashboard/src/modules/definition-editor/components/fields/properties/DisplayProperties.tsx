@@ -1,11 +1,10 @@
 import React, { memo, useEffect, useMemo, useCallback } from 'react';
 import { Box, Typography, Paper, Grid, TextField, FormControl, InputLabel, Select, MenuItem, FormControlLabel, Switch } from '@mui/material';
 import HelpTooltip from '../shared/HelpTooltip';
-import { ExtendedCustomFieldDefinition } from '../types/FieldEditTypes';
 
 interface DisplayPropertiesProps {
-  formData: ExtendedCustomFieldDefinition;
-  onChange: (key: keyof ExtendedCustomFieldDefinition, value: any) => void;
+  formData: any;
+  onChange: (key: string, value: any) => void;
 }
 
 const DisplayProperties: React.FC<DisplayPropertiesProps> = ({ formData, onChange }) => {
@@ -25,8 +24,8 @@ const DisplayProperties: React.FC<DisplayPropertiesProps> = ({ formData, onChang
   useEffect(() => {
     // If display type changes to one that supports options, and we don't have options yet,
     // initialize with an empty array
-    const supportsOptionsDisplay = ['accordion', 'chips', 'pill'].includes(formData.variant || '');
-    const isTextType = ['text', 'textarea'].includes(formData.type || '');
+    const supportsOptionsDisplay = ['accordion', 'chips', 'pill'].includes(formData.displayType);
+    const isTextType = ['text', 'textarea'].includes(formData.type);
     
     if (supportsOptionsDisplay && isTextType && !formData.options) {
       onChange('options', []);
@@ -96,10 +95,10 @@ const DisplayProperties: React.FC<DisplayPropertiesProps> = ({ formData, onChang
                 backdropFilter: 'blur(10px)',
               }}
             >
-              <MenuItem value="plain">معمولی</MenuItem>
+              <MenuItem value="normal">معمولی</MenuItem>
               <MenuItem value="accordion">آکاردئونی</MenuItem>
-              <MenuItem value="textarea">چندخطی</MenuItem>
-              <MenuItem value="richtext">متن غنی</MenuItem>
+              <MenuItem value="multiline">چندخطی</MenuItem>
+              <MenuItem value="rich-text">متن غنی</MenuItem>
               <MenuItem value="inline">درجا</MenuItem>
               <MenuItem value="chips">چیپ‌ها</MenuItem>
               <MenuItem value="pill">پِل</MenuItem>
@@ -149,9 +148,9 @@ const DisplayProperties: React.FC<DisplayPropertiesProps> = ({ formData, onChang
                 backdropFilter: 'blur(10px)',
               }}
             >
-              <MenuItem value="sm">کوچک</MenuItem>
-              <MenuItem value="md">متوسط</MenuItem>
-              <MenuItem value="lg">بزرگ</MenuItem>
+              <MenuItem value="small">کوچک</MenuItem>
+              <MenuItem value="medium">متوسط</MenuItem>
+              <MenuItem value="large">بزرگ</MenuItem>
               <MenuItem value="full">کامل</MenuItem>
             </Select>
           </FormControl>

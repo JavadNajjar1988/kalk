@@ -29,7 +29,7 @@ const validateFieldTypeConversion = (
           errors.push({
             field: 'options',
             message: 'برای فیلد انتخابی حداقل یک گزینه باید تعریف شود',
-            type: 'error'
+            type: 'warning'
           });
         }
         break;
@@ -147,12 +147,6 @@ export const validateFieldDefinition = (
       message: 'عنوان فیلد اجباری است',
       type: 'error'
     });
-  } else if (field.name.length < 2) {
-    errors.push({
-      field: 'name',
-      message: 'عنوان فیلد باید حداقل 2 کاراکتر باشد',
-      type: 'warning'
-    });
   }
 
   if (!field.englishName?.trim()) {
@@ -160,12 +154,6 @@ export const validateFieldDefinition = (
       field: 'englishName',
       message: 'کلید یکتا اجباری است',
       type: 'error'
-    });
-  } else if (field.englishName.length < 2) {
-    errors.push({
-      field: 'englishName',
-      message: 'کلید یکتا باید حداقل 2 کاراکتر باشد',
-      type: 'warning'
     });
   }
 

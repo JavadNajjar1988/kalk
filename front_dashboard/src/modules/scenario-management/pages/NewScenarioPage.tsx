@@ -129,7 +129,7 @@ const NewScenarioPageContent: React.FC = () => {
               <Button
                 startIcon={<Help />}
                 component="a"
-                href="#"
+                href="https://docs.orbat-mapper.app/guide/getting-started"
                 target="_blank"
                 variant="text"
                 size="small"

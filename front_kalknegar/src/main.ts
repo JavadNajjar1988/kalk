@@ -16,8 +16,10 @@ try {
 // Create and mount Vue app with error handling
 try {
   const app = createApp(App);
+  const pinia = createPinia();
+  // Install Pinia before any plugin/components that might access stores
+  app.use(pinia);
   app.use(router);
-  app.use(createPinia());
   
   // Register Persian number directives globally
   Object.entries(persianNumberDirectives).forEach(([name, directive]) => {

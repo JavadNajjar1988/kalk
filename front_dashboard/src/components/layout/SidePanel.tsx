@@ -24,12 +24,26 @@ const SidePanel: React.FC = () => {
   React.useEffect(() => {
     if (isOpen) setSettingsPanelOpen(true);
   }, [isOpen]);
+  
   const handleSettingsPanelRequestClose = () => {
     setSettingsPanelOpen(false);
+    // کاهش تاخیر به 150 میلی‌ثانیه برای بهبود تجربه کاربری
     setTimeout(() => {
       dispatch(closeSidePanel());
-    }, 500); // کمی تاخیر برای اطمینان از unmount کامل
+    }, 150);
   };
+  
+  // اضافه کردن useEffect برای ریست کردن state پنل تنظیمات
+  React.useEffect(() => {
+    if (!isOpen) {
+      // ریست کردن state پنل تنظیمات بعد از بسته شدن
+      const timer = setTimeout(() => {
+        setSettingsPanelOpen(true);
+      }, 300);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [isOpen]);
 
   const anchor: 'left' | 'right' = type === 'settings'
     ? (theme.direction === 'rtl' ? 'right' : 'left')
@@ -48,7 +62,7 @@ const SidePanel: React.FC = () => {
       case 'theme':
         return <ThemePanel />;
       case 'settings':
-        return settingsPanelOpen ? (
+        return settingsPanelOpen && isOpen ? (
           <SettingsPanel onClose={handleSettingsPanelRequestClose} onRequestClose={handleSettingsPanelRequestClose} />
         ) : null;
       default:

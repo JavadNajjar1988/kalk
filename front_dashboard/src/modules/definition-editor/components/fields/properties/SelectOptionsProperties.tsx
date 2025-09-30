@@ -8,9 +8,7 @@ const SelectOptionsProperties: React.FC<FieldPropertiesStepProps> = ({ formData,
   const isSelectField = formData.type === 'select' || formData.type === 'multiselect';
   
   // Also show for display types that support options
-  // Check both displayType and variant for compatibility
-  const supportsOptions = (['accordion', 'chips', 'pill'].includes(formData.displayType || '') || 
-                          ['accordion', 'chips', 'pill'].includes(formData.variant || '')) && 
+  const supportsOptions = ['accordion', 'chips', 'pill'].includes(formData.displayType || '') && 
                          ['text', 'textarea'].includes(formData.type);
 
   if (!isSelectField && !supportsOptions) {
@@ -37,7 +35,7 @@ const SelectOptionsProperties: React.FC<FieldPropertiesStepProps> = ({ formData,
         options={formData.options || []}
         onChange={(options) => onChange('options', options)}
         fieldType={formData.type}
-        displayType={formData.displayType || formData.variant}
+        displayType={formData.displayType}
       />
       
       <Box sx={{ mt: 2 }}>

@@ -110,7 +110,6 @@ export interface ExtendedCustomFieldDefinition extends CustomFieldDefinition {
   fixZWNJ?: boolean;
   allowEmoji?: boolean;
   allowMarkdown?: boolean;
-  customRegex?: string;
   
   // Assistive properties
   suggestions?: string[];
@@ -131,7 +130,7 @@ export interface ExtendedCustomFieldDefinition extends CustomFieldDefinition {
   conditionalDisplayValue?: string;
   enableConditionalEnable?: boolean;
   conditionalEnableField?: string;
-  conditionalEnableOperator?: 'equals' | 'not_equals' | 'greater_than' | 'less_than' | 'contains' | 'not_contains' | 'empty' | 'not_empty';
+  conditionalEnableOperator?: 'equals' | 'not_equals' | 'contains' | 'not_contains' | 'empty' | 'not_empty';
   conditionalEnableValue?: string;
   
   // Security properties (legacy - use piiCheck and profanityCheck instead)

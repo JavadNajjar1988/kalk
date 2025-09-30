@@ -1,11 +1,10 @@
 import React, { memo, useMemo, useCallback } from 'react';
 import { Box, Typography, Paper, Grid, TextField, FormControl, InputLabel, Select, MenuItem, FormControlLabel, Switch } from '@mui/material';
 import HelpTooltip from '../shared/HelpTooltip';
-import { ExtendedCustomFieldDefinition } from '../types/FieldEditTypes';
 
 interface AssistivePropertiesProps {
-  formData: ExtendedCustomFieldDefinition;
-  onChange: (key: keyof ExtendedCustomFieldDefinition, value: any) => void;
+  formData: any;
+  onChange: (key: string, value: any) => void;
 }
 
 const AssistiveProperties: React.FC<AssistivePropertiesProps> = ({ formData, onChange }) => {
@@ -86,7 +85,7 @@ const AssistiveProperties: React.FC<AssistivePropertiesProps> = ({ formData, onC
               example="پیشنهاد ۱، پیشنهاد ۲، پیشنهاد ۳"
             />
           </Box>
-          {formData.suggestions && formData.suggestions.length > 0 && (
+          {formData.enableSuggestions && (
             <TextField
               fullWidth
               label="پیشنهادات (هر خط یک مورد)"
@@ -180,8 +179,9 @@ const AssistiveProperties: React.FC<AssistivePropertiesProps> = ({ formData, onC
               }}
             >
               <MenuItem value="off">خاموش</MenuItem>
-              <MenuItem value="fa">فارسی</MenuItem>
-              <MenuItem value="en">انگلیسی</MenuItem>
+              <MenuItem value="persian">فارسی</MenuItem>
+              <MenuItem value="english">انگلیسی</MenuItem>
+              <MenuItem value="both">فارسی + انگلیسی</MenuItem>
               <MenuItem value="custom">سفارشی</MenuItem>
             </Select>
           </FormControl>

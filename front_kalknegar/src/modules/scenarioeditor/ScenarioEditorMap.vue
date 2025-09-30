@@ -59,9 +59,55 @@
           <div v-else></div>
         </section>
       </main>
+      <!-- Floating breadcrumb pill (top-center) -->
+      <div
+        v-if="mapRef"
+        class="pointer-events-none absolute inset-x-0 top-16 z-50 flex justify-center px-2"
+      >
+        <div class="pointer-events-auto">
+          <button
+            v-if="!breadcrumbOpen"
+            type="button"
+            class="bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60 border border-border rounded-full px-3 py-1 text-xs shadow hover:bg-background"
+            @click.stop="breadcrumbOpen = true"
+            title="نمایش مسیر آرایش نبرد"
+          >
+            مسیر آرایش نبرد
+          </button>
+          <div
+            v-else
+            class="bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60 border border-border rounded-xl shadow max-w-[90vw] sm:max-w-3xl lg:max-w-5xl"
+          >
+            <div class="flex items-center justify-between px-2 py-1">
+              <span class="text-xs text-muted-foreground">مسیر آرایش نبرد</span>
+              <button
+                type="button"
+                class="rounded px-2 py-1 text-xs hover:bg-muted/60"
+                @click.stop="breadcrumbOpen = false"
+                title="بستن"
+              >
+                ×
+              </button>
+            </div>
+            <div class="max-h-52 overflow-auto">
+              <UnitBreadcrumbs />
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- Overlay breadcrumb and timeline to avoid affecting map layout -->
+      <div
+        v-if="mapRef"
+        class="pointer-events-none absolute inset-x-0 bottom-2 z-40 flex flex-col items-center gap-2 px-2"
+      >
+        <!-- Breadcrumb moved to top floating pill -->
+        <div v-if="ui.showTimeline" class="pointer-events-auto w-full sm:max-w-4xl lg:max-w-6xl">
+          <ScenarioTimeline />
+        </div>
+      </div>
       <footer
         v-if="mapRef && ui.showToolbar"
-        class="pointer-events-none flex justify-center sm:absolute sm:bottom-2 sm:w-full sm:p-2"
+        class="pointer-events-none sm:absolute sm:bottom-28 sm:left-1/2 sm:-translate-x-1/2 sm:p-2 z-50"
       >
         <MapEditorMainToolbar
           @open-time-modal="openTimeDialog()"
@@ -104,8 +150,7 @@
       @keyup.t="openTimeDialog"
       @keyup.s="ui.showSearch = true"
     />
-    <UnitBreadcrumbs v-if="ui.showOrbatBreadcrumbs && !isMobile" />
-    <ScenarioTimeline v-if="ui.showTimeline" />
+    
   </div>
 </template>
 
@@ -171,6 +216,7 @@ const toolbarStore = useMainToolbarStore();
 const activeUnitStore = useActiveUnitStore();
 const ui = useUiStore();
 const playback = usePlaybackStore();
+const breadcrumbOpen = shallowRef(false);
 
 const mapRef = shallowRef<OLMap>();
 const featureSelectInteractionRef = shallowRef<Select>();

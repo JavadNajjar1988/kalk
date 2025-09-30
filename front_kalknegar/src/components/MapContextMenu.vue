@@ -356,10 +356,10 @@ function onAddPoint() {
             <ContextMenuSubTrigger inset>فرمت مختصات</ContextMenuSubTrigger>
             <ContextMenuSubContent>
               <ContextMenuRadioGroup v-model="coordinateFormat">
-                <ContextMenuRadioItem value="dms" @select.prevent
+                <ContextMenuRadioItem value="DegreeMinuteSeconds" @select.prevent
                   >درجه، دقیقه، ثانیه
                 </ContextMenuRadioItem>
-                <ContextMenuRadioItem value="dd" @select.prevent
+                <ContextMenuRadioItem value="DecimalDegrees" @select.prevent
                   >درجه اعشاری
                 </ContextMenuRadioItem>
                 <ContextMenuRadioItem value="MGRS" @select.prevent
