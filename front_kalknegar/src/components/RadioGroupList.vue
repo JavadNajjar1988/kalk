@@ -1,7 +1,7 @@
 <template>
   <RadioGroup v-model="selected">
     <RadioGroupLabel class="sr-only">{{ label }}</RadioGroupLabel>
-    <div class="-space-y-px rounded-2xl border border-blue-400/30 dark:border-blue-500/30 bg-blue-400/10 supports-[backdrop-filter]:bg-blue-400/15 backdrop-blur-md">
+    <div class="-space-y-px rounded-2xl border border-blue-300/40 dark:border-blue-400/20 bg-blue-100/30 dark:bg-blue-900/30 backdrop-blur-xl shadow-lg shadow-blue-500/3">
       <RadioGroupOption
         as="template"
         v-for="(item, settingIdx) in items"
@@ -13,14 +13,14 @@
           :class="[
             settingIdx === 0 ? 'rounded-tl-2xl rounded-tr-2xl' : '',
             settingIdx === items.length - 1 ? 'rounded-br-2xl rounded-bl-2xl' : '',
-            checked ? 'z-10 border-blue-400/40 bg-blue-400/15' : 'border-blue-400/30',
+            checked ? 'z-10 border-blue-400/30 bg-blue-400/10 dark:bg-blue-400/15' : 'border-blue-300/40 dark:border-blue-400/20',
             'relative flex cursor-pointer border p-4 focus:outline-hidden',
           ]"
         >
           <span
             class="shrink-0"
             :class="[
-              checked ? 'border-transparent bg-blue-500' : 'border-blue-300 bg-white/80',
+              checked ? 'border-transparent bg-blue-500' : 'border-blue-300/40 dark:border-blue-400/20 bg-blue-100/10 dark:bg-blue-400/3',
               active ? 'ring-2 ring-blue-400 ring-offset-2' : '',
               'mt-0.5 flex h-4 w-4 cursor-pointer items-center justify-center rounded-full border',
             ]"

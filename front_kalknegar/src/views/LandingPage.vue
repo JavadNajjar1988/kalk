@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-screen flex flex-col bg-blue-50/80 dark:bg-blue-950/80 backdrop-blur-md text-foreground">
+  <div class="bg-teal-50/80 dark:bg-teal-950/50 flex min-h-screen flex-col">
     <!-- AppBar Header (Dashboard Style) -->
     <header class="fixed top-0 left-0 right-0 z-50">
       <div class="flex h-16 items-center px-4">
@@ -23,7 +23,7 @@
               <input
                 type="search"
                 placeholder="جستجو در سناریوها..."
-                class="flex h-10 w-full rounded-full border border-blue-200 dark:border-blue-700 bg-white/70 dark:bg-slate-800/70 backdrop-blur-sm px-3 py-2 pr-10 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-blue-400 dark:placeholder:text-blue-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                class="flex h-10 w-full rounded-full border border-blue-300/60 dark:border-blue-400/30 bg-blue-100/40 dark:bg-blue-400/15 backdrop-blur backdrop-saturate-150 supports-[backdrop-filter]:bg-blue-300/30 dark:supports-[backdrop-filter]:bg-blue-400/20 px-3 py-2 pr-10 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-blue-500 dark:placeholder:text-blue-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                 v-model="searchQuery"
               />
             </div>
@@ -56,9 +56,9 @@
     </header>
 
     <!-- Main Content -->
-    <main class="flex-1 pt-16 bg-blue-50/80 dark:bg-blue-950/80 backdrop-blur-md transition-all duration-300" :class="sidebarOpen ? 'lg:ml-0' : 'lg:ml-0'">
+    <main class="flex-1 bg-teal-50/80 dark:bg-teal-950/50 backdrop-blur-md transition-all duration-300">
       <!-- Hero Content Section -->
-      <div class="p-6">
+      <div class="p-6 pt-20 bg-blue-50/20 dark:bg-blue-400/10 backdrop-blur backdrop-saturate-150 supports-[backdrop-filter]:bg-blue-300/20 dark:supports-[backdrop-filter]:bg-blue-400/15 border border-blue-300/60 dark:border-blue-400/30 shadow-lg shadow-blue-500/5 min-h-screen">
         <!-- Interactive Map Section -->
         <div class="relative w-full mb-8 flex justify-center items-center py-8">
           <div class="w-4/5 max-w-6xl">
@@ -68,7 +68,7 @@
         
         <!-- Dashboard Stats Cards -->
         <div class="grid gap-4 md:grid-cols-2 md:gap-8 lg:grid-cols-4 mb-8">
-          <div class="rounded-xl border border-blue-200/30 dark:border-blue-700/30 bg-blue-100/60 dark:bg-blue-900/60 backdrop-blur-xl text-card-foreground shadow-lg shadow-blue-500/5">
+          <div class="rounded-xl border border-blue-200/30 dark:border-blue-700/30 bg-blue-100/60 dark:bg-blue-900/10 backdrop-blur-xl text-card-foreground shadow-lg shadow-blue-500/5">
             <div class="p-6 flex flex-row items-center justify-between space-y-0 pb-2">
               <div class="space-y-1">
                 <p class="text-sm font-medium leading-none text-blue-600 dark:text-blue-400">سناریوهای فعال</p>
@@ -85,7 +85,7 @@
             </div>
           </div>
           
-          <div class="rounded-xl border border-blue-200/30 dark:border-blue-700/30 bg-blue-100/60 dark:bg-blue-900/60 backdrop-blur-xl text-card-foreground shadow-lg shadow-blue-500/5">
+          <div class="rounded-xl border border-blue-200/30 dark:border-blue-700/30 bg-blue-100/60 dark:bg-blue-900/10 backdrop-blur-xl text-card-foreground shadow-lg shadow-blue-500/5">
             <div class="p-6 flex flex-row items-center justify-between space-y-0 pb-2">
               <div class="space-y-1">
                 <p class="text-sm font-medium leading-none text-cyan-600 dark:text-cyan-400">نبردهای تاریخی</p>
@@ -102,7 +102,7 @@
             </div>
           </div>
           
-          <div class="rounded-xl border border-blue-200/30 dark:border-blue-700/30 bg-blue-100/60 dark:bg-blue-900/60 backdrop-blur-xl text-card-foreground shadow-lg shadow-blue-500/5">
+          <div class="rounded-xl border border-blue-200/30 dark:border-blue-700/30 bg-blue-100/60 dark:bg-blue-900/10 backdrop-blur-xl text-card-foreground shadow-lg shadow-blue-500/5">
             <div class="p-6 flex flex-row items-center justify-between space-y-0 pb-2">
               <div class="space-y-1">
                 <p class="text-sm font-medium leading-none text-sky-600 dark:text-sky-400">نیروها</p>
@@ -119,7 +119,7 @@
             </div>
           </div>
           
-          <div class="rounded-xl border border-blue-200/30 dark:border-blue-700/30 bg-blue-100/60 dark:bg-blue-900/60 backdrop-blur-xl text-card-foreground shadow-lg shadow-blue-500/5">
+          <div class="rounded-xl border border-blue-200/30 dark:border-blue-700/30 bg-blue-100/60 dark:bg-blue-900/10 backdrop-blur-xl text-card-foreground shadow-lg shadow-blue-500/5">
             <div class="p-6 flex flex-row items-center justify-between space-y-0 pb-2">
               <div class="space-y-1">
                 <p class="text-sm font-medium leading-none text-indigo-600 dark:text-indigo-400">عملیات</p>
@@ -139,7 +139,7 @@
         
         <!-- Scenario Management Section -->
         <div class="mt-8">
-          <div class="bg-blue-100/60 dark:bg-blue-900/60 backdrop-blur-xl rounded-3xl border border-blue-200/30 dark:border-blue-700/30 shadow-lg shadow-blue-500/5 p-8">
+          <div class="bg-blue-100/60 dark:bg-blue-900/10 backdrop-blur-xl rounded-3xl p-8 shadow-xl shadow-blue-500/5 border border-blue-200/30 dark:border-blue-700/30 hover:shadow-2xl hover:shadow-blue-500/10 transition-all duration-300">
             <div class="text-center mb-8">
               <h2 class="text-2xl md:text-3xl font-bold bg-gradient-to-r from-blue-700 to-cyan-600 bg-clip-text text-transparent mb-3">
                 مدیریت سناریوها
@@ -149,7 +149,7 @@
             <!-- View Toggle and Tab Navigation -->
             <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-8">
               <!-- Tab Navigation -->
-              <div class="bg-blue-100/60 dark:bg-blue-900/60 backdrop-blur-xl rounded-2xl p-1 border border-blue-200/30 dark:border-blue-700/30 shadow-lg shadow-blue-500/5 mb-4 sm:mb-0">
+              <div class="bg-blue-100/10 dark:bg-blue-400/2 backdrop-blur backdrop-saturate-150 supports-[backdrop-filter]:bg-blue-300/10 dark:supports-[backdrop-filter]:bg-blue-400/3 rounded-2xl p-1 border border-blue-300/60 dark:border-blue-400/30 shadow-lg shadow-blue-500/5 mb-4 sm:mb-0">
                 <div class="flex gap-1">
                   <button 
                     @click="activeTab = 'all'"
@@ -176,7 +176,7 @@
               </div>
               
               <!-- View Toggle -->
-              <div class="bg-blue-100/60 dark:bg-blue-900/60 backdrop-blur-xl rounded-2xl p-1 border border-blue-200/30 dark:border-blue-700/30 shadow-lg shadow-blue-500/5">
+              <div class="bg-blue-100/10 dark:bg-blue-400/2 backdrop-blur backdrop-saturate-150 supports-[backdrop-filter]:bg-blue-300/10 dark:supports-[backdrop-filter]:bg-blue-400/3 rounded-2xl p-1 border border-blue-300/60 dark:border-blue-400/30 shadow-lg shadow-blue-500/5">
                 <div class="flex gap-1">
                   <button 
                     @click="viewMode = 'cards'"
@@ -247,6 +247,7 @@ const toggleDark = useToggle(isDark);
 // State for sidebar and search
 const sidebarOpen = ref(false);
 const searchQuery = ref('');
+const showSearch = ref(false);
 const showImport = ref(false);
 
 // State for scenarios section

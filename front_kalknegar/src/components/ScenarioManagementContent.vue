@@ -4,7 +4,7 @@
     <!-- Recent Scenario Cards -->
     <template v-if="activeTab === 'all' || activeTab === 'recent'">
       <!-- عملیات بیت المقدس -->
-      <div class="group relative bg-blue-100/60 dark:bg-blue-900/60 rounded-2xl border border-blue-200/30 dark:border-blue-700/30 hover:border-blue-300/50 dark:hover:border-blue-600/40 shadow-lg hover:shadow-xl transition-all duration-400 cursor-pointer hover:-translate-y-1 backdrop-blur-xl">
+      <div class="group relative bg-blue-100/60 dark:bg-slate-900/30 rounded-2xl border border-blue-200/30 dark:border-slate-700/30 hover:border-blue-300/50 dark:hover:border-slate-600/40 shadow-lg hover:shadow-xl transition-all duration-400 cursor-pointer hover:-translate-y-1 backdrop-blur-xl">
         <div class="absolute top-3 left-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
           <div class="relative">
             <button @click="$emit('toggle-dropdown', 1)" class="p-1.5 rounded-full bg-white/80 dark:bg-slate-700/80 hover:bg-white dark:hover:bg-slate-600 transition-all duration-200 shadow-md">
@@ -73,7 +73,7 @@
       </div>
       
       <!-- عملیات مرصاد -->
-      <div class="group relative bg-blue-100/60 dark:bg-blue-900/60 rounded-2xl border border-blue-200/30 dark:border-blue-700/30 hover:border-blue-300/50 dark:hover:border-blue-600/40 shadow-lg hover:shadow-xl transition-all duration-400 cursor-pointer hover:-translate-y-1 backdrop-blur-xl">
+      <div class="group relative bg-blue-100/60 dark:bg-slate-900/30 rounded-2xl border border-blue-200/30 dark:border-slate-700/30 hover:border-blue-300/50 dark:hover:border-slate-600/40 shadow-lg hover:shadow-xl transition-all duration-400 cursor-pointer hover:-translate-y-1 backdrop-blur-xl">
         <div class="absolute top-3 left-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
           <div class="relative">
             <button @click="$emit('toggle-dropdown', 2)" class="p-1.5 rounded-full bg-white/80 dark:bg-slate-700/80 hover:bg-white dark:hover:bg-slate-600 transition-all duration-200 shadow-md">

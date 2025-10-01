@@ -1,11 +1,11 @@
 <template>
-  <div class="min-h-screen flex flex-col bg-blue-50/80 dark:bg-blue-950/80 backdrop-blur-md text-foreground">
+  <div class="min-h-screen flex flex-col bg-teal-50/80 dark:bg-teal-950/50 text-foreground">
     <!-- Simple Modern Header with Blue-Green Icy Theme -->
-    <header class="relative bg-blue-100/70 dark:bg-blue-900/70 backdrop-blur-xl border-b border-blue-200/40 dark:border-blue-700/40 shadow-lg shadow-blue-500/5 py-4">
+    <header class="relative bg-blue-100/40 dark:bg-blue-400/15 backdrop-blur backdrop-saturate-150 supports-[backdrop-filter]:bg-blue-300/30 dark:supports-[backdrop-filter]:bg-blue-400/20 border-b border-blue-300/40 dark:border-blue-400/20 shadow-lg shadow-blue-500/3 py-4">
       <div class="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div class="flex items-center gap-3">
           <!-- Logo/Icon -->
-          <div class="w-10 h-10 bg-blue-200/60 dark:bg-blue-800/60 rounded-lg flex items-center justify-center shadow-md shadow-blue-500/10 border border-blue-300/30 dark:border-blue-600/30">
+          <div class="w-10 h-10 bg-blue-200/60 dark:bg-blue-800/60 rounded-lg flex items-center justify-center shadow-md shadow-blue-500/5 border border-blue-300/20 dark:border-blue-600/20">
             <svg class="w-5 h-5 text-blue-600 dark:text-blue-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
             </svg>
@@ -20,22 +20,25 @@
     </header>
     
     <!-- Main Content with Step-based Layout -->
-    <main class="flex-1 bg-blue-50/80 dark:bg-blue-950/80 backdrop-blur-md transition-all duration-300">
+    <main class="flex-1 bg-blue-50/20 dark:bg-blue-400/10 backdrop-blur backdrop-saturate-150 supports-[backdrop-filter]:bg-blue-300/20 dark:supports-[backdrop-filter]:bg-blue-400/15 border border-blue-300/60 dark:border-blue-400/30 shadow-lg shadow-blue-500/5 min-h-screen transition-all duration-300">
       <div class="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-12">
         
         <form class="space-y-8" @submit.prevent="create()">
           <!-- Single Box Container for Step Content -->
-          <div class="bg-blue-100/60 dark:bg-blue-900/60 backdrop-blur-xl rounded-2xl p-8 shadow-xl shadow-blue-500/5 border border-blue-200/30 dark:border-blue-700/30 hover:shadow-2xl hover:shadow-blue-500/10 transition-all duration-300">
+          <div class="bg-blue-100/5 dark:bg-blue-400/2 backdrop-blur backdrop-saturate-150 supports-[backdrop-filter]:bg-blue-300/3 dark:supports-[backdrop-filter]:bg-blue-400/3 rounded-2xl p-8 shadow-xl shadow-blue-500/3 border border-blue-200/20 dark:border-blue-400/30 hover:shadow-2xl hover:shadow-blue-500/5 transition-all duration-300">
             <!-- Progress Steps -->
             <div class="mb-8">
-              <div class="bg-blue-50/40 dark:bg-blue-950/40 backdrop-blur-xl rounded-2xl p-6 shadow-lg shadow-blue-500/2 border border-blue-200/10 dark:border-blue-700/10">
+                <div class="p-4">
                 <div class="flex items-center justify-between relative">
-                  <!-- Progress Line -->
-                  <div class="absolute top-1/2 left-0 right-0 h-1 bg-blue-200/30 dark:bg-blue-700/30 -z-10 transform -translate-y-1/2"></div>
+                  <!-- Full Progress Line Background (Light) -->
+                  <div class="absolute top-1/2 left-0 right-0 h-0.5 bg-blue-200/30 dark:bg-blue-700/30 -z-10 transform -translate-y-1/2"></div>
+                  <!-- Animated Progress Line (Fills from right to left) -->
+                  <div class="absolute top-1/2 right-0 h-0.5 bg-gradient-to-l from-cyan-400 to-blue-400 -z-10 transform -translate-y-1/2 transition-all duration-1000 ease-out" 
+                       :style="{ width: `${((currentStep - 1) / (totalSteps - 1)) * 100}%` }"></div>
                   
                   <!-- Step 1 -->
                   <div class="flex flex-col items-center relative z-10">
-                    <div :class="[currentStep >= 1 ? 'bg-blue-400 text-white font-black' : 'bg-blue-200/50 dark:bg-blue-700/50 text-blue-600 dark:text-blue-300 font-bold', 'w-12 h-12 rounded-full flex items-center justify-center mb-2 shadow-lg shadow-blue-500/10 border-4 border-white dark:border-blue-800']">
+                    <div :class="[currentStep >= 1 ? 'bg-gradient-to-br from-blue-400 to-cyan-400 text-white font-black shadow-lg shadow-blue-400/30' : 'bg-blue-100/40 dark:bg-blue-700/20 text-blue-600 dark:text-blue-300 font-bold', 'w-10 h-10 rounded-full flex items-center justify-center mb-2 transition-all duration-500 border-2 border-white dark:border-blue-800 hover:scale-110']">
                       1
                     </div>
                     <span :class="[currentStep >= 1 ? 'text-blue-700 dark:text-blue-300 font-semibold' : 'text-blue-600 dark:text-blue-400', 'text-sm']">اطلاعات پایه</span>
@@ -43,7 +46,7 @@
                   
                   <!-- Step 2 -->
                   <div class="flex flex-col items-center relative z-10">
-                    <div :class="[currentStep >= 2 ? 'bg-blue-400 text-white font-black' : 'bg-blue-200/50 dark:bg-blue-700/50 text-blue-600 dark:text-blue-300 font-bold', 'w-12 h-12 rounded-full flex items-center justify-center mb-2 border-4 border-white dark:border-blue-800']">
+                    <div :class="[currentStep >= 2 ? 'bg-gradient-to-br from-blue-400 to-cyan-400 text-white font-black shadow-lg shadow-blue-400/30' : 'bg-blue-100/40 dark:bg-blue-700/20 text-blue-600 dark:text-blue-300 font-bold', 'w-10 h-10 rounded-full flex items-center justify-center mb-2 transition-all duration-500 border-2 border-white dark:border-blue-800 hover:scale-110']">
                       2
                     </div>
                     <span :class="[currentStep >= 2 ? 'text-blue-700 dark:text-blue-300 font-semibold' : 'text-blue-600 dark:text-blue-400', 'text-sm']">آرایش نبرد</span>
@@ -51,7 +54,7 @@
                   
                   <!-- Step 3 -->
                   <div class="flex flex-col items-center relative z-10">
-                    <div :class="[currentStep >= 3 ? 'bg-blue-400 text-white font-black' : 'bg-blue-200/50 dark:bg-blue-700/50 text-blue-600 dark:text-blue-300 font-bold', 'w-12 h-12 rounded-full flex items-center justify-center mb-2 border-4 border-white dark:border-blue-800']">
+                    <div :class="[currentStep >= 3 ? 'bg-gradient-to-br from-blue-400 to-cyan-400 text-white font-black shadow-lg shadow-blue-400/30' : 'bg-blue-100/40 dark:bg-blue-700/20 text-blue-600 dark:text-blue-300 font-bold', 'w-10 h-10 rounded-full flex items-center justify-center mb-2 transition-all duration-500 border-2 border-white dark:border-blue-800 hover:scale-110']">
                       3
                     </div>
                     <span :class="[currentStep >= 3 ? 'text-blue-700 dark:text-blue-300 font-semibold' : 'text-blue-600 dark:text-blue-400', 'text-sm']">زمان شروع</span>
@@ -59,7 +62,7 @@
                   
                   <!-- Step 4 -->
                   <div class="flex flex-col items-center relative z-10">
-                    <div :class="[currentStep >= 4 ? 'bg-blue-400 text-white font-black' : 'bg-blue-200/50 dark:bg-blue-700/50 text-blue-600 dark:text-blue-300 font-bold', 'w-12 h-12 rounded-full flex items-center justify-center mb-2 border-4 border-white dark:border-blue-800']">
+                    <div :class="[currentStep >= 4 ? 'bg-gradient-to-br from-blue-400 to-cyan-400 text-white font-black shadow-lg shadow-blue-400/30' : 'bg-blue-100/40 dark:bg-blue-700/20 text-blue-600 dark:text-blue-300 font-bold', 'w-10 h-10 rounded-full flex items-center justify-center mb-2 transition-all duration-500 border-2 border-white dark:border-blue-800 hover:scale-110']">
                       4
                     </div>
                     <span :class="[currentStep >= 4 ? 'text-blue-700 dark:text-blue-300 font-semibold' : 'text-blue-600 dark:text-blue-400', 'text-sm']">نمادشناسی</span>
@@ -107,7 +110,7 @@
               <template v-if="!noInitialOrbat">
                 <div
                   v-for="(sideData, idx) in form.sides"
-                  class="relative rounded-3xl border bg-gradient-to-br from-rose-50/70 to-pink-50/70 dark:from-rose-900/30 dark:to-pink-900/30 backdrop-blur-sm p-6 dark:border-slate-600/50 border-rose-200/50 mb-6 shadow-lg shadow-rose-500/10 hover:shadow-xl hover:shadow-rose-500/20 transition-all duration-500"
+                  class="relative rounded-3xl border bg-blue-100/5 dark:bg-blue-400/2 backdrop-blur backdrop-saturate-150 supports-[backdrop-filter]:bg-blue-300/3 dark:supports-[backdrop-filter]:bg-blue-400/3 p-6 border-blue-200/20 dark:border-blue-400/30 mb-6 shadow-xl shadow-blue-500/3 dark:shadow-blue-500/3 hover:shadow-2xl hover:shadow-blue-500/5 dark:hover:shadow-blue-500/5 transition-all duration-300"
                 >
                   <div class="grid gap-4 md:grid-cols-2">
                     <InputGroup v-model="sideData.name" label="نام طرف" />
@@ -211,8 +214,8 @@
                   <InputGroup label="ساعت" v-model="hour" type="number" min="0" max="23" />
                   <InputGroup label="دقیقه" v-model="minute" type="number" min="0" max="59" />
                 </div>
-                <div class="bg-gradient-to-r from-amber-50/80 to-yellow-50/80 dark:from-amber-900/30 dark:to-yellow-900/30 backdrop-blur-sm rounded-2xl p-4 border border-amber-200/60 dark:border-amber-700/60 shadow-lg shadow-amber-500/10">
-                  <p class="text-amber-700 dark:text-amber-300 font-mono text-center text-lg font-semibold">{{ resDateTime.format() }}</p>
+                <div class="bg-blue-100/60 dark:bg-blue-900/60 backdrop-blur-xl rounded-2xl p-4 border border-blue-200/20 dark:border-blue-700/20 shadow-xl shadow-blue-500/3">
+                  <p class="text-blue-700 dark:text-blue-300 font-mono text-center text-lg font-semibold">{{ resDateTime.format() }}</p>
                 </div>
               </div>
             </div>
@@ -237,12 +240,12 @@
             </div>
             
              <!-- Navigation Buttons -->
-             <div class="flex justify-between mt-8 pt-6 border-t border-blue-200/30 dark:border-blue-700/30">
+             <div class="flex justify-between mt-8 pt-6 border-t border-blue-200/20 dark:border-blue-700/20">
                <BaseButton 
                  v-if="currentStep > 1" 
                  @click="prevStep()" 
                  type="button"
-                 class="bg-white/70 hover:bg-white/90 dark:bg-blue-800/60 dark:hover:bg-blue-800/80 backdrop-blur-sm text-blue-600 dark:text-blue-400 px-6 py-2.5 rounded-xl font-semibold shadow-lg shadow-blue-500/5 hover:shadow-xl border border-blue-200/30 dark:border-blue-600/30 transition-all duration-300"
+                 class="bg-white/70 hover:bg-white/90 dark:bg-blue-800/60 dark:hover:bg-blue-800/80 backdrop-blur-sm text-blue-600 dark:text-blue-400 px-6 py-2.5 rounded-xl font-semibold shadow-lg shadow-blue-500/3 hover:shadow-xl border border-blue-200/20 dark:border-blue-600/20 transition-all duration-300"
                >
                  مرحله قبل
                </BaseButton>
@@ -253,23 +256,23 @@
                  v-if="currentStep < totalSteps" 
                  @click="nextStep()" 
                  type="button"
-                 class="bg-blue-400 hover:bg-blue-500 text-white px-6 py-2.5 rounded-xl font-semibold shadow-xl shadow-blue-500/20 hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-0.5 border border-blue-300/40"
+                 class="bg-blue-400 hover:bg-blue-500 text-white px-6 py-2.5 rounded-xl font-semibold shadow-xl shadow-blue-500/10 hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-0.5 border border-blue-300/30"
                >
                  مرحله بعد
                </BaseButton>
              </div>
              
              <!-- Final Action Card - Inside the main container -->
-             <div class="mt-8 pt-6 border-t border-blue-200/30 dark:border-blue-700/30">
+             <div class="mt-8 pt-6 border-t border-blue-200/20 dark:border-blue-700/20">
                <div class="flex items-center justify-between">
                  <div class="text-sm text-blue-600 dark:text-blue-400">
                    آماده برای ایجاد سناریوی جدید؟
                  </div>
                  <div class="flex items-center gap-4">
-                   <BaseButton @click="cancel()" type="button" class="bg-white/70 hover:bg-white/90 dark:bg-blue-800/60 dark:hover:bg-blue-800/80 backdrop-blur-sm text-blue-600 dark:text-blue-400 px-6 py-2.5 rounded-xl font-semibold shadow-lg shadow-blue-500/5 hover:shadow-xl border border-blue-200/30 dark:border-blue-600/30 transition-all duration-300">
+                   <BaseButton @click="cancel()" type="button" class="bg-white/70 hover:bg-white/90 dark:bg-blue-800/60 dark:hover:bg-blue-800/80 backdrop-blur-sm text-blue-600 dark:text-blue-400 px-6 py-2.5 rounded-xl font-semibold shadow-lg shadow-blue-500/3 hover:shadow-xl border border-blue-200/20 dark:border-blue-600/20 transition-all duration-300">
                      لغو
                    </BaseButton>
-                   <BaseButton primary type="submit" class="bg-blue-400 hover:bg-blue-500 text-white px-8 py-2.5 rounded-xl font-semibold shadow-xl shadow-blue-500/20 hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-0.5 border border-blue-300/40">
+                   <BaseButton primary type="submit" class="bg-blue-400 hover:bg-blue-500 text-white px-8 py-2.5 rounded-xl font-semibold shadow-xl shadow-blue-500/10 hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-0.5 border border-blue-300/30">
                      ایجاد سناریو
                    </BaseButton>
                  </div>
