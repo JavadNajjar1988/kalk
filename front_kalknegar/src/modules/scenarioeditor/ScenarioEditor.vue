@@ -1,7 +1,11 @@
 <template>
   <div class="bg-background flex h-dvh flex-col overflow-hidden" ref="dropZoneRef">
     <nav
+<<<<<<< Updated upstream
       class="dashboard-header relative flex shrink-0 items-center justify-between rounded-b-xl py-1.5 pr-4 pl-6 text-sm text-foreground print:hidden bg-blue-300/40 dark:bg-blue-400/15 backdrop-blur backdrop-saturate-150 supports-[backdrop-filter]:bg-blue-300/30 dark:supports-[backdrop-filter]:bg-blue-400/20 border-b border-blue-300/60 dark:border-blue-400/30"
+=======
+      class="dashboard-header flex shrink-0 items-center justify-between py-2 pr-4 pl-6 text-foreground print:hidden bg-white dark:bg-slate-800 border-b border-gray-200 dark:border-slate-700"
+>>>>>>> Stashed changes
     >
       <div class="flex min-w-0 flex-auto items-center">
         <div class="flex min-w-0 flex-auto items-center">

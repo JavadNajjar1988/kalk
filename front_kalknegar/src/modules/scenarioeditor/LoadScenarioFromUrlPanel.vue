@@ -1,16 +1,16 @@
 <template>
   <div
-    class="relative w-full rounded-lg border-2 border-dashed border-gray-300 p-4 ring-offset-2 focus-within:ring-2 hover:border-gray-500"
+    class="relative w-full rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-600 p-4 ring-offset-2 focus-within:ring-2 hover:border-gray-500 dark:hover:border-gray-400"
     @dragover.prevent
     @drop.prevent="onDrop"
   >
     <button
-      class="flex h-full w-full cursor-pointer flex-col items-center justify-center text-sm font-medium text-gray-900 hover:text-gray-700"
+      class="flex h-full w-full cursor-pointer flex-col items-center justify-center text-sm font-medium text-gray-900 hover:text-gray-700 dark:text-gray-100 dark:hover:text-gray-200"
       @click="toggleModal()"
     >
-      <IconWebPlus class="h-10 w-10 text-gray-500" />
+      <IconWebPlus class="h-10 w-10 text-gray-500 dark:text-gray-400" />
 
-      <p class="mt-2 text-center">بارگذاری از URL</p>
+      <p class="mt-2 text-center text-gray-900 dark:text-gray-100">بارگذاری از URL</p>
     </button>
 
     <p

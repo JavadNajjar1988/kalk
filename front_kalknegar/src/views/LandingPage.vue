@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-screen flex flex-col bg-gradient-to-br from-emerald-50/60 via-slate-50 to-blue-50 dark:from-emerald-950/40 dark:via-slate-900 dark:to-blue-950 text-foreground">
+  <div class="min-h-screen flex flex-col bg-blue-50/80 dark:bg-blue-950/80 backdrop-blur-md text-foreground">
     <!-- AppBar Header (Dashboard Style) -->
     <header class="fixed top-0 left-0 right-0 z-50">
       <div class="flex h-16 items-center px-4">
@@ -56,7 +56,7 @@
     </header>
 
     <!-- Main Content -->
-    <main class="flex-1 pt-16 bg-gradient-to-br from-emerald-50/60 via-slate-50 to-blue-50 dark:from-emerald-950/40 dark:via-slate-900 dark:to-blue-950 transition-all duration-300" :class="sidebarOpen ? 'lg:ml-0' : 'lg:ml-0'">
+    <main class="flex-1 pt-16 bg-blue-50/80 dark:bg-blue-950/80 backdrop-blur-md transition-all duration-300" :class="sidebarOpen ? 'lg:ml-0' : 'lg:ml-0'">
       <!-- Hero Content Section -->
       <div class="p-6">
         <!-- Interactive Map Section -->
@@ -68,7 +68,7 @@
         
         <!-- Dashboard Stats Cards -->
         <div class="grid gap-4 md:grid-cols-2 md:gap-8 lg:grid-cols-4 mb-8">
-          <div class="rounded-xl border border-blue-200/50 dark:border-blue-700/50 bg-white/60 dark:bg-slate-800/60 backdrop-blur-sm text-card-foreground shadow-lg shadow-blue-500/10">
+          <div class="rounded-xl border border-blue-200/30 dark:border-blue-700/30 bg-blue-100/60 dark:bg-blue-900/60 backdrop-blur-xl text-card-foreground shadow-lg shadow-blue-500/5">
             <div class="p-6 flex flex-row items-center justify-between space-y-0 pb-2">
               <div class="space-y-1">
                 <p class="text-sm font-medium leading-none text-blue-600 dark:text-blue-400">سناریوهای فعال</p>
@@ -85,7 +85,7 @@
             </div>
           </div>
           
-          <div class="rounded-xl border border-cyan-200/50 dark:border-cyan-700/50 bg-white/60 dark:bg-slate-800/60 backdrop-blur-sm text-card-foreground shadow-lg shadow-cyan-500/10">
+          <div class="rounded-xl border border-blue-200/30 dark:border-blue-700/30 bg-blue-100/60 dark:bg-blue-900/60 backdrop-blur-xl text-card-foreground shadow-lg shadow-blue-500/5">
             <div class="p-6 flex flex-row items-center justify-between space-y-0 pb-2">
               <div class="space-y-1">
                 <p class="text-sm font-medium leading-none text-cyan-600 dark:text-cyan-400">نبردهای تاریخی</p>
@@ -102,7 +102,7 @@
             </div>
           </div>
           
-          <div class="rounded-xl border border-sky-200/50 dark:border-sky-700/50 bg-white/60 dark:bg-slate-800/60 backdrop-blur-sm text-card-foreground shadow-lg shadow-sky-500/10">
+          <div class="rounded-xl border border-blue-200/30 dark:border-blue-700/30 bg-blue-100/60 dark:bg-blue-900/60 backdrop-blur-xl text-card-foreground shadow-lg shadow-blue-500/5">
             <div class="p-6 flex flex-row items-center justify-between space-y-0 pb-2">
               <div class="space-y-1">
                 <p class="text-sm font-medium leading-none text-sky-600 dark:text-sky-400">نیروها</p>
@@ -119,7 +119,7 @@
             </div>
           </div>
           
-          <div class="rounded-xl border border-indigo-200/50 dark:border-indigo-700/50 bg-white/60 dark:bg-slate-800/60 backdrop-blur-sm text-card-foreground shadow-lg shadow-indigo-500/10">
+          <div class="rounded-xl border border-blue-200/30 dark:border-blue-700/30 bg-blue-100/60 dark:bg-blue-900/60 backdrop-blur-xl text-card-foreground shadow-lg shadow-blue-500/5">
             <div class="p-6 flex flex-row items-center justify-between space-y-0 pb-2">
               <div class="space-y-1">
                 <p class="text-sm font-medium leading-none text-indigo-600 dark:text-indigo-400">عملیات</p>
@@ -139,7 +139,7 @@
         
         <!-- Scenario Management Section -->
         <div class="mt-8">
-          <div class="bg-gradient-to-br from-slate-50/80 to-blue-50/80 dark:from-slate-800/40 dark:to-blue-900/40 backdrop-blur-lg rounded-3xl border border-blue-200/40 dark:border-blue-700/30 shadow-lg shadow-blue-500/10 p-8">
+          <div class="bg-blue-100/60 dark:bg-blue-900/60 backdrop-blur-xl rounded-3xl border border-blue-200/30 dark:border-blue-700/30 shadow-lg shadow-blue-500/5 p-8">
             <div class="text-center mb-8">
               <h2 class="text-2xl md:text-3xl font-bold bg-gradient-to-r from-blue-700 to-cyan-600 bg-clip-text text-transparent mb-3">
                 مدیریت سناریوها
@@ -149,25 +149,25 @@
             <!-- View Toggle and Tab Navigation -->
             <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-8">
               <!-- Tab Navigation -->
-              <div class="bg-white/70 dark:bg-slate-700/50 backdrop-blur-sm rounded-2xl p-1 border border-blue-200/50 dark:border-blue-600/30 shadow-lg shadow-blue-500/10 mb-4 sm:mb-0">
+              <div class="bg-blue-100/60 dark:bg-blue-900/60 backdrop-blur-xl rounded-2xl p-1 border border-blue-200/30 dark:border-blue-700/30 shadow-lg shadow-blue-500/5 mb-4 sm:mb-0">
                 <div class="flex gap-1">
                   <button 
                     @click="activeTab = 'all'"
-                    :class="activeTab === 'all' ? 'bg-white dark:bg-slate-600 shadow-lg shadow-blue-500/20' : 'hover:bg-white/70 dark:hover:bg-slate-600/50'"
+                    :class="activeTab === 'all' ? 'bg-blue-200/60 dark:bg-blue-800/60 shadow-lg shadow-blue-500/10' : 'hover:bg-blue-200/40 dark:hover:bg-blue-800/40'"
                     class="px-6 py-2 text-sm font-medium rounded-xl transition-all duration-200 text-blue-700 dark:text-blue-300"
                   >
                     همه
                   </button>
                   <button 
                     @click="activeTab = 'recent'"
-                    :class="activeTab === 'recent' ? 'bg-white dark:bg-slate-600 shadow-lg shadow-blue-500/20' : 'hover:bg-white/70 dark:hover:bg-slate-600/50'"
+                    :class="activeTab === 'recent' ? 'bg-blue-200/60 dark:bg-blue-800/60 shadow-lg shadow-blue-500/10' : 'hover:bg-blue-200/40 dark:hover:bg-blue-800/40'"
                     class="px-6 py-2 text-sm font-medium rounded-xl transition-all duration-200 text-blue-700 dark:text-blue-300"
                   >
                     اخیر
                   </button>
                   <button 
                     @click="activeTab = 'samples'"
-                    :class="activeTab === 'samples' ? 'bg-white dark:bg-slate-600 shadow-lg shadow-blue-500/20' : 'hover:bg-white/70 dark:hover:bg-slate-600/50'"
+                    :class="activeTab === 'samples' ? 'bg-blue-200/60 dark:bg-blue-800/60 shadow-lg shadow-blue-500/10' : 'hover:bg-blue-200/40 dark:hover:bg-blue-800/40'"
                     class="px-6 py-2 text-sm font-medium rounded-xl transition-all duration-200 text-blue-700 dark:text-blue-300"
                   >
                     نمونه
@@ -176,11 +176,11 @@
               </div>
               
               <!-- View Toggle -->
-              <div class="bg-white/70 dark:bg-slate-700/50 backdrop-blur-sm rounded-2xl p-1 border border-blue-200/50 dark:border-blue-600/30 shadow-lg shadow-blue-500/10">
+              <div class="bg-blue-100/60 dark:bg-blue-900/60 backdrop-blur-xl rounded-2xl p-1 border border-blue-200/30 dark:border-blue-700/30 shadow-lg shadow-blue-500/5">
                 <div class="flex gap-1">
                   <button 
                     @click="viewMode = 'cards'"
-                    :class="viewMode === 'cards' ? 'bg-white dark:bg-slate-600 shadow-lg shadow-blue-500/20' : 'hover:bg-white/70 dark:hover:bg-slate-600/50'"
+                    :class="viewMode === 'cards' ? 'bg-blue-200/60 dark:bg-blue-800/60 shadow-lg shadow-blue-500/10' : 'hover:bg-blue-200/40 dark:hover:bg-blue-800/40'"
                     class="px-4 py-2 text-sm font-medium rounded-xl transition-all duration-200 text-blue-700 dark:text-blue-300 flex items-center gap-2"
                   >
                     <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
@@ -190,7 +190,7 @@
                   </button>
                   <button 
                     @click="viewMode = 'table'"
-                    :class="viewMode === 'table' ? 'bg-white dark:bg-slate-600 shadow-lg shadow-blue-500/20' : 'hover:bg-white/70 dark:hover:bg-slate-600/50'"
+                    :class="viewMode === 'table' ? 'bg-blue-200/60 dark:bg-blue-800/60 shadow-lg shadow-blue-500/10' : 'hover:bg-blue-200/40 dark:hover:bg-blue-800/40'"
                     class="px-4 py-2 text-sm font-medium rounded-xl transition-all duration-200 text-blue-700 dark:text-blue-300 flex items-center gap-2"
                   >
                     <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">

@@ -4,7 +4,7 @@
     <!-- Recent Scenario Cards -->
     <template v-if="activeTab === 'all' || activeTab === 'recent'">
       <!-- عملیات بیت المقدس -->
-      <div class="group relative bg-gradient-to-br from-white via-white to-blue-50/30 dark:from-slate-800 dark:via-slate-800 dark:to-slate-700 rounded-2xl border border-slate-200/60 dark:border-slate-700/60 hover:border-blue-300/70 dark:hover:border-blue-600/50 shadow-lg hover:shadow-xl transition-all duration-400 cursor-pointer hover:-translate-y-1 backdrop-blur-sm">
+      <div class="group relative bg-blue-100/60 dark:bg-blue-900/60 rounded-2xl border border-blue-200/30 dark:border-blue-700/30 hover:border-blue-300/50 dark:hover:border-blue-600/40 shadow-lg hover:shadow-xl transition-all duration-400 cursor-pointer hover:-translate-y-1 backdrop-blur-xl">
         <div class="absolute top-3 left-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
           <div class="relative">
             <button @click="$emit('toggle-dropdown', 1)" class="p-1.5 rounded-full bg-white/80 dark:bg-slate-700/80 hover:bg-white dark:hover:bg-slate-600 transition-all duration-200 shadow-md">
@@ -73,7 +73,7 @@
       </div>
       
       <!-- عملیات مرصاد -->
-      <div class="group relative bg-gradient-to-br from-white via-white to-emerald-50/30 dark:from-slate-800 dark:via-slate-800 dark:to-slate-700 rounded-2xl border border-slate-200/60 dark:border-slate-700/60 hover:border-emerald-300/70 dark:hover:border-emerald-600/50 shadow-lg hover:shadow-xl transition-all duration-400 cursor-pointer hover:-translate-y-1 backdrop-blur-sm">
+      <div class="group relative bg-blue-100/60 dark:bg-blue-900/60 rounded-2xl border border-blue-200/30 dark:border-blue-700/30 hover:border-blue-300/50 dark:hover:border-blue-600/40 shadow-lg hover:shadow-xl transition-all duration-400 cursor-pointer hover:-translate-y-1 backdrop-blur-xl">
         <div class="absolute top-3 left-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
           <div class="relative">
             <button @click="$emit('toggle-dropdown', 2)" class="p-1.5 rounded-full bg-white/80 dark:bg-slate-700/80 hover:bg-white dark:hover:bg-slate-600 transition-all duration-200 shadow-md">
@@ -298,7 +298,7 @@
       </div>
       
       <!-- Create New Scenario Card -->
-      <div class="group relative bg-gradient-to-br from-emerald-50 via-white to-emerald-50/30 dark:from-slate-800 dark:via-slate-800 dark:to-emerald-900/10 rounded-2xl border-2 border-dashed border-emerald-300/60 dark:border-emerald-600/40 hover:border-emerald-400 dark:hover:border-emerald-500 transition-all duration-400 hover:-translate-y-1 shadow-lg hover:shadow-xl backdrop-blur-sm">
+      <div class="group relative bg-slate-200/90 dark:bg-slate-800/90 rounded-2xl border-2 border-dashed border-slate-300/60 dark:border-slate-600/40 hover:border-slate-400 dark:hover:border-slate-500 transition-all duration-400 hover:-translate-y-1 shadow-lg hover:shadow-xl backdrop-blur-sm">
         <button
           type="button"
           @click="$emit('new-scenario')"
@@ -322,7 +322,7 @@
       </div>
       
       <!-- Load Scenario Card -->
-      <div class="group relative bg-gradient-to-br from-green-50 via-white to-green-50/30 dark:from-slate-800 dark:via-slate-800 dark:to-green-900/10 rounded-2xl border border-green-200/60 dark:border-green-700/40 hover:border-green-400 dark:hover:border-green-500 transition-all duration-400 hover:-translate-y-1 shadow-lg hover:shadow-xl backdrop-blur-sm">
+      <div class="group relative bg-slate-200/90 dark:bg-slate-800/90 rounded-2xl border border-slate-300/60 dark:border-slate-600/40 hover:border-slate-400 dark:hover:border-slate-500 transition-all duration-400 hover:-translate-y-1 shadow-lg hover:shadow-xl backdrop-blur-sm">
         <div class="p-6 h-full flex flex-col min-h-[260px] relative overflow-hidden">
           <div class="absolute inset-0 bg-gradient-to-br from-green-100/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-400"></div>
           <div class="relative z-10 flex flex-col h-full">
@@ -345,7 +345,7 @@
       </div>
       
       <!-- Load from URL Card -->
-      <div class="group relative bg-gradient-to-br from-violet-50 via-white to-violet-50/30 dark:from-slate-800 dark:via-slate-800 dark:to-violet-900/10 rounded-2xl border border-violet-200/60 dark:border-violet-700/40 hover:border-violet-400 dark:hover:border-violet-500 transition-all duration-400 hover:-translate-y-1 shadow-lg hover:shadow-xl backdrop-blur-sm">
+      <div class="group relative bg-slate-200/90 dark:bg-slate-800/90 rounded-2xl border border-slate-300/60 dark:border-slate-600/40 hover:border-slate-400 dark:hover:border-slate-500 transition-all duration-400 hover:-translate-y-1 shadow-lg hover:shadow-xl backdrop-blur-sm">
         <div class="p-6 h-full flex flex-col min-h-[260px] relative overflow-hidden">
           <div class="absolute inset-0 bg-gradient-to-br from-violet-100/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-400"></div>
           <div class="relative z-10 flex flex-col h-full">

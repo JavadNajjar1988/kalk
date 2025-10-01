@@ -12,7 +12,7 @@
     />
     <label
       for="file"
-      class="flex h-full w-full cursor-pointer flex-col items-center justify-center text-sm font-medium text-gray-900 hover:text-gray-700"
+      class="flex h-full w-full cursor-pointer flex-col items-center justify-center text-sm font-medium text-gray-900 hover:text-gray-700 dark:text-gray-100 dark:hover:text-gray-200"
     >
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -20,7 +20,7 @@
         viewBox="0 0 24 24"
         stroke-width="1"
         stroke="currentColor"
-        class="h-12 w-12 text-slate-400 dark:text-slate-600"
+        class="h-12 w-12 text-slate-400 dark:text-slate-300"
       >
         <path
           stroke-linecap="round"
@@ -29,7 +29,7 @@
         />
       </svg>
 
-      <p class="mt-2 text-center">فایل را اینجا بکشید یا کلیک کنید تا فایل محلی انتخاب کنید</p>
+      <p class="mt-2 text-center text-gray-900 dark:text-gray-100">فایل را اینجا بکشید یا کلیک کنید تا فایل محلی انتخاب کنید</p>
     </label>
 
     <p
