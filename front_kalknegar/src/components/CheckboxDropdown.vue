@@ -17,16 +17,16 @@ const selectedItems = useVModel(props, "modelValue", emit);
 </script>
 <template>
   <PopoverGroup class="flex items-baseline sm:space-x-8">
-    <Popover as="div" class="relative z-20 inline-block text-left">
+    <Popover as="div" class="relative z-50 inline-block text-left w-32">
       <div>
         <PopoverButton
-          class="group inline-flex items-center justify-center text-sm font-medium text-gray-700 hover:text-gray-900"
+          class="group inline-flex items-center justify-center text-sm font-medium text-gray-700 hover:text-gray-900 cursor-pointer relative z-50"
         >
           <span
             ><slot>{{ label }}</slot></span
           >
           <span
-            class="ml-1.5 rounded bg-gray-200 px-1.5 py-0.5 text-xs font-semibold text-gray-700 tabular-nums"
+            class="ml-1.5 rounded bg-blue-300/20 dark:bg-blue-400/10 backdrop-blur-sm px-1.5 py-0.5 text-xs font-semibold text-gray-700 tabular-nums"
             >{{ selectedItems.length }}</span
           >
           <ChevronDownIcon
@@ -45,7 +45,7 @@ const selectedItems = useVModel(props, "modelValue", emit);
         leave-to-class="transform opacity-0 scale-95"
       >
         <PopoverPanel
-          class="ring-opacity-5 absolute right-0 z-10 mt-2 origin-top-right rounded-md bg-white p-4 shadow-2xl ring-1 ring-black focus:outline-hidden"
+          class="ring-opacity-5 absolute right-0 z-50 mt-2 origin-top-right rounded-md bg-blue-300/20 dark:bg-blue-400/10 backdrop-blur-sm backdrop-saturate-150 p-4 shadow-2xl ring-1 ring-blue-300/40 dark:ring-blue-400/30 focus:outline-hidden"
         >
           <form class="space-y-4">
             <div
@@ -58,11 +58,11 @@ const selectedItems = useVModel(props, "modelValue", emit);
                 :value="option.value"
                 v-model="selectedItems"
                 type="checkbox"
-                class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                class="h-4 w-4 rounded border-blue-300/40 dark:border-blue-400/30 text-blue-600 dark:text-blue-400 focus:ring-blue-500 dark:focus:ring-blue-400 cursor-pointer"
               />
               <label
                 :for="`filter-${option.value}`"
-                class="ml-3 pr-6 text-sm font-medium whitespace-nowrap text-gray-900"
+                class="ml-3 pr-6 text-sm font-medium whitespace-nowrap text-gray-900 cursor-pointer"
                 >{{ option.label }}</label
               >
             </div>

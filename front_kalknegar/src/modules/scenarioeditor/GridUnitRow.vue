@@ -34,14 +34,14 @@ function toggleOpen() {
 }
 </script>
 <template>
-  <tr :id="`item-${unit.id}`" class="divide-x divide-gray-200 hover:bg-gray-100">
+  <tr :id="`item-${unit.id}`" class="divide-x divide-gray-200 dark:divide-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800">
     <td class="relative">
-      <div v-if="isActive" class="absolute inset-y-0 right-0 w-0.5 bg-indigo-600"></div>
+      <div v-if="isActive" class="absolute inset-y-0 right-0 w-0.5 bg-blue-500 dark:bg-blue-400"></div>
     </td>
     <td>
       <div
         :id="`cell-${itemIndex}-0`"
-        class="flex items-center border-2 border-white py-3 text-sm whitespace-nowrap text-gray-900 outline-0 focus-within:border-red-800"
+        class="flex items-center py-3 text-right text-sm whitespace-nowrap text-gray-900 outline-0"
         :style="`padding-left: ${level + 1}rem`"
         tabindex="0"
         @keydown.enter.exact="toggleOpen()"
@@ -49,7 +49,7 @@ function toggleOpen() {
       >
         <button v-if="unit.subUnits.length" @click="toggleOpen()">
           <ChevronRightIcon
-            class="h-6 w-6 transform text-gray-500 transition-transform group-hover:text-gray-900 dark:text-gray-400 dark:group-hover:text-gray-100"
+            class="h-6 w-6 transform text-gray-600 dark:text-gray-400 transition-transform group-hover:text-gray-700 dark:group-hover:text-gray-300"
             :class="{
               'rotate-90': unit._isOpen,
             }"

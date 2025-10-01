@@ -14,18 +14,18 @@ const props = defineProps<Props>();
     <col />
     <col class="w-1/4" />
   </colgroup>
-  <thead class="bg-gray-500">
+  <thead class="bg-blue-300/20 dark:bg-blue-400/10 backdrop-blur-sm rounded-t-lg">
     <tr>
       <th scope="col" class="sticky top-0 z-10">
         <div
-          class="-m-[1.5px] border-b border-gray-400 bg-gray-100 py-3.5 pr-3 pl-6 text-left text-sm font-semibold text-gray-900"
+          class="-m-[1.5px] bg-white dark:bg-gray-900 py-3.5 pr-3 pl-6 text-right text-sm font-semibold text-gray-900"
         >
           &nbsp;
         </div>
       </th>
       <th scope="col" class="sticky top-0 z-10">
         <div
-          class="-m-[1.5px] border-b border-gray-400 bg-gray-100 py-3.5 pr-3 pl-6 text-left text-sm font-semibold text-gray-900"
+          class="-m-[1.5px] bg-white dark:bg-gray-900 py-3.5 pr-3 pl-6 text-right text-sm font-semibold text-gray-900"
         >
           واحد
         </div>
@@ -38,7 +38,7 @@ const props = defineProps<Props>();
         class="sticky top-0 z-10"
       >
         <div
-          class="-my-[2px] -ml-[2px] border-b border-l border-gray-400 border-l-gray-200 bg-gray-100 py-3.5 pr-3 pl-3 text-left text-sm font-semibold text-gray-900"
+          class="-my-[2px] -ml-[2px] bg-white dark:bg-gray-900 py-3.5 pr-3 pl-3 text-right text-sm font-semibold text-gray-900"
         >
           {{ column.label }}
         </div>
