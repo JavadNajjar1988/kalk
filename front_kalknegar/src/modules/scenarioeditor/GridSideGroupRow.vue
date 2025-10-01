@@ -27,15 +27,15 @@ function toggleOpen() {
 }
 </script>
 <template>
-  <tr class="bg-gray-100">
+  <tr class="bg-white dark:bg-gray-900">
     <td class="relative">
-      <div v-if="isActive" class="absolute inset-y-0 right-0 w-0.5 bg-indigo-600"></div>
+      <div v-if="isActive" class="absolute inset-y-0 right-0 w-0.5 bg-blue-500 dark:bg-blue-400"></div>
     </td>
     <td class="hover:cursor-pointer" @click="emit('toggle', sideGroup)">
       <div
         :id="`cell-${itemIndex}-0`"
         tabindex="0"
-        class="flex h-12 items-center border-2 border-gray-100 bg-gray-100 py-2 pr-3 text-sm font-medium whitespace-nowrap text-gray-900 focus-within:border-red-800"
+        class="flex h-12 items-center bg-white dark:bg-gray-900 py-2 pr-3 text-right text-sm font-medium whitespace-nowrap text-gray-900"
         @click.self="toggleOpen()"
         @keydown.enter.exact="toggleOpen()"
       >
@@ -45,7 +45,7 @@ function toggleOpen() {
           class="ml-0 flex items-center"
         >
           <ChevronRightIcon
-            class="h-6 w-6 transform text-gray-500 transition-transform group-hover:text-gray-900 dark:text-gray-400 dark:group-hover:text-gray-100"
+            class="h-6 w-6 transform text-gray-600 dark:text-gray-400 transition-transform group-hover:text-gray-700 dark:group-hover:text-gray-300"
             :class="{
               'rotate-90': sgOpen.get(sideGroup) ?? true,
             }"
@@ -66,7 +66,7 @@ function toggleOpen() {
     </td>
     <td :colspan="columns.length - 1" class="">
       <div
-        class="flex h-12 items-center py-2 pr-3 text-sm font-medium whitespace-nowrap text-gray-900"
+        class="flex h-12 items-center py-2 pr-3 text-right text-sm font-medium whitespace-nowrap text-gray-900"
       >
         <BaseButton small class="ml-2" @click="emit('expand', sideGroup)"
           >باز/بسته کردن

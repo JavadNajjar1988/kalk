@@ -1,11 +1,11 @@
 <template>
-  <div class="relative flex min-h-0 flex-auto">
+  <div class="relative flex min-h-0 flex-auto pt-11">
     <ResizablePanel
       v-model:width="panelWidth"
-      class="relative z-10 flex h-full flex-col justify-between overflow-auto overflow-visible border-r-2 bg-gray-100 dark:bg-gray-900 print:hidden"
+      class="relative z-10 flex h-full flex-col justify-between overflow-auto overflow-visible border-r-2 bg-blue-300/20 dark:bg-blue-400/10 backdrop-blur-sm backdrop-saturate-150 print:hidden"
     >
       <TabGroup :selected-index="selectedTab" @change="changeTab">
-        <TabList class="-mb-px flex border-b border-orange-200 dark:border-slate-600 bg-gradient-to-r from-orange-50 to-amber-50 dark:from-slate-700 dark:to-slate-600 rounded-t-2xl">
+        <TabList class="-mb-px flex border-b border-blue-300/40 dark:border-blue-400/30 bg-blue-300/20 dark:bg-blue-400/10 backdrop-blur-sm backdrop-saturate-150 rounded-t-2xl">
           <Tab
             as="template"
             v-for="tab in ['آرایش نبرد', 'تنظیمات نمودار']"
@@ -15,8 +15,8 @@
             <button
               :class="[
                 selected
-                  ? 'border-orange-500 text-orange-600 dark:text-orange-400 bg-white dark:bg-slate-700'
-                  : 'border-transparent text-slate-500 hover:border-orange-300 hover:text-orange-600 dark:text-slate-400 dark:hover:text-orange-400',
+                  ? 'border-blue-500 text-blue-600 dark:text-blue-400 bg-blue-300/30 dark:bg-blue-400/20 backdrop-blur-sm'
+                  : 'border-transparent text-slate-500 hover:border-blue-300 hover:text-blue-600 dark:text-slate-400 dark:hover:text-blue-400',
                 'w-1/2 border-b-2 px-4 py-4 text-center text-sm font-medium transition-all duration-200 rounded-t-lg',
               ]"
             >
@@ -36,12 +36,12 @@
         </TabPanels>
       </TabGroup>
     </ResizablePanel>
-    <main class="relative h-full flex-auto bg-gradient-to-b from-amber-50 to-orange-50 dark:from-slate-800 dark:to-slate-900">
+    <main class="relative h-full flex-auto bg-blue-300/20 dark:bg-blue-400/10 backdrop-blur-sm backdrop-saturate-150">
       <SimpleBreadcrumbs
-        class="bg-white dark:bg-slate-700 border border-amber-200 dark:border-slate-600 absolute top-2 left-2 z-10 rounded-xl px-3 py-2 shadow-lg print:hidden"
+        class="bg-blue-300/20 dark:bg-blue-400/10 backdrop-blur-sm backdrop-saturate-150 border border-blue-300/40 dark:border-blue-400/30 absolute top-2 left-2 z-10 rounded-xl px-3 py-2 shadow-lg print:hidden"
         :items="breadcrumbItems"
       />
-      <nav class="absolute top-2 right-4 z-10 rounded-2xl bg-white dark:bg-slate-700 border border-amber-200 dark:border-slate-600 shadow-lg print:hidden">
+      <nav class="absolute top-2 right-4 z-10 rounded-2xl bg-blue-300/20 dark:bg-blue-400/10 backdrop-blur-sm backdrop-saturate-150 border border-blue-300/40 dark:border-blue-400/30 shadow-lg print:hidden">
         <DotsMenu :items="menuItems" />
       </nav>
 

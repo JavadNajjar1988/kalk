@@ -54,11 +54,11 @@ const updateValue = (event: Event) => {
       :value="localValue"
       @input="updateValue"
       type="text"
-      class="block w-full rounded-md border-gray-300 pr-10 pl-10 focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm dark:bg-gray-700"
+      class="block w-full rounded-md border-gray-300 pr-20 pl-10 focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm dark:bg-gray-700"
       placeholder="فیلتر"
       v-bind="$attrs"
     />
-    <div class="absolute inset-y-0 right-0 flex items-center pr-3">
+    <div class="absolute inset-y-0 right-0 flex items-center gap-1 pr-3">
       <button
         class="rounded-md text-gray-400 hover:text-gray-700 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:outline-hidden"
         type="button"

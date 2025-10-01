@@ -97,7 +97,7 @@ function handleExternalEdit() {
 <template>
   <div
     ref="root"
-    class="editable-cell truncate border-2 border-white px-3 py-3 text-sm whitespace-nowrap text-gray-500 outline-0 focus-within:border-red-800"
+    class="editable-cell truncate px-3 py-3 text-right text-sm whitespace-nowrap text-gray-500 outline-0"
     tabindex="0"
     :id="`cell-${rowIndex}-${colIndex}`"
     @keydown="onKeydown"
@@ -110,7 +110,7 @@ function handleExternalEdit() {
     <form v-if="editMode" @submit.prevent="">
       <input
         type="text"
-        class="m-0 -my-3 w-full border-none p-0 focus:ring-0"
+        class="m-0 -my-3 w-full border-none p-0 text-right focus:ring-0"
         v-model="iValue"
         @vue:mounted="doFocus"
         @focus="selected = true"

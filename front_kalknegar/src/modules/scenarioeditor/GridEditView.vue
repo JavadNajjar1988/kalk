@@ -1,6 +1,6 @@
 <template>
   <div
-    class="relative flex min-h-0 flex-auto"
+    class="relative flex min-h-0 flex-auto pt-12"
     @keydown.down="doArrows('down', $event)"
     @keydown.up="doArrows('up', $event)"
     @keydown.left="doArrows('left', $event)"
@@ -13,10 +13,10 @@
   >
     <div
       ref="target"
-      class="flex h-full w-full flex-col overflow-hidden bg-gradient-to-b from-cyan-50 to-blue-50 dark:from-slate-800 dark:to-slate-900 shadow-lg sm:rounded-2xl border border-cyan-200 dark:border-slate-600"
+      class="flex h-full w-full flex-col overflow-hidden bg-blue-300/40 dark:bg-blue-400/15 backdrop-blur backdrop-saturate-150 supports-[backdrop-filter]:bg-blue-300/30 dark:supports-[backdrop-filter]:bg-blue-400/20 shadow-lg sm:rounded-2xl border border-blue-300/60 dark:border-blue-400/30"
     >
       <header
-        class="flex shrink-0 items-center justify-between border-b border-cyan-200 dark:border-slate-600 bg-gradient-to-r from-cyan-100 to-blue-100 dark:from-slate-700 dark:to-slate-600 px-6 py-4 sm:px-8 rounded-t-2xl"
+        class="flex shrink-0 items-center justify-between border-b border-blue-300/60 dark:border-blue-400/30 bg-blue-300/40 dark:bg-blue-400/15 backdrop-blur backdrop-saturate-150 supports-[backdrop-filter]:bg-blue-300/30 dark:supports-[backdrop-filter]:bg-blue-400/20 px-6 py-4 sm:px-8 rounded-t-2xl"
       >
         <div class="flex w-full items-center space-x-2 overflow-x-auto sm:w-auto">
           <FilterQueryInput class="" v-model="filterQuery" />
@@ -27,14 +27,13 @@
             >حذف آیتم</BaseButton
           >
         </div>
-        <CheckboxDropdown :options="availableColumns" v-model="selectedColumns"
+        <CheckboxDropdown :options="availableColumns" v-model="selectedColumns" class="w-32"
           >ستون‌ها</CheckboxDropdown
         >
       </header>
-      <div class="relative max-w-none min-w-0 flex-auto overflow-auto pb-7">
-        <table class="w-full table-fixed">
+      <div> <table class="w-8/10 mx-auto table-fixed rounded-lg overflow-hidden" dir="rtl">
           <GridHeader :columns="columns" />
-          <tbody class="divide-y divide-cyan-200 dark:divide-slate-600 bg-white dark:bg-slate-800">
+          <tbody class="divide-y divide-gray-200 dark:divide-gray-700 bg-white dark:bg-gray-900 rounded-b-lg">
             <template v-for="(item, itemIndex) in items" :key="item.id">
               <GridUnitRow
                 v-if="item.type === 'unit'"
@@ -75,9 +74,9 @@
               />
             </template>
           </tbody>
-        </table>
-      </div>
-      <footer class="h-12 shrink-0 border-t border-cyan-200 dark:border-slate-600 bg-gradient-to-r from-cyan-100 to-blue-100 dark:from-slate-700 dark:to-slate-600 rounded-b-2xl"></footer>
+        </table></div>
+     
+      <footer class="h-12 shrink-0 mt-auto border-t border-blue-300/60 dark:border-blue-400/30 bg-blue-300/40 dark:bg-blue-400/15 backdrop-blur backdrop-saturate-150 supports-[backdrop-filter]:bg-blue-300/30 dark:supports-[backdrop-filter]:bg-blue-400/20 rounded-b-2xl"></footer>
     </div>
   </div>
 </template>
