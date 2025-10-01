@@ -208,11 +208,11 @@ function onSubmit() {
         ><span class="text-sm font-bold">{{ transformationLabel }}</span
         ><ChevronsUpDown class="h-4 w-4"
       /></CollapsibleTrigger>
-      <div class="pointer-events-none absolute inset-0 flex justify-end">
-        <div class="pointer-events-auto mr-8 flex items-center gap-1">
-          <Switch v-model="enabled" />
-          <Button variant="ghost" size="sm" @click="emit('delete')">
-            <Trash2Icon />
+      <div class="pointer-events-none absolute inset-y-0 right-100 flex justify-end items-center">
+        <div class="pointer-events-auto mr-8 flex items-center gap-2">
+          <Switch v-model="enabled" class="shrink-0" />
+          <Button variant="ghost" size="sm" class="shrink-0" @click="emit('delete')">
+            <Trash2Icon class="h-4 w-4" />
           </Button>
         </div>
       </div>

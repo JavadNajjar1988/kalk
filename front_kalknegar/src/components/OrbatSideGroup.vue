@@ -204,15 +204,15 @@ const onUnitAction = (unit: NUnit, action: UnitAction) => {
 };
 </script>
 <template>
-  <div>
+  <div class="text-xs">
     <header
-      class="group relative mt-1 flex items-center justify-between py-0"
+      class="group relative mt-0.5 flex items-center justify-between py-0"
       :class="isDragging ? 'opacity-20' : ''"
       ref="dropRef"
       :id="`osg-${group.id}`"
     >
       <IconDrag
-        class="h-6 w-6 cursor-move text-gray-400 group-focus-within:opacity-100 group-hover:opacity-100 sm:-ml-3 sm:opacity-0"
+        class="h-4 w-4 cursor-move text-gray-400 group-focus-within:opacity-100 group-hover:opacity-100 sm:-ml-3 sm:opacity-0"
         ref="dragRef"
       />
       <div class="flex flex-auto items-center">
@@ -221,19 +221,19 @@ const onUnitAction = (unit: NUnit, action: UnitAction) => {
           class="flex w-full items-center justify-between text-left"
         >
           <span
-            class="text-sm font-medium text-gray-800 hover:text-gray-900 dark:text-gray-300"
+            class="text-xs font-medium text-gray-800 hover:text-gray-900 dark:text-gray-300"
           >
             {{ group.name || "واحدها" }}
           </span>
           <ChevronUpIcon
             :class="isOpen ? 'rotate-180 transform' : ''"
-            class="size-5 text-gray-400 group-hover:text-gray-900"
+            class="size-4 text-gray-400 group-hover:text-gray-900"
           />
         </button>
       </div>
       <IconLockOutline
         v-if="isLocked"
-        class="size-5 text-gray-400"
+        class="size-4 text-gray-400"
         :class="isSideLocked ? 'opacity-40' : ''"
       />
       <button
@@ -245,8 +245,8 @@ const onUnitAction = (unit: NUnit, action: UnitAction) => {
         @click="onSideGroupAction(group, isHidden ? SideActions.Show : SideActions.Hide)"
         :disabled="isSideHidden"
       >
-        <IconEyeOff v-if="isHidden" class="h-5 w-5" />
-        <IconEye class="h-5 w-5" v-else />
+        <IconEyeOff v-if="isHidden" class="h-4 w-4" />
+        <IconEye class="h-4 w-4" v-else />
       </button>
       <SideGroupDropdownMenu
         :is-locked="isLocked"
@@ -272,7 +272,7 @@ const onUnitAction = (unit: NUnit, action: UnitAction) => {
       <OrbatTree
         :units="group.subUnits"
         :unit-map="state.unitMap"
-        class="mt-0"
+        class="mt-0 text-[10px]"
         :class="{ 'opacity-50': isHidden }"
         :filter-query="filterQuery"
         :location-filter="hasLocationFilter"
@@ -282,7 +282,7 @@ const onUnitAction = (unit: NUnit, action: UnitAction) => {
       />
       <div
         v-if="!group.subUnits.length"
-        class="mr-4 flex justify-center border-2 border-dashed border-gray-300 p-8"
+        class="mr-2 flex justify-center border-2 border-dashed border-gray-300 p-4 text-xs"
       >
         <SecondaryButton @click="addGroupUnit(group)">افزودن واحد ریشه</SecondaryButton>
       </div>

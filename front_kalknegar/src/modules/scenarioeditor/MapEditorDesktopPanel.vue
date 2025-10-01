@@ -1,20 +1,20 @@
 <template>
   <aside
-    class="pointer-events-auto relative hidden max-h-[80vh] overflow-auto rounded-2xl md:block bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border border-border shadow-xl mt-2 text-right"
+    class="pointer-events-auto relative hidden max-h-[80vh] overflow-auto rounded-2xl md:block bg-blue-300/40 dark:bg-blue-400/15 backdrop-blur-md backdrop-saturate-150 supports-[backdrop-filter]:bg-blue-300/30 dark:supports-[backdrop-filter]:bg-blue-400/20 border border-blue-300/60 dark:border-blue-400/30 shadow-xl mt-2 text-right"
     dir="rtl"
     :style="{ width: orbatPanelWidth + 'px' }"
   >
     <TabGroup
       as="div"
-      class="hover-none:mr-3 bg-transparent text-foreground mr-1.5 flex h-full flex-auto flex-col"
+      class="bg-transparent text-foreground flex h-full flex-auto flex-col"
       :class="{ hidden: !showBottomPanel }"
       :selected-index="activeTabIndex"
       @change="changeTab"
     >
       <TabList
-        class="flex flex-0 justify-between border-b border-border bg-muted/40 rounded-t-2xl rtl:flex-row-reverse"
+        class="flex flex-0 w-full justify-between border-b rounded-t-2xl rtl:flex-row-reverse bg-blue-300/30 dark:bg-blue-400/10 backdrop-blur-sm border-blue-300/50 dark:border-blue-400/30"
       >
-        <div class="flex flex-auto items-center justify-evenly">
+        <div class="flex items-center gap-1 w-full">
           <Tab
             as="template"
             v-for="tab in ['آرایش نبرد', 'رویدادها', 'لایه‌ها', 'فیلتر']"
@@ -24,9 +24,9 @@
             <button
               :class="[
                 selected
-                  ? 'text-primary border-b-2 border-primary bg-background/70'
-                  : 'text-muted-foreground hover:text-foreground',
-                'w-1/2 px-2.5 py-2.5 text-center text-[0.9rem] font-medium rounded-t-lg transition-all duration-200',
+                  ? 'text-blue-900 dark:text-blue-100 border-b-2 border-blue-300/60 dark:border-blue-400/30 bg-blue-300/30 dark:bg-blue-400/10 backdrop-blur-sm'
+                  : 'text-muted-foreground hover:text-foreground hover:bg-blue-300/20 dark:hover:bg-blue-400/10',
+                'flex-1 px-2 py-1.5 text-center text-xs font-medium rounded-t-lg transition-all duration-200',
               ]"
             >
               {{ tab }}
@@ -35,15 +35,15 @@
         </div>
         <CloseButton @click="emit('close')" class="mt-1 mr-1" />
       </TabList>
-      <TabPanels class="flex-auto overflow-y-auto bg-transparent">
+      <TabPanels class="flex-auto overflow-y-auto bg-transparent text-xs">
         <TabPanel :unmount="false" class="pb-10">
           <OrbatPanel />
         </TabPanel>
-        <TabPanel class="p-4 pb-10">
+        <TabPanel class="p-2 pb-6">
           <ScenarioEventsPanel @event-click="onEventClick" />
         </TabPanel>
-        <TabPanel class="p-4 pb-10"><ScenarioLayersTabPanel /></TabPanel>
-        <TabPanel :unmount="false"><ScenarioFiltersTabPanel /></TabPanel>
+        <TabPanel class="p-2 pb-6"><ScenarioLayersTabPanel /></TabPanel>
+        <TabPanel :unmount="false" class="p-2 pb-6"><ScenarioFiltersTabPanel /></TabPanel>
       </TabPanels>
     </TabGroup>
     <PanelResizeHandle

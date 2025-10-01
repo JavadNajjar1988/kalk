@@ -10,31 +10,31 @@
         leave-from="opacity-100"
         leave-to="opacity-0"
       >
-        <div class="fixed inset-0 bg-gray-500/50 transition-opacity"></div>
+        <div class="fixed inset-0 bg-transparent transition-opacity"></div>
       </TransitionChild>
 
-      <div class="fixed inset-0 z-10 overflow-y-auto p-4 sm:p-6 md:p-20">
+      <div class="fixed top-10 left-0 right-0 z-10 overflow-y-auto p-4 sm:p-6 md:p-20 flex items-start justify-center">
         <TransitionChild
           as="template"
           enter="ease-out duration-300"
-          enter-from="opacity-0 scale-95"
-          enter-to="opacity-100 scale-100"
+          enter-from="opacity-0 scale-95 -translate-y-4"
+          enter-to="opacity-100 scale-100 translate-y-0"
           leave="ease-in duration-200"
-          leave-from="opacity-100 scale-100"
-          leave-to="opacity-0 scale-95"
+          leave-from="opacity-100 scale-100 translate-y-4"
+          leave-to="opacity-0 scale-95 -translate-y-4"
         >
           <DialogPanel
-            class="ring-opacity-5 mx-auto max-w-xl transform divide-y divide-gray-100 overflow-hidden rounded-xl bg-white shadow-2xl ring-1 ring-black transition-all"
-            :class="isGeoSearch && 'bg-red-500'"
+            class="ring-opacity-5 mx-auto max-w-xl transform divide-y divide-cyan-200/30 overflow-hidden rounded-2xl shadow-2xl ring-1 ring-cyan-300/30 transition-all backdrop-blur-xl backdrop-saturate-150"
+            :class="isGeoSearch ? 'bg-red-500/20' : 'bg-cyan-50/20 dark:bg-cyan-900/20'"
           >
             <Combobox @update:modelValue="onSelect">
               <div class="relative">
                 <MagnifyingGlass
-                  class="pointer-events-none absolute top-3.5 left-4 h-5 w-5 text-gray-400"
+                  class="pointer-events-none absolute top-3.5 left-4 h-5 w-5 text-cyan-600 dark:text-cyan-400"
                   aria-hidden="true"
                 />
                 <ComboboxInput
-                  class="h-12 w-full border-0 bg-transparent pr-4 pl-11 text-gray-900 placeholder:text-gray-400 focus:ring-0 sm:text-sm"
+                  class="h-12 w-full border-0 bg-transparent pr-4 pl-11 text-cyan-800 dark:text-cyan-200 placeholder:text-cyan-500 dark:placeholder:text-cyan-400 focus:ring-0 sm:text-sm"
                   placeholder="جستجو..."
                   @change="rawQuery = $event.target.value"
                 />

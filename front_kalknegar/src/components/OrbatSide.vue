@@ -223,29 +223,29 @@ const toggleOpen = () => {
     <header
       ref="dropRef"
       :id="`os-${side.id}`"
-      class="group relative -mr-4 flex items-center justify-between border-t-2 border-b-2 border-gray-300 bg-gray-200/80 backdrop-blur-sm py-1 pr-3 dark:border-gray-600 dark:bg-gray-700/70"
+      class="group relative -mr-4 flex items-center justify-between border-t-2 border-b-2 border-gray-300 bg-gray-200/80 backdrop-blur-sm py-0.5 pr-2 dark:border-gray-600 dark:bg-gray-700/70 rounded-xl"
     >
       <button
         @click="toggleOpen"
         class="flex w-full items-center justify-between text-right"
       >
-        <span class="text-sm font-semibold text-gray-900 dark:text-gray-200">
+        <span class="text-xs font-semibold text-gray-900 dark:text-gray-200">
           {{ side.name }}
         </span>
         <ChevronUpIcon
           :class="isOpen ? 'rotate-180 transform' : ''"
-          class="size-5 text-gray-400 group-hover:text-gray-900"
+          class="size-4 text-gray-400 group-hover:text-gray-900"
         />
       </button>
-      <div class="flex items-center gap-2 pl-2">
+      <div class="flex items-center gap-1 pl-1">
         <button
           type="button"
           class="flex-none text-gray-400 hover:text-gray-700"
           title="تغییر وضعیت نمایش"
           @click="onSideAction(isHidden ? SideActions.Show : SideActions.Hide)"
         >
-          <IconEyeOff v-if="isHidden" class="h-5 w-5" />
-          <IconEye class="h-5 w-5" v-else />
+          <IconEyeOff v-if="isHidden" class="h-4 w-4" />
+          <IconEye class="h-4 w-4" v-else />
         </button>
         <Toggle
           v-if="!hideFilter"
@@ -255,10 +255,10 @@ const toggleOpen = () => {
           class="flex-none text-gray-400 hover:text-gray-900"
         >
           <span class="sr-only">تغییر فیلتر آرایش نبرد</span>
-          <IconFilterVariantPlus v-if="pressed" class="h-5 w-5" aria-hidden="true" />
-          <IconFilterVariant v-else class="h-5 w-5" aria-hidden="true" />
+          <IconFilterVariantPlus v-if="pressed" class="h-4 w-4" aria-hidden="true" />
+          <IconFilterVariant v-else class="h-4 w-4" aria-hidden="true" />
         </Toggle>
-        <IconLockOutline v-if="isLocked" class="size-5 text-gray-400" />
+        <IconLockOutline v-if="isLocked" class="size-4 text-gray-400" />
         <SideDropdownMenu
           @action="onSideAction"
           :is-locked="isLocked"
@@ -269,7 +269,7 @@ const toggleOpen = () => {
           class="flex-none cursor-grab active:cursor-grabbing text-gray-500 hover:text-gray-700"
           title="جابجایی"
         >
-          <IconDrag class="size-5" />
+          <IconDrag class="size-4" />
         </span>
       </div>
       <TreeDropIndicator v-if="instruction" :instruction="instruction" class="z-10" />
@@ -281,7 +281,7 @@ const toggleOpen = () => {
       class="-mr-6"
     />
     <div v-show="isOpen">
-      <div v-if="showFilter" class="mt-4 ml-10">
+      <div v-if="showFilter" class="mt-2 ml-6">
         <FilterQueryInput
           v-model="filterQuery"
           v-model:location-filter="hasLocationFilter"

@@ -13,7 +13,6 @@ import {
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { ChevronDownIcon } from "@heroicons/vue/20/solid";
 import { useUiStore } from "@/stores/uiStore";
 import { LANDING_PAGE_ROUTE } from "@/router/names";
 
@@ -25,6 +24,7 @@ import { useMeasurementsStore } from "@/stores/geoStore";
 import { breakpointsTailwind, useBreakpoints } from "@vueuse/core";
 import { injectStrict } from "@/utils";
 import { activeScenarioKey } from "@/components/injects";
+import { Bars3Icon } from "@heroicons/vue/24/outline";
 
 const breakpoints = useBreakpoints(breakpointsTailwind);
 const isMobile = breakpoints.smallerOrEqual("md");
@@ -48,18 +48,17 @@ const { measurementUnit } = storeToRefs(useMeasurementsStore());
 </script>
 
 <template>
-  <DropdownMenu>
-    <DropdownMenuTrigger as="div" dir="rtl" class="bg-white dark:bg-slate-700 relative rounded-lg px-3 py-1.5 transition-all duration-200 hover:bg-gray-50 dark:hover:bg-slate-600 border border-gray-200 dark:border-slate-600">
-      <button class="group flex items-center">
-        
-        <span class="mr-2 hidden font-medium tracking-tight text-slate-700 dark:text-slate-200 sm:block">کالک نگار</span>
-        <ChevronDownIcon
-          class="mr-1 h-5 w-5 text-slate-600 dark:text-slate-300 group-hover:text-slate-800 dark:group-hover:text-slate-100 transition-colors duration-200"
-          aria-hidden="true"
-        />
-      </button>
-    </DropdownMenuTrigger>
-    <DropdownMenuContent class="text-right" align="end" :side-offset="10" dir="rtl">
+  <div class="flex items-center">
+    <DropdownMenu>
+      <DropdownMenuTrigger as="button" dir="rtl" class="relative inline-flex items-center justify-center rounded-lg p-1.5 text-slate-600 dark:text-slate-300 hover:bg-gray-100 dark:hover:bg-slate-600 focus:ring-2 focus:ring-white focus:outline-hidden focus:ring-inset">
+        <Bars3Icon class="h-5 w-5" />
+      </DropdownMenuTrigger>
+      <DropdownMenuContent
+        class="text-right bg-blue-300/40 dark:bg-blue-400/15 backdrop-blur backdrop-saturate-150 border border-blue-300/60 dark:border-blue-400/30 rtl:mr-2"
+        align="end"
+        :side-offset="12"
+        dir="rtl"
+      >
       <DropdownMenuItem as-child>
         <router-link :to="{ name: LANDING_PAGE_ROUTE }" class="font-medium flex w-full justify-end text-right"
           >خانه
@@ -73,7 +72,7 @@ const { measurementUnit } = storeToRefs(useMeasurementsStore());
       <DropdownMenuSeparator />
       <DropdownMenuSub>
         <DropdownMenuSubTrigger>فایل</DropdownMenuSubTrigger>
-        <DropdownMenuSubContent>
+        <DropdownMenuSubContent side="left" align="start" class="bg-blue-300/40 dark:bg-blue-400/15 backdrop-blur backdrop-saturate-150 border border-blue-300/60 dark:border-blue-400/30">
           <DropdownMenuItem @select="emit('action', 'exportJson')"
             >دانلود سناریو
           </DropdownMenuItem>
@@ -111,7 +110,7 @@ const { measurementUnit } = storeToRefs(useMeasurementsStore());
       </DropdownMenuSub>
       <DropdownMenuSub>
         <DropdownMenuSubTrigger><span>ویرایش</span></DropdownMenuSubTrigger>
-        <DropdownMenuSubContent>
+        <DropdownMenuSubContent side="left" align="start">
           <DropdownMenuItem @select="undo()" :disabled="!canUndo">
             بازگردانی
             <DropdownMenuShortcut class="mr-4">Ctrl/⌘ Z</DropdownMenuShortcut>
@@ -124,7 +123,7 @@ const { measurementUnit } = storeToRefs(useMeasurementsStore());
       </DropdownMenuSub>
       <DropdownMenuSub>
         <DropdownMenuSubTrigger><span>نمایش</span></DropdownMenuSubTrigger>
-        <DropdownMenuSubContent>
+        <DropdownMenuSubContent side="left" align="start">
           <DropdownMenuCheckboxItem v-model="uiSettings.showToolbar" @select.prevent
             >نوار ابزار نقشه
           </DropdownMenuCheckboxItem>
@@ -154,9 +153,9 @@ const { measurementUnit } = storeToRefs(useMeasurementsStore());
           </DropdownMenuCheckboxItem>
           <DropdownMenuSub>
             <DropdownMenuSubTrigger inset
-              ><span class="pr-4">واحدهای اندازه‌گیری</span></DropdownMenuSubTrigger
+              ><span class="pr0">واحدهای اندازه‌گیری</span></DropdownMenuSubTrigger
             >
-            <DropdownMenuSubContent>
+            <DropdownMenuSubContent side="left" align="start" :side-offset="-300">
               <DropdownMenuRadioGroup v-model="measurementUnit">
                 <DropdownMenuRadioItem value="metric" @select.prevent
                   >متریک
@@ -172,7 +171,7 @@ const { measurementUnit } = storeToRefs(useMeasurementsStore());
           </DropdownMenuSub>
           <DropdownMenuSub>
             <DropdownMenuSubTrigger inset>فرمت مختصات</DropdownMenuSubTrigger>
-            <DropdownMenuSubContent>
+            <DropdownMenuSubContent side="left" align="start">
               <DropdownMenuRadioGroup v-model="coordinateFormat">
                 <DropdownMenuRadioItem value="DegreeMinuteSeconds" @select.prevent
                   >درجه، دقیقه، ثانیه
@@ -191,13 +190,15 @@ const { measurementUnit } = storeToRefs(useMeasurementsStore());
       <DropdownMenuSeparator />
       <DropdownMenuSub>
         <DropdownMenuSubTrigger>ابزارها</DropdownMenuSubTrigger>
-        <DropdownMenuSubContent>
+        <DropdownMenuSubContent side="left" align="start">
           <DropdownMenuItem @select="emit('action', 'browseSymbols')"
             >مرور نمادها
           </DropdownMenuItem>
         </DropdownMenuSubContent>
       </DropdownMenuSub>
      
-    </DropdownMenuContent>
-  </DropdownMenu>
+      </DropdownMenuContent>
+    </DropdownMenu>
+    <span class="mr-2 hidden font-medium tracking-tight text-slate-700 dark:text-slate-200 sm:block">کالک نگار</span>
+  </div>
 </template>

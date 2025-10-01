@@ -29,6 +29,7 @@ const expandedKeys = defineModel<string[]>("expandedKeys");
     :items="tree"
     :get-key="(item) => item.key"
     v-model:expanded="expandedKeys"
+    dir="rtl"
   >
     <TreeItem
       v-for="item in flattenItems"
@@ -56,7 +57,7 @@ const expandedKeys = defineModel<string[]>("expandedKeys");
         </button>
       </template>
       <span v-else class="h-6 w-6" />
-      <div class="flex w-full items-center justify-between pl-0">
+      <div class="flex w-full items-center justify-between pl-0 pr-0">
         <div class="flex cursor-pointer items-center gap-1">
           <MilitarySymbol
             :sidc="item.value.sidc"

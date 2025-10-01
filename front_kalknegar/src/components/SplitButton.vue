@@ -42,12 +42,12 @@ const onClick = (item: ButtonGroupItem) => {
 </script>
 
 <template>
-  <div class="flex items-center">
+  <div class="flex items-center" dir="rtl">
     <Button
       variant="outline"
       @click="onClick(activeItemRef)"
       :disabled="activeItemRef.disabled"
-      class="rounded-r-none text-left ring-inset"
+      class="rounded-l-none text-right ring-inset"
       :title="activeItemRef.label"
     >
       <span :class="cn('truncate', triggerClass)">{{ activeItemRef.label }}</span>
@@ -57,7 +57,7 @@ const onClick = (item: ButtonGroupItem) => {
         <Button
           variant="outline"
           size="icon"
-          class="rounded-l-none border-l-0 px-2 ring-inset"
+          class="rounded-r-none border-r-0 px-2 ring-inset"
           ><ChevronDown
         /></Button>
       </DropdownMenuTrigger>

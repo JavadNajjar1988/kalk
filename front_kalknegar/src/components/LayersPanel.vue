@@ -13,8 +13,8 @@
       لایه‌های دیگر
     </p>
 
-    <div class="mt-4 overflow-hidden rounded-md bg-white shadow-sm">
-      <ul class="divide-y divide-gray-200">
+    <div class="mt-4 overflow-hidden rounded-2xl border border-blue-400/30 dark:border-blue-500/30 bg-blue-400/10 supports-[backdrop-filter]:bg-blue-400/15 backdrop-blur-md shadow-sm">
+      <ul class="divide-y divide-blue-400/30 dark:divide-blue-500/30">
         <li v-for="layer in vectorLayers" :key="layer.id" class="px-6 py-4">
           <div class="flex items-center justify-between">
             <p class="flex-auto truncate text-sm">{{ layer.title }}</p>

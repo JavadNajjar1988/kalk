@@ -300,7 +300,7 @@ function handleNextEditedId(mode: ToeMode, itemId: string) {
 <template>
   <Tabs v-model="uiStore.toeTabIndex" class="w-full gap-0" :unmountOnHide="false">
     <div class="-mx-4">
-      <TabsList class="border-border h-12 w-full rounded-none border-b px-4 py-1">
+      <TabsList class="border-border h-12 w-full rounded-2xl overflow-hidden border px-4 py-1">
         <TabsTrigger
           v-for="(lbl, k) in ['تجهیزات', 'پرسنل', 'تدارکات']"
           :key="lbl"

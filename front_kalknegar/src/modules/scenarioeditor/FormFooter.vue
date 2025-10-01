@@ -29,7 +29,7 @@ const uiStore = useUiStore();
       </button>
       <button
         type="submit"
-        class="rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-2xs hover:bg-indigo-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+        class="rounded-md bg-blue-300/60 dark:bg-blue-400/30 backdrop-blur px-3 py-2 text-sm font-semibold text-blue-900 dark:text-blue-50 shadow-2xs hover:bg-blue-300/70 dark:hover:bg-blue-400/40 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-300"
       >
         {{ submitLabel }}
       </button>

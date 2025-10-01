@@ -78,14 +78,15 @@ function updateAverageSpeed(data: UnitPropertyUpdate) {
 </script>
 <template>
   <section class="prose mt-4">
-    <table class="w-full divide-y divide-gray-300">
-      <thead>
+    <div class="rounded-2xl border border-white/15 bg-white/5 backdrop-blur-md shadow-md overflow-hidden">
+      <table class="w-full">
+      <thead class="bg-white/5">
         <tr>
           <th>ویژگی واحد</th>
           <th class="w-36">مقدار</th>
         </tr>
       </thead>
-      <tbody class="divide-y divide-gray-200 bg-white">
+      <tbody class="divide-y divide-white/10 bg-transparent">
         <tr>
           <td>سرعت متوسط</td>
           <td
@@ -116,6 +117,7 @@ function updateAverageSpeed(data: UnitPropertyUpdate) {
           </td>
         </tr>
       </tbody>
-    </table>
+      </table>
+    </div>
   </section>
 </template>

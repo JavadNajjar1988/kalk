@@ -32,12 +32,12 @@ const cols = computed(() => props.table.getAllLeafColumns());
         </button>
       </div>
     </DropdownMenuTrigger>
-    <DropdownMenuContent class="" align="end">
+    <DropdownMenuContent class="text-right" align="end" dir="rtl">
       <DropdownMenuLabel>منوی جدول</DropdownMenuLabel>
       <DropdownMenuSeparator />
       <DropdownMenuSub>
         <DropdownMenuSubTrigger>ستون‌ها</DropdownMenuSubTrigger>
-        <DropdownMenuSubContent>
+        <DropdownMenuSubContent class="text-right" dir="rtl">
           <template
             v-for="col in cols.filter((c) => typeof c.columnDef.header === 'string')"
           >

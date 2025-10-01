@@ -24,7 +24,7 @@ const nsettings = computed(() => [...props.settings]);
 <template>
   <RadioGroup v-model="selected">
     <RadioGroupLabel class="sr-only">انتخاب لایه نقشه پایه</RadioGroupLabel>
-    <div class="-space-y-px rounded-md bg-white">
+    <div class="-space-y-px rounded-2xl border border-blue-400/30 dark:border-blue-500/30 bg-blue-400/10 supports-[backdrop-filter]:bg-blue-400/15 backdrop-blur-md">
       <RadioGroupOption
         as="template"
         v-for="(setting, settingIdx) in nsettings"
@@ -34,17 +34,17 @@ const nsettings = computed(() => [...props.settings]);
       >
         <div
           :class="[
-            settingIdx === 0 ? 'rounded-tl-md rounded-tr-md' : '',
-            settingIdx === settings.length - 1 ? 'rounded-br-md rounded-bl-md' : '',
-            checked ? 'z-10 border-indigo-200 bg-indigo-50' : 'border-gray-200',
+            settingIdx === 0 ? 'rounded-tl-2xl rounded-tr-2xl' : '',
+            settingIdx === settings.length - 1 ? 'rounded-br-2xl rounded-bl-2xl' : '',
+            checked ? 'z-10 border-blue-400/40 bg-blue-400/15' : 'border-blue-400/30',
             'relative flex cursor-pointer border p-4 focus:outline-hidden',
           ]"
         >
           <span
             class="shrink-0"
             :class="[
-              checked ? 'border-transparent bg-indigo-600' : 'border-gray-300 bg-white',
-              active ? 'ring-2 ring-indigo-500 ring-offset-2' : '',
+              checked ? 'border-transparent bg-blue-500' : 'border-blue-300 bg-white/80',
+              active ? 'ring-2 ring-blue-400 ring-offset-2' : '',
               'mt-0.5 flex h-4 w-4 cursor-pointer items-center justify-center rounded-full border',
             ]"
             aria-hidden="true"
@@ -55,8 +55,7 @@ const nsettings = computed(() => [...props.settings]);
             <RadioGroupLabel
               as="div"
               :class="[
-                checked ? 'text-indigo-900' : 'text-gray-900',
-                'flex items-center justify-between text-sm font-medium',
+                'flex items-center justify-between text-sm font-medium text-foreground',
               ]"
             >
               <div class="">
@@ -77,7 +76,7 @@ const nsettings = computed(() => [...props.settings]);
             </RadioGroupLabel>
             <RadioGroupDescription
               as="span"
-              :class="[checked ? 'text-indigo-700' : 'text-gray-500', 'block text-sm']"
+              :class="[checked ? 'text-foreground/80' : 'text-muted-foreground', 'block text-sm']"
             >
               {{ setting.description || "" }}
             </RadioGroupDescription>

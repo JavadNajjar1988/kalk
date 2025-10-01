@@ -15,24 +15,24 @@ export function useToeEditableItems<T>() {
 
 export function createToeTableColumns() {
   const columns: ColumnDef<EUnitEquipment | EUnitPersonnel>[] = [
-    { id: "name", header: "Name", accessorKey: "name", size: 120 },
+    { id: "name", header: "نام", accessorKey: "name", size: 120 },
     {
       id: "assigned",
-      header: "Asgd.",
+      header: "تخصیص",
       accessorKey: "count",
       size: 80,
       meta: { align: "right" },
     },
     {
       id: "onHand",
-      header: "Avail.",
+      header: "موجود",
       accessorKey: "onHand",
       size: 80,
       meta: { align: "right" },
     },
     {
       id: "percentage",
-      header: "%",
+      header: "درصد",
       accessorFn: (f) => asPercent(f),
       size: 80,
       meta: { align: "right" },

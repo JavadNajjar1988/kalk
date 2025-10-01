@@ -405,7 +405,7 @@ function onContextMenuAction(action: string, options?: Record<string, any>) {
   >
     <div
       ref="el"
-      class="bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-border mb-2 w-full sm:max-w-3xl lg:max-w-5xl mx-auto transform overflow-hidden border rounded-xl shadow text-xs transition-all select-none relative text-foreground"
+      class="mb-2 w-full sm:max-w-5xl lg:max-w-7xl mx-auto transform overflow-hidden rounded-2xl shadow-xl text-xs transition-all select-none relative text-foreground backdrop-blur-md bg-blue-400/10 supports-[backdrop-filter]:bg-blue-400/15 border border-blue-400/30 dark:border-blue-500/30"
       style="direction: ltr; text-align: left;"
       @pointerdown="onPointerDown"
       @pointerup="onPointerUp"
@@ -417,7 +417,7 @@ function onContextMenuAction(action: string, options?: Record<string, any>) {
       @contextmenu="onContextMenu"
     >
       <div class="bg-muted/60 flex h-6 items-center justify-center overflow-clip">
-        <IconTriangleDown class="h-5 w-5 scale-x-150 transform text-primary" />
+        <IconTriangleDown class="h-5 w-5 scale-x-150 transform text-gray-600 dark:text-gray-300" />
       </div>
       <div
         class="touch-none text-sm select-none will-change-transform"

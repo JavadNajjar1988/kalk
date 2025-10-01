@@ -70,4 +70,53 @@ onUnmounted(() => {
 .ol-zoom {
   @apply top-[unset] right-2 bottom-12 left-[unset] sm:bottom-10;
 }
+
+.ol-zoom-in,
+.ol-zoom-out {
+  @apply border shadow-lg;
+  border-radius: 12px;
+  background-color: rgba(236, 254, 255, 0.25);
+  border-color: rgba(34, 211, 238, 0.5);
+  color: rgb(21, 94, 117);
+  backdrop-filter: blur(16px) saturate(180%);
+  -webkit-backdrop-filter: blur(16px) saturate(180%);
+  transition: all 0.2s ease;
+}
+
+.dark .ol-zoom-in,
+.dark .ol-zoom-out {
+  background-color: rgba(6, 78, 59, 0.25);
+  border-color: rgba(34, 211, 238, 0.4);
+  color: rgb(153, 246, 228);
+}
+
+.ol-zoom-in:hover,
+.ol-zoom-out:hover {
+  background-color: rgba(236, 254, 255, 0.4);
+  border-color: rgba(34, 211, 238, 0.7);
+  transform: scale(1.05);
+}
+
+.dark .ol-zoom-in:hover,
+.dark .ol-zoom-out:hover {
+  background-color: rgba(6, 78, 59, 0.4);
+  border-color: rgba(34, 211, 238, 0.6);
+}
+
+.ol-attribution {
+  @apply border shadow-lg;
+  border-radius: 12px;
+  background-color: rgba(236, 254, 255, 0.25);
+  border-color: rgba(34, 211, 238, 0.5);
+  color: rgb(21, 94, 117);
+  backdrop-filter: blur(16px) saturate(180%);
+  -webkit-backdrop-filter: blur(16px) saturate(180%);
+  transition: all 0.2s ease;
+}
+
+.dark .ol-attribution {
+  background-color: rgba(6, 78, 59, 0.25);
+  border-color: rgba(34, 211, 238, 0.4);
+  color: rgb(153, 246, 228);
+}
 </style>

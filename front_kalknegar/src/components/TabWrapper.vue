@@ -60,23 +60,23 @@ onMounted(() => {
   <TabGroup :selected-index="tabIndex" @change="changeTab" class="-mx-4 mt-2" as="div">
     <div class="relative h-10 overflow-hidden border-b-2">
       <button
-        class="bg-mpanel absolute inset-y-0 left-0 hover:text-gray-800 disabled:pointer-events-none disabled:opacity-0"
-        :disabled="startMarkerIsVisible"
+        class="bg-mpanel absolute inset-y-0 left-0 rounded-l-xl disabled:pointer-events-none disabled:opacity-0"
+        :disabled="endMarkerIsVisible"
         aria-label="اسکرول به چپ"
         @click="x -= 100"
       >
         <ChevronLeftIcon class="mx-2 h-6 w-6 text-gray-600" />
       </button>
       <button
-        class="bg-mpanel absolute inset-y-0 right-0 disabled:pointer-events-none disabled:opacity-0"
-        :disabled="endMarkerIsVisible"
+        class="bg-mpanel absolute inset-y-0 right-0 rounded-r-xl hover:text-gray-800 disabled:pointer-events-none disabled:opacity-0"
+        :disabled="startMarkerIsVisible"
         aria-label="اسکرول به راست"
         @click="x += 100"
       >
         <ChevronRightIcon class="mx-2 h-6 w-6 text-gray-600 hover:text-gray-800" />
       </button>
 
-      <div class="h-20 overflow-x-auto" ref="scrollRef">
+      <div class="h-20 overflow-x-auto" ref="scrollRef" dir="rtl">
         <TabList class="mb-2 flex space-x-3 border-b-2 px-6" v-slot="{ selectedIndex }">
           <div ref="startTarget" class="-mr-3 flex-none" />
           <Tab
@@ -97,7 +97,7 @@ onMounted(() => {
       </div>
     </div>
 
-    <TabPanels class="w-full overflow-auto px-4">
+    <TabPanels class="w-full overflow-auto px-4" dir="rtl">
       <slot />
     </TabPanels>
   </TabGroup>

@@ -517,9 +517,10 @@ function expandAllIcons() {
   <div class="px-4">
     <header
       class="bg-sidebar sticky top-0 z-10 -mx-4 flex h-12 items-center justify-between px-4 py-2"
+      dir="rtl"
     >
       <PanelHeading>انتخاب واحدها</PanelHeading>
-      <div class="flex items-center space-x-1">
+      <div class="flex items-center space-x-1 rtl:space-x-reverse">
         <Button
           v-if="excludedKeys.size"
           variant="outline"
@@ -538,7 +539,7 @@ function expandAllIcons() {
         >
       </div>
     </header>
-    <NewAccordionPanel label="سطح فرماندهی">
+    <NewAccordionPanel label="سطح فرماندهی" dir="rtl">
       <FilterTree
         :tree="emtTree"
         v-model:expandedKeys="expandedKeys"
@@ -551,7 +552,7 @@ function expandAllIcons() {
         @clearExclude="excludedKeys.delete($event)"
       />
     </NewAccordionPanel>
-    <NewAccordionPanel label="آیکون واحد اصلی" default-open>
+    <NewAccordionPanel label="آیکون واحد اصلی" default-open dir="rtl">
       <template #header
         ><IconButton title="باز کردن همه" @click.stop="expandAllIcons()"
           ><IconExpandAllOutline /></IconButton
@@ -568,7 +569,7 @@ function expandAllIcons() {
         @clearExclude="excludedKeys.delete($event)"
       />
     </NewAccordionPanel>
-    <NewAccordionPanel label="طرف">
+    <NewAccordionPanel label="طرف" dir="rtl">
       <FilterTree
         :tree="sideTree"
         v-model:expandedKeys="expandedKeys"
@@ -581,7 +582,7 @@ function expandAllIcons() {
         @clearExclude="excludedKeys.delete($event)"
       />
     </NewAccordionPanel>
-    <NewAccordionPanel label="هویت استاندارد">
+    <NewAccordionPanel label="هویت استاندارد" dir="rtl">
       <FilterTree
         :tree="sidTree"
         v-model:expandedKeys="expandedKeys"
@@ -594,7 +595,7 @@ function expandAllIcons() {
         @clearExclude="excludedKeys.delete($event)"
       />
     </NewAccordionPanel>
-    <NewAccordionPanel label="وضعیت">
+    <NewAccordionPanel label="وضعیت" dir="rtl">
       <FilterTree
         :tree="statusTree"
         v-model:expandedKeys="expandedKeys"
@@ -607,7 +608,7 @@ function expandAllIcons() {
         @clearExclude="excludedKeys.delete($event)"
       />
     </NewAccordionPanel>
-    <NewAccordionPanel label="تغییردهنده‌های نماد">
+    <NewAccordionPanel label="تغییردهنده‌های نماد" dir="rtl">
       <FilterTree
         :tree="modifierTree"
         v-model:expandedKeys="expandedKeys"

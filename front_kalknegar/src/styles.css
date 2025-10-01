@@ -207,7 +207,7 @@
 }
 
 .dashboard-header {
-  @apply fixed top-0 left-0 right-0 z-50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b border-border;
+  @apply fixed top-0 left-0 right-0 z-50 bg-blue-300/40 dark:bg-blue-400/15 backdrop-blur backdrop-saturate-150 supports-[backdrop-filter]:bg-blue-300/30 dark:supports-[backdrop-filter]:bg-blue-400/20 border-b border-blue-300/60 dark:border-blue-400/30;
 }
 
 .dashboard-sidebar {
@@ -253,7 +253,7 @@
 }
 
 .location-control {
-  @apply absolute bottom-2 left-3 rounded bg-white/50 px-1 text-base tracking-tighter text-gray-800 tabular-nums;
+  @apply absolute bottom-2 left-3 rounded-lg bg-cyan-50/20 dark:bg-cyan-900/20 backdrop-blur-md backdrop-saturate-150 border border-cyan-200/40 dark:border-cyan-400/30 px-2 py-1 text-sm tracking-tighter text-cyan-800 dark:text-cyan-200 tabular-nums shadow-lg;
 }
 
 .badge {

@@ -200,11 +200,11 @@ watch(
 </script>
 
 <template>
-  <div class="relative flow-root">
+  <div class="relative flow-root" dir="rtl">
     <div class="-mx-4 max-h-96 overflow-x-auto whitespace-nowrap">
       <div class="inline-block min-w-full align-middle">
         <table
-          class="w-full border-separate border-spacing-0 text-left text-sm/6 text-slate-950 dark:text-white"
+          class="w-full border-separate border-spacing-0 text-right text-sm/6 text-slate-950 dark:text-white rounded-xl overflow-hidden"
           tabindex="0"
         >
           <thead class="cursor-pointer text-slate-900 dark:text-slate-400">

@@ -125,7 +125,7 @@
           <button
             v-if="!breadcrumbOpen"
             type="button"
-            class="bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60 border border-border rounded-full px-3 py-1 text-xs shadow hover:bg-background"
+            class="backdrop-blur-md supports-[backdrop-filter]:bg-blue-400/20 bg-blue-400/10 border border-blue-400/40 dark:border-blue-500/30 rounded-full px-3 py-1 text-xs shadow-md text-foreground"
             @click.stop="breadcrumbOpen = true"
             title="نمایش مسیر آرایش نبرد"
           >
@@ -133,20 +133,20 @@
           </button>
           <div
             v-else
-            class="bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60 border border-border rounded-xl shadow max-w-[90vw] sm:max-w-3xl lg:max-w-5xl"
+            class="backdrop-blur-md supports-[backdrop-filter]:bg-blue-400/15 bg-blue-400/10 border border-blue-400/40 dark:border-blue-500/30 rounded-2xl shadow-xl max-w-[90vw] sm:max-w-3xl lg:max-w-5xl overflow-hidden"
           >
-            <div class="flex items-center justify-between px-2 py-1">
-              <span class="text-xs text-muted-foreground">مسیر آرایش نبرد</span>
+            <div class="flex items-center justify-between px-3 py-1.5 bg-blue-400/10">
+              <span class="text-xs text-foreground">مسیر آرایش نبرد</span>
               <button
                 type="button"
-                class="rounded px-2 py-1 text-xs hover:bg-muted/60"
+                class="rounded px-2 py-1 text-xs hover:bg-blue-400/20"
                 @click.stop="breadcrumbOpen = false"
                 title="بستن"
               >
                 ×
               </button>
             </div>
-            <div class="max-h-52 overflow-auto">
+            <div class="max-h-52 overflow-auto p-2 rounded-2xl bg-blue-400/10 supports-[backdrop-filter]:bg-blue-400/15 border border-blue-400/30 dark:border-blue-500/30 text-foreground [&_.bg-sidebar]:bg-transparent [&_.border-b]:border-blue-400/30 [&_.sm\:p-3]:p-2">
               <UnitBreadcrumbs />
             </div>
           </div>

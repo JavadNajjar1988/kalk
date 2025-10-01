@@ -45,16 +45,16 @@ export const useUiStore = defineStore("ui", {
 
 export const useWidthStore = defineStore("panelWidth", {
   state: () => ({
-    orbatPanelWidth: useLocalStorage("orbatPanelWidth", 400),
-    detailsWidth: useLocalStorage("detailsPanelWidth", 400),
+    orbatPanelWidth: useLocalStorage("orbatPanelWidth", 250),
+    detailsWidth: useLocalStorage("detailsPanelWidth", 250),
   }),
   actions: {
     resetOrbatPanelWidth() {
-      this.orbatPanelWidth = 400;
+      this.orbatPanelWidth = 250;
     },
 
     resetDetailsWidth() {
-      this.detailsWidth = 400;
+      this.detailsWidth = 250;
     },
   },
 });

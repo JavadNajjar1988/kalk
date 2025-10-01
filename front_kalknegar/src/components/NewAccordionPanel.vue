@@ -27,8 +27,8 @@ const isOpen = defineModel<boolean>({ default: true });
       v-if="$slots.header && open"
       class="pointer-events-none absolute top-0 right-6 left-0 flex justify-end"
     >
-      <div class="pointer-events-auto"><slot name="header" /></div>
+      <div class="pointer-events-auto ml-4 sm:ml-6"><slot name="header" /></div>
     </div>
-    <CollapsibleContent className="pt-1 pb-3"><slot /></CollapsibleContent>
+    <CollapsibleContent className="pt-1 pb-3 pr-2 sm:pr-0"><slot /></CollapsibleContent>
   </Collapsible>
 </template>

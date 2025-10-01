@@ -1,11 +1,7 @@
 <template>
   <div class="bg-background flex h-dvh flex-col overflow-hidden" ref="dropZoneRef">
     <nav
-<<<<<<< Updated upstream
-      class="dashboard-header flex shrink-0 items-center justify-between py-2 pr-4 pl-6 text-foreground print:hidden bg-white dark:bg-slate-800 border-b border-gray-200 dark:border-slate-700"
-=======
-      class="dashboard-header flex shrink-0 items-center justify-between rounded-b-2xl py-2 pr-4 pl-4 text-foreground print:hidden"
->>>>>>> Stashed changes
+      class="dashboard-header relative flex shrink-0 items-center justify-between rounded-b-xl py-1.5 pr-4 pl-6 text-sm text-foreground print:hidden bg-blue-300/40 dark:bg-blue-400/15 backdrop-blur backdrop-saturate-150 supports-[backdrop-filter]:bg-blue-300/30 dark:supports-[backdrop-filter]:bg-blue-400/20 border-b border-blue-300/60 dark:border-blue-400/30"
     >
       <div class="flex min-w-0 flex-auto items-center">
         <div class="flex min-w-0 flex-auto items-center">
@@ -24,11 +20,11 @@
         
         <button
           @click="showSearch = true"
-          class="inline-flex items-center justify-center rounded-lg p-2 text-slate-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-600 hover:text-slate-800 dark:hover:text-white focus:ring-2 focus:ring-blue-300 dark:focus:ring-white focus:outline-hidden focus:ring-inset transition-all duration-200"
+          class="inline-flex items-center justify-center rounded-lg p-1.5 text-slate-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-600 hover:text-slate-800 dark:hover:text-white focus:ring-2 focus:ring-blue-300 dark:focus:ring-white focus:outline-hidden focus:ring-inset transition-all duration-200"
         >
           <SearchIcon class="block h-5 w-5" />
         </button>
-        <div class="flex items-center rounded-lg bg-gray-50 dark:bg-slate-700 px-1 py-0.5 border border-gray-200 dark:border-slate-600">
+        <div class="flex items-center gap-1 absolute left-1/2 -translate-x-1/2">
           <router-link
             :to="{ name: MAP_EDIT_MODE_ROUTE }"
             title="حالت ویرایش نقشه"
@@ -84,7 +80,7 @@
           class="inline-flex items-center justify-center rounded-lg p-1.5 text-slate-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-600 hover:text-slate-800 dark:hover:text-white focus:ring-2 focus:ring-red-300 dark:focus:ring-white focus:outline-hidden focus:ring-inset transition-all duration-200"
           @click="isOpen = !isOpen"
         >
-          <MenuIcon class="block h-5 w-5" />
+          <SettingsIcon class="block h-5 w-5" />
         </button>
       </div>
     </nav>
@@ -185,7 +181,7 @@ import { useDragStore } from "@/stores/dragStore";
 import ShortcutsModal from "@/components/ShortcutsModal.vue";
 
 import {
-  Bars3Icon as MenuIcon,
+  Cog6ToothIcon as SettingsIcon,
   GlobeAltIcon,
   MagnifyingGlassIcon as SearchIcon,
   TableCellsIcon as TableIcon,

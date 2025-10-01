@@ -1,5 +1,5 @@
 <template>
-  <div class="space-y-2 pt-4 px-3">
+  <div class="space-y-1 pt-0.5 px-0.5 text-[10px] leading-4">
     <slot name="header" />
     <OrbatSide
       v-for="side in sides"

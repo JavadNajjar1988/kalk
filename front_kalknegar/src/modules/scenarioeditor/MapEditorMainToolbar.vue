@@ -1,6 +1,6 @@
 <template>
   <nav
-    class="bg-transparent backdrop-blur supports-[backdrop-filter]:bg-background/60 border border-border pointer-events-auto flex w-auto items-center justify-between p-2 text-sm shadow-lg rounded-2xl sm:p-3"
+    class="pointer-events-auto flex w-auto items-center justify-between p-2 text-sm sm:p-3 rounded-2xl shadow-xl text-foreground backdrop-blur-md supports-[backdrop-filter]:bg-blue-400/15 bg-blue-400/10 border border-blue-400/30 dark:border-blue-500/30"
   >
     <section class="flex items-center justify-between">
       <MainToolbarButton

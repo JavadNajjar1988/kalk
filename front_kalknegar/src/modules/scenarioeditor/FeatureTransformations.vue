@@ -3,7 +3,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PhPlus as PlusIcon } from "@phosphor-icons/vue";
 import { geometryCollection } from "@turf/helpers";
 import { computed, onUnmounted, ref, watch } from "vue";
-import BaseButton from "@/components/BaseButton.vue";
 import { injectStrict, nanoid } from "@/utils";
 import { activeLayerKey, activeMapKey, activeScenarioKey } from "@/components/injects";
 import type { FeatureId } from "@/types/scenarioGeoModels";
@@ -225,10 +224,10 @@ function deleteTransformation(index: number) {
       <TabsContent value="add">
         <Label class="mt-2 pb-1.5">انتخاب لایه</Label>
         <ScenarioFeatureSelect v-model="addActiveLayer" layer-mode class="" />
-        <div class="mt-4 flex items-center justify-end">
-          <BaseButton type="button" primary small @click="onSubmit(false)"
-            >ایجاد ویژگی
-          </BaseButton>
+    <div class="mt-4 flex items-center justify-end">
+          <Button type="button" variant="outline" size="sm" @click="onSubmit(false)">
+            ایجاد ویژگی
+          </Button>
         </div>
       </TabsContent>
       <TabsContent value="update">
@@ -242,14 +241,14 @@ function deleteTransformation(index: number) {
           />
         </div>
         <div class="mt-4 flex items-center justify-end">
-          <BaseButton
+          <Button
             type="button"
-            primary
-            small
+            variant="outline"
+            size="sm"
             @click="onSubmit(true)"
             :disabled="!updateActiveFeature"
             >به‌روزرسانی ویژگی
-          </BaseButton>
+          </Button>
         </div>
       </TabsContent>
     </Tabs>
