@@ -115,17 +115,9 @@ let histogram: { t: number; count: number }[] = [];
 
 const minorWidth = computed(() => majorWidth.value / (24 / minorStep.value));
 
-// Responsive font sizing based on zoom level
-const majorFontClass = computed(() => {
-  if (majorWidth.value < 90) return "text-xs";
-  if (majorWidth.value < 140) return "text-sm";
-  return "text-base";
-});
-const minorFontClass = computed(() => {
-  if (minorWidth.value < 22) return "text-[0.6rem]";
-  if (minorWidth.value < 36) return "text-[0.7rem]";
-  return "text-sm";
-});
+// Fixed font sizing to keep timeline height constant regardless of zoom level
+const majorFontClass = computed(() => "text-sm");
+const minorFontClass = computed(() => "text-[0.7rem]");
 
 // Hide/skip labels when zoomed out to avoid overlaps
 const showMajorLabels = computed(() => majorWidth.value >= 60);

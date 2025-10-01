@@ -24,9 +24,9 @@ const panelWidth = useVModel(props, "width", emit);
     <slot></slot>
     <DragHandle
       :parent-ref="panelRef"
-      :left="left"
+      :left="!left"
       @resizestart="initialWidth = $event"
-      @resizing="panelWidth = props.left ? initialWidth - $event : initialWidth + $event"
+      @resizing="panelWidth = props.left ? initialWidth + $event : initialWidth - $event"
       @resizeend="emit('resizeend')"
     />
   </aside>
