@@ -25,13 +25,13 @@
         
         <form class="space-y-8" @submit.prevent="create()">
           <!-- Single Box Container for Step Content -->
-          <div class="bg-blue-100/5 dark:bg-blue-400/2 backdrop-blur backdrop-saturate-150 supports-[backdrop-filter]:bg-blue-300/3 dark:supports-[backdrop-filter]:bg-blue-400/3 rounded-2xl p-8 shadow-xl shadow-blue-500/3 border border-blue-200/20 dark:border-blue-400/30 hover:shadow-2xl hover:shadow-blue-500/5 transition-all duration-300">
+          <div class="bg-blue-100/60 dark:bg-blue-400/2 backdrop-blur-xl rounded-2xl p-8 shadow-xl shadow-blue-500/5 border border-blue-200/30 dark:border-blue-400/30 hover:shadow-2xl hover:shadow-blue-500/10 transition-all duration-300">
             <!-- Progress Steps -->
             <div class="mb-8">
-                <div class="p-4">
+                <div class="p-6">
                 <div class="flex items-center justify-between relative">
-                  <!-- Full Progress Line Background (Light) -->
-                  <div class="absolute top-1/2 left-0 right-0 h-0.5 bg-blue-200/30 dark:bg-blue-700/30 -z-10 transform -translate-y-1/2"></div>
+             <!-- Full Progress Line Background (Light) -->
+             <div class="absolute top-1/2 left-0 right-0 h-0.5 bg-blue-200/70 dark:bg-blue-700/70 -z-10 transform -translate-y-1/2"></div>
                   <!-- Animated Progress Line (Fills from right to left) -->
                   <div class="absolute top-1/2 right-0 h-0.5 bg-gradient-to-l from-cyan-400 to-blue-400 -z-10 transform -translate-y-1/2 transition-all duration-1000 ease-out" 
                        :style="{ width: `${((currentStep - 1) / (totalSteps - 1)) * 100}%` }"></div>
@@ -110,7 +110,7 @@
               <template v-if="!noInitialOrbat">
                 <div
                   v-for="(sideData, idx) in form.sides"
-                  class="relative rounded-3xl border bg-blue-100/5 dark:bg-blue-400/2 backdrop-blur backdrop-saturate-150 supports-[backdrop-filter]:bg-blue-300/3 dark:supports-[backdrop-filter]:bg-blue-400/3 p-6 border-blue-200/20 dark:border-blue-400/30 mb-6 shadow-xl shadow-blue-500/3 dark:shadow-blue-500/3 hover:shadow-2xl hover:shadow-blue-500/5 dark:hover:shadow-blue-500/5 transition-all duration-300"
+                  class="relative rounded-3xl border bg-blue-100/60 dark:bg-blue-400/15 backdrop-blur backdrop-saturate-150 supports-[backdrop-filter]:bg-blue-300/30 dark:supports-[backdrop-filter]:bg-blue-400/20 p-6 border-blue-200/30 dark:border-blue-400/30 mb-6 shadow-xl shadow-blue-500/5 dark:shadow-blue-500/3 hover:shadow-2xl hover:shadow-blue-500/10 dark:hover:shadow-blue-500/5 transition-all duration-300"
                 >
                   <div class="grid gap-4 md:grid-cols-2">
                     <InputGroup v-model="sideData.name" label="نام طرف" />
