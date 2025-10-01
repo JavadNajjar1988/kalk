@@ -97,7 +97,7 @@
     <GlobalEvents
       v-if="shortcutsEnabled"
       :filter="inputEventFilter"
-      @keyup.?="showKeyboardShortcuts"
+      @keyup="onGeneralKeyup"
       @keydown.ctrl.k.prevent="showSearch = true"
       @keydown.meta.k.prevent="showSearch = true"
       @keyup.prevent.alt.k="showSearch = true"
@@ -424,6 +424,13 @@ function onUiAction(action: UiAction) {
 
 function showKeyboardShortcuts() {
   shortcutsModalVisible.value = true;
+}
+
+function onGeneralKeyup(event: KeyboardEvent) {
+  // نمایش میانبرها وقتی کلید '?' فشرده می‌شود (Shift + '/')
+  if (event.key === '?' || (event.shiftKey && event.key === '/')) {
+    showKeyboardShortcuts();
+  }
 }
 
 watchOnce(

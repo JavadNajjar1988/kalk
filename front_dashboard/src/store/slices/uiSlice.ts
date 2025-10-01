@@ -43,6 +43,8 @@ export interface NotificationItem {
   read: boolean;
   priority: 'low' | 'medium' | 'high';
   autoHide?: boolean; // آیا اطلاع‌رسانی به صورت خودکار مخفی شود
+  archived?: boolean; // آیا اعلان آرشیو شده است
+  starred?: boolean; // آیا اعلان ستاره‌دار است
 }
 
 export interface ChartSettings {
@@ -268,7 +270,7 @@ const uiSlice = createSlice({
     addNotification: (state, action: PayloadAction<Omit<NotificationItem, 'id' | 'timestamp'>>) => {
       const notification: NotificationItem = {
         ...action.payload,
-        id: Date.now().toString(),
+        id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
         timestamp: Date.now(),
       };
       state.notifications.unshift(notification);
@@ -294,6 +296,68 @@ const uiSlice = createSlice({
     },
     clearAllNotifications: (state) => {
       state.notifications = [];
+    },
+    removeDuplicateNotifications: (state) => {
+      const seen = new Set();
+      state.notifications = state.notifications.filter(notification => {
+        if (seen.has(notification.id)) {
+          return false;
+        }
+        seen.add(notification.id);
+        return true;
+      });
+    },
+    
+    // Archive actions
+    archiveNotification: (state, action: PayloadAction<string>) => {
+      const notification = state.notifications.find(n => n.id === action.payload);
+      if (notification) {
+        notification.archived = true;
+      }
+    },
+    archiveNotifications: (state, action: PayloadAction<string[]>) => {
+      action.payload.forEach(id => {
+        const notification = state.notifications.find(n => n.id === id);
+        if (notification) {
+          notification.archived = true;
+        }
+      });
+    },
+    unarchiveNotification: (state, action: PayloadAction<string>) => {
+      const notification = state.notifications.find(n => n.id === action.payload);
+      if (notification) {
+        notification.archived = false;
+      }
+    },
+    unarchiveNotifications: (state, action: PayloadAction<string[]>) => {
+      action.payload.forEach(id => {
+        const notification = state.notifications.find(n => n.id === id);
+        if (notification) {
+          notification.archived = false;
+        }
+      });
+    },
+    toggleNotificationStar: (state, action: PayloadAction<string>) => {
+      const notification = state.notifications.find(n => n.id === action.payload);
+      if (notification) {
+        notification.starred = !notification.starred;
+      }
+    },
+    starNotifications: (state, action: PayloadAction<string[]>) => {
+      action.payload.forEach(id => {
+        const notification = state.notifications.find(n => n.id === id);
+        if (notification) {
+          notification.starred = true;
+        }
+      });
+    },
+    unstarNotifications: (state, action: PayloadAction<string[]>) => {
+      action.payload.forEach(id => {
+        const notification = state.notifications.find(n => n.id === id);
+        if (notification) {
+          notification.starred = false;
+        }
+      });
     },
 
     // General UI actions
@@ -408,6 +472,16 @@ export const {
   markNotificationAsRead,
   markAllNotificationsAsRead,
   clearAllNotifications,
+  removeDuplicateNotifications,
+  
+  // Archive actions
+  archiveNotification,
+  archiveNotifications,
+  unarchiveNotification,
+  unarchiveNotifications,
+  toggleNotificationStar,
+  starNotifications,
+  unstarNotifications,
   
   // General UI actions
   setLoading,
@@ -481,6 +555,34 @@ export const selectNotifications = (state: RootState) => state.ui.notifications;
 export const selectUnreadNotifications = createSelector(
   [selectNotifications],
   (notifications) => Array.isArray(notifications) ? notifications.filter(n => !n.read) : []
+);
+
+// Archive selectors
+export const selectArchivedNotifications = createSelector(
+  [selectNotifications],
+  (notifications) => Array.isArray(notifications) ? notifications.filter(n => n.archived) : []
+);
+
+export const selectActiveNotifications = createSelector(
+  [selectNotifications],
+  (notifications) => Array.isArray(notifications) ? notifications.filter(n => !n.archived) : []
+);
+
+export const selectStarredNotifications = createSelector(
+  [selectNotifications],
+  (notifications) => Array.isArray(notifications) ? notifications.filter(n => n.starred) : []
+);
+
+export const selectNotificationStats = createSelector(
+  [selectNotifications, selectUnreadNotifications, selectArchivedNotifications, selectStarredNotifications],
+  (all, unread, archived, starred) => ({
+    total: all.length,
+    unread: unread.length,
+    read: all.length - unread.length,
+    archived: archived.length,
+    active: all.length - archived.length,
+    starred: starred.length,
+  })
 );
 
 export const selectUI = (state: RootState) => state.ui;

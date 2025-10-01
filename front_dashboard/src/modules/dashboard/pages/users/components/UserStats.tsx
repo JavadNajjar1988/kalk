@@ -262,6 +262,9 @@ export const UserStats: React.FC<{ users: UserProfile[] }> = ({ users }) => {
                           fontWeight: 600,
                           fontSize: '0.7rem',
                           color: '#ff9800', // رنگ متن زرد ثابت
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 0.5
                         }}
                       >
                         {(users.length > 0 ? Math.round((users.filter(u => u.isActive).length / users.length) * 100) : 0).toLocaleString('fa-IR')}% فعال
@@ -273,6 +276,9 @@ export const UserStats: React.FC<{ users: UserProfile[] }> = ({ users }) => {
                           fontWeight: 600,
                           fontSize: '0.7rem',
                           color: 'text.secondary',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 0.5
                         }}
                       >
                         {(users.length > 0 ? Math.round(((users.length - users.filter(u => u.isActive).length) / users.length) * 100) : 0).toLocaleString('fa-IR')}% غیرفعال
@@ -375,6 +381,9 @@ export const UserStats: React.FC<{ users: UserProfile[] }> = ({ users }) => {
                           fontWeight: 600,
                           fontSize: '0.7rem',
                           color: 'success.main',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 0.5
                         }}
                       >
                         {(users.length > 0 ? Math.round((users.filter(u => u.nationality === 'iranian').length / users.length) * 100) : 0).toLocaleString('fa-IR')}% ایرانی
@@ -386,6 +395,9 @@ export const UserStats: React.FC<{ users: UserProfile[] }> = ({ users }) => {
                           fontWeight: 600,
                           fontSize: '0.7rem',
                           color: 'text.secondary',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 0.5
                         }}
                       >
                         {(users.length > 0 ? Math.round((users.filter(u => u.nationality === 'non-iranian').length / users.length) * 100) : 0).toLocaleString('fa-IR')}% خارجی
