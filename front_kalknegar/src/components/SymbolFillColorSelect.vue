@@ -1,5 +1,5 @@
 <template>
-  <SymbolCodeSelect label="رنگ پر کردن" :items="colorIconItems" v-model="colorValue" />
+  <SymbolCodeSelect label="انتخاب رنگ" :items="colorIconItems" v-model="colorValue" />
 </template>
 
 <script setup lang="ts">
@@ -19,19 +19,19 @@ const emit = defineEmits(["update:modelValue"]);
 const colorValue = defineModel<string | null>({ default: null });
 
 const colors: Omit<NullableSymbolItem, "sidc">[] = [
-  { code: null, text: "Default" },
-  { code: "#80e0ff", text: "Blue (standard)" },
-  { code: "#ff8080", text: "Red (standard)" },
-  { code: "#aaffaa", text: "Green (standard)" },
-  { code: "#ffff80", text: "Yellow (standard)" },
-  { code: "#ffa1ff", text: "Pink (civilian)" },
-  { code: "#aab074", text: "Olive" },
-  { code: "#5baa5b", text: "Infantry (Battle Order)" },
-  { code: "#ffd00b", text: "Armor (Battle Order)" },
-  { code: "#ff3333", text: "Artillery (Battle Order)" },
-  { code: "#f7f7f7", text: "Combat Support (Battle Order)" },
-  { code: "#d87600", text: "Service Support (Battle Order)" },
-  { code: "#a2e3e8", text: "Aviation (Battle Order)" },
+  { code: null, text: "پیش‌فرض" },
+  { code: "#80e0ff", text: "آبی (استاندارد)" },
+  { code: "#ff8080", text: "قرمز (استاندارد)" },
+  { code: "#aaffaa", text: "سبز (استاندارد)" },
+  { code: "#ffff80", text: "زرد (استاندارد)" },
+  { code: "#ffa1ff", text: "صورتی (غیردولتی)" },
+  { code: "#aab074", text: "زیتونی" },
+  { code: "#5baa5b", text: "پیاده‌نظام (آرایش نبرد)" },
+  { code: "#ffd00b", text: "زرهی (آرایش نبرد)" },
+  { code: "#ff3333", text: "توپخانه (آرایش نبرد)" },
+  { code: "#f7f7f7", text: "پشتیبانی رزمی (آرایش نبرد)" },
+  { code: "#d87600", text: "پشتیبانی خدماتی (آرایش نبرد)" },
+  { code: "#a2e3e8", text: "هوانیروز/هوایی (آرایش نبرد)" },
 ];
 
 const colorIconItems = computed((): NullableSymbolItem[] =>

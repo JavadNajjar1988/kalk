@@ -26,7 +26,7 @@ const onItemClick = (item: MenuItemData<string | Function>) => {
           <EllipsisVertical class="size-4" />
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent class="" align="end">
+      <DropdownMenuContent class="" align="end" :portal="props.portal">
         <DropdownMenuItem
           v-for="item in items"
           @select="onItemClick(item)"

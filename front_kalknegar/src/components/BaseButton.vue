@@ -2,6 +2,7 @@
   <Button
     :variant="primary ? 'default' : secondary ? 'secondary' : 'outline'"
     :size="small ? 'sm' : large ? 'lg' : huge ? 'lg' : undefined"
+    :disabled="disabled"
   >
     <slot />
   </Button>
@@ -16,6 +17,7 @@ const props = withDefaults(
     small?: boolean;
     large?: boolean;
     huge?: boolean;
+    disabled?: boolean;
   }>(),
   {
     primary: false,
@@ -23,6 +25,7 @@ const props = withDefaults(
     small: false,
     large: false,
     huge: false,
+    disabled: false,
   },
 );
 </script>

@@ -1,5 +1,5 @@
 <template>
-  <main class="grid min-h-full place-items-center bg-gradient-to-b from-blue-50 to-indigo-50 dark:from-slate-800 dark:to-slate-900 px-6 py-24 sm:py-32 lg:px-8">
+  <main class="grid min-h-full place-items-center bg-blue-50 dark:bg-slate-800 px-6 py-24 sm:py-32 lg:px-8">
     <div class="text-center">
       <p class="text-base font-semibold text-indigo-500 dark:text-indigo-400">404</p>
       <h1 class="mt-4 text-3xl font-bold tracking-tight text-slate-800 dark:text-slate-200 sm:text-5xl">

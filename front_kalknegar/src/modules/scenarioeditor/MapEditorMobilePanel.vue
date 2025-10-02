@@ -28,7 +28,7 @@
       :selected-index="activeTabIndex"
       @change="changeTab"
     >
-      <TabList class="flex flex-0 justify-between border-b border-purple-200 dark:border-slate-600 bg-gradient-to-r from-purple-50 to-pink-50 dark:from-slate-700 dark:to-slate-600">
+      <TabList class="flex flex-0 justify-between border-b border-purple-200 dark:border-slate-600 bg-purple-50 dark:bg-slate-700">
         <div ref="swipeDownEl" class="flex flex-auto items-center justify-evenly">
           <Tab
             as="template"
@@ -50,7 +50,7 @@
         </div>
         <CloseButton @click="toggleBottomPanel()" class="px-4" />
       </TabList>
-      <TabPanels class="flex-auto overflow-y-auto bg-gradient-to-b from-white to-gray-50 dark:from-slate-800 dark:to-slate-900">
+      <TabPanels class="flex-auto overflow-y-auto bg-white dark:bg-slate-800">
         <TabPanel :unmount="false" class="pb-10">
           <OrbatPanel />
         </TabPanel>

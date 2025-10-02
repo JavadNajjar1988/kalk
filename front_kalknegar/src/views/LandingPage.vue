@@ -7,7 +7,7 @@
         <div class="flex items-center gap-2">
           <!-- Logo -->
           <div class="flex items-center gap-2">
-            <h1 class="text-xl font-bold bg-gradient-to-r from-blue-600 to-cyan-500 bg-clip-text text-transparent">
+            <h1 class="text-xl font-bold text-blue-600 dark:text-blue-400">
               کالک نگار
             </h1>
           </div>
@@ -141,37 +141,74 @@
         <div class="mt-8">
           <div class="bg-blue-100/60 dark:bg-blue-900/10 backdrop-blur-xl rounded-3xl p-8 shadow-xl shadow-blue-500/5 border border-blue-200/30 dark:border-blue-700/30 hover:shadow-2xl hover:shadow-blue-500/10 transition-all duration-300">
             <div class="text-center mb-8">
-              <h2 class="text-2xl md:text-3xl font-bold bg-gradient-to-r from-blue-700 to-cyan-600 bg-clip-text text-transparent mb-3">
+              <h2 class="text-2xl md:text-3xl font-bold text-blue-700 dark:text-blue-300 mb-3">
                 مدیریت سناریوها
               </h2>
             </div>
             
             <!-- View Toggle and Tab Navigation -->
             <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-8">
-              <!-- Tab Navigation -->
-              <div class="bg-blue-100/10 dark:bg-blue-400/2 backdrop-blur backdrop-saturate-150 supports-[backdrop-filter]:bg-blue-300/10 dark:supports-[backdrop-filter]:bg-blue-400/3 rounded-2xl p-1 border border-blue-300/60 dark:border-blue-400/30 shadow-lg shadow-blue-500/5 mb-4 sm:mb-0">
-                <div class="flex gap-1">
+              <!-- Action Buttons and Dots Menu -->
+              <div class="flex items-center gap-3 mb-4 sm:mb-0">
+                <!-- Create New Scenario Button -->
+                <button
+                  @click="newScenario"
+                  class="px-4 py-2 rounded-xl bg-emerald-100/10 dark:bg-emerald-400/2 backdrop-blur backdrop-saturate-150 supports-[backdrop-filter]:bg-emerald-300/10 dark:supports-[backdrop-filter]:bg-emerald-400/3 border border-emerald-300/60 dark:border-emerald-400/30 shadow-lg shadow-emerald-500/5 hover:bg-emerald-200/20 dark:hover:bg-emerald-800/20 transition-all duration-200 flex items-center gap-2"
+                >
+                  <svg class="h-4 w-4 text-emerald-700 dark:text-emerald-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                  </svg>
+                  <span class="text-sm font-medium text-emerald-700 dark:text-emerald-300">ایجاد سناریو جدید</span>
+                </button>
+
+                <!-- Load File Button -->
+                <button
+                  @click="showImport = true"
+                  class="px-4 py-2 rounded-xl bg-green-100/10 dark:bg-green-400/2 backdrop-blur backdrop-saturate-150 supports-[backdrop-filter]:bg-green-300/10 dark:supports-[backdrop-filter]:bg-green-400/3 border border-green-300/60 dark:border-green-400/30 shadow-lg shadow-green-500/5 hover:bg-green-200/20 dark:hover:bg-green-800/20 transition-all duration-200 flex items-center gap-2"
+                >
+                  <svg class="h-4 w-4 text-green-700 dark:text-green-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10" />
+                  </svg>
+                  <span class="text-sm font-medium text-green-700 dark:text-green-300"> بارگذاری سناریو</span>
+                </button>
+
+                <!-- Dots Menu -->
+                <div class="relative">
                   <button 
-                    @click="activeTab = 'all'"
-                    :class="activeTab === 'all' ? 'bg-blue-200/60 dark:bg-blue-800/60 shadow-lg shadow-blue-500/10' : 'hover:bg-blue-200/40 dark:hover:bg-blue-800/40'"
-                    class="px-6 py-2 text-sm font-medium rounded-xl transition-all duration-200 text-blue-700 dark:text-blue-300"
+                    @click="toggleTabMenu"
+                    class="px-4 py-2 rounded-xl bg-blue-100/10 dark:bg-blue-400/2 backdrop-blur backdrop-saturate-150 supports-[backdrop-filter]:bg-blue-300/10 dark:supports-[backdrop-filter]:bg-blue-400/3 border border-blue-300/60 dark:border-blue-400/30 shadow-lg shadow-blue-500/5 hover:bg-blue-200/20 dark:hover:bg-blue-800/20 transition-all duration-200 flex items-center gap-2"
                   >
-                    همه
+                    <span class="text-sm font-medium text-blue-700 dark:text-blue-300">
+                      {{ activeTab === 'all' ? 'همه' : 'اخیر' }}
+                    </span>
+                    <svg class="h-4 w-4 text-blue-700 dark:text-blue-300" fill="currentColor" viewBox="0 0 20 20">
+                      <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
+                    </svg>
                   </button>
-                  <button 
-                    @click="activeTab = 'recent'"
-                    :class="activeTab === 'recent' ? 'bg-blue-200/60 dark:bg-blue-800/60 shadow-lg shadow-blue-500/10' : 'hover:bg-blue-200/40 dark:hover:bg-blue-800/40'"
-                    class="px-6 py-2 text-sm font-medium rounded-xl transition-all duration-200 text-blue-700 dark:text-blue-300"
+                  
+                  <!-- Dropdown Menu -->
+                  <div 
+                    v-if="showTabMenu" 
+                    class="absolute top-full right-0 mt-2 w-48 bg-blue-100/10 dark:bg-blue-400/2 backdrop-blur backdrop-saturate-150 supports-[backdrop-filter]:bg-blue-300/10 dark:supports-[backdrop-filter]:bg-blue-400/3 rounded-2xl p-1 border border-blue-300/60 dark:border-blue-400/30 shadow-lg shadow-blue-500/5 z-50"
+                    dir="LTR"
                   >
-                    اخیر
-                  </button>
-                  <button 
-                    @click="activeTab = 'samples'"
-                    :class="activeTab === 'samples' ? 'bg-blue-200/60 dark:bg-blue-800/60 shadow-lg shadow-blue-500/10' : 'hover:bg-blue-200/40 dark:hover:bg-blue-800/40'"
-                    class="px-6 py-2 text-sm font-medium rounded-xl transition-all duration-200 text-blue-700 dark:text-blue-300"
-                  >
-                    نمونه
-                  </button>
+                    <div class="flex flex-col gap-1">
+                      <button 
+                        @click="activeTab = 'all'; showTabMenu = false"
+                        :class="activeTab === 'all' ? 'bg-blue-200/60 dark:bg-blue-800/60 shadow-lg shadow-blue-500/10' : 'hover:bg-blue-200/40 dark:hover:bg-blue-800/40'"
+                        class="px-4 py-2 text-sm font-medium rounded-xl transition-all duration-200 text-blue-700 dark:text-blue-300 text-right flex items-center justify-end w-full"
+                      >
+                        همه
+                      </button>
+                      <button 
+                        @click="activeTab = 'recent'; showTabMenu = false"
+                        :class="activeTab === 'recent' ? 'bg-blue-200/60 dark:bg-blue-800/60 shadow-lg shadow-blue-500/10' : 'hover:bg-blue-200/40 dark:hover:bg-blue-800/40'"
+                        class="px-4 py-2 text-sm font-medium rounded-xl transition-all duration-200 text-blue-700 dark:text-blue-300 text-right flex items-center justify-end w-full"
+                      >
+                        اخیر
+                      </button>
+                    </div>
+                  </div>
                 </div>
               </div>
               
@@ -207,24 +244,88 @@
               :activeTab="activeTab" 
               :viewMode="viewMode" 
               :dropdownOpen="dropdownOpen"
+              :showAllScenarios="showAllScenarios"
+              :currentPage="currentPage"
+              :totalScenarios="totalScenarios"
               @toggle-dropdown="toggleDropdown"
               @new-scenario="newScenario"
               @delete-scenario="deleteScenario"
               @edit-scenario="editScenario"
               @run-scenario="runScenario"
-              @download-scenario="downloadScenario"
+              @download-scenario="saveScenario"
             />
             
-            <div class="text-center mt-8">
-              <button class="text-muted-foreground hover:text-foreground text-sm font-medium transition-colors duration-200">
-                مشاهده همه سناریوها ←
+            <!-- View All Button for Cards Mode -->
+            <div v-if="viewMode === 'cards'" class="text-center mt-8">
+              <button 
+                @click="showAllScenarios = !showAllScenarios"
+                class="group relative inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-blue-500/10 dark:bg-blue-400/5 backdrop-blur-sm border border-blue-300/30 dark:border-blue-600/30 shadow-lg shadow-blue-500/5 hover:shadow-xl hover:shadow-blue-500/10 transition-all duration-300 hover:-translate-y-0.5"
+              >
+                <span class="text-sm font-semibold text-blue-700 dark:text-blue-300 group-hover:text-blue-800 dark:group-hover:text-blue-200 transition-colors duration-200">
+                  {{ showAllScenarios ? 'نمایش کمتر' : 'مشاهده همه سناریوها' }}
+                </span>
+                <svg 
+                  class="w-4 h-4 text-blue-600 dark:text-blue-400 group-hover:text-blue-700 dark:group-hover:text-blue-300 transition-all duration-200 transform group-hover:translate-x-0.5" 
+                  :class="{ 'rotate-180': showAllScenarios }"
+                  fill="none" 
+                  stroke="currentColor" 
+                  viewBox="0 0 24 24"
+                >
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                </svg>
               </button>
+            </div>
+            
+            <!-- Pagination for Table Mode -->
+            <div v-if="viewMode === 'table' && totalScenarios > 10" class="flex items-center justify-between mt-8 px-4">
+              <div class="flex items-center gap-2">
+                <span class="text-sm text-slate-600 dark:text-slate-400">
+                  نمایش {{ (currentPage - 1) * 10 + 1 }} تا {{ Math.min(currentPage * 10, totalScenarios) }} از {{ totalScenarios }} سناریو
+                </span>
+              </div>
+              <div class="flex items-center gap-2">
+                <button 
+                  @click="currentPage = Math.max(1, currentPage - 1)"
+                  :disabled="currentPage === 1"
+                  class="px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed bg-white/60 dark:bg-slate-700/60 border border-slate-200/50 dark:border-slate-600/30 hover:bg-white/80 dark:hover:bg-slate-700/80 text-slate-700 dark:text-slate-300"
+                >
+                  قبلی
+                </button>
+                <div class="flex items-center gap-1">
+                  <button 
+                    v-for="page in visiblePages" 
+                    :key="page"
+                    @click="currentPage = page"
+                    :class="[
+                      'px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200',
+                      page === currentPage 
+                        ? 'bg-blue-500 text-white shadow-lg shadow-blue-500/20' 
+                        : 'bg-white/60 dark:bg-slate-700/60 border border-slate-200/50 dark:border-slate-600/30 hover:bg-white/80 dark:hover:bg-slate-700/80 text-slate-700 dark:text-slate-300'
+                    ]"
+                  >
+                    {{ page }}
+                  </button>
+                </div>
+                <button 
+                  @click="currentPage = Math.min(totalPages, currentPage + 1)"
+                  :disabled="currentPage === totalPages"
+                  class="px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed bg-white/60 dark:bg-slate-700/60 border border-slate-200/50 dark:border-slate-600/30 hover:bg-white/80 dark:hover:bg-slate-700/80 text-slate-700 dark:text-slate-300"
+                >
+                  بعدی
+                </button>
+              </div>
             </div>
           </div>
         </div>
       </div>
     </main>
-    <ImportModal v-model="showImport" />
+    <LoadScenarioModal v-model="showImport" />
+    <DeleteConfirmModal 
+      v-model="showDeleteModal" 
+      :scenario-name="selectedScenarioForDelete?.name || ''"
+      @confirm="confirmDeleteScenario"
+      @cancel="showDeleteModal = false"
+    />
   </div>
 </template>
 
@@ -233,10 +334,13 @@ import InteractiveMap from "@/components/InteractiveMap.vue";
 import ScenarioManagementContent from "@/components/ScenarioManagementContent.vue";
 import { Button } from "@/components/ui/button";
 import { useRouter } from "vue-router";
-import { ref, onMounted, onUnmounted } from "vue";
-import ImportModal from "@/components/ImportModal.vue";
-import { NEW_SCENARIO_ROUTE } from "@/router/names";
+import { ref, computed, onMounted, onUnmounted } from "vue";
+import LoadScenarioModal from "@/components/LoadScenarioModal.vue";
+import DeleteConfirmModal from "@/components/DeleteConfirmModal.vue";
+import { NEW_SCENARIO_ROUTE, MAP_EDIT_MODE_ROUTE } from "@/router/names";
 import { useDark, useToggle } from "@vueuse/core";
+import { scenarioApiService } from "@/services/api/scenarioApiService";
+import { useIndexedDb } from "@/scenariostore/localdb";
 
 const router = useRouter();
 
@@ -253,7 +357,28 @@ const showImport = ref(false);
 // State for scenarios section
 const activeTab = ref('all');
 const viewMode = ref('cards');
-const dropdownOpen = ref(null);
+const dropdownOpen = ref<number | null>(null);
+const showTabMenu = ref(false);
+const showDeleteModal = ref(false);
+const selectedScenarioForDelete = ref<{ id: number; name: string } | null>(null);
+
+// State for view controls
+const showAllScenarios = ref(false);
+const currentPage = ref(1);
+const totalScenarios = ref(2); // تعداد کل سناریوها
+
+// Computed properties for pagination
+const totalPages = computed(() => Math.ceil(totalScenarios.value / 10));
+const visiblePages = computed(() => {
+  const pages = [];
+  const start = Math.max(1, currentPage.value - 2);
+  const end = Math.min(totalPages.value, currentPage.value + 2);
+  
+  for (let i = start; i <= end; i++) {
+    pages.push(i);
+  }
+  return pages;
+});
 
 // Sidebar toggle function
 const toggleSidebar = () => {
@@ -261,12 +386,17 @@ const toggleSidebar = () => {
 };
 
 // Dropdown toggle function
-const toggleDropdown = (cardId) => {
+const toggleDropdown = (cardId: number) => {
   if (dropdownOpen.value === cardId) {
     dropdownOpen.value = null;
   } else {
     dropdownOpen.value = cardId;
   }
+};
+
+// Tab menu toggle function
+const toggleTabMenu = () => {
+  showTabMenu.value = !showTabMenu.value;
 };
 
 // New scenario creation
@@ -275,24 +405,176 @@ const newScenario = () => {
 };
 
 // Scenario actions
-const deleteScenario = (scenarioId) => {
-  console.log('حذف سناریو:', scenarioId);
-  // TODO: Implement delete functionality
+const deleteScenario = (scenarioId: number) => {
+  // Map scenarioId to scenario names
+  const scenarioNameMap: Record<number, string> = {
+    1: 'عملیات بیت المقدس',
+    2: 'عملیات مرصاد',
+    3: 'آزادسازی خرمشهر – عملیات بیت‌المقدس',
+    4: 'عملیات مرصاد (۱۳۶۷)',
+    5: 'عملیات بیت المقدس',
+    6: 'عملیات مرصاد',
+    7: 'آزادسازی خرمشهر – عملیات بیت‌المقدس',
+    8: 'عملیات مرصاد (۱۳۶۷)'
+  };
+  
+  const scenarioName = scenarioNameMap[scenarioId] || 'سناریو';
+  selectedScenarioForDelete.value = { id: scenarioId, name: scenarioName };
+  showDeleteModal.value = true;
 };
 
-const editScenario = (scenarioId) => {
-  console.log('ویرایش سناریو:', scenarioId);
-  // TODO: Implement edit functionality
+const confirmDeleteScenario = async () => {
+  if (!selectedScenarioForDelete.value) return;
+  
+  try {
+    const scenarioId = selectedScenarioForDelete.value.id;
+    
+    // For demo scenarios, we can't actually delete them from the server
+    // Instead, we'll show a message that they are demo scenarios
+    console.log('سناریوهای demo قابل حذف نیستند. این سناریوها برای نمایش هستند.');
+    
+    // Show a notification to the user
+    alert('سناریوهای demo قابل حذف نیستند. این سناریوها برای نمایش و آموزش هستند.');
+    
+    // Close the modal
+    showDeleteModal.value = false;
+  } catch (error) {
+    console.error('خطا در حذف سناریو:', error);
+  }
 };
 
-const downloadScenario = (scenarioId) => {
-  console.log('دانلود سناریو:', scenarioId);
-  // TODO: Implement download functionality
+const editScenario = async (scenarioId: number) => {
+  try {
+    // Map scenarioId to actual scenario IDs
+    const scenarioMap: Record<number, string> = {
+      1: 'Operation_Beit_ol_Moqaddas_1982_FA',
+      2: 'Operation_Mersad_1988_FA',
+      3: 'Operation_Beit_ol_Moqaddas_1982_FA',
+      4: 'Operation_Mersad_1988_FA',
+      5: 'Operation_Beit_ol_Moqaddas_1982_FA',
+      6: 'Operation_Mersad_1988_FA',
+      7: 'Operation_Beit_ol_Moqaddas_1982_FA',
+      8: 'Operation_Mersad_1988_FA'
+    };
+    
+    const actualId = scenarioMap[scenarioId];
+    if (!actualId) {
+      console.error('سناریو یافت نشد:', scenarioId);
+      return;
+    }
+
+    // Load demo scenario from JSON file
+    const base = (import.meta as any).env?.BASE_URL || "/";
+    const idUrlMap: Record<string, string> = {
+      Operation_Beit_ol_Moqaddas_1982_FA: `${base}scenarios/Operation_Beit_ol_Moqaddas_1982_FA.json`,
+      Operation_Mersad_1988_FA: `${base}scenarios/Operation_Mersad_1988_FA.json`,
+    };
+    
+    const url = idUrlMap[actualId];
+    if (!url) {
+      console.error('URL سناریو یافت نشد:', actualId);
+      return;
+    }
+
+    // Fetch scenario data from JSON file
+    const response = await fetch(url);
+    if (!response.ok) {
+      console.error('خطا در بارگذاری سناریو:', response.statusText);
+      return;
+    }
+    
+    const scenarioData = await response.json();
+    
+    // Store scenario data in localStorage for the new scenario page to use
+    localStorage.setItem('editingScenario', JSON.stringify(scenarioData));
+    router.push({ name: NEW_SCENARIO_ROUTE });
+  } catch (error) {
+    console.error('خطا در ویرایش سناریو:', error);
+  }
 };
 
-const runScenario = (scenarioId) => {
-  console.log('اجرای سناریو:', scenarioId);
-  // TODO: Implement run functionality
+const saveScenario = async (scenarioId: number) => {
+  try {
+    // Map scenarioId to actual scenario IDs
+    const scenarioMap: Record<number, string> = {
+      1: 'Operation_Beit_ol_Moqaddas_1982_FA',
+      2: 'Operation_Mersad_1988_FA',
+      3: 'Operation_Beit_ol_Moqaddas_1982_FA',
+      4: 'Operation_Mersad_1988_FA',
+      5: 'Operation_Beit_ol_Moqaddas_1982_FA',
+      6: 'Operation_Mersad_1988_FA',
+      7: 'Operation_Beit_ol_Moqaddas_1982_FA',
+      8: 'Operation_Mersad_1988_FA'
+    };
+    
+    const actualId = scenarioMap[scenarioId];
+    if (!actualId) {
+      console.error('سناریو یافت نشد:', scenarioId);
+      return;
+    }
+
+    // Load demo scenario from JSON file
+    const base = (import.meta as any).env?.BASE_URL || "/";
+    const idUrlMap: Record<string, string> = {
+      Operation_Beit_ol_Moqaddas_1982_FA: `${base}scenarios/Operation_Beit_ol_Moqaddas_1982_FA.json`,
+      Operation_Mersad_1988_FA: `${base}scenarios/Operation_Mersad_1988_FA.json`,
+    };
+    
+    const url = idUrlMap[actualId];
+    if (!url) {
+      console.error('URL سناریو یافت نشد:', actualId);
+      return;
+    }
+
+    // Fetch scenario data from JSON file
+    const response = await fetch(url);
+    if (!response.ok) {
+      console.error('خطا در بارگذاری سناریو:', response.statusText);
+      return;
+    }
+    
+    const scenarioData = await response.json();
+    
+    // Create and download the JSON file
+    const blob = new Blob([JSON.stringify(scenarioData, null, 2)], {
+      type: 'application/json'
+    });
+    
+    const downloadUrl = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = downloadUrl;
+    link.download = `${scenarioData.name || actualId}.json`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(downloadUrl);
+    
+    console.log('سناریو با موفقیت ذخیره شد');
+  } catch (error) {
+    console.error('خطا در ذخیره سناریو:', error);
+  }
+};
+
+const runScenario = (scenarioId: number) => {
+  // Map scenarioId to actual scenario IDs
+  const scenarioMap: Record<number, string> = {
+    1: 'demo-Operation_Beit_ol_Moqaddas_1982_FA',
+    2: 'demo-Operation_Mersad_1988_FA',
+    3: 'demo-Operation_Beit_ol_Moqaddas_1982_FA',
+    4: 'demo-Operation_Mersad_1988_FA',
+    5: 'demo-Operation_Beit_ol_Moqaddas_1982_FA',
+    6: 'demo-Operation_Mersad_1988_FA',
+    7: 'demo-Operation_Beit_ol_Moqaddas_1982_FA',
+    8: 'demo-Operation_Mersad_1988_FA'
+  };
+  
+  const actualId = scenarioMap[scenarioId];
+  if (actualId) {
+    router.push({ 
+      name: MAP_EDIT_MODE_ROUTE, 
+      params: { scenarioId: actualId } 
+    });
+  }
 };
 
 // Theme toggle function
@@ -307,18 +589,15 @@ const persianTime = ref('');
 // Update Persian date/time
 const updateDateTime = () => {
   const now = new Date();
-  const options = { 
+  const options: Intl.DateTimeFormatOptions = { 
     year: 'numeric', 
     month: 'long', 
     day: 'numeric',
-    calendar: 'persian',
-    locale: 'fa-IR'
+    calendar: 'persian'
   };
-  const timeOptions = {
+  const timeOptions: Intl.DateTimeFormatOptions = {
     hour: '2-digit',
-    minute: '2-digit',
-    calendar: 'persian',
-    locale: 'fa-IR'
+    minute: '2-digit'
   };
   
   try {
@@ -340,11 +619,19 @@ const navigateToScenarios = () => {
 };
 
 // Initialize date/time and set interval
-let dateTimeInterval: number;
+let dateTimeInterval: NodeJS.Timeout;
 
 onMounted(() => {
   updateDateTime();
   dateTimeInterval = setInterval(updateDateTime, 60000); // Update every minute
+  
+  // Close tab menu when clicking outside
+  document.addEventListener('click', (event) => {
+    const target = event.target as HTMLElement;
+    if (target && !target.closest('.relative')) {
+      showTabMenu.value = false;
+    }
+  });
 });
 
 onUnmounted(() => {

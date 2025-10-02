@@ -2,11 +2,10 @@
   <div class="mt-4">
     <RadioGroup v-model="data">
       <RadioGroupLabel class="text-heading text-sm font-medium"
-        >Standard identity
+        >هویت استاندارد
       </RadioGroupLabel>
       <div
-        class="mt-1 grid gap-x-4 gap-y-4"
-        :class="compact ? 'grid-cols-2' : 'sm:grid-cols-4'"
+        class="mt-1 flex gap-4 overflow-x-auto whitespace-nowrap justify-center"
       >
         <RadioGroupOption
           as="template"
@@ -19,17 +18,17 @@
             :class="[
               checked ? 'border-blue-400/60 dark:border-blue-400/40' : 'border-blue-300/40 dark:border-blue-400/20',
               active ? 'border-blue-400 ring-2 ring-blue-400/50' : '',
-              'relative flex cursor-pointer rounded-lg border border-blue-300/40 dark:border-blue-400/20 bg-blue-100/10 dark:bg-blue-400/5 backdrop-blur backdrop-saturate-150 supports-[backdrop-filter]:bg-blue-300/10 dark:supports-[backdrop-filter]:bg-blue-400/5 p-4 shadow-lg shadow-blue-500/3 focus:outline-hidden',
+              'relative inline-flex cursor-pointer rounded-lg border border-blue-300/40 dark:border-blue-400/20 bg-blue-100/10 dark:bg-blue-400/5 backdrop-blur backdrop-saturate-150 supports-[backdrop-filter]:bg-blue-300/10 dark:supports-[backdrop-filter]:bg-blue-400/5 p-4 shadow-lg shadow-blue-500/3 focus:outline-hidden w-32 h-28 items-center justify-center text-center align-middle',
             ]"
           >
-            <span class="flex flex-1">
-              <span class="flex w-full flex-col items-center">
+            <span class="flex flex-1 items-center justify-center">
+              <span class="flex w-full flex-col items-center justify-center gap-1">
                 <RadioGroupLabel
                   as="span"
                   class="text-heading block text-sm font-medium"
                   >{{ sid.text }}</RadioGroupLabel
                 >
-                <RadioGroupDescription as="span" class="mt-2 flex"
+                <RadioGroupDescription as="span" class="mt-1 flex"
                   ><MilSymbol
                     :sidc="sid.sidc"
                     :size="32"
@@ -56,15 +55,6 @@
         </RadioGroupOption>
       </div>
     </RadioGroup>
-    <div class="mt-2 flex justify-end">
-      <Button type="button" variant="link" @click="toggleShowAll()" size="sm">
-        <template v-if="showAll"><span aria-hidden="true"> ←</span> نمایش کمتر</template>
-        <template v-else>نمایش بیشتر<span aria-hidden="true"> →</span></template>
-      </Button>
-    </div>
-    <div class="mt-0 grid gap-4" :class="compact ? 'grid-cols-1' : 'sm:grid-cols-2'">
-      <SymbolFillColorSelect v-model="fillColorValue" :sid="data" />
-    </div>
   </div>
 </template>
 
@@ -79,9 +69,7 @@ import {
 import { PhCheckCircle as CheckCircleIcon } from "@phosphor-icons/vue";
 import type { SymbolItem, SymbolValue } from "@/types/constants";
 import MilSymbol from "@/components/MilSymbol.vue";
-import { useToggle, useVModel } from "@vueuse/core";
-import SymbolFillColorSelect from "@/components/SymbolFillColorSelect.vue";
-import { Button } from "@/components/ui/button";
+import { useVModel } from "@vueuse/core";
 
 interface Props {
   modelValue: string;
@@ -102,31 +90,31 @@ const fillColorValue = defineModel<string | null>("fillColor");
 const sidItems = [
   {
     code: "3",
-    text: "Friend",
+    text: "دوست",
   },
   {
     code: "6",
-    text: "Hostile",
+    text: "دشمن",
   },
   {
     code: "4",
-    text: "Neutral",
+    text: "خنثی",
   },
   {
     code: "1",
-    text: "Unknown",
+    text: "ناشناس",
   },
   {
     code: "0",
-    text: "Pending",
+    text: "در انتظار",
   },
   {
     code: "2",
-    text: "Assumed Friend",
+    text: "دوست فرضی",
   },
   {
     code: "5",
-    text: "Suspect",
+    text: "مشکوک",
   },
 ].map(addSymbol);
 
@@ -138,10 +126,5 @@ function addSymbol({ code, text }: SymbolValue): SymbolItem {
   };
 }
 
-const [showAll, toggleShowAll] = useToggle(false);
-const items = computed(() =>
-  showAll.value
-    ? sidItems
-    : sidItems.filter((e) => ["1", "3", "6", "4", "7"].includes(e.code)),
-);
+const items = computed(() => sidItems);
 </script>
