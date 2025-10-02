@@ -37,8 +37,18 @@ export class ScenarioApiService extends BaseApiClient {
   private useMockApi: boolean;
 
   constructor() {
-    super();
-    this.useMockApi = shouldUseMockApi();
+    super(((import.meta as any).env?.VITE_API_URL as string) || '/api');
+    const env = (import.meta as any).env || {};
+    const viteMock = env.VITE_USE_MOCK;
+    const isViteDev = Boolean(env.DEV);
+    const reactMock = (typeof process !== 'undefined' && (process as any).env?.REACT_APP_USE_MOCK_API) || 'false';
+    const isNodeDev = typeof process !== 'undefined' && (process as any).env?.NODE_ENV === 'development';
+    this.useMockApi = viteMock === 'true' || reactMock === 'true' || isViteDev || isNodeDev;
+  }
+
+  private authHeaders() {
+    const token = localStorage.getItem('access_token');
+    return token ? { Authorization: `Bearer ${token}` } : {};
   }
 
   // GET /api/scenarios

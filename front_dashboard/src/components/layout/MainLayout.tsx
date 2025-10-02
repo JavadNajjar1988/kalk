@@ -18,7 +18,6 @@ import {
   Badge,
   Tooltip,
   Paper,
-  InputBase,
   alpha,
   Fade,
   Dialog,
@@ -27,21 +26,19 @@ import {
 } from '@mui/material';
 import {
   Menu as MenuIcon,
-  Search as SearchIcon,
   Settings as SettingsIcon,
   Notifications as NotificationsIcon,
   Dashboard,
-  Map,
   People,
   Help,
-  Storage,
-  Layers,
   MilitaryTech,
   Warning as WarningIcon,
   CheckCircle,
-  Category as CategoryIcon,
   Edit as EditIcon,
   AccountBox,
+  ExitToApp,
+  Person,
+  VpnKey,
 } from '@mui/icons-material';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAppSelector, useAppDispatch } from '@/store';
@@ -49,7 +46,6 @@ import { selectUser, logout } from '@/store/slices/authSlice';
 import { 
   selectNotifications, 
   selectLayout,
-  selectTheme,
   selectSidePanel,
   toggleSidebar,
   toggleSidePanel,
@@ -57,7 +53,6 @@ import {
 } from '@/store/slices/uiSlice';
 import SidePanel from './SidePanel';
 import PersianDateTime from '@/components/common/PersianDateTime';
-import ProfilePanel from './panels/ProfilePanel';
 import { useTranslation } from '@/hooks/useTranslation';
 import SearchBar from '@/components/common/SearchBar';
 
@@ -82,7 +77,6 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
   const sidePanel = useAppSelector(selectSidePanel);
   const [notificationsMenuAnchor, setNotificationsMenuAnchor] = useState<null | HTMLElement>(null);
   const [profileMenuAnchor, setProfileMenuAnchor] = useState<null | HTMLElement>(null);
-  const [showLabels, setShowLabels] = useState(!layout.sidebarCollapsed);
   const [searchValue, setSearchValue] = useState('');
   const [notifDialogOpen, setNotifDialogOpen] = useState(false);
   const [notifDialogData, setNotifDialogData] = useState<any>(null);
@@ -94,7 +88,6 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
 
 
   useEffect(() => {
-    setShowLabels(!layout.sidebarCollapsed);
     setSidebarElementsVisible({
       labels: !layout.sidebarCollapsed,
       dateTime: !layout.sidebarCollapsed
@@ -109,7 +102,6 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
     if (!layout.sidebarCollapsed) {
       // وقتی منو باز می‌شود، لیبل‌ها را با تاخیر نمایش بده
       labelsTimeout = setTimeout(() => {
-        setShowLabels(true);
         setSidebarElementsVisible(prev => ({ ...prev, labels: true }));
       }, 250);
       
@@ -120,7 +112,6 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
     } else {
       // وقتی منو بسته می‌شود، بلافاصله المان‌ها را مخفی کن
       setSidebarElementsVisible({ labels: false, dateTime: false });
-      setShowLabels(false);
     }
     
     return () => {
@@ -201,6 +192,13 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
     setProfileMenuAnchor(null);
   };
 
+  const handleLogout = () => {
+    dispatch(logout());
+    localStorage.removeItem('user');
+    navigate('/auth/login');
+    handleProfileMenuClose();
+  };
+
 
 
   const handleMenuItemClick = (path: string) => {
@@ -236,13 +234,11 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
     if (!layout.sidebarCollapsed) {
       // بستن منو
       setSidebarElementsVisible({ labels: false, dateTime: false });
-      setShowLabels(false);
       dispatch(toggleSidebar());
     } else {
       // باز کردن منو
       dispatch(toggleSidebar());
       setTimeout(() => {
-        setShowLabels(true);
         setSidebarElementsVisible({ labels: true, dateTime: true });
       }, 500);
     }
@@ -529,18 +525,94 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
         PaperProps={{
           sx: {
             mt: 1,
-            overflow: 'visible',
-            background: 'transparent',
-            boxShadow: 'none',
-            '& .MuiMenu-paper': {
-              background: 'transparent',
+            minWidth: 280,
+            maxWidth: 320,
+            borderRadius: 2,
+            boxShadow: theme.shadows[8],
+            border: `1px solid ${alpha(theme.palette.divider, 0.1)}`,
+            '& .MuiMenuItem-root': {
+              px: 2,
+              py: 1.5,
+              borderRadius: 1,
+              mx: 1,
+              my: 0.5,
             }
           }
         }}
         transformOrigin={{ horizontal: 'right', vertical: 'top' }}
         anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
       >
-        <ProfilePanel onClose={handleProfileMenuClose} />
+        {/* Header با اطلاعات کاربر */}
+        <Box sx={{ 
+          p: 2, 
+          borderBottom: `1px solid ${alpha(theme.palette.divider, 0.1)}`,
+          bgcolor: alpha(theme.palette.primary.main, 0.05)
+        }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+            <Avatar
+              src={user?.avatar}
+              sx={{
+                width: 48,
+                height: 48,
+                bgcolor: theme.palette.primary.main,
+                fontSize: '1.2rem',
+                fontWeight: 600,
+              }}
+            >
+              {user?.name?.charAt(0) || user?.username?.charAt(0) || 'ک'}
+            </Avatar>
+            <Box sx={{ flex: 1, minWidth: 0 }}>
+              <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 0.5 }}>
+                {user?.name || 'کاربر'}
+              </Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.8rem' }}>
+                {user?.username}@sajed.mil
+              </Typography>
+              <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.75rem' }}>
+                {user?.rank} - {user?.unit}
+              </Typography>
+            </Box>
+          </Box>
+        </Box>
+
+        {/* منوی عملیات */}
+        <MenuItem onClick={() => { handleProfileMenuClose(); dispatch(toggleSidePanel('profile')); }}>
+          <ListItemIcon>
+            <Person fontSize="small" />
+          </ListItemIcon>
+          <ListItemText primary="مدیریت پروفایل" />
+        </MenuItem>
+
+        <MenuItem onClick={() => { handleProfileMenuClose(); dispatch(toggleSidePanel('settings')); }}>
+          <ListItemIcon>
+            <SettingsIcon fontSize="small" />
+          </ListItemIcon>
+          <ListItemText primary="تنظیمات" />
+        </MenuItem>
+
+        <MenuItem onClick={() => { handleProfileMenuClose(); }}>
+          <ListItemIcon>
+            <VpnKey fontSize="small" />
+          </ListItemIcon>
+          <ListItemText primary="تغییر رمز عبور" />
+        </MenuItem>
+
+        <Box sx={{ borderTop: `1px solid ${alpha(theme.palette.divider, 0.1)}`, mt: 1, pt: 1 }}>
+          <MenuItem 
+            onClick={handleLogout}
+            sx={{ 
+              color: 'error.main',
+              '&:hover': { 
+                bgcolor: alpha(theme.palette.error.main, 0.1) 
+              }
+            }}
+          >
+            <ListItemIcon>
+              <ExitToApp fontSize="small" sx={{ color: 'error.main' }} />
+            </ListItemIcon>
+            <ListItemText primary="خروج از سیستم" />
+          </MenuItem>
+        </Box>
       </Menu>
 
       {/* Dialog نمایش جزئیات اعلان */}

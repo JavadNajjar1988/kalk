@@ -4,7 +4,16 @@ import { mockApiServer } from './mockApiServer';
 import type { Scenario } from '@/types/scenarioModels';
 
 export class ScenarioApiService extends BaseApiClient {
-  private useMockApi = true; // kalknegar: همیشه mock (همسان با dashboard در dev)
+  private useMockApi = (import.meta as any).env?.VITE_USE_MOCK === 'true';
+
+  constructor() {
+    super(((import.meta as any).env?.VITE_API_URL as string) || '/api');
+  }
+
+  private authHeaders() {
+    const token = localStorage.getItem('access_token');
+    return token ? { Authorization: `Bearer ${token}` } : {};
+  }
 
   async list(): Promise<{ id: string; name: string; description?: string; created: Date; modified: Date; image?: string }[]> {
     if (this.useMockApi) {
