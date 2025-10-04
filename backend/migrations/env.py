@@ -9,8 +9,17 @@ from sqlalchemy.ext.asyncio import async_engine_from_config
 
 from alembic import context
 
+import os
+import sys
+
+# Ensure backend root is on sys.path so that 'app' package is importable
+current_dir = os.path.dirname(os.path.abspath(__file__))
+backend_root = os.path.abspath(os.path.join(current_dir, os.pardir))
+if backend_root not in sys.path:
+    sys.path.insert(0, backend_root)
+
 from app.db.base import Base
-from app.models import scenario  # noqa: F401 ensure models imported
+from app.models import scenario, user  # noqa: F401 ensure models imported
 
 
 config = context.config

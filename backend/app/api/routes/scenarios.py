@@ -4,7 +4,7 @@ from datetime import datetime, timezone
 import uuid
 from typing import List
 
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, HTTPException, status, Depends
 from sqlalchemy import select, update, delete
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -42,6 +42,7 @@ async def create_scenario(payload: ScenarioCreate, db: DbSession):
         name=payload.name,
         description=payload.description,
         image=payload.image,
+        content=getattr(payload, "content", None),
         created=now,
         modified=now,
     )

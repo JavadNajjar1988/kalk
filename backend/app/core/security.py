@@ -9,7 +9,7 @@ from passlib.context import CryptContext
 from app.core.config import settings
 
 
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+pwd_context = CryptContext(schemes=["pbkdf2_sha256"], deprecated="auto")
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl=f"{settings.API_PREFIX}/auth/token")
 
 
@@ -33,6 +33,9 @@ def decode_access_token(token: str) -> dict[str, Any]:
 
 
 async def get_current_user(token: str = Depends(oauth2_scheme)) -> dict[str, Any]:
+    # در حالت غیرفعال بودن احراز هویت، کاربر فرضی admin با تمام نقش‌ها برمی‌گردد.
+    if settings.DISABLE_AUTH:
+        return {"username": "dev", "roles": ["ADMIN", "OPERATOR", "USER"]}
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate credentials",
@@ -51,6 +54,8 @@ async def get_current_user(token: str = Depends(oauth2_scheme)) -> dict[str, Any
 
 def require_roles(*required_roles: str):
     async def _inner(user: dict[str, Any] = Depends(get_current_user)):
+        if settings.DISABLE_AUTH:
+            return user
         user_roles = set(user.get("roles", []))
         if not set(required_roles).issubset(user_roles):
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Insufficient permissions")

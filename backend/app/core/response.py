@@ -44,6 +44,6 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
 
 
 async def unhandled_exception_handler(request: Request, exc: Exception):
-    return error("Internal server error", status_code=500)
+    return error(f"Internal server error: {exc}", status_code=500)
 
 

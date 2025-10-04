@@ -104,6 +104,7 @@ export default defineConfig({
   },
   server: {
     port: 3000,
+    strictPort: true, // در صورت اشغال بودن پورت خطا می‌دهد تا تصادفی تغییر نکند
     host: true,
     proxy: {
       '/api': {

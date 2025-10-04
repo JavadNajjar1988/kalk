@@ -55,6 +55,8 @@ import SidePanel from './SidePanel';
 import PersianDateTime from '@/components/common/PersianDateTime';
 import { useTranslation } from '@/hooks/useTranslation';
 import SearchBar from '@/components/common/SearchBar';
+import KalknegarLaunchDialog from '@/components/common/KalknegarLaunchDialog';
+import KalknegarLoadingDialog from '@/components/common/KalknegarLoadingDialog';
 
 const DRAWER_WIDTH = 180; // further narrow sidebar width for more main content space
 const DRAWER_WIDTH_COLLAPSED = 60;
@@ -80,6 +82,8 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
   const [searchValue, setSearchValue] = useState('');
   const [notifDialogOpen, setNotifDialogOpen] = useState(false);
   const [notifDialogData, setNotifDialogData] = useState<any>(null);
+  const [kalknegarDialogOpen, setKalknegarDialogOpen] = useState(false);
+  const [kalknegarLoadingOpen, setKalknegarLoadingOpen] = useState(false);
   // حذف stateهای جداگانه و استفاده از یک state واحد برای مدیریت نمایش المان‌ها
   const [sidebarElementsVisible, setSidebarElementsVisible] = useState({
     labels: !layout.sidebarCollapsed,
@@ -201,9 +205,14 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
 
 
 
-  const handleMenuItemClick = (path: string) => {
-    // فقط navigate کردن بدون بستن settings panel
-    navigate(path);
+  const handleMenuItemClick = (path: string, itemId: string) => {
+    if (itemId === 'kalknegar') {
+      // نمایش دیالوگ راه‌اندازی کالک نگار
+      setKalknegarDialogOpen(true);
+    } else {
+      // فقط navigate کردن بدون بستن settings panel
+      navigate(path);
+    }
   };
 
   const isActiveRoute = (path: string): boolean => {
@@ -242,6 +251,23 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
         setSidebarElementsVisible({ labels: true, dateTime: true });
       }, 500);
     }
+  };
+
+  // تابع‌های مربوط به دیالوگ کالک نگار
+  const handleKalknegarDialogClose = () => {
+    setKalknegarDialogOpen(false);
+  };
+
+  const handleKalknegarLaunch = () => {
+    setKalknegarDialogOpen(false);
+    setKalknegarLoadingOpen(true);
+    
+    // شبیه‌سازی لودینگ و سپس باز کردن کالک نگار
+    setTimeout(() => {
+      setKalknegarLoadingOpen(false);
+      // هدایت فول‌پیج به کالک نگار در همان تب (با اسلش انتهایی)
+      window.location.assign('/kalknegar/');
+    }, 3000); // 3 ثانیه لودینگ
   };
 
   return (
@@ -665,7 +691,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
               <ListItemButton
                 onClick={(e) => {
                   e.stopPropagation();
-                  handleMenuItemClick(item.path);
+                  handleMenuItemClick(item.path, item.id);
                 }}
                 selected={isActiveRoute(item.path)}
                 sx={{
@@ -757,6 +783,18 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
 
       {/* Side Panel (Gmail-like) */}
       <SidePanel />
+
+      {/* دیالوگ راه‌اندازی کالک نگار */}
+      <KalknegarLaunchDialog
+        open={kalknegarDialogOpen}
+        onClose={handleKalknegarDialogClose}
+        onLaunch={handleKalknegarLaunch}
+      />
+
+      {/* دیالوگ لودینگ کالک نگار */}
+      <KalknegarLoadingDialog
+        open={kalknegarLoadingOpen}
+      />
 
       {/* محتوای اصلی */}
       <Box

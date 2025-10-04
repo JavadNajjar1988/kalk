@@ -1,6 +1,7 @@
 import { computed, onMounted, ref } from "vue";
 import { type ScenarioMetadata } from "@/scenariostore/localdb";
 import { scenarioApiService } from "@/services/api/scenarioApiService";
+import { useIndexedDb } from "@/scenariostore/localdb";
 import type { MenuItemData } from "@/components/types";
 import type { StoredScenarioAction } from "@/types/constants";
 import { MAP_EDIT_MODE_ROUTE } from "@/router/names";
@@ -62,7 +63,7 @@ export function useBrowserScenarios() {
 
   async function onAction(action: StoredScenarioAction, scenario: ScenarioMetadata) {
     const { /* deleteScenario, listScenarios, duplicateScenario, */ downloadAsJson } =
-      await (await import("@/scenariostore/localdb")).useIndexedDb();
+      await useIndexedDb();
     switch (action) {
       case "open":
         await router.push({
@@ -84,7 +85,7 @@ export function useBrowserScenarios() {
         break;
       case "duplicate":
         {
-          const scn = await scenarioApiService.get(scenario.id);
+          const scn = await scenarioApiService.getById(scenario.id);
           // حذف شناسه برای ایجاد
           const { id: _oldId, meta, ...rest } = scn as any;
           await scenarioApiService.create({ ...(rest as any), id: crypto.randomUUID() } as any);

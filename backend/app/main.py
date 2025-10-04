@@ -40,8 +40,8 @@ def create_app() -> FastAPI:
     # Compression
     app.add_middleware(GZipMiddleware, minimum_size=1024)
 
-    # Structured request logging (basic JSON to stdout)
-    logger = logging.getLogger("uvicorn.access")
+    # Structured request logging (basic JSON to stdout) using custom logger
+    logger = logging.getLogger("app.requests")
 
     @app.middleware("http")
     async def log_requests(request: Request, call_next):
@@ -49,12 +49,13 @@ def create_app() -> FastAPI:
         response = await call_next(request)
         duration_ms = (time.perf_counter() - start) * 1000
         logger.info(
+            "%s",
             {
                 "method": request.method,
                 "path": request.url.path,
                 "status": response.status_code,
                 "duration_ms": round(duration_ms, 2),
-            }
+            },
         )
         return response
 
@@ -66,6 +67,10 @@ def create_app() -> FastAPI:
         docs_url="/docs",
         openapi_url="/openapi.json",
     )
+    # Register exception handlers on the mounted API app as well
+    api.add_exception_handler(HTTPException, http_exception_handler)
+    api.add_exception_handler(RequestValidationError, validation_exception_handler)
+    api.add_exception_handler(Exception, unhandled_exception_handler)
     app.mount(settings.API_PREFIX, api)
 
     api.include_router(health_routes.router)

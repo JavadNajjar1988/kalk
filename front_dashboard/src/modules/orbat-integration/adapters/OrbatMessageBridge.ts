@@ -147,7 +147,7 @@ export class OrbatMessageBridge {
       }
 
       // Send message
-      this.iframe.contentWindow.postMessage(message, this.config.targetOrigin);
+      this.iframe.contentWindow.postMessage(message, this.getIframeOrigin());
       this.log('Sent message:', message);
 
       // Set timeout
@@ -170,7 +170,7 @@ export class OrbatMessageBridge {
     });
     
     // Validate origin
-    if (event.origin !== this.config.targetOrigin) {
+    if (event.origin !== this.getIframeOrigin()) {
       this.log('Message from invalid origin:', event.origin);
       return;
     }
@@ -248,6 +248,9 @@ export class OrbatMessageBridge {
     if (handlers) {
       handlers.forEach(handler => handler(message));
     }
+
+    // Send auth token to iframe if available
+    this.sendAuthTokenIfAvailable();
   }
 
   private handleError(message: ErrorMessage): void {
@@ -342,6 +345,56 @@ export class OrbatMessageBridge {
     if (this.config.enableLogging) {
       console.log(`[OrbatBridge] ${message}`, ...args);
     }
+  }
+
+  private getIframeOrigin(): string {
+    try {
+      if (this.iframe?.src) {
+        return new URL(this.iframe.src).origin;
+      }
+      return this.config.targetOrigin;
+    } catch {
+      return this.config.targetOrigin;
+    }
+  }
+
+  // Auth bridge helpers
+  private sendAuthTokenIfAvailable(): void {
+    try {
+      const token = localStorage.getItem('access_token');
+      if (!token) {
+        this.log('No access_token in localStorage to send to iframe');
+        return;
+      }
+      if (!this.iframe?.contentWindow) {
+        this.log('Iframe not available to send AUTH_TOKEN');
+        return;
+      }
+      const msg = {
+        id: `auth_${Date.now()}`,
+        type: 'AUTH_TOKEN',
+        origin: 'react',
+        timestamp: Date.now(),
+        token,
+        exp: Number(localStorage.getItem('access_token_exp')) || undefined,
+      };
+      this.iframe.contentWindow.postMessage(msg, this.config.targetOrigin);
+      this.log('Sent AUTH_TOKEN to iframe');
+    } catch (e) {
+      console.error('[OrbatBridge] Failed to send AUTH_TOKEN to iframe', e);
+    }
+  }
+
+  public refreshAuthToken(token?: string, exp?: number): void {
+    try {
+      if (token) {
+        localStorage.setItem('access_token', token);
+      }
+      if (exp) {
+        localStorage.setItem('access_token_exp', String(exp));
+      }
+    } catch {}
+    this.sendAuthTokenIfAvailable();
   }
 
   // Cleanup

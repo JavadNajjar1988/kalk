@@ -23,6 +23,7 @@
           class="inline-flex items-center justify-center rounded-lg p-1.5 text-slate-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-600 hover:text-slate-800 dark:hover:text-white focus:ring-2 focus:ring-blue-300 dark:focus:ring-white focus:outline-hidden focus:ring-inset transition-all duration-200"
         >
           <SearchIcon class="block h-5 w-5" />
+        
         </button>
         <div class="flex items-center gap-1 absolute left-1/2 -translate-x-1/2">
           <router-link
@@ -48,6 +49,7 @@
             class="inline-flex items-center justify-center rounded-md p-1.5 text-slate-600 dark:text-gray-400 hover:bg-orange-50 dark:hover:bg-slate-600 hover:text-orange-600 dark:hover:text-orange-400 focus:ring-2 focus:ring-orange-300 dark:focus:ring-white focus:outline-hidden focus:ring-inset transition-all duration-200"
           >
             <IconSitemap class="h-5 w-5" />
+           
           </router-link>
         </div>
         <div class="flex items-center">
@@ -66,6 +68,7 @@
             :disabled="!canRedo"
           >
             <IconRedo class="block h-5 w-5" />
+            <IconRedo class="block h-5 w-5" />
           </button>
         </div>
         <button
@@ -73,6 +76,7 @@
           class="hidden items-center justify-center rounded-lg p-1.5 text-slate-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-600 hover:text-slate-800 dark:hover:text-white focus:ring-2 focus:ring-pink-300 dark:focus:ring-white focus:outline-hidden focus:ring-inset sm:block transition-all duration-200"
           title="نمایش میانبرهای صفحه کلید"
         >
+          <IconKeyboard class="block h-5 w-5" />
           <IconKeyboard class="block h-5 w-5" />
         </button>
 

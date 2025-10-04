@@ -15,8 +15,8 @@ class Settings(BaseSettings):
     CORS_ORIGINS: List[str] = Field(
         default_factory=lambda: [
             "http://localhost:5173",
-            "http://localhost:5174",
             "http://localhost:3000",
+            
         ]
     )
 
@@ -24,6 +24,9 @@ class Settings(BaseSettings):
     JWT_SECRET: str = "change_me"
     JWT_ALG: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60
+
+    # وقتی True باشد، تمام بررسی‌های احراز هویت در backend نادیده گرفته می‌شود.
+    DISABLE_AUTH: bool = False
 
 
 settings = Settings()

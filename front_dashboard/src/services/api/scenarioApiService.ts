@@ -51,6 +51,26 @@ export class ScenarioApiService extends BaseApiClient {
     return token ? { Authorization: `Bearer ${token}` } : {};
   }
 
+  private buildScenarioPayload(data: EnhancedScenario) {
+    const name = (data as any)?.name || '';
+    const description = (data as any)?.description || '';
+    const image = (data as any)?.image;
+    return { name, description, image, content: data } as any;
+  }
+
+  private mapScenarioOutToEnhanced(apiItem: any): EnhancedScenario {
+    if (apiItem && typeof apiItem === 'object' && 'content' in apiItem && apiItem.content) {
+      const base = apiItem.content;
+      return {
+        ...base,
+        id: apiItem.id ?? base.id,
+        name: apiItem.name ?? base.name,
+        description: apiItem.description ?? base.description,
+      } as EnhancedScenario;
+    }
+    return apiItem as EnhancedScenario;
+  }
+
   // GET /api/scenarios
   async getScenarios(query?: ScenarioQuery): Promise<EnhancedScenario[]> {
     try {
@@ -59,8 +79,9 @@ export class ScenarioApiService extends BaseApiClient {
         return handleApiResponse(response);
       }
 
-      const response = await this.get<EnhancedScenario[]>('/scenarios', query);
-      return handleApiResponse(response);
+      const response = await this.get<any[]>('/scenarios', query);
+      const data = handleApiResponse(response);
+      return (Array.isArray(data) ? data : []).map((i) => this.mapScenarioOutToEnhanced(i));
     } catch (error) {
       console.error('Failed to fetch scenarios:', error);
       throw error;
@@ -77,8 +98,9 @@ export class ScenarioApiService extends BaseApiClient {
         return handleApiResponse(response);
       }
 
-      const response = await this.get<EnhancedScenario>(`/scenarios/${id}`);
-      return handleApiResponse(response);
+      const response = await this.get<any>(`/scenarios/${id}`);
+      const data = handleApiResponse(response);
+      return this.mapScenarioOutToEnhanced(data);
     } catch (error) {
       console.error(`Failed to fetch scenario ${id}:`, error);
       throw error;
@@ -95,8 +117,10 @@ export class ScenarioApiService extends BaseApiClient {
         return handleApiResponse(response);
       }
 
-      const response = await this.post<EnhancedScenario>('/scenarios', scenarioData);
-      return handleApiResponse(response);
+      const payload = this.buildScenarioPayload(scenarioData as any);
+      const response = await this.post<any>('/scenarios', payload);
+      const data = handleApiResponse(response);
+      return this.mapScenarioOutToEnhanced(data);
     } catch (error) {
       console.error('Failed to create scenario:', error);
       throw error;
@@ -111,8 +135,10 @@ export class ScenarioApiService extends BaseApiClient {
         return handleApiResponse(response);
       }
 
-      const response = await this.put<EnhancedScenario>(`/scenarios/${id}`, updates);
-      return handleApiResponse(response);
+      const payload = this.buildScenarioPayload({ ...(updates as any), id } as EnhancedScenario);
+      const response = await this.put<any>(`/scenarios/${id}`, payload);
+      const data = handleApiResponse(response);
+      return this.mapScenarioOutToEnhanced(data);
     } catch (error) {
       console.error(`Failed to update scenario ${id}:`, error);
       throw error;
@@ -127,8 +153,10 @@ export class ScenarioApiService extends BaseApiClient {
         return handleApiResponse(response);
       }
 
-      const response = await this.patch<EnhancedScenario>(`/scenarios/${id}`, updates);
-      return handleApiResponse(response);
+      const payload = { ...this.buildScenarioPayload({ ...(updates as any), id } as EnhancedScenario) };
+      const response = await this.patch<any>(`/scenarios/${id}`, payload);
+      const data = handleApiResponse(response);
+      return this.mapScenarioOutToEnhanced(data);
     } catch (error) {
       console.error(`Failed to patch scenario ${id}:`, error);
       throw error;

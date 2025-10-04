@@ -21,7 +21,8 @@ interface ReadyMessage extends OrbatMessage {
 
 class ReactBridge {
   private isIntegrationMode = false;
-  private parentOrigin = 'http://localhost:3000';
+  private parentOrigin = (import.meta as any).env?.VITE_PARENT_ORIGIN || 'http://localhost:3000';
+  private currentToken: string | null = null;
 
   constructor() {
     this.init();
@@ -83,8 +84,14 @@ class ReactBridge {
 
       console.log('[ReactBridge] Received message:', message);
       
-      // Handle different message types
+      // Handle different message types (auth bridge + data bridge)
       switch (message.type) {
+        case 'AUTH_TOKEN':
+          this.handleAuthToken(message);
+          break;
+        case 'CLEAR_TOKEN':
+          this.handleClearToken();
+          break;
         case 'ORBAT_COMMAND':
           this.handleCommand(message);
           break;
@@ -191,6 +198,39 @@ class ReactBridge {
       }
     } else {
       console.warn('[ReactBridge] No parent window found, cannot send message:', message);
+    }
+  }
+
+  private handleAuthToken(message: OrbatMessage) {
+    const token = message.token as string | undefined;
+    const exp = message.exp as number | undefined;
+    if (!token || typeof token !== 'string') {
+      console.warn('[ReactBridge] AUTH_TOKEN message missing token');
+      return;
+    }
+    try {
+      this.currentToken = token;
+      // Persist for API clients that read from localStorage
+      localStorage.setItem('access_token', token);
+      if (exp) {
+        localStorage.setItem('access_token_exp', String(exp));
+      }
+      console.log('[ReactBridge] Auth token stored');
+      this.sendEvent('AUTH_APPLIED', { exp });
+    } catch (e) {
+      console.error('[ReactBridge] Failed to store auth token', e);
+    }
+  }
+
+  private handleClearToken() {
+    this.currentToken = null;
+    try {
+      localStorage.removeItem('access_token');
+      localStorage.removeItem('access_token_exp');
+      console.log('[ReactBridge] Auth token cleared');
+      this.sendEvent('AUTH_CLEARED', {});
+    } catch (e) {
+      console.error('[ReactBridge] Failed to clear auth token', e);
     }
   }
 
