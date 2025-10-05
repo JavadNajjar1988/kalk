@@ -12,6 +12,7 @@ import { type NullableSymbolItem, type SymbolItem } from "@/types/constants";
 import { type UnitSymbolOptions } from "@/types/scenarioModels";
 import { Label } from "@/components/ui/label";
 import NewMilitarySymbol from "@/components/NewMilitarySymbol.vue";
+import { translateEntity, translateEntityType, translateEntitySubtype } from "@/symbology/translations";
 
 interface Props {
   label?: string;
@@ -26,14 +27,18 @@ const controlId = useId();
 const selectedValue = defineModel<string | null>({ default: "00" });
 
 function mapSymbolItem(item: NullableSymbolItem) {
+  const translatedEntity = translateEntity(item.entity || "");
+  const translatedEntityType = item.entityType ? translateEntityType(item.entityType) : "";
+  const translatedEntitySubtype = item.entitySubtype ? translateEntitySubtype(item.entitySubtype) : "";
+  
   return {
     sidc: item.sidc,
     code: item.code,
-    label: item.entitySubtype || item.entityType || item.entity,
+    label: translatedEntitySubtype || translatedEntityType || translatedEntity,
     subLabel: item.entitySubtype
-      ? `${item.entity} / ${item.entityType}`
+      ? `${translatedEntity} / ${translatedEntityType}`
       : item.entityType
-        ? item.entity
+        ? translatedEntity
         : "",
   };
 }

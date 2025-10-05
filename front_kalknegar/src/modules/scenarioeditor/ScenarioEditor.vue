@@ -67,7 +67,7 @@
             title="انجام مجدد عمل"
             :disabled="!canRedo"
           >
-            
+          
             <IconRedo class="block h-5 w-5" />
           </button>
         </div>
@@ -76,7 +76,7 @@
           class="hidden items-center justify-center rounded-lg p-1.5 text-slate-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-600 hover:text-slate-800 dark:hover:text-white focus:ring-2 focus:ring-pink-300 dark:focus:ring-white focus:outline-hidden focus:ring-inset sm:block transition-all duration-200"
           title="نمایش میانبرهای صفحه کلید"
         >
-         
+       
           <IconKeyboard class="block h-5 w-5" />
         </button>
 

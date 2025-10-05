@@ -22,6 +22,7 @@ import {
   type ReinforcedStatus,
   type SymbologyStandard,
 } from "@/types/scenarioModels";
+import { translateEntity, translateModifier, translateEntityType, translateEntitySubtype, translateSymbolSet } from "@/symbology/translations";
 
 const symbology = shallowRef<SymbolSetMap | undefined>();
 const isLoaded = ref(false);
@@ -44,7 +45,10 @@ const searchSymbolRef = computed(() => {
       )
       .map((e) => {
         const { entity, entityType, entitySubtype } = e;
-        const text = [entity, entityType, entitySubtype].filter((e) => e).join(" - ");
+        const translatedEntity = translateEntity(entity);
+        const translatedEntityType = entityType ? translateEntityType(entityType) : "";
+        const translatedEntitySubtype = entitySubtype ? translateEntitySubtype(entitySubtype) : "";
+        const text = [translatedEntity, translatedEntityType, translatedEntitySubtype].filter((e) => e).join(" - ");
         return {
           ...e,
           text: text.replaceAll("/", " / "),
@@ -68,7 +72,7 @@ const searchModifierOneRef = computed(() => {
       .map((e) => {
         return {
           ...e,
-          text: e.modifier,
+          text: translateModifier(e.modifier),
         };
       })
   );
@@ -89,7 +93,7 @@ const searchModifierTwoRef = computed(() => {
       .map((e) => {
         return {
           ...e,
-          text: e.modifier,
+          text: translateModifier(e.modifier),
         };
       })
   );
@@ -156,7 +160,7 @@ export function useSymbolItems(sidc: Ref<string>, reinforcedReduced?: Reinforced
         k === CONTROL_MEASURE_SYMBOLSET_VALUE ? "00001602050000" : "00000000000000";
       return {
         code: k,
-        text: v.name,
+        text: translateSymbolSet(v.name),
         sidc: "100" + sidValue.value + k + iconValue,
       } as SymbolItem;
     });
@@ -176,22 +180,22 @@ export function useSymbolItems(sidc: Ref<string>, reinforcedReduced?: Reinforced
     return [
       {
         code: "None",
-        text: "Not Applicable",
+        text: "قابل اجرا نیست",
         symbolOptions: {},
       },
       {
         code: "Reinforced",
-        text: "Reinforced",
+        text: "تقویت شده",
         symbolOptions: { reinforcedReduced: mapReinforcedStatus2Field("Reinforced") },
       },
       {
         code: "Reduced",
-        text: "Reduced",
+        text: "کاهش یافته",
         symbolOptions: { reinforcedReduced: mapReinforcedStatus2Field("Reduced") },
       },
       {
         code: "ReinforcedReduced",
-        text: "Reinforced and reduced",
+        text: "تقویت شده و کاهش یافته",
         symbolOptions: {
           reinforcedReduced: mapReinforcedStatus2Field("ReinforcedReduced"),
         },
@@ -219,9 +223,12 @@ export function useSymbolItems(sidc: Ref<string>, reinforcedReduced?: Reinforced
     if (symbolSetCode === CONTROL_MEASURE_SYMBOLSET_VALUE)
       mis = mis.filter((v) => v.geometry === "Point");
     return mis.map((mi) => {
-      let text = mi.entity;
-      if (mi.entityType) text += " - " + mi.entityType;
-      if (mi.entitySubtype) text += " - " + mi.entitySubtype;
+      const translatedEntity = translateEntity(mi.entity);
+      const translatedEntityType = mi.entityType ? translateEntityType(mi.entityType) : "";
+      const translatedEntitySubtype = mi.entitySubtype ? translateEntitySubtype(mi.entitySubtype) : "";
+      let text = translatedEntity;
+      if (translatedEntityType) text += " - " + translatedEntityType;
+      if (translatedEntitySubtype) text += " - " + translatedEntitySubtype;
       return {
         code: mi.code,
         text,
@@ -268,7 +275,7 @@ export function useSymbolItems(sidc: Ref<string>, reinforcedReduced?: Reinforced
         ({ code, modifier }): SymbolItem => {
           return {
             code,
-            text: modifier,
+            text: translateModifier(modifier),
             sidc:
               "100" + sidValue.value + symbolSetValue.value + "0000000000" + code + "00",
           };
@@ -284,7 +291,7 @@ export function useSymbolItems(sidc: Ref<string>, reinforcedReduced?: Reinforced
         ({ code, modifier }): SymbolItem => {
           return {
             code,
-            text: modifier,
+            text: translateModifier(modifier),
             sidc:
               "100" + sidValue.value + symbolSetValue.value + "0000000000" + "00" + code,
           };
