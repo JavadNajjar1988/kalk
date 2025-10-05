@@ -18,7 +18,8 @@ export type MessageType =
   | 'ORBAT_EVENT'
   | 'ORBAT_ERROR'
   | 'ORBAT_READY'
-  | 'ORBAT_STATE_UPDATE';
+  | 'ORBAT_STATE_UPDATE'
+  | 'LOGOUT_REQUEST';
 
 // Command message from React to Vue
 export interface CommandMessage extends BaseMessage {

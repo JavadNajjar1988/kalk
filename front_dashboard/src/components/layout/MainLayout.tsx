@@ -262,11 +262,18 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
     setKalknegarDialogOpen(false);
     setKalknegarLoadingOpen(true);
     
-    // شبیه‌سازی لودینگ و سپس باز کردن کالک نگار
+    // Copy token to sessionStorage for iframe access
+    const token = localStorage.getItem('access_token');
+    if (token) {
+      sessionStorage.setItem('access_token', token);
+      console.log('[MainLayout] Token copied to sessionStorage for iframe access');
+    }
+    
+    // شبیه‌سازی لودینگ و سپس باز کردن کالک نگار در iframe
     setTimeout(() => {
       setKalknegarLoadingOpen(false);
-      // هدایت فول‌پیج به کالک نگار در همان تب (با اسلش انتهایی)
-      window.location.assign('/kalknegar/');
+          // هدایت به صفحه KalkNegar (iframe route)
+          navigate('/kalknegar');
     }, 3000); // 3 ثانیه لودینگ
   };
 

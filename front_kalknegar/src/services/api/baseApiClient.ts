@@ -18,8 +18,15 @@ export class BaseApiClient {
   protected async request<T>(endpoint: string, options?: RequestInit): Promise<ApiResponse<T>> {
     const token = typeof localStorage !== 'undefined' ? localStorage.getItem('access_token') : null;
     const authHeader = token ? { Authorization: `Bearer ${token}` } : {};
-    const res = await fetch(`${this.baseUrl}${endpoint}`, {
+    
+    // Cache-busting برای dev environment
+    const isDev = import.meta.env.DEV;
+    const cacheBuster = isDev ? `?t=${Date.now()}` : '';
+    const fullUrl = `${this.baseUrl}${endpoint}${cacheBuster}`;
+    
+    const res = await fetch(fullUrl, {
       headers: { 'Content-Type': 'application/json', Accept: 'application/json', ...authHeader, ...(options?.headers || {}) },
+      cache: isDev ? 'no-store' : 'default', // جلوگیری از cache در dev
       ...options,
     });
     const raw = await res.text();

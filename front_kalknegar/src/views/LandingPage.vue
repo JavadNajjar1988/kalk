@@ -46,11 +46,36 @@
           </button>
           
           <!-- Profile Button -->
-          <button class="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-accent-foreground h-10 w-10">
-            <div class="h-8 w-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm font-semibold">
-              ک
+          <div class="relative">
+            <button 
+              @click="showProfileMenu = !showProfileMenu"
+              class="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-accent-foreground h-10 w-10"
+            >
+              <div class="h-8 w-8 rounded-full bg-blue-500 text-white flex items-center justify-center text-sm font-semibold">
+                {{ userInfo.name.charAt(0) }}
+              </div>
+            </button>
+
+            <!-- Profile Dropdown Menu -->
+            <div 
+              v-if="showProfileMenu"
+              class="absolute left-0 top-full translate-y-2 w-48 bg-white dark:bg-gray-800 rounded-md shadow-lg border border-blue-200/40 dark:border-blue-700/40 z-50"
+              style="max-height: 200px; overflow-y: auto;"
+            >
+              <div class="py-1">
+                <div class="px-4 py-2 text-sm text-gray-700 dark:text-gray-300 border-b border-gray-200 dark:border-gray-600">
+                  <div class="font-medium">{{ userInfo.name }}</div>
+                  <div class="text-xs text-gray-500 dark:text-gray-400">{{ userInfo.username }}</div>
+                </div>
+                <button 
+                  @click="logout"
+                  class="w-full text-left px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                >
+                  خروج از سیستم
+                </button>
+              </div>
             </div>
-          </button>
+          </div>
         </div>
       </div>
     </header>
@@ -247,6 +272,7 @@
               :showAllScenarios="showAllScenarios"
               :currentPage="currentPage"
               :totalScenarios="totalScenarios"
+              :serverScenarios="serverScenarios"
               @toggle-dropdown="toggleDropdown"
               @new-scenario="newScenario"
               @delete-scenario="deleteScenario"
@@ -254,6 +280,8 @@
               @run-scenario="runScenario"
               @download-scenario="saveScenario"
             />
+
+            <!-- Server block removed; now integrated into ScenarioManagementContent -->
             
             <!-- View All Button for Cards Mode -->
             <div v-if="viewMode === 'cards'" class="text-center mt-8">
@@ -354,18 +382,72 @@ const searchQuery = ref('');
 const showSearch = ref(false);
 const showImport = ref(false);
 
+// Profile management
+const showProfileMenu = ref(false);
+const userInfo = ref({
+  name: 'کاربر',
+  username: 'user',
+  role: 'operator'
+});
+
+// Get user info from token
+const getUserInfoFromToken = () => {
+  try {
+    const token = localStorage.getItem('access_token');
+    if (token) {
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      userInfo.value = {
+        name: payload.sub === 'admin' ? 'مدیر سیستم' : 'اپراتور سیستم',
+        username: payload.sub || 'user',
+        role: payload.roles?.includes('ADMIN') ? 'admin' : 'operator'
+      };
+    }
+  } catch (error) {
+    console.error('Error parsing token:', error);
+  }
+};
+
+// Logout function
+const logout = () => {
+  // Clear token from localStorage
+  localStorage.removeItem('access_token');
+  localStorage.removeItem('access_token_exp');
+  
+  // Close profile menu
+  showProfileMenu.value = false;
+  
+  // Send logout message to parent (React Dashboard)
+  if (window.parent !== window) {
+    try {
+      window.parent.postMessage({
+        type: 'LOGOUT_REQUEST',
+        origin: 'vue',
+        timestamp: Date.now()
+      }, '*');
+    } catch (error) {
+      console.error('Error sending logout message:', error);
+    }
+  }
+  
+  // Redirect to login or show message
+  console.log('User logged out');
+};
+
 // State for scenarios section
 const activeTab = ref('all');
 const viewMode = ref('cards');
-const dropdownOpen = ref<number | null>(null);
+const dropdownOpen = ref<number | string | null>(null);
 const showTabMenu = ref(false);
 const showDeleteModal = ref(false);
-const selectedScenarioForDelete = ref<{ id: number; name: string } | null>(null);
+const selectedScenarioForDelete = ref<{ id: number | string; name: string } | null>(null);
 
 // State for view controls
 const showAllScenarios = ref(false);
 const currentPage = ref(1);
 const totalScenarios = ref(2); // تعداد کل سناریوها
+
+  // Server scenarios (from backend)
+  const serverScenarios = ref<Array<{ id: string; name: string; description?: string }>>([]);
 
 // Computed properties for pagination
 const totalPages = computed(() => Math.ceil(totalScenarios.value / 10));
@@ -386,7 +468,7 @@ const toggleSidebar = () => {
 };
 
 // Dropdown toggle function
-const toggleDropdown = (cardId: number) => {
+const toggleDropdown = (cardId: number | string) => {
   if (dropdownOpen.value === cardId) {
     dropdownOpen.value = null;
   } else {
@@ -405,8 +487,18 @@ const newScenario = () => {
 };
 
 // Scenario actions
-const deleteScenario = (scenarioId: number) => {
-  // Map scenarioId to scenario names
+const deleteScenario = (scenarioId: number | string) => {
+  // Check if it's a server scenario (string ID)
+  if (typeof scenarioId === 'string') {
+    // For server scenarios, we need to get the name from serverScenarios
+    const serverScenario = serverScenarios.value.find(s => s.id === scenarioId);
+    const scenarioName = serverScenario?.name || 'سناریو سرور';
+    selectedScenarioForDelete.value = { id: scenarioId, name: scenarioName };
+    showDeleteModal.value = true;
+    return;
+  }
+
+  // For sample scenarios (number ID), use existing logic
   const scenarioNameMap: Record<number, string> = {
     1: 'عملیات بیت المقدس',
     2: 'عملیات مرصاد',
@@ -429,12 +521,32 @@ const confirmDeleteScenario = async () => {
   try {
     const scenarioId = selectedScenarioForDelete.value.id;
     
-    // For demo scenarios, we can't actually delete them from the server
-    // Instead, we'll show a message that they are demo scenarios
-    console.log('سناریوهای demo قابل حذف نیستند. این سناریوها برای نمایش هستند.');
-    
-    // Show a notification to the user
-    alert('سناریوهای demo قابل حذف نیستند. این سناریوها برای نمایش و آموزش هستند.');
+    // Check if it's a server scenario (string ID)
+    if (typeof scenarioId === 'string') {
+      // For server scenarios, delete from API
+      try {
+        await scenarioApiService.remove(scenarioId);
+        
+        // Remove from local list
+        const index = serverScenarios.value.findIndex(s => s.id === scenarioId);
+        if (index > -1) {
+          serverScenarios.value.splice(index, 1);
+        }
+        
+        console.log('سناریو سرور با موفقیت حذف شد');
+        alert('سناریو با موفقیت حذف شد');
+      } catch (error) {
+        console.error('خطا در حذف سناریو از سرور:', error);
+        alert('خطا در حذف سناریو از سرور');
+      }
+    } else {
+      // For demo scenarios, we can't actually delete them from the server
+      // Instead, we'll show a message that they are demo scenarios
+      console.log('سناریوهای demo قابل حذف نیستند. این سناریوها برای نمایش هستند.');
+      
+      // Show a notification to the user
+      alert('سناریوهای demo قابل حذف نیستند. این سناریوها برای نمایش و آموزش هستند.');
+    }
     
     // Close the modal
     showDeleteModal.value = false;
@@ -443,9 +555,19 @@ const confirmDeleteScenario = async () => {
   }
 };
 
-const editScenario = async (scenarioId: number) => {
+const editScenario = async (scenarioId: number | string) => {
   try {
-    // Map scenarioId to actual scenario IDs
+    // Check if it's a server scenario (string ID)
+    if (typeof scenarioId === 'string') {
+      // For server scenarios, navigate directly to editor
+      await router.push({ 
+        name: MAP_EDIT_MODE_ROUTE, 
+        params: { scenarioId: scenarioId } 
+      });
+      return;
+    }
+
+    // For sample scenarios (number ID), use existing logic
     const scenarioMap: Record<number, string> = {
       1: 'Operation_Beit_ol_Moqaddas_1982_FA',
       2: 'Operation_Mersad_1988_FA',
@@ -493,9 +615,34 @@ const editScenario = async (scenarioId: number) => {
   }
 };
 
-const saveScenario = async (scenarioId: number) => {
+const saveScenario = async (scenarioId: number | string) => {
   try {
-    // Map scenarioId to actual scenario IDs
+    // Check if it's a server scenario (string ID)
+    if (typeof scenarioId === 'string') {
+      // For server scenarios, we need to fetch from API
+      try {
+        const scenarioData = await scenarioApiService.getById(scenarioId);
+        const blob = new Blob([JSON.stringify(scenarioData, null, 2)], {
+          type: 'application/json'
+        });
+        
+        const downloadUrl = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = downloadUrl;
+        link.download = `${(scenarioData as any).name || scenarioId}.json`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(downloadUrl);
+        
+        console.log('سناریو سرور با موفقیت ذخیره شد');
+      } catch (error) {
+        console.error('خطا در دریافت سناریو از سرور:', error);
+      }
+      return;
+    }
+
+    // For sample scenarios (number ID), use existing logic
     const scenarioMap: Record<number, string> = {
       1: 'Operation_Beit_ol_Moqaddas_1982_FA',
       2: 'Operation_Mersad_1988_FA',
@@ -555,8 +702,18 @@ const saveScenario = async (scenarioId: number) => {
   }
 };
 
-const runScenario = (scenarioId: number) => {
-  // Map scenarioId to actual scenario IDs
+const runScenario = (scenarioId: number | string) => {
+  // Check if it's a server scenario (string ID)
+  if (typeof scenarioId === 'string') {
+    // For server scenarios, navigate directly to editor
+    router.push({ 
+      name: MAP_EDIT_MODE_ROUTE, 
+      params: { scenarioId: scenarioId } 
+    });
+    return;
+  }
+
+  // For sample scenarios (number ID), use existing logic
   const scenarioMap: Record<number, string> = {
     1: 'demo-Operation_Beit_ol_Moqaddas_1982_FA',
     2: 'demo-Operation_Mersad_1988_FA',
@@ -625,11 +782,29 @@ onMounted(() => {
   updateDateTime();
   dateTimeInterval = setInterval(updateDateTime, 60000); // Update every minute
   
+  // Initialize user info
+  getUserInfoFromToken();
+  // Load scenarios from API
+  scenarioApiService
+    .list()
+    .then((items) => {
+      serverScenarios.value = items as any;
+      // Optionally update totalScenarios to include server items
+      try { totalScenarios.value = Math.max(totalScenarios.value, serverScenarios.value.length); } catch {}
+    })
+    .catch((e) => console.error('Failed to load scenarios from API:', e));
+  // React to auth updates from bridge
+  const applied = () => getUserInfoFromToken();
+  const cleared = () => getUserInfoFromToken();
+  window.addEventListener('kalk-auth-applied', applied as any);
+  window.addEventListener('kalk-auth-cleared', cleared as any);
+  
   // Close tab menu when clicking outside
   document.addEventListener('click', (event) => {
     const target = event.target as HTMLElement;
     if (target && !target.closest('.relative')) {
       showTabMenu.value = false;
+      showProfileMenu.value = false;
     }
   });
 });
@@ -638,5 +813,7 @@ onUnmounted(() => {
   if (dateTimeInterval) {
     clearInterval(dateTimeInterval);
   }
+  window.removeEventListener('kalk-auth-applied', getUserInfoFromToken as any);
+  window.removeEventListener('kalk-auth-cleared', getUserInfoFromToken as any);
 });
 </script>

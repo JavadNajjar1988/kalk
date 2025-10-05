@@ -21,7 +21,7 @@ interface ReadyMessage extends OrbatMessage {
 
 class ReactBridge {
   private isIntegrationMode = false;
-  private parentOrigin = (import.meta as any).env?.VITE_PARENT_ORIGIN || 'http://localhost:3000';
+  private parentOrigin = (import.meta as any).env?.VITE_PARENT_ORIGIN || 'http://127.0.0.1:3000';
   private currentToken: string | null = null;
 
   constructor() {
@@ -33,8 +33,25 @@ class ReactBridge {
     const urlParams = new URLSearchParams(window.location.search);
     this.isIntegrationMode = urlParams.get('integration') === 'react';
 
+    console.log('[ReactBridge] URL params:', window.location.search);
+    console.log('[ReactBridge] Integration mode:', this.isIntegrationMode);
+
     if (this.isIntegrationMode) {
       console.log('[ReactBridge] Integration mode enabled');
+      
+      // Check for token in URL parameter as fallback
+      const tokenFromUrl = urlParams.get('token');
+      if (tokenFromUrl) {
+        console.log('[ReactBridge] Found token in URL parameter, storing it');
+        try {
+          this.currentToken = tokenFromUrl;
+          localStorage.setItem('access_token', tokenFromUrl);
+          console.log('[ReactBridge] Token stored from URL parameter');
+        } catch (e) {
+          console.error('[ReactBridge] Failed to store token from URL', e);
+        }
+      }
+      
       this.setupMessageListener();
       
       // Wait for DOM to be ready before notifying
@@ -45,16 +62,21 @@ class ReactBridge {
       } else {
         this.waitForVueApp();
       }
+    } else {
+      console.log('[ReactBridge] Not in integration mode, skipping bridge setup');
     }
   }
 
   private waitForVueApp() {
+    console.log('[ReactBridge] Waiting for Vue app to mount...');
     // Wait for Vue app to mount
     const checkInterval = setInterval(() => {
       // Check if Vue app is mounted (look for Vue app element)
       const appElement = document.getElementById('app');
+      console.log('[ReactBridge] App element:', appElement, 'Children:', appElement?.children.length);
       if (appElement && appElement.children.length > 0) {
         clearInterval(checkInterval);
+        console.log('[ReactBridge] Vue app mounted, notifying ready');
         // Add a small delay to ensure Vue is fully initialized
         setTimeout(() => {
           this.notifyReady();
@@ -105,6 +127,7 @@ class ReactBridge {
   }
 
   private notifyReady() {
+    console.log('[ReactBridge] Notifying parent that Vue app is ready');
     // Ensure we have a parent window and we're in an iframe
     if (window.parent === window) {
       console.warn('[ReactBridge] Not running in iframe, skipping ready notification');
@@ -202,6 +225,7 @@ class ReactBridge {
   }
 
   private handleAuthToken(message: OrbatMessage) {
+    console.log('[ReactBridge] Received AUTH_TOKEN message:', message);
     const token = message.token as string | undefined;
     const exp = message.exp as number | undefined;
     if (!token || typeof token !== 'string') {
@@ -215,8 +239,12 @@ class ReactBridge {
       if (exp) {
         localStorage.setItem('access_token_exp', String(exp));
       }
-      console.log('[ReactBridge] Auth token stored');
+      console.log('[ReactBridge] Auth token stored successfully');
       this.sendEvent('AUTH_APPLIED', { exp });
+      // Notify local Vue app
+      try {
+        window.dispatchEvent(new CustomEvent('kalk-auth-applied', { detail: { token, exp } }));
+      } catch {}
     } catch (e) {
       console.error('[ReactBridge] Failed to store auth token', e);
     }
@@ -229,6 +257,10 @@ class ReactBridge {
       localStorage.removeItem('access_token_exp');
       console.log('[ReactBridge] Auth token cleared');
       this.sendEvent('AUTH_CLEARED', {});
+      // Notify local Vue app
+      try {
+        window.dispatchEvent(new CustomEvent('kalk-auth-cleared'));
+      } catch {}
     } catch (e) {
       console.error('[ReactBridge] Failed to clear auth token', e);
     }

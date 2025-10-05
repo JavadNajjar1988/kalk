@@ -30,7 +30,7 @@ watch(
       localReady.value = true;
     } else {
       try {
-        const scn = await scenarioApiService.get(newScenarioId);
+        const scn = await scenarioApiService.getById(newScenarioId);
         if (scn) {
           scenario.value.io.loadFromObject(scn);
           selectedItems.clear();

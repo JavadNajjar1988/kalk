@@ -3,7 +3,7 @@ import { Routes, Route, Navigate, useRoutes } from 'react-router-dom';
 import { ThemeProvider, CssBaseline, Box, CircularProgress } from '@mui/material';
 import { useAppSelector, useAppDispatch } from './store';
 import { selectTheme, setLanguage } from './store/slices/uiSlice';
-import { selectIsAuthenticated } from './store/slices/authSlice';
+import { selectIsAuthenticated, rehydrateUser } from './store/slices/authSlice';
 import { createAppTheme } from './theme';
 import { ErrorFallback } from './components/common/ErrorFallback';
 import { ErrorBoundary } from 'react-error-boundary';
@@ -11,12 +11,12 @@ import MainLayout from './components/layout/MainLayout';
 import ProtectedRoute from './components/common/ProtectedRoute';
 import TransformFarsiNumbers from './components/common/TransformFarsiNumbers';
 import NewSplashScreen from './components/common/NewSplashScreen';
+import KalknegarIframe from './components/common/KalknegarIframe';
 import authRoutes from './modules/auth/routes';
 import DashboardRoutes from './modules/dashboard/routes';
 import { ScenarioDialogProvider } from './components/common/ScenarioDialogContext';
 import { initializeViewportHeight } from './utils/browserCompatibility';
 import './transparent-number.css';
-
 
 // کامپوننت لودینگ
 const LoadingFallback = () => (
@@ -66,6 +66,10 @@ const AppRoutes: React.FC = () => {
       path: '/dashboard/*',
       element: <ProtectedRoute><DashboardRoutes /></ProtectedRoute>,
     },
+          {
+            path: '/kalknegar',
+            element: <ProtectedRoute><KalknegarIframe /></ProtectedRoute>,
+          },
     {
       path: '*',
       element: (
@@ -103,6 +107,11 @@ const App: React.FC = () => {
   useEffect(() => {
     initializeViewportHeight();
   }, []);
+
+  // Re-hydrate user from localStorage on app start
+  useEffect(() => {
+    dispatch(rehydrateUser());
+  }, [dispatch]);
 
   // اضافه کردن useEffect برای مشاهده تغییرات زبان و تم
   useEffect(() => {

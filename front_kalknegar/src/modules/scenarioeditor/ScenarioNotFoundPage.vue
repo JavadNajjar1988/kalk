@@ -13,7 +13,7 @@
           ><span aria-hidden="true">&larr;</span> بازگشت به خانه
         </router-link>
         <a
-          href="https://docs.orbat-mapper.app/guide/storage"
+          href="http://127.0.0.1:3000/dashboard/help"
           class="text-sm font-semibold text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-slate-100"
           >مستندات <span aria-hidden="true">&rarr;</span></a
         >

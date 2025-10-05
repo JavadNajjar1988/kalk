@@ -34,7 +34,7 @@ export class OrbatMessageBridge {
 
   constructor(config: Partial<BridgeConfig> = {}) {
     this.config = {
-      targetOrigin: 'http://localhost:5173',
+      targetOrigin: 'http://127.0.0.1:5173',
       timeout: 10000,
       retryAttempts: 3,
       enableLogging: true,
@@ -65,10 +65,18 @@ export class OrbatMessageBridge {
     this.iframe = iframe;
     this.log('Iframe attached to bridge');
     
+    // Dynamically set targetOrigin based on iframe src
+    try {
+      this.config.targetOrigin = new URL(iframe.src).origin;
+      this.log('Updated targetOrigin to:', this.config.targetOrigin);
+    } catch (e) {
+      console.error('[OrbatBridge] Could not parse iframe src for targetOrigin', e);
+    }
+    
     // Set a timeout to detect if Vue backend doesn't respond
     setTimeout(() => {
       if (!this.isReady) {
-        const errorMsg = 'ORBAT backend did not respond within 10 seconds. Make sure the Vue ORBAT service is running on http://localhost:5173';
+        const errorMsg = 'ORBAT backend did not respond within 10 seconds. Make sure the Vue ORBAT service is running on http://127.0.0.1:5173';
         this.log('Ready timeout:', errorMsg);
         
         // Trigger error handlers
@@ -195,6 +203,12 @@ export class OrbatMessageBridge {
       return;
     }
 
+    // Handle logout request
+    if (message.type === 'LOGOUT_REQUEST') {
+      this.handleLogoutRequest(message);
+      return;
+    }
+
     // Handle error messages
     if (message.type === 'ORBAT_ERROR') {
       this.handleError(message as ErrorMessage);
@@ -250,6 +264,7 @@ export class OrbatMessageBridge {
     }
 
     // Send auth token to iframe if available
+    this.log('Attempting to send auth token to iframe...');
     this.sendAuthTokenIfAvailable();
   }
 
@@ -271,6 +286,23 @@ export class OrbatMessageBridge {
     if (handlers) {
       handlers.forEach(handler => handler(message));
     }
+  }
+
+  private handleLogoutRequest(message: any): void {
+    this.log('Logout request received from KalkNegar');
+    
+    // Clear token from localStorage
+    localStorage.removeItem('access_token');
+    localStorage.removeItem('access_token_exp');
+    
+    // Notify handlers
+    const handlers = this.messageHandlers.get('LOGOUT_REQUEST');
+    if (handlers) {
+      handlers.forEach(handler => handler(message));
+    }
+    
+    // Redirect to login page
+    window.location.href = '/auth/login';
   }
 
   // Register message handler
@@ -370,6 +402,8 @@ export class OrbatMessageBridge {
         this.log('Iframe not available to send AUTH_TOKEN');
         return;
       }
+      
+      this.log('Sending AUTH_TOKEN to iframe:', token.substring(0, 20) + '...');
       const msg = {
         id: `auth_${Date.now()}`,
         type: 'AUTH_TOKEN',

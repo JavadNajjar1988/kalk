@@ -33,35 +33,40 @@ export const loginUser = createAsyncThunk(
   'auth/loginUser',
   async (credentials: { username: string; password: string }, { rejectWithValue }) => {
     try {
-      // Simulate API call - replace with actual API
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Call real API endpoint
+      const formData = new FormData();
+      formData.append('username', credentials.username);
+      formData.append('password', credentials.password);
       
-      // بررسی نام کاربری و رمز عبور ثابت
-      if (credentials.username === 'admin' && credentials.password === 'admin123') {
-        const mockUser: User = {
-          id: '1',
-          username: credentials.username,
-          name: 'مدیر سیستم',
-          role: 'admin',
-          rank: 'سرهنگ',
-          unit: 'فرماندهی کل',
-        };
-        
-        return mockUser;
-      } else if (credentials.username === 'operator' && credentials.password === 'operator123') {
-        const mockUser: User = {
-          id: '2',
-          username: credentials.username,
-          name: 'اپراتور سیستم',
-          role: 'operator',
-          rank: 'ستوان',
-          unit: 'مرکز عملیات',
-        };
-        
-        return mockUser;
-      } else {
-        throw new Error('نام کاربری یا رمز عبور اشتباه است');
+      const response = await fetch('/api/auth/token', {
+        method: 'POST',
+        body: formData,
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.detail || 'خطا در ورود');
       }
+      
+      const tokenData = await response.json();
+      const { access_token } = tokenData;
+      
+      // Store token in localStorage
+      localStorage.setItem('access_token', access_token);
+      
+      // Decode JWT to get user info (basic decode without verification for now)
+      const payload = JSON.parse(atob(access_token.split('.')[1]));
+      
+      const user: User = {
+        id: payload.uid || '1',
+        username: payload.sub || credentials.username,
+        name: payload.sub === 'admin' ? 'مدیر سیستم' : 'اپراتور سیستم',
+        role: payload.roles?.includes('ADMIN') ? 'admin' : 'operator',
+        rank: payload.sub === 'admin' ? 'سرهنگ' : 'ستوان',
+        unit: payload.sub === 'admin' ? 'فرماندهی کل' : 'مرکز عملیات',
+      };
+      
+      return user;
     } catch (error: any) {
       return rejectWithValue(error.message || 'خطا در ورود');
     }
@@ -94,6 +99,10 @@ const authSlice = createSlice({
       state.isAuthenticated = false;
       state.loading = false;
       state.error = null;
+      
+      // Clear token from localStorage
+      localStorage.removeItem('access_token');
+      localStorage.removeItem('access_token_exp');
     },
     updateUser: (state, action: PayloadAction<Partial<User>>) => {
       if (state.user) {
@@ -102,6 +111,39 @@ const authSlice = createSlice({
     },
     clearError: (state) => {
       state.error = null;
+    },
+    // Re-hydrate user from localStorage on app start
+    rehydrateUser: (state) => {
+      const token = localStorage.getItem('access_token');
+      if (token) {
+        try {
+          const payload = JSON.parse(atob(token.split('.')[1]));
+          const now = Math.floor(Date.now() / 1000);
+          
+          // Check if token is not expired
+          if (payload.exp && payload.exp > now) {
+            const user: User = {
+              id: payload.uid || '1',
+              username: payload.sub || 'unknown',
+              name: payload.sub === 'admin' ? 'مدیر سیستم' : 'اپراتور سیستم',
+              role: payload.roles?.includes('ADMIN') ? 'admin' : 'operator',
+              rank: payload.sub === 'admin' ? 'سرهنگ' : 'ستوان',
+              unit: payload.sub === 'admin' ? 'فرماندهی کل' : 'مرکز عملیات',
+            };
+            
+            state.user = user;
+            state.isAuthenticated = true;
+          } else {
+            // Token expired, clear it
+            localStorage.removeItem('access_token');
+            localStorage.removeItem('access_token_exp');
+          }
+        } catch (error) {
+          // Invalid token, clear it
+          localStorage.removeItem('access_token');
+          localStorage.removeItem('access_token_exp');
+        }
+      }
     },
   },
   extraReducers: (builder) => {
@@ -133,6 +175,7 @@ export const {
   logout,
   updateUser,
   clearError,
+  rehydrateUser,
 } = authSlice.actions;
 
 // Selectors

@@ -7,10 +7,34 @@ export class ScenarioApiService extends BaseApiClient {
   private useMockApi = (import.meta as any).env?.VITE_USE_MOCK === 'true';
 
   constructor() {
-    let base = ((import.meta as any).env?.VITE_API_URL as string) || '/api';
+    // تعیین پایگاه URL - اولویت با متغیر محیطی، سپس origin والد
+    const envBase = (import.meta as any).env?.VITE_API_URL as string | undefined;
+    let base: string;
+    
+    if (envBase && envBase.trim() !== '') {
+      base = envBase;
+    } else {
+      // تشخیص محیط و حالت اجرا
+      const isIframe = window.parent !== window;
+      const isDev = import.meta.env.DEV;
+      
+      if (isIframe) {
+        // داخل Dashboard (iframe) - همیشه به پورت 3000
+        base = 'http://127.0.0.1:3000/api';
+      } else if (isDev) {
+        // حالت مستقل dev - مستقیماً به backend
+        base = 'http://127.0.0.1:8000/api';
+      } else {
+        // حالت production
+        base = `${window.location.origin}/api`;
+      }
+    }
+    
     // اطمینان از این‌که baseUrl به ‎/scenarios‎ ختم نمی‌شود و اسلش اضافی ندارد
     base = base.replace(/\/+$/, ''); // حذف اسلش‌های پایانی
     base = base.replace(/\/scenarios$/, ''); // حذف بخش ‎/scenarios‎ در انتها در صورت وجود
+    
+    console.log('[ScenarioApiService] Base URL:', base);
     super(base);
   }
 

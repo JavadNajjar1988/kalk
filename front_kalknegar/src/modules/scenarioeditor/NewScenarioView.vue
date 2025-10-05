@@ -1,20 +1,66 @@
 <template>
   <div class="min-h-screen flex flex-col bg-teal-50/80 dark:bg-teal-950/50 text-foreground">
     <!-- Simple Modern Header with Blue-Green Icy Theme -->
-    <header class="relative bg-blue-100/40 dark:bg-blue-400/15 backdrop-blur backdrop-saturate-150 supports-[backdrop-filter]:bg-blue-300/30 dark:supports-[backdrop-filter]:bg-blue-400/20 border-b border-blue-300/40 dark:border-blue-400/20 shadow-lg shadow-blue-500/3 py-4">
+    <header class="relative z-50 bg-blue-100/40 dark:bg-blue-400/15 backdrop-blur backdrop-saturate-150 supports-[backdrop-filter]:bg-blue-300/30 dark:supports-[backdrop-filter]:bg-blue-400/20 border-b border-blue-300/40 dark:border-blue-400/20 shadow-lg shadow-blue-500/3 py-4">
       <div class="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div class="flex items-center gap-3">
-          <!-- Logo/Icon -->
-          <div class="w-10 h-10 bg-blue-200/60 dark:bg-blue-800/60 rounded-lg flex items-center justify-center shadow-md shadow-blue-500/5 border border-blue-300/20 dark:border-blue-600/20">
-            <svg class="w-5 h-5 text-blue-600 dark:text-blue-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-            </svg>
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-3">
+            <!-- Logo/Icon -->
+            <div class="w-10 h-10 bg-blue-200/60 dark:bg-blue-800/60 rounded-lg flex items-center justify-center shadow-md shadow-blue-500/5 border border-blue-300/20 dark:border-blue-600/20">
+              <svg class="w-5 h-5 text-blue-600 dark:text-blue-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+              </svg>
+            </div>
+            
+            <!-- Title -->
+            <h1 class="text-lg font-bold text-blue-700 dark:text-blue-300">
+              ایجاد سناریوی جدید
+            </h1>
           </div>
-          
-          <!-- Title -->
-          <h1 class="text-lg font-bold text-blue-700 dark:text-blue-300">
-            ایجاد سناریوی جدید
-          </h1>
+
+          <!-- Profile Section -->
+          <div class="flex items-center gap-3">
+            <!-- User Info -->
+            <div class="hidden sm:flex items-center gap-2 text-sm text-blue-600 dark:text-blue-300">
+              <span>{{ userInfo.name }}</span>
+              <span class="text-blue-400 dark:text-blue-400">•</span>
+              <span class="text-xs bg-blue-200/40 dark:bg-blue-800/40 px-2 py-1 rounded-full">
+                {{ userInfo.role === 'admin' ? 'مدیر' : 'اپراتور' }}
+              </span>
+            </div>
+
+            <!-- Profile Button -->
+            <div class="relative">
+              <button 
+                @click="showProfileMenu = !showProfileMenu"
+                class="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-accent-foreground h-10 w-10"
+              >
+                <div class="h-8 w-8 rounded-full bg-blue-500 text-white flex items-center justify-center text-sm font-semibold">
+                  {{ userInfo.name.charAt(0) }}
+                </div>
+              </button>
+
+              <!-- Profile Dropdown Menu -->
+              <div 
+                v-if="showProfileMenu"
+                class="absolute right-0 top-full translate-y-2 w-48 bg-white dark:bg-gray-800 rounded-md shadow-lg border border-blue-200/40 dark:border-blue-700/40 z-50"
+                style="max-height: 200px; overflow-y: auto;"
+              >
+                <div class="py-1">
+                  <div class="px-4 py-2 text-sm text-gray-700 dark:text-gray-300 border-b border-gray-200 dark:border-gray-600">
+                    <div class="font-medium">{{ userInfo.name }}</div>
+                    <div class="text-xs text-gray-500 dark:text-gray-400">{{ userInfo.username }}</div>
+                  </div>
+                  <button 
+                    @click="logout"
+                    class="w-full text-left px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                  >
+                    خروج از سیستم
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </header>
@@ -471,6 +517,86 @@ const { scenario } = useScenario();
 // Step management
 const currentStep = ref(1);
 const totalSteps = 5;
+
+// Profile management
+const showProfileMenu = ref(false);
+const userInfo = ref({
+  name: 'کاربر',
+  username: 'user',
+  role: 'operator'
+});
+
+// Get user info from token
+const getUserInfoFromToken = () => {
+  try {
+    const token = localStorage.getItem('access_token');
+    if (token) {
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      userInfo.value = {
+        name: payload.sub === 'admin' ? 'مدیر سیستم' : 'اپراتور سیستم',
+        username: payload.sub || 'user',
+        role: payload.roles?.includes('ADMIN') ? 'admin' : 'operator'
+      };
+    }
+  } catch (error) {
+    console.error('Error parsing token:', error);
+  }
+};
+
+// Logout function
+const logout = () => {
+  // Clear token from localStorage
+  localStorage.removeItem('access_token');
+  localStorage.removeItem('access_token_exp');
+  
+  // Close profile menu
+  showProfileMenu.value = false;
+  
+  // Send logout message to parent (React Dashboard)
+  if (window.parent !== window) {
+    try {
+      window.parent.postMessage({
+        type: 'LOGOUT_REQUEST',
+        origin: 'vue',
+        timestamp: Date.now()
+      }, '*');
+    } catch (error) {
+      console.error('Error sending logout message:', error);
+    }
+  }
+  
+  // Redirect to login or show message
+  console.log('User logged out');
+};
+
+// Initialize user info on mount
+onMounted(() => {
+  getUserInfoFromToken();
+});
+
+// Close profile menu when clicking outside
+const handleClickOutside = (event: MouseEvent) => {
+  const target = event.target as HTMLElement;
+  if (!target.closest('.relative')) {
+    showProfileMenu.value = false;
+  }
+};
+
+onMounted(() => {
+  getUserInfoFromToken();
+  // React to auth updates from bridge
+  const applied = () => getUserInfoFromToken();
+  const cleared = () => getUserInfoFromToken();
+  window.addEventListener('kalk-auth-applied', applied as any);
+  window.addEventListener('kalk-auth-cleared', cleared as any);
+  document.addEventListener('click', handleClickOutside);
+});
+
+onBeforeUnmount(() => {
+  document.removeEventListener('click', handleClickOutside);
+  window.removeEventListener('kalk-auth-applied', getUserInfoFromToken as any);
+  window.removeEventListener('kalk-auth-cleared', getUserInfoFromToken as any);
+});
 
 const standardSettings = [
   {
