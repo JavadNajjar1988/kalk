@@ -15,6 +15,7 @@ import { MasterDefinition, DefinitionCategory as MDDefinitionCategory } from '..
 import { saveCategoryNodes } from '../../data/loader';
 import { useAppSelector } from '../../../../store';
 import { selectDynamicLevelsByCategory } from '../../store';
+import HierarchicalExcelImporter from '../import/HierarchicalExcelImporter';
 
 interface BaseCategoryManagerProps {
   categoryType: CategoryType;
@@ -362,6 +363,20 @@ const BaseCategoryManager: React.FC<BaseCategoryManagerProps> = ({
               setSelectedParentId(undefined);
               setIsAddModalOpen(true);
             }}>افزودن داده جدید</Button>
+            <HierarchicalExcelImporter
+              levels={(dynamicLevels.length > 0 ? dynamicLevels : levels) as any}
+              categoryId={categoryId}
+              categoryType={categoryType}
+              onImported={async (importedNodes) => {
+                setNodes(importedNodes);
+                try {
+                  await saveCategoryNodes(categoryType, categoryId, importedNodes);
+                } catch (e) {
+                  console.error('Error saving imported nodes:', e);
+                }
+              }}
+              title={`ورود داده‌های ${categoryName} از اکسل`}
+            />
           </Box>
         </Box>
 

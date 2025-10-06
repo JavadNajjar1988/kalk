@@ -94,7 +94,7 @@ export interface RankItem {
   rankCode: string;
   title: string;
   level: number;
-  category: 'officer' | 'enlisted' | 'warrant';
+  category: string; 
   insignia?: string;
   authority: string[];
   description?: string;
@@ -266,7 +266,7 @@ const getInitialData = (tabType: ResourceType): ResourceItem[] => {
     case 'ammunition':
       return ammunitionData.ammunition as AmmunitionItem[];
     case 'logistics':
-      return logisticsData.logistics as LogisticsItem[];
+      return logisticsData.logistics as unknown as LogisticsItem[];
     case 'ranks':
       return ranksData.ranks as RankItem[];
     case 'maps':

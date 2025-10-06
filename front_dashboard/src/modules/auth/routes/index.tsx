@@ -1,7 +1,7 @@
 import { lazy } from 'react';
 import { RouteObject, Navigate } from 'react-router-dom';
 
-const LoginPage = lazy(() => import('../components/LoginPage'));
+const LoginPage = lazy(() => import('@/modules/auth/components/LoginPage'));
 
 const authRoutes: RouteObject[] = [
   {
