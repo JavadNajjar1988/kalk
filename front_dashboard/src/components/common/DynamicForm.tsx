@@ -336,21 +336,7 @@ const DynamicForm: React.FC<DynamicFormProps> = ({ tab, data, errors, onChange, 
 
       case ENHANCED_FIELD_TYPES.HIERARCHICAL_ADDRESS:
       case 'hierarchical-address':
-        // Check if this is a Field Constructor field
-        if (UniversalFieldAdapter.isEnhancedField(field as any)) {
-          const constructorConfig = UniversalFieldAdapter.normalize(field as any);
-          return (
-            <HierarchicalInputComponent
-              config={constructorConfig}
-              value={value || null}
-              onChange={(newValue) => onChange(field.id, newValue)}
-              error={error}
-              disabled={false}
-            />
-          );
-        }
-        
-        // Fallback to legacy component
+        // استفاده از نسخه legacy موجود
         return (
           <HierarchicalAddressComponent
             value={value ? [value] : []}
@@ -368,21 +354,7 @@ const DynamicForm: React.FC<DynamicFormProps> = ({ tab, data, errors, onChange, 
 
       case ENHANCED_FIELD_TYPES.NAME_SPLIT:
       case 'name-split':
-        // Check if this is a Field Constructor field
-        if (UniversalFieldAdapter.isEnhancedField(field as any)) {
-          const constructorConfig = UniversalFieldAdapter.normalize(field as any);
-          return (
-            <CompositeInputComponent
-              config={constructorConfig}
-              value={value || {}}
-              onChange={(newValue) => onChange(field.id, newValue)}
-              error={error}
-              disabled={false}
-            />
-          );
-        }
-        
-        // Fallback to legacy component
+        // استفاده از نسخه legacy موجود
         return (
           <NameSplitFieldComponent
             firstNameValue={value?.firstName || ''}
@@ -399,21 +371,7 @@ const DynamicForm: React.FC<DynamicFormProps> = ({ tab, data, errors, onChange, 
 
       case ENHANCED_FIELD_TYPES.FULL_NAME_DUAL:
       case 'full-name-dual':
-        // Check if this is a Field Constructor field
-        if (UniversalFieldAdapter.isEnhancedField(field as any)) {
-          const constructorConfig = UniversalFieldAdapter.normalize(field as any);
-          return (
-            <CompositeInputComponent
-              config={constructorConfig}
-              value={value || {}}
-              onChange={(newValue) => onChange(field.id, newValue)}
-              error={error}
-              disabled={false}
-            />
-          );
-        }
-        
-        // Fallback to legacy component
+        // استفاده از نسخه legacy موجود
         return (
           <FullNameDualFieldComponent
             firstNameFa={value?.firstNameFa || ''}
