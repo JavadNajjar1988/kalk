@@ -41,6 +41,10 @@ interface FormData {
   icon?: string;
   natoEquivalent?: string;
   country?: string;
+  // فیلدهای کدگذاری برای درجات نظامی
+  countryCode?: string;
+  groupCode?: string;
+  rankCode?: string;
 }
 
 interface FormErrors {
@@ -54,6 +58,10 @@ interface FormErrors {
   icon?: string;
   natoEquivalent?: string;
   country?: string;
+  // خطاهای کدگذاری برای درجات نظامی
+  countryCode?: string;
+  groupCode?: string;
+  rankCode?: string;
 }
 
 const AddDataModal: React.FC<AddDataModalProps> = ({
@@ -78,6 +86,10 @@ const AddDataModal: React.FC<AddDataModalProps> = ({
     icon: '',
     natoEquivalent: '',
     country: '',
+    // مقداردهی اولیه فیلدهای کدگذاری
+    countryCode: '',
+    groupCode: '',
+    rankCode: '',
   });
 
   const [errors, setErrors] = useState<FormErrors>({});
@@ -87,6 +99,26 @@ const AddDataModal: React.FC<AddDataModalProps> = ({
   const showCoordinates = categoryType === CategoryType.GEOGRAPHICAL;
   const showMilitaryUnitExtras = categoryType === CategoryType.MILITARY_UNITS;
   const showNatoForRanks = categoryType === CategoryType.MILITARY_RANKS;
+  const showMilitaryRankCodes = categoryType === CategoryType.MILITARY_RANKS;
+  
+  // برای درجات نظامی، ساختار سلسله‌مراتبی را غیرفعال کن (فقط کدگذاری)
+  const isMilitaryRanks = categoryType === CategoryType.MILITARY_RANKS;
+  const effectiveSupportsHierarchy = supportsHierarchyLevels && !isMilitaryRanks;
+
+  // تابع برای دریافت کدهای والد
+  const getParentCodes = (parentId?: string) => {
+    if (!parentId) return { countryCode: '', groupCode: '', rankCode: '' };
+    
+    const parent = parentOptions.find(p => p.id === parentId);
+    if (!parent) return { countryCode: '', groupCode: '', rankCode: '' };
+    
+    const customFields = parent.customFields || {};
+    return {
+      countryCode: customFields.countryCode || '',
+      groupCode: customFields.groupCode || '',
+      rankCode: customFields.rankCode || '',
+    };
+  };
 
   // پر کردن فرم با داده‌های آیتم ویرایش
   useEffect(() => {
@@ -112,6 +144,10 @@ const AddDataModal: React.FC<AddDataModalProps> = ({
         icon: cf.icon || '',
         natoEquivalent: cf.natoEquivalent || '',
         country: cf.country || '',
+        // پر کردن فیلدهای کدگذاری از customFields
+        countryCode: cf.countryCode || '',
+        groupCode: cf.groupCode || '',
+        rankCode: cf.rankCode || '',
       });
     }
   }, [isEditing, editingItem, open]);
@@ -134,57 +170,42 @@ const AddDataModal: React.FC<AddDataModalProps> = ({
   };
 
   // تابع برای دریافت سطوح قابل انتخاب بر اساس والد
-  const getAvailableLevels = (currentParentId?: string) => {
+  const getAvailableLevels = () => {
     if (!levels || levels.length === 0) {
       // اگر levels خالی است، هیچ سطحی نمایش نده
       return [];
     }
     
-    if (!currentParentId) {
-      // اگر والد انتخاب نشده، همه سطوح را نمایش بده
-      return levels;
-    }
-
-    const selectedParent = parentOptions.find(p => p.id === currentParentId);
-    if (!selectedParent) {
-      return levels;
-    }
-
-    // فقط سطوح بالاتر از والد را نمایش بده
-    return levels.filter((level) => {
-      const order = 'order' in level ? level.order : (level as any).order || 1;
-      return order > selectedParent.level;
-    });
+    // همیشه همه سطوح تعریف شده را نمایش بده (بدون محدودیت)
+    return levels;
   };
 
-  // تابع برای تنظیم سطح پیش‌فرض بر اساس والد
-  const getDefaultLevel = (selectedParentId?: string) => {
-    if (!selectedParentId) {
-      return 1;
-    }
-    const selectedParent = parentOptions.find(p => p.id === selectedParentId);
-    return selectedParent ? selectedParent.level + 1 : 1;
-  };
 
   // مقداردهی اولیه فرم
   useEffect(() => {
     if (open && !isEditing) {
-      const availableLevels = supportsHierarchyLevels ? getAvailableLevels(parentId) : [];
+      const availableLevels = effectiveSupportsHierarchy ? getAvailableLevels() : [];
       
       // اگر سطوح پشتیبانی نشود، سطح ثابت 1 در نظر بگیر
       // اگر پشتیبانی شود و هیچ سطحی موجود نباشد، 0 تنظیم می‌شود تا کاربر ابتدا سطح بسازد
-      let finalLevel = supportsHierarchyLevels ? 0 : 1;
-      if (supportsHierarchyLevels && availableLevels.length > 0) {
-        const defaultLevel = getDefaultLevel(parentId);
+      let finalLevel = effectiveSupportsHierarchy ? 0 : 1;
+      if (effectiveSupportsHierarchy && availableLevels.length > 0) {
+        // همیشه اولین سطح موجود را به عنوان پیش‌فرض انتخاب کن
         const firstAvailableLevel = availableLevels[0];
         const firstLevelOrder = 'order' in firstAvailableLevel ? firstAvailableLevel.order : (firstAvailableLevel as any).order || 1;
-        finalLevel = defaultLevel < firstLevelOrder ? firstLevelOrder : defaultLevel;
+        finalLevel = firstLevelOrder;
       }
+      
+      // برای درجات نظامی، والد را خالی بگذار
+      const effectiveParentId = isMilitaryRanks ? '' : (parentId || '');
+      
+      // دریافت کدهای والد برای ارث‌بری (فقط اگر والد انتخاب شده باشد)
+      const parentCodes = getParentCodes(effectiveParentId);
       
       setFormData({
         name: '',
         level: finalLevel,
-        parentId: parentId || '',
+        parentId: effectiveParentId,
         latitude: '',
         longitude: '',
         description: '',
@@ -192,10 +213,14 @@ const AddDataModal: React.FC<AddDataModalProps> = ({
         icon: '',
         natoEquivalent: '',
         country: '',
+        // ارث‌بری کدها از والد (فقط اگر والد انتخاب شده باشد)
+        countryCode: parentCodes.countryCode,
+        groupCode: parentCodes.groupCode,
+        rankCode: parentCodes.rankCode,
       });
       setErrors({});
     }
-  }, [open, parentId, parentOptions, levels, isEditing, supportsHierarchyLevels]);
+  }, [open, parentId, parentOptions, levels, isEditing, effectiveSupportsHierarchy, isMilitaryRanks]);
 
   // اعتبارسنجی فرم
   const validateForm = (): boolean => {
@@ -205,15 +230,11 @@ const AddDataModal: React.FC<AddDataModalProps> = ({
       newErrors.name = 'نام الزامی است';
     }
 
-    if (supportsHierarchyLevels) {
+    if (effectiveSupportsHierarchy) {
       if (!formData.level || formData.level === 0) {
         newErrors.level = 'سطح الزامی است';
-      } else if (formData.parentId) {
-        const selectedParent = parentOptions.find(p => p.id === formData.parentId);
-        if (selectedParent && formData.level <= selectedParent.level) {
-          newErrors.level = `سطح باید بیشتر از سطح والد (${selectedParent.level}) باشد`;
-        }
       }
+      // حذف محدودیت سطح بالاتر از والد - حالا هر سطحی قابل انتخاب است
     }
 
     // اعتبارسنجی مختصات جغرافیایی
@@ -223,6 +244,24 @@ const AddDataModal: React.FC<AddDataModalProps> = ({
       }
       if (formData.longitude && !/^-?\d+(\.\d+)?$/.test(formData.longitude)) {
         newErrors.longitude = 'طول جغرافیایی باید عدد باشد';
+      }
+    }
+
+    // اعتبارسنجی کدهای درجات نظامی
+    if (showMilitaryRankCodes) {
+      // اعتبارسنجی کد کشور
+      if (formData.countryCode && !/^[A-Z]{2}$/.test(formData.countryCode)) {
+        newErrors.countryCode = 'کد کشور باید دو حرف بزرگ انگلیسی باشد (مثل IR)';
+      }
+      
+      // اعتبارسنجی کد گروه
+      if (formData.groupCode && !/^G[1-9]\d*$/.test(formData.groupCode)) {
+        newErrors.groupCode = 'کد گروه باید با G شروع شود و عدد مثبت باشد (مثل G1, G10)';
+      }
+      
+      // اعتبارسنجی کد رده
+      if (formData.rankCode && !/^R[1-9]\d*$/.test(formData.rankCode)) {
+        newErrors.rankCode = 'کد رده باید با R شروع شود و عدد مثبت باشد (مثل R1, R15)';
       }
     }
 
@@ -245,12 +284,19 @@ const AddDataModal: React.FC<AddDataModalProps> = ({
         if (formData.natoEquivalent) customFields.natoEquivalent = formData.natoEquivalent;
       }
 
+      // ذخیره کدهای درجات نظامی
+      if (showMilitaryRankCodes) {
+        if (formData.countryCode) customFields.countryCode = formData.countryCode;
+        if (formData.groupCode) customFields.groupCode = formData.groupCode;
+        if (formData.rankCode) customFields.rankCode = formData.rankCode;
+      }
+
       onSubmit({
         name: formData.name.trim(),
         englishName: formData.name.trim(),
         description: formData.description.trim(),
-        level: supportsHierarchyLevels ? formData.level : 1,
-        parentId: supportsHierarchyLevels ? (formData.parentId || undefined) : undefined,
+        level: effectiveSupportsHierarchy ? formData.level : 1,
+        parentId: effectiveSupportsHierarchy ? (formData.parentId || undefined) : undefined,
         customFields,
       });
       onClose();
@@ -262,21 +308,29 @@ const AddDataModal: React.FC<AddDataModalProps> = ({
     setFormData(prev => {
       const newData = { ...prev, [field]: value };
       
-      // اگر والد تغییر کرد، سطح را خودکار تنظیم کن
-      if (field === 'parentId') {
+      // اگر والد تغییر کرد، سطح را خودکار تنظیم کن (فقط برای دسته‌های غیر نظامی)
+      if (field === 'parentId' && !isMilitaryRanks) {
         const newParentId = value as string;
-        const availableLevels = getAvailableLevels(newParentId);
+        const availableLevels = getAvailableLevels();
         
         // اگر هیچ سطحی موجود نیست، سطح را 0 تنظیم کن
         let finalLevel = 0;
         if (availableLevels.length > 0) {
-          const defaultLevel = getDefaultLevel(newParentId);
+          // همیشه اولین سطح موجود را به عنوان پیش‌فرض انتخاب کن
           const firstAvailableLevel = availableLevels[0];
           const firstLevelOrder = 'order' in firstAvailableLevel ? firstAvailableLevel.order : (firstAvailableLevel as any).order || 1;
-          finalLevel = defaultLevel < firstLevelOrder ? firstLevelOrder : defaultLevel;
+          finalLevel = firstLevelOrder;
         }
         
         newData.level = finalLevel;
+        
+        // ارث‌بری کدها از والد جدید
+        if (showMilitaryRankCodes) {
+          const parentCodes = getParentCodes(newParentId);
+          newData.countryCode = parentCodes.countryCode;
+          newData.groupCode = parentCodes.groupCode;
+          newData.rankCode = parentCodes.rankCode;
+        }
       }
       
       return newData;
@@ -289,7 +343,7 @@ const AddDataModal: React.FC<AddDataModalProps> = ({
   };
 
   // سطوح قابل انتخاب
-  const availableLevels = supportsHierarchyLevels ? getAvailableLevels(formData.parentId) : [];
+  const availableLevels = effectiveSupportsHierarchy ? getAvailableLevels() : [];
 
   return (
     <Dialog
@@ -325,7 +379,7 @@ const AddDataModal: React.FC<AddDataModalProps> = ({
               required
               sx={{ flex: 1, minWidth: 200 }}
             />
-            {supportsHierarchyLevels && (
+            {effectiveSupportsHierarchy && (
               <FormControl sx={{ minWidth: 200 }} error={!!errors.level}>
                <InputLabel>سطح</InputLabel>
                <Select
@@ -361,7 +415,7 @@ const AddDataModal: React.FC<AddDataModalProps> = ({
         </Box>
 
         {/* ساختار سلسله مراتبی */}
-        {supportsHierarchyLevels && (
+        {effectiveSupportsHierarchy && (
           <Box sx={{ mb: 3 }}>
             <Typography variant="h6" color="primary.main" sx={{ mb: 2 }}>
               ساختار سلسله مراتبی
@@ -489,6 +543,48 @@ const AddDataModal: React.FC<AddDataModalProps> = ({
                 sx={{ flex: 1, minWidth: 200 }}
               />
             </Box>
+          </Box>
+        )}
+
+        {/* فیلدهای کدگذاری برای درجات نظامی */}
+        {showMilitaryRankCodes && (
+          <Box sx={{ mb: 3 }}>
+            <Typography variant="h6" color="primary.main" sx={{ mb: 2 }}>
+              کدگذاری سلسله‌مراتبی
+            </Typography>
+            <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+              <TextField
+                label="کد کشور"
+                placeholder="مثلاً: IR, RU, US"
+                value={formData.countryCode}
+                onChange={(e) => handleInputChange('countryCode', e.target.value.toUpperCase())}
+                error={!!errors.countryCode}
+                helperText={errors.countryCode || 'دو حرف بزرگ انگلیسی (اختیاری)'}
+                sx={{ flex: 1, minWidth: 150 }}
+              />
+              <TextField
+                label="کد گروه رده‌ای"
+                placeholder="مثلاً: G1, G2, G10"
+                value={formData.groupCode}
+                onChange={(e) => handleInputChange('groupCode', e.target.value.toUpperCase())}
+                error={!!errors.groupCode}
+                helperText={errors.groupCode || 'با G شروع شود (اختیاری)'}
+                sx={{ flex: 1, minWidth: 150 }}
+              />
+              <TextField
+                label="کد رده نظامی"
+                placeholder="مثلاً: R1, R2, R15"
+                value={formData.rankCode}
+                onChange={(e) => handleInputChange('rankCode', e.target.value.toUpperCase())}
+                error={!!errors.rankCode}
+                helperText={errors.rankCode || 'با R شروع شود (اختیاری)'}
+                sx={{ flex: 1, minWidth: 150 }}
+              />
+            </Box>
+            <FormHelperText sx={{ mt: 1 }}>
+              کدها برای مرتب‌سازی و نمایش سلسله‌مراتبی استفاده می‌شوند. 
+              {isMilitaryRanks ? ' در درجات نظامی، نمایش بر اساس این کدها انجام می‌شود.' : ' اگر والد انتخاب شده باشد، کدهای والد ارث‌بری می‌شوند.'}
+            </FormHelperText>
           </Box>
         )}
 

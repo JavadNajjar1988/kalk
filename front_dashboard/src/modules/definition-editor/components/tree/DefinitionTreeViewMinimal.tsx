@@ -8,6 +8,7 @@ import {
 	Delete as DeleteIcon,
 } from '@mui/icons-material';
 import { MasterDefinition } from '../../types';
+import { CategoryType } from '../../types';
 
 interface DefinitionTreeViewProps {
 	definitions: MasterDefinition[];
@@ -17,6 +18,7 @@ interface DefinitionTreeViewProps {
 	onReorder: (items: MasterDefinition[]) => void;
 	onAddChild?: (parentId: string) => void;
 	getLevelName?: (level: number) => string;
+	categoryType?: CategoryType;
 }
 
 interface TreeNodeProps {
@@ -27,6 +29,7 @@ interface TreeNodeProps {
 	onDelete: (def: MasterDefinition) => void;
 	onAddChild?: (parentId: string) => void;
 	getLevelName?: (level: number) => string;
+	categoryType?: CategoryType;
 }
 
 const TreeNodeMinimal: React.FC<TreeNodeProps> = ({
@@ -37,6 +40,7 @@ const TreeNodeMinimal: React.FC<TreeNodeProps> = ({
 	onDelete,
 	onAddChild,
 	getLevelName,
+	categoryType,
 }) => {
 	const [expanded, setExpanded] = useState<boolean>(depth < 1);
 	const children = definition.children || [];
@@ -74,6 +78,53 @@ const TreeNodeMinimal: React.FC<TreeNodeProps> = ({
 
 	const levelLabel = getLevelName ? getLevelName(definition.level || 0) : `سطح ${definition.level ?? ''}`;
 
+	// تابع برای نمایش کدهای درجات نظامی
+	const renderMilitaryRankCodes = () => {
+		if (categoryType !== CategoryType.MILITARY_RANKS) return null;
+		
+		const customFields = definition.customFields || {};
+		const codes = [];
+		
+		if (customFields.countryCode) {
+			codes.push(
+				<Chip 
+					key="country" 
+					size="small" 
+					label={`[${customFields.countryCode}]`} 
+					sx={{ height: 18, fontSize: '0.7rem', bgcolor: 'primary.light', color: 'primary.contrastText' }}
+				/>
+			);
+		}
+		
+		if (customFields.groupCode) {
+			codes.push(
+				<Chip 
+					key="group" 
+					size="small" 
+					label={`[${customFields.groupCode}]`} 
+					sx={{ height: 18, fontSize: '0.7rem', bgcolor: 'secondary.light', color: 'secondary.contrastText' }}
+				/>
+			);
+		}
+		
+		if (customFields.rankCode) {
+			codes.push(
+				<Chip 
+					key="rank" 
+					size="small" 
+					label={`[${customFields.rankCode}]`} 
+					sx={{ height: 18, fontSize: '0.7rem', bgcolor: 'success.light', color: 'success.contrastText' }}
+				/>
+			);
+		}
+		
+		return codes.length > 0 ? (
+			<Box sx={{ display: 'flex', gap: 0.5, ml: 1 }}>
+				{codes}
+			</Box>
+		) : null;
+	};
+
 	return (
 		<Box sx={{ mb: 1 }}>
 			<Box
@@ -107,6 +158,9 @@ const TreeNodeMinimal: React.FC<TreeNodeProps> = ({
 					<Chip size="small" label={levelLabel} sx={{ height: 20 }} />
 
 					<Typography variant="body2">{definition.name}</Typography>
+					
+					{/* نمایش کدهای درجات نظامی */}
+					{renderMilitaryRankCodes()}
 				</Box>
 
 				<Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
@@ -135,6 +189,7 @@ const TreeNodeMinimal: React.FC<TreeNodeProps> = ({
 									onDelete={onDelete}
 									onAddChild={onAddChild}
 									getLevelName={getLevelName}
+									categoryType={categoryType}
 								/>
 							</Fragment>
 						))}
@@ -153,6 +208,7 @@ const DefinitionTreeViewMinimal: React.FC<DefinitionTreeViewProps> = ({
 	onReorder,
 	onAddChild,
 	getLevelName,
+	categoryType,
 }) => {
 	// فقط ریشه‌ها را نمایش بده و بازگشتی ادامه بده
 	const rootDefinitions = definitions.filter((d) => !d.parentId);
@@ -177,6 +233,7 @@ const DefinitionTreeViewMinimal: React.FC<DefinitionTreeViewProps> = ({
 					onDelete={onDelete}
 					onAddChild={onAddChild}
 					getLevelName={getLevelName}
+					categoryType={categoryType}
 				/>
 			))}
 		</Box>

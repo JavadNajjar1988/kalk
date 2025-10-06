@@ -16,6 +16,7 @@ import { saveCategoryNodes } from '../../data/loader';
 import { useAppSelector } from '../../../../store';
 import { selectDynamicLevelsByCategory } from '../../store';
 import HierarchicalExcelImporter from '../import/HierarchicalExcelImporter';
+import MilitaryRanksExcelImporter from '../import/MilitaryRanksExcelImporter';
 
 interface BaseCategoryManagerProps {
   categoryType: CategoryType;
@@ -25,6 +26,54 @@ interface BaseCategoryManagerProps {
   maxLevels?: number;
   loadNodes: (categoryId: string) => Promise<DefinitionNode[]>;
   loadLevels?: (categoryType: CategoryType) => Promise<ExtendedHierarchyLevel[]>;
+}
+
+// تابع برای مرتب‌سازی درجات نظامی بر اساس کدها
+function sortByMilitaryRankCodes(definitions: MasterDefinition[]): MasterDefinition[] {
+  const sortByCode = (items: MasterDefinition[]): MasterDefinition[] => {
+    return items.sort((a, b) => {
+      const aCustomFields = a.customFields || {};
+      const bCustomFields = b.customFields || {};
+      
+      // مرتب‌سازی بر اساس کد کشور
+      const aCountryCode = aCustomFields.countryCode || '';
+      const bCountryCode = bCustomFields.countryCode || '';
+      if (aCountryCode !== bCountryCode) {
+        return aCountryCode.localeCompare(bCountryCode);
+      }
+      
+      // مرتب‌سازی بر اساس کد گروه
+      const aGroupCode = aCustomFields.groupCode || '';
+      const bGroupCode = bCustomFields.groupCode || '';
+      if (aGroupCode !== bGroupCode) {
+        const aGroupNum = parseInt(aGroupCode.replace('G', '')) || 0;
+        const bGroupNum = parseInt(bGroupCode.replace('G', '')) || 0;
+        return aGroupNum - bGroupNum;
+      }
+      
+      // مرتب‌سازی بر اساس کد رده
+      const aRankCode = aCustomFields.rankCode || '';
+      const bRankCode = bCustomFields.rankCode || '';
+      if (aRankCode !== bRankCode) {
+        const aRankNum = parseInt(aRankCode.replace('R', '')) || 0;
+        const bRankNum = parseInt(bRankCode.replace('R', '')) || 0;
+        return aRankNum - bRankNum;
+      }
+      
+      // در نهایت بر اساس نام
+      return a.name.localeCompare(b.name);
+    });
+  };
+  
+  const sortRecursively = (items: MasterDefinition[]): MasterDefinition[] => {
+    const sorted = sortByCode(items);
+    return sorted.map(item => ({
+      ...item,
+      children: item.children ? sortRecursively(item.children) : []
+    }));
+  };
+  
+  return sortRecursively(definitions);
 }
 
 // تابع برای تبدیل آرایه flat به ساختار درختی
@@ -156,9 +205,152 @@ const BaseCategoryManager: React.FC<BaseCategoryManagerProps> = ({
   );
 
   const masterDefinitions: MasterDefinition[] = useMemo(
-    () => convertNodesToMasterDefinitions(nodes, definitionCategoryMeta),
-    [nodes, definitionCategoryMeta]
+    () => {
+      const converted = convertNodesToMasterDefinitions(nodes, definitionCategoryMeta);
+      
+      // مرتب‌سازی بر اساس کدها برای درجات نظامی
+      if (categoryType === CategoryType.MILITARY_RANKS) {
+        return sortByMilitaryRankCodes(converted);
+      }
+      
+      return converted;
+    },
+    [nodes, definitionCategoryMeta, categoryType]
   );
+
+  // برای درجات نظامی، ساختار درختی را بر اساس کدها ایجاد کن
+  const militaryRankDefinitions: MasterDefinition[] = useMemo(() => {
+    if (categoryType !== CategoryType.MILITARY_RANKS) {
+      return masterDefinitions;
+    }
+
+    // گروه‌بندی بر اساس کدها (نه نام‌ها)
+    const groupedByCountryCode = new Map<string, MasterDefinition[]>();
+    // نگاشت کد → نام برای نمایش درست برچسب‌ها
+    const countryCodeToName = new Map<string, string>();
+    const groupKeyToName = new Map<string, string>(); // key: `${countryCode}::${groupCode}`
+    
+    masterDefinitions.forEach(def => {
+      const customFields = def.customFields || {};
+      const countryCode = customFields.countryCode || 'بدون کد کشور';
+      const meta: any = def.metadata || {};
+      // ذخیره نام‌های انسانی اگر موجود باشد
+      if (!countryCodeToName.has(countryCode) && meta.country) {
+        countryCodeToName.set(countryCode, String(meta.country));
+      }
+      
+      if (!groupedByCountryCode.has(countryCode)) {
+        groupedByCountryCode.set(countryCode, []);
+      }
+      groupedByCountryCode.get(countryCode)!.push(def);
+
+      const groupCode = customFields.groupCode || '';
+      if (groupCode) {
+        const gkey = `${countryCode}::${groupCode}`;
+        if (!groupKeyToName.has(gkey) && meta.groupName) {
+          groupKeyToName.set(gkey, String(meta.groupName));
+        }
+      }
+    });
+
+    // ایجاد ساختار درختی بر اساس کدها
+    const result: MasterDefinition[] = [];
+    
+    groupedByCountryCode.forEach((countryRanks, countryCode) => {
+      // گروه‌بندی بر اساس کد گروه
+      const groupedByGroupCode = new Map<string, MasterDefinition[]>();
+      
+      countryRanks.forEach(rank => {
+        const customFields = rank.customFields || {};
+        const groupCode = customFields.groupCode || 'بدون کد گروه';
+        
+        if (!groupedByGroupCode.has(groupCode)) {
+          groupedByGroupCode.set(groupCode, []);
+        }
+        groupedByGroupCode.get(groupCode)!.push(rank);
+      });
+
+      // ایجاد نود کشور (سطح 1 - ریشه)
+      const displayCountryName = countryCodeToName.get(countryCode) || (countryCode === 'بدون کد کشور' ? 'بدون کد کشور' : countryCode);
+      const countryNode: MasterDefinition = {
+        id: `country-${countryCode}`,
+        name: displayCountryName,
+        englishName: displayCountryName,
+        description: '',
+        category: definitionCategoryMeta,
+        parentId: undefined, // ریشه - والد ندارد
+        level: 1, // سطح 1
+        order: 0,
+        isActive: true,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        children: [],
+        customFields: { countryCode },
+        metadata: { nodeType: 'country' } as any,
+      };
+
+      // ایجاد نودهای گروه به‌صورت زنجیره‌ای: G(n) فرزند G(n-1)
+      const sortedGroupEntries = Array.from(groupedByGroupCode.entries()).sort((a, b) => {
+        const aNum = parseInt(String(a[0]).replace(/[^\d]/g, '')) || 0;
+        const bNum = parseInt(String(b[0]).replace(/[^\d]/g, '')) || 0;
+        return aNum - bNum;
+      });
+
+      let previousGroupNode: MasterDefinition | null = null;
+      sortedGroupEntries.forEach(([groupCode, groupRanks]) => {
+        const displayGroupName = groupKeyToName.get(`${countryCode}::${groupCode}`) || (groupCode === 'بدون کد گروه' ? 'بدون کد گروه' : groupCode);
+        const groupNode: MasterDefinition = {
+          id: `group-${countryCode}-${groupCode}`,
+          name: displayGroupName,
+          englishName: displayGroupName,
+          description: '',
+          category: definitionCategoryMeta,
+          parentId: previousGroupNode ? previousGroupNode.id : countryNode.id, // زنجیره‌ای
+          level: 2, // همیشه برچسب «گروه رده‌ای»
+          order: 0,
+          isActive: true,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+          children: [],
+          customFields: { countryCode, groupCode },
+          metadata: { nodeType: 'group' } as any,
+        };
+
+        // رده‌ها به‌صورت زنجیره‌ای R(n) فرزند R(n-1)
+        const sortedRanks = [...groupRanks].sort((ra, rb) => {
+          const raNum = parseInt(String((ra.customFields as any)?.rankCode || '').replace(/[^\d]/g, '')) || 0;
+          const rbNum = parseInt(String((rb.customFields as any)?.rankCode || '').replace(/[^\d]/g, '')) || 0;
+          return raNum - rbNum;
+        });
+
+        let prevRank: MasterDefinition | null = null;
+        sortedRanks.forEach(rank => {
+          const chainedRank: MasterDefinition = {
+            ...rank,
+            parentId: prevRank ? prevRank.id : groupNode.id,
+            level: 3, // همیشه برچسب «رده نظامی»
+          };
+          if (prevRank) {
+            prevRank.children = [...(prevRank.children || []), chainedRank];
+          } else {
+            groupNode.children!.push(chainedRank);
+          }
+          prevRank = chainedRank;
+        });
+
+        if (previousGroupNode) {
+          previousGroupNode.children = [...(previousGroupNode.children || []), groupNode];
+        } else {
+          countryNode.children!.push(groupNode);
+        }
+        previousGroupNode = groupNode;
+      });
+
+      result.push(countryNode);
+    });
+
+    return result;
+  }, [masterDefinitions, categoryType, definitionCategoryMeta]);
 
   const handleGraphChange = useCallback(async (newData: any[]) => {
     // SimpleGraphViewer خروجی را به ساختار DefinitionNode (تقریباً سازگار) می‌دهد
@@ -172,6 +364,30 @@ const BaseCategoryManager: React.FC<BaseCategoryManagerProps> = ({
       console.error('Error saving graph changes:', error);
     }
   }, [categoryType, categoryId]);
+
+  // داده مخصوص نمایش گراف: برای درجات نظامی از ساختار درختی زنجیره‌ای استفاده کن
+  const graphData = useMemo(() => {
+    if (categoryType === CategoryType.MILITARY_RANKS) {
+      // تابع در پایین تعریف شده؛ این بلاک بعد از mount محاسبه می‌شود
+      return ((): DefinitionNode[] => {
+        const toNodes = (definitions: MasterDefinition[]): DefinitionNode[] => {
+          const convert = (def: MasterDefinition): DefinitionNode => ({
+            id: def.id,
+            name: def.name,
+            description: def.description,
+            level: def.level,
+            parentId: def.parentId,
+            children: (def.children || []).map(convert),
+            customFields: def.customFields,
+            metadata: def.metadata,
+          });
+          return definitions.map(convert);
+        };
+        return toNodes(militaryRankDefinitions);
+      })();
+    }
+    return nodes;
+  }, [categoryType, militaryRankDefinitions, nodes]);
 
   // تبدیل MasterDefinition به DefinitionNode برای ذخیره‌سازی
   const convertMasterDefinitionsToNodes = useCallback((definitions: MasterDefinition[]): DefinitionNode[] => {
@@ -213,7 +429,40 @@ const BaseCategoryManager: React.FC<BaseCategoryManagerProps> = ({
 
   // ذخیره تغییرات درخت
   const saveTreeChanges = useCallback(async (updatedDefinitions: MasterDefinition[]) => {
-    const treeNodes = convertMasterDefinitionsToNodes(updatedDefinitions);
+    let definitionsToSave = updatedDefinitions;
+    
+    // برای درجات نظامی، فقط رده‌های واقعی را ذخیره کن (نه نودهای گروه‌بندی)
+    if (categoryType === CategoryType.MILITARY_RANKS) {
+      const extractRealRanks = (definitions: MasterDefinition[]): MasterDefinition[] => {
+        const realRanks: MasterDefinition[] = [];
+        
+        const traverse = (defs: MasterDefinition[]) => {
+          defs.forEach(def => {
+            // اگر ID با country- یا group- شروع می‌شود، نود گروه‌بندی است
+            if (def.id.startsWith('country-') || def.id.startsWith('group-')) {
+              // فقط فرزندان را پردازش کن
+              if (def.children && def.children.length > 0) {
+                traverse(def.children);
+              }
+            } else {
+              // این یک رده واقعی است
+              realRanks.push({
+                ...def,
+                parentId: undefined, // برای درجات نظامی، parentId را حذف کن
+                level: 1, // همه رده‌ها سطح 1 دارند
+              });
+            }
+          });
+        };
+        
+        traverse(definitions);
+        return realRanks;
+      };
+      
+      definitionsToSave = extractRealRanks(updatedDefinitions);
+    }
+    
+    const treeNodes = convertMasterDefinitionsToNodes(definitionsToSave);
     const flatNodes = convertTreeToFlat(treeNodes);
     
     // به‌روزرسانی state با flat array
@@ -363,20 +612,36 @@ const BaseCategoryManager: React.FC<BaseCategoryManagerProps> = ({
               setSelectedParentId(undefined);
               setIsAddModalOpen(true);
             }}>افزودن داده جدید</Button>
-            <HierarchicalExcelImporter
-              levels={(dynamicLevels.length > 0 ? dynamicLevels : levels) as any}
-              categoryId={categoryId}
-              categoryType={categoryType}
-              onImported={async (importedNodes) => {
-                setNodes(importedNodes);
-                try {
-                  await saveCategoryNodes(categoryType, categoryId, importedNodes);
-                } catch (e) {
-                  console.error('Error saving imported nodes:', e);
-                }
-              }}
-              title={`ورود داده‌های ${categoryName} از اکسل`}
-            />
+            {categoryType === CategoryType.MILITARY_RANKS ? (
+              <MilitaryRanksExcelImporter
+                categoryId={categoryId}
+                categoryType={categoryType}
+                onImported={async (importedNodes) => {
+                  setNodes(importedNodes);
+                  try {
+                    await saveCategoryNodes(categoryType, categoryId, importedNodes);
+                  } catch (e) {
+                    console.error('Error saving imported nodes:', e);
+                  }
+                }}
+                title={`ورود درجات نظامی از اکسل`}
+              />
+            ) : (
+              <HierarchicalExcelImporter
+                levels={(dynamicLevels.length > 0 ? dynamicLevels : levels) as any}
+                categoryId={categoryId}
+                categoryType={categoryType}
+                onImported={async (importedNodes) => {
+                  setNodes(importedNodes);
+                  try {
+                    await saveCategoryNodes(categoryType, categoryId, importedNodes);
+                  } catch (e) {
+                    console.error('Error saving imported nodes:', e);
+                  }
+                }}
+                title={`ورود داده‌های ${categoryName} از اکسل`}
+              />
+            )}
           </Box>
         </Box>
 
@@ -446,7 +711,7 @@ const BaseCategoryManager: React.FC<BaseCategoryManagerProps> = ({
         {viewMode === ViewMode.TREE ? (
           treeDisplayMode === 'hierarchy' ? (
             <DefinitionTreeViewMinimal
-            definitions={masterDefinitions}
+            definitions={militaryRankDefinitions}
             onCreate={(data) => {
               // ایجاد آیتم جدید
               const newDefinition: MasterDefinition = {
@@ -455,8 +720,8 @@ const BaseCategoryManager: React.FC<BaseCategoryManagerProps> = ({
                 englishName: data.name || 'New Item',
                 description: data.description || '',
                 category: definitionCategoryMeta,
-                parentId: data.parentId ?? undefined,
-                level: data.level || 1,
+                parentId: categoryType === CategoryType.MILITARY_RANKS ? undefined : (data.parentId ?? undefined),
+                level: categoryType === CategoryType.MILITARY_RANKS ? 1 : (data.level || 1),
                 order: 0,
                 isActive: true,
                 createdAt: new Date().toISOString(),
@@ -466,96 +731,12 @@ const BaseCategoryManager: React.FC<BaseCategoryManagerProps> = ({
                 metadata: data.metadata,
               };
               
-              // افزودن آیتم به ساختار درختی
-              const addToTree = (definitions: MasterDefinition[], newItem: MasterDefinition): MasterDefinition[] => {
-                if (!newItem.parentId) {
-                  // آیتم ریشه است
-                  return [...definitions, newItem];
-                }
-                
-                // پیدا کردن والد و افزودن فرزند
-                return definitions.map(def => {
-                  if (def.id === newItem.parentId) {
-                    return {
-                      ...def,
-                      children: [...(def.children || []), newItem]
-                    };
-                  }
-                  if (def.children && def.children.length > 0) {
-                    return {
-                      ...def,
-                      children: addToTree(def.children, newItem)
-                    };
-                  }
-                  return def;
-                });
-              };
-              
-              const updatedDefinitions = addToTree(masterDefinitions, newDefinition);
-              saveTreeChanges(updatedDefinitions);
-            }}
-            onAddChild={(parentId) => {
-              setSelectedParentId(parentId);
-              setIsAddModalOpen(true);
-            }}
-            onUpdate={(id, _data) => {
-              // پیدا کردن آیتم برای ویرایش
-              const findItem = (definitions: MasterDefinition[], targetId: string): MasterDefinition | null => {
-                for (const def of definitions) {
-                  if (def.id === targetId) {
-                    return def;
-                  }
-                  if (def.children && def.children.length > 0) {
-                    const found = findItem(def.children, targetId);
-                    if (found) return found;
-                  }
-                }
-                return null;
-              };
-
-              const itemToEdit = findItem(masterDefinitions, id);
-              if (itemToEdit) {
-                // تنظیم حالت ویرایش
-                setEditingItem(itemToEdit);
-                setIsEditing(true);
-                setSelectedParentId(itemToEdit.parentId || undefined);
-                setIsAddModalOpen(true);
-              }
-            }}
-            onDelete={(def) => {
-              // نمایش مودال تأیید حذف
-              setItemToDelete(def);
-              setIsDeleteConfirmOpen(true);
-            }}
-            onReorder={(items) => {
-              // تغییر ترتیب
-              saveTreeChanges(items);
-            }}
-            getLevelName={getLevelName}
-            />
-          ) : (
-            <LevelBasedTreeView
-              definitions={masterDefinitions}
-              onCreate={(data) => {
-                // ایجاد آیتم جدید
-                const newDefinition: MasterDefinition = {
-                  id: Date.now().toString(),
-                  name: data.name || 'آیتم جدید',
-                  englishName: data.name || 'New Item',
-                  description: data.description || '',
-                  category: definitionCategoryMeta,
-                  parentId: data.parentId ?? undefined,
-                  level: data.level || 1,
-                  order: 0,
-                  isActive: true,
-                  createdAt: new Date().toISOString(),
-                  updatedAt: new Date().toISOString(),
-                  children: [],
-                  customFields: data.customFields,
-                  metadata: data.metadata,
-                };
-                
-                // افزودن آیتم به ساختار درختی
+              if (categoryType === CategoryType.MILITARY_RANKS) {
+                // برای درجات نظامی، مستقیماً به masterDefinitions اضافه کن
+                const updatedDefinitions = [...masterDefinitions, newDefinition];
+                saveTreeChanges(updatedDefinitions);
+              } else {
+                // برای سایر دسته‌ها، از منطق درختی استفاده کن
                 const addToTree = (definitions: MasterDefinition[], newItem: MasterDefinition): MasterDefinition[] => {
                   if (!newItem.parentId) {
                     // آیتم ریشه است
@@ -582,9 +763,125 @@ const BaseCategoryManager: React.FC<BaseCategoryManagerProps> = ({
                 
                 const updatedDefinitions = addToTree(masterDefinitions, newDefinition);
                 saveTreeChanges(updatedDefinitions);
+              }
+            }}
+            onAddChild={(parentId) => {
+              // برای درجات نظامی، parentId را تنظیم نکن
+              if (categoryType !== CategoryType.MILITARY_RANKS) {
+                setSelectedParentId(parentId);
+              }
+              setIsAddModalOpen(true);
+            }}
+            onUpdate={(id, _data) => {
+              // پیدا کردن آیتم برای ویرایش
+              const findItem = (definitions: MasterDefinition[], targetId: string): MasterDefinition | null => {
+                for (const def of definitions) {
+                  if (def.id === targetId) {
+                    return def;
+                  }
+                  if (def.children && def.children.length > 0) {
+                    const found = findItem(def.children, targetId);
+                    if (found) return found;
+                  }
+                }
+                return null;
+              };
+
+              const itemToEdit = findItem(militaryRankDefinitions, id);
+              if (itemToEdit) {
+                // تنظیم حالت ویرایش
+                setEditingItem(itemToEdit);
+                setIsEditing(true);
+                // برای درجات نظامی، parentId را تنظیم نکن
+                if (categoryType !== CategoryType.MILITARY_RANKS) {
+                  setSelectedParentId(itemToEdit.parentId || undefined);
+                }
+                setIsAddModalOpen(true);
+              }
+            }}
+            onDelete={(def) => {
+              // برای درجات نظامی، فقط رده‌های واقعی را حذف کن
+              if (categoryType === CategoryType.MILITARY_RANKS) {
+                // اگر نود گروه‌بندی است، حذف نکن
+                if (def.id.startsWith('country-') || def.id.startsWith('group-')) {
+                  return;
+                }
+              }
+              
+              // نمایش مودال تأیید حذف
+              setItemToDelete(def);
+              setIsDeleteConfirmOpen(true);
+            }}
+            onReorder={(items) => {
+              // برای درجات نظامی، تغییر ترتیب را غیرفعال کن
+              if (categoryType !== CategoryType.MILITARY_RANKS) {
+                saveTreeChanges(items);
+              }
+            }}
+            getLevelName={getLevelName}
+            categoryType={categoryType}
+            />
+          ) : (
+            <LevelBasedTreeView
+              definitions={militaryRankDefinitions}
+              onCreate={(data) => {
+                // ایجاد آیتم جدید
+                const newDefinition: MasterDefinition = {
+                  id: Date.now().toString(),
+                  name: data.name || 'آیتم جدید',
+                  englishName: data.name || 'New Item',
+                  description: data.description || '',
+                  category: definitionCategoryMeta,
+                  parentId: categoryType === CategoryType.MILITARY_RANKS ? undefined : (data.parentId ?? undefined),
+                  level: categoryType === CategoryType.MILITARY_RANKS ? 1 : (data.level || 1),
+                  order: 0,
+                  isActive: true,
+                  createdAt: new Date().toISOString(),
+                  updatedAt: new Date().toISOString(),
+                  children: [],
+                  customFields: data.customFields,
+                  metadata: data.metadata,
+                };
+                
+                if (categoryType === CategoryType.MILITARY_RANKS) {
+                  // برای درجات نظامی، مستقیماً به masterDefinitions اضافه کن
+                  const updatedDefinitions = [...masterDefinitions, newDefinition];
+                  saveTreeChanges(updatedDefinitions);
+                } else {
+                  // برای سایر دسته‌ها، از منطق درختی استفاده کن
+                  const addToTree = (definitions: MasterDefinition[], newItem: MasterDefinition): MasterDefinition[] => {
+                    if (!newItem.parentId) {
+                      // آیتم ریشه است
+                      return [...definitions, newItem];
+                    }
+                    
+                    // پیدا کردن والد و افزودن فرزند
+                    return definitions.map(def => {
+                      if (def.id === newItem.parentId) {
+                        return {
+                          ...def,
+                          children: [...(def.children || []), newItem]
+                        };
+                      }
+                      if (def.children && def.children.length > 0) {
+                        return {
+                          ...def,
+                          children: addToTree(def.children, newItem)
+                        };
+                      }
+                      return def;
+                    });
+                  };
+                  
+                  const updatedDefinitions = addToTree(masterDefinitions, newDefinition);
+                  saveTreeChanges(updatedDefinitions);
+                }
               }}
               onAddChild={(parentId) => {
-                setSelectedParentId(parentId);
+                // برای درجات نظامی، parentId را تنظیم نکن
+                if (categoryType !== CategoryType.MILITARY_RANKS) {
+                  setSelectedParentId(parentId);
+                }
                 setIsAddModalOpen(true);
               }}
               onUpdate={(id, _data) => {
@@ -602,16 +899,27 @@ const BaseCategoryManager: React.FC<BaseCategoryManagerProps> = ({
                   return null;
                 };
 
-                const itemToEdit = findItem(masterDefinitions, id);
+                const itemToEdit = findItem(militaryRankDefinitions, id);
                 if (itemToEdit) {
                   // تنظیم حالت ویرایش
                   setEditingItem(itemToEdit);
                   setIsEditing(true);
-                  setSelectedParentId(itemToEdit.parentId || undefined);
+                  // برای درجات نظامی، parentId را تنظیم نکن
+                  if (categoryType !== CategoryType.MILITARY_RANKS) {
+                    setSelectedParentId(itemToEdit.parentId || undefined);
+                  }
                   setIsAddModalOpen(true);
                 }
               }}
               onDelete={(def) => {
+                // برای درجات نظامی، فقط رده‌های واقعی را حذف کن
+                if (categoryType === CategoryType.MILITARY_RANKS) {
+                  // اگر نود گروه‌بندی است، حذف نکن
+                  if (def.id.startsWith('country-') || def.id.startsWith('group-')) {
+                    return;
+                  }
+                }
+                
                 // نمایش مودال تأیید حذف
                 setItemToDelete(def);
                 setIsDeleteConfirmOpen(true);
@@ -621,7 +929,7 @@ const BaseCategoryManager: React.FC<BaseCategoryManagerProps> = ({
           )
         ) : (
           <SimpleGraphViewer
-            data={nodes as any}
+            data={graphData as any}
             getLevelName={getLevelName}
             onGraphChange={handleGraphChange}
           />
@@ -724,8 +1032,8 @@ const BaseCategoryManager: React.FC<BaseCategoryManagerProps> = ({
         category={definitionCategoryMeta}
         categoryType={categoryType}
         levels={dynamicLevels.length > 0 ? dynamicLevels : levels}
-        parentOptions={parentOptions}
-        parentId={selectedParentId}
+        parentOptions={categoryType === CategoryType.MILITARY_RANKS ? [] : parentOptions}
+        parentId={categoryType === CategoryType.MILITARY_RANKS ? undefined : selectedParentId}
         editingItem={editingItem}
         isEditing={isEditing}
       />
