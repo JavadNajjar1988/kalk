@@ -27,7 +27,7 @@ services:
       # Prefer loading from .env via --env-file; fallback to default if not provided
       DB_URL: ${DB_URL:-postgresql+asyncpg://postgres:postgres@db:5432/kalk}
       CORS_ORIGINS: '["http://localhost:5173","http://localhost:5174","http://localhost:3000"]'
-      DISABLE_AUTH: ${DISABLE_AUTH:-"false"}
+      DISABLE_AUTH: ${DISABLE_AUTH:-false}
     ports:
       - "8000:8000"
     depends_on:

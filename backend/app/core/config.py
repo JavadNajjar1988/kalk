@@ -1,6 +1,7 @@
 from typing import List
 
 from pydantic import Field
+from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -27,6 +28,16 @@ class Settings(BaseSettings):
 
     # وقتی True باشد، تمام بررسی‌های احراز هویت در backend نادیده گرفته می‌شود.
     DISABLE_AUTH: bool = False
+
+    @field_validator("DISABLE_AUTH", mode="before")
+    def _coerce_bool(cls, v):  # type: ignore[no-redef]
+        if isinstance(v, str):
+            s = v.strip().strip('"').strip("'").lower()
+            if s in {"true", "1", "yes", "y", "on"}:
+                return True
+            if s in {"false", "0", "no", "n", "off"}:
+                return False
+        return v
 
 
 settings = Settings()
