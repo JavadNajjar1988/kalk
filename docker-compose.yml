@@ -1,7 +1,7 @@
-version: '3.8'
 services:
   db:
     image: postgis/postgis:16-3.4
+    restart: unless-stopped
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
@@ -15,22 +15,37 @@ services:
       interval: 5s
       timeout: 5s
       retries: 10
+    networks:
+      - kalknet
 
   api:
     build:
       context: ./backend
       dockerfile: Dockerfile
+    restart: unless-stopped
     environment:
-      DB_URL: postgresql+asyncpg://postgres:postgres@db:5432/kalk
+      # Prefer loading from .env via --env-file; fallback to default if not provided
+      DB_URL: ${DB_URL:-postgresql+asyncpg://postgres:postgres@db:5432/kalk}
       CORS_ORIGINS: '["http://localhost:5173","http://localhost:5174","http://localhost:3000"]'
-      DISABLE_AUTH: "true"
+      DISABLE_AUTH: ${DISABLE_AUTH:-"false"}
     ports:
       - "8000:8000"
     depends_on:
       db:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:8000/api/health || wget -qO- http://localhost:8000/api/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+    networks:
+      - kalknet
 
 volumes:
   db-data:
+
+networks:
+  kalknet:
 
 
