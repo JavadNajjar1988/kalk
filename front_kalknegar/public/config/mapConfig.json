@@ -1,10 +1,14 @@
 [
   {
-    "title": "OSM",
+    "title": "نقشه آفلاین جهانی",
     "name": "osm",
-    "layerSourceType": "osm",
+    "layerSourceType": "xyz",
     "sourceOptions": {
-      "crossOrigin": "anonymous"
+      "url": "http://127.0.0.1:8480/data/maps/{z}/{x}/{-y}.png",
+      "crossOrigin": "anonymous",
+      "attributions": "نقشه محلی آفلاین",
+      "minZoom": 0,
+      "maxZoom": 13
     }
   },
   {

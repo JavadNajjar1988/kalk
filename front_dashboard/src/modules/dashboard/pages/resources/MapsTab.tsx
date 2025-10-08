@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Box,
   Grid,
@@ -30,6 +30,14 @@ import {
   Paper,
   Divider,
   Tooltip,
+  LinearProgress,
+  Alert,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
 } from '@mui/material';
 import {
   Add,
@@ -42,6 +50,8 @@ import {
   Settings,
   Public,
   Download,
+  CheckCircle,
+  Cancel,
 } from '@mui/icons-material';
 import { useAppDispatch, useAppSelector } from '@/store';
 import {
@@ -51,17 +61,41 @@ import {
   updateMapLayer,
   deleteMapLayer,
 } from '@/store/slices/orbatSlice';
+import {
+  setActiveOfflineMap,
+  selectActiveOfflineMap,
+} from '@/store/slices/mapSlice';
 import type { MapLayer } from '@/types/orbat';
 import { useTranslation } from '@/hooks/useTranslation';
+
+// Interface برای نقشه‌های آفلاین
+interface OfflineMap {
+  id: number;
+  name: string;
+  filename: string;
+  file_path: string;
+  description?: string;
+  is_active: boolean;
+  file_size?: number;
+  created_at: string;
+  updated_at?: string;
+}
 
 const MapsTab: React.FC = () => {
   const theme = useTheme();
   const dispatch = useAppDispatch();
   const { t } = useTranslation();
   const mapLayers = useAppSelector(selectMapLayers);
+  const activeOfflineMap = useAppSelector(selectActiveOfflineMap);
+  
+  // State برای نقشه‌های آفلاین
+  const [offlineMaps, setOfflineMaps] = useState<OfflineMap[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [uploadError, setUploadError] = useState<string | null>(null);
   
   const [openDialog, setOpenDialog] = useState(false);
-  const [dialogMode, setDialogMode] = useState<'server' | 'upload'>('server');
+  const [dialogMode, setDialogMode] = useState<'server' | 'upload' | 'offline'>('server');
   const [selectedLayer, setSelectedLayer] = useState<MapLayer | null>(null);
   const [formData, setFormData] = useState<Partial<MapLayer>>({
     name: '',
@@ -71,26 +105,146 @@ const MapsTab: React.FC = () => {
     opacity: 1,
   });
 
-  const handleOpenDialog = (mode: 'server' | 'upload') => {
+  // State برای آپلود نقشه آفلاین
+  const [offlineFormData, setOfflineFormData] = useState({
+    name: '',
+    description: '',
+    file: null as File | null,
+  });
+
+  // بارگذاری نقشه‌های آفلاین
+  const loadOfflineMaps = async () => {
+    try {
+      setLoading(true);
+      const response = await fetch('http://127.0.0.1:8000/api/maps');
+      if (response.ok) {
+        const data = await response.json();
+        setOfflineMaps(data.maps || []);
+      }
+    } catch (error) {
+      console.error('خطا در بارگذاری نقشه‌های آفلاین:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // آپلود نقشه آفلاین
+  const uploadOfflineMap = async () => {
+    if (!offlineFormData.file || !offlineFormData.name) return;
+
+    try {
+      setLoading(true);
+      setUploadProgress(0);
+      setUploadError(null);
+
+      const formData = new FormData();
+      formData.append('file', offlineFormData.file);
+      formData.append('name', offlineFormData.name);
+      formData.append('description', offlineFormData.description);
+
+      const response = await fetch('http://127.0.0.1:8000/api/maps/upload', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (response.ok) {
+        await loadOfflineMaps();
+        handleCloseDialog();
+        setOfflineFormData({ name: '', description: '', file: null });
+      } else {
+        const error = await response.json();
+        setUploadError(error.detail || 'خطا در آپلود فایل');
+      }
+    } catch (error) {
+      setUploadError('خطا در اتصال به سرور');
+    } finally {
+      setLoading(false);
+      setUploadProgress(0);
+    }
+  };
+
+  // فعال/غیرفعال کردن نقشه آفلاین
+  const toggleOfflineMap = async (mapId: number) => {
+    try {
+      const response = await fetch(`http://127.0.0.1:8000/api/maps/${mapId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ is_active: true }),
+      });
+
+      if (response.ok) {
+        await loadOfflineMaps();
+        
+        // نقشه فعال را در mapSlice تنظیم کن
+        const activeMap = offlineMaps.find(map => map.id === mapId);
+        if (activeMap) {
+          dispatch(setActiveOfflineMap({
+            id: activeMap.id,
+            name: activeMap.name,
+            url: `http://127.0.0.1:8480/data/${activeMap.filename}/{z}/{x}/{y}.png`
+          }));
+        }
+      }
+    } catch (error) {
+      console.error('خطا در تغییر وضعیت نقشه:', error);
+    }
+  };
+
+  // حذف نقشه آفلاین
+  const deleteOfflineMap = async (mapId: number) => {
+    if (!window.confirm('آیا مطمئن هستید که می‌خواهید این نقشه را حذف کنید؟')) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`http://127.0.0.1:8000/api/maps/${mapId}`, {
+        method: 'DELETE',
+      });
+
+      if (response.ok) {
+        await loadOfflineMaps();
+      }
+    } catch (error) {
+      console.error('خطا در حذف نقشه:', error);
+    }
+  };
+
+  useEffect(() => {
+    loadOfflineMaps();
+  }, []);
+
+  const handleOpenDialog = (mode: 'server' | 'upload' | 'offline') => {
     setDialogMode(mode);
-    setFormData({
-      name: '',
-      type: mode === 'server' ? 'xyz' : 'raster',
-      url: '',
-      visible: true,
-      opacity: 1,
-    });
+    if (mode === 'offline') {
+      setOfflineFormData({ name: '', description: '', file: null });
+    } else {
+      setFormData({
+        name: '',
+        type: mode === 'server' ? 'xyz' : 'raster',
+        url: '',
+        visible: true,
+        opacity: 1,
+      });
+    }
     setOpenDialog(true);
   };
 
   const handleCloseDialog = () => {
     setOpenDialog(false);
     setFormData({});
+    setOfflineFormData({ name: '', description: '', file: null });
+    setUploadError(null);
   };
 
   const handleSave = () => {
-    dispatch(addMapLayer(formData as Omit<MapLayer, 'id'>));
-    handleCloseDialog();
+    if (dialogMode === 'offline') {
+      uploadOfflineMap();
+    } else {
+      dispatch(addMapLayer(formData as Omit<MapLayer, 'id'>));
+      handleCloseDialog();
+    }
   };
 
   const handleToggleVisibility = (id: string) => {
@@ -115,10 +269,35 @@ const MapsTab: React.FC = () => {
   const uploadedLayers = mapLayers.filter(l => ['vector', 'raster'].includes(l.type));
 
   return (
-    <Box>
+    <Box sx={{ px: 2, pt: 2 }}>
       <Grid container spacing={3}>
+        {/* کارت «نقشه‌های آفلاین» */}
+        <Grid item xs={12} sm={6} md={4}>
+          <Card sx={{ height: '100%' }}>
+            <CardHeader
+              title="نقشه‌های آفلاین"
+              avatar={<MapIcon color="primary" />}
+              action={
+                <Button variant="contained" size="small" startIcon={<Add />} onClick={() => handleOpenDialog('offline')}>
+                  آپلود نقشه
+                </Button>
+              }
+              sx={{ pb: 1 }}
+            />
+            <CardContent sx={{ pt: 1.5 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                <Chip label={`تعداد: ${offlineMaps.length}`} size="small" />
+                <Chip label={`فعال: ${offlineMaps.filter(m=>m.is_active).length}`} color="success" size="small" />
+              </Box>
+              <Typography variant="body2" color="text.secondary">
+                از دکمه بالا برای بارگذاری فایل .mbtiles استفاده کنید. لیست کامل در جدول پایین نمایش داده می‌شود.
+              </Typography>
+            </CardContent>
+          </Card>
+        </Grid>
+
         {/* کارت لایه‌های سرور */}
-        <Grid item xs={12} md={6}>
+        <Grid item xs={12} sm={6} md={4}>
           <Card sx={{ height: '100%' }}>
             <CardHeader
               title={t('resources.maps.serverLayersTitle')}
@@ -133,8 +312,9 @@ const MapsTab: React.FC = () => {
                   {t('resources.maps.addFromServerButton')}
                 </Button>
               }
+              sx={{ pb: 1 }}
             />
-            <CardContent>
+            <CardContent sx={{ pt: 1.5 }}>
               {serverLayers.length > 0 ? (
                 <List>
                   {serverLayers.map((layer, index) => (
@@ -204,7 +384,7 @@ const MapsTab: React.FC = () => {
         </Grid>
 
         {/* کارت لایه‌های آپلود شده */}
-        <Grid item xs={12} md={6}>
+        <Grid item xs={12} sm={6} md={4}>
           <Card sx={{ height: '100%' }}>
             <CardHeader
               title={t('resources.maps.uploadedLayersTitle')}
@@ -219,8 +399,9 @@ const MapsTab: React.FC = () => {
                   {t('resources.maps.uploadFileButton')}
                 </Button>
               }
+              sx={{ pb: 1 }}
             />
-            <CardContent>
+            <CardContent sx={{ pt: 1.5 }}>
               {uploadedLayers.length > 0 ? (
                 <List>
                   {uploadedLayers.map((layer, index) => (
@@ -289,6 +470,74 @@ const MapsTab: React.FC = () => {
           </Card>
         </Grid>
 
+        {/* جدول نقشه‌های آفلاین */}
+        <Grid item xs={12}>
+          <Paper sx={{ p: 2 }}>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+              <Typography variant="h6">لیست نقشه‌های آفلاین</Typography>
+            </Box>
+            {loading ? (
+              <Box sx={{ textAlign: 'center', py: 4 }}>
+                <LinearProgress />
+                <Typography sx={{ mt: 2 }}>در حال بارگذاری...</Typography>
+              </Box>
+            ) : (
+              <TableContainer>
+                <Table size="small">
+                  <TableHead>
+                    <TableRow>
+                      <TableCell>نام</TableCell>
+                      <TableCell>توضیحات</TableCell>
+                      <TableCell align="center">اندازه</TableCell>
+                      <TableCell align="center">وضعیت</TableCell>
+                      <TableCell align="center">عملیات</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {offlineMaps.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={5} align="center">هیچ نقشه آفلاینی یافت نشد</TableCell>
+                      </TableRow>
+                    ) : (
+                      offlineMaps.map((map) => (
+                        <TableRow key={map.id} hover>
+                          <TableCell>{map.name}</TableCell>
+                          <TableCell sx={{ maxWidth: 360 }}>
+                            <Typography variant="body2" noWrap>{map.description || '-'}</Typography>
+                          </TableCell>
+                          <TableCell align="center">{map.file_size ? `${Math.round(map.file_size / 1024 / 1024)} MB` : '-'}</TableCell>
+                          <TableCell align="center">
+                            {map.is_active ? <Chip label="فعال" color="success" size="small" /> : <Chip label="غیرفعال" size="small" />}
+                          </TableCell>
+                          <TableCell align="center">
+                            <Box sx={{ display: 'flex', justifyContent: 'center', gap: 1 }}>
+                              <Tooltip title={map.is_active ? 'غیرفعال کردن' : 'فعال کردن'}>
+                                <IconButton size="small" onClick={() => toggleOfflineMap(map.id)}>
+                                  {map.is_active ? <Cancel fontSize="small" /> : <CheckCircle fontSize="small" />}
+                                </IconButton>
+                              </Tooltip>
+                              <Tooltip title="دانلود">
+                                <IconButton size="small" onClick={() => window.open(`http://127.0.0.1:8000/api/maps/${map.id}/download`)}>
+                                  <Download fontSize="small" />
+                                </IconButton>
+                              </Tooltip>
+                              <Tooltip title="حذف">
+                                <IconButton size="small" color="error" onClick={() => deleteOfflineMap(map.id)}>
+                                  <Delete fontSize="small" />
+                                </IconButton>
+                              </Tooltip>
+                            </Box>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    )}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            )}
+          </Paper>
+        </Grid>
+
         {/* آمار و اطلاعات */}
         <Grid item xs={12}>
           <Paper sx={{ p: 3 }}>
@@ -335,74 +584,38 @@ const MapsTab: React.FC = () => {
       {/* دیالوگ افزودن لایه */}
       <Dialog open={openDialog} onClose={handleCloseDialog} maxWidth="sm" fullWidth>
         <DialogTitle>
-          {dialogMode === 'server' ? t('resources.maps.dialog.addFromServerTitle') : t('resources.maps.dialog.uploadFileTitle')}
+          {dialogMode === 'offline' ? 'آپلود نقشه آفلاین' : 
+           dialogMode === 'server' ? t('resources.maps.dialog.addFromServerTitle') : 
+           t('resources.maps.dialog.uploadFileTitle')}
         </DialogTitle>
         <DialogContent>
+          {uploadError && (
+            <Alert severity="error" sx={{ mb: 2 }}>
+              {uploadError}
+            </Alert>
+          )}
+          
           <Grid container spacing={2} sx={{ mt: 1 }}>
-            <Grid item xs={12}>
-              <TextField
-                fullWidth
-                label={t('resources.maps.dialog.layerNameLabel')}
-                value={formData.name || ''}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              />
-            </Grid>
-            
-            {dialogMode === 'server' ? (
+            {dialogMode === 'offline' ? (
               <>
                 <Grid item xs={12}>
-                  <FormControl fullWidth>
-                    <InputLabel>{t('resources.maps.dialog.serviceTypeLabel')}</InputLabel>
-                    <Select
-                      value={formData.type || 'xyz'}
-                      onChange={(e) => setFormData({ ...formData, type: e.target.value as any })}
-                      label={t('resources.maps.dialog.serviceTypeLabel')}
-                    >
-                      <MenuItem value="wms">WMS</MenuItem>
-                      <MenuItem value="wmts">WMTS</MenuItem>
-                      <MenuItem value="xyz">XYZ Tiles</MenuItem>
-                      <MenuItem value="osm">OpenStreetMap</MenuItem>
-                    </Select>
-                  </FormControl>
+                  <TextField
+                    fullWidth
+                    label="نام نقشه"
+                    value={offlineFormData.name}
+                    onChange={(e) => setOfflineFormData({ ...offlineFormData, name: e.target.value })}
+                    required
+                  />
                 </Grid>
                 <Grid item xs={12}>
                   <TextField
                     fullWidth
-                    label={t('resources.maps.dialog.serverUrlLabel')}
-                    value={formData.url || ''}
-                    onChange={(e) => setFormData({ ...formData, url: e.target.value })}
-                    placeholder="https://example.com/geoserver/wms"
+                    label="توضیحات (اختیاری)"
+                    value={offlineFormData.description}
+                    onChange={(e) => setOfflineFormData({ ...offlineFormData, description: e.target.value })}
+                    multiline
+                    rows={2}
                   />
-                </Grid>
-                {formData.type === 'wms' && (
-                  <Grid item xs={12}>
-                    <TextField
-                      fullWidth
-                      label={t('resources.maps.dialog.layersLabel')}
-                      value={formData.layers || ''}
-                      onChange={(e) => setFormData({ ...formData, layers: e.target.value })}
-                      placeholder="layer1,layer2"
-                    />
-                  </Grid>
-                )}
-              </>
-            ) : (
-              <>
-                <Grid item xs={12}>
-                  <FormControl fullWidth>
-                    <InputLabel>{t('resources.maps.dialog.fileTypeLabel')}</InputLabel>
-                    <Select
-                      value={formData.format || ''}
-                      onChange={(e) => setFormData({ ...formData, format: e.target.value })}
-                      label={t('resources.maps.dialog.fileTypeLabel')}
-                    >
-                      <MenuItem value="geojson">GeoJSON</MenuItem>
-                      <MenuItem value="kml">KML</MenuItem>
-                      <MenuItem value="gpx">GPX</MenuItem>
-                      <MenuItem value="shapefile">Shapefile</MenuItem>
-                      <MenuItem value="geotiff">GeoTIFF</MenuItem>
-                    </Select>
-                  </FormControl>
                 </Grid>
                 <Grid item xs={12}>
                   <Button
@@ -411,32 +624,137 @@ const MapsTab: React.FC = () => {
                     startIcon={<CloudUpload />}
                     fullWidth
                   >
-                    {t('resources.maps.dialog.selectFileButton')}
+                    انتخاب فایل MBTiles
                     <input
                       type="file"
                       hidden
-                      accept=".geojson,.json,.kml,.gpx,.shp,.tif,.tiff"
+                      accept=".mbtiles"
                       onChange={(e) => {
                         if (e.target.files && e.target.files[0]) {
-                          setFormData({ ...formData, file: e.target.files[0] });
+                          setOfflineFormData({ ...offlineFormData, file: e.target.files[0] });
                         }
                       }}
                     />
                   </Button>
-                  {formData.file && (
+                  {offlineFormData.file && (
                     <Typography variant="caption" display="block" sx={{ mt: 1 }}>
-                      {t('resources.maps.dialog.selectedFile')}: {formData.file.name}
+                      فایل انتخاب شده: {offlineFormData.file.name}
                     </Typography>
                   )}
                 </Grid>
+              </>
+            ) : (
+              <>
+                <Grid item xs={12}>
+                  <TextField
+                    fullWidth
+                    label={t('resources.maps.dialog.layerNameLabel')}
+                    value={formData.name || ''}
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  />
+                </Grid>
+                
+                {dialogMode === 'server' ? (
+                  <>
+                    <Grid item xs={12}>
+                      <FormControl fullWidth>
+                        <InputLabel>{t('resources.maps.dialog.serviceTypeLabel')}</InputLabel>
+                        <Select
+                          value={formData.type || 'xyz'}
+                          onChange={(e) => setFormData({ ...formData, type: e.target.value as any })}
+                          label={t('resources.maps.dialog.serviceTypeLabel')}
+                        >
+                          <MenuItem value="wms">WMS</MenuItem>
+                          <MenuItem value="wmts">WMTS</MenuItem>
+                          <MenuItem value="xyz">XYZ Tiles</MenuItem>
+                          <MenuItem value="osm">OpenStreetMap</MenuItem>
+                        </Select>
+                      </FormControl>
+                    </Grid>
+                    <Grid item xs={12}>
+                      <TextField
+                        fullWidth
+                        label={t('resources.maps.dialog.serverUrlLabel')}
+                        value={formData.url || ''}
+                        onChange={(e) => setFormData({ ...formData, url: e.target.value })}
+                        placeholder="https://example.com/geoserver/wms"
+                      />
+                    </Grid>
+                    {formData.type === 'wms' && (
+                      <Grid item xs={12}>
+                        <TextField
+                          fullWidth
+                          label={t('resources.maps.dialog.layersLabel')}
+                          value={formData.layers || ''}
+                          onChange={(e) => setFormData({ ...formData, layers: e.target.value })}
+                          placeholder="layer1,layer2"
+                        />
+                      </Grid>
+                    )}
+                  </>
+                ) : (
+                  <>
+                    <Grid item xs={12}>
+                      <FormControl fullWidth>
+                        <InputLabel>{t('resources.maps.dialog.fileTypeLabel')}</InputLabel>
+                        <Select
+                          value={formData.format || ''}
+                          onChange={(e) => setFormData({ ...formData, format: e.target.value })}
+                          label={t('resources.maps.dialog.fileTypeLabel')}
+                        >
+                          <MenuItem value="geojson">GeoJSON</MenuItem>
+                          <MenuItem value="kml">KML</MenuItem>
+                          <MenuItem value="gpx">GPX</MenuItem>
+                          <MenuItem value="shapefile">Shapefile</MenuItem>
+                          <MenuItem value="geotiff">GeoTIFF</MenuItem>
+                        </Select>
+                      </FormControl>
+                    </Grid>
+                    <Grid item xs={12}>
+                      <Button
+                        variant="outlined"
+                        component="label"
+                        startIcon={<CloudUpload />}
+                        fullWidth
+                      >
+                        {t('resources.maps.dialog.selectFileButton')}
+                        <input
+                          type="file"
+                          hidden
+                          accept=".geojson,.json,.kml,.gpx,.shp,.tif,.tiff"
+                          onChange={(e) => {
+                            if (e.target.files && e.target.files[0]) {
+                              setFormData({ ...formData, file: e.target.files[0] });
+                            }
+                          }}
+                        />
+                      </Button>
+                      {formData.file && (
+                        <Typography variant="caption" display="block" sx={{ mt: 1 }}>
+                          {t('resources.maps.dialog.selectedFile')}: {formData.file.name}
+                        </Typography>
+                      )}
+                    </Grid>
+                  </>
+                )}
               </>
             )}
           </Grid>
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleCloseDialog}>{t('resources.maps.dialog.cancelButton')}</Button>
-          <Button onClick={handleSave} variant="contained" disabled={!formData.name}>
-            {dialogMode === 'server' ? t('resources.maps.dialog.addButton') : t('resources.maps.dialog.uploadButton')}
+          <Button onClick={handleCloseDialog}>لغو</Button>
+          <Button 
+            onClick={handleSave} 
+            variant="contained" 
+            disabled={
+              dialogMode === 'offline' 
+                ? !offlineFormData.name || !offlineFormData.file 
+                : !formData.name
+            }
+          >
+            {dialogMode === 'offline' ? 'آپلود نقشه' :
+             dialogMode === 'server' ? t('resources.maps.dialog.addButton') : 
+             t('resources.maps.dialog.uploadButton')}
           </Button>
         </DialogActions>
       </Dialog>

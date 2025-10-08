@@ -10,6 +10,7 @@ import {
   NEW_SCENARIO_ROUTE,
   ORBAT_CHART_ROUTE,
   STORY_MODE_ROUTE,
+  TACTICAL_GRAPHICS_ROUTE,
 } from "@/router/names";
 
 declare module "vue-router" {
@@ -34,6 +35,7 @@ const ScenarioEditorMap = () => import("@/modules/scenarioeditor/ScenarioEditorM
   console.error('Failed to load ScenarioEditorMap:', err);
   return import("@/views/ErrorFallback.vue"); // Fallback component
 });
+const TacticalGraphicsView = () => import("../views/TacticalGraphicsView.vue");
 const routes = [
   {
     path: "/scenario/:scenarioId",
@@ -104,6 +106,14 @@ const routes = [
     component: TanstackGridTestView,
   },
   { path: "/", name: LANDING_PAGE_ROUTE, component: LandingPage },
+  {
+    path: "/tactical-graphics",
+    name: TACTICAL_GRAPHICS_ROUTE,
+    component: TacticalGraphicsView,
+    beforeEnter: (to, from) => {
+      NProgress.start();
+    },
+  },
 ] as RouteRecordRaw[];
 
 export const router = createRouter({

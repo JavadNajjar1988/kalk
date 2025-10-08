@@ -18,8 +18,9 @@ interface Props {
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  center: () => [30, 60],
-  zoom: 5,
+  // Default to Iran center for global map
+  center: () => [53.6880, 32.4279],
+  zoom: 6,
   baseLayerName: "osm",
 });
 const emit = defineEmits(["ready", "moveend"]);

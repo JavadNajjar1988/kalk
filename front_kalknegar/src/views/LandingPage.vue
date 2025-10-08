@@ -91,6 +91,19 @@
           </div>
         </div>
         
+        <!-- Tactical Graphics Button -->
+        <div class="flex justify-center mb-8">
+          <button
+            @click="goToTacticalGraphics"
+            class="px-6 py-3 rounded-xl bg-indigo-500 hover:bg-indigo-600 text-white font-medium shadow-lg hover:shadow-xl transition-all duration-300 flex items-center gap-2 transform hover:-translate-y-1"
+          >
+            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+            </svg>
+            ساخت گرافیک تاکتیکال
+          </button>
+        </div>
+        
         <!-- Dashboard Stats Cards -->
         <div class="grid gap-4 md:grid-cols-2 md:gap-8 lg:grid-cols-4 mb-8">
           <div class="rounded-xl border border-blue-200/30 dark:border-blue-700/30 bg-blue-100/60 dark:bg-blue-900/10 backdrop-blur-xl text-card-foreground shadow-lg shadow-blue-500/5">
@@ -365,7 +378,7 @@ import { useRouter } from "vue-router";
 import { ref, computed, onMounted, onUnmounted } from "vue";
 import LoadScenarioModal from "@/components/LoadScenarioModal.vue";
 import DeleteConfirmModal from "@/components/DeleteConfirmModal.vue";
-import { NEW_SCENARIO_ROUTE, MAP_EDIT_MODE_ROUTE } from "@/router/names";
+import { NEW_SCENARIO_ROUTE, MAP_EDIT_MODE_ROUTE, TACTICAL_GRAPHICS_ROUTE } from "@/router/names";
 import { useDark, useToggle } from "@vueuse/core";
 import { scenarioApiService } from "@/services/api/scenarioApiService";
 import { useIndexedDb } from "@/scenariostore/localdb";
@@ -737,6 +750,11 @@ const runScenario = (scenarioId: number | string) => {
 // Theme toggle function
 const toggleTheme = () => {
   toggleDark();
+};
+
+// Add this new method
+const goToTacticalGraphics = () => {
+  router.push({ name: TACTICAL_GRAPHICS_ROUTE });
 };
 
 // Persian date and time

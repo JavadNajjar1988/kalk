@@ -437,18 +437,7 @@ function onAddPoint() {
           >
         </ContextMenuSubContent>
       </ContextMenuSub>
-      <ContextMenuSub>
-        <ContextMenuSubTrigger inset><span>باز کردن در</span></ContextMenuSubTrigger>
-        <ContextMenuSubContent>
-          <ContextMenuItem
-            v-for="{ name, url } in returnMapProviders(dropPosition, mapZoomLevel)"
-            :key="url"
-            inset
-            as-child
-            ><a :href="url" target="_blank">{{ name }}</a></ContextMenuItem
-          >
-        </ContextMenuSubContent>
-      </ContextMenuSub>
+     
       <ContextMenuSeparator />
       <ContextMenuCheckboxItem v-model="uiSettings.showToolbar" @select.prevent
         >نوار ابزار نقشه

@@ -15,9 +15,9 @@ class Settings(BaseSettings):
     # Comma-separated in env, parsed to list automatically by pydantic v2 when provided as list[str]
     CORS_ORIGINS: List[str] = Field(
         default_factory=lambda: [
-            "http://localhost:5173",
-            "http://localhost:3000",
-            
+             "http://127.0.0.1:5173",
+             "http://127.0.0.1:3000",
+       
         ]
     )
 
