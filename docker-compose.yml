@@ -42,6 +42,27 @@ services:
     networks:
       - kalknet
 
+  tileserver:
+    image: maptiler/tileserver-gl:latest
+    restart: unless-stopped
+    ports:
+      - "8480:8080"
+    volumes:
+      - ./backend/static/maps/maps.mbtiles:/data/maps.mbtiles:ro
+    command: ["--mbtiles", "/data/maps.mbtiles"]
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:8080/health || wget -qO- http://localhost:8080/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - kalknet
+    profiles:
+      - maps
+    depends_on:
+      - api
+
 volumes:
   db-data:
 

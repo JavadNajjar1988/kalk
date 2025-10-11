@@ -20,36 +20,8 @@ $composeUpArgs = @("up","-d")
 if ($EnvFile) { $composeUpArgs = @("--env-file", $EnvFile) + $composeUpArgs }
 docker compose @composeUpArgs
 
-# Start local MBTiles TileServer (if maps.mbtiles exists)
-$mbtilesPath = Join-Path $PSScriptRoot "maps.mbtiles"
-if (Test-Path $mbtilesPath) {
-$existingTsRaw = (& docker ps -q -f name=kalk-tileserver)
-$existingTs = if ($null -ne $existingTsRaw) { $existingTsRaw.Trim() } else { "" }
-if (-not $existingTs) {
-    Write-Host "Starting local TileServer for maps.mbtiles on http://127.0.0.1:8480 ..."
-    $runArgs = @(
-      "run","-d","--name","kalk-tileserver",
-      "-v","${mbtilesPath}:/data/maps.mbtiles",
-      "-p","127.0.0.1:8480:8080",
-      "maptiler/tileserver-gl","--mbtiles","/data/maps.mbtiles"
-    )
-    $proc = & docker @runArgs 2>&1
-    if ($LASTEXITCODE -ne 0) {
-      Write-Warning "Failed to start tileserver: $proc"
-    }
-  }
-
-  # Wait for tileserver health
-  $tsOk = $false
-  for ($i = 0; $i -lt 20; $i++) {
-    try {
-      $resp = Invoke-WebRequest -Uri "http://127.0.0.1:8480/health" -UseBasicParsing -TimeoutSec 3
-      if ($resp.StatusCode -eq 200) { $tsOk = $true; break }
-    } catch {}
-    Start-Sleep -Seconds 1
-  }
-  if (-not $tsOk) { Write-Warning "TileServer at http://127.0.0.1:8480 not healthy yet; continue startup." }
-}
+# TileServer is now managed by docker-compose.yml
+# No need for manual container management
 
 # Ensure Node/npm available
 $nodeCmd = Get-Command node -ErrorAction SilentlyContinue
@@ -156,4 +128,7 @@ Write-Host "Started:"
 Write-Host "- API:           http://localhost:8000 (Swagger: /api/docs)"
 Write-Host "- Dashboard:     http://127.0.0.1:3000/"
 Write-Host "- KalkNegar:     http://localhost:5173/kalknegar/"
-if (Test-Path $mbtilesPath) { Write-Host "- TileServer:     http://127.0.0.1:8480 (MBTiles: maps.mbtiles)" }
+Write-Host ""
+Write-Host "Optional services:"
+Write-Host "- TileServer:    docker compose --profile maps up -d (requires backend/static/maps/maps.mbtiles)"
+Write-Host "                http://127.0.0.1:8480 (MBTiles: backend/static/maps/maps.mbtiles)"
