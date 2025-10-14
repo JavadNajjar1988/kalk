@@ -26,6 +26,7 @@ import {
   Switch,
   Slider,
   useTheme,
+  useMediaQuery,
   alpha,
   Paper,
   Divider,
@@ -111,6 +112,7 @@ interface OfflineMap {
 
 const MapsTab: React.FC = () => {
   const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const dispatch = useAppDispatch();
   const { t } = useTranslation();
   const apiBase = useMemo(resolveApiBase, []);
@@ -653,6 +655,19 @@ const MapsTab: React.FC = () => {
                     component="label"
                     startIcon={<CloudUpload />}
                     fullWidth
+                    sx={{
+                      borderRadius: '12px',
+                      backgroundColor: alpha(theme.palette.primary.light, 0.12),
+                      borderColor: alpha(theme.palette.primary.main, 0.3),
+                      color: theme.palette.primary.main,
+                      fontWeight: 600,
+                      '&:hover': {
+                        backgroundColor: alpha(theme.palette.primary.light, 0.18),
+                        borderColor: alpha(theme.palette.primary.main, 0.45),
+                        transform: 'translateY(-2px)',
+                        boxShadow: `0 4px 12px ${alpha(theme.palette.primary.main, 0.2)}`,
+                      },
+                    }}
                   >
                     انتخاب فایل MBTiles
                     <input

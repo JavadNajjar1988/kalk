@@ -11,10 +11,7 @@ const NumericFieldPropertiesStep: React.FC<FieldPropertiesStepProps> = ({ formDa
           gutterBottom
           sx={{
             fontWeight: 700,
-            background: 'linear-gradient(45deg, #4A90E2 30%, #7BB3F0 90%)',
-            backgroundClip: 'text',
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent',
+            color: 'primary.main',
           }}
         >
           ویژگی‌های فیلد عددی
@@ -28,7 +25,7 @@ const NumericFieldPropertiesStep: React.FC<FieldPropertiesStepProps> = ({ formDa
         sx={{
           p: 4,
           borderRadius: '16px',
-          background: 'linear-gradient(135deg, rgba(248, 250, 252, 0.9) 0%, rgba(241, 245, 249, 0.8) 100%)',
+          backgroundColor: 'rgba(248, 250, 252, 0.9)',
           backdropFilter: 'blur(10px)',
           border: '1px solid rgba(203, 213, 225, 0.3)',
           textAlign: 'center',

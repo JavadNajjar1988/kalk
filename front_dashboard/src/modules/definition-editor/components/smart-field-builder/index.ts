@@ -4,10 +4,8 @@
  */
 
 // Main Smart Field Builder component
-// Provide a neutral stub to satisfy existing imports without enabling functionality
-import React from 'react';
-
-export const SmartFieldBuilder: React.FC<any> = () => null;
+export { default as SmartFieldBuilder } from './SmartFieldBuilder';
+export { default } from './SmartFieldBuilder';
 
 // Components
 export { default as BuilderModeSelector } from './components/BuilderModeSelector';

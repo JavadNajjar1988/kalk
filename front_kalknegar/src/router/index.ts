@@ -105,6 +105,22 @@ const routes = [
     path: "/testgrid2",
     component: TanstackGridTestView,
   },
+  {
+    path: "/symbol-designer",
+    name: "symbol-designer",
+    component: SymbolDesignerPage,
+    beforeEnter: (to, from) => {
+      NProgress.start();
+    },
+  },
+  {
+    path: "/tactical-symbols",
+    name: TACTICAL_SYMBOL_DEFINITION_ROUTE,
+    component: TacticalSymbolDefinitionPage,
+    beforeEnter: (to, from) => {
+      NProgress.start();
+    },
+  },
   { path: "/", name: LANDING_PAGE_ROUTE, component: LandingPage },
   {
     path: "/tactical-graphics",

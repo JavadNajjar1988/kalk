@@ -59,10 +59,7 @@ export const FieldPreviewStep = memo<FieldPreviewStepProps>(({ formData, origina
           gutterBottom
           sx={{
             fontWeight: 700,
-            background: 'linear-gradient(45deg, #4A90E2 30%, #7BB3F0 90%)',
-            backgroundClip: 'text',
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent',
+            color: 'primary.main',
             fontSize: isMobile ? '1.3rem' : undefined
           }}
         >
@@ -87,10 +84,10 @@ export const FieldPreviewStep = memo<FieldPreviewStepProps>(({ formData, origina
           sx={{
             p: isMobile ? 2 : 3,
             borderRadius: '12px',
-            background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(248, 250, 252, 0.9) 100%)',
+            backgroundColor: 'rgba(255, 255, 255, 0.95)',
             backdropFilter: 'blur(10px)',
-            border: '2px dashed rgba(74, 144, 226, 0.3)',
-            boxShadow: '0 4px 16px rgba(74, 144, 226, 0.1)',
+            border: (theme) => `2px dashed ${theme.palette.primary.main}4D`,
+            boxShadow: (theme) => `0 4px 16px ${theme.palette.primary.main}1A`,
           }}
           role="region"
           aria-label="پیش‌نمایش زنده فیلد آکاردئونی"
@@ -99,7 +96,7 @@ export const FieldPreviewStep = memo<FieldPreviewStepProps>(({ formData, origina
             variant={isMobile ? "h6" : "h5"} 
             sx={{ 
               mb: isMobile ? 2 : 3, 
-              color: '#4A90E2', 
+              color: 'primary.main', 
               fontWeight: 600, 
               textAlign: 'center',
               fontSize: isMobile ? '1.1rem' : undefined
@@ -130,8 +127,8 @@ export const FieldPreviewStep = memo<FieldPreviewStepProps>(({ formData, origina
                     background: 'rgba(255, 255, 255, 0.8)',
                     backdropFilter: 'blur(10px)',
                     fontSize: formData.size === 'sm' ? (isMobile ? '0.75rem' : '0.875rem') : formData.size === 'lg' ? (isMobile ? '1rem' : '1.125rem') : (isMobile ? '0.875rem' : '1rem'),
-                    '&:hover': { boxShadow: '0 4px 12px rgba(74, 144, 226, 0.15)' },
-                    '&.Mui-focused': { boxShadow: '0 0 0 3px rgba(74, 144, 226, 0.1)' },
+                    '&:hover': { boxShadow: (theme) => `0 4px 12px ${theme.palette.primary.main}26` },
+                    '&.Mui-focused': { boxShadow: (theme) => `0 0 0 3px ${theme.palette.primary.main}1A` },
                   },
                   mb: 2
                 }}
@@ -150,7 +147,7 @@ export const FieldPreviewStep = memo<FieldPreviewStepProps>(({ formData, origina
                 <Box sx={{ 
                   mt: 2, 
                   p: isMobile ? 1 : 1.5, 
-                  backgroundColor: 'rgba(74, 144, 226, 0.1)', 
+                  backgroundColor: (theme) => theme.palette.primary.main + '1A', 
                   borderRadius: 1 
                 }}>
                   <Typography 
@@ -176,7 +173,7 @@ export const FieldPreviewStep = memo<FieldPreviewStepProps>(({ formData, origina
                         sx={{ 
                           px: isMobile ? 0.5 : 1, 
                           py: isMobile ? 0.25 : 0.5, 
-                          backgroundColor: 'rgba(74, 144, 226, 0.2)', 
+                          backgroundColor: (theme) => theme.palette.primary.main + '33', 
                           borderRadius: 0.5,
                           fontSize: isMobile ? '0.65rem' : undefined
                         }}
@@ -190,7 +187,7 @@ export const FieldPreviewStep = memo<FieldPreviewStepProps>(({ formData, origina
                         sx={{ 
                           px: isMobile ? 0.5 : 1, 
                           py: isMobile ? 0.25 : 0.5, 
-                          backgroundColor: 'rgba(74, 144, 226, 0.2)', 
+                          backgroundColor: (theme) => theme.palette.primary.main + '33', 
                           borderRadius: 0.5,
                           fontSize: isMobile ? '0.65rem' : undefined
                         }}
@@ -204,7 +201,7 @@ export const FieldPreviewStep = memo<FieldPreviewStepProps>(({ formData, origina
                         sx={{ 
                           px: isMobile ? 0.5 : 1, 
                           py: isMobile ? 0.25 : 0.5, 
-                          backgroundColor: 'rgba(74, 144, 226, 0.2)', 
+                          backgroundColor: (theme) => theme.palette.primary.main + '33', 
                           borderRadius: 0.5,
                           fontSize: isMobile ? '0.65rem' : undefined
                         }}
@@ -225,8 +222,8 @@ export const FieldPreviewStep = memo<FieldPreviewStepProps>(({ formData, origina
       <Divider sx={{ my: isMobile ? 2 : 4 }} />
       
       {/* Field Details */}
-      <Paper sx={{ p: 2, mb: 3, borderRadius: 2, backgroundColor: 'rgba(74, 144, 226, 0.05)' }}>
-        <Typography variant="h6" sx={{ mb: 2, color: '#4A90E2', display: 'flex', alignItems: 'center' }}>
+      <Paper sx={{ p: 2, mb: 3, borderRadius: 2, backgroundColor: (theme) => theme.palette.primary.main + '0D' }}>
+        <Typography variant="h6" sx={{ mb: 2, color: 'primary.main', display: 'flex', alignItems: 'center' }}>
           📝 مشخصات کلی
         </Typography>
         <Grid container spacing={isMobile ? 1 : 2}>
@@ -241,7 +238,7 @@ export const FieldPreviewStep = memo<FieldPreviewStepProps>(({ formData, origina
             </Box>
             <Box sx={{ mb: 1 }}>
               <Typography variant="body2" sx={{ fontWeight: 600, color: '#64748B' }}>نوع فیلد</Typography>
-              <Chip label={getFieldTypeLabel(formData.type)} size="small" sx={{ bgcolor: 'rgba(74, 144, 226, 0.1)', color: '#4A90E2' }} />
+              <Chip label={getFieldTypeLabel(formData.type)} size="small" sx={{ bgcolor: (theme) => theme.palette.primary.main + '1A', color: 'primary.main' }} />
             </Box>
             <Box sx={{ mb: 1 }}>
               <Typography variant="body2" sx={{ fontWeight: 600, color: '#64748B' }}>اجباری</Typography>
@@ -272,19 +269,19 @@ export const FieldPreviewStep = memo<FieldPreviewStepProps>(({ formData, origina
       {/* Content Control Properties */}
       {(formData.characterControl || formData.caseTransform || formData.trimWhitespace || 
         formData.normalizeDigits || formData.fixZWNJ || formData.allowEmoji || formData.allowMarkdown) && (
-        <Paper sx={{ p: 2, mb: 3, borderRadius: 2, backgroundColor: 'rgba(74, 144, 226, 0.05)' }}>
-          <Typography variant="h6" sx={{ mb: 2, color: '#4A90E2', display: 'flex', alignItems: 'center' }}>
+        <Paper sx={{ p: 2, mb: 3, borderRadius: 2, backgroundColor: (theme) => theme.palette.primary.main + '0D' }}>
+          <Typography variant="h6" sx={{ mb: 2, color: 'primary.main', display: 'flex', alignItems: 'center' }}>
             ⚙️ کنترل محتوا
           </Typography>
           <Grid container spacing={isMobile ? 1 : 2}>
             <Grid item xs={12} md={6}>
               <Box sx={{ mb: 1 }}>
                 <Typography variant="body2" sx={{ fontWeight: 600, color: '#64748B' }}>کنترل کاراکتر</Typography>
-                <Chip label={formData.characterControl || '-'} size="small" sx={{ bgcolor: 'rgba(74, 144, 226, 0.1)', color: '#4A90E2' }} />
+                <Chip label={formData.characterControl || '-'} size="small" sx={{ bgcolor: (theme) => theme.palette.primary.main + '1A', color: 'primary.main' }} />
               </Box>
               <Box sx={{ mb: 1 }}>
                 <Typography variant="body2" sx={{ fontWeight: 600, color: '#64748B' }}>تبدیل حروف</Typography>
-                <Chip label={formData.caseTransform || '-'} size="small" sx={{ bgcolor: 'rgba(74, 144, 226, 0.1)', color: '#4A90E2' }} />
+                <Chip label={formData.caseTransform || '-'} size="small" sx={{ bgcolor: (theme) => theme.palette.primary.main + '1A', color: 'primary.main' }} />
               </Box>
               <Box sx={{ mb: 1 }}>
                 <Typography variant="body2" sx={{ fontWeight: 600, color: '#64748B' }}>حذف فاصله اضافی</Typography>
@@ -315,8 +312,8 @@ export const FieldPreviewStep = memo<FieldPreviewStepProps>(({ formData, origina
       
       {/* Assistive Properties */}
       {(formData.suggestions && formData.suggestions.length > 0 || formData.autoComplete || formData.enableMultipleValues || formData.spellcheck !== 'off') && (
-        <Paper sx={{ p: 2, mb: 3, borderRadius: 2, backgroundColor: 'rgba(74, 144, 226, 0.05)' }}>
-          <Typography variant="h6" sx={{ mb: 2, color: '#4A90E2', display: 'flex', alignItems: 'center' }}>
+        <Paper sx={{ p: 2, mb: 3, borderRadius: 2, backgroundColor: (theme) => theme.palette.primary.main + '0D' }}>
+          <Typography variant="h6" sx={{ mb: 2, color: 'primary.main', display: 'flex', alignItems: 'center' }}>
             🎆 ویژگی‌های کمکی
           </Typography>
           <Grid container spacing={isMobile ? 1 : 2}>
@@ -335,10 +332,10 @@ export const FieldPreviewStep = memo<FieldPreviewStepProps>(({ formData, origina
                   <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
                     {Array.isArray(formData.suggestions) 
                       ? formData.suggestions.map((suggestion, index) => (
-                          <Chip key={index} label={suggestion} size="small" sx={{ bgcolor: 'rgba(74, 144, 226, 0.1)', color: '#4A90E2' }} />
+                          <Chip key={index} label={suggestion} size="small" sx={{ bgcolor: (theme) => theme.palette.primary.main + '1A', color: 'primary.main' }} />
                         ))
                       : (formData.suggestions as string).split('\n').filter((s: string) => s.trim()).map((suggestion, index) => (
-                          <Chip key={index} label={suggestion} size="small" sx={{ bgcolor: 'rgba(74, 144, 226, 0.1)', color: '#4A90E2' }} />
+                          <Chip key={index} label={suggestion} size="small" sx={{ bgcolor: (theme) => theme.palette.primary.main + '1A', color: 'primary.main' }} />
                         ))
                     }
                   </Box>
@@ -354,13 +351,13 @@ export const FieldPreviewStep = memo<FieldPreviewStepProps>(({ formData, origina
                 <>
                   <Box sx={{ mb: 1 }}>
                     <Typography variant="body2" sx={{ fontWeight: 600, color: '#64748B' }}>جداکننده</Typography>
-                    <Chip label={formData.multiValueSeparator || '-'} size="small" sx={{ bgcolor: 'rgba(74, 144, 226, 0.1)', color: '#4A90E2' }} />
+                    <Chip label={formData.multiValueSeparator || '-'} size="small" sx={{ bgcolor: (theme) => theme.palette.primary.main + '1A', color: 'primary.main' }} />
                   </Box>
                 </>
               )}
               <Box sx={{ mb: 1 }}>
                 <Typography variant="body2" sx={{ fontWeight: 600, color: '#64748B' }}>غلط‌یاب</Typography>
-                <Chip label={formData.spellcheck || '-'} size="small" sx={{ bgcolor: 'rgba(74, 144, 226, 0.1)', color: '#4A90E2' }} />
+                <Chip label={formData.spellcheck || '-'} size="small" sx={{ bgcolor: (theme) => theme.palette.primary.main + '1A', color: 'primary.main' }} />
               </Box>
             </Grid>
           </Grid>
@@ -370,8 +367,8 @@ export const FieldPreviewStep = memo<FieldPreviewStepProps>(({ formData, origina
       {/* Behavior & Logic Properties */}
       {(formData.editableAfterSave !== undefined || formData.enableAutoSave || 
         formData.enableConditionalDisplay || formData.enableConditionalEnable) && (
-        <Paper sx={{ p: 2, mb: 3, borderRadius: 2, backgroundColor: 'rgba(74, 144, 226, 0.05)' }}>
-          <Typography variant="h6" sx={{ mb: 2, color: '#4A90E2', display: 'flex', alignItems: 'center' }}>
+        <Paper sx={{ p: 2, mb: 3, borderRadius: 2, backgroundColor: (theme) => theme.palette.primary.main + '0D' }}>
+          <Typography variant="h6" sx={{ mb: 2, color: 'primary.main', display: 'flex', alignItems: 'center' }}>
             ⚙️ رفتار و منطق
           </Typography>
           <Grid container spacing={isMobile ? 1 : 2}>
@@ -410,7 +407,7 @@ export const FieldPreviewStep = memo<FieldPreviewStepProps>(({ formData, origina
                   </Box>
                   <Box sx={{ mb: 1 }}>
                     <Typography variant="body2" sx={{ fontWeight: 600, color: '#64748B' }}>شرط</Typography>
-                    <Chip label={formData.conditionalDisplayOperator || '-'} size="small" sx={{ bgcolor: 'rgba(74, 144, 226, 0.1)', color: '#4A90E2' }} />
+                    <Chip label={formData.conditionalDisplayOperator || '-'} size="small" sx={{ bgcolor: (theme) => theme.palette.primary.main + '1A', color: 'primary.main' }} />
                   </Box>
                   <Box sx={{ mb: 1 }}>
                     <Typography variant="body2" sx={{ fontWeight: 600, color: '#64748B' }}>مقدار</Typography>
@@ -430,8 +427,8 @@ export const FieldPreviewStep = memo<FieldPreviewStepProps>(({ formData, origina
       {/* Security & Storage Properties */}
       {(formData.piiCheck?.enabled || formData.profanityCheck?.enabled || 
         formData.indexing?.searchable || formData.indexing?.filterable || formData.storeRawAndNormalized) && (
-        <Paper sx={{ p: 2, mb: 3, borderRadius: 2, backgroundColor: 'rgba(74, 144, 226, 0.05)' }}>
-          <Typography variant="h6" sx={{ mb: 2, color: '#4A90E2', display: 'flex', alignItems: 'center' }}>
+        <Paper sx={{ p: 2, mb: 3, borderRadius: 2, backgroundColor: (theme) => theme.palette.primary.main + '0D' }}>
+          <Typography variant="h6" sx={{ mb: 2, color: 'primary.main', display: 'flex', alignItems: 'center' }}>
             🔒 امنیت و ذخیره‌سازی
           </Typography>
           <Grid container spacing={isMobile ? 1 : 2}>
@@ -443,7 +440,7 @@ export const FieldPreviewStep = memo<FieldPreviewStepProps>(({ formData, origina
               {formData.piiCheck?.enabled && (
                 <Box sx={{ mb: 1 }}>
                   <Typography variant="body2" sx={{ fontWeight: 600, color: '#64748B' }}>عمل</Typography>
-                  <Chip label={formData.piiCheck.action || '-'} size="small" sx={{ bgcolor: 'rgba(74, 144, 226, 0.1)', color: '#4A90E2' }} />
+                  <Chip label={formData.piiCheck.action || '-'} size="small" sx={{ bgcolor: (theme) => theme.palette.primary.main + '1A', color: 'primary.main' }} />
                 </Box>
               )}
               <Box sx={{ mb: 1 }}>
@@ -453,7 +450,7 @@ export const FieldPreviewStep = memo<FieldPreviewStepProps>(({ formData, origina
               {formData.profanityCheck?.enabled && (
                 <Box sx={{ mb: 1 }}>
                   <Typography variant="body2" sx={{ fontWeight: 600, color: '#64748B' }}>عمل</Typography>
-                  <Chip label={formData.profanityCheck.action || '-'} size="small" sx={{ bgcolor: 'rgba(74, 144, 226, 0.1)', color: '#4A90E2' }} />
+                  <Chip label={formData.profanityCheck.action || '-'} size="small" sx={{ bgcolor: (theme) => theme.palette.primary.main + '1A', color: 'primary.main' }} />
                 </Box>
               )}
             </Grid>
@@ -468,7 +465,7 @@ export const FieldPreviewStep = memo<FieldPreviewStepProps>(({ formData, origina
               </Box>
               <Box sx={{ mb: 1 }}>
                 <Typography variant="body2" sx={{ fontWeight: 600, color: '#64748B' }}>آنالایزر جستجو</Typography>
-                <Chip label={formData.analyzer || '-'} size="small" sx={{ bgcolor: 'rgba(74, 144, 226, 0.1)', color: '#4A90E2' }} />
+                <Chip label={formData.analyzer || '-'} size="small" sx={{ bgcolor: (theme) => theme.palette.primary.main + '1A', color: 'primary.main' }} />
               </Box>
               <Box sx={{ mb: 1 }}>
                 <Typography variant="body2" sx={{ fontWeight: 600, color: '#64748B' }}>ذخیره خام و نرمال</Typography>
@@ -481,15 +478,15 @@ export const FieldPreviewStep = memo<FieldPreviewStepProps>(({ formData, origina
       
       {/* Reference Field Properties */}
       {formData.type === 'reference' && formData.referenceConfig && (
-        <Paper sx={{ p: 2, mb: 3, borderRadius: 2, backgroundColor: 'rgba(74, 144, 226, 0.05)' }}>
-          <Typography variant="h6" sx={{ mb: 2, color: '#4A90E2', display: 'flex', alignItems: 'center' }}>
+        <Paper sx={{ p: 2, mb: 3, borderRadius: 2, backgroundColor: (theme) => theme.palette.primary.main + '0D' }}>
+          <Typography variant="h6" sx={{ mb: 2, color: 'primary.main', display: 'flex', alignItems: 'center' }}>
             🔗 ویژگی‌های فیلد مرجع
           </Typography>
           <Grid container spacing={isMobile ? 1 : 2}>
             <Grid item xs={12} md={6}>
               <Box sx={{ mb: 1 }}>
                 <Typography variant="body2" sx={{ fontWeight: 600, color: '#64748B' }}>نوع منبع داده</Typography>
-                <Chip label={formData.referenceConfig.dataSource?.type || '-'} size="small" sx={{ bgcolor: 'rgba(74, 144, 226, 0.1)', color: '#4A90E2' }} />
+                <Chip label={formData.referenceConfig.dataSource?.type || '-'} size="small" sx={{ bgcolor: (theme) => theme.palette.primary.main + '1A', color: 'primary.main' }} />
               </Box>
               {formData.referenceConfig.dataSource?.type === 'static' && (
                 <>
@@ -513,7 +510,7 @@ export const FieldPreviewStep = memo<FieldPreviewStepProps>(({ formData, origina
                     <Typography variant="body2" sx={{ fontWeight: 600, color: '#64748B' }}>فیلدهای نمایشی</Typography>
                     <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
                       {formData.referenceConfig.dataSource.table?.displayFields?.map((field, index) => (
-                        <Chip key={index} label={field} size="small" sx={{ bgcolor: 'rgba(74, 144, 226, 0.1)', color: '#4A90E2' }} />
+                        <Chip key={index} label={field} size="small" sx={{ bgcolor: (theme) => theme.palette.primary.main + '1A', color: 'primary.main' }} />
                       ))}
                     </Box>
                   </Box>
@@ -533,7 +530,7 @@ export const FieldPreviewStep = memo<FieldPreviewStepProps>(({ formData, origina
                     <Typography variant="body2" sx={{ fontWeight: 600, color: '#64748B' }}>فیلدهای نمایشی</Typography>
                     <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
                       {formData.referenceConfig.dataSource.api?.displayFields?.map((field, index) => (
-                        <Chip key={index} label={field} size="small" sx={{ bgcolor: 'rgba(74, 144, 226, 0.1)', color: '#4A90E2' }} />
+                        <Chip key={index} label={field} size="small" sx={{ bgcolor: (theme) => theme.palette.primary.main + '1A', color: 'primary.main' }} />
                       ))}
                     </Box>
                   </Box>

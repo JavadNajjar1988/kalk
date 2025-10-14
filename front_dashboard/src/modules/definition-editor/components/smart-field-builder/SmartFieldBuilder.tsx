@@ -341,7 +341,14 @@ const SmartFieldBuilder: React.FC<SmartFieldBuilderProps> = React.memo(({
           maxHeight: { xs: '100vh', sm: '90vh' },
           display: 'flex',
           flexDirection: 'column',
-          overflow: 'hidden'
+          overflow: 'hidden',
+          ...(theme.palette.mode === 'light' && {
+            background: `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.06)} 0%, ${alpha(theme.palette.background.paper, 0.6)} 60%)`,
+            backdropFilter: 'blur(18px) saturate(120%)',
+            WebkitBackdropFilter: 'blur(18px) saturate(120%)',
+            border: `1px solid ${alpha(theme.palette.primary.main, 0.12)}`,
+            boxShadow: `0 8px 32px ${alpha(theme.palette.primary.main, 0.15)}`,
+          })
         }
       }}
     >
@@ -349,6 +356,9 @@ const SmartFieldBuilder: React.FC<SmartFieldBuilderProps> = React.memo(({
         id="smart-field-builder-title"
         sx={{ 
           borderBottom: `1px solid ${alpha(theme.palette.divider, 0.08)}`,
+          ...(theme.palette.mode === 'light' && {
+            background: `linear-gradient(90deg, ${alpha(theme.palette.primary.main, 0.04)} 0%, transparent 100%)`,
+          }),
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between'
@@ -391,7 +401,10 @@ const SmartFieldBuilder: React.FC<SmartFieldBuilderProps> = React.memo(({
           flex: 1, 
           display: 'flex', 
           flexDirection: 'column', 
-          overflow: 'hidden' 
+          overflow: 'hidden',
+          ...(theme.palette.mode === 'light' && {
+            background: `linear-gradient(0deg, ${alpha(theme.palette.primary.main, 0.02)} 0%, transparent 100%)`,
+          })
         }}
         role="main"
         aria-live="polite"
@@ -435,6 +448,9 @@ const SmartFieldBuilder: React.FC<SmartFieldBuilderProps> = React.memo(({
       <DialogActions 
         sx={{ 
           borderTop: `1px solid ${alpha(theme.palette.divider, 0.08)}`, 
+          ...(theme.palette.mode === 'light' && {
+            background: `linear-gradient(90deg, transparent 0%, ${alpha(theme.palette.primary.main, 0.03)} 100%)`,
+          }),
           gap: 1,
           p: 2
         }}

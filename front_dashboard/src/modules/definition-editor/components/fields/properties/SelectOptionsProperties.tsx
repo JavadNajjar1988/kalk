@@ -22,12 +22,11 @@ const SelectOptionsProperties: React.FC<FieldPropertiesStepProps> = ({ formData,
         mb: 3,
         borderRadius: '12px',
         background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(248, 250, 252, 0.8) 100%)',
-        backdropFilter: 'blur(10px)',
         border: '1px solid rgba(135, 206, 250, 0.2)',
         boxShadow: '0 4px 16px rgba(135, 206, 250, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.8)',
       }}
     >
-      <Typography variant="h6" sx={{ mb: 3, color: '#4A90E2', fontWeight: 600 }}>
+      <Typography variant="h6" sx={{ mb: 3, color: 'primary.main', fontWeight: 600 }}>
         گزینه‌های فیلد انتخابی
       </Typography>
       

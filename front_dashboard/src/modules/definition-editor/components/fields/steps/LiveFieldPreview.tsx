@@ -2079,7 +2079,7 @@ export const LiveFieldPreview: React.FC<LiveFieldPreviewProps> = ({ formData }) 
       sx={{
         p: 3,
         borderRadius: '12px',
-        background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(248, 250, 252, 0.9) 100%)',
+        backgroundColor: 'rgba(255, 255, 255, 0.95)',
         backdropFilter: 'blur(10px)',
         border: '2px dashed rgba(74, 144, 226, 0.3)',
         boxShadow: '0 4px 16px rgba(74, 144, 226, 0.1)',

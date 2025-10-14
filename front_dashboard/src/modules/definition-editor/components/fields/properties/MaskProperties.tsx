@@ -106,13 +106,12 @@ const MaskProperties: React.FC<MaskPropertiesProps> = ({ formData, onChange }) =
         p: 3,
         mb: 3,
         borderRadius: '12px',
-        background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(248, 250, 252, 0.8) 100%)',
-        backdropFilter: 'blur(10px)',
-        border: '1px solid rgba(135, 206, 250, 0.2)',
-        boxShadow: '0 4px 16px rgba(135, 206, 250, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.8)',
+        backgroundColor: 'rgba(255, 255, 255, 0.95)',
+        border: (theme) => `1px solid ${theme.palette.primary.main}33`,
+        boxShadow: (theme) => `0 4px 16px ${theme.palette.primary.main}1A`,
       }}
     >
-      <Typography variant="h6" sx={{ mb: 3, color: '#4A90E2', fontWeight: 600 }}>
+      <Typography variant="h6" sx={{ mb: 3, color: 'primary.main', fontWeight: 600 }}>
         ویژگی‌های ماسک‌گذاری
       </Typography>
       
@@ -169,7 +168,6 @@ const MaskProperties: React.FC<MaskPropertiesProps> = ({ formData, onChange }) =
                     label="الگوی پیش‌فرض"
                     sx={{
                       background: 'rgba(255, 255, 255, 0.8)',
-                      backdropFilter: 'blur(10px)',
                     }}
                   >
                     {defaultPatterns.map((pattern) => (
@@ -200,7 +198,6 @@ const MaskProperties: React.FC<MaskPropertiesProps> = ({ formData, onChange }) =
                 sx={{
                   '& .MuiOutlinedInput-root': {
                     background: 'rgba(255, 255, 255, 0.8)',
-                    backdropFilter: 'blur(10px)',
                   },
                 }}
               />
@@ -210,11 +207,11 @@ const MaskProperties: React.FC<MaskPropertiesProps> = ({ formData, onChange }) =
             <Grid item xs={12}>
               <Box sx={{ 
                 p: 2, 
-                bgcolor: 'rgba(74, 144, 226, 0.05)', 
+                bgcolor: (theme) => (theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.06)' : (theme.palette.primary.main + '1A')),
                 borderRadius: 2, 
-                border: '1px solid rgba(74, 144, 226, 0.2)' 
+                border: (theme) => `1px solid ${theme.palette.primary.main}33` 
               }}>
-                <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 600, color: '#4A90E2' }}>
+                <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 600, color: 'primary.main' }}>
                   پیش‌نمایش ماسک
                 </Typography>
                 <Box sx={{ display: 'flex', gap: 2, alignItems: 'center', flexWrap: 'wrap' }}>
@@ -303,7 +300,6 @@ const MaskProperties: React.FC<MaskPropertiesProps> = ({ formData, onChange }) =
                   sx={{
                     '& .MuiOutlinedInput-root': {
                       background: 'rgba(255, 255, 255, 0.8)',
-                      backdropFilter: 'blur(10px)',
                     },
                   }}
                 />

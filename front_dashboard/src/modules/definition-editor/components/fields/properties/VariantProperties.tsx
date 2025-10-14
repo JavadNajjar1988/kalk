@@ -208,13 +208,12 @@ const VariantProperties: React.FC<VariantPropertiesProps> = ({ formData, onChang
         p: 3,
         mb: 3,
         borderRadius: '12px',
-        background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(248, 250, 252, 0.8) 100%)',
-        backdropFilter: 'blur(10px)',
-        border: '1px solid rgba(135, 206, 250, 0.2)',
-        boxShadow: '0 4px 16px rgba(135, 206, 250, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.8)',
+        backgroundColor: 'rgba(255, 255, 255, 0.95)',
+        border: (theme) => `1px solid ${theme.palette.primary.main}33`,
+        boxShadow: (theme) => `0 4px 16px ${theme.palette.primary.main}1A`,
       }}
     >
-      <Typography variant="h6" sx={{ mb: 3, color: '#4A90E2', fontWeight: 600 }}>
+      <Typography variant="h6" sx={{ mb: 3, color: 'primary.main', fontWeight: 600 }}>
         ویژگی‌های تخصصی نوع نمایش
       </Typography>
       
@@ -233,7 +232,6 @@ const VariantProperties: React.FC<VariantPropertiesProps> = ({ formData, onChang
                 sx={{
                   '& .MuiOutlinedInput-root': {
                     background: 'rgba(255, 255, 255, 0.8)',
-                    backdropFilter: 'blur(10px)',
                   },
                 }}
               />
@@ -257,7 +255,6 @@ const VariantProperties: React.FC<VariantPropertiesProps> = ({ formData, onChang
                 sx={{
                   '& .MuiOutlinedInput-root': {
                     background: 'rgba(255, 255, 255, 0.8)',
-                    backdropFilter: 'blur(10px)',
                   },
                 }}
               />
@@ -278,7 +275,6 @@ const VariantProperties: React.FC<VariantPropertiesProps> = ({ formData, onChang
                 label="قابلیت تغییر اندازه"
                 sx={{
                   background: 'rgba(255, 255, 255, 0.8)',
-                  backdropFilter: 'blur(10px)',
                 }}
               >
                 <MenuItem value="none">هیچ</MenuItem>
@@ -305,7 +301,6 @@ const VariantProperties: React.FC<VariantPropertiesProps> = ({ formData, onChang
               sx={{
                 '& .MuiOutlinedInput-root': {
                   background: 'rgba(255, 255, 255, 0.8)',
-                  backdropFilter: 'blur(10px)',
                 },
               }}
             />
@@ -321,7 +316,6 @@ const VariantProperties: React.FC<VariantPropertiesProps> = ({ formData, onChang
               sx={{
                 '& .MuiOutlinedInput-root': {
                   background: 'rgba(255, 255, 255, 0.8)',
-                  backdropFilter: 'blur(10px)',
                 },
               }}
             />
@@ -341,7 +335,6 @@ const VariantProperties: React.FC<VariantPropertiesProps> = ({ formData, onChang
                 label="رنگ چیپ‌ها"
                 sx={{
                   background: 'rgba(255, 255, 255, 0.8)',
-                  backdropFilter: 'blur(10px)',
                 }}
               >
                 <MenuItem value="default">پیش‌فرض</MenuItem>
@@ -360,7 +353,6 @@ const VariantProperties: React.FC<VariantPropertiesProps> = ({ formData, onChang
                 label="سبک چیپ‌ها"
                 sx={{
                   background: 'rgba(255, 255, 255, 0.8)',
-                  backdropFilter: 'blur(10px)',
                 }}
               >
                 <MenuItem value="filled">پر</MenuItem>
@@ -395,7 +387,6 @@ const VariantProperties: React.FC<VariantPropertiesProps> = ({ formData, onChang
               sx={{
                 '& .MuiOutlinedInput-root': {
                   background: 'rgba(255, 255, 255, 0.8)',
-                  backdropFilter: 'blur(10px)',
                 },
               }}
             />
@@ -416,7 +407,6 @@ const VariantProperties: React.FC<VariantPropertiesProps> = ({ formData, onChang
                 sx={{
                   '& .MuiOutlinedInput-root': {
                     background: 'rgba(255, 255, 255, 0.8)',
-                    backdropFilter: 'blur(10px)',
                   },
                 }}
               />
@@ -426,9 +416,9 @@ const VariantProperties: React.FC<VariantPropertiesProps> = ({ formData, onChang
                 disabled={!variantConfig.newOptionText?.trim()}
                 sx={{
                   minWidth: 120,
-                  background: 'linear-gradient(135deg, #4A90E2, #7BB3F0)',
+                  background: (theme) => `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.primary.light})`,
                   '&:hover': {
-                    background: 'linear-gradient(135deg, #3A7BC8, #6BA3E0)',
+                    background: (theme) => `linear-gradient(135deg, ${theme.palette.primary.dark}, ${theme.palette.primary.main})`,
                   },
                 }}
               >
@@ -450,7 +440,7 @@ const VariantProperties: React.FC<VariantPropertiesProps> = ({ formData, onChang
                   mb: 1,
                   background: 'rgba(255, 255, 255, 0.6)',
                   borderRadius: 1,
-                  border: '1px solid rgba(135, 206, 250, 0.3)',
+                  border: (theme) => `1px solid ${theme.palette.primary.main}4D`,
                 }}
               >
                 <Typography variant="body2">
@@ -483,7 +473,6 @@ const VariantProperties: React.FC<VariantPropertiesProps> = ({ formData, onChang
                 label="رنگ پِل"
                 sx={{
                   background: 'rgba(255, 255, 255, 0.8)',
-                  backdropFilter: 'blur(10px)',
                 }}
               >
                 <MenuItem value="default">پیش‌فرض</MenuItem>
@@ -505,7 +494,6 @@ const VariantProperties: React.FC<VariantPropertiesProps> = ({ formData, onChang
                 label="اندازه پِل"
                 sx={{
                   background: 'rgba(255, 255, 255, 0.8)',
-                  backdropFilter: 'blur(10px)',
                 }}
               >
                 <MenuItem value="small">کوچک</MenuItem>
@@ -529,7 +517,6 @@ const VariantProperties: React.FC<VariantPropertiesProps> = ({ formData, onChang
                 sx={{
                   '& .MuiOutlinedInput-root': {
                     background: 'rgba(255, 255, 255, 0.8)',
-                    backdropFilter: 'blur(10px)',
                   },
                 }}
               />
@@ -539,9 +526,9 @@ const VariantProperties: React.FC<VariantPropertiesProps> = ({ formData, onChang
                 disabled={!variantConfig.newOptionText?.trim()}
                 sx={{
                   minWidth: 120,
-                  background: 'linear-gradient(135deg, #4A90E2, #7BB3F0)',
+                  background: (theme) => `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.primary.light})`,
                   '&:hover': {
-                    background: 'linear-gradient(135deg, #3A7BC8, #6BA3E0)',
+                    background: (theme) => `linear-gradient(135deg, ${theme.palette.primary.dark}, ${theme.palette.primary.main})`,
                   },
                 }}
               >
@@ -563,7 +550,7 @@ const VariantProperties: React.FC<VariantPropertiesProps> = ({ formData, onChang
                   mb: 1,
                   background: 'rgba(255, 255, 255, 0.6)',
                   borderRadius: 1,
-                  border: '1px solid rgba(135, 206, 250, 0.3)',
+                  border: (theme) => `1px solid ${theme.palette.primary.main}4D`,
                 }}
               >
                 <Typography variant="body2">
@@ -596,7 +583,6 @@ const VariantProperties: React.FC<VariantPropertiesProps> = ({ formData, onChang
                 label="رویداد فعال‌سازی"
                 sx={{
                   background: 'rgba(255, 255, 255, 0.8)',
-                  backdropFilter: 'blur(10px)',
                 }}
               >
                 <MenuItem value="click">کلیک</MenuItem>
@@ -614,7 +600,6 @@ const VariantProperties: React.FC<VariantPropertiesProps> = ({ formData, onChang
                 label="اندازه پاپ‌اور"
                 sx={{
                   background: 'rgba(255, 255, 255, 0.8)',
-                  backdropFilter: 'blur(10px)',
                 }}
               >
                 <MenuItem value="small">کوچک</MenuItem>
@@ -633,7 +618,6 @@ const VariantProperties: React.FC<VariantPropertiesProps> = ({ formData, onChang
                 label="موقعیت پاپ‌اور"
                 sx={{
                   background: 'rgba(255, 255, 255, 0.8)',
-                  backdropFilter: 'blur(10px)',
                 }}
               >
                 <MenuItem value="top">بالا</MenuItem>
@@ -658,7 +642,6 @@ const VariantProperties: React.FC<VariantPropertiesProps> = ({ formData, onChang
                 label="موقعیت برچسب"
                 sx={{
                   background: 'rgba(255, 255, 255, 0.8)',
-                  backdropFilter: 'blur(10px)',
                 }}
               >
                 <MenuItem value="left">چپ</MenuItem>
@@ -678,7 +661,6 @@ const VariantProperties: React.FC<VariantPropertiesProps> = ({ formData, onChang
               sx={{
                 '& .MuiOutlinedInput-root': {
                   background: 'rgba(255, 255, 255, 0.8)',
-                  backdropFilter: 'blur(10px)',
                 },
               }}
             />
@@ -693,7 +675,6 @@ const VariantProperties: React.FC<VariantPropertiesProps> = ({ formData, onChang
                 label="فاصله‌گذاری"
                 sx={{
                   background: 'rgba(255, 255, 255, 0.8)',
-                  backdropFilter: 'blur(10px)',
                 }}
               >
                 <MenuItem value="compact">فشرده</MenuItem>
@@ -718,7 +699,6 @@ const VariantProperties: React.FC<VariantPropertiesProps> = ({ formData, onChang
               sx={{
                 '& .MuiOutlinedInput-root': {
                   background: 'rgba(255, 255, 255, 0.8)',
-                  backdropFilter: 'blur(10px)',
                 },
               }}
             />
@@ -733,7 +713,6 @@ const VariantProperties: React.FC<VariantPropertiesProps> = ({ formData, onChang
                 label="حالت نمایش آکاردئون"
                 sx={{
                   background: 'rgba(255, 255, 255, 0.8)',
-                  backdropFilter: 'blur(10px)',
                 }}
               >
                 <MenuItem value="title">عنوان</MenuItem>
@@ -757,7 +736,6 @@ const VariantProperties: React.FC<VariantPropertiesProps> = ({ formData, onChang
                 sx={{
                   '& .MuiOutlinedInput-root': {
                     background: 'rgba(255, 255, 255, 0.8)',
-                    backdropFilter: 'blur(10px)',
                   },
                 }}
               />
@@ -767,9 +745,9 @@ const VariantProperties: React.FC<VariantPropertiesProps> = ({ formData, onChang
                 disabled={!variantConfig.newOptionText?.trim()}
                 sx={{
                   minWidth: 120,
-                  background: 'linear-gradient(135deg, #4A90E2, #7BB3F0)',
+                  background: (theme) => `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.primary.light})`,
                   '&:hover': {
-                    background: 'linear-gradient(135deg, #3A7BC8, #6BA3E0)',
+                    background: (theme) => `linear-gradient(135deg, ${theme.palette.primary.dark}, ${theme.palette.primary.main})`,
                   },
                 }}
               >
@@ -791,7 +769,7 @@ const VariantProperties: React.FC<VariantPropertiesProps> = ({ formData, onChang
                   mb: 1,
                   background: 'rgba(255, 255, 255, 0.6)',
                   borderRadius: 1,
-                  border: '1px solid rgba(135, 206, 250, 0.3)',
+                  border: (theme) => `1px solid ${theme.palette.primary.main}4D`,
                 }}
               >
                 <Typography variant="body2">

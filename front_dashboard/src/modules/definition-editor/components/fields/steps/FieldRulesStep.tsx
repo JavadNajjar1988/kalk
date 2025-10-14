@@ -14,16 +14,18 @@ import {
 } from '@mui/material';
 import { ExtendedCustomFieldDefinition } from '../types/FieldEditTypes';
 import HelpTooltip from '../shared/HelpTooltip';
+import { useTheme, alpha } from '@mui/material/styles';
 
 interface FieldRulesStepProps {
   formData: ExtendedCustomFieldDefinition;
   onChange: (field: keyof ExtendedCustomFieldDefinition, value: any) => void;
 }
 
-export const FieldRulesStep = memo<FieldRulesStepProps>(({
+export const FieldRulesStep = memo<FieldRulesStepProps>(({ 
   formData,
   onChange: handleChange,
 }) => {
+  const theme = useTheme();
   // Helper function to validate JavaScript rule
   const isValidJavaScriptRule = (rule: string): boolean => {
     if (!rule || rule.trim() === '') return false;
@@ -95,10 +97,7 @@ export const FieldRulesStep = memo<FieldRulesStepProps>(({
           gutterBottom
           sx={{
             fontWeight: 700,
-            background: 'linear-gradient(45deg, #4A90E2 30%, #7BB3F0 90%)',
-            backgroundClip: 'text',
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent',
+            color: theme.palette.primary.main,
           }}
         >
           {(() => {
@@ -120,13 +119,12 @@ export const FieldRulesStep = memo<FieldRulesStepProps>(({
           p: 3,
           mb: 3,
           borderRadius: '12px',
-          background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(248, 250, 252, 0.8) 100%)',
-          backdropFilter: 'blur(10px)',
-          border: '1px solid rgba(135, 206, 250, 0.2)',
-          boxShadow: '0 4px 16px rgba(135, 206, 250, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.8)',
+          backgroundColor: 'rgba(255, 255, 255, 0.95)',
+          border: `1px solid ${alpha(theme.palette.primary.main, 0.2)}`,
+          boxShadow: `0 4px 16px ${alpha(theme.palette.primary.main, 0.1)}`,
         }}
       >
-        <Typography variant="h6" sx={{ mb: 3, color: '#4A90E2', fontWeight: 600 }}>
+        <Typography variant="h6" sx={{ mb: 3, color: theme.palette.primary.main, fontWeight: 600 }}>
           قوانین اعتبارسنجی
         </Typography>
         
@@ -413,13 +411,12 @@ export const FieldRulesStep = memo<FieldRulesStepProps>(({
           p: 3,
           mb: 3,
           borderRadius: '12px',
-          background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(248, 250, 252, 0.8) 100%)',
-          backdropFilter: 'blur(10px)',
-          border: '1px solid rgba(135, 206, 250, 0.2)',
-          boxShadow: '0 4px 16px rgba(135, 206, 250, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.8)',
+          backgroundColor: 'rgba(255, 255, 255, 0.95)',
+          border: `1px solid ${alpha(theme.palette.primary.main, 0.2)}`,
+          boxShadow: `0 4px 16px ${alpha(theme.palette.primary.main, 0.1)}`,
         }}
       >
-        <Typography variant="h6" sx={{ mb: 3, color: '#4A90E2', fontWeight: 600 }}>
+        <Typography variant="h6" sx={{ mb: 3, color: theme.palette.primary.main, fontWeight: 600 }}>
           قوانین وابستگی
         </Typography>
         
@@ -873,13 +870,12 @@ export const FieldRulesStep = memo<FieldRulesStepProps>(({
           p: 3,
           mb: 3,
           borderRadius: '12px',
-          background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(248, 250, 252, 0.8) 100%)',
-          backdropFilter: 'blur(10px)',
-          border: '1px solid rgba(135, 206, 250, 0.2)',
-          boxShadow: '0 4px 16px rgba(135, 206, 250, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.8)',
+          backgroundColor: 'rgba(255, 255, 255, 0.95)',
+          border: `1px solid ${alpha(theme.palette.primary.main, 0.2)}`,
+          boxShadow: `0 4px 16px ${alpha(theme.palette.primary.main, 0.1)}`,
         }}
       >
-        <Typography variant="h6" sx={{ mb: 3, color: '#4A90E2', fontWeight: 600 }}>
+        <Typography variant="h6" sx={{ mb: 3, color: theme.palette.primary.main, fontWeight: 600 }}>
           قوانین کنترلی
         </Typography>
         

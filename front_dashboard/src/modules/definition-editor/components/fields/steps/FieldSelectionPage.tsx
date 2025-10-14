@@ -1,5 +1,5 @@
 import React from 'react';
-import { Box, Typography, Paper, Grid, useTheme, useMediaQuery } from '@mui/material';
+import { Box, Typography, Paper, Grid, useTheme, useMediaQuery, alpha } from '@mui/material';
 import { FieldSelectionPageProps } from '../types/FieldEditTypes';
 
 const FieldSelectionPage: React.FC<FieldSelectionPageProps> = ({
@@ -14,7 +14,7 @@ const FieldSelectionPage: React.FC<FieldSelectionPageProps> = ({
     <Box 
       sx={{ 
         p: isMobile ? 2 : 4,
-        background: 'linear-gradient(135deg, rgba(240, 248, 255, 0.9) 0%, rgba(230, 245, 255, 0.8) 100%)',
+        backgroundColor: 'rgba(255,255,255,0.9)',
         backdropFilter: 'blur(20px)',
         borderRadius: '16px',
         position: 'relative',
@@ -25,7 +25,7 @@ const FieldSelectionPage: React.FC<FieldSelectionPageProps> = ({
           left: 0,
           right: 0,
           bottom: 0,
-          background: 'linear-gradient(45deg, rgba(135, 206, 250, 0.1) 0%, rgba(173, 216, 230, 0.15) 50%, rgba(176, 224, 230, 0.1) 100%)',
+          background: 'none',
           borderRadius: '16px',
           zIndex: -1,
         }
@@ -37,11 +37,8 @@ const FieldSelectionPage: React.FC<FieldSelectionPageProps> = ({
           gutterBottom 
           sx={{ 
             fontWeight: 700,
-            background: 'linear-gradient(45deg, #4A90E2 30%, #7BB3F0 90%)',
-            backgroundClip: 'text',
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent',
-            textShadow: '0 2px 4px rgba(135, 206, 250, 0.3)',
+            color: (theme) => theme.palette.primary.main,
+            textShadow: (theme) => `0 2px 4px ${alpha(theme.palette.primary.main, 0.3)}`,
             fontSize: isMobile ? '1.4rem' : undefined
           }}
         >
@@ -67,10 +64,10 @@ const FieldSelectionPage: React.FC<FieldSelectionPageProps> = ({
               textAlign: 'center',
               cursor: 'pointer',
               borderRadius: '20px',
-              background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(240, 248, 255, 0.8) 100%)',
+              backgroundColor: 'rgba(255, 255, 255, 0.9)',
               backdropFilter: 'blur(10px)',
-              border: '2px solid rgba(135, 206, 250, 0.3)',
-              boxShadow: '0 8px 32px rgba(135, 206, 250, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.8)',
+              border: (theme) => `2px solid ${alpha(theme.palette.primary.light, 0.3)}`,
+              boxShadow: (theme) => `0 8px 32px ${alpha(theme.palette.primary.light, 0.2)}, inset 0 1px 0 rgba(255, 255, 255, 0.8)`,
               position: 'relative',
               overflow: 'hidden',
               transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
@@ -81,13 +78,13 @@ const FieldSelectionPage: React.FC<FieldSelectionPageProps> = ({
                 left: '-100%',
                 width: '100%',
                 height: '100%',
-                background: 'linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent)',
+                background: 'none',
                 transition: 'left 0.6s',
               },
               '&:hover': {
                 transform: isMobile ? 'translateY(-4px) scale(1.01)' : 'translateY(-8px) scale(1.02)',
-                boxShadow: '0 20px 40px rgba(135, 206, 250, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.9)',
-                border: '2px solid rgba(135, 206, 250, 0.6)',
+                boxShadow: (theme) => `0 20px 40px ${alpha(theme.palette.primary.light, 0.3)}`,
+                border: (theme) => `2px solid ${alpha(theme.palette.primary.light, 0.6)}`,
                 '&::before': {
                   left: '100%',
                 },
@@ -99,7 +96,7 @@ const FieldSelectionPage: React.FC<FieldSelectionPageProps> = ({
               sx={{ 
                 fontSize: isMobile ? '3rem' : '4rem', 
                 mb: isMobile ? 2 : 3,
-                filter: 'drop-shadow(0 4px 8px rgba(74, 144, 226, 0.3))',
+                filter: (theme) => `drop-shadow(0 4px 8px ${alpha(theme.palette.primary.main, 0.3)})`,
                 animation: 'float 3s ease-in-out infinite',
                 '@keyframes float': {
                   '0%, 100%': { transform: 'translateY(0px)' },
@@ -114,8 +111,8 @@ const FieldSelectionPage: React.FC<FieldSelectionPageProps> = ({
               gutterBottom
               sx={{ 
                 fontWeight: 700,
-                color: '#4A90E2',
-                textShadow: '0 2px 4px rgba(74, 144, 226, 0.2)',
+                color: (theme) => theme.palette.primary.main,
+                textShadow: (theme) => `0 2px 4px ${alpha(theme.palette.primary.main, 0.2)}`,
                 fontSize: isMobile ? '1.1rem' : undefined
               }}
             >
@@ -141,7 +138,7 @@ const FieldSelectionPage: React.FC<FieldSelectionPageProps> = ({
               textAlign: 'center',
               cursor: 'pointer',
               borderRadius: '20px',
-              background: 'linear-gradient(135deg, rgba(248, 250, 252, 0.6) 0%, rgba(241, 245, 249, 0.4) 100%)',
+              backgroundColor: 'rgba(248, 250, 252, 0.8)',
               backdropFilter: 'blur(10px)',
               border: '2px solid rgba(203, 213, 225, 0.5)',
               boxShadow: '0 8px 32px rgba(148, 163, 184, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.6)',
@@ -156,7 +153,7 @@ const FieldSelectionPage: React.FC<FieldSelectionPageProps> = ({
                 left: '-100%',
                 width: '100%',
                 height: '100%',
-                background: 'linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent)',
+                background: 'none',
                 transition: 'left 0.6s',
               },
               '&:hover': {

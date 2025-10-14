@@ -11,6 +11,7 @@ import {
   Paper,
   useTheme,
   useMediaQuery,
+  alpha,
 } from '@mui/material';
 import { Cancel as CancelIcon, Save as SaveIcon } from '@mui/icons-material';
 import { FieldEditDialogProps } from '../types/FieldEditTypes';
@@ -33,6 +34,49 @@ const FieldEditDialog: React.FC<FieldEditDialogProps> = ({
 }) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  
+  // Soft flat background based on primary palette (no glass/gradient)
+  const getSoftSurface = () => {
+    const primary = (theme.palette.primary.main || '#4a90e2').toLowerCase();
+    const hex = primary.replace('#', '');
+    // 1) Exact/brand buckets
+    if (hex.includes('10b981') || hex.includes('4caf50') || hex.includes('2e7d32')) return '#f0f4f3'; // green
+    if (hex.includes('4a90e2') || hex.includes('1976d2') || hex.includes('2196f3')) return '#f0f4f8'; // blue
+    if (hex.includes('ef4444') || hex.includes('f44336') || hex.includes('d32f2f')) return '#fbf1f0'; // red
+    if (hex.includes('6b21a8') || hex.includes('9c27b0') || hex.includes('673ab7')) return '#22262d'; // purple (dark)
+    if (hex.includes('f59e0b') || hex.includes('ff9800') || hex.includes('fb8c00')) return '#fbf1f1'; // orange
+
+    // 2) Generic: create a white-tinted version of primary (solid, 100% opacity)
+    const clamp = (n: number) => Math.max(0, Math.min(255, Math.round(n)));
+    const hexToRgb = (h: string) => {
+      const n = h.length === 3 ? h.split('').map(c => c + c).join('') : h;
+      const r = parseInt(n.substring(0, 2), 16);
+      const g = parseInt(n.substring(2, 4), 16);
+      const b = parseInt(n.substring(4, 6), 16);
+      return { r, g, b };
+    };
+    const rgbToHex = (r: number, g: number, b: number) =>
+      `#${clamp(r).toString(16).padStart(2, '0')}${clamp(g).toString(16).padStart(2, '0')}${clamp(b).toString(16).padStart(2, '0')}`;
+    const blendWithWhite = (h: string, primaryWeight = 0.10) => {
+      const { r, g, b } = hexToRgb(h);
+      const wr = 255, wg = 255, wb = 255; // white
+      const w = 1 - primaryWeight;
+      const br = wr * w + r * primaryWeight;
+      const bg = wg * w + g * primaryWeight;
+      const bb = wb * w + b * primaryWeight;
+      return rgbToHex(br, bg, bb);
+    };
+    if (/^[0-9a-f]{3,6}$/.test(hex)) {
+      return blendWithWhite(hex, 0.10); // 10% رنگ اصلی + 90% سفید (تخت، 100% opacity)
+    }
+    // Fallback neutral tinted from theme primary.light if available
+    try {
+      const fallback = (theme.palette.primary.light || '#90caf9').toLowerCase().replace('#', '');
+      return blendWithWhite(fallback, 0.08);
+    } catch {
+      return '#f5f7fa';
+    }
+  };
   
   const [formData, setFormData] = useState<ExtendedCustomFieldDefinition | null>(null);
   const [currentPage, setCurrentPage] = useState<'selection' | 'create' | 'ready'>('selection');
@@ -164,20 +208,13 @@ const FieldEditDialog: React.FC<FieldEditDialogProps> = ({
     return (
       <Box
         sx={{
-          background: 'linear-gradient(135deg, rgba(240, 248, 255, 0.95) 0%, rgba(230, 245, 255, 0.9) 100%)',
-          backdropFilter: 'blur(20px)',
+          backgroundColor: getSoftSurface(),
+          backdropFilter: 'none',
           borderRadius: '16px',
           overflow: 'hidden',
           position: 'relative',
           '&::before': {
-            content: '""',
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            background: 'linear-gradient(45deg, rgba(135, 206, 250, 0.05) 0%, rgba(173, 216, 230, 0.1) 50%, rgba(176, 224, 230, 0.05) 100%)',
-            zIndex: -1,
+            content: 'none',
           }
         }}
         onKeyDown={handleKeyDown}
@@ -222,9 +259,9 @@ const FieldEditDialog: React.FC<FieldEditDialogProps> = ({
             justifyContent: 'space-between',
             alignItems: 'center',
             p: isMobile ? 2 : 3,
-            background: 'linear-gradient(90deg, rgba(255, 255, 255, 0.8) 0%, rgba(240, 248, 255, 0.6) 100%)',
+            backgroundColor: 'rgba(255, 255, 255, 0.8)',
             backdropFilter: 'blur(10px)',
-            borderTop: '1px solid rgba(135, 206, 250, 0.2)',
+            borderTop: (theme) => `1px solid ${alpha(theme.palette.primary.light, 0.2)}`,
           }}
         >
           <Button
@@ -233,14 +270,14 @@ const FieldEditDialog: React.FC<FieldEditDialogProps> = ({
               borderRadius: '12px',
               px: isMobile ? 2 : 3,
               py: isMobile ? 1 : 1.5,
-              background: 'linear-gradient(135deg, rgba(148, 163, 184, 0.1) 0%, rgba(203, 213, 225, 0.05) 100%)',
+              backgroundColor: 'rgba(148, 163, 184, 0.1)',
               backdropFilter: 'blur(10px)',
               border: '1px solid rgba(148, 163, 184, 0.2)',
               color: '#64748B',
               fontWeight: 600,
               fontSize: isMobile ? '0.8rem' : 'inherit',
               '&:hover': {
-                background: 'linear-gradient(135deg, rgba(148, 163, 184, 0.15) 0%, rgba(203, 213, 225, 0.1) 100%)',
+                backgroundColor: 'rgba(148, 163, 184, 0.15)',
                 transform: 'translateY(-2px)',
                 boxShadow: '0 4px 12px rgba(148, 163, 184, 0.2)',
               },
@@ -259,19 +296,19 @@ const FieldEditDialog: React.FC<FieldEditDialogProps> = ({
                   borderRadius: '12px',
                   px: isMobile ? 2 : 4,
                   py: isMobile ? 1 : 1.5,
-                  background: 'linear-gradient(135deg, #4A90E2, #7BB3F0)',
+                  backgroundColor: (theme) => theme.palette.primary.main,
                   color: 'white',
                   fontWeight: 600,
                   border: '2px solid rgba(255, 255, 255, 0.3)',
-                  boxShadow: '0 4px 16px rgba(74, 144, 226, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.3)',
+                  boxShadow: (theme) => `0 4px 16px ${alpha(theme.palette.primary.main, 0.3)}`,
                   fontSize: isMobile ? '0.8rem' : 'inherit',
                   '&:hover': {
-                    background: 'linear-gradient(135deg, #3A7BC8, #6BA3E0)',
+                    backgroundColor: (theme) => theme.palette.primary.dark,
                     transform: 'translateY(-2px)',
-                    boxShadow: '0 8px 24px rgba(74, 144, 226, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.4)',
+                    boxShadow: (theme) => `0 8px 24px ${alpha(theme.palette.primary.main, 0.4)}`,
                   },
                   '&:disabled': {
-                    background: 'linear-gradient(135deg, rgba(148, 163, 184, 0.5), rgba(203, 213, 225, 0.3))',
+                    backgroundColor: 'rgba(148, 163, 184, 0.5)',
                     color: 'rgba(255, 255, 255, 0.7)',
                     transform: 'none',
                     boxShadow: 'none',
@@ -289,16 +326,16 @@ const FieldEditDialog: React.FC<FieldEditDialogProps> = ({
                   borderRadius: '12px',
                   px: isMobile ? 2 : 4,
                   py: isMobile ? 1 : 1.5,
-                  background: 'linear-gradient(135deg, #4A90E2, #7BB3F0)',
+                  backgroundColor: (theme) => theme.palette.primary.main,
                   color: 'white',
                   fontWeight: 600,
                   border: '2px solid rgba(255, 255, 255, 0.3)',
-                  boxShadow: '0 4px 16px rgba(74, 144, 226, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.3)',
+                  boxShadow: (theme) => `0 4px 16px ${alpha(theme.palette.primary.main, 0.3)}`,
                   fontSize: isMobile ? '0.8rem' : 'inherit',
                   '&:hover': {
-                    background: 'linear-gradient(135deg, #3A7BC8, #6BA3E0)',
+                    backgroundColor: (theme) => theme.palette.primary.dark,
                     transform: 'translateY(-2px)',
-                    boxShadow: '0 8px 24px rgba(74, 144, 226, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.4)',
+                    boxShadow: (theme) => `0 8px 24px ${alpha(theme.palette.primary.main, 0.4)}`,
                   },
                 }}
                 aria-label="مرحله بعد"
@@ -318,7 +355,7 @@ const FieldEditDialog: React.FC<FieldEditDialogProps> = ({
         sx={{
           p: isMobile ? 2 : 4,
           borderRadius: '16px',
-          background: 'linear-gradient(135deg, rgba(248, 250, 252, 0.9) 0%, rgba(241, 245, 249, 0.8) 100%)',
+          backgroundColor: 'rgba(248, 250, 252, 0.9)',
           backdropFilter: 'blur(10px)',
           border: '1px solid rgba(203, 213, 225, 0.3)',
           textAlign: 'center',
@@ -383,25 +420,18 @@ const FieldEditDialog: React.FC<FieldEditDialogProps> = ({
       sx={{
         '& .MuiDialog-paper': {
           borderRadius: isMobile ? 0 : '20px',
-          background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(240, 248, 255, 0.9) 100%)',
+          backgroundColor: (theme) => alpha(theme.palette.primary.light, 0.10),
           backdropFilter: 'blur(20px)',
-          border: '1px solid rgba(135, 206, 250, 0.2)',
-          boxShadow: '0 20px 60px rgba(135, 206, 250, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.8)',
+          border: (theme) => `1px solid ${alpha(theme.palette.primary.light, 0.2)}`,
+          boxShadow: (theme) => `0 20px 60px ${alpha(theme.palette.primary.light, 0.3)}, inset 0 1px 0 rgba(255, 255, 255, 0.8)`,
           overflow: 'hidden',
           position: 'relative',
           '&::before': {
-            content: '""',
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            background: 'linear-gradient(45deg, rgba(135, 206, 250, 0.03) 0%, rgba(173, 216, 230, 0.05) 50%, rgba(176, 224, 230, 0.03) 100%)',
-            zIndex: -1,
+            content: 'none',
           }
         },
         '& .MuiBackdrop-root': {
-          backgroundColor: 'rgba(135, 206, 250, 0.1)',
+          backgroundColor: (theme) => `${alpha(theme.palette.primary.light, 0.08)}`,
           backdropFilter: 'blur(4px)',
         },
       }}
@@ -412,9 +442,9 @@ const FieldEditDialog: React.FC<FieldEditDialogProps> = ({
     >
       <DialogTitle
         sx={{
-          background: 'linear-gradient(90deg, rgba(255, 255, 255, 0.9) 0%, rgba(240, 248, 255, 0.7) 100%)',
-          backdropFilter: 'blur(10px)',
-          borderBottom: '1px solid rgba(135, 206, 250, 0.2)',
+          backgroundColor: getSoftSurface(),
+          backdropFilter: 'none',
+          borderBottom: (theme) => `1px solid ${alpha(theme.palette.primary.light, 0.2)}`,
           textAlign: 'center',
           py: isMobile ? 2 : 3,
           px: isMobile ? 2 : 3,
@@ -426,10 +456,7 @@ const FieldEditDialog: React.FC<FieldEditDialogProps> = ({
             variant={isMobile ? "h5" : "h4"}
             sx={{
               fontWeight: 700,
-              background: 'linear-gradient(45deg, #4A90E2 30%, #7BB3F0 90%)',
-              backgroundClip: 'text',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
+              color: (theme) => theme.palette.primary.main,
             }}
           >
             {currentPage === 'selection' && (isEditing ? 'ویرایش فیلد' : 'افزودن فیلد جدید')}
@@ -438,7 +465,7 @@ const FieldEditDialog: React.FC<FieldEditDialogProps> = ({
           </Typography>
         </Box>
       </DialogTitle>
-      <DialogContent sx={{ p: 0 }} id="field-edit-dialog-description">
+      <DialogContent sx={{ p: 0, backgroundColor: getSoftSurface() }} id="field-edit-dialog-description">
         {currentPage === 'selection' && (
           <FieldSelectionPage 
             onCreateField={handleCreateField}
@@ -451,9 +478,9 @@ const FieldEditDialog: React.FC<FieldEditDialogProps> = ({
       {currentPage === 'selection' && (
         <DialogActions
           sx={{
-            background: 'linear-gradient(90deg, rgba(255, 255, 255, 0.8) 0%, rgba(240, 248, 255, 0.6) 100%)',
-            backdropFilter: 'blur(10px)',
-            borderTop: '1px solid rgba(135, 206, 250, 0.2)',
+            backgroundColor: getSoftSurface(),
+            backdropFilter: 'none',
+            borderTop: (theme) => `1px solid ${alpha(theme.palette.primary.light, 0.2)}`,
             p: isMobile ? 2 : 3,
           }}
         >
@@ -464,14 +491,14 @@ const FieldEditDialog: React.FC<FieldEditDialogProps> = ({
               borderRadius: '12px',
               px: isMobile ? 2 : 3,
               py: isMobile ? 1 : 1.5,
-              background: 'linear-gradient(135deg, rgba(148, 163, 184, 0.1) 0%, rgba(203, 213, 225, 0.05) 100%)',
+              backgroundColor: 'rgba(148, 163, 184, 0.1)',
               backdropFilter: 'blur(10px)',
               border: '1px solid rgba(148, 163, 184, 0.2)',
               color: '#64748B',
               fontWeight: 600,
               fontSize: isMobile ? '0.8rem' : 'inherit',
               '&:hover': {
-                background: 'linear-gradient(135deg, rgba(148, 163, 184, 0.15) 0%, rgba(203, 213, 225, 0.1) 100%)',
+                backgroundColor: 'rgba(148, 163, 184, 0.15)',
                 transform: 'translateY(-2px)',
                 boxShadow: '0 4px 12px rgba(148, 163, 184, 0.2)',
               },

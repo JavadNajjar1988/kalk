@@ -152,7 +152,6 @@ const OptionsEditor: React.FC<OptionsEditorProps> = ({
           mb: 3,
           borderRadius: '12px',
           background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(248, 250, 252, 0.8) 100%)',
-          backdropFilter: 'blur(10px)',
           border: '1px solid rgba(135, 206, 250, 0.2)',
           boxShadow: '0 4px 16px rgba(135, 206, 250, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.8)',
         }}
@@ -168,18 +167,17 @@ const OptionsEditor: React.FC<OptionsEditorProps> = ({
   }
 
   return (
-    <Paper
+      <Paper
       sx={{
         p: 3,
         mb: 3,
         borderRadius: '12px',
-        background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(248, 250, 252, 0.8) 100%)',
-        backdropFilter: 'blur(10px)',
-        border: '1px solid rgba(135, 206, 250, 0.2)',
-        boxShadow: '0 4px 16px rgba(135, 206, 250, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.8)',
+          backgroundColor: 'rgba(255, 255, 255, 0.95)',
+          border: (theme) => `1px solid ${theme.palette.primary.main}33`,
+          boxShadow: (theme) => `0 4px 16px ${theme.palette.primary.main}1A`,
       }}
     >
-      <Typography variant="h6" sx={{ mb: 3, color: '#4A90E2', fontWeight: 600 }}>
+      <Typography variant="h6" sx={{ mb: 3, color: 'primary.main', fontWeight: 600 }}>
         مدیریت گزینه‌ها
       </Typography>
 
@@ -196,7 +194,6 @@ const OptionsEditor: React.FC<OptionsEditorProps> = ({
             sx={{
               '& .MuiOutlinedInput-root': {
                 background: 'rgba(255, 255, 255, 0.8)',
-                backdropFilter: 'blur(10px)',
               },
             }}
           />
@@ -210,13 +207,13 @@ const OptionsEditor: React.FC<OptionsEditorProps> = ({
             disabled={!newOption.trim()}
             sx={{
               height: '100%',
-              background: 'linear-gradient(135deg, #4A90E2, #7BB3F0)',
+              background: (theme) => `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.primary.light})`,
               color: 'white',
               fontWeight: 600,
-              boxShadow: '0 4px 16px rgba(74, 144, 226, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.3)',
+              boxShadow: (theme) => `0 4px 16px ${alpha(theme.palette.primary.main, 0.3)}`,
               '&:hover': {
-                background: 'linear-gradient(135deg, #3A7BC8, #6BA3E0)',
-                boxShadow: '0 8px 24px rgba(74, 144, 226, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.4)',
+                background: (theme) => `linear-gradient(135deg, ${theme.palette.primary.dark}, ${theme.palette.primary.main})`,
+                boxShadow: (theme) => `0 8px 24px ${alpha(theme.palette.primary.main, 0.4)}`,
               },
               '&:disabled': {
                 background: 'linear-gradient(135deg, rgba(148, 163, 184, 0.5), rgba(203, 213, 225, 0.3))',
@@ -256,7 +253,6 @@ const OptionsEditor: React.FC<OptionsEditorProps> = ({
             mb: 1,
             '& .MuiOutlinedInput-root': {
               background: 'rgba(255, 255, 255, 0.8)',
-              backdropFilter: 'blur(10px)',
             },
           }}
         />
@@ -265,14 +261,13 @@ const OptionsEditor: React.FC<OptionsEditorProps> = ({
           onClick={handleBulkImport}
           disabled={!bulkOptionsText.trim()}
           sx={{
-            background: 'rgba(255, 255, 255, 0.8)',
-            backdropFilter: 'blur(10px)',
-            border: '1px solid rgba(74, 144, 226, 0.3)',
-            color: '#4A90E2',
+            backgroundColor: 'rgba(255, 255, 255, 0.9)',
+            border: (theme) => `1px solid ${theme.palette.primary.main}4D`,
+            color: 'primary.main',
             fontWeight: 600,
             '&:hover': {
-              background: 'rgba(74, 144, 226, 0.05)',
-              border: '1px solid rgba(74, 144, 226, 0.5)',
+              backgroundColor: (theme) => theme.palette.primary.main + '0D',
+              border: (theme) => `1px solid ${theme.palette.primary.main}80`,
             },
             '&:disabled': {
               background: 'rgba(203, 213, 225, 0.3)',

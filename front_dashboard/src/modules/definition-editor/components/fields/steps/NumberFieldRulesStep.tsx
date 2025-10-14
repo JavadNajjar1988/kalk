@@ -10,16 +10,18 @@ import { ExtendedCustomFieldDefinition } from '../types/FieldEditTypes';
 import { NumberValidationRules } from '../rules/NumberValidationRules';
 import { NumberDependencyRules } from '../rules/NumberDependencyRules';
 import { NumberControlRules } from '../rules/NumberControlRules';
+import { useTheme } from '@mui/material/styles';
 
 interface NumberFieldRulesStepProps {
   formData: ExtendedCustomFieldDefinition;
   onChange: (key: keyof ExtendedCustomFieldDefinition, value: any) => void;
 }
 
-export const NumberFieldRulesStep = memo<NumberFieldRulesStepProps>(({
+export const NumberFieldRulesStep = memo<NumberFieldRulesStepProps>(({ 
   formData,
   onChange,
 }) => {
+  const theme = useTheme();
   return (
     <Box>
       {/* Header */}
@@ -29,10 +31,7 @@ export const NumberFieldRulesStep = memo<NumberFieldRulesStepProps>(({
           gutterBottom
           sx={{
             fontWeight: 700,
-            background: 'linear-gradient(45deg, #4A90E2 30%, #7BB3F0 90%)',
-            backgroundClip: 'text',
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent',
+            color: theme.palette.primary.main,
           }}
         >
           قوانین فیلد عددی
