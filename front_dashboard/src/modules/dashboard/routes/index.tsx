@@ -30,7 +30,7 @@ import RealTimeSyncComprehensiveTest from '@/components/test/RealTimeSyncCompreh
 import ReferenceCategorySelectorComprehensiveTest from '@/components/test/ReferenceCategorySelectorComprehensiveTest';
 import FinalIntegrationTest from '@/components/test/FinalIntegrationTest';
 import TestsPage from '@/components/test/TestsPage';
-import SmartFieldPreviewSyncTest from '@/test/SmartFieldPreviewSyncTest';
+// import SmartFieldPreviewSyncTest from '@/test/SmartFieldPreviewSyncTest';
 
  
 import DefinitionEditorRoutes from '../../definition-editor/routes';
@@ -76,7 +76,7 @@ const DashboardRoutes: React.FC = () => {
         <Route path="test/hierarchical-selector" element={<HierarchicalSelectorTest />} />
         <Route path="test/real-time-sync" element={<RealTimeSyncTest />} />
         <Route path="test/all-categories-hierarchy" element={<AllCategoriesHierarchyVerification />} />
-        <Route path="test/smart-field-preview-sync" element={<SmartFieldPreviewSyncTest />} />
+        {/* <Route path="test/smart-field-preview-sync" element={<SmartFieldPreviewSyncTest />} /> */}
         
         <Route path="*" element={<Navigate to="/dashboard" replace />} />
       </Route>

@@ -25,7 +25,7 @@ export const NumberBasicProperties = memo<NumberBasicPropertiesProps>(({
       {/* ویژگی‌های عمومی */}
       <Box sx={{ mb: 3 }}>
         <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-          <h4 style={{ margin: 0, color: '#4A90E2', fontWeight: 600 }}>
+          <h4 style={{ margin: 0, color: 'var(--mui-palette-primary-main)', fontWeight: 600 }}>
             ویژگی‌های عمومی
           </h4>
         </Box>
@@ -76,7 +76,7 @@ export const NumberBasicProperties = memo<NumberBasicPropertiesProps>(({
       {/* ویژگی‌های اختیاری */}
       <Box sx={{ mb: 3 }}>
         <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-          <h4 style={{ margin: 0, color: '#4A90E2', fontWeight: 600 }}>
+          <h4 style={{ margin: 0, color: 'var(--mui-palette-primary-main)', fontWeight: 600 }}>
             ویژگی‌های اختیاری
           </h4>
         </Box>

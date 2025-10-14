@@ -18,13 +18,12 @@ const SelectFieldProperties: React.FC<FieldPropertiesStepProps> = ({ formData, o
           p: 3,
           mb: 3,
           borderRadius: '12px',
-          background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(248, 250, 252, 0.8) 100%)',
-          backdropFilter: 'blur(10px)',
-          border: '1px solid rgba(135, 206, 250, 0.2)',
-          boxShadow: '0 4px 16px rgba(135, 206, 250, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.8)',
+          backgroundColor: 'rgba(255, 255, 255, 0.95)',
+          border: (theme) => `1px solid ${theme.palette.primary.main}33`,
+          boxShadow: (theme) => `0 4px 16px ${theme.palette.primary.main}1A`,
         }}
       >
-        <Typography variant="h6" sx={{ mb: 3, color: '#4A90E2', fontWeight: 600 }}>
+        <Typography variant="h6" sx={{ mb: 3, color: 'primary.main', fontWeight: 600 }}>
           مدیریت گزینه‌ها
         </Typography>
         
@@ -41,13 +40,12 @@ const SelectFieldProperties: React.FC<FieldPropertiesStepProps> = ({ formData, o
           p: 3,
           mb: 3,
           borderRadius: '12px',
-          background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(248, 250, 252, 0.8) 100%)',
-          backdropFilter: 'blur(10px)',
-          border: '1px solid rgba(135, 206, 250, 0.2)',
-          boxShadow: '0 4px 16px rgba(135, 206, 250, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.8)',
+          backgroundColor: 'rgba(255, 255, 255, 0.95)',
+          border: (theme) => `1px solid ${theme.palette.primary.main}33`,
+          boxShadow: (theme) => `0 4px 16px ${theme.palette.primary.main}1A`,
         }}
       >
-        <Typography variant="h6" sx={{ mb: 3, color: '#4A90E2', fontWeight: 600 }}>
+        <Typography variant="h6" sx={{ mb: 3, color: 'primary.main', fontWeight: 600 }}>
           ویژگی‌های خاص فیلد انتخابی
         </Typography>
         
@@ -64,7 +62,6 @@ const SelectFieldProperties: React.FC<FieldPropertiesStepProps> = ({ formData, o
                 sx={{
                   '& .MuiOutlinedInput-root': {
                     background: 'rgba(255, 255, 255, 0.8)',
-                    backdropFilter: 'blur(10px)',
                   },
                 }}
               />
@@ -87,7 +84,6 @@ const SelectFieldProperties: React.FC<FieldPropertiesStepProps> = ({ formData, o
                   label="مقدار پیش‌فرض"
                   sx={{
                     background: 'rgba(255, 255, 255, 0.8)',
-                    backdropFilter: 'blur(10px)',
                   }}
                 >
                   <MenuItem value="">هیچ</MenuItem>
@@ -121,7 +117,6 @@ const SelectFieldProperties: React.FC<FieldPropertiesStepProps> = ({ formData, o
                   label="قابلیت جستجو"
                   sx={{
                     background: 'rgba(255, 255, 255, 0.8)',
-                    backdropFilter: 'blur(10px)',
                   }}
                 >
                   <MenuItem value="none">غیرفعال</MenuItem>

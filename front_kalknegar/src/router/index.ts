@@ -10,6 +10,7 @@ import {
   NEW_SCENARIO_ROUTE,
   ORBAT_CHART_ROUTE,
   STORY_MODE_ROUTE,
+  TACTICAL_SYMBOL_DEFINITION_ROUTE,
 } from "@/router/names";
 
 declare module "vue-router" {
@@ -34,6 +35,9 @@ const ScenarioEditorMap = () => import("@/modules/scenarioeditor/ScenarioEditorM
   console.error('Failed to load ScenarioEditorMap:', err);
   return import("@/views/ErrorFallback.vue"); // Fallback component
 });
+const SymbolDesignerPage = () => import("@/features/symbol-designer/pages/SymbolDesignerPage.vue");
+const TacticalSymbolDefinitionPage = () => import("@/modules/tactical-symbols/TacticalSymbolDefinitionPage.vue");
+
 const routes = [
   {
     path: "/scenario/:scenarioId",
@@ -102,6 +106,22 @@ const routes = [
   {
     path: "/testgrid2",
     component: TanstackGridTestView,
+  },
+  {
+    path: "/symbol-designer",
+    name: "symbol-designer",
+    component: SymbolDesignerPage,
+    beforeEnter: (to, from) => {
+      NProgress.start();
+    },
+  },
+  {
+    path: "/tactical-symbols",
+    name: TACTICAL_SYMBOL_DEFINITION_ROUTE,
+    component: TacticalSymbolDefinitionPage,
+    beforeEnter: (to, from) => {
+      NProgress.start();
+    },
   },
   { path: "/", name: LANDING_PAGE_ROUTE, component: LandingPage },
 ] as RouteRecordRaw[];

@@ -19,9 +19,7 @@ export { default as LoadingOverlay } from '../shared/LoadingOverlay';
 export { default as ValidationMessage } from '../shared/ValidationMessage';
 export { default as FieldSearchFilter } from '../shared/FieldSearchFilter';
 
-// Template components
-export { default as FieldTemplateSelector } from '../templates/FieldTemplateSelector';
-export * from '../templates/fieldTemplates';
+// Template components (removed in cleanup)
 
 // Types
 export * from '../types/FieldEditTypes';

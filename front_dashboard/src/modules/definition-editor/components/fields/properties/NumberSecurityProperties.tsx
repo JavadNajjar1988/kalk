@@ -55,7 +55,7 @@ export const NumberSecurityProperties = memo<NumberSecurityPropertiesProps>(({
   return (
     <Box>
       <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-        <h4 style={{ margin: 0, color: '#4A90E2', fontWeight: 600 }}>
+        <h4 style={{ margin: 0, color: 'var(--mui-palette-primary-main)', fontWeight: 600 }}>
           ویژگی‌های امنیت و ذخیره‌سازی
         </h4>
       </Box>

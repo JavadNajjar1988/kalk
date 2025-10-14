@@ -28,7 +28,7 @@ import {
   Speed as PerformanceIcon
 } from '@mui/icons-material';
 
-import FieldManager from '@/modules/definition-editor/components/fields/FieldManager';
+import NodeFieldManager from '@/modules/definition-editor/components/fields/NodeFieldManager';
 import ReferenceCategorySelector from '@/modules/definition-editor/components/fields/ReferenceCategorySelector';
 import ReferenceFieldRenderer from '@/components/common/ReferenceFieldRenderer';
 import { useReferenceData } from '@/hooks/useReferenceData';
@@ -54,8 +54,8 @@ const FinalIntegrationTest: React.FC = () => {
     },
     {
       title: 'مدیریت فیلدها',
-      description: 'تست FieldManager',
-      component: <FieldManager nodeId="test" fields={[]} />,
+      description: 'تست NodeFieldManager (جایگزین FieldManager)',
+      component: <NodeFieldManager nodeId="test" nodeName="Test Node" fields={[]} />,
       validation: async () => true
     },
     {

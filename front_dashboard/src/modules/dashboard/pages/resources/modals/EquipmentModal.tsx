@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   Dialog,
   DialogTitle,
@@ -10,9 +10,10 @@ import {
   MenuItem,
   Box,
   Typography,
-  Divider,
-  Chip,
   Paper,
+  useTheme,
+  useMediaQuery,
+  alpha,
 } from '@mui/material';
 import { useTranslation } from '@/hooks/useTranslation';
 import EquipmentHierarchicalSelector from '@/components/common/EquipmentHierarchicalSelector';
@@ -31,9 +32,78 @@ const EquipmentModal: React.FC<EquipmentModalProps> = ({
   onClose,
   onSave,
   equipment,
-  categories
+  categories,
 }) => {
   const { t } = useTranslation();
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const softSurface = useMemo(() => {
+    const primary = (theme.palette.primary.main || '#4a90e2').toLowerCase();
+    const hex = primary.replace('#', '');
+    if (hex.includes('10b981') || hex.includes('4caf50') || hex.includes('2e7d32')) return '#f0f4f3';
+    if (hex.includes('4a90e2') || hex.includes('1976d2') || hex.includes('2196f3')) return '#f0f4f8';
+    if (hex.includes('ef4444') || hex.includes('f44336') || hex.includes('d32f2f')) return '#fbf1f0';
+    if (hex.includes('6b21a8') || hex.includes('9c27b0') || hex.includes('673ab7')) return '#22262d';
+    if (hex.includes('f59e0b') || hex.includes('ff9800') || hex.includes('fb8c00')) return '#fbf1f1';
+
+    const clamp = (n: number) => Math.max(0, Math.min(255, Math.round(n)));
+    const hexToRgb = (h: string) => {
+      const normalized = h.length === 3 ? h.split('').map(c => c + c).join('') : h;
+      const r = parseInt(normalized.substring(0, 2), 16);
+      const g = parseInt(normalized.substring(2, 4), 16);
+      const b = parseInt(normalized.substring(4, 6), 16);
+      return { r, g, b };
+    };
+    const rgbToHex = (r: number, g: number, b: number) =>
+      `#${clamp(r).toString(16).padStart(2, '0')}${clamp(g).toString(16).padStart(2, '0')}${clamp(b).toString(16).padStart(2, '0')}`;
+    const blendWithWhite = (h: string, primaryWeight = 0.1) => {
+      const { r, g, b } = hexToRgb(h);
+      const wr = 255;
+      const wg = 255;
+      const wb = 255;
+      const w = 1 - primaryWeight;
+      const br = wr * w + r * primaryWeight;
+      const bg = wg * w + g * primaryWeight;
+      const bb = wb * w + b * primaryWeight;
+      return rgbToHex(br, bg, bb);
+    };
+
+    if (/^[0-9a-f]{3,6}$/.test(hex)) {
+      return blendWithWhite(hex, 0.1);
+    }
+
+    try {
+      const fallback = (theme.palette.primary.light || '#90caf9').toLowerCase().replace('#', '');
+      return blendWithWhite(fallback, 0.08);
+    } catch {
+      return '#f5f7fa';
+    }
+  }, [theme.palette.primary.main, theme.palette.primary.light]);
+
+  const inputRootSx = useMemo(() => ({
+    backgroundColor: 'rgba(255, 255, 255, 0.92)',
+    backdropFilter: 'blur(8px)',
+    transition: 'border-color 0.2s ease, box-shadow 0.2s ease',
+    '& fieldset': {
+      borderColor: alpha(theme.palette.primary.main, 0.2),
+    },
+    '&:hover fieldset': {
+      borderColor: alpha(theme.palette.primary.main, 0.35),
+    },
+    '&.Mui-focused fieldset': {
+      borderWidth: 2,
+      borderColor: alpha(theme.palette.primary.main, 0.6),
+      boxShadow: `0 0 0 3px ${alpha(theme.palette.primary.main, 0.1)}`,
+    },
+  }), [theme.palette.primary.main]);
+
+  const textFieldSx = useMemo(() => ({
+    '& .MuiOutlinedInput-root': {
+      ...inputRootSx,
+      borderRadius: 2,
+    },
+  }), [inputRootSx]);
+
   const [formData, setFormData] = useState<any>({});
   const [selectedEquipmentPath, setSelectedEquipmentPath] = useState<EquipmentPath[]>([]);
   const [equipmentHierarchyFields, setEquipmentHierarchyFields] = useState<EquipmentFieldDefinition[]>([]);
@@ -41,7 +111,6 @@ const EquipmentModal: React.FC<EquipmentModalProps> = ({
   useEffect(() => {
     if (equipment) {
       setFormData(equipment);
-      // اگر تجهیز قبلاً مسیر hierarchical داشته، آن را تنظیم کن
       if (equipment.equipmentPath) {
         setSelectedEquipmentPath(equipment.equipmentPath);
       }
@@ -58,29 +127,27 @@ const EquipmentModal: React.FC<EquipmentModalProps> = ({
   const handleChange = (fieldId: string, value: any) => {
     setFormData((prev: any) => ({
       ...prev,
-      [fieldId]: value
+      [fieldId]: value,
     }));
   };
 
   const handleSubmit = () => {
-    // ترکیب داده‌های فرم با اطلاعات hierarchical
     const finalData = {
       ...formData,
       equipmentPath: selectedEquipmentPath,
-      equipmentHierarchyFields: equipmentHierarchyFields,
+      equipmentHierarchyFields,
     };
-    
-    // اضافه کردن مقادیر فیلدهای hierarchical
+
     equipmentHierarchyFields.forEach(field => {
       if (formData[field.id] !== undefined) {
         finalData[field.id] = formData[field.id];
       }
     });
-    
+
     onSave(finalData);
   };
 
-  const handleEquipmentPathChange = (path: EquipmentPath[], finalNodeId?: string) => {
+  const handleEquipmentPathChange = (path: EquipmentPath[], _finalNodeId?: string) => {
     setSelectedEquipmentPath(path);
   };
 
@@ -88,25 +155,13 @@ const EquipmentModal: React.FC<EquipmentModalProps> = ({
     setEquipmentHierarchyFields(fields);
   };
 
-
-
   const renderEquipmentField = (field: EquipmentFieldDefinition) => {
     const commonProps = {
       fullWidth: true,
       variant: 'outlined' as const,
       size: 'small' as const,
       required: field.isRequired,
-      sx: {
-        '& .MuiOutlinedInput-root': {
-          borderRadius: 2,
-          '&:hover .MuiOutlinedInput-notchedOutline': {
-            borderColor: 'primary.main',
-          },
-          '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-            borderWidth: 2,
-          }
-        }
-      }
+      sx: textFieldSx,
     };
 
     switch (field.type) {
@@ -168,20 +223,6 @@ const EquipmentModal: React.FC<EquipmentModalProps> = ({
             InputLabelProps={{ shrink: true }}
           />
         );
-      case 'boolean':
-        return (
-          <TextField
-            {...commonProps}
-            key={field.id}
-            select
-            label={field.name}
-            value={formData[field.id] !== undefined ? String(formData[field.id]) : 'false'}
-            onChange={(e) => handleChange(field.id, e.target.value === 'true')}
-          >
-            <MenuItem value="true">بله</MenuItem>
-            <MenuItem value="false">خیر</MenuItem>
-          </TextField>
-        );
       default:
         return (
           <TextField
@@ -196,70 +237,146 @@ const EquipmentModal: React.FC<EquipmentModalProps> = ({
   };
 
   return (
-    <Dialog 
-      open={open} 
-      onClose={onClose} 
-      maxWidth="md" 
+    <Dialog
+      open={open}
+      onClose={onClose}
+      maxWidth="md"
       fullWidth
-      PaperProps={{
-        sx: {
-          borderRadius: 3,
-          minHeight: 400,
-        }
+      fullScreen={isMobile}
+      sx={{
+        '& .MuiDialog-paper': {
+          borderRadius: isMobile ? 0 : '20px',
+          backgroundColor: (theme) => alpha(theme.palette.primary.light, 0.1),
+          backdropFilter: 'blur(20px)',
+          border: (theme) => `1px solid ${alpha(theme.palette.primary.light, 0.2)}`,
+          boxShadow: (theme) => `0 20px 60px ${alpha(theme.palette.primary.light, 0.3)}, inset 0 1px 0 rgba(255, 255, 255, 0.8)`,
+          overflow: 'hidden',
+          position: 'relative',
+          minHeight: isMobile ? '100vh' : 'auto',
+          '&::before': {
+            content: 'none',
+          },
+        },
+        '& .MuiBackdrop-root': {
+          backgroundColor: (theme) => `${alpha(theme.palette.primary.light, 0.08)}`,
+          backdropFilter: 'blur(4px)',
+        },
       }}
     >
       <DialogTitle
         sx={{
-          pb: 1,
-          borderBottom: 1,
-          borderColor: 'divider',
-          bgcolor: 'primary.main',
-          color: 'primary.contrastText',
-          display: 'flex',
-          alignItems: 'center',
-          gap: 1
+          backgroundColor: softSurface,
+          borderBottom: (theme) => `1px solid ${alpha(theme.palette.primary.light, 0.2)}`,
+          textAlign: 'center',
+          py: isMobile ? 2 : 3,
+          px: isMobile ? 2 : 3,
         }}
       >
-        <Box
-          component="span"
+        <Typography
+          variant={isMobile ? 'h6' : 'h5'}
           sx={{
-            width: 8,
-            height: 8,
-            borderRadius: '50%',
-            bgcolor: 'primary.contrastText',
-            opacity: 0.7
+            fontWeight: 700,
+            color: theme.palette.primary.main,
           }}
-        />
-        {equipment ? t('resources.equipment.editTitle') : t('resources.equipment.addTitle')}
+        >
+          {equipment ? t('resources.equipment.editEquipment') : t('resources.equipment.addEquipment')}
+        </Typography>
       </DialogTitle>
-      <DialogContent sx={{ p: 0 }}>
-        <Box sx={{ p: 3 }}>
-          {/* Equipment Hierarchy Selector */}
-          <Paper 
+
+      <DialogContent
+        sx={{
+          backgroundColor: softSurface,
+          p: isMobile ? 2 : 3,
+        }}
+      >
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+          <Paper
             elevation={0}
-            sx={{ 
-              p: 3, 
-              mb: 3, 
-              bgcolor: 'grey.50',
-              border: 1,
-              borderColor: 'grey.200',
-              borderRadius: 2,
-              '&:hover': {
-                borderColor: 'primary.main',
-                bgcolor: 'primary.50'
-              },
-              transition: 'all 0.2s ease'
+            sx={{
+              p: isMobile ? 2 : 3,
+              borderRadius: '16px',
+              backgroundColor: 'rgba(255, 255, 255, 0.95)',
+              border: `1px solid ${alpha(theme.palette.primary.main, 0.15)}`,
+              boxShadow: `0 8px 24px ${alpha(theme.palette.primary.main, 0.08)}`,
             }}
           >
-            <Typography 
-              variant="subtitle2" 
-              sx={{ 
-                mb: 2, 
-                color: 'primary.main',
+            <Typography
+              variant="subtitle1"
+              sx={{ fontWeight: 600, mb: 2, color: theme.palette.primary.main }}
+            >
+              {t('resources.equipment.basicInfo')}
+            </Typography>
+            <Grid container spacing={2}>
+              <Grid item xs={12} md={6}>
+                <TextField
+                  fullWidth
+                  label={t('resources.equipment.name')}
+                  value={formData.name || ''}
+                  onChange={(e) => handleChange('name', e.target.value)}
+                  required
+                  sx={textFieldSx}
+                />
+              </Grid>
+              <Grid item xs={12} md={6}>
+                <TextField
+                  fullWidth
+                  label={t('resources.equipment.code')}
+                  value={formData.code || ''}
+                  onChange={(e) => handleChange('code', e.target.value)}
+                  required
+                  sx={textFieldSx}
+                />
+              </Grid>
+              <Grid item xs={12} md={6}>
+                <TextField
+                  select
+                  fullWidth
+                  label={t('resources.equipment.category')}
+                  value={formData.category || ''}
+                  onChange={(e) => handleChange('category', e.target.value)}
+                  required
+                  sx={textFieldSx}
+                >
+                  {categories.map((category) => (
+                    <MenuItem key={category.id} value={category.id}>
+                      {category.name}
+                    </MenuItem>
+                  ))}
+                </TextField>
+              </Grid>
+              <Grid item xs={12} md={6}>
+                <TextField
+                  fullWidth
+                  label={t('resources.equipment.manufacturer')}
+                  value={formData.manufacturer || ''}
+                  onChange={(e) => handleChange('manufacturer', e.target.value)}
+                  sx={textFieldSx}
+                />
+              </Grid>
+            </Grid>
+          </Paper>
+
+          <Paper
+            elevation={0}
+            sx={{
+              p: isMobile ? 2 : 3,
+              borderRadius: '16px',
+              backgroundColor: 'rgba(255, 255, 255, 0.95)',
+              border: `1px solid ${alpha(theme.palette.primary.main, 0.15)}`,
+              boxShadow: `0 8px 24px ${alpha(theme.palette.primary.main, 0.08)}`,
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 2,
+            }}
+          >
+            <Typography
+              variant="subtitle2"
+              sx={{
+                color: theme.palette.primary.main,
                 fontWeight: 600,
                 display: 'flex',
                 alignItems: 'center',
-                gap: 1
+                gap: 1,
               }}
             >
               <Box
@@ -267,11 +384,11 @@ const EquipmentModal: React.FC<EquipmentModalProps> = ({
                 sx={{
                   width: 4,
                   height: 16,
-                  bgcolor: 'primary.main',
-                  borderRadius: 1
+                  bgcolor: theme.palette.primary.main,
+                  borderRadius: 1,
                 }}
               />
-              انتخاب نوع تجهیز
+              {t('resources.equipment.equipmentHierarchy')}
             </Typography>
             <EquipmentHierarchicalSelector
               value={selectedEquipmentPath}
@@ -280,33 +397,31 @@ const EquipmentModal: React.FC<EquipmentModalProps> = ({
             />
           </Paper>
 
-          {/* Dynamic Equipment Hierarchy Fields */}
           {equipmentHierarchyFields.length > 0 && (
-            <Paper 
+            <Paper
               elevation={0}
-              sx={{ 
-                border: 1,
-                borderColor: 'grey.200',
-                borderRadius: 2,
-                overflow: 'hidden'
+              sx={{
+                borderRadius: '16px',
+                backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                border: `1px solid ${alpha(theme.palette.primary.main, 0.1)}`,
+                boxShadow: `0 6px 18px ${alpha(theme.palette.primary.main, 0.06)}`,
               }}
             >
               <Box
                 sx={{
                   p: 2,
-                  bgcolor: 'primary.50',
-                  borderBottom: 1,
-                  borderColor: 'grey.200'
+                  bgcolor: alpha(theme.palette.primary.main, 0.08),
+                  borderBottom: `1px solid ${alpha(theme.palette.primary.main, 0.1)}`,
                 }}
               >
-                <Typography 
-                  variant="subtitle2" 
-                  sx={{ 
-                    color: 'primary.main',
+                <Typography
+                  variant="subtitle2"
+                  sx={{
+                    color: theme.palette.primary.main,
                     fontWeight: 600,
                     display: 'flex',
                     alignItems: 'center',
-                    gap: 1
+                    gap: 1,
                   }}
                 >
                   <Box
@@ -314,21 +429,21 @@ const EquipmentModal: React.FC<EquipmentModalProps> = ({
                     sx={{
                       width: 4,
                       height: 16,
-                      bgcolor: 'primary.main',
-                      borderRadius: 1
+                      bgcolor: theme.palette.primary.main,
+                      borderRadius: 1,
                     }}
                   />
-                  فیلدهای تخصصی
+                  {t('resources.equipment.dynamicAttributes')}
                 </Typography>
               </Box>
-              
-              <Box sx={{ p: 3 }}>
+
+              <Box sx={{ p: isMobile ? 2 : 3 }}>
                 <Grid container spacing={2}>
                   {equipmentHierarchyFields.map((field: EquipmentFieldDefinition) => (
-                    <Grid 
-                      item 
-                      xs={12} 
-                      sm={field.type === 'text' || field.type === 'number' ? 6 : 12} 
+                    <Grid
+                      item
+                      xs={12}
+                      sm={field.type === 'text' || field.type === 'number' ? 6 : 12}
                       key={field.id}
                     >
                       {renderEquipmentField(field)}
@@ -340,32 +455,58 @@ const EquipmentModal: React.FC<EquipmentModalProps> = ({
           )}
         </Box>
       </DialogContent>
-      <DialogActions 
-        sx={{ 
-          p: 3, 
-          pt: 0,
+
+      <DialogActions
+        sx={{
+          backgroundColor: softSurface,
+          borderTop: (theme) => `1px solid ${alpha(theme.palette.primary.light, 0.2)}`,
+          p: isMobile ? 2 : 3,
           gap: 1,
-          justifyContent: 'flex-end'
+          justifyContent: 'flex-end',
         }}
       >
-        <Button 
+        <Button
           onClick={onClose}
-          variant="outlined"
           sx={{
-            borderRadius: 2,
-            minWidth: 100
+            borderRadius: '12px',
+            minWidth: 100,
+            backgroundColor: 'rgba(148, 163, 184, 0.1)',
+            backdropFilter: 'blur(10px)',
+            border: '1px solid rgba(148, 163, 184, 0.2)',
+            color: '#64748B',
+            fontWeight: 600,
+            '&:hover': {
+              backgroundColor: 'rgba(148, 163, 184, 0.15)',
+              transform: 'translateY(-2px)',
+              boxShadow: '0 4px 12px rgba(148, 163, 184, 0.2)',
+            },
           }}
         >
           {t('common.cancel')}
         </Button>
-        <Button 
-          onClick={handleSubmit} 
+        <Button
+          onClick={handleSubmit}
           variant="contained"
           disabled={equipmentHierarchyFields.length === 0}
           sx={{
-            borderRadius: 2,
-            minWidth: 100,
-            boxShadow: 2
+            borderRadius: '12px',
+            minWidth: 120,
+            backgroundColor: theme.palette.primary.main,
+            color: 'white',
+            fontWeight: 600,
+            border: '2px solid rgba(255, 255, 255, 0.3)',
+            boxShadow: `0 4px 16px ${alpha(theme.palette.primary.main, 0.3)}`,
+            '&:hover': {
+              backgroundColor: theme.palette.primary.dark,
+              transform: 'translateY(-2px)',
+              boxShadow: `0 8px 24px ${alpha(theme.palette.primary.main, 0.4)}`,
+            },
+            '&:disabled': {
+              backgroundColor: alpha(theme.palette.primary.main, 0.2),
+              color: 'rgba(255,255,255,0.7)',
+              transform: 'none',
+              boxShadow: 'none',
+            },
           }}
         >
           {t('common.save')}

@@ -129,7 +129,7 @@ const ReferenceFieldProperties = memo<ReferenceFieldPropertiesProps>(({ formData
 
       <Accordion expanded={expanded === 'basic'} onChange={handleAcc('basic')} sx={{ mb: 2, borderRadius: '12px !important', '&:before': { display: 'none' } }}>
         <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-          <Typography variant="h6" sx={{ color: '#4A90E2', fontWeight: 600 }}>📝 ویژگی‌های عمومی</Typography>
+          <Typography variant="h6" sx={{ color: 'primary.main', fontWeight: 600 }}>📝 ویژگی‌های عمومی</Typography>
         </AccordionSummary>
         <AccordionDetails>
           <ReferenceBasicProperties formData={formData} onChange={onChange} />
@@ -138,7 +138,7 @@ const ReferenceFieldProperties = memo<ReferenceFieldPropertiesProps>(({ formData
 
       <Accordion expanded={expanded === 'optional'} onChange={handleAcc('optional')} sx={{ mb: 2, borderRadius: '12px !important', '&:before': { display: 'none' } }}>
         <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-          <Typography variant="h6" sx={{ color: '#4A90E2', fontWeight: 600 }}>💡 ویژگی‌های اختیاری</Typography>
+          <Typography variant="h6" sx={{ color: 'primary.main', fontWeight: 600 }}>💡 ویژگی‌های اختیاری</Typography>
         </AccordionSummary>
         <AccordionDetails>
           <ReferenceOptionalProperties formData={formData} onChange={onChange} />
@@ -147,7 +147,7 @@ const ReferenceFieldProperties = memo<ReferenceFieldPropertiesProps>(({ formData
 
       <Accordion expanded={expanded === 'content'} onChange={handleAcc('content')} sx={{ mb: 2, borderRadius: '12px !important', '&:before': { display: 'none' } }}>
         <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-          <Typography variant="h6" sx={{ color: '#4A90E2', fontWeight: 600 }}>📦 ویژگی‌های محتوایی</Typography>
+          <Typography variant="h6" sx={{ color: 'primary.main', fontWeight: 600 }}>📦 ویژگی‌های محتوایی</Typography>
         </AccordionSummary>
         <AccordionDetails>
           <ReferenceContentProperties formData={formData} onChange={onChange} updateRefConfig={updateRefConfig} updateRefDataSource={updateRefDataSource} refCfg={refCfg} />
@@ -157,7 +157,7 @@ const ReferenceFieldProperties = memo<ReferenceFieldPropertiesProps>(({ formData
       {/* ویژگی‌های کمکی */}
       <Accordion expanded={expanded === 'assistive'} onChange={handleAcc('assistive')} sx={{ mb: 2, borderRadius: '12px !important', '&:before': { display: 'none' } }}>
         <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-          <Typography variant="h6" sx={{ color: '#4A90E2', fontWeight: 600 }}>🎯 ویژگی‌های کمکی</Typography>
+          <Typography variant="h6" sx={{ color: 'primary.main', fontWeight: 600 }}>🎯 ویژگی‌های کمکی</Typography>
         </AccordionSummary>
         <AccordionDetails>
           <ReferenceAssistiveProperties formData={formData} onChange={onChange} updateRefConfig={updateRefConfig} refCfg={refCfg} />
@@ -167,7 +167,7 @@ const ReferenceFieldProperties = memo<ReferenceFieldPropertiesProps>(({ formData
       {/* ویژگی‌های رفتار و منطق */}
       <Accordion expanded={expanded === 'behavior'} onChange={handleAcc('behavior')} sx={{ mb: 2, borderRadius: '12px !important', '&:before': { display: 'none' } }}>
         <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-          <Typography variant="h6" sx={{ color: '#4A90E2', fontWeight: 600 }}>⚙️ ویژگی‌های رفتار و منطق</Typography>
+          <Typography variant="h6" sx={{ color: 'primary.main', fontWeight: 600 }}>⚙️ ویژگی‌های رفتار و منطق</Typography>
         </AccordionSummary>
         <AccordionDetails>
           <ReferenceBehaviorProperties formData={formData} onChange={onChange} />
@@ -177,7 +177,7 @@ const ReferenceFieldProperties = memo<ReferenceFieldPropertiesProps>(({ formData
       {/* امنیت و ذخیره‌سازی */}
       <Accordion expanded={expanded === 'security'} onChange={handleAcc('security')} sx={{ mb: 2, borderRadius: '12px !important', '&:before': { display: 'none' } }}>
         <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-          <Typography variant="h6" sx={{ color: '#4A90E2', fontWeight: 600 }}>🔐 ویژگی‌های امنیت و ذخیره‌سازی</Typography>
+          <Typography variant="h6" sx={{ color: 'primary.main', fontWeight: 600 }}>🔐 ویژگی‌های امنیت و ذخیره‌سازی</Typography>
         </AccordionSummary>
         <AccordionDetails>
           <ReferenceSecurityProperties formData={formData} onChange={onChange} updateRefConfig={updateRefConfig} refCfg={refCfg} />
@@ -187,7 +187,7 @@ const ReferenceFieldProperties = memo<ReferenceFieldPropertiesProps>(({ formData
       {/* ویژگی‌های نمایشی */}
       <Accordion expanded={expanded === 'display'} onChange={handleAcc('display')} sx={{ mb: 2, borderRadius: '12px !important', '&:before': { display: 'none' } }}>
         <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-          <Typography variant="h6" sx={{ color: '#4A90E2', fontWeight: 600 }}>🎨 ویژگی‌های نمایشی</Typography>
+          <Typography variant="h6" sx={{ color: 'primary.main', fontWeight: 600 }}>🎨 ویژگی‌های نمایشی</Typography>
         </AccordionSummary>
         <AccordionDetails>
           <ReferenceDisplayProperties formData={formData} onChange={onChange} updateRefConfig={updateRefConfig} refCfg={refCfg} />

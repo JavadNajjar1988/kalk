@@ -12,6 +12,7 @@ import {
   AccordionSummary,
   AccordionDetails,
 } from '@mui/material';
+import { useTheme, alpha } from '@mui/material/styles';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import { FieldPropertiesStepProps } from '../types/FieldEditTypes';
 import HelpTooltip from '../shared/HelpTooltip';
@@ -34,6 +35,7 @@ import ReferenceFieldProperties from '../properties/ReferenceFieldProperties';
 
 const FieldPropertiesStep: React.FC<FieldPropertiesStepProps> = ({ formData, onChange }) => {
   const [expandedAccordion, setExpandedAccordion] = useState<string | false>('basic');
+  const theme = useTheme();
 
   const handleAccordionChange = (panel: string) => (_event: React.SyntheticEvent, isExpanded: boolean) => {
     setExpandedAccordion(isExpanded ? panel : false);
@@ -101,10 +103,7 @@ const FieldPropertiesStep: React.FC<FieldPropertiesStepProps> = ({ formData, onC
           gutterBottom
           sx={{
             fontWeight: 700,
-            background: 'linear-gradient(45deg, #4A90E2 30%, #7BB3F0 90%)',
-            backgroundClip: 'text',
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent',
+            color: theme.palette.primary.main,
           }}
         >
           {(() => {
@@ -121,8 +120,8 @@ const FieldPropertiesStep: React.FC<FieldPropertiesStepProps> = ({ formData, onC
       </Box>
 
       {/* Navigation Guide */}
-      <Box sx={{ mb: 3, p: 2, bgcolor: 'rgba(74, 144, 226, 0.05)', borderRadius: 2, border: '1px solid rgba(74, 144, 226, 0.2)' }}>
-        <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 600, color: '#4A90E2' }}>
+      <Box sx={{ mb: 3, p: 2, bgcolor: alpha(theme.palette.primary.main, 0.05), borderRadius: 2, border: `1px solid ${alpha(theme.palette.primary.main, 0.2)}` }}>
+        <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 600, color: theme.palette.primary.main }}>
           راهنمای تنظیمات فیلد
         </Typography>
         <Typography variant="body2" color="text.secondary">
@@ -137,7 +136,7 @@ const FieldPropertiesStep: React.FC<FieldPropertiesStepProps> = ({ formData, onC
         sx={{ mb: 2, borderRadius: '12px !important', '&:before': { display: 'none' } }}
       >
         <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-          <Typography variant="h6" sx={{ color: '#4A90E2', fontWeight: 600 }}>
+          <Typography variant="h6" sx={{ color: theme.palette.primary.main, fontWeight: 600 }}>
             📝 ویژگی‌های پایه (اجباری)
           </Typography>
         </AccordionSummary>
@@ -156,8 +155,8 @@ const FieldPropertiesStep: React.FC<FieldPropertiesStepProps> = ({ formData, onC
                   '& .MuiOutlinedInput-root': {
                     background: 'rgba(255, 255, 255, 0.8)',
                     backdropFilter: 'blur(10px)',
-                    '&:hover': { boxShadow: '0 4px 12px rgba(74, 144, 226, 0.15)' },
-                    '&.Mui-focused': { boxShadow: '0 0 0 3px rgba(74, 144, 226, 0.1)' },
+                    '&:hover': { boxShadow: `0 4px 12px ${alpha(theme.palette.primary.main, 0.15)}` },
+                    '&.Mui-focused': { boxShadow: `0 0 0 3px ${alpha(theme.palette.primary.main, 0.1)}` },
                   },
                 }}
                 aria-label="عنوان فیلد"
@@ -179,8 +178,8 @@ const FieldPropertiesStep: React.FC<FieldPropertiesStepProps> = ({ formData, onC
                   '& .MuiOutlinedInput-root': {
                     background: 'rgba(255, 255, 255, 0.8)',
                     backdropFilter: 'blur(10px)',
-                    '&:hover': { boxShadow: '0 4px 12px rgba(74, 144, 226, 0.15)' },
-                    '&.Mui-focused': { boxShadow: '0 0 0 3px rgba(74, 144, 226, 0.1)' },
+                    '&:hover': { boxShadow: `0 4px 12px ${alpha(theme.palette.primary.main, 0.15)}` },
+                    '&.Mui-focused': { boxShadow: `0 0 0 3px ${alpha(theme.palette.primary.main, 0.1)}` },
                   },
                 }}
                 aria-label="کلید یکتا فیلد"
@@ -220,7 +219,7 @@ const FieldPropertiesStep: React.FC<FieldPropertiesStepProps> = ({ formData, onC
         sx={{ mb: 2, borderRadius: '12px !important', '&:before': { display: 'none' } }}
       >
         <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-          <Typography variant="h6" sx={{ color: '#4A90E2', fontWeight: 600 }}>
+          <Typography variant="h6" sx={{ color: theme.palette.primary.main, fontWeight: 600 }}>
             💡 ویژگی‌های اختیاری
           </Typography>
         </AccordionSummary>
@@ -293,12 +292,12 @@ const FieldPropertiesStep: React.FC<FieldPropertiesStepProps> = ({ formData, onC
           sx={{ mb: 2, borderRadius: '12px !important', '&:before': { display: 'none' } }}
         >
           <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-            <Typography variant="h6" sx={{ color: '#4A90E2', fontWeight: 600 }}>
+            <Typography variant="h6" sx={{ color: theme.palette.primary.main, fontWeight: 600 }}>
               🔒 کنترل محتوا
             </Typography>
           </AccordionSummary>
           <AccordionDetails>
-            <ContentControlProperties formData={formData} onChange={onChange} />
+            <ContentControlProperties formData={formData} onChange={onChange as any} />
           </AccordionDetails>
         </Accordion>
       )}
@@ -311,12 +310,12 @@ const FieldPropertiesStep: React.FC<FieldPropertiesStepProps> = ({ formData, onC
           sx={{ mb: 2, borderRadius: '12px !important', '&:before': { display: 'none' } }}
         >
           <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-            <Typography variant="h6" sx={{ color: '#4A90E2', fontWeight: 600 }}>
+            <Typography variant="h6" sx={{ color: theme.palette.primary.main, fontWeight: 600 }}>
               🎯 ویژگی‌های کمکی
             </Typography>
           </AccordionSummary>
           <AccordionDetails>
-            <AssistiveProperties formData={formData} onChange={onChange} />
+            <AssistiveProperties formData={formData} onChange={onChange as any} />
           </AccordionDetails>
         </Accordion>
       )}
@@ -329,12 +328,12 @@ const FieldPropertiesStep: React.FC<FieldPropertiesStepProps> = ({ formData, onC
           sx={{ mb: 2, borderRadius: '12px !important', '&:before': { display: 'none' } }}
         >
           <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-            <Typography variant="h6" sx={{ color: '#4A90E2', fontWeight: 600 }}>
+            <Typography variant="h6" sx={{ color: theme.palette.primary.main, fontWeight: 600 }}>
               🔢 ویژگی‌های محتوایی عددی
             </Typography>
           </AccordionSummary>
           <AccordionDetails>
-            <NumberContentProperties formData={formData} onChange={onChange} />
+            <NumberContentProperties formData={formData} onChange={onChange as any} />
           </AccordionDetails>
         </Accordion>
       )}
@@ -347,12 +346,12 @@ const FieldPropertiesStep: React.FC<FieldPropertiesStepProps> = ({ formData, onC
           sx={{ mb: 2, borderRadius: '12px !important', '&:before': { display: 'none' } }}
         >
           <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-            <Typography variant="h6" sx={{ color: '#4A90E2', fontWeight: 600 }}>
+            <Typography variant="h6" sx={{ color: theme.palette.primary.main, fontWeight: 600 }}>
               🛠️ ویژگی‌های کمکی عددی
             </Typography>
           </AccordionSummary>
           <AccordionDetails>
-            <NumberHelperProperties formData={formData} onChange={onChange} />
+            <NumberHelperProperties formData={formData} onChange={onChange as any} />
           </AccordionDetails>
         </Accordion>
       )}
@@ -364,15 +363,15 @@ const FieldPropertiesStep: React.FC<FieldPropertiesStepProps> = ({ formData, onC
         sx={{ mb: 2, borderRadius: '12px !important', '&:before': { display: 'none' } }}
       >
         <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-          <Typography variant="h6" sx={{ color: '#4A90E2', fontWeight: 600 }}>
+          <Typography variant="h6" sx={{ color: theme.palette.primary.main, fontWeight: 600 }}>
             🎨 ویژگی‌های نمایشی
           </Typography>
         </AccordionSummary>
         <AccordionDetails>
           {formData.type === 'number' ? (
-            <NumberDisplayProperties formData={formData} onChange={onChange} />
+            <NumberDisplayProperties formData={formData} onChange={onChange as any} />
           ) : (
-            <DisplayProperties formData={formData} onChange={onChange} />
+            <DisplayProperties formData={formData} onChange={onChange as any} />
           )}
         </AccordionDetails>
       </Accordion>
@@ -385,12 +384,12 @@ const FieldPropertiesStep: React.FC<FieldPropertiesStepProps> = ({ formData, onC
           sx={{ mb: 2, borderRadius: '12px !important', '&:before': { display: 'none' } }}
         >
           <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-            <Typography variant="h6" sx={{ color: '#4A90E2', fontWeight: 600 }}>
+            <Typography variant="h6" sx={{ color: theme.palette.primary.main, fontWeight: 600 }}>
               🔧 ویژگی‌های تخصصی نوع نمایش
             </Typography>
           </AccordionSummary>
           <AccordionDetails>
-            <VariantProperties formData={formData} onChange={onChange} />
+            <VariantProperties formData={formData} onChange={onChange as any} />
           </AccordionDetails>
         </Accordion>
       )}
@@ -403,12 +402,12 @@ const FieldPropertiesStep: React.FC<FieldPropertiesStepProps> = ({ formData, onC
           sx={{ mb: 2, borderRadius: '12px !important', '&:before': { display: 'none' } }}
         >
           <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-            <Typography variant="h6" sx={{ color: '#4A90E2', fontWeight: 600 }}>
+            <Typography variant="h6" sx={{ color: theme.palette.primary.main, fontWeight: 600 }}>
               🎭 ویژگی‌های ماسک‌گذاری
             </Typography>
           </AccordionSummary>
           <AccordionDetails>
-            <MaskProperties formData={formData} onChange={onChange} />
+            <MaskProperties formData={formData} onChange={onChange as any} />
           </AccordionDetails>
         </Accordion>
       )}
@@ -420,15 +419,15 @@ const FieldPropertiesStep: React.FC<FieldPropertiesStepProps> = ({ formData, onC
         sx={{ mb: 2, borderRadius: '12px !important', '&:before': { display: 'none' } }}
       >
         <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-          <Typography variant="h6" sx={{ color: '#4A90E2', fontWeight: 600 }}>
+          <Typography variant="h6" sx={{ color: theme.palette.primary.main, fontWeight: 600 }}>
             ⚙️ رفتار و منطق
           </Typography>
         </AccordionSummary>
         <AccordionDetails>
           {formData.type === 'number' ? (
-            <NumberBehaviorProperties formData={formData} onChange={onChange} />
+            <NumberBehaviorProperties formData={formData} onChange={onChange as any} />
           ) : (
-            <BehaviorLogicProperties formData={formData} onChange={onChange} />
+            <BehaviorLogicProperties formData={formData} onChange={onChange as any} />
           )}
         </AccordionDetails>
       </Accordion>
@@ -441,15 +440,15 @@ const FieldPropertiesStep: React.FC<FieldPropertiesStepProps> = ({ formData, onC
           sx={{ mb: 2, borderRadius: '12px !important', '&:before': { display: 'none' } }}
         >
           <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-            <Typography variant="h6" sx={{ color: '#4A90E2', fontWeight: 600 }}>
+            <Typography variant="h6" sx={{ color: theme.palette.primary.main, fontWeight: 600 }}>
               🔐 امنیت و ذخیره‌سازی
             </Typography>
           </AccordionSummary>
           <AccordionDetails>
             {formData.type === 'number' ? (
-              <NumberSecurityProperties formData={formData} onChange={onChange} />
+              <NumberSecurityProperties formData={formData} onChange={onChange as any} />
             ) : (
-              <SecurityStorageProperties formData={formData} onChange={onChange} />
+              <SecurityStorageProperties formData={formData} onChange={onChange as any} />
             )}
           </AccordionDetails>
         </Accordion>
@@ -463,12 +462,12 @@ const FieldPropertiesStep: React.FC<FieldPropertiesStepProps> = ({ formData, onC
           sx={{ mb: 2, borderRadius: '12px !important', '&:before': { display: 'none' } }}
         >
           <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-            <Typography variant="h6" sx={{ color: '#4A90E2', fontWeight: 600 }}>
+          <Typography variant="h6" sx={{ color: theme.palette.primary.main, fontWeight: 600 }}>
               📋 ویژگی‌های فیلد انتخابی
             </Typography>
           </AccordionSummary>
           <AccordionDetails>
-            <SelectFieldProperties formData={formData} onChange={onChange} />
+            <SelectFieldProperties formData={formData} onChange={onChange as any} />
           </AccordionDetails>
         </Accordion>
       )}

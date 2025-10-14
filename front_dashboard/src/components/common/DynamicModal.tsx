@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   Dialog,
   DialogTitle,
@@ -13,6 +13,9 @@ import {
   Tab,
   IconButton,
   Divider,
+  useTheme,
+  useMediaQuery,
+  alpha,
 } from '@mui/material';
 import {
   Close as CloseIcon,
@@ -64,6 +67,8 @@ const DynamicModal: React.FC<DynamicModalProps> = ({
   maxWidth = 'md'
 }) => {
   const { definitionData, loading, error } = useDefinitionData(categoryType);
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   
   // Debug log
   console.log('DynamicModal state:', { categoryType, definitionData, loading, error, open });
@@ -72,6 +77,53 @@ const DynamicModal: React.FC<DynamicModalProps> = ({
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const [isSaving, setIsSaving] = useState(false);
   const [isInitialized, setIsInitialized] = useState(false);
+
+  const softSurface = useMemo(() => {
+    const primary = (theme.palette.primary.main || '#4a90e2').toLowerCase();
+    const hex = primary.replace('#', '');
+    if (hex.includes('10b981') || hex.includes('4caf50') || hex.includes('2e7d32')) return '#f0f4f3';
+    if (hex.includes('4a90e2') || hex.includes('1976d2') || hex.includes('2196f3')) return '#f0f4f8';
+    if (hex.includes('ef4444') || hex.includes('f44336') || hex.includes('d32f2f')) return '#fbf1f0';
+    if (hex.includes('6b21a8') || hex.includes('9c27b0') || hex.includes('673ab7')) return '#22262d';
+    if (hex.includes('f59e0b') || hex.includes('ff9800') || hex.includes('fb8c00')) return '#fbf1f1';
+
+    const clamp = (n: number) => Math.max(0, Math.min(255, Math.round(n)));
+    const hexToRgb = (h: string) => {
+      const normalized = h.length === 3 ? h.split('').map(c => c + c).join('') : h;
+      const r = parseInt(normalized.substring(0, 2), 16);
+      const g = parseInt(normalized.substring(2, 4), 16);
+      const b = parseInt(normalized.substring(4, 6), 16);
+      return { r, g, b };
+    };
+    const rgbToHex = (r: number, g: number, b: number) =>
+      `#${clamp(r).toString(16).padStart(2, '0')}${clamp(g).toString(16).padStart(2, '0')}${clamp(b).toString(16).padStart(2, '0')}`;
+    const blendWithWhite = (h: string, primaryWeight = 0.1) => {
+      const { r, g, b } = hexToRgb(h);
+      const wr = 255, wg = 255, wb = 255;
+      const w = 1 - primaryWeight;
+      const br = wr * w + r * primaryWeight;
+      const bg = wg * w + g * primaryWeight;
+      const bb = wb * w + b * primaryWeight;
+      return rgbToHex(br, bg, bb);
+    };
+    if (/^[0-9a-f]{3,6}$/.test(hex)) {
+      return blendWithWhite(hex, 0.1);
+    }
+    try {
+      const fallback = (theme.palette.primary.light || '#90caf9').toLowerCase().replace('#', '');
+      return blendWithWhite(fallback, 0.08);
+    } catch {
+      return '#f5f7fa';
+    }
+  }, [theme.palette.primary.main, theme.palette.primary.light]);
+
+  const backdropSx = useMemo(
+    () => ({
+      backgroundColor: 'rgba(15, 23, 42, 0.45)',
+      backdropFilter: 'blur(6px)',
+    }),
+    []
+  );
 
   // Initialize form when modal opens and definitionData is available
   useEffect(() => {
@@ -217,41 +269,76 @@ const DynamicModal: React.FC<DynamicModalProps> = ({
       onClose={onClose}
       maxWidth={maxWidth}
       fullWidth
-      PaperProps={{
-        sx: { 
-          borderRadius: 2, 
-          minHeight: '70vh',
-          maxHeight: '90vh',
-          overflow: 'auto'
-        }
+      fullScreen={isMobile}
+      slotProps={{
+        backdrop: {
+          sx: backdropSx,
+        },
       }}
       sx={{
-        zIndex: 1300, // Ensure proper z-index
+        zIndex: 1300,
         '& .MuiDialog-paper': {
-          pointerEvents: 'auto' // Ensure interactions work
-        }
+          pointerEvents: 'auto',
+          borderRadius: isMobile ? 0 : '20px',
+          minHeight: isMobile ? '100vh' : '70vh',
+          maxHeight: isMobile ? '100vh' : '90vh',
+          backgroundColor: (theme) => alpha(theme.palette.primary.light, 0.1),
+          backdropFilter: 'blur(20px)',
+          border: (theme) => `1px solid ${alpha(theme.palette.primary.light, 0.2)}`,
+          boxShadow: (theme) => `0 20px 60px ${alpha(theme.palette.primary.light, 0.3)}, inset 0 1px 0 rgba(255, 255, 255, 0.8)`,
+          overflow: 'hidden',
+          position: 'relative',
+          '&::before': {
+            content: 'none',
+          },
+        },
+        '& .MuiBackdrop-root': {
+          backgroundColor: (theme) => `${alpha(theme.palette.primary.light, 0.08)}`,
+          backdropFilter: 'blur(4px)',
+        },
       }}
     >
-      <DialogTitle sx={{ p: 2, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <Box sx={{ display: 'flex', alignItems: 'center' }}>
-          <PersonIcon sx={{ mr: 1, color: 'primary.main' }} />
-          <Typography variant="h6" fontWeight={600}>
-            {modalTitle}
-          </Typography>
-        </Box>
-        <IconButton onClick={onClose} size="small">
-          <CloseIcon />
+      <DialogTitle
+        sx={{
+          backgroundColor: softSurface,
+          borderBottom: (theme) => `1px solid ${alpha(theme.palette.primary.light, 0.2)}`,
+          py: isMobile ? 2 : 3,
+          px: isMobile ? 2 : 3,
+          display: 'flex',
+          alignItems: 'center',
+          gap: 1,
+        }}
+      >
+        <PersonIcon sx={{ color: theme.palette.primary.main }} />
+        <Typography variant={isMobile ? 'h6' : 'h5'} fontWeight={700} sx={{ color: theme.palette.primary.main }}>
+          {modalTitle}
+        </Typography>
+        <IconButton
+          onClick={onClose}
+          size="small"
+          sx={{
+            ml: 'auto',
+            color: theme.palette.primary.main,
+            backgroundColor: alpha(theme.palette.primary.main, 0.08),
+            backdropFilter: 'blur(8px)',
+            '&:hover': {
+              backgroundColor: alpha(theme.palette.primary.main, 0.15),
+            },
+          }}
+        >
+          <CloseIcon fontSize="small" />
         </IconButton>
       </DialogTitle>
 
-      <Divider />
+      <Divider sx={{ borderColor: alpha(theme.palette.primary.light, 0.2), opacity: 0.6 }} />
 
-      <DialogContent sx={{ 
-        p: 0, 
+      <DialogContent sx={{
+        p: 0,
         overflow: 'visible',
         pointerEvents: 'auto',
         height: 'auto',
-        maxHeight: '60vh'
+        maxHeight: '60vh',
+        backgroundColor: softSurface,
       }}>
         {loading ? (
           <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 200 }}>
@@ -276,7 +363,14 @@ const DynamicModal: React.FC<DynamicModalProps> = ({
               return null;
             })()}
             {/* Tabs */}
-            <Box sx={{ borderBottom: 1, borderColor: 'divider', px: 2 }}>
+            <Box
+              sx={{
+                borderBottom: (theme) => `1px solid ${alpha(theme.palette.primary.light, 0.2)}`,
+                px: isMobile ? 2 : 3,
+                backgroundColor: 'rgba(255, 255, 255, 0.6)',
+                backdropFilter: 'blur(6px)',
+              }}
+            >
               <Tabs
                 value={activeTab}
                 onChange={handleTabChange}
@@ -292,12 +386,15 @@ const DynamicModal: React.FC<DynamicModalProps> = ({
                     textTransform: 'none',
                     cursor: 'pointer',
                     pointerEvents: 'auto',
+                    borderRadius: '12px 12px 0 0',
+                    transition: 'all 0.2s ease',
                     '&:hover': {
-                      backgroundColor: 'action.hover',
+                      backgroundColor: alpha(theme.palette.primary.main, 0.08),
                     },
                     '&.Mui-selected': {
                       fontWeight: 600,
-                      color: 'primary.main',
+                      color: theme.palette.primary.main,
+                      backgroundColor: alpha(theme.palette.primary.main, 0.1),
                     }
                   },
                   '& .MuiTabs-indicator': {
@@ -322,9 +419,9 @@ const DynamicModal: React.FC<DynamicModalProps> = ({
             </Box>
 
             {/* Tab Panels */}
-            <Box sx={{ 
-              px: 3, 
-              py: 2,
+            <Box sx={{
+              px: isMobile ? 2 : 3,
+              py: isMobile ? 2 : 3,
               maxHeight: '50vh',
               overflow: 'auto',
               pointerEvents: 'auto'
@@ -355,19 +452,64 @@ const DynamicModal: React.FC<DynamicModalProps> = ({
         )}
       </DialogContent>
 
-      <Divider />
-
-      <DialogActions sx={{ p: 2, gap: 1 }}>
-        <Button onClick={onClose} variant="outlined">
-          انصراف
+      <DialogActions
+        sx={{
+          backgroundColor: softSurface,
+          borderTop: (theme) => `1px solid ${alpha(theme.palette.primary.light, 0.2)}`,
+          p: isMobile ? 2 : 3,
+          gap: 1,
+        }}
+      >
+        <Button
+          onClick={onClose}
+          sx={{
+            borderRadius: '12px',
+            px: isMobile ? 2 : 3,
+            py: isMobile ? 1 : 1.5,
+            backgroundColor: 'rgba(148, 163, 184, 0.1)',
+            backdropFilter: 'blur(10px)',
+            border: '1px solid rgba(148, 163, 184, 0.2)',
+            color: '#64748B',
+            fontWeight: 600,
+            fontSize: isMobile ? '0.8rem' : 'inherit',
+            '&:hover': {
+              backgroundColor: 'rgba(148, 163, 184, 0.15)',
+              transform: 'translateY(-2px)',
+              boxShadow: '0 4px 12px rgba(148, 163, 184, 0.2)',
+            },
+          }}
+        >
+          ??????
         </Button>
         <Button
           onClick={handleSave}
           variant="contained"
           startIcon={isSaving ? <CircularProgress size={16} color="inherit" /> : <SaveIcon />}
           disabled={loading || !!error || !definitionData || isSaving}
+          sx={{
+            borderRadius: '12px',
+            px: isMobile ? 2 : 4,
+            py: isMobile ? 1 : 1.5,
+            backgroundColor: theme.palette.primary.main,
+            color: 'white',
+            fontWeight: 600,
+            border: '2px solid rgba(255, 255, 255, 0.3)',
+            boxShadow: `0 4px 16px ${alpha(theme.palette.primary.main, 0.3)}`,
+            fontSize: isMobile ? '0.8rem' : 'inherit',
+            '&:hover': {
+              backgroundColor: theme.palette.primary.dark,
+              transform: 'translateY(-2px)',
+              boxShadow: `0 8px 24px ${alpha(theme.palette.primary.main, 0.4)}`,
+            },
+            '&:disabled': {
+              backgroundColor: 'rgba(148, 163, 184, 0.5)',
+              color: 'rgba(255, 255, 255, 0.7)',
+              transform: 'none',
+              boxShadow: 'none',
+            },
+          }}
         >
-          {isSaving ? 'در حال ذخیره...' : 'ذخیره'}
+          {isSaving ? '?? ??? ?????...' : '?????'}
         </Button>
       </DialogActions>
     </Dialog>
@@ -375,3 +517,4 @@ const DynamicModal: React.FC<DynamicModalProps> = ({
 };
 
 export default DynamicModal;
+

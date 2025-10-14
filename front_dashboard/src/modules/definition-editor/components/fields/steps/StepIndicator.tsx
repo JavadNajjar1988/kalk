@@ -1,14 +1,15 @@
 import React from 'react';
-import { Box, Typography } from '@mui/material';
+import { Box, Typography, useTheme, alpha } from '@mui/material';
 import { StepIndicatorProps } from '../types/FieldEditTypes';
 
 const StepIndicator: React.FC<StepIndicatorProps> = ({ steps, currentStep }) => {
+  const theme = useTheme();
   return (
     <Box 
       sx={{ 
         p: 3, 
-        borderBottom: '1px solid rgba(135, 206, 250, 0.2)',
-        background: 'linear-gradient(90deg, rgba(255, 255, 255, 0.8) 0%, rgba(240, 248, 255, 0.6) 100%)',
+        borderBottom: `1px solid ${alpha(theme.palette.primary.light, 0.2)}`,
+        backgroundColor: 'rgba(255,255,255,0.8)',
         backdropFilter: 'blur(10px)',
       }}
     >
@@ -33,9 +34,9 @@ const StepIndicator: React.FC<StepIndicatorProps> = ({ steps, currentStep }) => 
                   left: '50%',
                   width: '100%',
                   height: '2px',
-                  background: currentStep > step.number 
-                    ? 'linear-gradient(90deg, #4A90E2, #7BB3F0)'
-                    : 'rgba(135, 206, 250, 0.3)',
+                backgroundColor: currentStep > step.number 
+                  ? theme.palette.primary.main
+                  : alpha(theme.palette.primary.light, 0.3),
                   zIndex: 0,
                 }}
               />
@@ -46,9 +47,9 @@ const StepIndicator: React.FC<StepIndicatorProps> = ({ steps, currentStep }) => 
                 width: 40,
                 height: 40,
                 borderRadius: '50%',
-                background: currentStep >= step.number 
-                  ? 'linear-gradient(135deg, #4A90E2, #7BB3F0)'
-                  : 'linear-gradient(135deg, rgba(255, 255, 255, 0.9), rgba(248, 250, 252, 0.8))',
+              backgroundColor: currentStep >= step.number 
+                ? theme.palette.primary.main
+                : 'rgba(255, 255, 255, 0.9)',
                 color: currentStep >= step.number ? 'white' : '#64748B',
                 display: 'flex',
                 alignItems: 'center',
@@ -56,12 +57,12 @@ const StepIndicator: React.FC<StepIndicatorProps> = ({ steps, currentStep }) => 
                 fontWeight: 'bold',
                 fontSize: '1.1rem',
                 mb: 2,
-                border: currentStep >= step.number 
-                  ? '2px solid rgba(255, 255, 255, 0.3)' 
-                  : '2px solid rgba(135, 206, 250, 0.3)',
-                boxShadow: currentStep >= step.number
-                  ? '0 4px 16px rgba(74, 144, 226, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.3)'
-                  : '0 4px 16px rgba(135, 206, 250, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.8)',
+              border: currentStep >= step.number 
+                ? '2px solid rgba(255, 255, 255, 0.3)' 
+                : `2px solid ${alpha(theme.palette.primary.light, 0.3)}`,
+              boxShadow: currentStep >= step.number
+                ? `0 4px 16px ${alpha(theme.palette.primary.main, 0.3)}, inset 0 1px 0 rgba(255, 255, 255, 0.3)`
+                : `0 4px 16px ${alpha(theme.palette.primary.light, 0.15)}, inset 0 1px 0 rgba(255, 255, 255, 0.8)`,
                 backdropFilter: 'blur(10px)',
                 transition: 'all 0.3s ease',
                 zIndex: 1,
@@ -72,7 +73,7 @@ const StepIndicator: React.FC<StepIndicatorProps> = ({ steps, currentStep }) => 
             <Typography
               variant="caption"
               sx={{
-                color: currentStep >= step.number ? '#4A90E2' : '#64748B',
+              color: currentStep >= step.number ? theme.palette.primary.main : '#64748B',
                 textAlign: 'center',
                 fontWeight: currentStep >= step.number ? 600 : 500,
                 textShadow: '0 1px 2px rgba(255, 255, 255, 0.8)',
