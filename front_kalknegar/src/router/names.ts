@@ -7,3 +7,4 @@ export const GRID_EDIT_ROUTE = "GridEditRoute";
 export const CHART_EDIT_MODE_ROUTE = "ChartModeRoute";
 export const MAP_EDIT_MODE_ROUTE = "MapBetaModeRoute";
 export const TACTICAL_GRAPHICS_ROUTE = "TacticalGraphicsRoute";
+export const TACTICAL_SYMBOL_DEFINITION_ROUTE = "TacticalSymbolDefinitionRoute";

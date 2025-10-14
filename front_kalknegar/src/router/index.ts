@@ -11,6 +11,7 @@ import {
   ORBAT_CHART_ROUTE,
   STORY_MODE_ROUTE,
   TACTICAL_GRAPHICS_ROUTE,
+  TACTICAL_SYMBOL_DEFINITION_ROUTE,
 } from "@/router/names";
 
 declare module "vue-router" {
@@ -36,6 +37,8 @@ const ScenarioEditorMap = () => import("@/modules/scenarioeditor/ScenarioEditorM
   return import("@/views/ErrorFallback.vue"); // Fallback component
 });
 const TacticalGraphicsView = () => import("../views/TacticalGraphicsView.vue");
+const SymbolDesignerPage = () => import("../modules/tactical-symbol-designer/SymbolDesignerPage.vue");
+const TacticalSymbolDefinitionPage = () => import("../modules/tactical-symbols/TacticalSymbolDefinitionPage.vue");
 const routes = [
   {
     path: "/scenario/:scenarioId",
