@@ -1,14 +1,20 @@
 import asyncio
 import os
+import pathlib
 
 import pytest
 from httpx import AsyncClient
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
 from app.main import app
 from app.core.config import settings
-from app.db.session import AsyncSessionLocal, engine
 from app.db.base import Base
+from app.db.session import get_session
+
+
+TEST_DB_URL = os.getenv("TEST_DB_URL", "sqlite+aiosqlite:///./test_api.db")
+test_engine = create_async_engine(TEST_DB_URL, future=True)
+TestingSessionLocal = async_sessionmaker(test_engine, expire_on_commit=False, class_=AsyncSession)
 
 
 @pytest.fixture(scope="session")
@@ -18,14 +24,32 @@ def event_loop():
     loop.close()
 
 
-@pytest.fixture(autouse=True, scope="session")
+@pytest.fixture(scope="session", autouse=True)
 async def setup_db():
-    # Create tables in test session (for simple tests; in real-world use migrations)
-    async with engine.begin() as conn:
+    async with test_engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
     yield
-    async with engine.begin() as conn:
+    async with test_engine.begin() as conn:
         await conn.run_sync(Base.metadata.drop_all)
+    # Clean up sqlite file if created on disk
+    if TEST_DB_URL.startswith("sqlite") and "memory" not in TEST_DB_URL:
+        db_path = TEST_DB_URL.rsplit("///", 1)[-1]
+        path = pathlib.Path(db_path)
+        if path.exists():
+            path.unlink()
+
+
+@pytest.fixture(autouse=True)
+async def override_session():
+    async def _get_test_session():
+        async with TestingSessionLocal() as session:
+            yield session
+
+    app.dependency_overrides[get_session] = _get_test_session
+    try:
+        yield
+    finally:
+        app.dependency_overrides.pop(get_session, None)
 
 
 @pytest.mark.asyncio

@@ -1,3 +1,24 @@
+<script setup lang="ts">
+const resolveParentOrigin = () => {
+  const envOrigin = (import.meta as any).env?.VITE_PARENT_ORIGIN as string | undefined;
+  if (envOrigin && envOrigin.trim().length > 0) {
+    return envOrigin.trim().replace(/\/+$/, '');
+  }
+  if (typeof window !== 'undefined' && window.parent !== window) {
+    if (document.referrer) {
+      try {
+        return new URL(document.referrer).origin;
+      } catch {
+        /* ignore parse error */
+      }
+    }
+  }
+  return typeof window !== 'undefined' ? window.location.origin : 'http://127.0.0.1:3000';
+};
+
+const parentHelpUrl = `${resolveParentOrigin()}/dashboard/help`;
+</script>
+
 <template>
   <main class="grid min-h-full place-items-center bg-blue-50 dark:bg-slate-800 px-6 py-24 sm:py-32 lg:px-8">
     <div class="text-center">
@@ -13,7 +34,7 @@
           ><span aria-hidden="true">&larr;</span> بازگشت به خانه
         </router-link>
         <a
-          href="http://127.0.0.1:3000/dashboard/help"
+          :href="parentHelpUrl"
           class="text-sm font-semibold text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-slate-100"
           >مستندات <span aria-hidden="true">&rarr;</span></a
         >

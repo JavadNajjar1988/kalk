@@ -5,11 +5,21 @@ import { useAppSelector } from '@/store';
 import { selectIsAuthenticated } from '@/store/slices/authSlice';
 import { OrbatMessageBridge } from '@/modules/orbat-integration/adapters/OrbatMessageBridge';
 
+const resolveKalknegarBaseUrl = () => {
+  const rawOrigin = import.meta.env.VITE_KALKNEGAR_ORIGIN as string | undefined;
+  const origin = rawOrigin ? rawOrigin.replace(/\/+$/, '') : 'http://127.0.0.1:5173';
+  const rawPath = import.meta.env.VITE_KALKNEGAR_PATH as string | undefined;
+  const sanitized = rawPath ? rawPath.replace(/^\/+/, '') : 'kalknegar/';
+  const path = sanitized.endsWith('/') ? sanitized : `${sanitized}/`;
+  return `${origin}/${path}`;
+};
+
 const KalknegarIframe: React.FC = () => {
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const bridgeRef = useRef<OrbatMessageBridge | null>(null);
   const navigate = useNavigate();
   const isAuthenticated = useAppSelector(selectIsAuthenticated);
+  const kalknegarBaseUrl = useRef(resolveKalknegarBaseUrl());
 
   // Redirect to login if not authenticated
   useEffect(() => {
@@ -41,8 +51,6 @@ const KalknegarIframe: React.FC = () => {
   // Check if we have a token and log it
   useEffect(() => {
     const token = localStorage.getItem('access_token');
-    console.log('[KalknegarIframe] Current token in localStorage:', token ? token.substring(0, 20) + '...' : 'none');
-    
     // If no token in localStorage, try to get it from sessionStorage or parent window
     if (!token) {
       console.log('[KalknegarIframe] No token in localStorage, checking alternatives...');
@@ -72,10 +80,12 @@ const KalknegarIframe: React.FC = () => {
   const handleIframeLoad = () => {
     console.log('[KalknegarIframe] Iframe loaded');
     const iframe = iframeRef.current;
-    if (iframe && bridgeRef.current) {
-      console.log('[KalknegarIframe] Setting iframe reference to bridge');
-      bridgeRef.current.setIframe(iframe);
+    if (!iframe || !bridgeRef.current) {
+      return;
     }
+
+    console.log('[KalknegarIframe] Setting iframe reference to bridge');
+    bridgeRef.current.setIframe(iframe);
   };
 
   // Show loading if not authenticated
@@ -101,7 +111,7 @@ const KalknegarIframe: React.FC = () => {
     <Box sx={{ width: '100%', height: '100vh', position: 'relative' }}>
       <iframe
         ref={iframeRef}
-        src={`http://127.0.0.1:5173/kalknegar/?integration=react&token=${localStorage.getItem('access_token') || ''}`}
+        src={`${kalknegarBaseUrl.current}?integration=react&token=${localStorage.getItem('access_token') || ''}`}
         style={{
           width: '100%',
           height: '100%',

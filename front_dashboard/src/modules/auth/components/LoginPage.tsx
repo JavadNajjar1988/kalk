@@ -116,15 +116,11 @@ const LoginPage: React.FC = () => {
       return;
     }
 
-    console.log('Attempting login with:', formData.username, formData.password);
-
     try {
       const result = await dispatch(loginUser({
         username: formData.username,
         password: formData.password,
       })).unwrap();
-      
-      console.log('Login successful:', result);
       // در صورت موفقیت، useEffect redirect را انجام می‌دهد
     } catch (error) {
       console.error('Login failed:', error);

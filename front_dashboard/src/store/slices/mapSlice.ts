@@ -1,6 +1,20 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { RootState } from '../index';
 
+const resolveTileServerBase = () => {
+  const raw = (import.meta.env.VITE_TILESERVER_URL as string | undefined)?.trim();
+  if (raw && raw.length > 0) {
+    return raw.replace(/\/+$/, '');
+  }
+  if (typeof window !== 'undefined') {
+    const { protocol, hostname } = window.location;
+    return `${protocol}//${hostname}:8480`;
+  }
+  return 'http://127.0.0.1:8480';
+};
+
+const defaultTileServerBase = resolveTileServerBase();
+
 // تعریف تایپ‌های مورد نیاز
 export interface Coordinates {
   lat: number;
@@ -68,7 +82,7 @@ const initialState: MapState = {
       type: 'base',
       visible: true,
       opacity: 1,
-      url: 'http://127.0.0.1:8480/data/maps/{z}/{x}/{y}.png',
+      url: `${defaultTileServerBase}/data/maps/{z}/{x}/{y}.png`,
     },
     {
       id: 'satellite',
@@ -336,4 +350,4 @@ export const selectMapError = (state: RootState) => state.map.error;
 export const selectActiveOfflineMap = (state: RootState) => state.map.activeOfflineMap;
 
 // اکسپورت کردن ریدیوسر
-export default mapSlice.reducer; 
+export default mapSlice.reducer;

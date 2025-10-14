@@ -21,7 +21,7 @@ export class BaseApiClient {
     
     // Cache-busting برای dev environment
     const isDev = import.meta.env.DEV;
-    const cacheBuster = isDev ? `?t=${Date.now()}` : '';
+    const cacheBuster = isDev ? `${endpoint.includes('?') ? '&' : '?'}t=${Date.now()}` : '';
     const fullUrl = `${this.baseUrl}${endpoint}${cacheBuster}`;
     
     const res = await fetch(fullUrl, {

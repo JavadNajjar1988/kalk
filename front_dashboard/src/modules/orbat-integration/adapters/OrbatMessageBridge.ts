@@ -33,8 +33,9 @@ export class OrbatMessageBridge {
   private messageId = 0;
 
   constructor(config: Partial<BridgeConfig> = {}) {
+    const envTargetOrigin = (import.meta.env.VITE_KALKNEGAR_ORIGIN as string | undefined)?.replace(/\/+$/, '');
     this.config = {
-      targetOrigin: 'http://127.0.0.1:5173',
+      targetOrigin: envTargetOrigin || 'http://127.0.0.1:5173',
       timeout: 10000,
       retryAttempts: 3,
       enableLogging: true,
@@ -76,7 +77,7 @@ export class OrbatMessageBridge {
     // Set a timeout to detect if Vue backend doesn't respond
     setTimeout(() => {
       if (!this.isReady) {
-        const errorMsg = 'ORBAT backend did not respond within 10 seconds. Make sure the Vue ORBAT service is running on http://127.0.0.1:5173';
+        const errorMsg = `ORBAT backend did not respond within 10 seconds. Make sure the Vue ORBAT service is running on ${this.config.targetOrigin}`;
         this.log('Ready timeout:', errorMsg);
         
         // Trigger error handlers
@@ -403,7 +404,7 @@ export class OrbatMessageBridge {
         return;
       }
       
-      this.log('Sending AUTH_TOKEN to iframe:', token.substring(0, 20) + '...');
+      this.log('Sending AUTH_TOKEN to iframe.');
       const msg = {
         id: `auth_${Date.now()}`,
         type: 'AUTH_TOKEN',

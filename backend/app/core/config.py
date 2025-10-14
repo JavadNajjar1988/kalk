@@ -1,4 +1,5 @@
 from typing import List
+import secrets
 
 from pydantic import Field
 from pydantic import field_validator
@@ -22,9 +23,10 @@ class Settings(BaseSettings):
     )
 
     DB_URL: str = "postgresql+asyncpg://postgres:postgres@localhost:5432/kalk"
-    JWT_SECRET: str = "change_me"
+    JWT_SECRET: str = Field(default_factory=lambda: secrets.token_urlsafe(32))
     JWT_ALG: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60
+    ADMIN_BOOTSTRAP_PASSWORD: str = Field(default="admin123", repr=False)
 
     # وقتی True باشد، تمام بررسی‌های احراز هویت در backend نادیده گرفته می‌شود.
     DISABLE_AUTH: bool = False

@@ -21,7 +21,11 @@ interface ReadyMessage extends OrbatMessage {
 
 class ReactBridge {
   private isIntegrationMode = false;
-  private parentOrigin = (import.meta as any).env?.VITE_PARENT_ORIGIN || 'http://127.0.0.1:3000';
+  private parentOrigin = (() => {
+    const raw = (import.meta as any).env?.VITE_PARENT_ORIGIN as string | undefined;
+    const resolved = raw && raw.trim().length > 0 ? raw : 'http://127.0.0.1:3000';
+    return resolved.replace(/\/+$/, '');
+  })();
   private currentToken: string | null = null;
 
   constructor() {
@@ -225,7 +229,7 @@ class ReactBridge {
   }
 
   private handleAuthToken(message: OrbatMessage) {
-    console.log('[ReactBridge] Received AUTH_TOKEN message:', message);
+    console.log('[ReactBridge] Received AUTH_TOKEN message');
     const token = message.token as string | undefined;
     const exp = message.exp as number | undefined;
     if (!token || typeof token !== 'string') {

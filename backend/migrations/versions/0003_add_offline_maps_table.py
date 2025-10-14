@@ -11,7 +11,7 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision = '0003_add_offline_maps_table'
-down_revision = '0002_add_users_and_scenario_content'
+down_revision = '0002'
 branch_labels = None
 depends_on = None
 

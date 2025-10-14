@@ -1,5 +1,6 @@
 from datetime import timedelta, datetime, timezone
 import uuid
+import logging
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
@@ -13,6 +14,19 @@ from app.schemas.auth import Token, LoginRequest
 
 
 router = APIRouter(prefix="/auth", tags=["auth"])
+logger = logging.getLogger(__name__)
+_default_admin_warning_emitted = False
+
+
+def _get_admin_password() -> str:
+    global _default_admin_warning_emitted
+    password = settings.ADMIN_BOOTSTRAP_PASSWORD
+    if password == "admin123" and not _default_admin_warning_emitted:
+        logger.warning("ADMIN_BOOTSTRAP_PASSWORD is using the default value; change it via environment variables.")
+        _default_admin_warning_emitted = True
+    if not password:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Admin bootstrap password not configured")
+    return password
 
 
 @router.post("/token", response_model=Token)
@@ -25,7 +39,7 @@ async def login(db: DbSession, form_data: OAuth2PasswordRequestForm = Depends())
         admin_user = User(
             id=str(uuid.uuid4()),
             username="admin",
-            password_hash=get_password_hash("admin123"),
+            password_hash=get_password_hash(_get_admin_password()),
             roles="ADMIN,OPERATOR",
             is_active=True,
             created_at=now,
@@ -58,7 +72,7 @@ async def login_json(payload: LoginRequest, db: DbSession):
         admin_user = User(
             id=str(uuid.uuid4()),
             username="admin",
-            password_hash=get_password_hash("admin123"),
+            password_hash=get_password_hash(_get_admin_password()),
             roles="ADMIN,OPERATOR",
             is_active=True,
             created_at=now,

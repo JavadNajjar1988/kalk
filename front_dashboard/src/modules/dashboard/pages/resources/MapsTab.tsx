@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   Box,
   Grid,
@@ -68,6 +68,34 @@ import {
 import type { MapLayer } from '@/types/orbat';
 import { useTranslation } from '@/hooks/useTranslation';
 
+const resolveApiBase = () => {
+  const raw = (import.meta.env.VITE_API_URL as string | undefined) ?? '';
+  const trimmed = raw.trim();
+  if (trimmed.length > 0) {
+    return trimmed.replace(/\/+$/, '');
+  }
+  return '/api';
+};
+
+const resolveTileServerBase = () => {
+  const raw = (import.meta.env.VITE_TILESERVER_URL as string | undefined) ?? '';
+  const trimmed = raw.trim();
+  if (trimmed.length > 0) {
+    return trimmed.replace(/\/+$/, '');
+  }
+  const { protocol, hostname } = window.location;
+  return `${protocol}//${hostname}:8480`;
+};
+
+const authFetch = async (baseUrl: string, endpoint: string, options: RequestInit = {}) => {
+  const token = localStorage.getItem('access_token');
+  const headers = new Headers(options.headers as HeadersInit | undefined);
+  if (token) {
+    headers.set('Authorization', `Bearer ${token}`);
+  }
+  return fetch(`${baseUrl}${endpoint}`, { ...options, headers });
+};
+
 // Interface برای نقشه‌های آفلاین
 interface OfflineMap {
   id: number;
@@ -85,6 +113,8 @@ const MapsTab: React.FC = () => {
   const theme = useTheme();
   const dispatch = useAppDispatch();
   const { t } = useTranslation();
+  const apiBase = useMemo(resolveApiBase, []);
+  const tileServerBase = useMemo(resolveTileServerBase, []);
   const mapLayers = useAppSelector(selectMapLayers);
   const activeOfflineMap = useAppSelector(selectActiveOfflineMap);
   
@@ -116,7 +146,7 @@ const MapsTab: React.FC = () => {
   const loadOfflineMaps = async () => {
     try {
       setLoading(true);
-      const response = await fetch('http://127.0.0.1:8000/api/maps');
+      const response = await authFetch(apiBase, '/maps');
       if (response.ok) {
         const data = await response.json();
         setOfflineMaps(data.maps || []);
@@ -142,7 +172,7 @@ const MapsTab: React.FC = () => {
       formData.append('name', offlineFormData.name);
       formData.append('description', offlineFormData.description);
 
-      const response = await fetch('http://127.0.0.1:8000/api/maps/upload', {
+      const response = await authFetch(apiBase, '/maps/upload', {
         method: 'POST',
         body: formData,
       });
@@ -166,7 +196,7 @@ const MapsTab: React.FC = () => {
   // فعال/غیرفعال کردن نقشه آفلاین
   const toggleOfflineMap = async (mapId: number) => {
     try {
-      const response = await fetch(`http://127.0.0.1:8000/api/maps/${mapId}`, {
+      const response = await authFetch(apiBase, `/maps/${mapId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -183,7 +213,7 @@ const MapsTab: React.FC = () => {
           dispatch(setActiveOfflineMap({
             id: activeMap.id,
             name: activeMap.name,
-            url: `http://127.0.0.1:8480/data/${activeMap.filename}/{z}/{x}/{y}.png`
+            url: `${tileServerBase}/data/${activeMap.filename}/{z}/{x}/{y}.png`
           }));
         }
       }
@@ -199,7 +229,7 @@ const MapsTab: React.FC = () => {
     }
 
     try {
-      const response = await fetch(`http://127.0.0.1:8000/api/maps/${mapId}`, {
+      const response = await authFetch(apiBase, `/maps/${mapId}`, {
         method: 'DELETE',
       });
 
@@ -517,7 +547,7 @@ const MapsTab: React.FC = () => {
                                 </IconButton>
                               </Tooltip>
                               <Tooltip title="دانلود">
-                                <IconButton size="small" onClick={() => window.open(`http://127.0.0.1:8000/api/maps/${map.id}/download`)}>
+                                <IconButton size="small" onClick={() => window.open(`${apiBase}/maps/${map.id}/download`)}>
                                   <Download fontSize="small" />
                                 </IconButton>
                               </Tooltip>

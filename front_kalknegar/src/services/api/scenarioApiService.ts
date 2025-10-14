@@ -12,28 +12,27 @@ export class ScenarioApiService extends BaseApiClient {
     let base: string;
     
     if (envBase && envBase.trim() !== '') {
-      base = envBase;
+      base = envBase.trim().replace(/\/+$/, '');
     } else {
-      // تشخیص محیط و حالت اجرا
+      const apiPathEnv = (import.meta as any).env?.VITE_API_PATH as string | undefined;
+      const apiPath = apiPathEnv && apiPathEnv.trim().length > 0 ? apiPathEnv.trim().replace(/^\/+/, '') : 'api';
       const isIframe = window.parent !== window;
-      const isDev = import.meta.env.DEV;
-      
+
       if (isIframe) {
-        // داخل Dashboard (iframe) - همیشه به پورت 3000
-        base = 'http://127.0.0.1:3000/api';
-      } else if (isDev) {
-        // حالت مستقل dev - مستقیماً به backend
-        base = 'http://127.0.0.1:8000/api';
+        const parentOriginEnv = (import.meta as any).env?.VITE_PARENT_ORIGIN as string | undefined;
+        const parentOrigin = parentOriginEnv && parentOriginEnv.trim().length > 0
+          ? parentOriginEnv.trim()
+          : (document.referrer ? new URL(document.referrer).origin : window.location.origin);
+        base = `${parentOrigin.replace(/\/+$/, '')}/${apiPath}`;
+      } else if (import.meta.env.DEV) {
+        base = `http://127.0.0.1:8000/${apiPath}`;
       } else {
-        // حالت production
-        base = `${window.location.origin}/api`;
+        base = `${window.location.origin.replace(/\/+$/, '')}/${apiPath}`;
       }
     }
-    
-    // اطمینان از این‌که baseUrl به ‎/scenarios‎ ختم نمی‌شود و اسلش اضافی ندارد
-    base = base.replace(/\/+$/, ''); // حذف اسلش‌های پایانی
-    base = base.replace(/\/scenarios$/, ''); // حذف بخش ‎/scenarios‎ در انتها در صورت وجود
-    
+
+    base = base.replace(/\/+$/, '');
+    base = base.replace(/\/scenarios$/, '');
     console.log('[ScenarioApiService] Base URL:', base);
     super(base);
   }
