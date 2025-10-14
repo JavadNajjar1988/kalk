@@ -18,6 +18,8 @@ from app.api.routes import health as health_routes
 from app.api.routes import scenarios as scenarios_routes
 from app.api.routes import auth as auth_routes
 from app.api.routes import realtime as realtime_routes
+from app.api.routes import maps as maps_routes
+from app.api.routes import maps as maps_routes
 
 
 def create_app() -> FastAPI:
@@ -67,16 +69,34 @@ def create_app() -> FastAPI:
         docs_url="/docs",
         openapi_url="/openapi.json",
     )
+    # Apply CORS on mounted API app as well (for dev frontends on 127.0.0.1)
+    api.add_middleware(
+        CORSMiddleware,
+        allow_origins=settings.CORS_ORIGINS,
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
     # Register exception handlers on the mounted API app as well
     api.add_exception_handler(HTTPException, http_exception_handler)
     api.add_exception_handler(RequestValidationError, validation_exception_handler)
     api.add_exception_handler(Exception, unhandled_exception_handler)
+    # CORS on API app
+    api.add_middleware(
+        CORSMiddleware,
+        allow_origins=settings.CORS_ORIGINS,
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
     app.mount(settings.API_PREFIX, api)
 
     api.include_router(health_routes.router)
     api.include_router(scenarios_routes.router)
     api.include_router(auth_routes.router)
     api.include_router(realtime_routes.router)
+    api.include_router(maps_routes.router)
+    api.include_router(maps_routes.router)
 
     return app
 

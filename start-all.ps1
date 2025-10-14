@@ -8,6 +8,8 @@ param(
 # Start / Prepare Docker services
 if ($Purge) {
   docker compose down -v --remove-orphans
+  # Also remove standalone tileserver container if present
+  try { $ts = & docker ps -aq -f name=kalk-tileserver; if ($ts) { docker rm -f $ts | Out-Null } } catch {}
 }
 if ($Rebuild) {
   docker compose down
@@ -17,6 +19,9 @@ if ($Rebuild) {
 $composeUpArgs = @("up","-d")
 if ($EnvFile) { $composeUpArgs = @("--env-file", $EnvFile) + $composeUpArgs }
 docker compose @composeUpArgs
+
+# TileServer is now managed by docker-compose.yml
+# No need for manual container management
 
 # Ensure Node/npm available
 $nodeCmd = Get-Command node -ErrorAction SilentlyContinue
@@ -123,3 +128,7 @@ Write-Host "Started:"
 Write-Host "- API:           http://localhost:8000 (Swagger: /api/docs)"
 Write-Host "- Dashboard:     http://127.0.0.1:3000/"
 Write-Host "- KalkNegar:     http://localhost:5173/kalknegar/"
+Write-Host ""
+Write-Host "Optional services:"
+Write-Host "- TileServer:    docker compose --profile maps up -d (requires backend/static/maps/maps.mbtiles)"
+Write-Host "                http://127.0.0.1:8480 (MBTiles: backend/static/maps/maps.mbtiles)"

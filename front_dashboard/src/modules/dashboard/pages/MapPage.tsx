@@ -96,6 +96,7 @@ import {
   selectMapZoom,
   selectDrawingType,
   selectIsDrawingMode,
+  selectActiveOfflineMap,
   addMarker,
   MapMarker,
   Coordinates,
@@ -446,11 +447,14 @@ const MapPage: React.FC = () => {
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<Map | null>(null);
   const unitsLayerRef = useRef<VectorLayer<VectorSource> | null>(null);
+  const baseLayerRefs = useRef<Record<string, TileLayer<any>>>({});
   const dispatch = useAppDispatch();
   const user = useAppSelector(selectUser);
   const mapState = useAppSelector(selectMapState);
   const mapCenter = useAppSelector(selectMapCenter);
   const mapZoom = useAppSelector(selectMapZoom);
+  const baseLayersConfig = useAppSelector(selectBaseLayers);
+  const activeOfflineMap = useAppSelector(selectActiveOfflineMap);
   const isDrawingMode = useAppSelector(selectIsDrawingMode);
   const theme = useTheme();
   
@@ -547,10 +551,7 @@ const MapPage: React.FC = () => {
   useEffect(() => {
     if (!mapRef.current) return;
 
-    // ایجاد لایه پایه (OpenStreetMap)
-    const baseLayer = new TileLayer({
-      source: new OSM(),
-    });
+    // ایجاد نقشه (بدون لایه‌ها، لایه‌های پایه را بعداً بر اساس state اضافه می‌کنیم)
 
     // ایجاد لایه واحدهای نظامی
     const unitsSource = new VectorSource();
@@ -567,10 +568,9 @@ const MapPage: React.FC = () => {
 
     unitsLayerRef.current = unitsLayer;
 
-    // ایجاد نقشه
     const map = new Map({
       target: mapRef.current,
-      layers: [baseLayer, unitsLayer],
+      layers: [unitsLayer],
       view: new View({
         center: fromLonLat([mapCenter.lng, mapCenter.lat]),
         zoom: mapZoom,
@@ -580,6 +580,28 @@ const MapPage: React.FC = () => {
     });
 
     mapInstanceRef.current = map;
+
+    // افزودن لایه‌های پایه از state
+    baseLayersConfig.forEach(cfg => {
+      let source;
+      
+      // اگر نقشه آفلاین فعال است، از آن استفاده کن
+      if (cfg.id === 'osm' && activeOfflineMap) {
+        source = new XYZ({ 
+          url: activeOfflineMap.url, 
+          crossOrigin: 'anonymous' 
+        });
+      } else {
+        const isOSM = (cfg.url || '').includes('{s}.tile.openstreetmap.org');
+        source = isOSM ? new OSM() : new XYZ({ url: cfg.url || '', crossOrigin: 'anonymous' });
+      }
+      
+      const tl = new TileLayer({ source, visible: cfg.visible, opacity: cfg.opacity });
+      // اطمینان از قرارگیری زیر لایه‌های واحدها
+      map.addLayer(tl);
+      tl.setZIndex(0);
+      baseLayerRefs.current[cfg.id] = tl;
+    });
 
     // اضافه کردن event listeners
     map.on('click', (event) => {
@@ -601,7 +623,43 @@ const MapPage: React.FC = () => {
         map.setTarget(undefined);
       }
     };
-  }, []);
+  }, [mapCenter, mapZoom, baseLayersConfig, activeOfflineMap]);
+
+  // همگام‌سازی تغییرات لایه‌های پایه با نقشه
+  useEffect(() => {
+    const map = mapInstanceRef.current;
+    if (!map) return;
+
+    // حذف لایه‌هایی که دیگر وجود ندارند
+    Object.keys(baseLayerRefs.current).forEach(id => {
+      if (!baseLayersConfig.find(l => l.id === id)) {
+        const layer = baseLayerRefs.current[id];
+        map.removeLayer(layer);
+        delete baseLayerRefs.current[id];
+      }
+    });
+
+    // افزودن/به‌روزرسانی لایه‌ها
+    baseLayersConfig.forEach(cfg => {
+      let layer = baseLayerRefs.current[cfg.id];
+      const isOSM = (cfg.url || '').includes('{s}.tile.openstreetmap.org');
+      if (!layer) {
+        const source = isOSM ? new OSM() : new XYZ({ url: cfg.url || '', crossOrigin: 'anonymous' });
+        layer = new TileLayer({ source });
+        map.addLayer(layer);
+        layer.setZIndex(0);
+        baseLayerRefs.current[cfg.id] = layer;
+      }
+      layer.setOpacity(cfg.opacity);
+      layer.setVisible(cfg.visible);
+      // اگر URL تغییر کرد، منبع را به‌روزرسانی کنیم
+      const src = layer.getSource();
+      if (!isOSM && src && (src as any).getUrls && cfg.url) {
+        const xyz = src as unknown as XYZ;
+        (xyz as any).setUrl?.(cfg.url);
+      }
+    });
+  }, [baseLayersConfig]);
 
   // به‌روزرسانی مرکز و زوم نقشه
   useEffect(() => {

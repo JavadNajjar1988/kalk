@@ -49,6 +49,11 @@ export interface MapState {
   drawingType: 'point' | 'line' | 'polygon' | 'circle' | null;
   loading: boolean;
   error: string | null;
+  activeOfflineMap: {
+    id: number;
+    name: string;
+    url: string;
+  } | null;
 }
 
 // حالت اولیه نقشه
@@ -59,11 +64,11 @@ const initialState: MapState = {
   baseLayers: [
     {
       id: 'osm',
-      name: 'نقشه پایه',
+      name: 'نقشه آفلاین جهانی',
       type: 'base',
       visible: true,
       opacity: 1,
-      url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+      url: 'http://127.0.0.1:8480/data/maps/{z}/{x}/{y}.png',
     },
     {
       id: 'satellite',
@@ -134,6 +139,7 @@ const initialState: MapState = {
   drawingType: null,
   loading: false,
   error: null,
+  activeOfflineMap: null,
 };
 
 // ایجاد اسلایس نقشه
@@ -270,6 +276,20 @@ const mapSlice = createSlice({
       state.zoom = initialState.zoom;
       state.bounds = null;
     },
+    
+    // تنظیم نقشه آفلاین فعال
+    setActiveOfflineMap: (state, action: PayloadAction<{ id: number; name: string; url: string } | null>) => {
+      state.activeOfflineMap = action.payload;
+      
+      // اگر نقشه آفلاین جدید تنظیم شد، لایه OSM را به‌روزرسانی کن
+      if (action.payload) {
+        const osmLayer = state.baseLayers.find(layer => layer.id === 'osm');
+        if (osmLayer) {
+          osmLayer.url = action.payload.url;
+          osmLayer.name = action.payload.name;
+        }
+      }
+    },
   },
 });
 
@@ -291,6 +311,7 @@ export const {
   loadingStart,
   loadingEnd,
   setError,
+  setActiveOfflineMap,
   clearError,
   resetMap,
 } = mapSlice.actions;
@@ -312,6 +333,7 @@ export const selectIsDrawingMode = (state: RootState) => state.map.isDrawingMode
 export const selectDrawingType = (state: RootState) => state.map.drawingType;
 export const selectMapLoading = (state: RootState) => state.map.loading;
 export const selectMapError = (state: RootState) => state.map.error;
+export const selectActiveOfflineMap = (state: RootState) => state.map.activeOfflineMap;
 
 // اکسپورت کردن ریدیوسر
 export default mapSlice.reducer; 
