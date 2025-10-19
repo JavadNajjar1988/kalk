@@ -42,6 +42,7 @@ import {
   selectTabPagination,
 } from '@/store/slices/tabularResourcesSlice';
 import DynamicModal from '@/components/common/DynamicModal';
+import PersonnelDeleteConfirmModal from './PersonnelDeleteConfirmModal';
 
 const PersonnelTab: React.FC = () => {
   const { t } = useTranslation();
@@ -142,13 +143,26 @@ const PersonnelTab: React.FC = () => {
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (window.confirm('آیا از حذف این شخص اطمینان دارید؟')) {
-      try {
-        await dispatch(deleteTabItem({ tabType: 'personnel', itemId: id })).unwrap();
-      } catch (error) {
-        console.error('Error deleting personnel:', error);
-      }
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [pendingDeletePerson, setPendingDeletePerson] = useState<PersonnelItem | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const handleDelete = (id: string) => {
+    const person = personnel.find(p => p.id === id) || null;
+    setPendingDeletePerson(person);
+    setDeleteOpen(true);
+  };
+
+  const confirmDelete = async (personId: string) => {
+    try {
+      setIsDeleting(true);
+      await dispatch(deleteTabItem({ tabType: 'personnel', itemId: personId })).unwrap();
+      setDeleteOpen(false);
+      setPendingDeletePerson(null);
+    } catch (error) {
+      console.error('Error deleting personnel:', error);
+    } finally {
+      setIsDeleting(false);
     }
   };
   
@@ -414,6 +428,14 @@ const PersonnelTab: React.FC = () => {
         title={selectedPersonnel ? "ویرایش شخص" : "افزودن شخص جدید"}
         initialData={selectedPersonnel || {}}
         maxWidth="lg"
+      />
+
+      <PersonnelDeleteConfirmModal
+        open={deleteOpen}
+        person={pendingDeletePerson}
+        onClose={() => { setDeleteOpen(false); setPendingDeletePerson(null); }}
+        onConfirm={confirmDelete}
+        isDeleting={isDeleting}
       />
     </Box>
   );

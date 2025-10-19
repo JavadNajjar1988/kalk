@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import {
   Dialog,
   DialogTitle,
@@ -12,11 +12,8 @@ import {
   InputLabel,
   Select,
   MenuItem,
-  Switch,
-  FormControlLabel,
   Chip,
   Alert,
-  Divider,
   List,
   ListItem,
   ListItemIcon,
@@ -237,7 +234,7 @@ const QuickActionsModal: React.FC<QuickActionsModalProps> = ({
       switch (selectedAction) {
         case 'changePassword':
           if (passwordData.newPassword !== passwordData.confirmPassword) {
-            alert('رمز عبور و تکرار آن یکسان نیستند');
+            alert('رمز عبور و تأیید آن یکسان نیست');
             return;
           }
           payload = {
@@ -270,7 +267,7 @@ const QuickActionsModal: React.FC<QuickActionsModalProps> = ({
       await onAction(payload);
       handleClose();
     } catch (error) {
-      console.error('خطا در اجرای عملیات:', error);
+      console.error('خطا در ارسال عملیات:', error);
     } finally {
       setIsLoading(false);
     }
@@ -296,7 +293,7 @@ const QuickActionsModal: React.FC<QuickActionsModalProps> = ({
 
       >
 
-        ?????? ?????? ????: {user?.personalInfo.fullName}
+        اقدامات سریع برای: {user?.personalInfo.fullName}
 
       </Typography>
 
@@ -324,9 +321,9 @@ const QuickActionsModal: React.FC<QuickActionsModalProps> = ({
 
             primaryTypographyProps={{ fontWeight: 600 }}
 
-            primary="????? ??? ????"
+            primary="تغییر رمز عبور"
 
-            secondary="????? ??? ???? ???? ???? ?????"
+            secondary="تنظیم رمز عبور جدید برای کاربر"
 
           />
 
@@ -354,9 +351,9 @@ const QuickActionsModal: React.FC<QuickActionsModalProps> = ({
 
             primaryTypographyProps={{ fontWeight: 600 }}
 
-            primary="????? ??? ??????"
+            primary="به‌روزرسانی سطح دسترسی"
 
-            secondary="?????? ??? ? ??? ?????? ?????"
+            secondary="انتخاب نقش و سطح دسترسی تازه برای کاربر"
 
           />
 
@@ -384,9 +381,9 @@ const QuickActionsModal: React.FC<QuickActionsModalProps> = ({
 
             primaryTypographyProps={{ fontWeight: 600 }}
 
-            primary={user?.isActive ? '??????? ???? ?????' : '???? ???? ?????'}
+            primary={user?.isActive ? 'غیرفعال کردن حساب کاربری' : 'فعال کردن حساب کاربری'}
 
-            secondary={user?.isActive ? '????? ???? ?? ???? ?????? ???' : '????? ???? ?? ???? ????? ???'}
+            secondary={user?.isActive ? 'کاربر پس از غیرفعال‌سازی قادر به ورود نخواهد بود' : 'با فعال‌سازی، دسترسی کاربر مجدداً برقرار می‌شود'}
 
           />
 
@@ -408,7 +405,7 @@ const renderPasswordForm = () => (
 
         <PasswordIcon sx={{ color: theme.palette.primary.main }} />
 
-        <Typography variant="h6" fontWeight={600}>????? ??? ????</Typography>
+        <Typography variant="h6" fontWeight={600}>تغییر رمز عبور</Typography>
 
       </Box>
 
@@ -436,7 +433,7 @@ const renderPasswordForm = () => (
 
       >
 
-        ??? ???? ???? ???? ????? ? ??????? ? ???? ????? ????? ? ?????? ????.
+        برای امنیت بیشتر از رمز عبور قوی و حداقل ۸ کاراکتر استفاده کنید.
 
       </Alert>
 
@@ -448,7 +445,7 @@ const renderPasswordForm = () => (
 
         type="password"
 
-        label="??? ???? ????"
+        label="رمز عبور جدید"
 
         value={passwordData.newPassword}
 
@@ -466,7 +463,7 @@ const renderPasswordForm = () => (
 
         type="password"
 
-        label="????? ??? ???? ????"
+        label="تأیید رمز عبور جدید"
 
         value={passwordData.confirmPassword}
 
@@ -474,7 +471,7 @@ const renderPasswordForm = () => (
 
         error={passwordData.confirmPassword !== '' && passwordData.newPassword !== passwordData.confirmPassword}
 
-        helperText={passwordData.confirmPassword !== '' && passwordData.newPassword !== passwordData.confirmPassword ? '??? ???? ? ????? ?? ????? ??????' : ''}
+        helperText={passwordData.confirmPassword !== '' && passwordData.newPassword !== passwordData.confirmPassword ? 'رمز عبور و تأیید آن یکسان نیست' : ''}
 
         sx={inputStyle}
 
@@ -494,7 +491,7 @@ const renderAccessLevelForm = () => (
 
         <AccessIcon sx={{ color: theme.palette.info.main }} />
 
-        <Typography variant="h6" fontWeight={600}>????? ??? ??????</Typography>
+        <Typography variant="h6" fontWeight={600}>به‌روزرسانی سطح دسترسی</Typography>
 
       </Box>
 
@@ -522,7 +519,7 @@ const renderAccessLevelForm = () => (
 
       >
 
-        ????? ??? ?????? ?? ??? ?????????? ????? ????? ?????? ????.
+        تغییر نقش یا سطح دسترسی می‌تواند توانایی‌های کاربر را تغییر دهد.
 
       </Alert>
 
@@ -530,7 +527,7 @@ const renderAccessLevelForm = () => (
 
       <FormControl fullWidth sx={inputStyle}>
 
-        <InputLabel>??? ??????</InputLabel>
+        <InputLabel>نقش کاربری</InputLabel>
 
         <Select
 
@@ -538,7 +535,7 @@ const renderAccessLevelForm = () => (
 
           onChange={(e) => setAccessData(prev => ({ ...prev, newRole: e.target.value }))}
 
-          label="??? ??????"
+          label="نقش کاربری"
 
         >
 
@@ -560,7 +557,7 @@ const renderAccessLevelForm = () => (
 
       <FormControl fullWidth sx={inputStyle}>
 
-        <InputLabel>??? ??????</InputLabel>
+        <InputLabel>سطح دسترسی</InputLabel>
 
         <Select
 
@@ -568,7 +565,7 @@ const renderAccessLevelForm = () => (
 
           onChange={(e) => setAccessData(prev => ({ ...prev, newAccessLevel: e.target.value }))}
 
-          label="??? ??????"
+          label="سطح دسترسی"
 
         >
 
@@ -590,7 +587,7 @@ const renderAccessLevelForm = () => (
 
       <Box>
 
-        <Typography variant="body2" color="text.secondary" sx={{ mb: 1, fontWeight: 600 }}>??????? ????:</Typography>
+        <Typography variant="body2" color="text.secondary" sx={{ mb: 1, fontWeight: 600 }}>مجوزهای فعلی:</Typography>
 
         <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
 
@@ -648,7 +645,7 @@ const renderToggleActiveConfirmation = () => (
 
         <Typography variant="h6" fontWeight={600}>
 
-          {user?.isActive ? '??????? ???? ?????' : '???? ???? ?????'}
+          {user?.isActive ? 'غیرفعال کردن حساب کاربری' : 'فعال کردن حساب کاربری'}
 
         </Typography>
 
@@ -682,9 +679,9 @@ const renderToggleActiveConfirmation = () => (
 
         {user?.isActive
 
-          ? '?? ??????? ???? ??? ?????? ?? ???? ?? ???? ?? ????? ?????? ???.'
+          ? 'با غیرفعال کردن حساب، کاربر امکان ورود به سامانه را نخواهد داشت.'
 
-          : '?? ???? ???? ??? ?????? ?? ???? ?? ???? ?? ????? ????? ???.'
+          : 'با فعال کردن حساب، دسترسی کاربر به سامانه برقرار می‌شود.'
 
         }
 
@@ -720,13 +717,13 @@ const renderToggleActiveConfirmation = () => (
 
       >
 
-        <Typography variant="body2"><strong>?????:</strong> {user?.personalInfo.fullName}</Typography>
+        <Typography variant="body2"><strong>نام:</strong> {user?.personalInfo.fullName}</Typography>
 
-        <Typography variant="body2"><strong>?? ??????:</strong> {user?.userCode}</Typography>
+        <Typography variant="body2"><strong>کد کاربری:</strong> {user?.userCode}</Typography>
 
-        <Typography variant="body2"><strong>???:</strong> {user?.systemInfo.role}</Typography>
+        <Typography variant="body2"><strong>نقش:</strong> {user?.systemInfo.role}</Typography>
 
-        <Typography variant="body2"><strong>????? ????:</strong> {user?.isActive ? '????' : '???????'}</Typography>
+        <Typography variant="body2"><strong>وضعیت حساب:</strong> {user?.isActive ? 'فعال' : 'غیرفعال'}</Typography>
 
       </Box>
 
@@ -809,7 +806,7 @@ const renderContent = () => {
             variant={isMobile ? 'h6' : 'h5'}
             sx={{ fontWeight: 700, color: theme.palette.primary.main }}
           >
-            ??????? ????
+            اقدامات سریع
           </Typography>
         </Box>
         <IconButton
@@ -852,7 +849,7 @@ const renderContent = () => {
             disabled={isLoading}
             sx={secondaryButtonSx}
           >
-            ??????
+            بازگشت
           </Button>
         )}
 
@@ -861,7 +858,7 @@ const renderContent = () => {
           disabled={isLoading}
           sx={secondaryButtonSx}
         >
-          ??????
+          انصراف
         </Button>
 
         {selectedAction && (
@@ -871,7 +868,7 @@ const renderContent = () => {
             disabled={!isFormValid() || isLoading}
             sx={getPrimaryButtonSx(isDestructiveAction ? 'destructive' : 'default')}
           >
-            {isLoading ? '?? ??? ?????...' : '?????'}
+            {isLoading ? 'در حال انجام...' : 'تأیید'}
           </Button>
         )}
       </DialogActions>

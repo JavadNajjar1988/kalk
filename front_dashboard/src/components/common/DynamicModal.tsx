@@ -479,7 +479,7 @@ const DynamicModal: React.FC<DynamicModalProps> = ({
             },
           }}
         >
-          ??????
+          انصراف
         </Button>
         <Button
           onClick={handleSave}
@@ -509,7 +509,7 @@ const DynamicModal: React.FC<DynamicModalProps> = ({
             },
           }}
         >
-          {isSaving ? '?? ??? ?????...' : '?????'}
+          {isSaving ? 'در حال ذخیره...' : 'ذخیره'}
         </Button>
       </DialogActions>
     </Dialog>

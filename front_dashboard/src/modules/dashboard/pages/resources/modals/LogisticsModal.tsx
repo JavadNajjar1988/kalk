@@ -293,60 +293,7 @@ const LogisticsModal: React.FC<LogisticsModalProps> = ({
               boxShadow: `0 8px 24px ${alpha(theme.palette.primary.main, 0.08)}`,
             }}
           >
-            <Typography
-              variant="subtitle1"
-              sx={{ fontWeight: 600, mb: 2, color: theme.palette.primary.main }}
-            >
-              {t('resources.logistics.basicInfo') ?? 'اطلاعات اصلی'}
-            </Typography>
-            <Grid container spacing={2}>
-              <Grid item xs={12} md={6}>
-                <TextField
-                  fullWidth
-                  label={t('resources.logistics.name')}
-                  value={formData.name || ''}
-                  onChange={(e) => handleChange('name', e.target.value)}
-                  required
-                  sx={textFieldSx}
-                />
-              </Grid>
-              <Grid item xs={12} md={6}>
-                <TextField
-                  fullWidth
-                  label={t('resources.logistics.code')}
-                  value={formData.code || ''}
-                  onChange={(e) => handleChange('code', e.target.value)}
-                  required
-                  sx={textFieldSx}
-                />
-              </Grid>
-              <Grid item xs={12} md={6}>
-                <TextField
-                  select
-                  fullWidth
-                  label={t('resources.logistics.category')}
-                  value={formData.category || ''}
-                  onChange={(e) => handleChange('category', e.target.value)}
-                  required
-                  sx={textFieldSx}
-                >
-                  {categories.map((category) => (
-                    <MenuItem key={category.id} value={category.id}>
-                      {category.name}
-                    </MenuItem>
-                  ))}
-                </TextField>
-              </Grid>
-              <Grid item xs={12} md={6}>
-                <TextField
-                  fullWidth
-                  label={t('resources.logistics.provider') ?? 'تأمین‌کننده'}
-                  value={formData.provider || ''}
-                  onChange={(e) => handleChange('provider', e.target.value)}
-                  sx={textFieldSx}
-                />
-              </Grid>
-            </Grid>
+            
           </Paper>
 
           <Paper
@@ -378,7 +325,7 @@ const LogisticsModal: React.FC<LogisticsModalProps> = ({
                   borderRadius: 1,
                 }}
               />
-              {t('resources.logistics.hierarchyTitle') ?? 'مسیر سلسله‌مراتب'}
+              سلسله‌مراتب لجستیک
             </Typography>
             <LogisticsHierarchicalSelector
               value={selectedLogisticsPath}
@@ -487,7 +434,7 @@ const LogisticsModal: React.FC<LogisticsModalProps> = ({
             },
           }}
         >
-          {t('common.cancel')}
+          انصراف
         </Button>
         <Button
           onClick={handleSubmit}
@@ -514,7 +461,7 @@ const LogisticsModal: React.FC<LogisticsModalProps> = ({
             },
           }}
         >
-          {t('common.save')}
+          ذخیره
         </Button>
       </DialogActions>
     </Dialog>

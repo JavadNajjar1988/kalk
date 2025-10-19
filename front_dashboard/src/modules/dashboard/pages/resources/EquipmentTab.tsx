@@ -42,6 +42,7 @@ import {
   selectTabPagination,
 } from '@/store/slices/tabularResourcesSlice';
 import EquipmentModal from '@/modules/dashboard/pages/resources/modals/EquipmentModal';
+import EquipmentDeleteConfirmModal from '@/modules/dashboard/pages/resources/EquipmentDeleteConfirmModal';
 
 // Import equipment data
 import equipmentData from '@/data/resources/equipment.json';
@@ -111,13 +112,26 @@ const EquipmentTab: React.FC = () => {
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (window.confirm('آیا از حذف این تجهیز اطمینان دارید؟')) {
-      try {
-        await dispatch(deleteTabItem({ tabType: 'equipment', itemId: id })).unwrap();
-      } catch (error) {
-        console.error('Error deleting equipment:', error);
-      }
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [pendingDeleteEquipment, setPendingDeleteEquipment] = useState<EquipmentItem | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const handleDelete = (id: string) => {
+    const item = equipment.find(e => e.id === id) || null;
+    setPendingDeleteEquipment(item);
+    setDeleteOpen(true);
+  };
+
+  const confirmDelete = async (id: string) => {
+    try {
+      setIsDeleting(true);
+      await dispatch(deleteTabItem({ tabType: 'equipment', itemId: id })).unwrap();
+      setDeleteOpen(false);
+      setPendingDeleteEquipment(null);
+    } catch (error) {
+      console.error('Error deleting equipment:', error);
+    } finally {
+      setIsDeleting(false);
     }
   };
   
@@ -357,6 +371,14 @@ const EquipmentTab: React.FC = () => {
         onSave={handleSave}
         equipment={selectedEquipment}
         categories={equipmentData.categories}
+      />
+
+      <EquipmentDeleteConfirmModal
+        open={deleteOpen}
+        item={pendingDeleteEquipment}
+        onClose={() => { setDeleteOpen(false); setPendingDeleteEquipment(null); }}
+        onConfirm={confirmDelete}
+        isDeleting={isDeleting}
       />
     </Box>
   );

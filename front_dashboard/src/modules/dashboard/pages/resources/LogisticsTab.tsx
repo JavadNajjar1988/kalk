@@ -42,6 +42,7 @@ import {
   selectTabPagination,
 } from '@/store/slices/tabularResourcesSlice';
 import LogisticsModal from './modals/LogisticsModal';
+import LogisticsDeleteConfirmModal from '@/modules/dashboard/pages/resources/LogisticsDeleteConfirmModal';
 
 // Import logistics data
 // import logisticsData from '@/data/resources/logistics.json'; // Remove static import
@@ -111,13 +112,26 @@ const LogisticsTab: React.FC = () => {
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (window.confirm('آیا از حذف این آیتم لجستیک اطمینان دارید؟')) {
-      try {
-        await dispatch(deleteTabItem({ tabType: 'logistics', itemId: id })).unwrap();
-      } catch (error) {
-        console.error('Error deleting logistics:', error);
-      }
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [pendingDeleteItem, setPendingDeleteItem] = useState<LogisticsItem | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const handleDelete = (id: string) => {
+    const item = logistics.find(l => l.id === id) || null;
+    setPendingDeleteItem(item);
+    setDeleteOpen(true);
+  };
+
+  const confirmDelete = async (id: string) => {
+    try {
+      setIsDeleting(true);
+      await dispatch(deleteTabItem({ tabType: 'logistics', itemId: id })).unwrap();
+      setDeleteOpen(false);
+      setPendingDeleteItem(null);
+    } catch (error) {
+      console.error('Error deleting logistics:', error);
+    } finally {
+      setIsDeleting(false);
     }
   };
   
@@ -336,6 +350,14 @@ const LogisticsTab: React.FC = () => {
         onSave={handleSave}
         logistics={selectedLogistics}
         categories={[]} // No longer needed - using hierarchical selector
+      />
+
+      <LogisticsDeleteConfirmModal
+        open={deleteOpen}
+        item={pendingDeleteItem}
+        onClose={() => { setDeleteOpen(false); setPendingDeleteItem(null); }}
+        onConfirm={confirmDelete}
+        isDeleting={isDeleting}
       />
     </Box>
   );

@@ -11,6 +11,8 @@ import {
   InputAdornment,
   Alert,
   Fade,
+  useTheme,
+  alpha,
 } from '@mui/material';
 import {
   Visibility,
@@ -41,6 +43,7 @@ interface MousePosition {
 }
 
 const LoginPage: React.FC = () => {
+  const theme = useTheme();
   const navigate = useNavigate();
   const location = useLocation();
   const dispatch = useAppDispatch();
@@ -155,6 +158,42 @@ const LoginPage: React.FC = () => {
 
   const backgroundTransform = `translate(${mousePosition.x * -20}px, ${mousePosition.y * -20}px)`;
 
+  // Soft surface like FieldEditDialog
+  const getSoftSurface = () => {
+    const primary = (theme.palette.primary.main || '#4a90e2').toLowerCase();
+    const hex = primary.replace('#', '');
+    if (hex.includes('10b981') || hex.includes('4caf50') || hex.includes('2e7d32')) return '#f0f4f3';
+    if (hex.includes('4a90e2') || hex.includes('1976d2') || hex.includes('2196f3')) return '#f0f4f8';
+    if (hex.includes('ef4444') || hex.includes('f44336') || hex.includes('d32f2f')) return '#fbf1f0';
+    if (hex.includes('6b21a8') || hex.includes('9c27b0') || hex.includes('673ab7')) return '#22262d';
+    if (hex.includes('f59e0b') || hex.includes('ff9800') || hex.includes('fb8c00')) return '#fbf1f1';
+    const clamp = (n: number) => Math.max(0, Math.min(255, Math.round(n)));
+    const hexToRgb = (h: string) => {
+      const n = h.length === 3 ? h.split('').map(c => c + c).join('') : h;
+      const r = parseInt(n.substring(0, 2), 16);
+      const g = parseInt(n.substring(2, 4), 16);
+      const b = parseInt(n.substring(4, 6), 16);
+      return { r, g, b };
+    };
+    const rgbToHex = (r: number, g: number, b: number) => `#${clamp(r).toString(16).padStart(2, '0')}${clamp(g).toString(16).padStart(2, '0')}${clamp(b).toString(16).padStart(2, '0')}`;
+    const blendWithWhite = (h: string, primaryWeight = 0.10) => {
+      const { r, g, b } = hexToRgb(h);
+      const wr = 255, wg = 255, wb = 255;
+      const w = 1 - primaryWeight;
+      const br = wr * w + r * primaryWeight;
+      const bg = wg * w + g * primaryWeight;
+      const bb = wb * w + b * primaryWeight;
+      return rgbToHex(br, bg, bb);
+    };
+    if (/^[0-9a-f]{3,6}$/.test(hex)) return blendWithWhite(hex, 0.10);
+    try {
+      const fallback = (theme.palette.primary.light || '#90caf9').toLowerCase().replace('#', '');
+      return blendWithWhite(fallback, 0.08);
+    } catch {
+      return '#f5f7fa';
+    }
+  };
+
   return (
     <Box 
       sx={{ 
@@ -210,19 +249,20 @@ const LoginPage: React.FC = () => {
 
       {/* فرم ورود */}
       <Paper 
-        elevation={24}
+        elevation={0}
         sx={{
           position: 'relative',
           zIndex: 10,
           width: '100%',
-          maxWidth: '480px',
-          p: { xs: 3, sm: 4 },
+          maxWidth: '520px',
+          p: 0,
           mx: 2,
-          borderRadius: 3,
-          backgroundColor: 'rgba(255, 255, 255, 0.95)',
+          borderRadius: '20px',
+          backgroundColor: (theme) => alpha(theme.palette.primary.light, 0.10),
           backdropFilter: 'blur(20px)',
-          boxShadow: '0 20px 60px rgba(0, 0, 0, 0.3)',
-          border: '1px solid rgba(255, 255, 255, 0.2)',
+          border: (theme) => `1px solid ${alpha(theme.palette.primary.light, 0.2)}`,
+          boxShadow: (theme) => `0 20px 60px ${alpha(theme.palette.primary.light, 0.25)}, inset 0 1px 0 rgba(255, 255, 255, 0.75)`,
+          overflow: 'hidden',
         }}
       >
         {/* هدر */}
@@ -230,19 +270,23 @@ const LoginPage: React.FC = () => {
           display: 'flex', 
           flexDirection: 'column', 
           alignItems: 'center', 
-          mb: 4 
+          py: 3,
+          px: 3,
+          backgroundColor: getSoftSurface(),
+          borderBottom: (theme) => `1px solid ${alpha(theme.palette.primary.light, 0.2)}`,
         }}>
           <Box
             sx={{
               width: 80,
               height: 80,
               borderRadius: '50%',
-              background: 'linear-gradient(135deg, primary.main, primary.light)',
+              backgroundColor: (theme) => theme.palette.primary.main,
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               mb: 2,
-              boxShadow: '0 8px 24px rgba(0,0,0,0.15)',
+              boxShadow: (theme) => `0 8px 24px ${alpha(theme.palette.primary.main, 0.25)}`,
+              border: '2px solid rgba(255,255,255,0.3)'
             }}
           >
             <LoginIcon sx={{ fontSize: 40, color: 'white' }} />
@@ -276,7 +320,7 @@ const LoginPage: React.FC = () => {
           <Fade in={!!error}>
             <Alert 
               severity="error" 
-              sx={{ mb: 3, borderRadius: 2 }}
+              sx={{ m: 3, borderRadius: 2, backgroundColor: alpha(theme.palette.error.light, 0.15) }}
               onClose={() => dispatch(clearError())}
             >
               {error}
@@ -284,8 +328,20 @@ const LoginPage: React.FC = () => {
           </Fade>
         )}
         
-        {/* فرم */}
-        <form onSubmit={handleSubmit}>
+        {/* فرم - بدون افکت شیشه‌ای */}
+        <Box 
+          component="form" 
+          onSubmit={handleSubmit} 
+          sx={{ 
+            p: { xs: 2, sm: 3 }, 
+            pt: 2,
+            backgroundColor: (theme) => theme.palette.background.paper,
+            borderRadius: 0,
+            boxShadow: (theme) => theme.shadows[1],
+            border: (theme) => `1px solid ${alpha(theme.palette.primary.light, 0.15)}`,
+            backdropFilter: 'none',
+          }}
+        >
           {/* نام کاربری */}
           <Box sx={{ mb: 3 }}>
             <Typography variant="subtitle2" sx={{ mb: 1.5, fontWeight: 600 }}>
@@ -303,7 +359,7 @@ const LoginPage: React.FC = () => {
               disabled={isLoading}
               sx={{
                 '& .MuiOutlinedInput-root': {
-                  backgroundColor: 'rgba(255, 255, 255, 0.8)',
+                  backgroundColor: '#fff',
                 }
               }}
               InputProps={{
@@ -338,7 +394,7 @@ const LoginPage: React.FC = () => {
               disabled={isLoading}
               sx={{
                 '& .MuiOutlinedInput-root': {
-                  backgroundColor: 'rgba(255, 255, 255, 0.8)',
+                  backgroundColor: '#fff',
                 }
               }}
               InputProps={{
@@ -397,24 +453,29 @@ const LoginPage: React.FC = () => {
             size="large"
             disabled={isLoading || !formData.username || !formData.password}
             sx={{ 
-              py: 1.8, 
-              mb: 3, 
+              py: 1.6, 
+              mb: 2.5, 
               fontWeight: 600,
               fontSize: '1.1rem',
-              position: 'relative',
-              overflow: 'hidden',
+              borderRadius: '12px',
+              border: '2px solid rgba(255,255,255,0.3)',
+              boxShadow: (theme) => `0 4px 16px ${alpha(theme.palette.primary.main, 0.3)}`,
+              '&:hover': {
+                transform: 'translateY(-2px)',
+                boxShadow: (theme) => `0 8px 24px ${alpha(theme.palette.primary.main, 0.4)}`,
+              }
             }}
           >
             {isLoading ? 'در حال ورود...' : 'ورود به سیستم'}
           </Button>
-        </form>
+        </Box>
         
         {/* اطلاعات تماس */}
         <Box sx={{ 
           textAlign: 'center', 
-          pt: 2, 
-          borderTop: '1px solid',
-          borderColor: 'divider',
+          p: 2.5,
+          borderTop: (theme) => `1px solid ${alpha(theme.palette.primary.light, 0.2)}`,
+          backgroundColor: getSoftSurface(),
         }}>
           <Typography variant="caption" color="text.secondary">
             در صورت مشکل با واحد پشتیبانی تماس بگیرید

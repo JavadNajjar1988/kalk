@@ -330,7 +330,7 @@ const UserForm: React.FC<UserFormProps> = ({ open, onClose, onSave, user, mode }
           variant="contained"
           disabled={Object.keys(errors).length > 0}
         >
-          {mode === 'create' ? 'ایجاد' : 'ذخیره'}
+          ذخیره
         </Button>
       </DialogActions>
     </Dialog>

@@ -24,7 +24,6 @@ interface EquipmentModalProps {
   onClose: () => void;
   onSave: (data: any) => void;
   equipment?: any;
-  categories: any[];
 }
 
 const EquipmentModal: React.FC<EquipmentModalProps> = ({
@@ -32,7 +31,6 @@ const EquipmentModal: React.FC<EquipmentModalProps> = ({
   onClose,
   onSave,
   equipment,
-  categories,
 }) => {
   const { t } = useTranslation();
   const theme = useTheme();
@@ -279,7 +277,7 @@ const EquipmentModal: React.FC<EquipmentModalProps> = ({
             color: theme.palette.primary.main,
           }}
         >
-          {equipment ? t('resources.equipment.editEquipment') : t('resources.equipment.addEquipment')}
+          {equipment ? 'ویرایش تجهیز' : 'افزودن تجهیز جدید'}
         </Typography>
       </DialogTitle>
 
@@ -290,71 +288,6 @@ const EquipmentModal: React.FC<EquipmentModalProps> = ({
         }}
       >
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-          <Paper
-            elevation={0}
-            sx={{
-              p: isMobile ? 2 : 3,
-              borderRadius: '16px',
-              backgroundColor: 'rgba(255, 255, 255, 0.95)',
-              border: `1px solid ${alpha(theme.palette.primary.main, 0.15)}`,
-              boxShadow: `0 8px 24px ${alpha(theme.palette.primary.main, 0.08)}`,
-            }}
-          >
-            <Typography
-              variant="subtitle1"
-              sx={{ fontWeight: 600, mb: 2, color: theme.palette.primary.main }}
-            >
-              {t('resources.equipment.basicInfo')}
-            </Typography>
-            <Grid container spacing={2}>
-              <Grid item xs={12} md={6}>
-                <TextField
-                  fullWidth
-                  label={t('resources.equipment.name')}
-                  value={formData.name || ''}
-                  onChange={(e) => handleChange('name', e.target.value)}
-                  required
-                  sx={textFieldSx}
-                />
-              </Grid>
-              <Grid item xs={12} md={6}>
-                <TextField
-                  fullWidth
-                  label={t('resources.equipment.code')}
-                  value={formData.code || ''}
-                  onChange={(e) => handleChange('code', e.target.value)}
-                  required
-                  sx={textFieldSx}
-                />
-              </Grid>
-              <Grid item xs={12} md={6}>
-                <TextField
-                  select
-                  fullWidth
-                  label={t('resources.equipment.category')}
-                  value={formData.category || ''}
-                  onChange={(e) => handleChange('category', e.target.value)}
-                  required
-                  sx={textFieldSx}
-                >
-                  {categories.map((category) => (
-                    <MenuItem key={category.id} value={category.id}>
-                      {category.name}
-                    </MenuItem>
-                  ))}
-                </TextField>
-              </Grid>
-              <Grid item xs={12} md={6}>
-                <TextField
-                  fullWidth
-                  label={t('resources.equipment.manufacturer')}
-                  value={formData.manufacturer || ''}
-                  onChange={(e) => handleChange('manufacturer', e.target.value)}
-                  sx={textFieldSx}
-                />
-              </Grid>
-            </Grid>
-          </Paper>
 
           <Paper
             elevation={0}
@@ -388,7 +321,7 @@ const EquipmentModal: React.FC<EquipmentModalProps> = ({
                   borderRadius: 1,
                 }}
               />
-              {t('resources.equipment.equipmentHierarchy')}
+              سلسله‌مراتب تجهیزات
             </Typography>
             <EquipmentHierarchicalSelector
               value={selectedEquipmentPath}
@@ -482,7 +415,7 @@ const EquipmentModal: React.FC<EquipmentModalProps> = ({
             },
           }}
         >
-          {t('common.cancel')}
+          انصراف
         </Button>
         <Button
           onClick={handleSubmit}
@@ -509,7 +442,7 @@ const EquipmentModal: React.FC<EquipmentModalProps> = ({
             },
           }}
         >
-          {t('common.save')}
+          ذخیره
         </Button>
       </DialogActions>
     </Dialog>

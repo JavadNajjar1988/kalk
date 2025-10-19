@@ -37,8 +37,8 @@ import {
   Edit as EditIcon,
   AccountBox,
   ExitToApp,
-  Person,
-  VpnKey,
+  
+  
 } from '@mui/icons-material';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAppSelector, useAppDispatch } from '@/store';
@@ -90,6 +90,41 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
     dateTime: !layout.sidebarCollapsed
   });
 
+  // Soft background surface like 4-step modal
+  const getSoftSurface = () => {
+    const primary = (theme.palette.primary.main || '#4a90e2').toLowerCase();
+    const hex = primary.replace('#', '');
+    if (hex.includes('10b981') || hex.includes('4caf50') || hex.includes('2e7d32')) return '#f0f4f3';
+    if (hex.includes('4a90e2') || hex.includes('1976d2') || hex.includes('2196f3')) return '#f0f4f8';
+    if (hex.includes('ef4444') || hex.includes('f44336') || hex.includes('d32f2f')) return '#fbf1f0';
+    if (hex.includes('6b21a8') || hex.includes('9c27b0') || hex.includes('673ab7')) return '#22262d';
+    if (hex.includes('f59e0b') || hex.includes('ff9800') || hex.includes('fb8c00')) return '#fbf1f1';
+    const clamp = (n: number) => Math.max(0, Math.min(255, Math.round(n)));
+    const hexToRgb = (h: string) => {
+      const n = h.length === 3 ? h.split('').map(c => c + c).join('') : h;
+      const r = parseInt(n.substring(0, 2), 16);
+      const g = parseInt(n.substring(2, 4), 16);
+      const b = parseInt(n.substring(4, 6), 16);
+      return { r, g, b };
+    };
+    const rgbToHex = (r: number, g: number, b: number) => `#${clamp(r).toString(16).padStart(2, '0')}${clamp(g).toString(16).padStart(2, '0')}${clamp(b).toString(16).padStart(2, '0')}`;
+    const blendWithWhite = (h: string, primaryWeight = 0.10) => {
+      const { r, g, b } = hexToRgb(h);
+      const wr = 255, wg = 255, wb = 255;
+      const w = 1 - primaryWeight;
+      const br = wr * w + r * primaryWeight;
+      const bg = wg * w + g * primaryWeight;
+      const bb = wb * w + b * primaryWeight;
+      return rgbToHex(br, bg, bb);
+    };
+    if (/^[0-9a-f]{3,6}$/.test(hex)) return blendWithWhite(hex, 0.10);
+    try {
+      const fallback = (theme.palette.primary.light || '#90caf9').toLowerCase().replace('#', '');
+      return blendWithWhite(fallback, 0.08);
+    } catch {
+      return '#f5f7fa';
+    }
+  };
 
   useEffect(() => {
     setSidebarElementsVisible({
@@ -176,10 +211,6 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
     item.roles.includes(user?.role || 'operator')
   );
 
-
-
-
-
   const handleNotificationsMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
     setNotificationsMenuAnchor(event.currentTarget);
   };
@@ -203,14 +234,10 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
     handleProfileMenuClose();
   };
 
-
-
   const handleMenuItemClick = (path: string, itemId: string) => {
     if (itemId === 'kalknegar') {
-      // نمایش دیالوگ راه‌اندازی کالک نگار
       setKalknegarDialogOpen(true);
     } else {
-      // فقط navigate کردن بدون بستن settings panel
       navigate(path);
     }
   };
@@ -222,7 +249,6 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
     return location.pathname.startsWith(path);
   };
 
-  // Gmail-like action handlers
   const handleSettingsClick = () => {
     dispatch(toggleSidePanel('settings'));
   };
@@ -241,11 +267,9 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
 
   const handleSidebarToggle = () => {
     if (!layout.sidebarCollapsed) {
-      // بستن منو
       setSidebarElementsVisible({ labels: false, dateTime: false });
       dispatch(toggleSidebar());
     } else {
-      // باز کردن منو
       dispatch(toggleSidebar());
       setTimeout(() => {
         setSidebarElementsVisible({ labels: true, dateTime: true });
@@ -253,7 +277,6 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
     }
   };
 
-  // تابع‌های مربوط به دیالوگ کالک نگار
   const handleKalknegarDialogClose = () => {
     setKalknegarDialogOpen(false);
   };
@@ -261,27 +284,20 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
   const handleKalknegarLaunch = () => {
     setKalknegarDialogOpen(false);
     setKalknegarLoadingOpen(true);
-    
-    // Copy token to sessionStorage for iframe access
     const token = localStorage.getItem('access_token');
     if (token) {
       sessionStorage.setItem('access_token', token);
       console.log('[MainLayout] Token copied to sessionStorage for iframe access');
     }
-    
-    // شبیه‌سازی لودینگ و سپس باز کردن کالک نگار در iframe
     setTimeout(() => {
       setKalknegarLoadingOpen(false);
-          // هدایت به صفحه KalkNegar (iframe route)
-          navigate('/kalknegar');
-    }, 3000); // 3 ثانیه لودینگ
+      navigate('/kalknegar');
+    }, 3000);
   };
 
   return (
     <Box sx={{ display: 'flex', height: '100vh' }}>
-
-
-      {/* AppBar مشابه Gmail */}
+      {/* AppBar */}
       <AppBar
         position="fixed"
         sx={{
@@ -300,8 +316,8 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          py: 2, // افزایش فاصله عمودی بیشتر
-          mt: 0.5, // فاصله از بالا
+          py: 2,
+          mt: 0.5,
         }}>
           {/* بخش سمت راست */}
           <Box sx={{ display: 'flex', alignItems: 'center', ml: 0.5 }}>
@@ -450,10 +466,6 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
         </Toolbar>
       </AppBar>
 
-
-
-
-
       {/* منوی اعلان‌ها */}
       <Menu
         anchorEl={notificationsMenuAnchor}
@@ -461,24 +473,41 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
         onClose={handleNotificationsMenuClose}
         PaperProps={{
           sx: {
-            width: 360,
-            maxHeight: 400,
-            overflow: 'auto',
-            background: alpha(theme.palette.background.paper, 0.95),
+            width: 380,
+            maxHeight: 520,
+            overflow: 'hidden',
+            mt: 1.5,
+            borderRadius: '20px',
+            backgroundColor: (theme) => alpha(theme.palette.primary.light, 0.10),
             backdropFilter: 'blur(20px)',
-            border: `1px solid ${alpha(theme.palette.divider, 0.1)}`,
+            border: (theme) => `1px solid ${alpha(theme.palette.primary.light, 0.2)}`,
+            boxShadow: (theme) => `0 20px 60px ${alpha(theme.palette.primary.light, 0.25)}, inset 0 1px 0 rgba(255, 255, 255, 0.75)`,
+            '&:before': {
+              content: '""',
+              display: 'block',
+              position: 'absolute',
+              top: 0,
+              right: 18,
+              width: 12,
+              height: 12,
+              bgcolor: getSoftSurface(),
+              borderTop: (theme) => `1px solid ${alpha(theme.palette.primary.light, 0.2)}`,
+              borderLeft: (theme) => `1px solid ${alpha(theme.palette.primary.light, 0.2)}`,
+              transform: 'translateY(-50%) rotate(45deg)',
+              zIndex: 0,
+            },
           }
         }}
         transformOrigin={{ horizontal: 'right', vertical: 'top' }}
         anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
       >
-        <Box sx={{ p: 2, borderBottom: `1px solid ${alpha(theme.palette.divider, 0.1)}` }}>
-          <Typography variant="h6" sx={{ fontWeight: 600 }}>
+        <Box sx={{ p: 2.5, borderBottom: (theme) => `1px solid ${alpha(theme.palette.primary.light, 0.2)}`, backgroundColor: getSoftSurface() }}>
+          <Typography variant="h6" sx={{ fontWeight: 700, color: 'primary.main' }}>
             {t('layout.notificationsTitle')}
           </Typography>
         </Box>
         {notifications.length === 0 ? (
-          <Box sx={{ p: 3, textAlign: 'center' }}>
+          <Box sx={{ p: 3, textAlign: 'center', backgroundColor: getSoftSurface() }}>
             <NotificationsIcon sx={{ fontSize: 48, color: 'text.secondary', mb: 1 }} />
             <Typography variant="body2" color="text.secondary">
               {t('layout.noNewNotifications')}
@@ -495,7 +524,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
               }}
               sx={{
                 borderBottom: `1px solid ${alpha(theme.palette.divider, 0.05)}`,
-                py: 0.5, // ارتفاع خیلی کم
+                py: 0.5,
                 px: 1.5,
                 borderRadius: 2,
                 boxShadow: '0 1px 4px rgba(25, 118, 210, 0.05)',
@@ -513,7 +542,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
                 gap: 1,
               }}
             >
-              <Avatar sx={{ bgcolor: 'background.paper', color: 'primary.main', mr: 1, width: 28, height: 28, boxShadow: 1, fontSize: 18 }}>
+              <Avatar sx={{ bgcolor: 'background.paper', color: 'primary.main', mr: 1, width: 28, height: 28, boxShadow: 2, fontSize: 18 }}>
                 {notification.type === 'success' ? <CheckCircle sx={{ color: 'success.main', fontSize: 20 }} /> :
                  notification.type === 'warning' ? <WarningIcon sx={{ color: 'warning.main', fontSize: 20 }} /> :
                  notification.type === 'error' ? <WarningIcon sx={{ color: 'error.main', fontSize: 20 }} /> :
@@ -533,21 +562,6 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
             </MenuItem>
           ))
         )}
-        {notifications.length > 5 && (
-          <Box sx={{ p: 1.2, textAlign: 'center', borderTop: `1px solid ${alpha(theme.palette.divider, 0.1)}` }}>
-            <Typography
-              variant="body2"
-              color="primary"
-              sx={{ cursor: 'pointer', fontSize: '0.97rem', py: 0.5 }}
-              onClick={() => {
-                handleNotificationsMenuClose();
-                setTimeout(() => navigate('/dashboard/notifications'), 0);
-              }}
-            >
-              {t('layout.viewAllNotifications')}
-            </Typography>
-          </Box>
-        )}
       </Menu>
 
       {/* منوی پروفایل */}
@@ -557,12 +571,15 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
         onClose={handleProfileMenuClose}
         PaperProps={{
           sx: {
-            mt: 1,
-            minWidth: 280,
-            maxWidth: 320,
-            borderRadius: 2,
-            boxShadow: theme.shadows[8],
-            border: `1px solid ${alpha(theme.palette.divider, 0.1)}`,
+            mt: 1.5,
+            minWidth: 300,
+            maxWidth: 340,
+            borderRadius: '20px',
+            overflow: 'hidden',
+            backgroundColor: (theme) => alpha(theme.palette.primary.light, 0.10),
+            backdropFilter: 'blur(20px)',
+            border: (theme) => `1px solid ${alpha(theme.palette.primary.light, 0.2)}`,
+            boxShadow: (theme) => `0 20px 60px ${alpha(theme.palette.primary.light, 0.25)}, inset 0 1px 0 rgba(255, 255, 255, 0.75)`,
             '& .MuiMenuItem-root': {
               px: 2,
               py: 1.5,
@@ -577,9 +594,9 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
       >
         {/* Header با اطلاعات کاربر */}
         <Box sx={{ 
-          p: 2, 
-          borderBottom: `1px solid ${alpha(theme.palette.divider, 0.1)}`,
-          bgcolor: alpha(theme.palette.primary.main, 0.05)
+          p: 2.5, 
+          borderBottom: (theme) => `1px solid ${alpha(theme.palette.primary.light, 0.2)}`,
+          bgcolor: getSoftSurface()
         }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
             <Avatar
@@ -595,7 +612,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
               {user?.name?.charAt(0) || user?.username?.charAt(0) || 'ک'}
             </Avatar>
             <Box sx={{ flex: 1, minWidth: 0 }}>
-              <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 0.5 }}>
+              <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 0.5, color: 'primary.main' }}>
                 {user?.name || 'کاربر'}
               </Typography>
               <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.8rem' }}>
@@ -608,29 +625,9 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
           </Box>
         </Box>
 
-        {/* منوی عملیات */}
-        <MenuItem onClick={() => { handleProfileMenuClose(); dispatch(toggleSidePanel('profile')); }}>
-          <ListItemIcon>
-            <Person fontSize="small" />
-          </ListItemIcon>
-          <ListItemText primary="مدیریت پروفایل" />
-        </MenuItem>
+        {/* منوی عملیات - حذف شده طبق درخواست */}
 
-        <MenuItem onClick={() => { handleProfileMenuClose(); dispatch(toggleSidePanel('settings')); }}>
-          <ListItemIcon>
-            <SettingsIcon fontSize="small" />
-          </ListItemIcon>
-          <ListItemText primary="تنظیمات" />
-        </MenuItem>
-
-        <MenuItem onClick={() => { handleProfileMenuClose(); }}>
-          <ListItemIcon>
-            <VpnKey fontSize="small" />
-          </ListItemIcon>
-          <ListItemText primary="تغییر رمز عبور" />
-        </MenuItem>
-
-        <Box sx={{ borderTop: `1px solid ${alpha(theme.palette.divider, 0.1)}`, mt: 1, pt: 1 }}>
+        <Box sx={{ borderTop: (theme) => `1px solid ${alpha(theme.palette.primary.light, 0.2)}`, mt: 1, pt: 1, bgcolor: getSoftSurface() }}>
           <MenuItem 
             onClick={handleLogout}
             sx={{ 
@@ -824,7 +821,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
           minHeight: 'calc(100vh - 64px)',
           display: 'flex',
           gap: 0,
-          transition: 'all 0.35s cubic-bezier(0.4, 0, 0.2, 1)', // اضافه شد
+          transition: 'all 0.35s cubic-bezier(0.4, 0, 0.2, 1)',
         }}
       >
         <Paper
@@ -838,7 +835,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
             display: 'flex',
             flexDirection: 'column',
             flexGrow: 1,
-            p: 0, // No padding here
+            p: 0,
           }}
         >
           <Box sx={{ p: 3, flexGrow: 1, overflowY: 'auto' }}>

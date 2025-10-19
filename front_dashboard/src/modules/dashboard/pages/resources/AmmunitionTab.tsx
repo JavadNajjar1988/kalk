@@ -42,6 +42,7 @@ import {
   selectTabPagination,
 } from '@/store/slices/tabularResourcesSlice';
 import AmmunitionModal from './modals/AmmunitionModal';
+import AmmunitionDeleteConfirmModal from '@/modules/dashboard/pages/resources/AmmunitionDeleteConfirmModal';
 
 // Import ammunition data
 import ammunitionData from '@/data/resources/ammunition.json';
@@ -113,13 +114,26 @@ const AmmunitionTab: React.FC = () => {
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (window.confirm('آیا از حذف این مهمات اطمینان دارید؟')) {
-      try {
-        await dispatch(deleteTabItem({ tabType: 'ammunition', itemId: id })).unwrap();
-      } catch (error) {
-        console.error('Error deleting ammunition:', error);
-      }
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [pendingDeleteItem, setPendingDeleteItem] = useState<AmmunitionItem | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const handleDelete = (id: string) => {
+    const item = ammunition.find(a => a.id === id) || null;
+    setPendingDeleteItem(item);
+    setDeleteOpen(true);
+  };
+
+  const confirmDelete = async (id: string) => {
+    try {
+      setIsDeleting(true);
+      await dispatch(deleteTabItem({ tabType: 'ammunition', itemId: id })).unwrap();
+      setDeleteOpen(false);
+      setPendingDeleteItem(null);
+    } catch (error) {
+      console.error('Error deleting ammunition:', error);
+    } finally {
+      setIsDeleting(false);
     }
   };
   
@@ -371,6 +385,14 @@ const AmmunitionTab: React.FC = () => {
         onSave={handleSave}
         ammunition={selectedAmmunition}
         categories={ammunitionData.categories}
+      />
+
+      <AmmunitionDeleteConfirmModal
+        open={deleteOpen}
+        item={pendingDeleteItem}
+        onClose={() => { setDeleteOpen(false); setPendingDeleteItem(null); }}
+        onConfirm={confirmDelete}
+        isDeleting={isDeleting}
       />
     </Box>
   );

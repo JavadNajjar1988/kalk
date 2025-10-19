@@ -190,12 +190,12 @@ const UserDetailsModal: React.FC<UserDetailsModalProps> = ({
             variant={isMobile ? 'h6' : 'h5'}
             sx={{ fontWeight: 700, color: theme.palette.primary.main }}
           >
-            ?????? ?????
+            جزئیات کاربر
           </Typography>
         </Box>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
           <Chip
-            label={user.isActive ? '????' : '???????'}
+            label={user.isActive ? 'فعال' : 'غیرفعال'}
             color={user.isActive ? 'success' : 'error'}
             size="small"
             sx={{ fontWeight: 600 }}

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   Dialog,
   DialogTitle,
@@ -13,7 +13,12 @@ import {
   Box,
   Typography,
   FormHelperText,
+  IconButton,
+  useTheme,
+  useMediaQuery,
 } from '@mui/material';
+import { alpha } from '@mui/material/styles';
+import CloseIcon from '@mui/icons-material/Close';
 import { MasterDefinition, DefinitionCategory, DynamicHierarchyLevel } from '../../types';
 import { ExtendedHierarchyLevel, CategoryType } from '../../types';
 
@@ -75,6 +80,122 @@ const AddDataModal: React.FC<AddDataModalProps> = ({
   isEditing = false,
   categoryType,
 }) => {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+
+  const softSurface = useMemo(() => {
+    const primary = (theme.palette.primary.main || '#4a90e2').toLowerCase();
+    const hex = primary.replace('#', '');
+
+    if (hex.includes('10b981') || hex.includes('4caf50') || hex.includes('2e7d32')) return '#f0f4f3';
+    if (hex.includes('4a90e2') || hex.includes('1976d2') || hex.includes('2196f3')) return '#f0f4f8';
+    if (hex.includes('ef4444') || hex.includes('f44336') || hex.includes('d32f2f')) return '#fbf1f0';
+    if (hex.includes('6b21a8') || hex.includes('9c27b0') || hex.includes('673ab7')) return theme.palette.mode === 'dark' ? '#1f2330' : '#f3f0f9';
+    if (hex.includes('f59e0b') || hex.includes('ff9800') || hex.includes('fb8c00')) return '#fbf5ef';
+
+    const clamp = (n: number) => Math.max(0, Math.min(255, Math.round(n)));
+    const hexToRgb = (h: string) => {
+      const norm = h.length === 3 ? h.split('').map(c => c + c).join('') : h;
+      const r = parseInt(norm.slice(0, 2), 16);
+      const g = parseInt(norm.slice(2, 4), 16);
+      const b = parseInt(norm.slice(4, 6), 16);
+      return { r, g, b };
+    };
+    const rgbToHex = (r: number, g: number, b: number) =>
+      `#${clamp(r).toString(16).padStart(2, '0')}${clamp(g).toString(16).padStart(2, '0')}${clamp(b).toString(16).padStart(2, '0')}`;
+    const blendWithWhite = (h: string, primaryWeight = 0.1) => {
+      const { r, g, b } = hexToRgb(h);
+      const white = 255;
+      const weight = 1 - primaryWeight;
+      const br = white * weight + r * primaryWeight;
+      const bg = white * weight + g * primaryWeight;
+      const bb = white * weight + b * primaryWeight;
+      return rgbToHex(br, bg, bb);
+    };
+
+    if (/^[0-9a-f]{3,6}$/.test(hex)) {
+      return blendWithWhite(hex, 0.1);
+    }
+
+    try {
+      const fallback = (theme.palette.primary.light || '#90caf9').toLowerCase().replace('#', '');
+      return blendWithWhite(fallback, 0.08);
+    } catch {
+      return theme.palette.mode === 'dark' ? '#1f2430' : '#f5f7fa';
+    }
+  }, [theme]);
+
+  const sectionCardSx = useMemo(() => ({
+    borderRadius: '16px',
+    padding: { xs: 2, sm: 3 },
+    backgroundColor: theme.palette.mode === 'dark' ? alpha(theme.palette.background.paper, 0.72) : 'rgba(255, 255, 255, 0.95)',
+    border: `1px solid ${alpha(theme.palette.primary.main, 0.12)}`,
+    boxShadow: `0 16px 32px ${alpha(theme.palette.primary.main, 0.12)}`,
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 2,
+  }), [theme]);
+
+  const sectionTitleSx = useMemo(() => ({
+    mb: 2,
+    fontWeight: 600,
+    color: theme.palette.primary.main,
+  }), [theme]);
+
+  const inputBaseSx = useMemo(() => ({
+    '& .MuiOutlinedInput-root': {
+      borderRadius: '12px',
+      backgroundColor: theme.palette.mode === 'dark' ? alpha(theme.palette.background.paper, 0.65) : 'rgba(255, 255, 255, 0.9)',
+      '& fieldset': { borderColor: alpha(theme.palette.primary.main, 0.2) },
+      '&:hover fieldset': { borderColor: alpha(theme.palette.primary.main, 0.4) },
+      '&.Mui-focused fieldset': {
+        borderColor: alpha(theme.palette.primary.main, 0.6),
+        boxShadow: `0 0 0 3px ${alpha(theme.palette.primary.main, 0.15)}`,
+      },
+    },
+  }), [theme]);
+
+  const secondaryButtonSx = useMemo(() => ({
+    borderRadius: '12px',
+    px: { xs: 2, sm: 3 },
+    py: 1.2,
+    backgroundColor: 'rgba(148, 163, 184, 0.12)',
+    color: '#475569',
+    border: '1px solid rgba(148, 163, 184, 0.25)',
+    backdropFilter: 'blur(10px)',
+    fontWeight: 600,
+    transition: 'transform 0.2s ease, box-shadow 0.2s ease',
+    '&:hover': {
+      backgroundColor: 'rgba(148, 163, 184, 0.18)',
+      transform: 'translateY(-2px)',
+      boxShadow: '0 8px 22px rgba(148, 163, 184, 0.24)',
+    },
+  }), [theme]);
+
+  const primaryButtonSx = useMemo(() => ({
+    borderRadius: '12px',
+    px: { xs: 2.2, sm: 3.5 },
+    py: 1.2,
+    background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
+    color: '#ffffff',
+    border: '2px solid rgba(255, 255, 255, 0.4)',
+    boxShadow: `0 12px 32px ${alpha(theme.palette.primary.main, 0.32)}`,
+    fontWeight: 700,
+    transition: 'transform 0.2s ease, box-shadow 0.2s ease',
+    '&:hover': {
+      transform: 'translateY(-2px)',
+      boxShadow: `0 16px 44px ${alpha(theme.palette.primary.dark, 0.4)}`,
+      background: `linear-gradient(135deg, ${theme.palette.primary.dark} 0%, ${theme.palette.primary.main} 100%)`,
+    },
+    '&:disabled': {
+      background: 'rgba(148, 163, 184, 0.4)',
+      borderColor: 'rgba(255, 255, 255, 0.2)',
+      color: 'rgba(255, 255, 255, 0.85)',
+      transform: 'none',
+      boxShadow: 'none',
+    },
+  }), [theme]);
+
   const [formData, setFormData] = useState<FormData>({
     name: '',
     level: 1,
@@ -351,21 +472,59 @@ const AddDataModal: React.FC<AddDataModalProps> = ({
       onClose={onClose}
       maxWidth="md"
       fullWidth
+      fullScreen={isMobile}
       PaperProps={{
         sx: {
-          borderRadius: 2,
-          bgcolor: 'grey.50',
+          borderRadius: isMobile ? 0 : '20px',
+          backgroundColor: alpha(theme.palette.primary.light, 0.1),
+          backdropFilter: 'blur(20px)',
+          border: (t) => `1px solid ${alpha(t.palette.primary.light, 0.2)}`,
+          boxShadow: (t) => `0 24px 60px ${alpha(t.palette.primary.light, 0.28)}, inset 0 1px 0 rgba(255, 255, 255, 0.75)`,
+          overflow: 'hidden',
+          display: 'flex',
+          flexDirection: 'column',
+          maxHeight: { xs: '100vh', md: '90vh' },
         },
       }}
     >
-      <DialogTitle sx={{ bgcolor: 'primary.main', color: 'white', pb: 1 }}>
-        <Typography variant="h6">{isEditing ? 'ویرایش داده' : 'افزودن داده جدید'}</Typography>
+      <DialogTitle
+        sx={{
+          backgroundColor: softSurface,
+          borderBottom: (t) => `1px solid ${alpha(t.palette.primary.light, 0.2)}`,
+          py: isMobile ? 2 : 3,
+          px: isMobile ? 2 : 3,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+        }}
+      >
+        <Typography variant={isMobile ? 'h6' : 'h5'} fontWeight={700} color="primary">
+          {isEditing ? 'ویرایش داده' : 'افزودن داده جدید'}
+        </Typography>
+        <IconButton
+          onClick={onClose}
+          size="small"
+          sx={{
+            minWidth: 'auto',
+            color: theme.palette.primary.main,
+            backgroundColor: alpha(theme.palette.primary.main, 0.12),
+            border: `1px solid ${alpha(theme.palette.primary.main, 0.18)}`,
+            '&:hover': {
+              backgroundColor: alpha(theme.palette.primary.main, 0.2),
+              transform: 'translateY(-1px)',
+              boxShadow: `0 6px 18px ${alpha(theme.palette.primary.main, 0.25)}`,
+            },
+          }}
+        >
+          <CloseIcon fontSize="small" />
+        </IconButton>
       </DialogTitle>
 
-      <DialogContent sx={{ p: 3 }}>
-        {/* اطلاعات اصلی */}
-        <Box sx={{ mb: 3 }}>
-          <Typography variant="h6" color="primary.main" sx={{ mb: 2 }}>
+      <DialogContent sx={{ p: 0, backgroundColor: softSurface }}>
+        <Box sx={{ p: { xs: 2.5, sm: 3.5 }, display: 'flex', flexDirection: 'column', gap: 3 }}>
+          {/* اطلاعات اصلی */}
+          <Box sx={{ ...sectionCardSx, mb: 3 }}>
+          <Typography variant="h6" sx={sectionTitleSx}>
             اطلاعات اصلی
           </Typography>
           <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
@@ -377,10 +536,10 @@ const AddDataModal: React.FC<AddDataModalProps> = ({
               error={!!errors.name}
               helperText={errors.name}
               required
-              sx={{ flex: 1, minWidth: 200 }}
+              sx={{ ...inputBaseSx, flex: 1, minWidth: 200 }}
             />
             {effectiveSupportsHierarchy && (
-              <FormControl sx={{ minWidth: 200 }} error={!!errors.level}>
+              <FormControl sx={{ minWidth: 200, ...inputBaseSx }} error={!!errors.level}>
                <InputLabel>سطح</InputLabel>
                <Select
                  value={formData.level}
@@ -412,15 +571,15 @@ const AddDataModal: React.FC<AddDataModalProps> = ({
               </FormControl>
             )}
           </Box>
-        </Box>
+          </Box>
 
-        {/* ساختار سلسله مراتبی */}
+          {/* ساختار سلسله مراتبی */}
         {effectiveSupportsHierarchy && (
-          <Box sx={{ mb: 3 }}>
-            <Typography variant="h6" color="primary.main" sx={{ mb: 2 }}>
+          <Box sx={{ ...sectionCardSx, mb: 3 }}>
+            <Typography variant="h6" sx={sectionTitleSx}>
               ساختار سلسله مراتبی
             </Typography>
-            <FormControl fullWidth>
+            <FormControl fullWidth sx={inputBaseSx}>
               <InputLabel>نود والد</InputLabel>
               <Select
                 value={formData.parentId}
@@ -447,10 +606,10 @@ const AddDataModal: React.FC<AddDataModalProps> = ({
           </Box>
         )}
 
-        {/* مختصات جغرافیایی و کشور (فقط برای جغرافیا) */}
+          {/* مختصات جغرافیایی و کشور (فقط برای جغرافیا) */}
         {showCoordinates && (
-          <Box sx={{ mb: 3 }}>
-            <Typography variant="h6" color="primary.main" sx={{ mb: 2 }}>
+          <Box sx={{ ...sectionCardSx, mb: 3 }}>
+            <Typography variant="h6" sx={sectionTitleSx}>
               مختصات جغرافیایی
             </Typography>
             <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
@@ -461,7 +620,7 @@ const AddDataModal: React.FC<AddDataModalProps> = ({
                 onChange={(e) => handleInputChange('latitude', e.target.value)}
                 error={!!errors.latitude}
                 helperText={errors.latitude}
-                sx={{ flex: 1, minWidth: 200 }}
+                sx={{ ...inputBaseSx, flex: 1, minWidth: 200 }}
               />
               <TextField
                 label="طول جغرافیایی"
@@ -470,7 +629,7 @@ const AddDataModal: React.FC<AddDataModalProps> = ({
                 onChange={(e) => handleInputChange('longitude', e.target.value)}
                 error={!!errors.longitude}
                 helperText={errors.longitude}
-                sx={{ flex: 1, minWidth: 200 }}
+                sx={{ ...inputBaseSx, flex: 1, minWidth: 200 }}
               />
               <TextField
                 label="کشور"
@@ -479,7 +638,7 @@ const AddDataModal: React.FC<AddDataModalProps> = ({
                 onChange={(e) => handleInputChange('country', e.target.value)}
                 error={!!errors.country}
                 helperText={errors.country}
-                sx={{ flex: 1, minWidth: 200 }}
+                sx={{ ...inputBaseSx, flex: 1, minWidth: 200 }}
               />
             </Box>
             <FormHelperText sx={{ mt: 1 }}>
@@ -488,10 +647,10 @@ const AddDataModal: React.FC<AddDataModalProps> = ({
           </Box>
         )}
 
-        {/* فیلدهای اختصاصی ساختار رده‌های نظامی */}
+          {/* فیلدهای اختصاصی ساختار رده‌های نظامی */}
         {showMilitaryUnitExtras && (
-          <Box sx={{ mb: 3 }}>
-            <Typography variant="h6" color="primary.main" sx={{ mb: 2 }}>
+          <Box sx={{ ...sectionCardSx, mb: 3 }}>
+            <Typography variant="h6" sx={sectionTitleSx}>
               اطلاعات تخصصی یگان
             </Typography>
             <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
@@ -502,7 +661,7 @@ const AddDataModal: React.FC<AddDataModalProps> = ({
                 onChange={(e) => handleInputChange('specialty', e.target.value)}
                 error={!!errors.specialty}
                 helperText={errors.specialty}
-                sx={{ flex: 1, minWidth: 200 }}
+                sx={{ ...inputBaseSx, flex: 1, minWidth: 200 }}
               />
               <TextField
                 label="کد ناتو / معادل ناتو"
@@ -511,7 +670,7 @@ const AddDataModal: React.FC<AddDataModalProps> = ({
                 onChange={(e) => handleInputChange('natoEquivalent', e.target.value)}
                 error={!!errors.natoEquivalent}
                 helperText={errors.natoEquivalent}
-                sx={{ flex: 1, minWidth: 200 }}
+                sx={{ ...inputBaseSx, flex: 1, minWidth: 200 }}
               />
               <TextField
                 label="آیکون"
@@ -520,16 +679,16 @@ const AddDataModal: React.FC<AddDataModalProps> = ({
                 onChange={(e) => handleInputChange('icon', e.target.value)}
                 error={!!errors.icon}
                 helperText={errors.icon}
-                sx={{ flex: 1, minWidth: 200 }}
+                sx={{ ...inputBaseSx, flex: 1, minWidth: 200 }}
               />
             </Box>
           </Box>
         )}
 
-        {/* فیلد کد ناتو برای درجات نظامی */}
+          {/* فیلد کد ناتو برای درجات نظامی */}
         {showNatoForRanks && (
-          <Box sx={{ mb: 3 }}>
-            <Typography variant="h6" color="primary.main" sx={{ mb: 2 }}>
+          <Box sx={{ ...sectionCardSx, mb: 3 }}>
+            <Typography variant="h6" sx={sectionTitleSx}>
               اطلاعات ناتو
             </Typography>
             <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
@@ -540,16 +699,16 @@ const AddDataModal: React.FC<AddDataModalProps> = ({
                 onChange={(e) => handleInputChange('natoEquivalent', e.target.value)}
                 error={!!errors.natoEquivalent}
                 helperText={errors.natoEquivalent}
-                sx={{ flex: 1, minWidth: 200 }}
+                sx={{ ...inputBaseSx, flex: 1, minWidth: 200 }}
               />
             </Box>
           </Box>
         )}
 
-        {/* فیلدهای کدگذاری برای درجات نظامی */}
+          {/* فیلدهای کدگذاری برای درجات نظامی */}
         {showMilitaryRankCodes && (
-          <Box sx={{ mb: 3 }}>
-            <Typography variant="h6" color="primary.main" sx={{ mb: 2 }}>
+          <Box sx={{ ...sectionCardSx, mb: 3 }}>
+            <Typography variant="h6" sx={sectionTitleSx}>
               کدگذاری سلسله‌مراتبی
             </Typography>
             <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
@@ -560,7 +719,7 @@ const AddDataModal: React.FC<AddDataModalProps> = ({
                 onChange={(e) => handleInputChange('countryCode', e.target.value.toUpperCase())}
                 error={!!errors.countryCode}
                 helperText={errors.countryCode || 'دو حرف بزرگ انگلیسی (اختیاری)'}
-                sx={{ flex: 1, minWidth: 150 }}
+                sx={{ ...inputBaseSx, flex: 1, minWidth: 150 }}
               />
               <TextField
                 label="کد گروه رده‌ای"
@@ -569,7 +728,7 @@ const AddDataModal: React.FC<AddDataModalProps> = ({
                 onChange={(e) => handleInputChange('groupCode', e.target.value.toUpperCase())}
                 error={!!errors.groupCode}
                 helperText={errors.groupCode || 'با G شروع شود (اختیاری)'}
-                sx={{ flex: 1, minWidth: 150 }}
+                sx={{ ...inputBaseSx, flex: 1, minWidth: 150 }}
               />
               <TextField
                 label="کد رده نظامی"
@@ -578,7 +737,7 @@ const AddDataModal: React.FC<AddDataModalProps> = ({
                 onChange={(e) => handleInputChange('rankCode', e.target.value.toUpperCase())}
                 error={!!errors.rankCode}
                 helperText={errors.rankCode || 'با R شروع شود (اختیاری)'}
-                sx={{ flex: 1, minWidth: 150 }}
+                sx={{ ...inputBaseSx, flex: 1, minWidth: 150 }}
               />
             </Box>
             <FormHelperText sx={{ mt: 1 }}>
@@ -588,9 +747,9 @@ const AddDataModal: React.FC<AddDataModalProps> = ({
           </Box>
         )}
 
-        {/* توضیحات اضافی */}
-        <Box sx={{ mb: 2 }}>
-          <Typography variant="h6" color="primary.main" sx={{ mb: 2 }}>
+          {/* توضیحات اضافی */}
+          <Box sx={{ ...sectionCardSx, mb: 2 }}>
+          <Typography variant="h6" sx={sectionTitleSx}>
             توضیحات اضافی
           </Typography>
           <TextField
@@ -601,15 +760,25 @@ const AddDataModal: React.FC<AddDataModalProps> = ({
             multiline
             rows={4}
             fullWidth
+            sx={inputBaseSx}
           />
+          </Box>
         </Box>
       </DialogContent>
 
-      <DialogActions sx={{ p: 3, pt: 0 }}>
-        <Button onClick={onClose} variant="outlined" color="primary">
+      <DialogActions
+        sx={{
+          backgroundColor: softSurface,
+          borderTop: (t) => `1px solid ${alpha(t.palette.primary.light, 0.2)}`,
+          p: isMobile ? 2 : 3,
+          justifyContent: 'flex-end',
+          gap: 1.5,
+        }}
+      >
+        <Button onClick={onClose} variant="outlined" color="primary" sx={secondaryButtonSx}>
           انصراف
         </Button>
-        <Button onClick={handleSubmit} variant="contained" color="primary">
+        <Button onClick={handleSubmit} variant="contained" color="primary" sx={primaryButtonSx}>
           {isEditing ? 'ذخیره تغییرات' : 'افزودن'}
         </Button>
       </DialogActions>
