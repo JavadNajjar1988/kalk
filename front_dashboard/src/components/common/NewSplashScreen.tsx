@@ -1,6 +1,63 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Box, Typography, useMediaQuery, useTheme } from '@mui/material';
 import { alpha } from '@mui/material/styles';
+import SvgIcon, { SvgIconProps } from '@mui/material/SvgIcon';
+
+type NormalizedColor = [number, number, number];
+
+const clamp01 = (value: number): number => Math.max(0, Math.min(1, value));
+
+const parseColorToNormalized = (
+  input?: string,
+  fallback: NormalizedColor = [1, 1, 1]
+): NormalizedColor => {
+  if (!input) {
+    return [...fallback] as NormalizedColor;
+  }
+
+  const color = input.trim();
+
+  if (color.startsWith('#')) {
+    let hex = color.slice(1);
+    if (hex.length === 3) {
+      hex = hex
+        .split('')
+        .map((char) => char + char)
+        .join('');
+    }
+    if (hex.length === 6) {
+      const r = parseInt(hex.slice(0, 2), 16) / 255;
+      const g = parseInt(hex.slice(2, 4), 16) / 255;
+      const b = parseInt(hex.slice(4, 6), 16) / 255;
+      return [r, g, b] as NormalizedColor;
+    }
+  } else {
+    const match = color
+      .replace(/\s+/g, '')
+      .match(/^rgba?\((\d+),(\d+),(\d+)/i);
+    if (match) {
+      const r = Number(match[1]) / 255;
+      const g = Number(match[2]) / 255;
+      const b = Number(match[3]) / 255;
+      return [r, g, b] as NormalizedColor;
+    }
+  }
+
+  return [...fallback] as NormalizedColor;
+};
+
+const mixWithWhite = (
+  color: NormalizedColor,
+  weight: number
+): NormalizedColor => {
+  const w = clamp01(weight);
+  const keep = 1 - w;
+  return [
+    clamp01(color[0] * keep + 1 * w),
+    clamp01(color[1] * keep + 1 * w),
+    clamp01(color[2] * keep + 1 * w),
+  ] as NormalizedColor;
+};
 
 interface NewSplashScreenProps {
   onComplete?: () => void;
@@ -28,6 +85,15 @@ declare global {
 const LOTTIE_SCRIPT_SRC = '/assets/vendor/lottie-player.js';
 const LOADER_SRC = '/assets/animations/double-circular-loader.json';
 
+const SajedLogo: React.FC<SvgIconProps> = (props) => (
+  <SvgIcon viewBox="0 0 570 402" {...props}>
+    <path
+      fillRule="evenodd"
+      d="M266.632 61.237 392.069 185.512l50.174 50.111h34.119l47.164 48.106H421.17L233.517 96.314Zm-42.146 42.093 180.628 180.4H44.861l47.164-48.106h83.29l-41.143-41.091 34.118-34.076 74.259 74.164 45.157 1v-1l-62.217-63.139-17.117 16.108-34.119-33.073Zm37.129 194.43c4.834-1.329 10.335-1.919 16.056 2 12.86 7.186 9.255 19.151 3.329 32.236-4.463 9.854-8.669 19.622-12.364 27.9h-1l-1-1c-1.745-7.251-5.175-14.708-8.629-21.9-5.833-12.37-12.662-25.337 4.836-36.926Zm1 10.022-4.014 3.007c-1.16 4.5-1.335 5.539-.6 10.211 1.785 3.78 2.884 4.218 6 6a11.881 11.881 0 0 0 8-1c3.34-2.454 3.02-2.662 5-7-5.364-4.478-10.285-8.22-20.307-6.209Z"
+    />
+  </SvgIcon>
+);
+
 const NewSplashScreen: React.FC<NewSplashScreenProps> = ({
   onComplete,
   duration = 2000,
@@ -41,6 +107,8 @@ const NewSplashScreen: React.FC<NewSplashScreenProps> = ({
     []
   );
   const [componentDefined, setComponentDefined] = useState(initialDefined);
+  const loaderRef = useRef<HTMLElement | null>(null);
+  const [loaderData, setLoaderData] = useState<any | null>(null);
 
   const softSurface = useMemo(() => {
     const primary = (theme.palette.primary.main || '#4a90e2').toLowerCase();
@@ -95,6 +163,89 @@ const NewSplashScreen: React.FC<NewSplashScreenProps> = ({
     theme.palette.primary.light,
     theme.palette.primary.main,
   ]);
+  const logoColor = useMemo(
+    () =>
+      theme.palette.mode === 'dark'
+        ? alpha(theme.palette.common.white, 0.92)
+        : theme.palette.primary.main,
+    [theme.palette.common.white, theme.palette.mode, theme.palette.primary.main]
+  );
+  const loaderInnerColor = useMemo<NormalizedColor>(
+    () =>
+      parseColorToNormalized(theme.palette.primary.main, [
+        0.898,
+        0.9608,
+        0.9804,
+      ]),
+    [theme.palette.primary.main]
+  );
+  const loaderOuterFallback = useMemo<NormalizedColor>(
+    () => mixWithWhite(loaderInnerColor, theme.palette.mode === 'dark' ? 0.08 : 0.24),
+    [loaderInnerColor, theme.palette.mode]
+  );
+  const loaderOuterColor = useMemo<NormalizedColor>(
+    () =>
+      parseColorToNormalized(
+        theme.palette.primary.light,
+        loaderOuterFallback
+      ),
+    [theme.palette.primary.light, loaderOuterFallback]
+  );
+
+  useEffect(() => {
+    if (loaderData || typeof window === 'undefined') return;
+    let cancelled = false;
+
+    fetch(LOADER_SRC)
+      .then((response) => response.json())
+      .then((data) => {
+        if (!cancelled) setLoaderData(data);
+      })
+      .catch(() => {
+        /* noop */
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [loaderData]);
+
+  useEffect(() => {
+    if (!componentDefined || !loaderData) return;
+    const player = loaderRef.current as unknown as {
+      load?: (data: unknown) => void;
+      play?: () => void;
+    } | null;
+    if (!player || typeof player.load !== 'function') return;
+
+    const updated = JSON.parse(JSON.stringify(loaderData));
+    if (Array.isArray(updated.layers)) {
+      updated.layers.forEach((layer: any) => {
+        if (!Array.isArray(layer?.shapes)) return;
+        layer.shapes.forEach((shape: any) => {
+          if (!shape || shape.ty !== 'st' || !shape.c) return;
+          const widthValue =
+            typeof shape.w?.k === 'number'
+              ? shape.w.k
+              : Array.isArray(shape.w?.k)
+              ? shape.w.k[0]
+              : typeof shape.w?.k === 'object' && shape.w?.k !== null
+              ? shape.w.k.s ?? shape.w.k[0]
+              : 0;
+          const color =
+            widthValue && widthValue <= 12 ? loaderInnerColor : loaderOuterColor;
+          shape.c.k = [...color];
+        });
+      });
+    }
+
+    try {
+      player.load(updated);
+      player.play?.();
+    } catch {
+      /* noop */
+    }
+  }, [componentDefined, loaderData, loaderInnerColor, loaderOuterColor]);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -230,6 +381,7 @@ const NewSplashScreen: React.FC<NewSplashScreenProps> = ({
             }}
           />
           <lottie-player
+            ref={loaderRef as unknown as React.RefObject<HTMLElement>}
             src={LOADER_SRC}
             background="transparent"
             speed="1"
@@ -255,15 +407,17 @@ const NewSplashScreen: React.FC<NewSplashScreenProps> = ({
               alignItems: 'center',
               justifyContent: 'center',
               borderRadius: '28%',
-              backgroundColor: 'transparent',
-              border: 'none',
-              boxShadow: 'none',
             }}
           >
-            <img
-              src="/logo.png"
-              alt="لوگو سامانه"
-              style={{ width: '70%', height: '70%' }}
+            <SajedLogo
+              titleAccess="لوگو سامانه"
+              role="img"
+              sx={{
+                width: '70%',
+                height: '70%',
+                color: logoColor,
+                transition: 'color 0.3s ease',
+              }}
             />
           </Box>
         </Box>
