@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import {
   Box,
   Grid,
@@ -33,6 +33,7 @@ import {
   Tooltip,
   LinearProgress,
   Alert,
+  Autocomplete,
   Table,
   TableBody,
   TableCell,
@@ -79,16 +80,6 @@ const resolveApiBase = () => {
   return '/api';
 };
 
-const resolveTileServerBase = () => {
-  const raw = (import.meta.env.VITE_TILESERVER_URL as string | undefined) ?? '';
-  const trimmed = raw.trim();
-  if (trimmed.length > 0) {
-    return trimmed.replace(/\/+$/, '');
-  }
-  const { protocol, hostname } = window.location;
-  return `${protocol}//${hostname}:8480`;
-};
-
 const authFetch = async (baseUrl: string, endpoint: string, options: RequestInit = {}) => {
   const token = localStorage.getItem('access_token');
   const headers = new Headers(options.headers as HeadersInit | undefined);
@@ -104,11 +95,20 @@ interface OfflineMap {
   name: string;
   filename: string;
   file_path: string;
+  storage_type: 'mbtiles' | 'filesystem';
   description?: string;
   is_active: boolean;
   file_size?: number;
   created_at: string;
   updated_at?: string;
+  url_template: string;
+}
+
+interface FilesystemFolderOption {
+  value: string;
+  label: string;
+  relativePath: string;
+  tileCount?: number | null;
 }
 
 const MapsTab: React.FC = () => {
@@ -117,7 +117,6 @@ const MapsTab: React.FC = () => {
   const dispatch = useAppDispatch();
   const { t } = useTranslation();
   const apiBase = useMemo(resolveApiBase, []);
-  const tileServerBase = useMemo(resolveTileServerBase, []);
   const mapLayers = useAppSelector(selectMapLayers);
   const activeOfflineMap = useAppSelector(selectActiveOfflineMap);
   
@@ -128,7 +127,7 @@ const MapsTab: React.FC = () => {
   const [uploadError, setUploadError] = useState<string | null>(null);
   
   const [openDialog, setOpenDialog] = useState(false);
-  const [dialogMode, setDialogMode] = useState<'server' | 'upload' | 'offline'>('server');
+  const [dialogMode, setDialogMode] = useState<'server' | 'upload' | 'offline' | 'filesystem'>('server');
   const [selectedLayer, setSelectedLayer] = useState<MapLayer | null>(null);
   const [formData, setFormData] = useState<Partial<MapLayer>>({
     name: '',
@@ -144,22 +143,43 @@ const MapsTab: React.FC = () => {
     description: '',
     file: null as File | null,
   });
+  const [filesystemFormData, setFilesystemFormData] = useState({
+    name: '',
+    description: '',
+    folder: '',
+  });
+  const [filesystemFolders, setFilesystemFolders] = useState<FilesystemFolderOption[]>([]);
+  const [filesystemFoldersLoading, setFilesystemFoldersLoading] = useState(false);
+  const [filesystemFoldersError, setFilesystemFoldersError] = useState<string | null>(null);
+  const [filesystemRootPath, setFilesystemRootPath] = useState('');
+  const [filesystemFolderInput, setFilesystemFolderInput] = useState('');
 
   // بارگذاری نقشه‌های آفلاین
-  const loadOfflineMaps = async () => {
+  const loadOfflineMaps = useCallback(async () => {
     try {
       setLoading(true);
       const response = await authFetch(apiBase, '/maps');
       if (response.ok) {
         const data = await response.json();
-        setOfflineMaps(data.maps || []);
+        const maps: OfflineMap[] = data.maps || [];
+        setOfflineMaps(maps);
+        const activeMapEntry = maps.find(map => map.is_active);
+        if (activeMapEntry && activeMapEntry.url_template) {
+          dispatch(setActiveOfflineMap({
+            id: activeMapEntry.id,
+            name: activeMapEntry.name,
+            url: activeMapEntry.url_template,
+          }));
+        } else if (!activeMapEntry) {
+          dispatch(setActiveOfflineMap(null));
+        }
       }
     } catch (error) {
       console.error('خطا در بارگذاری نقشه‌های آفلاین:', error);
     } finally {
       setLoading(false);
     }
-  };
+  }, [apiBase, dispatch]);
 
   // آپلود نقشه آفلاین
   const uploadOfflineMap = async () => {
@@ -196,8 +216,104 @@ const MapsTab: React.FC = () => {
     }
   };
 
+  // ثبت نقشه مبتنی بر پوشه
+  const registerFilesystemMap = async () => {
+    if (!filesystemFormData.name || !filesystemFormData.folder) return;
+
+    try {
+      setLoading(true);
+      setUploadError(null);
+
+      const response = await authFetch(apiBase, '/maps/register-folder', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: filesystemFormData.name,
+          description: filesystemFormData.description,
+          folder: filesystemFormData.folder.trim(),
+        }),
+      });
+
+      if (response.ok) {
+        await loadOfflineMaps();
+        handleCloseDialog();
+        setFilesystemFormData({ name: '', description: '', folder: '' });
+        setFilesystemFolderInput('');
+      } else {
+        const error = await response.json();
+        setUploadError(error.detail || 'خطا در ثبت پوشه');
+      }
+    } catch (error) {
+      setUploadError('خطا در اتصال به سرور');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // فعال/غیرفعال کردن نقشه آفلاین
+  useEffect(() => {
+    if (!openDialog || dialogMode !== 'filesystem') {
+      return;
+    }
+
+    let cancelled = false;
+
+    const fetchFolders = async () => {
+      setFilesystemFoldersLoading(true);
+      setFilesystemFoldersError(null);
+      try {
+        const response = await authFetch(apiBase, '/maps/filesystem-folders');
+        let payload: any = null;
+        try {
+          payload = await response.json();
+        } catch (err) {
+          payload = null;
+        }
+
+        if (!response.ok) {
+          const detail = payload && typeof payload === 'object' && 'detail' in payload ? payload.detail : null;
+          throw new Error(detail || 'Failed to fetch filesystem folders');
+        }
+
+        if (!cancelled && payload) {
+          const entries = Array.isArray(payload.entries) ? payload.entries : [];
+          const normalisedOptions: FilesystemFolderOption[] = entries
+            .map((entry: any) => ({
+              value: typeof entry.folder === 'string' ? entry.folder : '',
+              label: typeof entry.label === 'string' ? entry.label : '',
+              relativePath: typeof entry.relative_path === 'string' ? entry.relative_path : '',
+              tileCount: typeof entry.approx_tile_count === 'number' ? entry.approx_tile_count : null,
+            }))
+            .filter((entry: FilesystemFolderOption) => entry.value && entry.label);
+
+          setFilesystemRootPath(typeof payload.root === 'string' ? payload.root : '');
+          setFilesystemFolders(normalisedOptions);
+        }
+      } catch (error) {
+        if (!cancelled) {
+          const message = error instanceof Error ? error.message : 'Failed to fetch filesystem folders';
+          setFilesystemFoldersError(message);
+          setFilesystemFolders([]);
+          setFilesystemRootPath('');
+        }
+      } finally {
+        if (!cancelled) {
+          setFilesystemFoldersLoading(false);
+        }
+      }
+    };
+
+    fetchFolders();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [openDialog, dialogMode, apiBase]);
+
   const toggleOfflineMap = async (mapId: number) => {
+
     try {
       const response = await authFetch(apiBase, `/maps/${mapId}`, {
         method: 'PUT',
@@ -208,15 +324,15 @@ const MapsTab: React.FC = () => {
       });
 
       if (response.ok) {
+        const updated = await response.json();
         await loadOfflineMaps();
-        
-        // نقشه فعال را در mapSlice تنظیم کن
-        const activeMap = offlineMaps.find(map => map.id === mapId);
-        if (activeMap) {
+
+        // نقشه فعال را در mapSlice تنظیم کن (بر اساس پاسخ سرور)
+        if (updated && updated.id && updated.url_template) {
           dispatch(setActiveOfflineMap({
-            id: activeMap.id,
-            name: activeMap.name,
-            url: `${tileServerBase}/data/${activeMap.filename}/{z}/{x}/{y}.png`
+            id: updated.id,
+            name: updated.name,
+            url: updated.url_template,
           }));
         }
       }
@@ -253,12 +369,15 @@ const MapsTab: React.FC = () => {
 
   useEffect(() => {
     loadOfflineMaps();
-  }, []);
+  }, [loadOfflineMaps]);
 
-  const handleOpenDialog = (mode: 'server' | 'upload' | 'offline') => {
+  const handleOpenDialog = (mode: 'server' | 'upload' | 'offline' | 'filesystem') => {
     setDialogMode(mode);
     if (mode === 'offline') {
       setOfflineFormData({ name: '', description: '', file: null });
+    } else if (mode === 'filesystem') {
+      setFilesystemFormData({ name: '', description: '', folder: '' });
+        setFilesystemFolderInput('');
     } else {
       setFormData({
         name: '',
@@ -275,12 +394,17 @@ const MapsTab: React.FC = () => {
     setOpenDialog(false);
     setFormData({});
     setOfflineFormData({ name: '', description: '', file: null });
+    setFilesystemFormData({ name: '', description: '', folder: '' });
+    setFilesystemFolderInput('');
+    setFilesystemFoldersError(null);
     setUploadError(null);
   };
 
   const handleSave = () => {
     if (dialogMode === 'offline') {
       uploadOfflineMap();
+    } else if (dialogMode === 'filesystem') {
+      registerFilesystemMap();
     } else {
       dispatch(addMapLayer(formData as Omit<MapLayer, 'id'>));
       handleCloseDialog();
@@ -356,9 +480,14 @@ const MapsTab: React.FC = () => {
               title="نقشه‌های آفلاین"
               avatar={<MapIcon color="primary" />}
               action={
-                <Button variant="contained" size="small" startIcon={<Add />} onClick={() => handleOpenDialog('offline')}>
-                  آپلود نقشه
-                </Button>
+                <Box sx={{ display: 'flex', gap: 1 }}>
+                  <Button variant="contained" size="small" startIcon={<Add />} onClick={() => handleOpenDialog('offline')}>
+                    آپلود فایل نقشه
+                  </Button>
+                  <Button variant="outlined" size="small" startIcon={<Add />} onClick={() => handleOpenDialog('filesystem')}>
+                    ثبت پوشه
+                  </Button>
+                </Box>
               }
               sx={{ pb: 1 }}
             />
@@ -367,8 +496,8 @@ const MapsTab: React.FC = () => {
                 <Chip label={`تعداد: ${offlineMaps.length}`} size="small" />
                 <Chip label={`فعال: ${offlineMaps.filter(m=>m.is_active).length}`} color="success" size="small" />
               </Box>
-              <Typography variant="body2" color="text.secondary">
-                از دکمه بالا برای بارگذاری فایل .mbtiles استفاده کنید. لیست کامل در جدول پایین نمایش داده می‌شود.
+              <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+                می‌توانید فایل‌های .mbtiles را آپلود کنید یا پوشه‌های موجود با ساختار z/x/y را ثبت کنید. لیست کامل در جدول پایین نمایش داده می‌شود.
               </Typography>
             </CardContent>
           </Card>
@@ -566,6 +695,7 @@ const MapsTab: React.FC = () => {
                     <TableRow>
                       <TableCell>نام</TableCell>
                       <TableCell>توضیحات</TableCell>
+                      <TableCell align="center">نوع</TableCell>
                       <TableCell align="center">اندازه</TableCell>
                       <TableCell align="center">وضعیت</TableCell>
                       <TableCell align="center">عملیات</TableCell>
@@ -574,7 +704,7 @@ const MapsTab: React.FC = () => {
                   <TableBody>
                     {offlineMaps.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={5} align="center">هیچ نقشه آفلاینی یافت نشد</TableCell>
+                        <TableCell colSpan={6} align="center">هیچ نقشه آفلاینی یافت نشد</TableCell>
                       </TableRow>
                     ) : (
                       offlineMaps.map((map) => (
@@ -582,8 +712,21 @@ const MapsTab: React.FC = () => {
                           <TableCell>{map.name}</TableCell>
                           <TableCell sx={{ maxWidth: 360 }}>
                             <Typography variant="body2" noWrap>{map.description || '-'}</Typography>
+                            {map.storage_type === 'filesystem' && (
+                              <Typography variant="caption" color="text.secondary" display="block" sx={{ mt: 0.5 }} noWrap>
+                                مسیر: {map.file_path}
+                              </Typography>
+                            )}
                           </TableCell>
-                          <TableCell align="center">{map.file_size ? `${Math.round(map.file_size / 1024 / 1024)} MB` : '-'}</TableCell>
+                          <TableCell align="center">
+                            <Chip
+                              label={map.storage_type === 'mbtiles' ? 'فایل نقشه' : 'پوشه z/x/y'}
+                              size="small"
+                              color={map.storage_type === 'mbtiles' ? 'primary' : 'info'}
+                              variant={map.storage_type === 'mbtiles' ? 'filled' : 'outlined'}
+                            />
+                          </TableCell>
+                          <TableCell align="center">{map.file_size ? `${Math.round(map.file_size / 1024 / 1024)} مگابایت` : '-'}</TableCell>
                           <TableCell align="center">
                             {map.is_active ? <Chip label="فعال" color="success" size="small" /> : <Chip label="غیرفعال" size="small" />}
                           </TableCell>
@@ -694,6 +837,7 @@ const MapsTab: React.FC = () => {
           }}
         >
           {dialogMode === 'offline' ? 'آپلود نقشه آفلاین' : 
+           dialogMode === 'filesystem' ? 'ثبت نقشه پوشه‌ای' :
            dialogMode === 'server' ? t('resources.maps.dialog.addFromServerTitle') : 
            t('resources.maps.dialog.uploadFileTitle')}
         </DialogTitle>
@@ -747,7 +891,7 @@ const MapsTab: React.FC = () => {
                       },
                     }}
                   >
-                    انتخاب فایل MBTiles
+                    انتخاب فایل نقشه
                     <input
                       type="file"
                       hidden
@@ -764,6 +908,102 @@ const MapsTab: React.FC = () => {
                       فایل انتخاب شده: {offlineFormData.file.name}
                     </Typography>
                   )}
+                </Grid>
+              </>
+            ) : dialogMode === 'filesystem' ? (
+              <>
+                <Grid item xs={12}>
+                  <TextField
+                    fullWidth
+                    label="نام نقشه"
+                    value={filesystemFormData.name}
+                    onChange={(e) => setFilesystemFormData({ ...filesystemFormData, name: e.target.value })}
+                    required
+                  />
+                </Grid>
+                <Grid item xs={12}>
+                  <Autocomplete
+                    freeSolo
+                    options={filesystemFolders}
+                    value={
+                      filesystemFolders.find((option) => option.value === filesystemFormData.folder) ??
+                      (filesystemFormData.folder ? filesystemFormData.folder : null)
+                    }
+                    inputValue={filesystemFolderInput}
+                    onInputChange={(event, newInputValue) => {
+                      setFilesystemFolderInput(newInputValue);
+                      setFilesystemFormData({ ...filesystemFormData, folder: newInputValue });
+                    }}
+                    onChange={(event, newValue) => {
+                      if (typeof newValue === 'string') {
+                        setFilesystemFormData({ ...filesystemFormData, folder: newValue });
+                        setFilesystemFolderInput(newValue);
+                      } else if (newValue) {
+                        setFilesystemFormData({ ...filesystemFormData, folder: newValue.value });
+                        setFilesystemFolderInput(newValue.value);
+                      } else {
+                        setFilesystemFormData({ ...filesystemFormData, folder: '' });
+                        setFilesystemFolderInput('');
+                      }
+                    }}
+                    loading={filesystemFoldersLoading}
+                    sx={{ width: '100%' }}
+                    getOptionLabel={(option) => (typeof option === 'string' ? option : option.label)}
+                    renderOption={(props, option) => {
+                      const resolved =
+                        typeof option === 'string'
+                          ? filesystemFolders.find((item) => item.value === option) ?? null
+                          : option;
+                      return (
+                        <li {...props}>
+                          <Box sx={{ display: 'flex', flexDirection: 'column' }}>
+                            <Typography variant="body2">
+                              {resolved?.label ?? (typeof option === 'string' ? option : '')}
+                            </Typography>
+                            {resolved?.relativePath && resolved.relativePath !== resolved.label && (
+                              <Typography variant="caption" color="text.secondary">
+                                {resolved.relativePath}
+                              </Typography>
+                            )}
+                            {typeof resolved?.tileCount === 'number' && (
+                              <Typography variant="caption" color="text.secondary">
+                                {`تایل‌ها: ${resolved.tileCount}`}
+                              </Typography>
+                            )}
+                          </Box>
+                        </li>
+                      );
+                    }}
+                    renderInput={(params) => (
+                      <TextField
+                        {...params}
+                        label="مسیر پوشه (نسبت به سرور)"
+                        helperText={
+                          filesystemFoldersLoading
+                            ? 'در حال بارگذاری پوشه‌ها...'
+                            : filesystemRootPath
+                              ? `ریشه: ${filesystemRootPath}`
+                              : 'مسیر پوشه را وارد کنید یا از لیست انتخاب کنید'
+                        }
+                        required
+                      />
+                    )}
+                  />
+                  {filesystemFoldersError && (
+                    <Alert severity="error" sx={{ mt: 1 }}>
+                      {filesystemFoldersError}
+                    </Alert>
+                  )}
+                </Grid>
+                <Grid item xs={12}>
+                  <TextField
+                    fullWidth
+                    label="توضیحات (اختیاری)"
+                    value={filesystemFormData.description}
+                    onChange={(e) => setFilesystemFormData({ ...filesystemFormData, description: e.target.value })}
+                    multiline
+                    rows={2}
+                  />
                 </Grid>
               </>
             ) : (
@@ -789,8 +1029,8 @@ const MapsTab: React.FC = () => {
                         >
                           <MenuItem value="wms">WMS</MenuItem>
                           <MenuItem value="wmts">WMTS</MenuItem>
-                          <MenuItem value="xyz">XYZ Tiles</MenuItem>
-                          <MenuItem value="osm">OpenStreetMap</MenuItem>
+                          <MenuItem value="xyz">تایل‌های XYZ</MenuItem>
+                          <MenuItem value="osm">نقشه باز خیابان</MenuItem>
                         </Select>
                       </FormControl>
                     </Grid>
@@ -897,7 +1137,9 @@ const MapsTab: React.FC = () => {
             disabled={
               dialogMode === 'offline' 
                 ? !offlineFormData.name || !offlineFormData.file 
-                : !formData.name
+                : dialogMode === 'filesystem'
+                  ? !filesystemFormData.name || !filesystemFormData.folder
+                  : !formData.name
             }
             sx={{
               borderRadius: '12px',
@@ -916,6 +1158,7 @@ const MapsTab: React.FC = () => {
             }}
           >
             {dialogMode === 'offline' ? 'آپلود نقشه' :
+             dialogMode === 'filesystem' ? 'ثبت نقشه' :
              dialogMode === 'server' ? t('resources.maps.dialog.addButton') : 
              t('resources.maps.dialog.uploadButton')}
           </Button>
@@ -934,3 +1177,10 @@ const MapsTab: React.FC = () => {
 };
 
 export default MapsTab;
+
+
+
+
+
+
+

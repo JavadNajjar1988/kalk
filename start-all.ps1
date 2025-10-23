@@ -50,9 +50,10 @@ docker compose @composeUpArgs
 # TileServer is now managed by docker-compose.yml
 # No need for manual container management
 
-$mapsMbtiles = Join-Path $PWD "backend\static\maps\maps.mbtiles"
+$mapsDir = Join-Path $PWD "backend\static\maps"
 try {
-  if (Test-Path $mapsMbtiles) {
+  $hasMbtiles = Test-Path (Join-Path $mapsDir "*.mbtiles")
+  if ($hasMbtiles) {
     Write-Host "Starting TileServer profile (maps)..."
     if ($EnvFile) {
       docker compose --env-file $EnvFile --profile maps up -d
@@ -60,10 +61,26 @@ try {
       docker compose --profile maps up -d
     }
   } else {
-    Write-Warning "TileServer MBTiles file not found at backend/static/maps/maps.mbtiles; skipping maps profile."
+    Write-Warning "No .mbtiles files found under backend/static/maps; skipping maps profile."
   }
 } catch {
   Write-Warning "Failed to start TileServer profile: $_"
+}
+
+$satDir = Join-Path $PWD "sat"
+try {
+  if (Test-Path $satDir) {
+    $hasChunks = Get-ChildItem -Path $satDir -Recurse -Filter "*.sqlitedb" -ErrorAction SilentlyContinue | Select-Object -First 1
+    if ($hasChunks) {
+      Write-Host "SQLite tile chunks detected under sat/. Register via Dashboard -> Offline Maps -> Register Folder."
+    } else {
+      Write-Warning "sat/ directory present but no *.sqlitedb tile chunks found."
+    }
+  } else {
+    Write-Warning "sat/ directory not found; tile folders will not be accessible."
+  }
+} catch {
+  Write-Warning "Unable to inspect sat/ directory: $_"
 }
 
 if (-not $SkipFrontend) {
@@ -176,5 +193,5 @@ if ($SkipFrontend) {
 }
 Write-Host ""
 Write-Host "Optional services:"
-Write-Host "- TileServer:    docker compose --profile maps up -d (requires backend/static/maps/maps.mbtiles)"
-Write-Host "                http://127.0.0.1:8480 (MBTiles: backend/static/maps/maps.mbtiles)"
+Write-Host "- TileServer:    docker compose --profile maps up -d (serves backend/static/maps/*.mbtiles)"
+Write-Host "                http://127.0.0.1:8480 (Tiles: /data/<filename>.mbtiles/{z}/{x}/{y}.png)"

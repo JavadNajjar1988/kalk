@@ -30,6 +30,8 @@ class Settings(BaseSettings):
 
     # وقتی True باشد، تمام بررسی‌های احراز هویت در backend نادیده گرفته می‌شود.
     DISABLE_AUTH: bool = False
+    TILESERVER_URL: str = "http://127.0.0.1:8480"
+    FILESYSTEM_TILE_ROOT: str = "sat"
 
     @field_validator("DISABLE_AUTH", mode="before")
     def _coerce_bool(cls, v):  # type: ignore[no-redef]

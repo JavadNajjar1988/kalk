@@ -22,10 +22,12 @@ class OfflineMapResponse(OfflineMapBase):
     id: int
     filename: str
     file_path: str
+    storage_type: str
     is_active: bool
     file_size: Optional[int]
     created_at: datetime
     updated_at: Optional[datetime]
+    url_template: str
 
     class Config:
         from_attributes = True
@@ -34,3 +36,21 @@ class OfflineMapResponse(OfflineMapBase):
 class OfflineMapListResponse(BaseModel):
     maps: list[OfflineMapResponse]
     total: int
+
+
+class OfflineMapFolderRegister(BaseModel):
+    name: str
+    folder: str
+    description: Optional[str] = None
+
+
+class FilesystemFolderInfo(BaseModel):
+    label: str
+    folder: str
+    relative_path: str
+    approx_tile_count: Optional[int] = None
+
+
+class FilesystemFolderListResponse(BaseModel):
+    root: str
+    entries: list[FilesystemFolderInfo]

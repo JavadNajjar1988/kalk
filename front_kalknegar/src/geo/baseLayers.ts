@@ -71,6 +71,38 @@ export async function createBaseLayers(view: View, currentBaseLayerName = "osm")
     });
   });
 
+  try {
+    const activeRes = await fetch("/api/maps/active");
+    if (activeRes.ok) {
+      const activeMap = await activeRes.json();
+      const offlineLayerName = `offline-${activeMap.id}`;
+      const shouldDefault = currentBaseLayerName === "osm";
+      const offlineLayer = new TileLayer({
+        source: new XYZ({
+          url: activeMap.url_template,
+          crossOrigin: "anonymous",
+        }),
+        properties: {
+          title: activeMap.name ?? "Offline Map",
+          name: offlineLayerName,
+          layerType: "baselayer",
+        },
+        visible: shouldDefault || currentBaseLayerName === offlineLayerName,
+        preload: Infinity,
+      });
+      baseLayers.unshift(offlineLayer);
+      if (shouldDefault) {
+        baseLayers.forEach((layer) => {
+          if (layer !== offlineLayer) {
+            layer.setVisible(false);
+          }
+        });
+      }
+    }
+  } catch (error) {
+    console.warn("Failed to load active offline map", error);
+  }
+
   // ensure that at least one is visible
   if (!baseLayers.some((l) => l.getVisible())) {
     baseLayers[0]?.setVisible(true);

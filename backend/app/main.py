@@ -19,7 +19,7 @@ from app.api.routes import scenarios as scenarios_routes
 from app.api.routes import auth as auth_routes
 from app.api.routes import realtime as realtime_routes
 from app.api.routes import maps as maps_routes
-from app.api.routes import maps as maps_routes
+from app.api.routes import filesystem_tiles as filesystem_tiles_routes
 
 
 def create_app() -> FastAPI:
@@ -96,7 +96,7 @@ def create_app() -> FastAPI:
     api.include_router(auth_routes.router)
     api.include_router(realtime_routes.router)
     api.include_router(maps_routes.router)
-    api.include_router(maps_routes.router)
+    api.include_router(filesystem_tiles_routes.router)
 
     return app
 

@@ -13,8 +13,7 @@ tileserver:
   ports:
     - "8480:8080"
   volumes:
-    - ./backend/static/maps/maps.mbtiles:/data/maps.mbtiles:ro
-  command: ["--mbtiles", "/data/maps.mbtiles"]
+    - ./backend/static/maps:/data:ro
   healthcheck:
     test: ["CMD-SHELL", "curl -sf http://localhost:8080/health || wget -qO- http://localhost:8080/health || exit 1"]
     interval: 10s
@@ -36,7 +35,7 @@ tileserver:
 docker compose up -d
 ```
 
-### 2. اجرای فقط MapTiler (اگر فایل maps.mbtiles موجود باشد)
+### 2. اجرای فقط MapTiler (با پشتیبانی چندفایلی)
 ```bash
 docker compose --profile maps up -d
 ```
@@ -53,9 +52,9 @@ docker compose ps
 ## اضافه کردن فایل نقشه
 
 ### گزینه 1: دانلود نقشه آماده
-1. فایل `.mbtiles` مورد نظر را دانلود کنید
-2. آن را با نام `maps.mbtiles` در مسیر `backend/static/maps/` قرار دهید
-3. سیستم را مجدداً راه‌اندازی کنید
+1. فایل(های) `.mbtiles` مورد نظر را دانلود کنید
+2. آن‌ها را در مسیر `backend/static/maps/` قرار دهید (نام فایل همان شناسه لایه خواهد شد)
+3. سیستم را مجدداً راه‌اندازی کنید (یا فقط پروفایل `maps`)
 
 ### گزینه 2: ایجاد نقشه سفارشی
 ```bash
@@ -66,10 +65,19 @@ docker compose ps
 
 ## تنظیمات فرانت‌اند
 
-فرانت‌اند به صورت خودکار از آدرس زیر استفاده می‌کند:
+فرانت‌اند به صورت خودکار از آدرس‌های زیر استفاده می‌کند:
 ```
-http://127.0.0.1:8480/data/maps/{z}/{x}/{y}.png
+http://127.0.0.1:8480/data/<filename>.mbtiles/{z}/{x}/{y}.png
+یا مقداردهی از طریق ENV: VITE_TILESERVER_URL
 ```
+
+## کاشی‌های فایل‌سیستمی (SQLite chunk)
+
+- پوشه‌هایی مثل `sat/` ساختار MapTiler chunk دارند: `sat/z{Z}/{X-group}/{Y-group}/{X-chunk}.{Y-chunk}.sqlitedb`.
+- پوشه را در سرور (یا مسیر مانت‌شده داخل کانتینر) قرار دهید. مقدار `FILESYSTEM_TILE_ROOT` مسیر پایه را مشخص می‌کند (`sat` به‌صورت پیش‌فرض در `docker-compose.yml` مانت شده است).
+- در داشبورد، تب «نقشه‌های آفلاین» را باز کرده و دکمه «ثبت پوشه» را بزنید. مسیر پوشه (نسبت به `sat/` یا مسیر مطلق داخل سرور) را وارد کنید؛ سیستم وجود فایل‌های `.sqlitedb` را بررسی و نقشه را ثبت می‌کند.
+- پس از ثبت، URL کاشی به صورت `/api/tile-cache/<map_id>/{z}/{x}/{y}` در دسترس است و سرویس FastAPI کاشی را از SQLite استخراج می‌کند.
+- همان نقشه در KalkNegar به‌عنوان لایهٔ پایهٔ جدید در دسترس است و می‌توانید آن را فعال/غیرفعال کنید.
 
 ## عیب‌یابی
 
@@ -83,9 +91,11 @@ docker compose logs tileserver
 curl http://127.0.0.1:8480/health
 ```
 
-### مشکل: فایل maps.mbtiles موجود نیست
-- فایل `maps.mbtiles` را در مسیر `backend/static/maps/` قرار دهید
-- یا از profile استفاده کنید: `docker compose --profile maps up -d`
+### مشکل: فایل‌ها پیدا نمی‌شوند
+- مطمئن شوید فایل‌های `.mbtiles` در `backend/static/maps/` قرار دارند
+- نام فایل در URL استفاده می‌شود: `/data/<filename>.mbtiles/{z}/{x}/{y}.png`
+- از پروفایل استفاده کنید: `docker compose --profile maps up -d`
+- برای نقشه‌های پوشه‌ای، ساختار باید `sat/z{Z}/{X-group}/{Y-group}/{X-chunk}.{Y-chunk}.sqlitedb` باشد و مسیر در داشبورد ثبت شده باشد.
 
 ## مزایای این تنظیمات
 
@@ -99,6 +109,6 @@ curl http://127.0.0.1:8480/health
 
 ## نکات مهم
 
-- اگر فایل `maps.mbtiles` موجود نباشد، tileserver اجرا نمی‌شود
+- در نبود فایل `.mbtiles`، tileserver چیزی برای سرو ندارد
 - برای اجرای tileserver، از profile استفاده کنید: `--profile maps`
-- فایل نقشه باید در مسیر `backend/static/maps/` با نام `maps.mbtiles` قرار گیرد
+- همه‌ی فایل‌های `.mbtiles` داخل `backend/static/maps/` به‌صورت read-only در `/data` درون کانتینر در دسترس‌اند

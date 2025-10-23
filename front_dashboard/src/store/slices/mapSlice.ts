@@ -82,7 +82,7 @@ const initialState: MapState = {
       type: 'base',
       visible: true,
       opacity: 1,
-      url: `${defaultTileServerBase}/data/maps/{z}/{x}/{y}.png`,
+      url: `${defaultTileServerBase}/data/maps.mbtiles/{z}/{x}/{y}.png`,
     },
     {
       id: 'satellite',
@@ -296,11 +296,17 @@ const mapSlice = createSlice({
       state.activeOfflineMap = action.payload;
       
       // اگر نقشه آفلاین جدید تنظیم شد، لایه OSM را به‌روزرسانی کن
-      if (action.payload) {
-        const osmLayer = state.baseLayers.find(layer => layer.id === 'osm');
-        if (osmLayer) {
+      const osmLayer = state.baseLayers.find(layer => layer.id === 'osm');
+      if (osmLayer) {
+        if (action.payload) {
           osmLayer.url = action.payload.url;
           osmLayer.name = action.payload.name;
+        } else {
+          const defaultOsm = initialState.baseLayers.find(layer => layer.id === 'osm');
+          if (defaultOsm) {
+            osmLayer.url = defaultOsm.url || osmLayer.url;
+            osmLayer.name = defaultOsm.name;
+          }
         }
       }
     },

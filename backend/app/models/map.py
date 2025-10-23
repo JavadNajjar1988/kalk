@@ -11,6 +11,7 @@ class OfflineMap(Base):
     filename = Column(String(255), nullable=False)
     file_path = Column(String(500), nullable=False)
     description = Column(Text, nullable=True)
+    storage_type = Column(String(32), nullable=False, default="mbtiles")
     is_active = Column(Boolean, default=False)
     file_size = Column(Integer, nullable=True)  # اندازه فایل به بایت
     created_at = Column(DateTime(timezone=True), server_default=func.now())

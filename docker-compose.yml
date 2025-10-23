@@ -23,6 +23,8 @@ services:
       context: ./backend
       dockerfile: Dockerfile
     restart: unless-stopped
+    volumes:
+      - ./sat:/app/sat:ro
     environment:
       # Prefer loading from .env via --env-file; fallback to default if not provided
       DB_URL: ${DB_URL:-postgresql+asyncpg://postgres:postgres@db:5432/kalk}
@@ -48,8 +50,9 @@ services:
     ports:
       - "8480:8080"
     volumes:
-      - ./backend/static/maps/maps.mbtiles:/data/maps.mbtiles:ro
-    command: ["--mbtiles", "/data/maps.mbtiles"]
+      - ./backend/static/maps:/data:ro
+    # Let tileserver-gl auto-discover all .mbtiles in /data so URLs like
+    # /data/<filename>/{z}/{x}/{y}.png work for multiple offline maps
     healthcheck:
       test: ["CMD-SHELL", "curl -sf http://localhost:8080/health || wget -qO- http://localhost:8080/health || exit 1"]
       interval: 10s
