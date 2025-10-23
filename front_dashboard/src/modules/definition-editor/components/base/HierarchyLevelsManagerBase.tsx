@@ -1,12 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { 
   Box, Typography, Accordion, AccordionSummary, AccordionDetails, Paper,
   Button, IconButton, Dialog, DialogTitle, DialogContent, DialogActions,
   TextField, Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
-  Avatar, alpha
+  Avatar, alpha, useTheme, useMediaQuery
 } from '@mui/material';
 import { ExpandMore as ExpandMoreIcon } from '@mui/icons-material';
-import { Add as AddIcon, Edit as EditIcon, Delete as DeleteIcon, Settings as SettingsIcon, Warning as WarningIcon } from '@mui/icons-material';
+import { Add as AddIcon, Edit as EditIcon, Delete as DeleteIcon, Settings as SettingsIcon, Warning as WarningIcon, Close as CloseIcon } from '@mui/icons-material';
 import { CategoryType, ExtendedHierarchyLevel } from '../../types';
 import { DynamicHierarchyLevel } from '../../types';
 import { useAppDispatch, useAppSelector } from '../../../../store';
@@ -41,6 +41,107 @@ interface HierarchyLevelsManagerBaseProps {
 const HierarchyLevelsManagerBase: React.FC<HierarchyLevelsManagerBaseProps> = ({ 
   categoryType
 }) => {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+
+  const softSurface = useMemo(() => {
+    const primary = (theme.palette.primary.main || '#4a90e2').toLowerCase();
+    const hex = primary.replace('#', '');
+
+    if (hex.includes('10b981') || hex.includes('4caf50') || hex.includes('2e7d32')) return '#f0f4f3';
+    if (hex.includes('4a90e2') || hex.includes('1976d2') || hex.includes('2196f3')) return '#f0f4f8';
+    if (hex.includes('ef4444') || hex.includes('f44336') || hex.includes('d32f2f')) return '#fbf1f0';
+    if (hex.includes('6b21a8') || hex.includes('9c27b0') || hex.includes('673ab7')) return theme.palette.mode === 'dark' ? '#1f2330' : '#f3f0f9';
+    if (hex.includes('f59e0b') || hex.includes('ff9800') || hex.includes('fb8c00')) return '#fbf5ef';
+
+    const clamp = (n: number) => Math.max(0, Math.min(255, Math.round(n)));
+    const hexToRgb = (h: string) => {
+      const norm = h.length === 3 ? h.split('').map(c => c + c).join('') : h;
+      const r = parseInt(norm.slice(0, 2), 16);
+      const g = parseInt(norm.slice(2, 4), 16);
+      const b = parseInt(norm.slice(4, 6), 16);
+      return { r, g, b };
+    };
+    const rgbToHex = (r: number, g: number, b: number) =>
+      `#${clamp(r).toString(16).padStart(2, '0')}${clamp(g).toString(16).padStart(2, '0')}${clamp(b).toString(16).padStart(2, '0')}`;
+    const blendWithWhite = (h: string, primaryWeight = 0.1) => {
+      const { r, g, b } = hexToRgb(h);
+      const white = 255;
+      const weight = 1 - primaryWeight;
+      const br = white * weight + r * primaryWeight;
+      const bg = white * weight + g * primaryWeight;
+      const bb = white * weight + b * primaryWeight;
+      return rgbToHex(br, bg, bb);
+    };
+
+    if (/^[0-9a-f]{3,6}$/.test(hex)) {
+      return blendWithWhite(hex, 0.1);
+    }
+
+    try {
+      const fallback = (theme.palette.primary.light || '#90caf9').toLowerCase().replace('#', '');
+      return blendWithWhite(fallback, 0.08);
+    } catch {
+      return theme.palette.mode === 'dark' ? '#1f2430' : '#f5f7fa';
+    }
+  }, [theme]);
+
+  const inputBaseSx = useMemo(() => ({
+    '& .MuiOutlinedInput-root': {
+      borderRadius: '12px',
+      backgroundColor: theme.palette.mode === 'dark'
+        ? alpha(theme.palette.background.paper, 0.65)
+        : 'rgba(255, 255, 255, 0.9)',
+      '& fieldset': { borderColor: alpha(theme.palette.primary.main, 0.2) },
+      '&:hover fieldset': { borderColor: alpha(theme.palette.primary.main, 0.4) },
+      '&.Mui-focused fieldset': {
+        borderColor: alpha(theme.palette.primary.main, 0.6),
+        boxShadow: `0 0 0 3px ${alpha(theme.palette.primary.main, 0.15)}`
+      },
+    },
+  }), [theme]);
+
+  const secondaryButtonSx = useMemo(() => ({
+    borderRadius: '12px',
+    px: { xs: 2, sm: 3 },
+    py: 1.2,
+    backgroundColor: 'rgba(148, 163, 184, 0.12)',
+    color: '#475569',
+    border: '1px solid rgba(148, 163, 184, 0.25)',
+    backdropFilter: 'blur(10px)',
+    fontWeight: 600,
+    transition: 'transform 0.2s ease, box-shadow 0.2s ease',
+    '&:hover': {
+      backgroundColor: 'rgba(148, 163, 184, 0.18)',
+      transform: 'translateY(-2px)',
+      boxShadow: '0 8px 22px rgba(148, 163, 184, 0.24)',
+    },
+  }), [theme]);
+
+  const primaryButtonSx = useMemo(() => ({
+    borderRadius: '12px',
+    px: { xs: 2.2, sm: 3.5 },
+    py: 1.2,
+    background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
+    color: '#ffffff',
+    border: '2px solid rgba(255, 255, 255, 0.4)',
+    boxShadow: `0 12px 32px ${alpha(theme.palette.primary.main, 0.32)}`,
+    fontWeight: 700,
+    transition: 'transform 0.2s ease, box-shadow 0.2s ease',
+    '&:hover': {
+      transform: 'translateY(-2px)',
+      boxShadow: `0 16px 44px ${alpha(theme.palette.primary.dark, 0.4)}`,
+      background: `linear-gradient(135deg, ${theme.palette.primary.dark} 0%, ${theme.palette.primary.main} 100%)`,
+    },
+    '&:disabled': {
+      background: 'rgba(148, 163, 184, 0.4)',
+      borderColor: 'rgba(255, 255, 255, 0.2)',
+      color: 'rgba(255, 255, 255, 0.85)',
+      transform: 'none',
+      boxShadow: 'none',
+    },
+  }), [theme]);
+
   // حالت‌های کامپوننت
   const [category, setCategory] = useState<LocalDefinitionCategory | null>(null);
   const dispatch = useAppDispatch();
@@ -411,18 +512,108 @@ const HierarchyLevelsManagerBase: React.FC<HierarchyLevelsManagerBaseProps> = ({
       </TableContainer>
 
       {/* Dialog */}
-      <Dialog open={isDialogOpen} onClose={handleCloseDialog} maxWidth="sm" fullWidth PaperProps={{ sx: { direction: 'rtl', borderRadius: 2 } }}>
-        <DialogTitle>{editingLevel ? 'ویرایش سطح' : 'افزودن سطح جدید'}</DialogTitle>
-        <DialogContent sx={{ pt: 2 }}>
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-            <TextField label="نام فارسی" value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} fullWidth required />
-            <TextField label="نام انگلیسی" value={formData.englishName} onChange={(e) => setFormData({ ...formData, englishName: e.target.value })} fullWidth required />
-            <TextField label="ترتیب" type="number" value={formData.order} onChange={(e) => setFormData({ ...formData, order: parseInt(e.target.value) || 1 })} fullWidth inputProps={{ min: 1 }} />
+      <Dialog
+        open={isDialogOpen}
+        onClose={handleCloseDialog}
+        maxWidth="sm"
+        fullWidth
+        fullScreen={isMobile}
+        PaperProps={{
+          sx: {
+            direction: 'rtl',
+            borderRadius: isMobile ? 0 : '20px',
+            backgroundColor: alpha(theme.palette.primary.light, 0.1),
+            backdropFilter: 'blur(20px)',
+            border: (t) => `1px solid ${alpha(t.palette.primary.light, 0.2)}`,
+            boxShadow: (t) => `0 24px 60px ${alpha(t.palette.primary.light, 0.28)}, inset 0 1px 0 rgba(255, 255, 255, 0.75)`,
+            overflow: 'hidden',
+            display: 'flex',
+            flexDirection: 'column',
+            maxHeight: { xs: '100vh', md: '90vh' },
+          },
+        }}
+      >
+        <DialogTitle
+          sx={{
+            backgroundColor: softSurface,
+            borderBottom: (t) => `1px solid ${alpha(t.palette.primary.light, 0.2)}`,
+            py: isMobile ? 2 : 3,
+            px: isMobile ? 2 : 3,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+          }}
+        >
+          <Typography variant={isMobile ? 'h6' : 'h5'} fontWeight={700} color="primary">
+            {editingLevel ? 'ویرایش سطح' : 'افزودن سطح جدید'}
+          </Typography>
+          <IconButton
+            onClick={handleCloseDialog}
+            size="small"
+            sx={{
+              minWidth: 'auto',
+              color: theme.palette.primary.main,
+              backgroundColor: alpha(theme.palette.primary.main, 0.12),
+              border: `1px solid ${alpha(theme.palette.primary.main, 0.18)}`,
+              '&:hover': {
+                backgroundColor: alpha(theme.palette.primary.main, 0.2),
+                transform: 'translateY(-1px)',
+                boxShadow: `0 6px 18px ${alpha(theme.palette.primary.main, 0.25)}`,
+              },
+            }}
+          >
+            <CloseIcon fontSize="small" />
+          </IconButton>
+        </DialogTitle>
+        <DialogContent sx={{ p: 0, backgroundColor: softSurface }}>
+          <Box sx={{ p: { xs: 2.5, sm: 3 }, display: 'flex', flexDirection: 'column', gap: 2.5 }}>
+            <TextField
+              label="نام فارسی"
+              value={formData.name}
+              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              fullWidth
+              required
+              sx={inputBaseSx}
+            />
+            <TextField
+              label="نام انگلیسی"
+              value={formData.englishName}
+              onChange={(e) => setFormData({ ...formData, englishName: e.target.value })}
+              fullWidth
+              required
+              sx={inputBaseSx}
+            />
+            <TextField
+              label="ترتیب"
+              type="number"
+              value={formData.order}
+              onChange={(e) => setFormData({ ...formData, order: parseInt(e.target.value, 10) || 1 })}
+              fullWidth
+              inputProps={{ min: 1 }}
+              sx={inputBaseSx}
+            />
           </Box>
         </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCloseDialog} variant="outlined">انصراف</Button>
-          <Button onClick={handleSave} variant="contained" disabled={!formData.name.trim() || !formData.englishName.trim()}>ذخیره</Button>
+        <DialogActions
+          sx={{
+            backgroundColor: softSurface,
+            borderTop: (t) => `1px solid ${alpha(t.palette.primary.light, 0.2)}`,
+            p: isMobile ? 2 : 3,
+            justifyContent: 'flex-end',
+            gap: 1.5,
+          }}
+        >
+          <Button onClick={handleCloseDialog} variant="outlined" sx={secondaryButtonSx}>
+            انصراف
+          </Button>
+          <Button
+            onClick={handleSave}
+            variant="contained"
+            disabled={!formData.name.trim() || !formData.englishName.trim()}
+            sx={primaryButtonSx}
+          >
+            ذخیره
+          </Button>
         </DialogActions>
       </Dialog>
 

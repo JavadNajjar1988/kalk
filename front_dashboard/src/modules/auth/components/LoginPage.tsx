@@ -156,7 +156,7 @@ const LoginPage: React.FC = () => {
     setShowPassword(prev => !prev);
   };
 
-  const backgroundTransform = `translate(${mousePosition.x * -20}px, ${mousePosition.y * -20}px)`;
+  const backgroundTransform = `translate(${mousePosition.x * -20}px, ${mousePosition.y * -20}px) scale(0.9)`;
 
   // Soft surface like FieldEditDialog
   const getSoftSurface = () => {
@@ -207,30 +207,50 @@ const LoginPage: React.FC = () => {
       }}
     >
       {/* پس‌زمینه پارالکس */}
-      <Box 
-        sx={{ 
-          position: 'absolute',
-          top: '-20px',
-          left: '-20px',
-          right: '-20px',
-          bottom: '-20px',
-          backgroundImage: 'url("/images/military-bg.jpg")',
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-          transform: backgroundTransform,
-          transition: 'transform 0.1s ease-out',
-          '&::after': {
-            content: '""',
+        <Box 
+          aria-hidden
+          sx={{ 
             position: 'absolute',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            background: 'linear-gradient(135deg, rgba(28, 104, 78, 0.7), rgba(45, 134, 89, 0.5))',
-            backdropFilter: 'blur(3px)',
-          }
-        }}
-      />
+            inset: '-160px',
+            backgroundImage: 'url("/videos/login.gif")',
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+            backgroundRepeat: 'no-repeat',
+            transform: backgroundTransform,
+            transition: 'transform 0.18s ease-out',
+            filter: 'blur(18px)',
+            pointerEvents: 'none',
+            zIndex: 0,
+            '&::after': {
+              content: '""',
+              position: 'absolute',
+              inset: 0,
+              background: (theme) =>
+                `linear-gradient(140deg, ${alpha(theme.palette.background.default, 0.55)}, ${alpha(
+                  theme.palette.background.paper,
+                  0.35
+                )})`,
+            }
+          }}
+        />
+
+        <Box
+          aria-hidden
+          sx={{
+            position: 'absolute',
+            inset: 0,
+            pointerEvents: 'none',
+            zIndex: 0.5,
+            background: (theme) =>
+              `linear-gradient(145deg, ${alpha(theme.palette.primary.main, theme.palette.mode === 'dark' ? 0.36 : 0.28)}, ${alpha(
+                theme.palette.secondary.main || theme.palette.primary.light,
+                theme.palette.mode === 'dark' ? 0.2 : 0.18
+              )})`,
+            opacity: 0.55,
+            transition: 'opacity 0.3s ease, background 0.3s ease',
+            mixBlendMode: 'overlay',
+          }}
+        />
 
       {/* شبکه پس‌زمینه */}
       <Box 
