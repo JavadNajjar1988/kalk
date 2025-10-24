@@ -115,34 +115,39 @@ const authSlice = createSlice({
     // Re-hydrate user from localStorage on app start
     rehydrateUser: (state) => {
       const token = localStorage.getItem('access_token');
-      if (token) {
-        try {
-          const payload = JSON.parse(atob(token.split('.')[1]));
-          const now = Math.floor(Date.now() / 1000);
-          
-          // Check if token is not expired
-          if (payload.exp && payload.exp > now) {
-            const user: User = {
-              id: payload.uid || '1',
-              username: payload.sub || 'unknown',
-              name: payload.sub === 'admin' ? 'مدیر سیستم' : 'اپراتور سیستم',
-              role: payload.roles?.includes('ADMIN') ? 'admin' : 'operator',
-              rank: payload.sub === 'admin' ? 'سرهنگ' : 'ستوان',
-              unit: payload.sub === 'admin' ? 'فرماندهی کل' : 'مرکز عملیات',
-            };
-            
-            state.user = user;
-            state.isAuthenticated = true;
-          } else {
-            // Token expired, clear it
-            localStorage.removeItem('access_token');
-            localStorage.removeItem('access_token_exp');
-          }
-        } catch (error) {
-          // Invalid token, clear it
+      if (!token) {
+        state.user = null;
+        state.isAuthenticated = false;
+        return;
+      }
+      try {
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        const now = Math.floor(Date.now() / 1000);
+        // Check if token is not expired
+        if (payload.exp && payload.exp > now) {
+          const user: User = {
+            id: payload.uid || '1',
+            username: payload.sub || 'unknown',
+            name: payload.sub === 'admin' ? 'U.O_UOO? O3UOO3O?U.' : 'OU_OOOU^O O3UOO3OU.',
+            role: payload.roles?.includes('ADMIN') ? 'admin' : 'operator',
+            rank: payload.sub === 'admin' ? 'O3OUU+U_' : 'O3OU^OU+',
+            unit: payload.sub === 'admin' ? 'U?OU.OU+O_UO UcU,' : 'U.OUcO O1U.U,UOOO',
+          };
+          state.user = user;
+          state.isAuthenticated = true;
+        } else {
+          // Token expired, clear it
           localStorage.removeItem('access_token');
           localStorage.removeItem('access_token_exp');
+          state.user = null;
+          state.isAuthenticated = false;
         }
+      } catch (error) {
+        // Invalid token, clear it
+        localStorage.removeItem('access_token');
+        localStorage.removeItem('access_token_exp');
+        state.user = null;
+        state.isAuthenticated = false;
       }
     },
   },

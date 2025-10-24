@@ -67,20 +67,20 @@ try {
   Write-Warning "Failed to start TileServer profile: $_"
 }
 
-$satDir = Join-Path $PWD "sat"
+$satDir = Join-Path $PWD "backend\static\maps"
 try {
   if (Test-Path $satDir) {
     $hasChunks = Get-ChildItem -Path $satDir -Recurse -Filter "*.sqlitedb" -ErrorAction SilentlyContinue | Select-Object -First 1
     if ($hasChunks) {
-      Write-Host "SQLite tile chunks detected under sat/. Register via Dashboard -> Offline Maps -> Register Folder."
+      Write-Host "SQLite tile chunks detected under backend/static/maps/. Register via Dashboard -> Offline Maps -> Register Folder."
     } else {
-      Write-Warning "sat/ directory present but no *.sqlitedb tile chunks found."
+      Write-Warning "backend/static/maps/ directory present but no *.sqlitedb tile chunks found."
     }
   } else {
-    Write-Warning "sat/ directory not found; tile folders will not be accessible."
+    Write-Warning "backend/static/maps/ directory not found; tile folders will not be accessible."
   }
 } catch {
-  Write-Warning "Unable to inspect sat/ directory: $_"
+  Write-Warning "Unable to inspect backend/static/maps/ directory: $_"
 }
 
 if (-not $SkipFrontend) {
@@ -186,7 +186,8 @@ if ($try -gt $maxTries) {
 Write-Host "Started:"
 Write-Host "- API:           http://localhost:8000 (Swagger: /api/docs)"
 Write-Host "- Dashboard:     http://127.0.0.1:3000/"
-Write-Host "- KalkNegar:     http://localhost:5173/kalknegar/"
+Write-Host "- KalkNegar:     http://127.0.0.1:3000/kalknegar (proxy to dev server on :5173)"
+Write-Host "                 Direct dev server (if needed): http://127.0.0.1:5173/kalknegar/"
 Write-Host ""
 if ($SkipFrontend) {
   Write-Warning "Front-end dev servers were skipped (-SkipFrontend). Start them manually if needed."

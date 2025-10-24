@@ -21,7 +21,7 @@ from app.schemas.map import (
 router = APIRouter(prefix="/maps", tags=["maps"])
 
 # مسیر پوشه ذخیره فایل‌ها
-MAPS_DIR = Path("static/maps")
+MAPS_DIR = Path("backend/static/maps")
 MAPS_DIR.mkdir(exist_ok=True, parents=True)
 
 

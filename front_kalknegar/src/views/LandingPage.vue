@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="bg-teal-50/80 dark:bg-teal-950/50 flex min-h-screen flex-col">
     <!-- AppBar Header (Dashboard Style) -->
     <header class="fixed top-0 left-0 right-0 z-50">
@@ -436,6 +436,8 @@ const logout = () => {
   // Clear token from localStorage
   localStorage.removeItem('access_token');
   localStorage.removeItem('access_token_exp');
+  sessionStorage.removeItem('access_token');
+  localStorage.removeItem('persist:sajed-root');
   
   // Close profile menu
   showProfileMenu.value = false;
@@ -447,14 +449,15 @@ const logout = () => {
         type: 'LOGOUT_REQUEST',
         origin: 'vue',
         timestamp: Date.now()
-      }, '*');
+      }, window.location.origin);
     } catch (error) {
       console.error('Error sending logout message:', error);
     }
   }
   
-  // Redirect to login or show message
+  // Redirect to login
   console.log('User logged out');
+  window.location.replace(`${window.location.origin}/auth/login`);
 };
 
 // State for scenarios section

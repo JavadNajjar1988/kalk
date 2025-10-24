@@ -3,6 +3,11 @@ import type { ApiResponse } from './types';
 import { mockApiServer } from './mockApiServer';
 import type { Scenario } from '@/types/scenarioModels';
 
+export interface ScenarioImageUploadResponse {
+  filename: string;
+  url: string;
+}
+
 export class ScenarioApiService extends BaseApiClient {
   private useMockApi = (import.meta as any).env?.VITE_USE_MOCK === 'true';
 
@@ -11,23 +16,27 @@ export class ScenarioApiService extends BaseApiClient {
     const envBase = (import.meta as any).env?.VITE_API_URL as string | undefined;
     let base: string;
     
+    const isDev = import.meta.env.DEV;
+
     if (envBase && envBase.trim() !== '') {
       base = envBase.trim().replace(/\/+$/, '');
     } else {
       const apiPathEnv = (import.meta as any).env?.VITE_API_PATH as string | undefined;
       const apiPath = apiPathEnv && apiPathEnv.trim().length > 0 ? apiPathEnv.trim().replace(/^\/+/, '') : 'api';
-      const isIframe = window.parent !== window;
-
-      if (isIframe) {
-        const parentOriginEnv = (import.meta as any).env?.VITE_PARENT_ORIGIN as string | undefined;
-        const parentOrigin = parentOriginEnv && parentOriginEnv.trim().length > 0
-          ? parentOriginEnv.trim()
-          : (document.referrer ? new URL(document.referrer).origin : window.location.origin);
-        base = `${parentOrigin.replace(/\/+$/, '')}/${apiPath}`;
-      } else if (import.meta.env.DEV) {
-        base = `http://127.0.0.1:8000/${apiPath}`;
+      if (isDev) {
+        const devHost = (import.meta as any).env?.VITE_API_DEV_HOST as string | undefined;
+        base = `${(devHost && devHost.trim()) || 'http://127.0.0.1:8000'}/${apiPath}`;
       } else {
-        base = `${window.location.origin.replace(/\/+$/, '')}/${apiPath}`;
+        const isIframe = window.parent !== window;
+        if (isIframe) {
+          const parentOriginEnv = (import.meta as any).env?.VITE_PARENT_ORIGIN as string | undefined;
+          const parentOrigin = parentOriginEnv && parentOriginEnv.trim().length > 0
+            ? parentOriginEnv.trim()
+            : (document.referrer ? new URL(document.referrer).origin : window.location.origin);
+          base = `${parentOrigin.replace(/\/+$/, '')}/${apiPath}`;
+        } else {
+          base = `${window.location.origin.replace(/\/+$/, '')}/${apiPath}`;
+        }
       }
     }
 
@@ -126,6 +135,13 @@ export class ScenarioApiService extends BaseApiClient {
       return handleApiResponse(res);
     }
     const res = await super.delete<{ id: string }>(`/scenarios/${id}`);
+    return handleApiResponse(res);
+  }
+
+  async uploadImage(file: File): Promise<ScenarioImageUploadResponse> {
+    const formData = new FormData();
+    formData.append('file', file);
+    const res = await this.postForm<ScenarioImageUploadResponse>('/scenarios/images', formData);
     return handleApiResponse(res);
   }
 }

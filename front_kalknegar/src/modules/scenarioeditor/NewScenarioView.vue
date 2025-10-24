@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="min-h-screen flex flex-col bg-teal-50/80 dark:bg-teal-950/50 text-foreground">
     <!-- Simple Modern Header with Blue-Green Icy Theme -->
     <header class="relative z-50 bg-blue-100/40 dark:bg-blue-400/15 backdrop-blur backdrop-saturate-150 supports-[backdrop-filter]:bg-blue-300/30 dark:supports-[backdrop-filter]:bg-blue-400/20 border-b border-blue-300/40 dark:border-blue-400/20 shadow-lg shadow-blue-500/3 py-4">
@@ -150,7 +150,7 @@
                     <label class="block text-sm font-medium text-heading mb-1">انتخاب تصویر</label>
                     <input
                       type="file"
-                      accept="image/*"
+                      accept="image/"
                       @change="onPreviewImageChange"
                       class="block w-full text-sm file:mr-4 file:rounded-lg file:border file:border-blue-200/40 dark:file:border-blue-700/40 file:bg-white/70 dark:file:bg-blue-900/30 file:px-3 file:py-2 file:text-blue-700 dark:file:text-blue-200 file:hover:bg-white/90 dark:file:hover:bg-blue-900/50 rounded-lg border border-blue-200/40 dark:border-blue-700/40 bg-white/60 dark:bg-blue-900/20 backdrop-blur-sm"
                     />
@@ -392,12 +392,103 @@
 
             
 
-            <!-- Step 5: Final Review -->
+            <!-- Step 5: Objectives and Tags -->
             <div v-show="currentStep === 5">
               <div class="mb-6">
                 <div class="flex items-center gap-3 mb-6">
                   <div class="w-10 h-10 rounded-full bg-blue-400 flex items-center justify-center text-white font-bold">
                     {{ toFaDigits(5) }}
+                  </div>
+                  <h3 class="text-2xl font-bold text-blue-600 dark:text-blue-400">اهداف و برچسب‌ها</h3>
+                </div>
+                <p class="text-slate-600 dark:text-slate-400 mb-6">اهداف سناریو و برچسب‌های مربوطه را مشخص کنید.</p>
+              </div>
+              <div class="space-y-6">
+                <!-- Objectives -->
+                <div>
+                  <label class="block text-sm font-medium text-heading mb-2">اهداف سناریو</label>
+                  <div class="space-y-3">
+                    <div v-for="(objective, index) in form.objectives" :key="index" class="flex items-center gap-3">
+                      <InputGroup 
+                        :model-value="objective" 
+                        @update:model-value="(value) => form.objectives![index] = String(value || '')"
+                        :placeholder="`هدف ${index + 1}`"
+                        class="flex-1"
+                      />
+                      <Button 
+                        type="button" 
+                        size="sm" 
+                        variant="destructive"
+                        @click="form.objectives!.splice(index, 1)"
+                      >
+                        حذف
+                      </Button>
+                    </div>
+                    <Button 
+                      type="button" 
+                      size="sm" 
+                      variant="outline"
+                      @click="form.objectives!.push('')"
+                    >
+                      افزودن هدف
+                    </Button>
+                  </div>
+                </div>
+
+                <!-- Tags -->
+                <div>
+                  <label class="block text-sm font-medium text-heading mb-2">برچسب‌ها</label>
+                  <div class="space-y-3">
+                    <div v-for="(tag, index) in form.tags" :key="index" class="flex items-center gap-3">
+                      <InputGroup 
+                        :model-value="tag" 
+                        @update:model-value="(value) => form.tags![index] = String(value || '')"
+                        placeholder="برچسب"
+                        class="flex-1"
+                      />
+                      <Button 
+                        type="button" 
+                        size="sm" 
+                        variant="destructive"
+                        @click="form.tags!.splice(index, 1)"
+                      >
+                        حذف
+                      </Button>
+                    </div>
+                    <Button 
+                      type="button" 
+                      size="sm" 
+                      variant="outline"
+                      @click="form.tags!.push('')"
+                    >
+                      افزودن برچسب
+                    </Button>
+                  </div>
+                </div>
+
+                <!-- End Time -->
+                <div class="grid gap-6 md:grid-cols-2">
+                  <InputGroup 
+                    label="زمان پایان سناریو" 
+                    type="datetime-local"
+                    v-model="form.endTime"
+                    placeholder="زمان پایان سناریو (اختیاری)"
+                  />
+                  <SimpleSelect 
+                    label="وضعیت سناریو" 
+                    v-model="form.status"
+                    :items="statusItems"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <!-- Step 6: Final Review -->
+            <div v-show="currentStep === 6">
+              <div class="mb-6">
+                <div class="flex items-center gap-3 mb-6">
+                  <div class="w-10 h-10 rounded-full bg-blue-400 flex items-center justify-center text-white font-bold">
+                    {{ toFaDigits(6) }}
                   </div>
                   <h3 class="text-2xl font-bold text-blue-600 dark:text-blue-400">مرور نهایی</h3>
                 </div>
@@ -516,7 +607,7 @@ const { scenario } = useScenario();
 
 // Step management
 const currentStep = ref(1);
-const totalSteps = 5;
+const totalSteps = 6;
 
 // Profile management
 const showProfileMenu = ref(false);
@@ -548,6 +639,8 @@ const logout = () => {
   // Clear token from localStorage
   localStorage.removeItem('access_token');
   localStorage.removeItem('access_token_exp');
+  sessionStorage.removeItem('access_token');
+  localStorage.removeItem('persist:sajed-root');
   
   // Close profile menu
   showProfileMenu.value = false;
@@ -559,7 +652,7 @@ const logout = () => {
         type: 'LOGOUT_REQUEST',
         origin: 'vue',
         timestamp: Date.now()
-      }, '*');
+      }, window.location.origin);
     } catch (error) {
       console.error('Error sending logout message:', error);
     }
@@ -567,6 +660,7 @@ const logout = () => {
   
   // Redirect to login or show message
   console.log('User logged out');
+  window.location.replace(`${window.location.origin}/auth/login`);
 };
 
 // Initialize user info on mount
@@ -616,6 +710,7 @@ const stepLabels = [
   "آرایش نبرد",
   "زمان شروع",
   "جو و وضعیت جوی",
+  "اهداف و برچسب‌ها",
   "مرور نهایی",
 ];
 
@@ -677,6 +772,10 @@ interface NewScenarioForm extends ScenarioInfo {
   createdDate?: string; // formatted Jalali date string
   purpose?: "operational" | "educational" | "training" | "";
   bboxText?: string; // "minX,minY,maxX,maxY"
+  endTime?: string; // زمان پایان سناریو
+  status?: "draft" | "active" | "paused" | "completed" | "archived";
+  objectives?: string[]; // اهداف سناریو
+  tags?: string[]; // برچسب‌ها
 }
 
 const noInitialOrbat = ref(false);
@@ -767,6 +866,10 @@ const form = reactive<NewScenarioForm>({
   purpose: "",
   bboxText: "",
   sides: [],
+  endTime: "",
+  status: "draft",
+  objectives: [],
+  tags: []
 });
 
 const purposeItems = [
@@ -774,6 +877,14 @@ const purposeItems = [
   { label: "عملیاتی", value: "operational" },
   { label: "آموزشی", value: "educational" },
   { label: "تمرینی", value: "training" },
+];
+
+const statusItems = [
+  { label: "پیش‌نویس", value: "draft" },
+  { label: "فعال", value: "active" },
+  { label: "متوقف", value: "paused" },
+  { label: "تکمیل شده", value: "completed" },
+  { label: "آرشیو شده", value: "archived" },
 ];
 
 // Step navigation functions
@@ -798,6 +909,12 @@ async function create() {
   newScenario.value.description = form.description;
   newScenario.value.layers = [{ name: "Features", id: nanoid(), features: [] }];
   newScenario.value.timeZone = timeZone.value;
+  
+  // فیلدهای جدید اضافه شده
+  newScenario.value.endTime = form.endTime ? new Date(form.endTime).getTime() : undefined;
+  newScenario.value.status = form.status as any || "draft";
+  newScenario.value.objectives = form.objectives || [];
+  newScenario.value.tags = form.tags || [];
 
   // Meta and settings mapping
   newScenario.value.meta = {
@@ -857,7 +974,20 @@ async function create() {
   }
   clearUndoRedoStack();
 
-  const created = await scenarioApiService.create(scenario.value.io.serializeToObject());
+  // Serialize scenario data for API
+  const scenarioData = scenario.value.io.serializeToObject();
+  
+  // Add image field if preview image exists
+  if (previewImageFile.value) {
+    try {
+      const upload = await scenarioApiService.uploadImage(previewImageFile.value);
+      scenarioData.image = upload.url ?? upload.filename;
+    } catch (error) {
+      console.error("Failed to upload scenario preview image", error);
+    }
+  }
+
+  const created = await scenarioApiService.create(scenarioData);
   const scenarioId = created.id;
 
   await router.push({ name: MAP_EDIT_MODE_ROUTE, params: { scenarioId } });
@@ -869,13 +999,20 @@ function cancel() {
 
 // Image preview state and handler
 const previewImageUrl = ref<string | null>(null);
+const previewImageFile = ref<File | null>(null);
+
 function onPreviewImageChange(event: Event) {
   const input = event.target as HTMLInputElement;
   const file = input.files && input.files[0];
   if (!file) {
     previewImageUrl.value = null;
+    previewImageFile.value = null;
     return;
   }
+  
+  // Store the file for later use
+  previewImageFile.value = file;
+  
   const reader = new FileReader();
   reader.onload = (e) => {
     previewImageUrl.value = String(e.target?.result || "");

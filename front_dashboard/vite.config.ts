@@ -112,7 +112,18 @@ export default defineConfig({
         changeOrigin: true,
         secure: false,
       },
-      // Note: '/kalknegar' is now a React SPA route that renders the iframe
+      '/kalknegar': {
+        target: 'http://127.0.0.1:5173',
+        changeOrigin: true,
+        secure: false,
+        ws: true,
+        rewrite: (path) => {
+          if (path === '/kalknegar') {
+            return '/kalknegar/';
+          }
+          return path.replace(/^\/kalknegar/, '/kalknegar');
+        },
+      },
     },
   },
 }) 

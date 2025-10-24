@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <!-- Cards View -->
   <div v-if="viewMode === 'cards'" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6">
     <!-- Recent Scenario Cards -->
@@ -462,6 +462,25 @@ const props = defineProps<{
 const router = useRouter();
 const { loadScenario } = useBrowserScenarios();
 
+const envApiUrl = (import.meta as any).env?.VITE_API_URL as string | undefined;
+const envApiDevHost = (import.meta as any).env?.VITE_API_DEV_HOST as string | undefined;
+const apiBaseUrl =
+  (envApiUrl && envApiUrl.trim().length > 0
+    ? envApiUrl.trim().replace(/\/+$/, "")
+    : import.meta.env.DEV
+      ? (envApiDevHost && envApiDevHost.trim().length > 0
+          ? envApiDevHost.trim().replace(/\/+$/, "")
+          : "http://127.0.0.1:8000")
+      : typeof window !== "undefined" ? window.location.origin.replace(/\/+$/, "") : "");
+
+function resolveBackendUrl(path: string) {
+  if (path.startsWith("http://") || path.startsWith("https://")) {
+    return path;
+  }
+  const normalized = path.startsWith("/") ? path : `/${path}`;
+  return `${apiBaseUrl}${normalized}`;
+}
+
 const getScenarioTo = (scenarioId: string) => {
   return {
     name: MAP_EDIT_MODE_ROUTE,
@@ -477,16 +496,46 @@ const getServerScenarioTo = (scenarioId: string) => {
 };
 
 function resolveScenarioImage(src?: string) {
-  const fallback = "/scenarios/images/مرصاد.jpg";
+  const fallback = resolveBackendUrl("scenarios/images/خرمشهر.jpg");
   if (!src || typeof src !== "string") {
     return fallback;
   }
   const trimmed = src.trim();
-  if (trimmed.startsWith("http://") || trimmed.startsWith("https://") || trimmed.startsWith("/") || trimmed.startsWith("data:")) {
+  
+  // Handle base64 data URLs (for preview)
+  if (trimmed.startsWith("data:image/")) {
     return trimmed;
   }
+  
+  if (
+    trimmed.startsWith("/api/") ||
+    trimmed.startsWith("api/") ||
+    trimmed.startsWith("scenarios/images/")
+  ) {
+    return resolveBackendUrl(trimmed);
+  }
+
+  // Handle full URLs or already normalized absolute paths
+  if (
+    trimmed.startsWith("http://") ||
+    trimmed.startsWith("https://") ||
+    trimmed.startsWith("data:")
+  ) {
+    return trimmed;
+  }
+
+  if (trimmed.startsWith("/")) {
+    return resolveBackendUrl(trimmed);
+  }
+  
+  // Handle filename - check if it has extension, if not add .jpg
+  let filename = trimmed;
+  if (!filename.includes('.')) {
+    filename = filename + '.jpg';
+  }
+  
   // Treat as file name under public/scenarios/images
-  return `/scenarios/images/${trimmed}`;
+  return resolveBackendUrl(`scenarios/images/${filename}`);
 }
 
 // Sample scenarios data

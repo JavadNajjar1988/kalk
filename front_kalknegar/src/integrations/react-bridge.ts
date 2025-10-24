@@ -51,6 +51,7 @@ class ReactBridge {
           this.currentToken = tokenFromUrl;
           localStorage.setItem('access_token', tokenFromUrl);
           console.log('[ReactBridge] Token stored from URL parameter');
+          this.removeQueryParam('token');
         } catch (e) {
           console.error('[ReactBridge] Failed to store token from URL', e);
         }
@@ -298,6 +299,22 @@ class ReactBridge {
     };
 
     this.sendMessage(eventMessage);
+  }
+
+  private removeQueryParam(param: string) {
+    try {
+      const url = new URL(window.location.href);
+      if (!url.searchParams.has(param)) {
+        return;
+      }
+      url.searchParams.delete(param);
+      const nextSearch = url.searchParams.toString();
+      const nextUrl = `${url.pathname}${nextSearch ? `?${nextSearch}` : ''}${url.hash}`;
+      window.history.replaceState({}, document.title, nextUrl);
+      console.log(`[ReactBridge] Removed '${param}' from URL query`);
+    } catch (error) {
+      console.warn('[ReactBridge] Failed to strip query parameter', param, error);
+    }
   }
 }
 

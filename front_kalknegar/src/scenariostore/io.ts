@@ -96,6 +96,22 @@ export function createEmptyScenario(options: CreateEmptyScenarioOptions = {}): S
         { name: "Gallon", code: "GL", type: "volume" },
       ],
     },
+    
+    // فیلدهای جدید اضافه شده
+    endTime: undefined,
+    status: "draft",
+    objectives: [],
+    phases: [],
+    terrainAnalysis: undefined,
+    battleInformation: undefined,
+    commandStructure: [],
+    simulationSettings: undefined,
+    currentTime: undefined,
+    simulationSpeed: 1.0,
+    executionStatus: "not_started",
+    analysisResults: [],
+    tags: [],
+    metadata: {},
   };
 }
 

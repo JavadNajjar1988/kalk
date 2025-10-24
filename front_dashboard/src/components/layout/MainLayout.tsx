@@ -37,6 +37,7 @@ import {
   Edit as EditIcon,
   AccountBox,
   ExitToApp,
+  Assignment,
   
   
 } from '@mui/icons-material';
@@ -167,6 +168,13 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
       label: t('menu.dashboard'), 
       icon: <Dashboard />, 
       path: '/dashboard',
+      roles: ['admin', 'commander', 'operator']
+    },
+    { 
+      id: 'scenarios', 
+      label: 'مدیریت سناریوها', 
+      icon: <Assignment />, 
+      path: '/dashboard/scenarios',
       roles: ['admin', 'commander', 'operator']
     },
     { 

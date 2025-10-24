@@ -352,6 +352,315 @@ export interface ScenarioMetadata {
   purpose?: "operational" | "educational" | "training";
 }
 
+// فیلدهای جدید برای سناریو
+export interface ScenarioPhase {
+  id: string;
+  name: string;
+  description?: string;
+  startTime: ScenarioTime;
+  endTime?: ScenarioTime;
+  objectives: string[];
+  tasks: PhaseTask[];
+  status: PhaseStatus;
+  order?: number;
+}
+
+export interface PhaseTask {
+  id: string;
+  description: string;
+  assignedUnitIds: string[];
+  status: TaskStatus;
+  startTime?: ScenarioTime;
+  endTime?: ScenarioTime;
+  location?: Position;
+  prerequisiteTasks?: string[];
+}
+
+export enum PhaseStatus {
+  PLANNED = 'planned',
+  IN_PROGRESS = 'in_progress',
+  COMPLETED = 'completed',
+  FAILED = 'failed',
+  CANCELLED = 'cancelled'
+}
+
+export enum TaskStatus {
+  PENDING = 'pending',
+  ASSIGNED = 'assigned',
+  IN_PROGRESS = 'in_progress',
+  COMPLETED = 'completed',
+  FAILED = 'failed'
+}
+
+export enum ScenarioStatus {
+  DRAFT = 'draft',
+  ACTIVE = 'active',
+  PAUSED = 'paused',
+  COMPLETED = 'completed',
+  ARCHIVED = 'archived'
+}
+
+export interface TerrainAnalysis {
+  id: string;
+  keyTerrainFeatures: TerrainFeature[];
+  obstacles: Obstacle[];
+  avenues: AvenueOfApproach[];
+  coverAndConcealment: CoverConcealmentArea[];
+  observationPoints: ObservationPoint[];
+}
+
+export interface TerrainFeature {
+  id: string;
+  name: string;
+  description?: string;
+  location: GeoArea;
+  significance: SignificanceLevel;
+  controlledBy?: string;
+}
+
+export interface Obstacle {
+  id: string;
+  type: ObstacleType;
+  location: GeoArea;
+  strength: number; // 1-10
+  description?: string;
+  createdBy?: string;
+}
+
+export enum ObstacleType {
+  NATURAL = 'natural',
+  ARTIFICIAL = 'artificial',
+  REINFORCED = 'reinforced'
+}
+
+export interface AvenueOfApproach {
+  id: string;
+  name: string;
+  path: Position[];
+  width: number;
+  suitability: VehicleType[];
+  constraints?: string[];
+}
+
+export enum VehicleType {
+  INFANTRY = 'infantry',
+  WHEELED = 'wheeled',
+  TRACKED = 'tracked',
+  AIRCRAFT = 'aircraft'
+}
+
+export interface CoverConcealmentArea {
+  id: string;
+  location: GeoArea;
+  coverValue: number; // 1-10
+  concealmentValue: number; // 1-10
+  description?: string;
+}
+
+export interface ObservationPoint {
+  id: string;
+  location: Position;
+  visibleAreas: GeoArea[];
+  range: number;
+  quality: number; // 1-10
+}
+
+export interface GeoArea {
+  type: 'polygon' | 'circle' | 'rectangle';
+  coordinates: Position[];
+  radius?: number; // برای دایره
+  width?: number; // برای مستطیل
+  height?: number; // برای مستطیل
+}
+
+export enum SignificanceLevel {
+  LOW = 'low',
+  MEDIUM = 'medium',
+  HIGH = 'high',
+  CRITICAL = 'critical'
+}
+
+export interface BattleInformation {
+  id: string;
+  engagements: Engagement[];
+  casualties: Casualty[];
+  intelligenceReports: IntelligenceReport[];
+  supplyStatus: SupplyStatus[];
+}
+
+export interface Engagement {
+  id: string;
+  type: EngagementType;
+  startTime: ScenarioTime;
+  endTime?: ScenarioTime;
+  location: GeoArea | Position;
+  involvedUnits: {
+    unitId: string;
+    side: 'attacker' | 'defender' | 'neutral';
+  }[];
+  outcome?: EngagementOutcome;
+  description?: string;
+  casualties?: string[];
+  significantEvents?: string[];
+}
+
+export enum EngagementType {
+  DIRECT_FIRE = 'direct_fire',
+  INDIRECT_FIRE = 'indirect_fire',
+  AIR_STRIKE = 'air_strike',
+  AMBUSH = 'ambush',
+  MEETING_ENGAGEMENT = 'meeting_engagement',
+  RECONNAISSANCE = 'reconnaissance',
+  PATROL = 'patrol'
+}
+
+export interface EngagementOutcome {
+  victor?: string;
+  territoryControl?: string;
+  objectiveAchieved: boolean;
+  notes?: string;
+}
+
+export interface Casualty {
+  unitId: string;
+  personnel: {
+    killed: number;
+    wounded: number;
+    missing: number;
+  };
+  equipment: {
+    destroyed: number;
+    damaged: number;
+    captured: number;
+  };
+  timestamp: ScenarioTime;
+  cause?: string;
+}
+
+export interface IntelligenceReport {
+  id: string;
+  source: IntelligenceSource;
+  timestamp: ScenarioTime;
+  validUntil?: ScenarioTime;
+  reliability: ReliabilityLevel;
+  content: string;
+  relatedUnits?: string[];
+  location?: Position;
+  attachments?: string[];
+}
+
+export enum IntelligenceSource {
+  HUMAN = 'human',
+  SIGNAL = 'signal',
+  IMAGERY = 'imagery',
+  OPEN_SOURCE = 'open_source',
+  MEASUREMENT = 'measurement'
+}
+
+export enum ReliabilityLevel {
+  CONFIRMED = 'confirmed',
+  PROBABLE = 'probable',
+  POSSIBLE = 'possible',
+  DOUBTFUL = 'doubtful',
+  IMPROBABLE = 'improbable',
+  UNCONFIRMED = 'unconfirmed'
+}
+
+export interface SupplyStatus {
+  unitId: string;
+  timestamp: ScenarioTime;
+  supplyCategories: {
+    category: SupplyCategory;
+    current: number;
+    required: number;
+  }[];
+  nextResupplyExpected?: ScenarioTime;
+  resupplyRoute?: Position[];
+  priority: SupplyPriority;
+}
+
+export enum SupplyPriority {
+  ROUTINE = 'routine',
+  PRIORITY = 'priority',
+  IMMEDIATE = 'immediate',
+  EMERGENCY = 'emergency'
+}
+
+export interface CommandNode {
+  unitId: string;
+  role: CommandRole;
+  subordinates: string[];
+  superiors?: string[];
+  responsibilities?: string[];
+  communicationChannels?: CommunicationChannel[];
+}
+
+export enum CommandRole {
+  COMMANDER = 'commander',
+  DEPUTY = 'deputy',
+  STAFF_OFFICER = 'staff_officer',
+  LIAISON = 'liaison'
+}
+
+export interface CommunicationChannel {
+  type: CommunicationType;
+  reliability: number; // 1-10
+  security: number; // 1-10
+  connectedUnits: string[];
+}
+
+export enum CommunicationType {
+  RADIO = 'radio',
+  SATELLITE = 'satellite',
+  FIELD_PHONE = 'field_phone',
+  MESSENGER = 'messenger',
+  VISUAL_SIGNAL = 'visual_signal'
+}
+
+export interface SimulationSettings {
+  timeStep: number; // به ثانیه
+  accuracyLevel: AccuracyLevel;
+  randomFactors: boolean;
+  weatherEffects: boolean;
+  suppliesSimulation: boolean;
+  casualtySimulation: boolean;
+  moralSimulation: boolean;
+  terrainEffects: boolean;
+}
+
+export enum AccuracyLevel {
+  LOW = 'low',
+  MEDIUM = 'medium',
+  HIGH = 'high',
+  ULTRA = 'ultra'
+}
+
+export enum ExecutionStatus {
+  NOT_STARTED = 'not_started',
+  RUNNING = 'running',
+  PAUSED = 'paused',
+  COMPLETED = 'completed',
+  TERMINATED = 'terminated'
+}
+
+export interface AnalysisResult {
+  id: string;
+  type: AnalysisType;
+  timestamp: ScenarioTime;
+  data: any;
+  conclusions?: string[];
+  recommendations?: string[];
+}
+
+export enum AnalysisType {
+  FORCE_RATIO = 'force_ratio',
+  CASUALTY_PREDICTION = 'casualty_prediction',
+  MISSION_SUCCESS = 'mission_success',
+  TERRAIN_ADVANTAGE = 'terrain_advantage',
+  SUPPLY_EFFICIENCY = 'supply_efficiency',
+  COMMAND_EFFECTIVENESS = 'command_effectiveness'
+}
+
 export interface Scenario extends ScenarioInfo {
   type: "ORBAT-mapper";
   id: string;
@@ -366,6 +675,25 @@ export interface Scenario extends ScenarioInfo {
   supplyCategories?: SupplyCategory[];
   unitTemplates?: Unit[];
   settings?: ScenarioSettings;
+  
+  // فیلدهای جدید اضافه شده
+  endTime?: ScenarioTime;
+  status?: ScenarioStatus;
+  objectives?: string[];
+  phases?: ScenarioPhase[];
+  terrainAnalysis?: TerrainAnalysis;
+  battleInformation?: BattleInformation;
+  commandStructure?: CommandNode[];
+  simulationSettings?: SimulationSettings;
+  currentTime?: ScenarioTime;
+  simulationSpeed?: number;
+  executionStatus?: ExecutionStatus;
+  analysisResults?: AnalysisResult[];
+  tags?: string[];
+  metadata?: Record<string, any>;
+  
+  // فیلد تصویر برای API
+  image?: string;
 }
 
 export type UnitOrSide = Unit | Side;

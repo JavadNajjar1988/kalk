@@ -43,6 +43,33 @@ export class BaseApiClient {
     return data;
   }
 
+  protected async postForm<T>(endpoint: string, formData: FormData): Promise<ApiResponse<T>> {
+    const token = typeof localStorage !== 'undefined' ? localStorage.getItem('access_token') : null;
+    const authHeader = token ? { Authorization: `Bearer ${token}` } : {};
+    const isDev = import.meta.env.DEV;
+    const cacheBuster = isDev ? `${endpoint.includes('?') ? '&' : '?'}t=${Date.now()}` : '';
+    const fullUrl = `${this.baseUrl}${endpoint}${cacheBuster}`;
+
+    const res = await fetch(fullUrl, {
+      method: 'POST',
+      headers: { Accept: 'application/json', ...authHeader },
+      cache: isDev ? 'no-store' : 'default',
+      body: formData,
+    });
+    const raw = await res.text();
+    let data: ApiResponse<T> | null = null;
+    try {
+      data = raw ? (JSON.parse(raw) as ApiResponse<T>) : null;
+    } catch (e) {
+      console.error('Failed to parse JSON response', e, 'raw:', raw);
+    }
+    if (!res.ok || !data?.success) {
+      const message = data?.message || `HTTP ${res.status}`;
+      throw new ApiClientError(message, 'API_RESPONSE_ERROR', undefined, res.status);
+    }
+    return data;
+  }
+
   protected get<T>(endpoint: string): Promise<ApiResponse<T>> {
     return this.request<T>(endpoint, { method: 'GET' });
   }

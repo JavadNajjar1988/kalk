@@ -11,7 +11,7 @@ import MainLayout from './components/layout/MainLayout';
 import ProtectedRoute from './components/common/ProtectedRoute';
 import TransformFarsiNumbers from './components/common/TransformFarsiNumbers';
 import NewSplashScreen from './components/common/NewSplashScreen';
-import KalknegarIframe from './components/common/KalknegarIframe';
+import KalknegarRedirect from './components/common/KalknegarRedirect';
 import authRoutes from './modules/auth/routes';
 import DashboardRoutes from './modules/dashboard/routes';
 import { ScenarioDialogProvider } from './components/common/ScenarioDialogContext';
@@ -66,10 +66,14 @@ const AppRoutes: React.FC = () => {
       path: '/dashboard/*',
       element: <ProtectedRoute><DashboardRoutes /></ProtectedRoute>,
     },
-          {
-            path: '/kalknegar',
-            element: <ProtectedRoute><KalknegarIframe /></ProtectedRoute>,
-          },
+    {
+      path: '/kalknegar/*',
+      element: (
+        <ProtectedRoute>
+          <KalknegarRedirect />
+        </ProtectedRoute>
+      ),
+    },
     {
       path: '*',
       element: (

@@ -73,9 +73,9 @@ http://127.0.0.1:8480/data/<filename>.mbtiles/{z}/{x}/{y}.png
 
 ## کاشی‌های فایل‌سیستمی (SQLite chunk)
 
-- پوشه‌هایی مثل `sat/` ساختار MapTiler chunk دارند: `sat/z{Z}/{X-group}/{Y-group}/{X-chunk}.{Y-chunk}.sqlitedb`.
-- پوشه را در سرور (یا مسیر مانت‌شده داخل کانتینر) قرار دهید. مقدار `FILESYSTEM_TILE_ROOT` مسیر پایه را مشخص می‌کند (`sat` به‌صورت پیش‌فرض در `docker-compose.yml` مانت شده است).
-- در داشبورد، تب «نقشه‌های آفلاین» را باز کرده و دکمه «ثبت پوشه» را بزنید. مسیر پوشه (نسبت به `sat/` یا مسیر مطلق داخل سرور) را وارد کنید؛ سیستم وجود فایل‌های `.sqlitedb` را بررسی و نقشه را ثبت می‌کند.
+- پوشه‌هایی مثل `backend/static/maps/` ساختار MapTiler chunk دارند: `backend/static/maps/z{Z}/{X-group}/{Y-group}/{X-chunk}.{Y-chunk}.sqlitedb`.
+- پوشه را در سرور (یا مسیر مانت‌شده داخل کانتینر) قرار دهید. مقدار `FILESYSTEM_TILE_ROOT` مسیر پایه را مشخص می‌کند (`backend/static/maps` به‌صورت پیش‌فرض در `docker-compose.yml` مانت شده است).
+- در داشبورد، تب «نقشه‌های آفلاین» را باز کرده و دکمه «ثبت پوشه» را بزنید. مسیر پوشه (نسبت به `backend/static/maps/` یا مسیر مطلق داخل سرور) را وارد کنید؛ سیستم وجود فایل‌های `.sqlitedb` را بررسی و نقشه را ثبت می‌کند.
 - پس از ثبت، URL کاشی به صورت `/api/tile-cache/<map_id>/{z}/{x}/{y}` در دسترس است و سرویس FastAPI کاشی را از SQLite استخراج می‌کند.
 - همان نقشه در KalkNegar به‌عنوان لایهٔ پایهٔ جدید در دسترس است و می‌توانید آن را فعال/غیرفعال کنید.
 
@@ -95,7 +95,7 @@ curl http://127.0.0.1:8480/health
 - مطمئن شوید فایل‌های `.mbtiles` در `backend/static/maps/` قرار دارند
 - نام فایل در URL استفاده می‌شود: `/data/<filename>.mbtiles/{z}/{x}/{y}.png`
 - از پروفایل استفاده کنید: `docker compose --profile maps up -d`
-- برای نقشه‌های پوشه‌ای، ساختار باید `sat/z{Z}/{X-group}/{Y-group}/{X-chunk}.{Y-chunk}.sqlitedb` باشد و مسیر در داشبورد ثبت شده باشد.
+- برای نقشه‌های پوشه‌ای، ساختار باید `backend/static/maps/z{Z}/{X-group}/{Y-group}/{X-chunk}.{Y-chunk}.sqlitedb` باشد و مسیر در داشبورد ثبت شده باشد.
 
 ## مزایای این تنظیمات
 
