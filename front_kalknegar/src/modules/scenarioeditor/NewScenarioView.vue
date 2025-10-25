@@ -593,6 +593,7 @@ import SimpleDivider from "@/components/SimpleDivider.vue";
 import type { SymbolItem, SymbolValue } from "@/types/constants";
 import { echelonItems } from "@/symbology/helpers";
 import { scenarioApiService } from "@/services/api/scenarioApiService";
+import { ApiClientError } from "@/services/api/baseApiClient";
 import SymbolCodeSelect from "@/components/SymbolCodeSelect.vue";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -979,16 +980,39 @@ async function create() {
   
   // Add image field if preview image exists
   if (previewImageFile.value) {
-    try {
-      const upload = await scenarioApiService.uploadImage(previewImageFile.value);
-      scenarioData.image = upload.url ?? upload.filename;
-    } catch (error) {
-      console.error("Failed to upload scenario preview image", error);
+    if (!imageUploadUnavailable.value) {
+      try {
+        const upload = await scenarioApiService.uploadImage(previewImageFile.value);
+        const uploaded = upload.url ?? upload.filename;
+        if (uploaded) {
+          scenarioData.image = uploaded;
+          newScenario.value.image = uploaded;
+        }
+      } catch (error) {
+        if (error instanceof ApiClientError && error.status === 405) {
+          imageUploadUnavailable.value = true;
+          if (previewImageUrl.value) {
+            scenarioData.image = previewImageUrl.value;
+            newScenario.value.image = previewImageUrl.value;
+          }
+          console.warn(
+            "Scenario image upload endpoint is not available (HTTP 405). Using inline image data instead.",
+          );
+        } else {
+          console.error("Failed to upload scenario preview image", error);
+        }
+      }
+    } else if (previewImageUrl.value) {
+      scenarioData.image = previewImageUrl.value;
+      newScenario.value.image = previewImageUrl.value;
     }
   }
 
   const created = await scenarioApiService.create(scenarioData);
   const scenarioId = created.id;
+
+  // ارسال event برای refresh صفحه لندینگ
+  window.dispatchEvent(new CustomEvent('scenario-created', { detail: { scenarioId } }));
 
   await router.push({ name: MAP_EDIT_MODE_ROUTE, params: { scenarioId } });
 }
@@ -1000,6 +1024,7 @@ function cancel() {
 // Image preview state and handler
 const previewImageUrl = ref<string | null>(null);
 const previewImageFile = ref<File | null>(null);
+const imageUploadUnavailable = ref(false);
 
 function onPreviewImageChange(event: Event) {
   const input = event.target as HTMLInputElement;

@@ -811,6 +811,17 @@ const navigateToScenarios = () => {
   }
 };
 
+// Function to refresh scenarios
+const refreshScenarios = async () => {
+  try {
+    const items = await scenarioApiService.list();
+    serverScenarios.value = items as any;
+    totalScenarios.value = Math.max(totalScenarios.value, items.length);
+  } catch (error) {
+    console.error('Error refreshing scenarios:', error);
+  }
+};
+
 // Initialize date/time and set interval
 let dateTimeInterval: NodeJS.Timeout;
 
@@ -820,7 +831,8 @@ onMounted(() => {
   
   // Initialize user info
   getUserInfoFromToken();
-  // Load scenarios from API
+  
+  // Load scenarios from API (original working code)
   scenarioApiService
     .list()
     .then((items) => {
@@ -829,11 +841,16 @@ onMounted(() => {
       try { totalScenarios.value = Math.max(totalScenarios.value, serverScenarios.value.length); } catch {}
     })
     .catch((e) => console.error('Failed to load scenarios from API:', e));
+  
   // React to auth updates from bridge
   const applied = () => getUserInfoFromToken();
   const cleared = () => getUserInfoFromToken();
   window.addEventListener('kalk-auth-applied', applied as any);
   window.addEventListener('kalk-auth-cleared', cleared as any);
+  
+  // Listen for scenario updates
+  window.addEventListener('scenario-created', refreshScenarios);
+  window.addEventListener('scenario-updated', refreshScenarios);
   
   // Close tab menu when clicking outside
   document.addEventListener('click', (event) => {

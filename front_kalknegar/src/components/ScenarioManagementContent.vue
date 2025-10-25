@@ -210,17 +210,39 @@
           </div>
         </div>
         
-        <router-link :to="getServerScenarioTo(srv.id)" class="block h-full" draggable="false">
+        <!-- قسمت تصویر -->
+        <router-link :to="getServerScenarioTo(srv.id)" class="block" draggable="false">
           <div class="relative h-40 overflow-hidden">
-            <img class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" :src="resolveScenarioImage(srv.image)" alt="scenario" />
-            <div class="absolute inset-0 bg-black/20" />
-            <div class="absolute bottom-2.5 left-2.5 right-2.5">
+            <img 
+              class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
+              :src="resolveScenarioImage(srv.image)" 
+              :alt="srv.name || 'سناریو'"
+              @error="handleImageError"
+            />
+            <div class="absolute inset-0 bg-black/20"/>
+            
+            <!-- نمایش تصویر پیش‌فرض اگر تصویر اصلی وجود نداشته باشد -->
+            <div v-if="!srv.image || srv.image.trim() === ''" class="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-blue-500 to-blue-600">
+              <div class="text-center text-white">
+                <svg class="w-16 h-16 mx-auto mb-2 opacity-80" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clip-rule="evenodd" />
+                </svg>
+                <p class="text-sm font-medium">سناریو</p>
+              </div>
+            </div>
+            
+            <!-- عنوان سناریو - همیشه نمایش داده شود -->
+            <div class="absolute bottom-2.5 left-2.5 right-2.5 z-10">
               <h4 class="text-white font-semibold text-sm leading-tight drop-shadow-md truncate">{{ srv.name || 'سناریو' }}</h4>
             </div>
           </div>
         </router-link>
+        
+        <!-- قسمت توضیحات و دکمه‌ها -->
         <div class="p-4">
-          <p class="text-slate-600 dark:text-slate-300 text-xs leading-relaxed line-clamp-2 mb-3">{{ srv.description || '—' }}</p>
+          <p class="text-slate-600 dark:text-slate-300 text-xs leading-relaxed line-clamp-2 mb-3">
+            {{ srv.description && srv.description.trim() ? srv.description : 'این سناریو جدید است و هنوز توضیحات اضافه نشده است. برای ویرایش روی دکمه مشاهده کلیک کنید.' }}
+          </p>
           <div class="flex items-center justify-between">
             <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-teal-100 dark:bg-teal-900/30 text-teal-700 dark:text-teal-300 border border-teal-200 dark:border-teal-700">
               ثبت شده
@@ -260,7 +282,9 @@
                   </div>
                   <div>
                     <div class="text-sm font-medium text-gray-900 dark:text-white">{{ srv.name || 'سناریو' }}</div>
-                    <div class="text-sm text-gray-500 dark:text-gray-400 truncate">{{ srv.description || '—' }}</div>
+                    <div class="text-sm text-gray-500 dark:text-gray-400 truncate">
+                      {{ srv.description && srv.description.trim() ? srv.description : 'این سناریو جدید است و هنوز توضیحات اضافه نشده است.' }}
+                    </div>
                   </div>
                 </div>
               </td>
@@ -496,10 +520,13 @@ const getServerScenarioTo = (scenarioId: string) => {
 };
 
 function resolveScenarioImage(src?: string) {
-  const fallback = resolveBackendUrl("scenarios/images/خرمشهر.jpg");
-  if (!src || typeof src !== "string") {
+  // استفاده از تصویر پیش‌فرض SVG به جای JPG
+  const fallback = "/scenarios/images/default-scenario.svg";
+  
+  if (!src || typeof src !== "string" || src.trim() === "") {
     return fallback;
   }
+  
   const trimmed = src.trim();
   
   // Handle base64 data URLs (for preview)
@@ -507,15 +534,7 @@ function resolveScenarioImage(src?: string) {
     return trimmed;
   }
   
-  if (
-    trimmed.startsWith("/api/") ||
-    trimmed.startsWith("api/") ||
-    trimmed.startsWith("scenarios/images/")
-  ) {
-    return resolveBackendUrl(trimmed);
-  }
-
-  // Handle full URLs or already normalized absolute paths
+  // Handle full URLs (including API URLs) - use them directly
   if (
     trimmed.startsWith("http://") ||
     trimmed.startsWith("https://") ||
@@ -523,9 +542,17 @@ function resolveScenarioImage(src?: string) {
   ) {
     return trimmed;
   }
+  
+  // Handle API paths - use them directly as they are valid URLs
+  if (
+    trimmed.startsWith("/api/scenarios/images/") ||
+    trimmed.startsWith("/scenarios/images/")
+  ) {
+    return trimmed;
+  }
 
   if (trimmed.startsWith("/")) {
-    return resolveBackendUrl(trimmed);
+    return trimmed;
   }
   
   // Handle filename - check if it has extension, if not add .jpg
@@ -535,7 +562,15 @@ function resolveScenarioImage(src?: string) {
   }
   
   // Treat as file name under public/scenarios/images
-  return resolveBackendUrl(`scenarios/images/${filename}`);
+  return `/scenarios/images/${filename}`;
+}
+
+function handleImageError(event: Event) {
+  const img = event.target as HTMLImageElement;
+  const fallback = "/scenarios/images/default-scenario.svg";
+  if (img.src !== fallback) {
+    img.src = fallback;
+  }
 }
 
 // Sample scenarios data

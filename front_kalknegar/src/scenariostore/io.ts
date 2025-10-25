@@ -385,6 +385,12 @@ export function useScenarioIO(store: ShallowRef<NewScenarioStore>) {
       scn.id = nanoid();
       store.value.state.id = scn.id;
     }
+    
+    // ذخیره در IndexedDB محلی
+    const { addScenario } = await useIndexedDb();
+    await addScenario(scn);
+    
+    // ذخیره در API
     const saved = await scenarioApiService.save(scn);
     return saved.id;
   }

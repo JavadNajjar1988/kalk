@@ -73,7 +73,7 @@ export async function useIndexedDb() {
       modified: scenario.meta?.lastModifiedDate
         ? new Date(scenario.meta.lastModifiedDate)
         : new Date(),
-      image: "",
+      image: (scenario as any).image ?? "",
     };
 
     await db.add("scenario-metadata", metadata);
@@ -94,8 +94,7 @@ export async function useIndexedDb() {
       modified: scenario.meta?.lastModifiedDate
         ? new Date(scenario.meta.lastModifiedDate)
         : new Date(),
-
-      image: "",
+      image: (scenario as any).image ?? "",
     };
 
     await db.put("scenario-metadata", metadata);
