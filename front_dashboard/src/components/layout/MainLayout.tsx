@@ -297,10 +297,11 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
       sessionStorage.setItem('access_token', token);
       console.log('[MainLayout] Token copied to sessionStorage for iframe access');
     }
+    // کاهش مدت زمان به 1 ثانیه برای عملیات ضروری
     setTimeout(() => {
       setKalknegarLoadingOpen(false);
       navigate('/kalknegar');
-    }, 3000);
+    }, 1000);
   };
 
   return (
