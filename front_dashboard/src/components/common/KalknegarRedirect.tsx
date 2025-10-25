@@ -1,13 +1,13 @@
 import React, { useEffect, useRef } from 'react';
-import { Box, CircularProgress, Typography } from '@mui/material';
 import { useLocation } from 'react-router-dom';
 import { useAppSelector } from '@/store';
 import { selectIsAuthenticated } from '@/store/slices/authSlice';
+import KalknegarLoadingDialog from './KalknegarLoadingDialog';
 
 /**
  * Redirects the user to the Vue KalkNegar application that is now served
  * behind the same origin via the Vite proxy. We keep the SPA path intact,
- * attach integration metadata when available, and fall back to a spinner
+ * attach integration metadata when available, and show the loading dialog
  * until the redirect completes.
  */
 const KalknegarRedirect: React.FC = () => {
@@ -40,27 +40,15 @@ const KalknegarRedirect: React.FC = () => {
     const nextUrl = `${pathname}${nextSearch ? `?${nextSearch}` : ''}${url.hash}`;
 
     redirected.current = true;
-    window.location.replace(nextUrl);
+    
+    // اضافه کردن تاخیر کوتاه برای نمایش دیالوگ لودینگ
+    setTimeout(() => {
+      window.location.replace(nextUrl);
+    }, 1500);
   }, [isAuthenticated, location]);
 
-  return (
-    <Box
-      sx={{
-        width: '100%',
-        height: '100vh',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        flexDirection: 'column',
-        gap: 2,
-      }}
-    >
-      <CircularProgress size={48} />
-      <Typography variant="h6">
-        Redirecting to KalkNegar...
-      </Typography>
-    </Box>
-  );
+  // نمایش دیالوگ لودینگ به جای صفحه جداگانه
+  return <KalknegarLoadingDialog open={true} />;
 };
 
 export default KalknegarRedirect;
