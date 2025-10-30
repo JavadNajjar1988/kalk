@@ -20,6 +20,8 @@ from app.api.routes import auth as auth_routes
 from app.api.routes import realtime as realtime_routes
 from app.api.routes import maps as maps_routes
 from app.api.routes import filesystem_tiles as filesystem_tiles_routes
+from app.api.routes import catalog as catalog_routes
+from app.api.routes import sdi as sdi_routes
 
 
 def create_app() -> FastAPI:
@@ -97,6 +99,8 @@ def create_app() -> FastAPI:
     api.include_router(realtime_routes.router)
     api.include_router(maps_routes.router)
     api.include_router(filesystem_tiles_routes.router)
+    api.include_router(catalog_routes.router)
+    api.include_router(sdi_routes.router)
 
     return app
 

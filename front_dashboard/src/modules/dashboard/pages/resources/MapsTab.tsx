@@ -40,6 +40,17 @@ import {
   TableContainer,
   TableHead,
   TableRow,
+  Stepper,
+  Step,
+  StepLabel,
+  Tabs,
+  Tab,
+  Drawer,
+  Stack,
+  Checkbox,
+  FormControlLabel,
+  Snackbar,
+  CircularProgress,
 } from '@mui/material';
 import {
   Add,
@@ -54,6 +65,21 @@ import {
   Download,
   CheckCircle,
   Cancel,
+  Source,
+  Inventory,
+  History,
+  Sync,
+  Preview,
+  Edit,
+  Publish,
+  Undo,
+  Block,
+  Refresh,
+  CloudSync,
+  Folder,
+  Storage,
+  CheckCircleOutline,
+  RadioButtonUnchecked,
 } from '@mui/icons-material';
 import { useAppDispatch, useAppSelector } from '@/store';
 import {
@@ -86,7 +112,19 @@ const authFetch = async (baseUrl: string, endpoint: string, options: RequestInit
   if (token) {
     headers.set('Authorization', `Bearer ${token}`);
   }
-  return fetch(`${baseUrl}${endpoint}`, { ...options, headers });
+  const response = await fetch(`${baseUrl}${endpoint}`, { ...options, headers });
+  
+  // Handle 401 Unauthorized
+  if (response.status === 401) {
+    localStorage.removeItem('access_token');
+    // Optionally redirect to login or show toast
+    if (window.location.pathname !== '/login') {
+      window.location.href = '/login?reason=session_expired';
+    }
+    throw new Error('Session expired. Please login again.');
+  }
+  
+  return response;
 };
 
 // Interface برای نقشه‌های آفلاین
@@ -111,6 +149,45 @@ interface FilesystemFolderOption {
   tileCount?: number | null;
 }
 
+// Interface برای کاتالوگ لایه‌ها
+interface CatalogLayer {
+  id: string;
+  title: string;
+  type: string;
+  minzoom?: number;
+  maxzoom?: number;
+  srs?: string;
+  updated?: string;
+  status: 'draft' | 'published' | 'retired';
+  category?: string;
+  description?: string;
+  bbox?: number[];
+  path?: string;
+  adminMapId?: number;
+}
+
+// Helper component for TabPanel
+interface TabPanelProps {
+  children?: React.ReactNode;
+  index: number;
+  value: number;
+}
+
+function TabPanel(props: TabPanelProps) {
+  const { children, value, index, ...other } = props;
+  return (
+    <div
+      role="tabpanel"
+      hidden={value !== index}
+      id={`maps-tabpanel-${index}`}
+      aria-labelledby={`maps-tab-${index}`}
+      {...other}
+    >
+      {value === index && <Box sx={{ pt: 3 }}>{children}</Box>}
+    </div>
+  );
+}
+
 const MapsTab: React.FC = () => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
@@ -119,6 +196,314 @@ const MapsTab: React.FC = () => {
   const apiBase = useMemo(resolveApiBase, []);
   const mapLayers = useAppSelector(selectMapLayers);
   const activeOfflineMap = useAppSelector(selectActiveOfflineMap);
+  
+  // Stepper state برای workflow
+  const [activeStep, setActiveStep] = useState(0); // 0: افزودن منبع, 1: همگام‌سازی, 2: بازبینی و انتشار
+  
+  // Tab state برای بخش‌های مختلف
+  const [activeTab, setActiveTab] = useState(0); // 0: Sources, 1: Catalog, 2: Jobs, 3: Settings
+  
+  // SDI demo config (persisted locally) for phase-1 visibility
+  const [sdiConfig, setSdiConfig] = useState<{
+    geoserverBase: string;
+    wmsUrl: string;
+    wmtsUrl: string;
+    wfsUrl: string;
+    serverId?: number;
+  }>({
+    geoserverBase: '',
+    wmsUrl: '',
+    wmtsUrl: '',
+    wfsUrl: '',
+  });
+  useEffect(() => {
+    setSdiConfig({
+      geoserverBase: localStorage.getItem('sdi.geoserver.base') || '',
+      wmsUrl: localStorage.getItem('sdi.wms.url') || '',
+      wmtsUrl: localStorage.getItem('sdi.wmts.url') || '',
+      wfsUrl: localStorage.getItem('sdi.wfs.url') || '',
+    });
+  }, []);
+  const updateSdi = (key: keyof typeof sdiConfig, value: string) => {
+    setSdiConfig(prev => {
+      const next = { ...prev, [key]: value };
+      try { localStorage.setItem(`sdi.${key === 'geoserverBase' ? 'geoserver.base' : key.replace('Url','').toLowerCase()+'.url'}`, value); } catch {}
+      return next;
+    });
+  };
+  const copySdi = () => {
+    const summary = `GeoServer: ${sdiConfig.geoserverBase || '-'}\nWMS: ${sdiConfig.wmsUrl || '-'}\nWMTS: ${sdiConfig.wmtsUrl || '-'}\nWFS/OGC Features: ${sdiConfig.wfsUrl || '-'}`;
+    navigator.clipboard?.writeText(summary).catch(() => {});
+  };
+
+  // State برای SDI Connection و Harvest
+  const [sdiConnectionStatus, setSdiConnectionStatus] = useState<'idle' | 'testing' | 'success' | 'error'>('idle');
+  const [sdiConnectionError, setSdiConnectionError] = useState<string | null>(null);
+  const [lastHarvestTime, setLastHarvestTime] = useState<string | null>(null);
+  const [harvestStatus, setHarvestStatus] = useState<'idle' | 'harvesting' | 'success' | 'error'>('idle');
+  const [harvestedLayers, setHarvestedLayers] = useState<any[]>([]);
+
+  // Test SDI Connection
+  const testSdiConnection = async () => {
+    if (!sdiConfig.wmsUrl && !sdiConfig.wmtsUrl && !sdiConfig.wfsUrl) {
+      setSdiConnectionError('حداقل یک URL باید وارد شود');
+      setSdiConnectionStatus('error');
+      return;
+    }
+
+    setSdiConnectionStatus('testing');
+    setSdiConnectionError(null);
+    
+    try {
+      // تشخیص نوع سرویس از URL
+      const serviceTypes: string[] = [];
+      if (sdiConfig.wmsUrl) serviceTypes.push('wms');
+      if (sdiConfig.wmtsUrl) serviceTypes.push('wmts');
+      if (sdiConfig.wfsUrl) serviceTypes.push('wfs');
+
+      // ایجاد یا به‌روزرسانی SDI Server
+      const baseUrl = sdiConfig.wmsUrl || sdiConfig.wmtsUrl || sdiConfig.wfsUrl || '';
+      
+      const response = await authFetch(apiBase, '/sdi/servers', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: `SDI Server (${new Date().toLocaleTimeString('fa-IR')})`,
+          base_url: baseUrl,
+          service_types: serviceTypes,
+          auth_type: 'none',
+        }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setSdiConnectionStatus('success');
+        setSdiConnectionError(null);
+        // ذخیره server_id برای استفاده در harvest
+        setSdiConfig(prev => ({ ...prev, serverId: data.id }));
+      } else {
+        const error = await response.json();
+        throw new Error(error.message || 'خطا در ایجاد سرور SDI');
+      }
+    } catch (error) {
+      setSdiConnectionStatus('error');
+      setSdiConnectionError(error instanceof Error ? error.message : 'خطا در اتصال');
+    }
+  };
+
+  // Harvest layers from SDI
+  const harvestSdiLayers = async () => {
+    if (sdiConnectionStatus !== 'success') {
+      setSdiConnectionError('ابتدا اتصال را تست کنید');
+      return;
+    }
+
+    if (!sdiConfig.serverId) {
+      setSdiConnectionError('شناسه سرور یافت نشد');
+      return;
+    }
+    const serverId = sdiConfig.serverId;
+
+    setHarvestStatus('harvesting');
+    
+    try {
+      const response = await authFetch(apiBase, `/sdi/servers/${serverId}/harvest`, {
+        method: 'POST',
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setHarvestedLayers(data.map_ids || []);
+        setLastHarvestTime(new Date().toLocaleString('fa-IR'));
+        setHarvestStatus('success');
+        setActiveStep(1); // به مرحله همگام‌سازی برو
+        
+        // بارگذاری مجدد کاتالوگ برای نمایش نقشه‌های harvested شده
+        await loadCatalog();
+      } else {
+        const error = await response.json();
+        throw new Error(error.message || 'خطا در Harvest');
+      }
+    } catch (error) {
+      setHarvestStatus('error');
+      setSdiConnectionError(error instanceof Error ? error.message : 'خطا در Harvest');
+    }
+  };
+
+  // State برای کاتالوگ
+  const [catalogLayers, setCatalogLayers] = useState<CatalogLayer[]>([]);
+  const [catalogLoading, setCatalogLoading] = useState(false);
+  const [catalogSearch, setCatalogSearch] = useState('');
+  const [catalogFilterStatus, setCatalogFilterStatus] = useState<'all' | 'draft' | 'published' | 'retired'>('all');
+  const [catalogFilterType, setCatalogFilterType] = useState<string>('all');
+  const [selectedLayers, setSelectedLayers] = useState<string[]>([]);
+  const [previewLayer, setPreviewLayer] = useState<CatalogLayer | null>(null);
+  const [editLayer, setEditLayer] = useState<CatalogLayer | null>(null);
+
+  // بارگذاری کاتالوگ از layers.json
+  const loadCatalog = useCallback(async () => {
+    setCatalogLoading(true);
+    try {
+      const response = await authFetch(apiBase, '/catalog/layers.json');
+      if (response.ok) {
+        const data = await response.json();
+        const layers = Array.isArray(data.layers) ? data.layers : [];
+        setCatalogLayers(layers.map((l: any) => ({
+          id: String(l.id ?? ''),
+          title: String(l.title ?? ''),
+          type: String(l.type ?? ''),
+          minzoom: typeof l.minzoom === 'number' ? l.minzoom : undefined,
+          maxzoom: typeof l.maxzoom === 'number' ? l.maxzoom : undefined,
+          srs: typeof l.srs === 'string' ? l.srs : undefined,
+          updated: typeof l.updated === 'string' ? l.updated : undefined,
+          status: 'published',
+          category: typeof l.category === 'string' ? l.category : undefined,
+          description: typeof l.description === 'string' ? l.description : undefined,
+          bbox: Array.isArray(l.bbox) ? l.bbox : undefined,
+          path: typeof l.path === 'string' ? l.path : undefined,
+          adminMapId: typeof l.admin === 'object' && l.admin && typeof l.admin.map_id === 'number' ? l.admin.map_id : undefined,
+        })));
+      }
+      // همچنین Draftها را از SDI بخوانیم و به لیست اضافه کنیم
+      try {
+        const r2 = await authFetch(apiBase, '/sdi/maps?status=draft');
+        if (r2.ok) {
+          const data2 = await r2.json();
+          const items = Array.isArray(data2.maps) ? data2.maps : [];
+          const drafts: CatalogLayer[] = items.map((m: any) => ({
+            id: String(m.id),
+            title: String(m.title || m.layer_name || `map-${m.id}`),
+            type: String(m.source_type || 'wms'),
+            status: 'draft',
+            adminMapId: Number(m.id),
+            path: String(m.url_or_path || ''),
+            srs: String(m.srs || ''),
+          }));
+          setCatalogLayers(prev => {
+            const publishedIds = new Set(prev.map(p => p.id));
+            return [...prev, ...drafts.filter(d => !publishedIds.has(d.id))];
+          });
+        }
+      } catch {}
+    } catch (error) {
+      console.error('خطا در بارگذاری کاتالوگ:', error);
+    } finally {
+      setCatalogLoading(false);
+    }
+  }, [apiBase]);
+
+  // فیلتر لایه‌ها
+  const filteredCatalogLayers = useMemo(() => {
+    return catalogLayers.filter(layer => {
+      const matchesSearch = catalogSearch === '' || 
+        layer.title.toLowerCase().includes(catalogSearch.toLowerCase()) ||
+        layer.description?.toLowerCase().includes(catalogSearch.toLowerCase());
+      const matchesStatus = catalogFilterStatus === 'all' || layer.status === catalogFilterStatus;
+      const matchesType = catalogFilterType === 'all' || layer.type === catalogFilterType || layer.category === catalogFilterType;
+      return matchesSearch && matchesStatus && matchesType;
+    });
+  }, [catalogLayers, catalogSearch, catalogFilterStatus, catalogFilterType]);
+
+  // Interface و State برای Jobs
+  interface Job {
+    id: string;
+    type: 'harvest' | 'publish' | 'rollback';
+    status: 'running' | 'success' | 'error';
+    startTime: string;
+    endTime?: string;
+    duration?: number; // به ثانیه
+    layerCount?: number;
+    error?: string;
+    log?: string[];
+  }
+
+  const [jobs, setJobs] = useState<Job[]>([]);
+  const [jobsLoading, setJobsLoading] = useState(false);
+  const [selectedJob, setSelectedJob] = useState<Job | null>(null);
+  const [showLogDialog, setShowLogDialog] = useState(false);
+
+  // بارگذاری Jobs
+  const loadJobs = useCallback(async () => {
+    setJobsLoading(true);
+    try {
+      const response = await authFetch(apiBase, '/sdi/jobs');
+      if (response.ok) {
+        const data = await response.json();
+        const jobs = Array.isArray(data.jobs) ? data.jobs : [];
+        setJobs(jobs.map((j: any) => ({
+          id: String(j.id),
+          type: j.type,
+          status: j.status,
+          startTime: j.started_at,
+          endTime: j.ended_at,
+          layerCount: Array.isArray(j.map_ids) ? j.map_ids.length : undefined,
+          error: j.error || undefined,
+          log: Array.isArray(j.logs) ? j.logs : undefined,
+        })));
+      }
+    } catch (error) {
+      console.error('خطا در بارگذاری Jobs:', error);
+    } finally {
+      setJobsLoading(false);
+    }
+  }, [apiBase]);
+
+  // فرمت مدت زمان
+  const formatDuration = (seconds?: number) => {
+    if (!seconds) return '-';
+    if (seconds < 60) return `${seconds}ثانیه`;
+    if (seconds < 3600) return `${Math.floor(seconds / 60)} دقیقه`;
+    return `${Math.floor(seconds / 3600)} ساعت`;
+  };
+
+  // عملیات اتمیک Publish (نوشتن layers.tmp.json سپس rename)
+  const publishCatalog = async (layerIds?: string[]) => {
+    try {
+      const targets = (layerIds ? catalogLayers.filter(l => layerIds.includes(l.id)) : [])
+        .map(l => l.adminMapId)
+        .filter((id): id is number => typeof id === 'number');
+      if (targets.length === 0) {
+        alert('شناسه SDI برای انتشار یافت نشد');
+        return;
+      }
+      const response = await authFetch(apiBase, '/sdi/maps/publish', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(targets)
+      });
+      if (response.ok) {
+        await loadCatalog();
+        setActiveStep(2);
+      } else {
+        throw new Error('publish failed');
+      }
+    } catch (error) {
+      console.error('خطا در Publish:', error);
+    }
+  };
+
+  // عملیات Rollback (بازگشت به نسخه قبلی)
+  const rollbackCatalog = async () => {
+    if (!window.confirm('آیا از بازگشت به نسخه قبلی کاتالوگ مطمئن هستید؟')) {
+      return;
+    }
+
+    try {
+      const response = await authFetch(apiBase, '/catalog/rollback', {
+        method: 'POST'
+      });
+
+      if (response.ok) {
+        await loadCatalog();
+        alert('کاتالوگ به نسخه قبلی بازگشت');
+      } else {
+        throw new Error('خطا در Rollback');
+      }
+    } catch (error) {
+      console.error('خطا در Rollback:', error);
+      alert('خطا در بازگشت کاتالوگ');
+    }
+  };
   
   // State برای نقشه‌های آفلاین
   const [offlineMaps, setOfflineMaps] = useState<OfflineMap[]>([]);
@@ -136,6 +521,26 @@ const MapsTab: React.FC = () => {
     visible: true,
     opacity: 1,
   });
+  // SDI server integration in server dialog
+  const [saveAsSdiServer, setSaveAsSdiServer] = useState(false);
+  const [savedServerId, setSavedServerId] = useState<number | null>(null);
+  const [testConnLoading, setTestConnLoading] = useState(false);
+  const [testConnResult, setTestConnResult] = useState<string | null>(null);
+
+  // SDI Servers management
+  interface SdiServer { id: number; name: string; base_url: string; service_types: string[]; status: string; }
+  const [servers, setServers] = useState<SdiServer[]>([]);
+  const loadServers = useCallback(async () => {
+    try {
+      const res = await authFetch(apiBase, '/sdi/servers');
+      if (res.ok) {
+        const data = await res.json();
+        const items = Array.isArray(data.servers) ? data.servers : [];
+        setServers(items.map((s: any) => ({ id: s.id, name: s.name, base_url: s.base_url, service_types: s.service_types || [], status: s.status })));
+      }
+    } catch {}
+  }, [apiBase]);
+  useEffect(() => { loadServers(); }, [loadServers]);
 
   // State برای آپلود نقشه آفلاین
   const [offlineFormData, setOfflineFormData] = useState({
@@ -195,22 +600,47 @@ const MapsTab: React.FC = () => {
       formData.append('name', offlineFormData.name);
       formData.append('description', offlineFormData.description);
 
-      const response = await authFetch(apiBase, '/maps/upload', {
-        method: 'POST',
-        body: formData,
-      });
+      const token = localStorage.getItem('access_token');
+      const xhr = new XMLHttpRequest();
 
-      if (response.ok) {
-        await loadOfflineMaps();
-        handleCloseDialog();
-        setOfflineFormData({ name: '', description: '', file: null });
-      } else {
-        const error = await response.json();
-        setUploadError(error.detail || 'خطا در آپلود فایل');
+      xhr.upload.onprogress = (e) => {
+        if (e.lengthComputable) {
+          const percentComplete = (e.loaded / e.total) * 100;
+          setUploadProgress(percentComplete);
+        }
+      };
+
+      xhr.onload = async () => {
+        if (xhr.status === 200 || xhr.status === 201) {
+          await loadOfflineMaps();
+          handleCloseDialog();
+          setOfflineFormData({ name: '', description: '', file: null });
+          setUploadProgress(0);
+        } else {
+          try {
+            const error = JSON.parse(xhr.responseText);
+            setUploadError(error.detail || 'خطا در آپلود فایل');
+          } catch {
+            setUploadError('خطا در آپلود فایل');
+          }
+          setUploadProgress(0);
+        }
+        setLoading(false);
+      };
+
+      xhr.onerror = () => {
+        setUploadError('خطا در اتصال به سرور');
+        setUploadProgress(0);
+        setLoading(false);
+      };
+
+      xhr.open('POST', `${apiBase}/maps/upload`);
+      if (token) {
+        xhr.setRequestHeader('Authorization', `Bearer ${token}`);
       }
+      xhr.send(formData);
     } catch (error) {
       setUploadError('خطا در اتصال به سرور');
-    } finally {
       setLoading(false);
       setUploadProgress(0);
     }
@@ -312,28 +742,34 @@ const MapsTab: React.FC = () => {
     };
   }, [openDialog, dialogMode, apiBase]);
 
-  const toggleOfflineMap = async (mapId: number) => {
-
+  const toggleOfflineMap = async (map: OfflineMap) => {
+    const willActivate = !map.is_active;
+    
     try {
-      const response = await authFetch(apiBase, `/maps/${mapId}`, {
+      const response = await authFetch(apiBase, `/maps/${map.id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ is_active: true }),
+        body: JSON.stringify({ is_active: willActivate }),
       });
 
       if (response.ok) {
-        const updated = await response.json();
         await loadOfflineMaps();
 
-        // نقشه فعال را در mapSlice تنظیم کن (بر اساس پاسخ سرور)
-        if (updated && updated.id && updated.url_template) {
+        // اگر نقشه فعال شد، آن را در mapSlice تنظیم کن
+        if (willActivate && map.url_template) {
           dispatch(setActiveOfflineMap({
-            id: updated.id,
-            name: updated.name,
-            url: updated.url_template,
+            id: map.id,
+            name: map.name,
+            url: map.url_template,
           }));
+        } else {
+          // اگر غیرفعال شد، mapSlice را خالی کن اگر این نقشه فعال بود
+          const currentActive = offlineMaps.find(m => m.is_active);
+          if (currentActive?.id === map.id) {
+            dispatch(setActiveOfflineMap(null));
+          }
         }
       }
     } catch (error) {
@@ -371,6 +807,20 @@ const MapsTab: React.FC = () => {
     loadOfflineMaps();
   }, [loadOfflineMaps]);
 
+  // بارگذاری کاتالوگ وقتی تب Catalog فعال است
+  useEffect(() => {
+    if (activeTab === 1) {
+      loadCatalog();
+    }
+  }, [activeTab, loadCatalog]);
+
+  // بارگذاری Jobs وقتی تب Jobs فعال است
+  useEffect(() => {
+    if (activeTab === 2) {
+      loadJobs();
+    }
+  }, [activeTab, loadJobs]);
+
   const handleOpenDialog = (mode: 'server' | 'upload' | 'offline' | 'filesystem') => {
     setDialogMode(mode);
     if (mode === 'offline') {
@@ -387,8 +837,38 @@ const MapsTab: React.FC = () => {
         opacity: 1,
       });
     }
+    if (mode === 'server') {
+      setSaveAsSdiServer(false);
+      setSavedServerId(null);
+      setTestConnResult(null);
+    }
     setOpenDialog(true);
   };
+
+  // SDI status mapping for offline maps
+  const [offlineSdiStatus, setOfflineSdiStatus] = useState<Record<number, { status: 'draft'|'published'|'retired'; mapId?: number }>>({});
+  const loadOfflineSdiStatus = useCallback(async () => {
+    try {
+      const res = await authFetch(apiBase, '/sdi/maps?status=all');
+      if (res.ok) {
+        const data = await res.json();
+        const map: Record<number, {status:'draft'|'published'|'retired'; mapId?: number}> = {};
+        const items = Array.isArray(data.maps) ? data.maps : [];
+        for (const m of items) {
+          const offId = m?.metadata?.offline_map_id as number | undefined;
+          if (typeof offId === 'number') {
+            map[offId] = { status: m.status, mapId: m.id };
+          }
+        }
+        setOfflineSdiStatus(map);
+      }
+    } catch {}
+  }, [apiBase]);
+
+  // پس از آماده شدن تابع بالا، یکبار در مونت وضعیت SDI را بارگذاری کن
+  useEffect(() => {
+    loadOfflineSdiStatus();
+  }, [loadOfflineSdiStatus]);
 
   const handleCloseDialog = () => {
     setOpenDialog(false);
@@ -406,8 +886,60 @@ const MapsTab: React.FC = () => {
     } else if (dialogMode === 'filesystem') {
       registerFilesystemMap();
     } else {
+      // Optionally save SDI server metadata
+      if (saveAsSdiServer && formData.url) {
+        try {
+          const u = new URL(formData.url);
+          const body = {
+            name: u.host,
+            base_url: formData.url,
+            service_types: [formData.type || 'xyz'],
+            auth_type: 'none',
+          } as any;
+          authFetch(apiBase, '/sdi/servers', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
+            .then(r => r.json())
+            .then(s => setSavedServerId(s.id))
+            .catch(() => {});
+        } catch {}
+      }
       dispatch(addMapLayer(formData as Omit<MapLayer, 'id'>));
       handleCloseDialog();
+    }
+  };
+
+  const testServerConnection = async () => {
+    if (!formData.url) return;
+    setTestConnLoading(true);
+    setTestConnResult(null);
+    try {
+      const params = new URLSearchParams({ base_url: String(formData.url) });
+      const res = await authFetch(apiBase, `/sdi/servers/test?${params.toString()}`, { method: 'POST' });
+      const data = await res.json();
+      if (data.ok) setTestConnResult('موفق'); else setTestConnResult('ناموفق');
+    } catch {
+      setTestConnResult('ناموفق');
+    } finally {
+      setTestConnLoading(false);
+    }
+  };
+
+  const discoverServerLayers = async () => {
+    if (!formData.url) return;
+    try {
+      // همیشه یک سرور SDI موقت/جدید می‌سازیم تا harvest کنیم
+      const body = {
+        name: (() => { try { return new URL(String(formData.url)).host; } catch { return 'server'; } })(),
+        base_url: formData.url,
+        service_types: [formData.type || 'wms'],
+        auth_type: 'none',
+      } as any;
+      const created = await authFetch(apiBase, '/sdi/servers', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+      const server = await created.json();
+      await authFetch(apiBase, `/sdi/servers/${server.id}/harvest`, { method: 'POST' });
+      setSavedServerId(server.id);
+      alert('Discover/Harvest انجام شد. Draftها در تب Catalog قابل مشاهده خواهند بود.');
+    } catch (e) {
+      alert('خطا در Discover/Harvest');
     }
   };
 
@@ -420,6 +952,25 @@ const MapsTab: React.FC = () => {
       ...layer,
       opacity: newOpacity,
     }));
+  };
+
+  // افزودن نقشه آفلاین به کاتالوگ SDI و انتشار
+  const addOfflineToCatalogAndPublish = async (offlineId: number) => {
+    try {
+      setLoading(true);
+      const res = await authFetch(apiBase, `/sdi/offline/harvest-from-offline-map/${offlineId}`, { method: 'POST' });
+      if (!res.ok) throw new Error('harvest failed');
+      const sdiMap = await res.json();
+      const pub = await authFetch(apiBase, `/sdi/maps/${sdiMap.id}/publish`, { method: 'POST' });
+      if (!pub.ok) throw new Error('publish failed');
+      await loadCatalog();
+      await loadOfflineSdiStatus();
+      setActiveStep(2);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoading(false);
+    }
   };
 
   // Soft background surface similar to FieldEditDialog
@@ -470,9 +1021,68 @@ const MapsTab: React.FC = () => {
   const serverLayers = mapLayers.filter(l => ['wms', 'wmts', 'xyz', 'osm'].includes(l.type));
   const uploadedLayers = mapLayers.filter(l => ['vector', 'raster'].includes(l.type));
 
+  // Steps برای Stepper
+  const steps = ['افزودن منبع', 'همگام‌سازی', 'بازبینی و انتشار'];
+
   return (
-    <Box sx={{ px: 2, pt: 2 }}>
-      <Grid container spacing={3}>
+    <Box sx={{ px: 2, pt: 2, pb: 2 }}>
+      {/* Stepper برای workflow */}
+      <Paper sx={{ p: 3, mb: 3 }}>
+        <Stepper activeStep={activeStep} alternativeLabel>
+          {steps.map((label, index) => (
+            <Step key={label}>
+              <StepLabel
+                optional={
+                  index === 0 && offlineMaps.length > 0 ? (
+                    <Typography variant="caption" color="success.main">✓ منابع اضافه شد</Typography>
+                  ) : index === 1 && lastHarvestTime ? (
+                    <Typography variant="caption" color="success.main">✓ همگام‌سازی انجام شد</Typography>
+                  ) : index === 2 && catalogLayers.filter(l => l.status === 'published').length > 0 ? (
+                    <Typography variant="caption" color="success.main">✓ منتشر شد</Typography>
+                  ) : null
+                }
+              >
+                {label}
+              </StepLabel>
+            </Step>
+          ))}
+        </Stepper>
+        {activeStep === 0 && (
+          <Alert severity="info" sx={{ mt: 2 }}>
+            در تب «منابع»، سرور SDI را اضافه کنید یا نقشه‌های آفلاین را آپلود کنید.
+          </Alert>
+        )}
+        {activeStep === 1 && (
+          <Alert severity="info" sx={{ mt: 2 }}>
+            در تب «کاتالوگ»، لایه‌های Harvest شده را بازبینی کنید و منتشر کنید.
+          </Alert>
+        )}
+        {activeStep === 2 && (
+          <Alert severity="success" sx={{ mt: 2 }}>
+            لایه‌ها منتشر شدند. در تب «کاتالوگ» می‌توانید وضعیت را مشاهده کنید.
+          </Alert>
+        )}
+      </Paper>
+
+      {/* Tabs برای بخش‌های مختلف */}
+      <Paper sx={{ mb: 3 }}>
+        <Tabs 
+          value={activeTab} 
+          onChange={(_, newValue) => setActiveTab(newValue)}
+          sx={{ borderBottom: 1, borderColor: 'divider' }}
+        >
+          <Tab icon={<Source />} iconPosition="start" label="منابع (Sources)" />
+          <Tab icon={<Inventory />} iconPosition="start" label="کاتالوگ (Catalog)" />
+          <Tab icon={<History />} iconPosition="start" label="Job‌ها / Log‌ها" />
+          <Tab icon={<Settings />} iconPosition="start" label="تنظیمات" />
+        </Tabs>
+      </Paper>
+
+      {/* محتوای تب‌ها */}
+      <TabPanel value={activeTab} index={0}>
+        {/* تب Sources */}
+        <Grid container spacing={3}>
+        
         {/* کارت «نقشه‌های آفلاین» */}
         <Grid item xs={12} sm={6} md={4}>
           <Card sx={{ height: '100%' }}>
@@ -584,6 +1194,93 @@ const MapsTab: React.FC = () => {
                   <Typography color="text.secondary">
                     {t('resources.maps.noServerLayers')}
                   </Typography>
+                </Box>
+              )}
+            </CardContent>
+          </Card>
+        </Grid>
+
+        {/* کارت مدیریت سرورها (SDI) */}
+        <Grid item xs={12} sm={6} md={4}>
+          <Card sx={{ height: '100%' }}>
+            <CardHeader title="سرورهای SDI" avatar={<Public color="primary" />} sx={{ pb: 1 }} />
+            <CardContent sx={{ pt: 1.5 }}>
+              {servers.length > 0 ? (
+                <List>
+                  {servers.map((s, idx) => (
+                    <React.Fragment key={s.id}>
+                      <ListItem>
+                        <ListItemText
+                          primary={`${s.name}`}
+                          secondary={<>
+                            <Typography variant="caption" display="block" noWrap>URL: {s.base_url}</Typography>
+                            <Typography variant="caption" display="block">Types: {(s.service_types || []).join(', ') || '-'}</Typography>
+                          </>}
+                        />
+                        <ListItemSecondaryAction>
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                            <Tooltip title="Harvest">
+                              <IconButton size="small" onClick={async () => { try { await authFetch(apiBase, `/sdi/servers/${s.id}/harvest`, { method: 'POST' }); await loadCatalog(); } catch {} }}>
+                                <CloudSync fontSize="small" />
+                              </IconButton>
+                            </Tooltip>
+                            <Tooltip title="Delete">
+                              <IconButton size="small" color="error" onClick={async () => { if (confirm('حذف سرور؟')) { try { await authFetch(apiBase, `/sdi/servers/${s.id}`, { method: 'DELETE' }); await loadServers(); } catch {} } }}>
+                                <Delete fontSize="small" />
+                              </IconButton>
+                            </Tooltip>
+                          </Box>
+                        </ListItemSecondaryAction>
+                      </ListItem>
+                      {idx < servers.length - 1 && <Divider />}
+                    </React.Fragment>
+                  ))}
+                </List>
+              ) : (
+                <Box sx={{ textAlign: 'center', py: 4 }}>
+                  <Typography color="text.secondary">سروری ثبت نشده است</Typography>
+                </Box>
+              )}
+            </CardContent>
+          </Card>
+        </Grid>
+
+        {/* کارت کاتالوگ SDI منتشر شده */}
+        <Grid item xs={12} sm={6} md={4}>
+          <Card sx={{ height: '100%' }}>
+            <CardHeader
+              title="کاتالوگ منتشر شده"
+              avatar={<Public color="secondary" />}
+              action={
+                <Button variant="outlined" size="small" onClick={loadCatalog} startIcon={<Download />}>بروزرسانی</Button>
+              }
+              sx={{ pb: 1 }}
+            />
+            <CardContent sx={{ pt: 1.5 }}>
+              {catalogLoading ? (
+                <Box sx={{ textAlign: 'center', py: 3 }}>
+                  <LinearProgress />
+                </Box>
+              ) : catalogLayers.length > 0 ? (
+                <List>
+                  {catalogLayers.map((l, idx) => (
+                    <React.Fragment key={l.id || idx}>
+                      <ListItem>
+                        <ListItemText
+                          primary={l.title || l.id}
+                          secondary={<>
+                            <Typography variant="caption" display="block">نوع: {l.type}</Typography>
+                            <Typography variant="caption" display="block" noWrap>مسیر/URL: {l.path}</Typography>
+                          </>}
+                        />
+                      </ListItem>
+                      {idx < catalogLayers.length - 1 && <Divider />}
+                    </React.Fragment>
+                  ))}
+                </List>
+              ) : (
+                <Box sx={{ textAlign: 'center', py: 4 }}>
+                  <Typography color="text.secondary">لایه منتشر شده‌ای وجود ندارد</Typography>
                 </Box>
               )}
             </CardContent>
@@ -728,22 +1425,70 @@ const MapsTab: React.FC = () => {
                           </TableCell>
                           <TableCell align="center">{map.file_size ? `${Math.round(map.file_size / 1024 / 1024)} مگابایت` : '-'}</TableCell>
                           <TableCell align="center">
-                            {map.is_active ? <Chip label="فعال" color="success" size="small" /> : <Chip label="غیرفعال" size="small" />}
+                            <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 0.5 }}>
+                              {map.is_active ? <Chip label="فعال" color="success" size="small" /> : <Chip label="غیرفعال" size="small" />}
+                              {offlineSdiStatus[map.id]?.status && (
+                                <Chip 
+                                  label={`SDI: ${offlineSdiStatus[map.id]?.status}`}
+                                  size="small"
+                                  color={offlineSdiStatus[map.id]?.status === 'published' ? 'success' : offlineSdiStatus[map.id]?.status === 'draft' ? 'warning' : 'default'}
+                                  variant="outlined"
+                                />
+                              )}
+                            </Box>
                           </TableCell>
                           <TableCell align="center">
                             <Box sx={{ display: 'flex', justifyContent: 'center', gap: 1 }}>
+                              <Tooltip title="افزودن به کاتالوگ و انتشار">
+                                <IconButton 
+                                  size="small" 
+                                  onClick={() => addOfflineToCatalogAndPublish(map.id)}
+                                  aria-label={`افزودن ${map.name} به کاتالوگ و انتشار`}
+                                >
+                                  <CloudSync fontSize="small" />
+                                </IconButton>
+                              </Tooltip>
+                              {offlineSdiStatus[map.id]?.status === 'published' && offlineSdiStatus[map.id]?.mapId && (
+                                <Tooltip title="Retire در SDI">
+                                  <IconButton size="small" color="warning" onClick={async () => {
+                                    try {
+                                      const id = offlineSdiStatus[map.id]?.mapId as number;
+                                      const r = await authFetch(apiBase, `/sdi/maps/${id}/retire`, { method: 'POST' });
+                                      if (r.ok) {
+                                        await loadCatalog();
+                                        await loadOfflineSdiStatus();
+                                      }
+                                    } catch {}
+                                  }}>
+                                    <Block fontSize="small" />
+                                  </IconButton>
+                                </Tooltip>
+                              )}
                               <Tooltip title={map.is_active ? 'غیرفعال کردن' : 'فعال کردن'}>
-                                <IconButton size="small" onClick={() => toggleOfflineMap(map.id)}>
+                                <IconButton 
+                                  size="small" 
+                                  onClick={() => toggleOfflineMap(map)}
+                                  aria-label={map.is_active ? 'غیرفعال کردن نقشه' : 'فعال کردن نقشه'}
+                                >
                                   {map.is_active ? <Cancel fontSize="small" /> : <CheckCircle fontSize="small" />}
                                 </IconButton>
                               </Tooltip>
                               <Tooltip title="دانلود">
-                                <IconButton size="small" onClick={() => window.open(`${apiBase}/maps/${map.id}/download`)}>
+                                <IconButton 
+                                  size="small" 
+                                  onClick={() => window.open(`${apiBase}/maps/${map.id}/download`)}
+                                  aria-label={`دانلود نقشه ${map.name}`}
+                                >
                                   <Download fontSize="small" />
                                 </IconButton>
                               </Tooltip>
                               <Tooltip title="حذف">
-                                <IconButton size="small" color="error" onClick={() => requestDeleteOfflineMap(map)}>
+                                <IconButton 
+                                  size="small" 
+                                  color="error" 
+                                  onClick={() => requestDeleteOfflineMap(map)}
+                                  aria-label={`حذف نقشه ${map.name}`}
+                                >
                                   <Delete fontSize="small" />
                                 </IconButton>
                               </Tooltip>
@@ -800,7 +1545,447 @@ const MapsTab: React.FC = () => {
             </Grid>
           </Paper>
         </Grid>
-      </Grid>
+        </Grid>
+      </TabPanel>
+
+      {/* تب Catalog */}
+      <TabPanel value={activeTab} index={1}>
+        <Paper sx={{ p: 2 }}>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2, flexWrap: 'wrap', gap: 2 }}>
+            <Typography variant="h6">کاتالوگ لایه‌ها</Typography>
+            <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+              <TextField 
+                size="small" 
+                placeholder="جست‌وجو..." 
+                value={catalogSearch}
+                onChange={(e) => setCatalogSearch(e.target.value)}
+                sx={{ width: 250 }} 
+              />
+              <FormControl size="small" sx={{ minWidth: 120 }}>
+                <InputLabel>وضعیت</InputLabel>
+                <Select
+                  value={catalogFilterStatus}
+                  label="وضعیت"
+                  onChange={(e) => setCatalogFilterStatus(e.target.value as any)}
+                >
+                  <MenuItem value="all">همه</MenuItem>
+                  <MenuItem value="draft">Draft</MenuItem>
+                  <MenuItem value="published">Published</MenuItem>
+                  <MenuItem value="retired">Retired</MenuItem>
+                </Select>
+              </FormControl>
+              <FormControl size="small" sx={{ minWidth: 120 }}>
+                <InputLabel>نوع</InputLabel>
+                <Select
+                  value={catalogFilterType}
+                  label="نوع"
+                  onChange={(e) => setCatalogFilterType(e.target.value)}
+                >
+                  <MenuItem value="all">همه</MenuItem>
+                  <MenuItem value="wms">WMS</MenuItem>
+                  <MenuItem value="wmts">WMTS</MenuItem>
+                  <MenuItem value="xyz">XYZ</MenuItem>
+                  <MenuItem value="raster-xyz">Raster XYZ</MenuItem>
+                </Select>
+              </FormControl>
+              <Button 
+                variant="outlined" 
+                size="small" 
+                startIcon={catalogLoading ? <CircularProgress size={16} color="inherit" /> : <Sync />}
+                onClick={loadCatalog}
+                disabled={catalogLoading}
+              >
+                همگام‌سازی
+              </Button>
+              {selectedLayers.length > 0 && (
+                <Button 
+                  variant="contained" 
+                  size="small" 
+                  startIcon={<Publish />}
+                  onClick={() => publishCatalog(selectedLayers)}
+                >
+                  انتشار گروهی ({selectedLayers.length})
+                </Button>
+              )}
+            </Box>
+          </Box>
+          {catalogLoading ? (
+            <Box sx={{ textAlign: 'center', py: 4 }}>
+              <LinearProgress sx={{ mb: 2 }} />
+              <Typography>در حال بارگذاری...</Typography>
+            </Box>
+          ) : filteredCatalogLayers.length === 0 ? (
+            <Alert severity="info" sx={{ mb: 2 }}>
+              {catalogLayers.length === 0 
+                ? 'هیچ لایه‌ای در کاتالوگ یافت نشد. ابتدا منابع را اضافه کنید و Harvest انجام دهید.'
+                : 'با فیلتر انتخابی هیچ لایه‌ای یافت نشد.'}
+            </Alert>
+          ) : (
+            <TableContainer>
+              <Table size="small">
+                <TableHead>
+                  <TableRow>
+                    <TableCell padding="checkbox">
+                      <Checkbox
+                        indeterminate={selectedLayers.length > 0 && selectedLayers.length < filteredCatalogLayers.length}
+                        checked={filteredCatalogLayers.length > 0 && selectedLayers.length === filteredCatalogLayers.length}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            setSelectedLayers(filteredCatalogLayers.map(l => l.id));
+                          } else {
+                            setSelectedLayers([]);
+                          }
+                        }}
+                      />
+                    </TableCell>
+                    <TableCell>عنوان/نام</TableCell>
+                    <TableCell>نوع</TableCell>
+                    <TableCell>min/maxZoom</TableCell>
+                    <TableCell>SRS</TableCell>
+                    <TableCell>تاریخ به‌روزرسانی</TableCell>
+                    <TableCell>وضعیت</TableCell>
+                    <TableCell align="center">عملیات</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {filteredCatalogLayers.map((layer) => (
+                    <TableRow key={layer.id} hover selected={selectedLayers.includes(layer.id)}>
+                      <TableCell padding="checkbox">
+                        <Checkbox
+                          checked={selectedLayers.includes(layer.id)}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setSelectedLayers([...selectedLayers, layer.id]);
+                            } else {
+                              setSelectedLayers(selectedLayers.filter(id => id !== layer.id));
+                            }
+                          }}
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <Typography variant="body2" fontWeight="medium">{layer.title}</Typography>
+                        {layer.description && (
+                          <Typography variant="caption" color="text.secondary" display="block">
+                            {layer.description.substring(0, 50)}...
+                          </Typography>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        <Chip label={layer.type} size="small" variant="outlined" />
+                      </TableCell>
+                      <TableCell>
+                        {layer.minzoom !== undefined && layer.maxzoom !== undefined 
+                          ? `${layer.minzoom}/${layer.maxzoom}`
+                          : '-'}
+                      </TableCell>
+                      <TableCell>{layer.srs || '-'}</TableCell>
+                      <TableCell>{layer.updated || '-'}</TableCell>
+                      <TableCell>
+                        <Chip 
+                          label={layer.status === 'published' ? 'Published' : layer.status === 'draft' ? 'Draft' : 'Retired'}
+                          size="small"
+                          color={layer.status === 'published' ? 'success' : layer.status === 'draft' ? 'warning' : 'default'}
+                        />
+                      </TableCell>
+                      <TableCell align="center">
+                        <Box sx={{ display: 'flex', gap: 0.5, justifyContent: 'center' }}>
+                          <Tooltip title="Preview">
+                            <IconButton 
+                              size="small" 
+                              onClick={() => setPreviewLayer(layer)}
+                              aria-label={`Preview لایه ${layer.title}`}
+                            >
+                              <Preview fontSize="small" />
+                            </IconButton>
+                          </Tooltip>
+                          <Tooltip title="Edit">
+                            <IconButton 
+                              size="small" 
+                              onClick={() => setEditLayer(layer)}
+                              aria-label={`ویرایش لایه ${layer.title}`}
+                            >
+                              <Edit fontSize="small" />
+                            </IconButton>
+                          </Tooltip>
+                          {layer.status !== 'published' && (
+                            <Tooltip title="Publish">
+                              <IconButton 
+                                size="small" 
+                                color="success" 
+                                onClick={() => publishCatalog([layer.id])}
+                                aria-label={`انتشار لایه ${layer.title}`}
+                              >
+                                <Publish fontSize="small" />
+                              </IconButton>
+                            </Tooltip>
+                          )}
+                          {layer.status === 'published' && (
+                            <Tooltip title="Retire">
+                              <IconButton 
+                                size="small" 
+                                color="warning" 
+                                onClick={async () => {
+                                  if (!layer.adminMapId) return;
+                                  try {
+                                    const res = await authFetch(apiBase, `/sdi/maps/${layer.adminMapId}/retire`, { method: 'POST' });
+                                    if (res.ok) await loadCatalog();
+                                  } catch {}
+                                }}
+                                aria-label={`Retire لایه ${layer.title}`}
+                              >
+                                <Block fontSize="small" />
+                              </IconButton>
+                            </Tooltip>
+                          )}
+                          {layer.status === 'retired' && (
+                            <Tooltip title="Rollback">
+                              <IconButton 
+                                size="small" 
+                                onClick={() => rollbackCatalog()}
+                                aria-label={`Rollback لایه ${layer.title}`}
+                              >
+                                <Undo fontSize="small" />
+                              </IconButton>
+                            </Tooltip>
+                          )}
+                        </Box>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          )}
+        </Paper>
+      </TabPanel>
+
+      {/* تب Jobs/Logs */}
+      <TabPanel value={activeTab} index={2}>
+        <Paper sx={{ p: 2 }}>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+            <Typography variant="h6">وضعیت Jobها و Logها</Typography>
+            <Button 
+              variant="outlined" 
+              size="small" 
+              startIcon={<Refresh />}
+              onClick={loadJobs}
+              disabled={jobsLoading}
+            >
+              بروزرسانی
+            </Button>
+          </Box>
+          {jobsLoading ? (
+            <Box sx={{ textAlign: 'center', py: 4 }}>
+              <LinearProgress sx={{ mb: 2 }} />
+              <Typography>در حال بارگذاری...</Typography>
+            </Box>
+          ) : jobs.length === 0 ? (
+            <Box sx={{ textAlign: 'center', py: 4 }}>
+              <History sx={{ fontSize: 60, color: 'text.secondary', mb: 2 }} />
+              <Typography color="text.secondary">هنوز هیچ Jobی ثبت نشده است</Typography>
+            </Box>
+          ) : (
+            <TableContainer>
+              <Table size="small">
+                <TableHead>
+                  <TableRow>
+                    <TableCell>نوع</TableCell>
+                    <TableCell>وضعیت</TableCell>
+                    <TableCell>شروع</TableCell>
+                    <TableCell>پایان</TableCell>
+                    <TableCell>مدت اجرا</TableCell>
+                    <TableCell>تعداد لایه</TableCell>
+                    <TableCell align="center">عملیات</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {jobs.map((job) => (
+                    <TableRow key={job.id} hover>
+                      <TableCell>
+                        <Chip 
+                          label={job.type === 'harvest' ? 'Harvest' : job.type === 'publish' ? 'Publish' : 'Rollback'}
+                          size="small"
+                          color={job.type === 'harvest' ? 'primary' : job.type === 'publish' ? 'success' : 'warning'}
+                          variant="outlined"
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <Chip 
+                          icon={
+                            job.status === 'running' ? undefined :
+                            job.status === 'success' ? <CheckCircle /> : <Cancel />
+                          }
+                          label={
+                            job.status === 'running' ? 'در حال اجرا' :
+                            job.status === 'success' ? 'موفق' : 'ناموفق'
+                          }
+                          size="small"
+                          color={job.status === 'running' ? 'info' : job.status === 'success' ? 'success' : 'error'}
+                        />
+                      </TableCell>
+                      <TableCell>{new Date(job.startTime).toLocaleString('fa-IR')}</TableCell>
+                      <TableCell>{job.endTime ? new Date(job.endTime).toLocaleString('fa-IR') : '-'}</TableCell>
+                      <TableCell>{formatDuration(job.duration)}</TableCell>
+                      <TableCell>{job.layerCount || '-'}</TableCell>
+                      <TableCell align="center">
+                        <Box sx={{ display: 'flex', gap: 0.5, justifyContent: 'center' }}>
+                          {job.log && job.log.length > 0 && (
+                            <Tooltip title="مشاهده Log">
+                              <IconButton 
+                                size="small" 
+                                onClick={() => {
+                                  setSelectedJob(job);
+                                  setShowLogDialog(true);
+                                }}
+                              >
+                                <History fontSize="small" />
+                              </IconButton>
+                            </Tooltip>
+                          )}
+                          {job.status === 'error' && (
+                            <Tooltip title="اجرای مجدد">
+                              <IconButton 
+                                size="small" 
+                                color="warning"
+                                onClick={() => {/* Run Again */}}
+                              >
+                                <Refresh fontSize="small" />
+                              </IconButton>
+                            </Tooltip>
+                          )}
+                        </Box>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          )}
+
+          {/* Dialog برای نمایش Log */}
+          <Dialog
+            open={showLogDialog}
+            onClose={() => setShowLogDialog(false)}
+            maxWidth="md"
+            fullWidth
+          >
+            <DialogTitle>
+              Log Job: {selectedJob?.type} - {selectedJob?.id}
+            </DialogTitle>
+            <DialogContent>
+              {selectedJob?.log && selectedJob.log.length > 0 ? (
+                <Box sx={{ mt: 2 }}>
+                  {selectedJob.log.map((line, index) => (
+                    <Typography 
+                      key={index} 
+                      variant="body2" 
+                      component="pre"
+                      sx={{ 
+                        fontFamily: 'monospace', 
+                        fontSize: '0.75rem',
+                        mb: 0.5,
+                        color: line.toLowerCase().includes('error') ? 'error.main' : 'text.primary'
+                      }}
+                    >
+                      {line}
+                    </Typography>
+                  ))}
+                </Box>
+              ) : (
+                <Typography color="text.secondary">Log موجود نیست</Typography>
+              )}
+            </DialogContent>
+            <DialogActions>
+              <Button onClick={() => setShowLogDialog(false)}>بستن</Button>
+            </DialogActions>
+          </Dialog>
+        </Paper>
+      </TabPanel>
+
+      {/* تب Settings */}
+      <TabPanel value={activeTab} index={3}>
+        <Paper sx={{ p: 2 }}>
+          <Typography variant="h6" sx={{ mb: 2 }}>تنظیمات</Typography>
+          <Grid container spacing={3}>
+            <Grid item xs={12} md={6}>
+              <Card>
+                <CardHeader title="مسیر کاتالوگ" />
+                <CardContent>
+                  <TextField 
+                    fullWidth 
+                    label="مسیر layers.json" 
+                    defaultValue="backend/static/maps/layers.json"
+                    helperText="مسیر فایل کاتالوگ لایه‌ها (نسبت به root پروژه)"
+                    sx={{ mb: 2 }}
+                  />
+                  <Alert severity="info" sx={{ fontSize: '0.875rem' }}>
+                    برای به‌روزرسانی اتمیک، ابتدا layers.tmp.json نوشته می‌شود سپس rename به layers.json انجام می‌شود.
+                  </Alert>
+                </CardContent>
+              </Card>
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <Card>
+                <CardHeader title="خط‌مشی انتشار" />
+                <CardContent>
+                  <FormControlLabel 
+                    control={<Switch defaultChecked />} 
+                    label="انتشار خودکار برای Basemapها" 
+                    sx={{ mb: 1, display: 'block' }}
+                  />
+                  <FormControlLabel 
+                    control={<Switch />} 
+                    label="انتشار دستی برای همه لایه‌ها" 
+                    sx={{ mb: 1, display: 'block' }}
+                  />
+                  <Alert severity="warning" sx={{ mt: 2, fontSize: '0.875rem' }}>
+                    عملیات Publish/Rollback همیشه به صورت اتمیک انجام می‌شود تا از خرابی فایل جلوگیری شود.
+                  </Alert>
+                </CardContent>
+              </Card>
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <Card>
+                <CardHeader title="نقش‌ها و دسترسی" />
+                <CardContent>
+                  <FormControl fullWidth sx={{ mb: 2 }}>
+                    <InputLabel>نقش پیش‌فرض برای لایه‌های جدید</InputLabel>
+                    <Select defaultValue="user">
+                      <MenuItem value="user">کاربر عادی</MenuItem>
+                      <MenuItem value="admin">ادمین</MenuItem>
+                      <MenuItem value="operator">اپراتور</MenuItem>
+                    </Select>
+                  </FormControl>
+                  <Alert severity="info" sx={{ fontSize: '0.875rem' }}>
+                    لایه‌ها بر اساس فیلد admin.roles فیلتر می‌شوند. کاربران عادی فقط لایه‌های مجاز را می‌بینند.
+                  </Alert>
+                </CardContent>
+              </Card>
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <Card>
+                <CardHeader title="پیش‌فرض‌های UI" />
+                <CardContent>
+                  <FormControlLabel 
+                    control={<Switch defaultChecked />} 
+                    label="visibleByDefault برای Basemapها" 
+                    sx={{ mb: 1, display: 'block' }}
+                  />
+                  <TextField 
+                    fullWidth
+                    label="Default Opacity"
+                    type="number"
+                    defaultValue={1.0}
+                    inputProps={{ min: 0, max: 1, step: 0.1 }}
+                    helperText="Opacity پیش‌فرض برای لایه‌های جدید"
+                    sx={{ mt: 2 }}
+                  />
+                </CardContent>
+              </Card>
+            </Grid>
+          </Grid>
+        </Paper>
+      </TabPanel>
 
       {/* دیالوگ افزودن لایه */}
       <Dialog 
@@ -904,9 +2089,19 @@ const MapsTab: React.FC = () => {
                     />
                   </Button>
                   {offlineFormData.file && (
-                    <Typography variant="caption" display="block" sx={{ mt: 1 }}>
-                      فایل انتخاب شده: {offlineFormData.file.name}
-                    </Typography>
+                    <Box sx={{ mt: 1 }}>
+                      <Typography variant="caption" display="block">
+                        فایل انتخاب شده: {offlineFormData.file.name}
+                      </Typography>
+                      {uploadProgress > 0 && uploadProgress < 100 && (
+                        <Box sx={{ mt: 1 }}>
+                          <LinearProgress variant="determinate" value={uploadProgress} sx={{ mb: 0.5 }} />
+                          <Typography variant="caption" color="text.secondary">
+                            {Math.round(uploadProgress)}% آپلود شده
+                          </Typography>
+                        </Box>
+                      )}
+                    </Box>
                   )}
                 </Grid>
               </>
@@ -925,22 +2120,23 @@ const MapsTab: React.FC = () => {
                   <Autocomplete
                     freeSolo
                     options={filesystemFolders}
-                    value={
-                      filesystemFolders.find((option) => option.value === filesystemFormData.folder) ??
-                      (filesystemFormData.folder ? filesystemFormData.folder : null)
-                    }
+                    value={filesystemFolders.find(o => o.value === filesystemFormData.folder) || null}
+                    isOptionEqualToValue={(opt, val) => opt.value === val.value}
                     inputValue={filesystemFolderInput}
-                    onInputChange={(event, newInputValue) => {
+                    onInputChange={(_, newInputValue) => {
                       setFilesystemFolderInput(newInputValue);
-                      setFilesystemFormData({ ...filesystemFormData, folder: newInputValue });
+                      // فقط وقتی که از لیست انتخاب نشده، folder را به‌روزرسانی کن
+                      if (!filesystemFolders.find(o => o.value === newInputValue)) {
+                        setFilesystemFormData({ ...filesystemFormData, folder: newInputValue });
+                      }
                     }}
-                    onChange={(event, newValue) => {
-                      if (typeof newValue === 'string') {
+                    onChange={(_, newValue) => {
+                      if (newValue && typeof newValue !== 'string') {
+                        setFilesystemFormData({ ...filesystemFormData, folder: newValue.value });
+                        setFilesystemFolderInput(newValue.value || '');
+                      } else if (typeof newValue === 'string') {
                         setFilesystemFormData({ ...filesystemFormData, folder: newValue });
                         setFilesystemFolderInput(newValue);
-                      } else if (newValue) {
-                        setFilesystemFormData({ ...filesystemFormData, folder: newValue.value });
-                        setFilesystemFolderInput(newValue.value);
                       } else {
                         setFilesystemFormData({ ...filesystemFormData, folder: '' });
                         setFilesystemFolderInput('');
@@ -948,26 +2144,25 @@ const MapsTab: React.FC = () => {
                     }}
                     loading={filesystemFoldersLoading}
                     sx={{ width: '100%' }}
-                    getOptionLabel={(option) => (typeof option === 'string' ? option : option.label)}
+                    getOptionLabel={(option) => {
+                      if (typeof option === 'string') return option;
+                      return option.label || option.value || '';
+                    }}
                     renderOption={(props, option) => {
-                      const resolved =
-                        typeof option === 'string'
-                          ? filesystemFolders.find((item) => item.value === option) ?? null
-                          : option;
                       return (
                         <li {...props}>
                           <Box sx={{ display: 'flex', flexDirection: 'column' }}>
                             <Typography variant="body2">
-                              {resolved?.label ?? (typeof option === 'string' ? option : '')}
+                              {option.label || option.value}
                             </Typography>
-                            {resolved?.relativePath && resolved.relativePath !== resolved.label && (
+                            {option.relativePath && option.relativePath !== option.label && (
                               <Typography variant="caption" color="text.secondary">
-                                {resolved.relativePath}
+                                {option.relativePath}
                               </Typography>
                             )}
-                            {typeof resolved?.tileCount === 'number' && (
+                            {typeof option.tileCount === 'number' && (
                               <Typography variant="caption" color="text.secondary">
-                                {`تایل‌ها: ${resolved.tileCount}`}
+                                {`تایل‌ها: ${option.tileCount}`}
                               </Typography>
                             )}
                           </Box>
@@ -1043,6 +2238,20 @@ const MapsTab: React.FC = () => {
                         placeholder="https://example.com/geoserver/wms"
                       />
                     </Grid>
+                    <Grid item xs={12} md={6}>
+                      <FormControlLabel
+                        control={<Checkbox checked={saveAsSdiServer} onChange={(e) => setSaveAsSdiServer(e.target.checked)} />}
+                        label="ذخیره به عنوان SDI Server"
+                      />
+                    </Grid>
+                    <Grid item xs={12} md={6}>
+                      <Button onClick={testServerConnection} variant="outlined" size="small" startIcon={testConnLoading ? <CircularProgress size={16} /> : <Sync />} disabled={testConnLoading || !formData.url}>
+                        Test Connection {testConnResult ? `(${testConnResult})` : ''}
+                      </Button>
+                      <Button onClick={discoverServerLayers} variant="contained" size="small" sx={{ ml: 1 }} disabled={!formData.url} startIcon={<CloudSync />}>
+                        Discover/Harvest
+                      </Button>
+                    </Grid>
                     {formData.type === 'wms' && (
                       <Grid item xs={12}>
                         <TextField
@@ -1068,7 +2277,7 @@ const MapsTab: React.FC = () => {
                           <MenuItem value="geojson">GeoJSON</MenuItem>
                           <MenuItem value="kml">KML</MenuItem>
                           <MenuItem value="gpx">GPX</MenuItem>
-                          <MenuItem value="shapefile">Shapefile</MenuItem>
+                          <MenuItem value="shapefile">Shapefile (ZIP)</MenuItem>
                           <MenuItem value="geotiff">GeoTIFF</MenuItem>
                         </Select>
                       </FormControl>
@@ -1084,7 +2293,7 @@ const MapsTab: React.FC = () => {
                         <input
                           type="file"
                           hidden
-                          accept=".geojson,.json,.kml,.gpx,.shp,.tif,.tiff"
+                          accept=".geojson,.json,.kml,.gpx,.tif,.tiff,.zip"
                           onChange={(e) => {
                             if (e.target.files && e.target.files[0]) {
                               setFormData({ ...formData, file: e.target.files[0] });
@@ -1092,6 +2301,9 @@ const MapsTab: React.FC = () => {
                           }}
                         />
                       </Button>
+                      <Typography variant="caption" color="text.secondary" display="block" sx={{ mt: 0.5 }}>
+                        برای Shapefile، فایل ZIP شامل shp/dbf/shx/prj را بارگذاری کنید.
+                      </Typography>
                       {formData.file && (
                         <Typography variant="caption" display="block" sx={{ mt: 1 }}>
                           {t('resources.maps.dialog.selectedFile')}: {formData.file.name}

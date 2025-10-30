@@ -33,6 +33,10 @@ class Settings(BaseSettings):
     TILESERVER_URL: str = "http://127.0.0.1:8480"
     FILESYSTEM_TILE_ROOT: str = "sat"
     SCENARIO_IMAGE_DIR: str = "backend/static/scenarios/images"
+    # SDI catalog
+    CATALOG_PATH: str = "backend/static/maps/layers.json"
+    CATALOG_TMP_PATH: str = "backend/static/maps/layers.tmp.json"
+    DEFAULT_ROLES: list[str] = ["user"]
 
     @field_validator("DISABLE_AUTH", mode="before")
     def _coerce_bool(cls, v):  # type: ignore[no-redef]
@@ -46,5 +50,4 @@ class Settings(BaseSettings):
 
 
 settings = Settings()
-
 
