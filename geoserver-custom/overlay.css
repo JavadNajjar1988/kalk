@@ -1,0 +1,96 @@
+/* GeoServer Custom Theme - مشابه تم داشبورد React */
+/* این فایل به صورت خودکار به صفحات GeoServer اضافه می‌شود */
+
+:root {
+  --primary-color: #34a853;
+  --primary-dark: #2e8e47;
+  --primary-light: #66bb6a;
+  --secondary-color: #3b475e;
+  --background-dark: #23262d;
+  --background-paper: #2a2e36;
+  --background-elevated: #313540;
+  --text-primary: #bac7e3;
+  --text-secondary: #9aa6c3;
+  --border-color: #383b43;
+  --shadow-color: rgba(0, 0, 0, 0.3);
+  --border-radius: 12px;
+}
+
+body {
+  font-family: 'Tahoma', 'Arial', sans-serif !important;
+  direction: rtl !important;
+  background: var(--background-dark) !important;
+  color: var(--text-primary) !important;
+}
+
+.header, .header-options, .header-banner {
+  background: #1e1e1e !important;
+  border-bottom: 1px solid var(--border-color) !important;
+  box-shadow: 0 2px 4px var(--shadow-color) !important;
+}
+
+.header a, .header-options a {
+  color: var(--text-primary) !important;
+}
+
+.button, .ui-button, input[type="submit"], input[type="button"], button {
+  background: var(--primary-color) !important;
+  color: #ffffff !important;
+  border: none !important;
+  border-radius: var(--border-radius) !important;
+  padding: 8px 16px !important;
+  font-weight: 500 !important;
+  transition: all 0.3s ease !important;
+  box-shadow: none !important;
+}
+
+.button:hover, .ui-button:hover, input[type="submit"]:hover, 
+input[type="button"]:hover, button:hover {
+  background: var(--primary-dark) !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 4px 12px rgba(52, 168, 83, 0.3) !important;
+}
+
+a {
+  color: var(--primary-color) !important;
+  transition: color 0.2s ease !important;
+}
+
+a:hover {
+  color: var(--primary-light) !important;
+}
+
+.panel, .ui-widget-content, .ui-panel {
+  background: var(--background-paper) !important;
+  border: 1px solid var(--border-color) !important;
+  border-radius: var(--border-radius) !important;
+  padding: 16px !important;
+  box-shadow: 0 2px 8px var(--shadow-color) !important;
+  transition: all 0.3s ease !important;
+}
+
+table, .ui-datatable {
+  background: var(--background-paper) !important;
+  border: 1px solid var(--border-color) !important;
+  border-radius: var(--border-radius) !important;
+}
+
+table th, .ui-datatable th {
+  background: var(--background-elevated) !important;
+  color: var(--text-primary) !important;
+  border-bottom: 2px solid var(--primary-color) !important;
+}
+
+input[type="text"], input[type="password"], input[type="number"], 
+textarea, select, .ui-inputfield {
+  background: rgba(255, 255, 255, 0.05) !important;
+  border: 1px solid var(--border-color) !important;
+  border-radius: 8px !important;
+  color: var(--text-primary) !important;
+}
+
+input:focus, textarea:focus, select:focus {
+  border-color: var(--primary-color) !important;
+  box-shadow: 0 0 0 3px rgba(52, 168, 83, 0.2) !important;
+}
+

@@ -80,6 +80,12 @@ import {
   Storage,
   CheckCircleOutline,
   RadioButtonUnchecked,
+  HelpOutline,
+  CompareArrows,
+  Storage as StorageIcon,
+  CloudQueue,
+  CheckCircle as CheckCircleIcon,
+  Info,
 } from '@mui/icons-material';
 import { useAppDispatch, useAppSelector } from '@/store';
 import {
@@ -202,6 +208,9 @@ const MapsTab: React.FC = () => {
   
   // Tab state برای بخش‌های مختلف
   const [activeTab, setActiveTab] = useState(0); // 0: Sources, 1: Catalog, 2: Jobs, 3: Settings
+  
+  // State برای Modal راهنما
+  const [helpModalOpen, setHelpModalOpen] = useState(false);
   
   // SDI demo config (persisted locally) for phase-1 visibility
   const [sdiConfig, setSdiConfig] = useState<{
@@ -1027,7 +1036,21 @@ const MapsTab: React.FC = () => {
   return (
     <Box sx={{ px: 2, pt: 2, pb: 2 }}>
       {/* Stepper برای workflow */}
-      <Paper sx={{ p: 3, mb: 3 }}>
+      <Paper sx={{ p: 3, mb: 3, position: 'relative' }}>
+        <Box sx={{ position: 'absolute', top: 16, left: 16, zIndex: 1 }}>
+          <Button
+            variant="outlined"
+            startIcon={<HelpOutline />}
+            onClick={() => setHelpModalOpen(true)}
+            sx={{
+              borderRadius: '12px',
+              textTransform: 'none',
+              fontWeight: 600,
+            }}
+          >
+            راهنمای استفاده
+          </Button>
+        </Box>
         <Stepper activeStep={activeStep} alternativeLabel>
           {steps.map((label, index) => (
             <Step key={label}>
@@ -1200,93 +1223,6 @@ const MapsTab: React.FC = () => {
           </Card>
         </Grid>
 
-        {/* کارت مدیریت سرورها (SDI) */}
-        <Grid item xs={12} sm={6} md={4}>
-          <Card sx={{ height: '100%' }}>
-            <CardHeader title="سرورهای SDI" avatar={<Public color="primary" />} sx={{ pb: 1 }} />
-            <CardContent sx={{ pt: 1.5 }}>
-              {servers.length > 0 ? (
-                <List>
-                  {servers.map((s, idx) => (
-                    <React.Fragment key={s.id}>
-                      <ListItem>
-                        <ListItemText
-                          primary={`${s.name}`}
-                          secondary={<>
-                            <Typography variant="caption" display="block" noWrap>URL: {s.base_url}</Typography>
-                            <Typography variant="caption" display="block">Types: {(s.service_types || []).join(', ') || '-'}</Typography>
-                          </>}
-                        />
-                        <ListItemSecondaryAction>
-                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                            <Tooltip title="Harvest">
-                              <IconButton size="small" onClick={async () => { try { await authFetch(apiBase, `/sdi/servers/${s.id}/harvest`, { method: 'POST' }); await loadCatalog(); } catch {} }}>
-                                <CloudSync fontSize="small" />
-                              </IconButton>
-                            </Tooltip>
-                            <Tooltip title="Delete">
-                              <IconButton size="small" color="error" onClick={async () => { if (confirm('حذف سرور؟')) { try { await authFetch(apiBase, `/sdi/servers/${s.id}`, { method: 'DELETE' }); await loadServers(); } catch {} } }}>
-                                <Delete fontSize="small" />
-                              </IconButton>
-                            </Tooltip>
-                          </Box>
-                        </ListItemSecondaryAction>
-                      </ListItem>
-                      {idx < servers.length - 1 && <Divider />}
-                    </React.Fragment>
-                  ))}
-                </List>
-              ) : (
-                <Box sx={{ textAlign: 'center', py: 4 }}>
-                  <Typography color="text.secondary">سروری ثبت نشده است</Typography>
-                </Box>
-              )}
-            </CardContent>
-          </Card>
-        </Grid>
-
-        {/* کارت کاتالوگ SDI منتشر شده */}
-        <Grid item xs={12} sm={6} md={4}>
-          <Card sx={{ height: '100%' }}>
-            <CardHeader
-              title="کاتالوگ منتشر شده"
-              avatar={<Public color="secondary" />}
-              action={
-                <Button variant="outlined" size="small" onClick={loadCatalog} startIcon={<Download />}>بروزرسانی</Button>
-              }
-              sx={{ pb: 1 }}
-            />
-            <CardContent sx={{ pt: 1.5 }}>
-              {catalogLoading ? (
-                <Box sx={{ textAlign: 'center', py: 3 }}>
-                  <LinearProgress />
-                </Box>
-              ) : catalogLayers.length > 0 ? (
-                <List>
-                  {catalogLayers.map((l, idx) => (
-                    <React.Fragment key={l.id || idx}>
-                      <ListItem>
-                        <ListItemText
-                          primary={l.title || l.id}
-                          secondary={<>
-                            <Typography variant="caption" display="block">نوع: {l.type}</Typography>
-                            <Typography variant="caption" display="block" noWrap>مسیر/URL: {l.path}</Typography>
-                          </>}
-                        />
-                      </ListItem>
-                      {idx < catalogLayers.length - 1 && <Divider />}
-                    </React.Fragment>
-                  ))}
-                </List>
-              ) : (
-                <Box sx={{ textAlign: 'center', py: 4 }}>
-                  <Typography color="text.secondary">لایه منتشر شده‌ای وجود ندارد</Typography>
-                </Box>
-              )}
-            </CardContent>
-          </Card>
-        </Grid>
-
         {/* کارت لایه‌های آپلود شده */}
         <Grid item xs={12} sm={6} md={4}>
           <Card sx={{ height: '100%' }}>
@@ -1372,6 +1308,179 @@ const MapsTab: React.FC = () => {
               )}
             </CardContent>
           </Card>
+        </Grid>
+
+        {/* بخش مدیریت سرورهای SDI - تمام صفحه */}
+        <Grid item xs={12}>
+          <Paper sx={{ p: 3 }}>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                <Public color="primary" sx={{ fontSize: 32 }} />
+                <Box>
+                  <Typography variant="h5" fontWeight="bold">
+                    مدیریت سرورهای SDI
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    افزودن و مدیریت سرورهای نقشه SDI (GeoServer, WMS, WMTS و...)
+                  </Typography>
+                </Box>
+              </Box>
+              <Button
+                variant="contained"
+                startIcon={<Add />}
+                onClick={() => handleOpenDialog('server')}
+                sx={{ borderRadius: 2 }}
+              >
+                افزودن سرور جدید
+              </Button>
+            </Box>
+
+            {servers.length === 0 ? (
+              <Box sx={{ textAlign: 'center', py: 8, border: '2px dashed', borderColor: 'divider', borderRadius: 2 }}>
+                <Public sx={{ fontSize: 80, color: 'text.secondary', mb: 2, opacity: 0.5 }} />
+                <Typography variant="h6" color="text.secondary" gutterBottom>
+                  هیچ سروری ثبت نشده است
+                </Typography>
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+                  برای شروع، یک سرور نقشه SDI اضافه کنید
+                </Typography>
+                <Button
+                  variant="contained"
+                  startIcon={<Add />}
+                  onClick={() => handleOpenDialog('server')}
+                >
+                  افزودن اولین سرور
+                </Button>
+              </Box>
+            ) : (
+              <TableContainer>
+                <Table>
+                  <TableHead>
+                    <TableRow>
+                      <TableCell sx={{ fontWeight: 'bold' }}>نام سرور</TableCell>
+                      <TableCell sx={{ fontWeight: 'bold' }}>URL پایه</TableCell>
+                      <TableCell sx={{ fontWeight: 'bold' }} align="center">نوع سرویس‌ها</TableCell>
+                      <TableCell sx={{ fontWeight: 'bold' }} align="center">نوع احراز هویت</TableCell>
+                      <TableCell sx={{ fontWeight: 'bold' }} align="center">وضعیت</TableCell>
+                      <TableCell sx={{ fontWeight: 'bold' }} align="center">تاریخ ایجاد</TableCell>
+                      <TableCell sx={{ fontWeight: 'bold' }} align="center" width={180}>عملیات</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {servers.map((server) => (
+                      <TableRow key={server.id} hover>
+                        <TableCell>
+                          <Typography variant="body1" fontWeight="medium">
+                            {server.name}
+                          </Typography>
+                        </TableCell>
+                        <TableCell>
+                          <Typography variant="body2" noWrap sx={{ maxWidth: 400 }}>
+                            {server.base_url}
+                          </Typography>
+                        </TableCell>
+                        <TableCell align="center">
+                          <Box sx={{ display: 'flex', gap: 0.5, justifyContent: 'center', flexWrap: 'wrap' }}>
+                            {(server.service_types || []).map((type, idx) => (
+                              <Chip
+                                key={idx}
+                                label={type.toUpperCase()}
+                                size="small"
+                                color="primary"
+                                variant="outlined"
+                              />
+                            ))}
+                            {(!server.service_types || server.service_types.length === 0) && (
+                              <Typography variant="caption" color="text.secondary">-</Typography>
+                            )}
+                          </Box>
+                        </TableCell>
+                        <TableCell align="center">
+                          <Chip
+                            label={server.auth_type === 'none' ? 'بدون احراز هویت' : server.auth_type || 'none'}
+                            size="small"
+                            color={server.auth_type === 'none' ? 'default' : 'warning'}
+                            variant="outlined"
+                          />
+                        </TableCell>
+                        <TableCell align="center">
+                          <Chip
+                            label={server.status === 'active' ? 'فعال' : 'غیرفعال'}
+                            size="small"
+                            color={server.status === 'active' ? 'success' : 'default'}
+                          />
+                        </TableCell>
+                        <TableCell align="center">
+                          <Typography variant="caption" color="text.secondary">
+                            {server.created_at ? new Date(server.created_at).toLocaleDateString('fa-IR') : '-'}
+                          </Typography>
+                        </TableCell>
+                        <TableCell align="center">
+                          <Box sx={{ display: 'flex', justifyContent: 'center', gap: 1 }}>
+                            <Tooltip title="Harvest - دریافت لایه‌ها از سرور">
+                              <IconButton
+                                size="small"
+                                color="primary"
+                                onClick={async () => {
+                                  try {
+                                    await authFetch(apiBase, `/sdi/servers/${server.id}/harvest`, { method: 'POST' });
+                                    await loadCatalog();
+                                  } catch (error) {
+                                    console.error('خطا در Harvest:', error);
+                                  }
+                                }}
+                              >
+                                <CloudSync fontSize="small" />
+                              </IconButton>
+                            </Tooltip>
+                            <Tooltip title="Test Connection - تست اتصال">
+                              <IconButton
+                                size="small"
+                                color="info"
+                                onClick={async () => {
+                                  try {
+                                    const res = await authFetch(apiBase, `/sdi/servers/${server.id}/test`, { method: 'POST' });
+                                    const data = await res.json();
+                                    if (data.ok) {
+                                      alert('اتصال موفق است ✓');
+                                    } else {
+                                      alert(`اتصال ناموفق: ${data.error || 'خطا'}`);
+                                    }
+                                  } catch (error) {
+                                    alert('خطا در تست اتصال');
+                                  }
+                                }}
+                              >
+                                <CheckCircle fontSize="small" />
+                              </IconButton>
+                            </Tooltip>
+                            <Tooltip title="حذف سرور">
+                              <IconButton
+                                size="small"
+                                color="error"
+                                onClick={async () => {
+                                  if (confirm(`آیا از حذف سرور "${server.name}" اطمینان دارید؟`)) {
+                                    try {
+                                      await authFetch(apiBase, `/sdi/servers/${server.id}`, { method: 'DELETE' });
+                                      await loadServers();
+                                    } catch (error) {
+                                      console.error('خطا در حذف سرور:', error);
+                                    }
+                                  }
+                                }}
+                              >
+                                <Delete fontSize="small" />
+                              </IconButton>
+                            </Tooltip>
+                          </Box>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            )}
+          </Paper>
         </Grid>
 
         {/* جدول نقشه‌های آفلاین */}
@@ -2373,6 +2482,359 @@ const MapsTab: React.FC = () => {
              dialogMode === 'filesystem' ? 'ثبت نقشه' :
              dialogMode === 'server' ? t('resources.maps.dialog.addButton') : 
              t('resources.maps.dialog.uploadButton')}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Modal راهنمای استفاده */}
+      <Dialog
+        open={helpModalOpen}
+        onClose={() => setHelpModalOpen(false)}
+        maxWidth="lg"
+        fullWidth
+        fullScreen={isMobile}
+        slotProps={{
+          backdrop: {
+            sx: {
+              backgroundColor: alpha('#000', 0.5),
+              backdropFilter: 'blur(4px)',
+            },
+          },
+        }}
+        sx={{
+          zIndex: 1300,
+          '& .MuiDialog-paper': {
+            borderRadius: isMobile ? 0 : '20px',
+            maxHeight: isMobile ? '100vh' : '90vh',
+            backgroundColor: (theme) => alpha(theme.palette.primary.light, 0.05),
+            backdropFilter: 'blur(20px)',
+            border: (theme) => `1px solid ${alpha(theme.palette.primary.light, 0.2)}`,
+            boxShadow: (theme) => `0 20px 60px ${alpha(theme.palette.primary.light, 0.3)}`,
+          },
+        }}
+      >
+        <DialogTitle
+          sx={{
+            backgroundColor: (theme) => alpha(theme.palette.primary.main, 0.1),
+            borderBottom: (theme) => `2px solid ${alpha(theme.palette.primary.main, 0.2)}`,
+            py: 3,
+            px: 3,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 2,
+          }}
+        >
+          <HelpOutline sx={{ color: 'primary.main', fontSize: 32 }} />
+          <Typography variant="h5" fontWeight={700} sx={{ color: 'primary.main' }}>
+            راهنمای سرو نقشه‌ها
+          </Typography>
+          <IconButton
+            onClick={() => setHelpModalOpen(false)}
+            size="small"
+            sx={{
+              ml: 'auto',
+              color: 'primary.main',
+              backgroundColor: alpha(theme.palette.primary.main, 0.1),
+              '&:hover': {
+                backgroundColor: alpha(theme.palette.primary.main, 0.2),
+              },
+            }}
+          >
+            <Cancel />
+          </IconButton>
+        </DialogTitle>
+
+        <DialogContent sx={{ p: 4, backgroundColor: alpha(theme.palette.background.paper, 0.5) }}>
+          <Box sx={{ mb: 4 }}>
+            <Typography variant="h6" gutterBottom sx={{ fontWeight: 700, mb: 2, color: 'primary.main' }}>
+              دو روش برای سرو نقشه‌ها
+            </Typography>
+            <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
+              سیستم شما از دو روش برای مدیریت و سرو نقشه‌ها پشتیبانی می‌کند. بر اساس حجم داده‌ها و نیازهای خود، یکی از این روش‌ها را انتخاب کنید.
+            </Typography>
+          </Box>
+
+          <Grid container spacing={4}>
+            {/* روش 1: Mount مستقیم */}
+            <Grid item xs={12} md={6}>
+              <Paper
+                elevation={3}
+                sx={{
+                  p: 3,
+                  height: '100%',
+                  borderRadius: '16px',
+                  border: (theme) => `2px solid ${alpha(theme.palette.info.main, 0.3)}`,
+                  backgroundColor: alpha(theme.palette.info.light, 0.05),
+                  transition: 'transform 0.2s, box-shadow 0.2s',
+                  '&:hover': {
+                    transform: 'translateY(-4px)',
+                    boxShadow: (theme) => `0 8px 24px ${alpha(theme.palette.info.main, 0.2)}`,
+                  },
+                }}
+              >
+                <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                  <StorageIcon sx={{ fontSize: 32, color: 'info.main', mr: 1 }} />
+                  <Typography variant="h6" fontWeight={700} sx={{ color: 'info.main' }}>
+                    روش 1: Mount مستقیم
+                  </Typography>
+                </Box>
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+                  اتصال مستقیم هارد خارجی به کانتینرهای Docker
+                </Typography>
+
+                <Box sx={{ mb: 3 }}>
+                  <Typography variant="subtitle2" fontWeight={600} gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <CheckCircleIcon sx={{ fontSize: 18, color: 'success.main' }} />
+                    مزایا:
+                  </Typography>
+                  <List dense>
+                    <ListItem sx={{ py: 0.5 }}>
+                      <ListItemIcon sx={{ minWidth: 32 }}>
+                        <CheckCircleOutline sx={{ fontSize: 16, color: 'success.main' }} />
+                      </ListItemIcon>
+                      <ListItemText primary="ساده و سریع برای راه‌اندازی" />
+                    </ListItem>
+                    <ListItem sx={{ py: 0.5 }}>
+                      <ListItemIcon sx={{ minWidth: 32 }}>
+                        <CheckCircleOutline sx={{ fontSize: 16, color: 'success.main' }} />
+                      </ListItemIcon>
+                      <ListItemText primary="بدون نیاز به سرور جداگانه" />
+                    </ListItem>
+                    <ListItem sx={{ py: 0.5 }}>
+                      <ListItemIcon sx={{ minWidth: 32 }}>
+                        <CheckCircleOutline sx={{ fontSize: 16, color: 'success.main' }} />
+                      </ListItemIcon>
+                      <ListItemText primary="مناسب برای حجم متوسط (کمتر از 1TB)" />
+                    </ListItem>
+                  </List>
+                </Box>
+
+                <Box sx={{ mb: 3 }}>
+                  <Typography variant="subtitle2" fontWeight={600} gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1, color: 'warning.main' }}>
+                    <Cancel sx={{ fontSize: 18, color: 'warning.main' }} />
+                    معایب:
+                  </Typography>
+                  <List dense>
+                    <ListItem sx={{ py: 0.5 }}>
+                      <ListItemIcon sx={{ minWidth: 32 }}>
+                        <Cancel sx={{ fontSize: 16, color: 'warning.main' }} />
+                      </ListItemIcon>
+                      <ListItemText primary="وابسته به سیستم اصلی" />
+                    </ListItem>
+                    <ListItem sx={{ py: 0.5 }}>
+                      <ListItemIcon sx={{ minWidth: 32 }}>
+                        <Cancel sx={{ fontSize: 16, color: 'warning.main' }} />
+                      </ListItemIcon>
+                      <ListItemText primary="برای حجم بالا (10TB+) کندتر است" />
+                    </ListItem>
+                  </List>
+                </Box>
+
+                <Paper sx={{ p: 2, backgroundColor: alpha(theme.palette.info.main, 0.1), borderRadius: '8px' }}>
+                  <Typography variant="caption" fontWeight={600} display="block" gutterBottom>
+                    نحوه استفاده:
+                  </Typography>
+                  <Typography variant="body2" component="div">
+                    <ol style={{ margin: 0, paddingRight: '20px' }}>
+                      <li>هارد خارجی را به سرور متصل کنید</li>
+                      <li>در docker-compose.yml، متغیر EXTERNAL_MAPS_PATH را تنظیم کنید</li>
+                      <li>نقشه‌ها را در پوشه مشخص شده قرار دهید</li>
+                      <li>از بخش "ثبت پوشه" استفاده کنید</li>
+                    </ol>
+                  </Typography>
+                </Paper>
+              </Paper>
+            </Grid>
+
+            {/* روش 2: سرور جداگانه */}
+            <Grid item xs={12} md={6}>
+              <Paper
+                elevation={3}
+                sx={{
+                  p: 3,
+                  height: '100%',
+                  borderRadius: '16px',
+                  border: (theme) => `2px solid ${alpha(theme.palette.success.main, 0.3)}`,
+                  backgroundColor: alpha(theme.palette.success.light, 0.05),
+                  transition: 'transform 0.2s, box-shadow 0.2s',
+                  '&:hover': {
+                    transform: 'translateY(-4px)',
+                    boxShadow: (theme) => `0 8px 24px ${alpha(theme.palette.success.main, 0.2)}`,
+                  },
+                }}
+              >
+                <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                  <CloudQueue sx={{ fontSize: 32, color: 'success.main', mr: 1 }} />
+                  <Typography variant="h6" fontWeight={700} sx={{ color: 'success.main' }}>
+                    روش 2: سرور نقشه جداگانه (توصیه برای 10TB+)
+                  </Typography>
+                </Box>
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+                  راه‌اندازی TileServer-GL جداگانه و اتصال از طریق SDI
+                </Typography>
+
+                <Box sx={{ mb: 3 }}>
+                  <Typography variant="subtitle2" fontWeight={600} gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <CheckCircleIcon sx={{ fontSize: 18, color: 'success.main' }} />
+                    مزایا:
+                  </Typography>
+                  <List dense>
+                    <ListItem sx={{ py: 0.5 }}>
+                      <ListItemIcon sx={{ minWidth: 32 }}>
+                        <CheckCircleOutline sx={{ fontSize: 16, color: 'success.main' }} />
+                      </ListItemIcon>
+                      <ListItemText primary="جداسازی کامل از سیستم اصلی" />
+                    </ListItem>
+                    <ListItem sx={{ py: 0.5 }}>
+                      <ListItemIcon sx={{ minWidth: 32 }}>
+                        <CheckCircleOutline sx={{ fontSize: 16, color: 'success.main' }} />
+                      </ListItemIcon>
+                      <ListItemText primary="عملکرد بهتر برای حجم بالا" />
+                    </ListItem>
+                    <ListItem sx={{ py: 0.5 }}>
+                      <ListItemIcon sx={{ minWidth: 32 }}>
+                        <CheckCircleOutline sx={{ fontSize: 16, color: 'success.main' }} />
+                      </ListItemIcon>
+                      <ListItemText primary="مقیاس‌پذیری و انعطاف بیشتر" />
+                    </ListItem>
+                    <ListItem sx={{ py: 0.5 }}>
+                      <ListItemIcon sx={{ minWidth: 32 }}>
+                        <CheckCircleOutline sx={{ fontSize: 16, color: 'success.main' }} />
+                      </ListItemIcon>
+                      <ListItemText primary="مناسب برای 10TB+ داده" />
+                    </ListItem>
+                  </List>
+                </Box>
+
+                <Box sx={{ mb: 3 }}>
+                  <Typography variant="subtitle2" fontWeight={600} gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1, color: 'info.main' }}>
+                    <Info sx={{ fontSize: 18, color: 'info.main' }} />
+                    نکات:
+                  </Typography>
+                  <List dense>
+                    <ListItem sx={{ py: 0.5 }}>
+                      <ListItemIcon sx={{ minWidth: 32 }}>
+                        <Info sx={{ fontSize: 16, color: 'info.main' }} />
+                      </ListItemIcon>
+                      <ListItemText primary="نیاز به راه‌اندازی TileServer-GL" />
+                    </ListItem>
+                    <ListItem sx={{ py: 0.5 }}>
+                      <ListItemIcon sx={{ minWidth: 32 }}>
+                        <Info sx={{ fontSize: 16, color: 'info.main' }} />
+                      </ListItemIcon>
+                      <ListItemText primary="از طریق SDI Server ثبت می‌شود" />
+                    </ListItem>
+                  </List>
+                </Box>
+
+                <Paper sx={{ p: 2, backgroundColor: alpha(theme.palette.success.main, 0.1), borderRadius: '8px' }}>
+                  <Typography variant="caption" fontWeight={600} display="block" gutterBottom>
+                    نحوه استفاده:
+                  </Typography>
+                  <Typography variant="body2" component="div">
+                    <ol style={{ margin: 0, paddingRight: '20px' }}>
+                      <li>TileServer-GL را روی هارد خارجی راه‌اندازی کنید</li>
+                      <li>سرور نقشه را در بخش "SDI Servers" ثبت کنید</li>
+                      <li>از Harvest برای دریافت لایه‌ها استفاده کنید</li>
+                      <li>لایه‌ها را در کاتالوگ منتشر کنید</li>
+                    </ol>
+                  </Typography>
+                </Paper>
+              </Paper>
+            </Grid>
+          </Grid>
+
+          {/* جدول مقایسه */}
+          <Box sx={{ mt: 4 }}>
+            <Typography variant="h6" gutterBottom sx={{ fontWeight: 700, mb: 2, color: 'primary.main' }}>
+              جدول مقایسه
+            </Typography>
+            <TableContainer component={Paper} sx={{ borderRadius: '12px', overflow: 'hidden' }}>
+              <Table>
+                <TableHead>
+                  <TableRow sx={{ backgroundColor: alpha(theme.palette.primary.main, 0.1) }}>
+                    <TableCell sx={{ fontWeight: 700 }}>ویژگی</TableCell>
+                    <TableCell align="center" sx={{ fontWeight: 700 }}>Mount مستقیم</TableCell>
+                    <TableCell align="center" sx={{ fontWeight: 700 }}>سرور جداگانه</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  <TableRow>
+                    <TableCell>سادگی راه‌اندازی</TableCell>
+                    <TableCell align="center">
+                      <Chip label="⭐⭐⭐⭐⭐" size="small" color="success" />
+                    </TableCell>
+                    <TableCell align="center">
+                      <Chip label="⭐⭐⭐" size="small" color="info" />
+                    </TableCell>
+                  </TableRow>
+                  <TableRow>
+                    <TableCell>عملکرد برای حجم بالا</TableCell>
+                    <TableCell align="center">
+                      <Chip label="⭐⭐⭐" size="small" color="warning" />
+                    </TableCell>
+                    <TableCell align="center">
+                      <Chip label="⭐⭐⭐⭐⭐" size="small" color="success" />
+                    </TableCell>
+                  </TableRow>
+                  <TableRow>
+                    <TableCell>مقیاس‌پذیری</TableCell>
+                    <TableCell align="center">
+                      <Chip label="⭐⭐" size="small" color="warning" />
+                    </TableCell>
+                    <TableCell align="center">
+                      <Chip label="⭐⭐⭐⭐⭐" size="small" color="success" />
+                    </TableCell>
+                  </TableRow>
+                  <TableRow>
+                    <TableCell>جداسازی</TableCell>
+                    <TableCell align="center">
+                      <Chip label="⭐⭐" size="small" color="warning" />
+                    </TableCell>
+                    <TableCell align="center">
+                      <Chip label="⭐⭐⭐⭐⭐" size="small" color="success" />
+                    </TableCell>
+                  </TableRow>
+                  <TableRow>
+                    <TableCell>مناسب برای حجم</TableCell>
+                    <TableCell align="center">
+                      <Typography variant="body2">کمتر از 1TB</Typography>
+                    </TableCell>
+                    <TableCell align="center">
+                      <Typography variant="body2" sx={{ fontWeight: 600, color: 'success.main' }}>
+                        1TB+ (10TB+ توصیه می‌شود)
+                      </Typography>
+                    </TableCell>
+                  </TableRow>
+                </TableBody>
+              </Table>
+            </TableContainer>
+          </Box>
+
+          {/* توصیه نهایی */}
+          <Alert severity="success" sx={{ mt: 4, borderRadius: '12px' }} icon={<CheckCircleIcon />}>
+            <Typography variant="subtitle1" fontWeight={700} gutterBottom>
+              توصیه نهایی
+            </Typography>
+            <Typography variant="body2">
+              برای حجم کمتر از 1TB از <strong>روش 1 (Mount مستقیم)</strong> استفاده کنید. 
+              برای حجم 1TB یا بیشتر، به ویژه 10TB+، از <strong>روش 2 (سرور جداگانه)</strong> استفاده کنید تا بهترین عملکرد را داشته باشید.
+            </Typography>
+          </Alert>
+        </DialogContent>
+
+        <DialogActions sx={{ p: 3, backgroundColor: alpha(theme.palette.background.paper, 0.5) }}>
+          <Button
+            onClick={() => setHelpModalOpen(false)}
+            variant="contained"
+            sx={{
+              borderRadius: '12px',
+              px: 4,
+              py: 1.5,
+              fontWeight: 600,
+            }}
+          >
+            متوجه شدم
           </Button>
         </DialogActions>
       </Dialog>

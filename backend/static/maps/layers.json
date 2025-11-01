@@ -1,0 +1,207 @@
+{
+  "schema_version": 1,
+  "catalog_version": "f46f868fa0c2629d0fb605401f2d54d5bf4cf94a15bd71f1b1498235f070855d",
+  "layers": [
+    {
+      "id": "صث-v1",
+      "title": "صث",
+      "category": null,
+      "description": null,
+      "type": "raster-xyz",
+      "source": "xyz_sqlite",
+      "path": "/api/tile-cache/3/{z}/{x}/{y}",
+      "srs": "EPSG:3857",
+      "minzoom": 1,
+      "maxzoom": 10,
+      "updated": "2025-11-01T04:45:36.415504+00:00",
+      "status": "published",
+      "ui": {
+        "defaultOpacity": 1.0,
+        "visibleByDefault": false,
+        "tags": []
+      },
+      "admin": {
+        "map_id": 1,
+        "version": "v1",
+        "checksum": null,
+        "roles": [
+          "user"
+        ]
+      },
+      "bbox": null
+    },
+    {
+      "id": "ضض-v1",
+      "title": "ضض",
+      "category": null,
+      "description": null,
+      "type": "raster-xyz",
+      "source": "xyz_mbtiles",
+      "path": "http://127.0.0.1:8480/data/ae3fbc4f-2d5f-4343-a30a-38da4affdef1.mbtiles/{z}/{x}/{y}.png",
+      "srs": "EPSG:3857",
+      "minzoom": null,
+      "maxzoom": null,
+      "updated": "2025-11-01T04:45:38.423651+00:00",
+      "status": "published",
+      "ui": {
+        "defaultOpacity": 1.0,
+        "visibleByDefault": false,
+        "tags": []
+      },
+      "admin": {
+        "map_id": 2,
+        "version": "v1",
+        "checksum": null,
+        "roles": [
+          "user"
+        ]
+      },
+      "bbox": null
+    },
+    {
+      "id": "صث-v1",
+      "title": "صث",
+      "category": null,
+      "description": null,
+      "type": "raster-xyz",
+      "source": "xyz_sqlite",
+      "path": "/api/tile-cache/3/{z}/{x}/{y}",
+      "srs": "EPSG:3857",
+      "minzoom": 1,
+      "maxzoom": 10,
+      "updated": "2025-11-01T04:45:44.056591+00:00",
+      "status": "published",
+      "ui": {
+        "defaultOpacity": 1.0,
+        "visibleByDefault": false,
+        "tags": []
+      },
+      "admin": {
+        "map_id": 3,
+        "version": "v1",
+        "checksum": null,
+        "roles": [
+          "user"
+        ]
+      },
+      "bbox": null
+    },
+    {
+      "id": "ضض-v1",
+      "title": "ضض",
+      "category": null,
+      "description": null,
+      "type": "raster-xyz",
+      "source": "xyz_mbtiles",
+      "path": "http://127.0.0.1:8480/data/ae3fbc4f-2d5f-4343-a30a-38da4affdef1.mbtiles/{z}/{x}/{y}.png",
+      "srs": "EPSG:3857",
+      "minzoom": null,
+      "maxzoom": null,
+      "updated": "2025-11-01T04:45:46.641327+00:00",
+      "status": "published",
+      "ui": {
+        "defaultOpacity": 1.0,
+        "visibleByDefault": false,
+        "tags": []
+      },
+      "admin": {
+        "map_id": 4,
+        "version": "v1",
+        "checksum": null,
+        "roles": [
+          "user"
+        ]
+      },
+      "bbox": null
+    },
+    {
+      "id": "صث-v1",
+      "title": "صث",
+      "category": null,
+      "description": null,
+      "type": "raster-xyz",
+      "source": "xyz_sqlite",
+      "path": "/api/tile-cache/3/{z}/{x}/{y}",
+      "srs": "EPSG:3857",
+      "minzoom": 1,
+      "maxzoom": 10,
+      "updated": "2025-11-01T04:45:48.403347+00:00",
+      "status": "published",
+      "ui": {
+        "defaultOpacity": 1.0,
+        "visibleByDefault": false,
+        "tags": []
+      },
+      "admin": {
+        "map_id": 5,
+        "version": "v1",
+        "checksum": null,
+        "roles": [
+          "user"
+        ]
+      },
+      "bbox": null
+    },
+    {
+      "id": "صث-v1",
+      "title": "صث",
+      "category": null,
+      "description": null,
+      "type": "raster-xyz",
+      "source": "xyz_sqlite",
+      "path": "/api/tile-cache/3/{z}/{x}/{y}",
+      "srs": "EPSG:3857",
+      "minzoom": 1,
+      "maxzoom": 10,
+      "updated": "2025-11-01T04:47:18.443710+00:00",
+      "status": "published",
+      "ui": {
+        "defaultOpacity": 1.0,
+        "visibleByDefault": false,
+        "tags": []
+      },
+      "admin": {
+        "map_id": 6,
+        "version": "v1",
+        "checksum": null,
+        "roles": [
+          "user"
+        ]
+      },
+      "bbox": null
+    },
+    {
+      "id": "کرمعلی-v1",
+      "title": "کرمعلی",
+      "category": null,
+      "description": null,
+      "type": "raster-xyz",
+      "source": "xyz_mbtiles",
+      "path": "http://127.0.0.1:8480/data/e4ed8aa9-9fa5-4434-82f3-70e4a23a6210.mbtiles/{z}/{x}/{y}.png",
+      "srs": "EPSG:3857",
+      "minzoom": 0,
+      "maxzoom": 13,
+      "updated": "2025-11-01T05:21:48.566248+00:00",
+      "status": "published",
+      "ui": {
+        "defaultOpacity": 1.0,
+        "visibleByDefault": false,
+        "tags": []
+      },
+      "admin": {
+        "map_id": 7,
+        "version": "v1",
+        "checksum": null,
+        "roles": [
+          "user"
+        ]
+      },
+      "bbox": [
+        -180.0,
+        -85.05112878,
+        180.0,
+        85.05112878
+      ]
+    }
+  ]
+}

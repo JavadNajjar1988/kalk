@@ -1,6 +1,7 @@
 from fastapi import APIRouter, HTTPException, UploadFile, File, status, Form
 from fastapi.responses import FileResponse
 from sqlalchemy import select, update as sa_update, delete as sa_delete, func
+from sqlalchemy.exc import SQLAlchemyError
 from pathlib import Path
 import shutil
 import uuid
@@ -234,9 +235,19 @@ async def upload_offline_map(
         is_active=False,
         file_size=file_size,
     )
-    session.add(item)
-    await session.commit()
-    await session.refresh(item)
+    try:
+        session.add(item)
+        await session.commit()
+        await session.refresh(item)
+    except SQLAlchemyError as e:
+        # Rollback and cleanup file if DB insert fails (e.g., missing migration)
+        await session.rollback()
+        try:
+            if file_path.exists() and _is_safe_map_path(file_path):
+                file_path.unlink()
+        except Exception:
+            pass
+        raise HTTPException(status_code=500, detail=f"Database error while saving map: {e}")
     return _map_to_response(item)
 
 
@@ -267,9 +278,13 @@ async def register_folder_map(
         is_active=False,
         file_size=None,
     )
-    session.add(item)
-    await session.commit()
-    await session.refresh(item)
+    try:
+        session.add(item)
+        await session.commit()
+        await session.refresh(item)
+    except SQLAlchemyError as e:
+        await session.rollback()
+        raise HTTPException(status_code=500, detail=f"Database error while registering folder map: {e}")
     return _map_to_response(item)
 
 

@@ -20,9 +20,17 @@ if backend_root not in sys.path:
 
 from app.db.base import Base
 from app.models import scenario, user, map, sdi  # noqa: F401 ensure models imported
+from app.core.config import settings
 
 
 config = context.config
+
+# Override sqlalchemy.url from runtime settings so migrations work
+# both in Docker (service name 'db') and local (localhost) setups.
+try:
+    config.set_main_option("sqlalchemy.url", settings.DB_URL)
+except Exception:
+    pass
 
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)

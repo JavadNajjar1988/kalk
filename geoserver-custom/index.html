@@ -1,0 +1,47 @@
+<!-- GeoServer Theme Overlay -->
+<!-- This file will be injected into GeoServer pages -->
+<script>
+(function() {
+  // Inject CSS
+  const cssLink = document.createElement('link');
+  cssLink.rel = 'stylesheet';
+  cssLink.type = 'text/css';
+  cssLink.href = '/geoserver/www/custom/overlay.css';
+  document.head.appendChild(cssLink);
+  
+  // Apply RTL direction
+  document.documentElement.setAttribute('dir', 'rtl');
+  
+  // Wait for DOM to be ready
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', applyTheme);
+  } else {
+    applyTheme();
+  }
+  
+  function applyTheme() {
+    // Additional theme application logic
+    document.body.style.fontFamily = 'Tahoma, Arial, sans-serif';
+    document.body.style.direction = 'rtl';
+  }
+})();
+</script>
+<style>
+/* Inline critical CSS for immediate application */
+:root {
+  --primary-color: #34a853;
+  --primary-dark: #2e8e47;
+  --background-dark: #23262d;
+  --background-paper: #2a2e36;
+  --text-primary: #bac7e3;
+  --border-color: #383b43;
+}
+
+body {
+  font-family: 'Tahoma', 'Arial', sans-serif !important;
+  direction: rtl !important;
+  background: var(--background-dark) !important;
+  color: var(--text-primary) !important;
+}
+</style>
+
