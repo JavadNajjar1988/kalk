@@ -1551,6 +1551,7 @@ const MapsTab: React.FC = () => {
                               <Tooltip title="افزودن به کاتالوگ و انتشار">
                                 <IconButton 
                                   size="small" 
+                                  color="info"
                                   onClick={() => addOfflineToCatalogAndPublish(map.id)}
                                   aria-label={`افزودن ${map.name} به کاتالوگ و انتشار`}
                                 >
@@ -1576,6 +1577,7 @@ const MapsTab: React.FC = () => {
                               <Tooltip title={map.is_active ? 'غیرفعال کردن' : 'فعال کردن'}>
                                 <IconButton 
                                   size="small" 
+                                  color={map.is_active ? "warning" : "success"}
                                   onClick={() => toggleOfflineMap(map)}
                                   aria-label={map.is_active ? 'غیرفعال کردن نقشه' : 'فعال کردن نقشه'}
                                 >
@@ -1585,6 +1587,7 @@ const MapsTab: React.FC = () => {
                               <Tooltip title="دانلود">
                                 <IconButton 
                                   size="small" 
+                                  color="primary"
                                   onClick={() => window.open(`${apiBase}/maps/${map.id}/download`)}
                                   aria-label={`دانلود نقشه ${map.name}`}
                                 >

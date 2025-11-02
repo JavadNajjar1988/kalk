@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "catalog_version": "f46f868fa0c2629d0fb605401f2d54d5bf4cf94a15bd71f1b1498235f070855d",
+  "catalog_version": "524f4dca18265f529362f178b1b9b3da8933d1baea36792f5837181b037c7366",
   "layers": [
     {
       "id": "صث-v1",
@@ -190,6 +190,39 @@
       },
       "admin": {
         "map_id": 7,
+        "version": "v1",
+        "checksum": null,
+        "roles": [
+          "user"
+        ]
+      },
+      "bbox": [
+        -180.0,
+        -85.05112878,
+        180.0,
+        85.05112878
+      ]
+    },
+    {
+      "id": "کرمعلی-v1",
+      "title": "کرمعلی",
+      "category": null,
+      "description": null,
+      "type": "raster-xyz",
+      "source": "xyz_mbtiles",
+      "path": "http://127.0.0.1:8480/data/e4ed8aa9-9fa5-4434-82f3-70e4a23a6210.mbtiles/{z}/{x}/{y}.png",
+      "srs": "EPSG:3857",
+      "minzoom": 0,
+      "maxzoom": 13,
+      "updated": "2025-11-01T09:16:53.929011+00:00",
+      "status": "published",
+      "ui": {
+        "defaultOpacity": 1.0,
+        "visibleByDefault": false,
+        "tags": []
+      },
+      "admin": {
+        "map_id": 8,
         "version": "v1",
         "checksum": null,
         "roles": [

@@ -39,7 +39,12 @@ def _build_url_template(map_obj: OfflineMap) -> str:
         return f"/api/tile-cache/{map_obj.id}/{{z}}/{{x}}/{{y}}"
     base_url = settings.TILESERVER_URL.rstrip("/")
     filename = map_obj.filename
-    return f"{base_url}/data/{filename}/{{z}}/{{x}}/{{y}}.png"
+    # حذف پسوند .mbtiles از نام فایل برای TileServer-GL
+    # TileServer-GL از استاندارد TMS استفاده می‌کند (Y از پایین به بالا)
+    # برای OpenLayers که از OSM style استفاده می‌کند، باید از {-y} استفاده کنیم
+    if filename.endswith('.mbtiles'):
+        filename = filename[:-8]  # حذف '.mbtiles'
+    return f"{base_url}/data/{filename}/{{z}}/{{x}}/{{-y}}.png"
 
 
 def _filesystem_base_root() -> Path:

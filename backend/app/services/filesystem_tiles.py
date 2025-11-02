@@ -23,9 +23,12 @@ class FilesystemTileService:
         if z < 0 or x < 0 or y < 0:
             raise HTTPException(status_code=400, detail="مختصات کاشی نامعتبر است")
 
+        # تبدیل zoom level: OpenLayers از z0 شروع می‌شود، اما نقشه‌ها از z1 شروع می‌شوند
+        z_filesystem = z + 1
+
         chunk = (
             self.root
-            / f"z{z}"
+            / f"z{z_filesystem}"
             / str(x // 1024)
             / str(y // 1024)
             / f"{x // 256}.{y // 256}.sqlitedb"
@@ -69,11 +72,15 @@ class FilesystemTileService:
 
 
     def get_tile(self, z: int, x: int, y: int) -> Tuple[bytes, str]:
-        max_index = (1 << z) - 1
+        # تبدیل zoom level: OpenLayers از z0 شروع می‌شود، اما نقشه‌ها از z1 شروع می‌شوند
+        z_filesystem = z + 1
+        max_index = (1 << z_filesystem) - 1
+        
         if y < 0 or y > max_index:
             raise HTTPException(status_code=404, detail="کاشی یافت نشد")
 
         candidates = [y]
+        # تبدیل TMS به XYZ (اگر نیاز باشد)
         tms_y = max_index - y
         if tms_y != y:
             candidates.append(tms_y)

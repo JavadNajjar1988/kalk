@@ -337,9 +337,15 @@ async def retire_map(map_id: int, session: DbSession = None):
 
 def _build_tiles_url_template(offline: OfflineMap) -> str:
     if offline.storage_type == "filesystem":
-        return f"/api/tile-cache/{offline.id}/{{z}}/{{x}}/{{y}}"
+        return f"/api/tile-cache/{offline.id}/{{z}}/{{x}}/{{-y}}"
     base = settings.TILESERVER_URL.rstrip("/")
-    return f"{base}/data/{offline.filename}/{{z}}/{{x}}/{{y}}.png"
+    filename = offline.filename
+    # حذف پسوند .mbtiles از نام فایل برای TileServer-GL
+    # TileServer-GL از استاندارد TMS استفاده می‌کند (Y از پایین به بالا)
+    # برای OpenLayers که از OSM style استفاده می‌کند، باید از {-y} استفاده کنیم
+    if filename.endswith('.mbtiles'):
+        filename = filename[:-8]  # حذف '.mbtiles'
+    return f"{base}/data/{filename}/{{z}}/{{x}}/{{-y}}.png"
 
 
 @router.post("/offline/harvest-from-offline-map/{offline_map_id}", response_model=SDIMapResponse, dependencies=[Depends(require_roles("ADMIN"))])

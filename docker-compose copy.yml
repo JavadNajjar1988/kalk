@@ -30,7 +30,7 @@ services:
       # 2. مثال Windows: EXTERNAL_MAPS_PATH=D:/maps
       # 3. مثال Linux: EXTERNAL_MAPS_PATH=/mnt/maps
       # اگر تنظیم نشده باشد، از مسیر محلی استفاده می‌شود
-      - ${EXTERNAL_MAPS_PATH:-./backend/static/maps}:/mnt/external-maps
+      - ${EXTERNAL_MAPS_PATH:-./backend/static/maps}:/mnt/external-maps:ro
     environment:
       # Prefer loading from .env via --env-file; fallback to default if not provided
       DB_URL: ${DB_URL:-postgresql+asyncpg://postgres:postgres@db:5432/kalk}
@@ -61,9 +61,9 @@ services:
       - "8480:8080"
     volumes:
       # مسیر محلی برای mbtiles کوچک (اختیاری)
-      - ./backend/static/maps:/data
-    # TileServer-GL به صورت خودکار تمام فایل‌های .mbtiles در /data را اسکن می‌کند
-    # هیچ command نیاز نیست - فقط باید /data را mount کنیم
+      - ./backend/static/maps:/data:ro
+    # Let tileserver-gl auto-discover all .mbtiles in /data so URLs like
+    # /data/<filename>/{z}/{x}/{y}.png work for multiple offline maps
     healthcheck:
       test: ["CMD-SHELL", "curl -sf http://localhost:8080/health || wget -qO- http://localhost:8080/health || exit 1"]
       interval: 10s
@@ -92,9 +92,6 @@ services:
       # در غیر این صورت از مسیر محلی استفاده می‌شود
       # TileServer-GL به صورت خودکار تمام فایل‌های .mbtiles را در /data پیدا می‌کند
       - ${EXTERNAL_MAPS_PATH:-./backend/static/maps}:/data:ro
-    command:
-      - "--mbtiles"
-      - "/data"
     environment:
       # تنظیمات بهینه برای داده‌های سنگین
       - NODE_OPTIONS=--max-old-space-size=4096  # حافظه بیشتر برای پردازش
@@ -140,4 +137,5 @@ volumes:
 
 networks:
   kalknet:
+
 
