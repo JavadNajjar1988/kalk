@@ -96,8 +96,7 @@ import {
   deleteMapLayer,
 } from '@/store/slices/orbatSlice';
 import {
-  setActiveOfflineMap,
-  selectActiveOfflineMap,
+  setActiveOfflineMaps,
 } from '@/store/slices/mapSlice';
 import type { MapLayer } from '@/types/orbat';
 import { useTranslation } from '@/hooks/useTranslation';
@@ -201,7 +200,6 @@ const MapsTab: React.FC = () => {
   const { t } = useTranslation();
   const apiBase = useMemo(resolveApiBase, []);
   const mapLayers = useAppSelector(selectMapLayers);
-  const activeOfflineMap = useAppSelector(selectActiveOfflineMap);
   
   // Stepper state برای workflow
   const [activeStep, setActiveStep] = useState(0); // 0: افزودن منبع, 1: همگام‌سازی, 2: بازبینی و انتشار
@@ -521,7 +519,7 @@ const MapsTab: React.FC = () => {
   const [uploadError, setUploadError] = useState<string | null>(null);
   
   const [openDialog, setOpenDialog] = useState(false);
-  const [dialogMode, setDialogMode] = useState<'server' | 'upload' | 'offline' | 'filesystem'>('server');
+  const [dialogMode, setDialogMode] = useState<'serverLayer' | 'upload' | 'offline' | 'filesystem'>('serverLayer');
   const [selectedLayer, setSelectedLayer] = useState<MapLayer | null>(null);
   const [formData, setFormData] = useState<Partial<MapLayer>>({
     name: '',
@@ -551,6 +549,119 @@ const MapsTab: React.FC = () => {
   }, [apiBase]);
   useEffect(() => { loadServers(); }, [loadServers]);
 
+  const [serverDialogOpen, setServerDialogOpen] = useState(false);
+  const [serverSubmitting, setServerSubmitting] = useState(false);
+  const [serverError, setServerError] = useState<string | null>(null);
+  const [serverForm, setServerForm] = useState<{
+    name: string;
+    baseUrl: string;
+    serviceTypes: string[];
+    authType: 'none' | 'basic' | 'token';
+    username: string;
+    password: string;
+    token: string;
+  }>({
+    name: '',
+    baseUrl: '',
+    serviceTypes: ['wms'],
+    authType: 'none',
+    username: '',
+    password: '',
+    token: '',
+  });
+  const resetServerForm = useCallback(() => {
+    setServerForm({
+      name: '',
+      baseUrl: '',
+      serviceTypes: ['wms'],
+      authType: 'none',
+      username: '',
+      password: '',
+      token: '',
+    });
+    setServerError(null);
+  }, []);
+
+  const openServerDialog = () => {
+    resetServerForm();
+    setServerDialogOpen(true);
+  };
+
+  const closeServerDialog = () => {
+    if (serverSubmitting) return;
+    setServerDialogOpen(false);
+  };
+
+  const handleServerInputChange = <K extends keyof typeof serverForm>(field: K, value: (typeof serverForm)[K]) => {
+    setServerForm(prev => ({ ...prev, [field]: value }));
+    if (serverError) {
+      setServerError(null);
+    }
+  };
+
+  const submitServerForm = async () => {
+    if (!serverForm.name.trim()) {
+      setServerError('نام سرور الزامی است');
+      return;
+    }
+    if (!serverForm.baseUrl.trim()) {
+      setServerError('آدرس پایه سرور الزامی است');
+      return;
+    }
+    const payload: any = {
+      name: serverForm.name.trim(),
+      base_url: serverForm.baseUrl.trim(),
+      service_types: serverForm.serviceTypes.length > 0 ? serverForm.serviceTypes : ['wms'],
+      auth_type: serverForm.authType,
+    };
+    if (serverForm.authType === 'basic') {
+      payload.auth_config = {
+        username: serverForm.username,
+        password: serverForm.password,
+      };
+    } else if (serverForm.authType === 'token') {
+      payload.auth_config = {
+        token: serverForm.token,
+      };
+    }
+
+    setServerSubmitting(true);
+    try {
+      const res = await authFetch(apiBase, '/sdi/servers', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+
+      const responseBody = await res.json().catch(() => null);
+      if (!res.ok) {
+        const msg = responseBody?.detail || 'خطا در ثبت سرور';
+        setServerError(typeof msg === 'string' ? msg : 'خطا در ثبت سرور');
+        return;
+      }
+
+      setServerDialogOpen(false);
+      await loadServers();
+      resetServerForm();
+    } catch (error) {
+      setServerError('ارتباط با سرور برقرار نشد');
+    } finally {
+      setServerSubmitting(false);
+    }
+  };
+
+  const serverServiceOptions = useMemo(
+    () => [
+      { value: 'wms', label: 'WMS' },
+      { value: 'wmts', label: 'WMTS' },
+      { value: 'wfs', label: 'WFS' },
+      { value: 'xyz', label: 'XYZ' },
+      { value: 'tms', label: 'TMS' },
+      { value: 'wcs', label: 'WCS' },
+    ],
+    []
+  );
+
   // State برای آپلود نقشه آفلاین
   const [offlineFormData, setOfflineFormData] = useState({
     name: '',
@@ -577,16 +688,14 @@ const MapsTab: React.FC = () => {
         const data = await response.json();
         const maps: OfflineMap[] = data.maps || [];
         setOfflineMaps(maps);
-        const activeMapEntry = maps.find(map => map.is_active);
-        if (activeMapEntry && activeMapEntry.url_template) {
-          dispatch(setActiveOfflineMap({
-            id: activeMapEntry.id,
-            name: activeMapEntry.name,
-            url: activeMapEntry.url_template,
+        const activeEntries = maps
+          .filter(map => map.is_active && typeof map.url_template === 'string' && map.url_template.length > 0)
+          .map(map => ({
+            id: map.id,
+            name: map.name,
+            url: map.url_template,
           }));
-        } else if (!activeMapEntry) {
-          dispatch(setActiveOfflineMap(null));
-        }
+        dispatch(setActiveOfflineMaps(activeEntries));
       }
     } catch (error) {
       console.error('خطا در بارگذاری نقشه‌های آفلاین:', error);
@@ -765,21 +874,6 @@ const MapsTab: React.FC = () => {
 
       if (response.ok) {
         await loadOfflineMaps();
-
-        // اگر نقشه فعال شد، آن را در mapSlice تنظیم کن
-        if (willActivate && map.url_template) {
-          dispatch(setActiveOfflineMap({
-            id: map.id,
-            name: map.name,
-            url: map.url_template,
-          }));
-        } else {
-          // اگر غیرفعال شد، mapSlice را خالی کن اگر این نقشه فعال بود
-          const currentActive = offlineMaps.find(m => m.is_active);
-          if (currentActive?.id === map.id) {
-            dispatch(setActiveOfflineMap(null));
-          }
-        }
       }
     } catch (error) {
       console.error('خطا در تغییر وضعیت نقشه:', error);
@@ -830,7 +924,7 @@ const MapsTab: React.FC = () => {
     }
   }, [activeTab, loadJobs]);
 
-  const handleOpenDialog = (mode: 'server' | 'upload' | 'offline' | 'filesystem') => {
+  const handleOpenDialog = (mode: 'serverLayer' | 'upload' | 'offline' | 'filesystem') => {
     setDialogMode(mode);
     if (mode === 'offline') {
       setOfflineFormData({ name: '', description: '', file: null });
@@ -840,13 +934,13 @@ const MapsTab: React.FC = () => {
     } else {
       setFormData({
         name: '',
-        type: mode === 'server' ? 'xyz' : 'raster',
+        type: mode === 'serverLayer' ? 'xyz' : 'raster',
         url: '',
         visible: true,
         opacity: 1,
       });
     }
-    if (mode === 'server') {
+    if (mode === 'serverLayer') {
       setSaveAsSdiServer(false);
       setSavedServerId(null);
       setTestConnResult(null);
@@ -1147,7 +1241,7 @@ const MapsTab: React.FC = () => {
                   variant="contained"
                   size="small"
                   startIcon={<Add />}
-                  onClick={() => handleOpenDialog('server')}
+                  onClick={() => handleOpenDialog('serverLayer')}
                 >
                   {t('resources.maps.addFromServerButton')}
                 </Button>
@@ -1328,7 +1422,7 @@ const MapsTab: React.FC = () => {
               <Button
                 variant="contained"
                 startIcon={<Add />}
-                onClick={() => handleOpenDialog('server')}
+                onClick={openServerDialog}
                 sx={{ borderRadius: 2 }}
               >
                 افزودن سرور جدید
@@ -1347,7 +1441,7 @@ const MapsTab: React.FC = () => {
                 <Button
                   variant="contained"
                   startIcon={<Add />}
-                  onClick={() => handleOpenDialog('server')}
+                  onClick={openServerDialog}
                 >
                   افزودن اولین سرور
                 </Button>
@@ -2099,6 +2193,127 @@ const MapsTab: React.FC = () => {
         </Paper>
       </TabPanel>
 
+      <Dialog
+        open={serverDialogOpen}
+        onClose={closeServerDialog}
+        fullWidth
+        maxWidth="sm"
+      >
+        <DialogTitle>ثبت سرور SDI جدید</DialogTitle>
+        <DialogContent dividers>
+          {serverError && (
+            <Alert severity="error" sx={{ mb: 2 }}>
+              {serverError}
+            </Alert>
+          )}
+          <Grid container spacing={2}>
+            <Grid item xs={12}>
+              <TextField
+                label="نام سرور"
+                fullWidth
+                required
+                value={serverForm.name}
+                onChange={(e) => handleServerInputChange('name', e.target.value)}
+              />
+            </Grid>
+            <Grid item xs={12}>
+              <TextField
+                label="URL پایه سرور"
+                fullWidth
+                required
+                placeholder="https://example.com/geoserver"
+                value={serverForm.baseUrl}
+                onChange={(e) => handleServerInputChange('baseUrl', e.target.value)}
+                helperText="آدرس کامل سرویس اصلی (بدون اسلش پایانی)"
+              />
+            </Grid>
+            <Grid item xs={12}>
+              <FormControl fullWidth>
+                <InputLabel>نوع سرویس‌ها</InputLabel>
+                <Select
+                  multiple
+                  label="نوع سرویس‌ها"
+                  value={serverForm.serviceTypes}
+                  renderValue={(selected) => (selected as string[]).map(v => v.toUpperCase()).join(', ')}
+                  onChange={(event) => {
+                    const value = event.target.value;
+                    handleServerInputChange(
+                      'serviceTypes',
+                      typeof value === 'string' ? value.split(',') : (value as string[])
+                    );
+                  }}
+                >
+                  {serverServiceOptions.map(option => (
+                    <MenuItem key={option.value} value={option.value}>
+                      <Checkbox checked={serverForm.serviceTypes.indexOf(option.value) > -1} />
+                      <ListItemText primary={option.label} />
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <FormControl fullWidth>
+                <InputLabel>نوع احراز هویت</InputLabel>
+                <Select
+                  label="نوع احراز هویت"
+                  value={serverForm.authType}
+                  onChange={(event) => handleServerInputChange('authType', event.target.value as typeof serverForm.authType)}
+                >
+                  <MenuItem value="none">بدون احراز هویت</MenuItem>
+                  <MenuItem value="basic">Basic Auth</MenuItem>
+                  <MenuItem value="token">Token</MenuItem>
+                </Select>
+              </FormControl>
+            </Grid>
+            {serverForm.authType === 'basic' && (
+              <>
+                <Grid item xs={12} md={6}>
+                  <TextField
+                    label="نام کاربری"
+                    fullWidth
+                    value={serverForm.username}
+                    onChange={(e) => handleServerInputChange('username', e.target.value)}
+                  />
+                </Grid>
+                <Grid item xs={12} md={6}>
+                  <TextField
+                    label="رمز عبور"
+                    type="password"
+                    fullWidth
+                    value={serverForm.password}
+                    onChange={(e) => handleServerInputChange('password', e.target.value)}
+                  />
+                </Grid>
+              </>
+            )}
+            {serverForm.authType === 'token' && (
+              <Grid item xs={12}>
+                <TextField
+                  label="توکن دسترسی"
+                  fullWidth
+                  value={serverForm.token}
+                  onChange={(e) => handleServerInputChange('token', e.target.value)}
+                />
+              </Grid>
+            )}
+          </Grid>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button onClick={closeServerDialog} disabled={serverSubmitting}>
+            انصراف
+          </Button>
+          <Button
+            variant="contained"
+            onClick={submitServerForm}
+            disabled={serverSubmitting}
+            startIcon={serverSubmitting ? <CircularProgress size={18} /> : null}
+          >
+            ثبت سرور
+          </Button>
+        </DialogActions>
+      </Dialog>
+
       {/* دیالوگ افزودن لایه */}
       <Dialog 
         open={openDialog} 
@@ -2135,7 +2350,7 @@ const MapsTab: React.FC = () => {
         >
           {dialogMode === 'offline' ? 'آپلود نقشه آفلاین' : 
            dialogMode === 'filesystem' ? 'ثبت نقشه پوشه‌ای' :
-           dialogMode === 'server' ? t('resources.maps.dialog.addFromServerTitle') : 
+           dialogMode === 'serverLayer' ? t('resources.maps.dialog.addFromServerTitle') : 
            t('resources.maps.dialog.uploadFileTitle')}
         </DialogTitle>
         <DialogContent sx={{ p: 0, backgroundColor: getSoftSurface() }}>
@@ -2324,7 +2539,7 @@ const MapsTab: React.FC = () => {
                   />
                 </Grid>
                 
-                {dialogMode === 'server' ? (
+                {dialogMode === 'serverLayer' ? (
                   <>
                     <Grid item xs={12}>
                       <FormControl fullWidth>
@@ -2483,7 +2698,7 @@ const MapsTab: React.FC = () => {
           >
             {dialogMode === 'offline' ? 'آپلود نقشه' :
              dialogMode === 'filesystem' ? 'ثبت نقشه' :
-             dialogMode === 'server' ? t('resources.maps.dialog.addButton') : 
+            dialogMode === 'serverLayer' ? t('resources.maps.dialog.addButton') : 
              t('resources.maps.dialog.uploadButton')}
           </Button>
         </DialogActions>
@@ -2854,10 +3069,3 @@ const MapsTab: React.FC = () => {
 };
 
 export default MapsTab;
-
-
-
-
-
-
-

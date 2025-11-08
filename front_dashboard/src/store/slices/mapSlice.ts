@@ -50,6 +50,12 @@ export interface MapLayer {
   data?: any;
 }
 
+export interface OfflineTileLayer {
+  id: number;
+  name: string;
+  url: string;
+}
+
 export interface MapState {
   center: Coordinates;
   zoom: number;
@@ -63,11 +69,7 @@ export interface MapState {
   drawingType: 'point' | 'line' | 'polygon' | 'circle' | null;
   loading: boolean;
   error: string | null;
-  activeOfflineMap: {
-    id: number;
-    name: string;
-    url: string;
-  } | null;
+  activeOfflineMaps: OfflineTileLayer[];
 }
 
 // حالت اولیه نقشه
@@ -153,7 +155,7 @@ const initialState: MapState = {
   drawingType: null,
   loading: false,
   error: null,
-  activeOfflineMap: null,
+  activeOfflineMaps: [],
 };
 
 // ایجاد اسلایس نقشه
@@ -291,22 +293,15 @@ const mapSlice = createSlice({
       state.bounds = null;
     },
     
-    // تنظیم نقشه آفلاین فعال
-    setActiveOfflineMap: (state, action: PayloadAction<{ id: number; name: string; url: string } | null>) => {
-      state.activeOfflineMap = action.payload;
-      
-      // اگر نقشه آفلاین جدید تنظیم شد، لایه OSM را به‌روزرسانی کن
-      const osmLayer = state.baseLayers.find(layer => layer.id === 'osm');
-      if (osmLayer) {
-        if (action.payload) {
-          osmLayer.url = action.payload.url;
-          osmLayer.name = action.payload.name;
-        } else {
-          const defaultOsm = initialState.baseLayers.find(layer => layer.id === 'osm');
-          if (defaultOsm) {
-            osmLayer.url = defaultOsm.url || osmLayer.url;
-            osmLayer.name = defaultOsm.name;
-          }
+    // تنظیم نقشه‌های آفلاین فعال
+    setActiveOfflineMaps: (state, action: PayloadAction<OfflineTileLayer[]>) => {
+      state.activeOfflineMaps = action.payload;
+      if (action.payload.length === 0) {
+        const defaultOsm = initialState.baseLayers.find(layer => layer.id === 'osm');
+        const osmLayer = state.baseLayers.find(layer => layer.id === 'osm');
+        if (defaultOsm && osmLayer) {
+          osmLayer.url = defaultOsm.url || osmLayer.url;
+          osmLayer.name = defaultOsm.name;
         }
       }
     },
@@ -331,7 +326,7 @@ export const {
   loadingStart,
   loadingEnd,
   setError,
-  setActiveOfflineMap,
+  setActiveOfflineMaps,
   clearError,
   resetMap,
 } = mapSlice.actions;
@@ -353,7 +348,7 @@ export const selectIsDrawingMode = (state: RootState) => state.map.isDrawingMode
 export const selectDrawingType = (state: RootState) => state.map.drawingType;
 export const selectMapLoading = (state: RootState) => state.map.loading;
 export const selectMapError = (state: RootState) => state.map.error;
-export const selectActiveOfflineMap = (state: RootState) => state.map.activeOfflineMap;
+export const selectActiveOfflineMaps = (state: RootState) => state.map.activeOfflineMaps;
 
 // اکسپورت کردن ریدیوسر
 export default mapSlice.reducer;

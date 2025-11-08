@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException, UploadFile, File, status, Form
 from fastapi.responses import FileResponse
-from sqlalchemy import select, update as sa_update, delete as sa_delete, func
+from sqlalchemy import select, delete as sa_delete, func
 from sqlalchemy.exc import SQLAlchemyError
 from pathlib import Path
 import shutil
@@ -319,12 +319,7 @@ async def update_offline_map(
 
     # U?O1OU,�?OO3OO�UO/O�UOO�U?O1OU,�?OO3OO�UO
     if map_update.is_active is not None:
-        if map_update.is_active:
-            # U�U.U� O�O O�UOO�U?O1OU,OO OU+O�OrOO"UO O�O U?O1OU,
-            await session.execute(sa_update(OfflineMap).values(is_active=False))
-            item.is_active = True
-        else:
-            item.is_active = False
+        item.is_active = bool(map_update.is_active)
 
     await session.commit()
     await session.refresh(item)
@@ -375,12 +370,14 @@ async def download_offline_map(
     return FileResponse(path=str(p), filename=item.filename, media_type="application/x-sqlite3")
 
 
-@router.get("/active", response_model=OfflineMapResponse)
-async def get_active_map(session: DbSession = None):
+@router.get("/active", response_model=OfflineMapListResponse)
+async def get_active_maps(session: DbSession = None):
     """O_O�UOOU?O� U+U,O'U� U?O1OU, OO� DB"""
-    res = await session.execute(select(OfflineMap).where(OfflineMap.is_active == True))  # noqa: E712
-    item = res.scalar_one_or_none()
-    if not item:
-        raise HTTPException(status_code=404, detail="U+U,O'U� U?O1OU,UO O�U+O,UOU. U+O'O_U� OO3O�")
-    return _map_to_response(item)
-
+    res = await session.execute(
+        select(OfflineMap).where(OfflineMap.is_active == True).order_by(OfflineMap.created_at.desc())  # noqa: E712
+    )
+    items = res.scalars().all()
+    return OfflineMapListResponse(
+        maps=[_map_to_response(item) for item in items],
+        total=len(items),
+    )

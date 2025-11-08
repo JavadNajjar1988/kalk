@@ -741,16 +741,16 @@
                                                    "tags":  [
                                                                 "maps"
                                                             ],
-                                                   "summary":  "Get Active Map",
+                                                   "summary":  "Get Active Maps",
                                                    "description":  "O_O???UOO\u0015U?O??? U+U,O\u0027U??? U?O1O\u0015U, O\u0015O??? DB",
-                                                   "operationId":  "get_active_map_maps_active_get",
+                                                   "operationId":  "get_active_maps_maps_active_get",
                                                    "responses":  {
                                                                      "200":  {
                                                                                  "description":  "Successful Response",
                                                                                  "content":  {
                                                                                                  "application/json":  {
                                                                                                                           "schema":  {
-                                                                                                                                         "$ref":  "#/components/schemas/OfflineMapResponse"
+                                                                                                                                         "$ref":  "#/components/schemas/OfflineMapListResponse"
                                                                                                                                      }
                                                                                                                       }
                                                                                              }

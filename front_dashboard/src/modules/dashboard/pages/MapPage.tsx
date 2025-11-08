@@ -96,7 +96,7 @@ import {
   selectMapZoom,
   selectDrawingType,
   selectIsDrawingMode,
-  selectActiveOfflineMap,
+  selectActiveOfflineMaps,
   addMarker,
   MapMarker,
   Coordinates,
@@ -448,19 +448,21 @@ const MapPage: React.FC = () => {
   const mapInstanceRef = useRef<Map | null>(null);
   const unitsLayerRef = useRef<VectorLayer<VectorSource> | null>(null);
   const baseLayerRefs = useRef<Record<string, TileLayer<any>>>({});
+  const offlineLayerRefs = useRef<Record<string, TileLayer<any>>>({});
   const dispatch = useAppDispatch();
   const user = useAppSelector(selectUser);
   const mapState = useAppSelector(selectMapState);
   const mapCenter = useAppSelector(selectMapCenter);
   const mapZoom = useAppSelector(selectMapZoom);
   const baseLayersConfig = useAppSelector(selectBaseLayers);
-  const activeOfflineMap = useAppSelector(selectActiveOfflineMap);
+  const activeOfflineMaps = useAppSelector(selectActiveOfflineMaps);
   const isDrawingMode = useAppSelector(selectIsDrawingMode);
   const theme = useTheme();
   
   const [layersPanelOpen, setLayersPanelOpen] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [mousePosition, setMousePosition] = useState<Coordinates | null>(null);
+  const [mapReady, setMapReady] = useState(false);
   
   // State برای کالک نگار
   const [selectedScenario, setSelectedScenario] = useState<EnhancedScenario | null>(null);
@@ -549,11 +551,8 @@ const MapPage: React.FC = () => {
 
   // ایجاد نقشه OpenLayers
   useEffect(() => {
-    if (!mapRef.current) return;
+    if (!mapRef.current || mapInstanceRef.current) return;
 
-    // ایجاد نقشه (بدون لایه‌ها، لایه‌های پایه را بعداً بر اساس state اضافه می‌کنیم)
-
-    // ایجاد لایه واحدهای نظامی
     const unitsSource = new VectorSource();
     const unitsLayer = new VectorLayer({
       source: unitsSource,
@@ -581,29 +580,6 @@ const MapPage: React.FC = () => {
 
     mapInstanceRef.current = map;
 
-    // افزودن لایه‌های پایه از state
-    baseLayersConfig.forEach(cfg => {
-      let source;
-      
-      // اگر نقشه آفلاین فعال است، از آن استفاده کن
-      if (cfg.id === 'osm' && activeOfflineMap) {
-        source = new XYZ({ 
-          url: activeOfflineMap.url, 
-          crossOrigin: 'anonymous' 
-        });
-      } else {
-        const isOSM = (cfg.url || '').includes('{s}.tile.openstreetmap.org');
-        source = isOSM ? new OSM() : new XYZ({ url: cfg.url || '', crossOrigin: 'anonymous' });
-      }
-      
-      const tl = new TileLayer({ source, visible: cfg.visible, opacity: cfg.opacity });
-      // اطمینان از قرارگیری زیر لایه‌های واحدها
-      map.addLayer(tl);
-      tl.setZIndex(0);
-      baseLayerRefs.current[cfg.id] = tl;
-    });
-
-    // اضافه کردن event listeners
     map.on('click', (event) => {
       const coordinate = event.coordinate;
       const lonLat = toLonLat(coordinate);
@@ -617,16 +593,21 @@ const MapPage: React.FC = () => {
     });
 
     dispatch(showInfoNotification('نقشه OpenLayers بارگذاری شد'));
+    setMapReady(true);
 
     return () => {
-      if (map) {
-        map.setTarget(undefined);
-      }
+      map.setTarget(undefined);
+      mapInstanceRef.current = null;
+      baseLayerRefs.current = {};
+      offlineLayerRefs.current = {};
+      setMapReady(false);
     };
-  }, [mapCenter, mapZoom, baseLayersConfig, activeOfflineMap]);
+    // اجرای یک‌باره پس از مونت
+  }, [dispatch]);
 
   // همگام‌سازی تغییرات لایه‌های پایه با نقشه
   useEffect(() => {
+    if (!mapReady) return;
     const map = mapInstanceRef.current;
     if (!map) return;
 
@@ -652,14 +633,59 @@ const MapPage: React.FC = () => {
       }
       layer.setOpacity(cfg.opacity);
       layer.setVisible(cfg.visible);
-      // اگر URL تغییر کرد، منبع را به‌روزرسانی کنیم
       const src = layer.getSource();
-      if (!isOSM && src && (src as any).getUrls && cfg.url) {
-        const xyz = src as unknown as XYZ;
-        (xyz as any).setUrl?.(cfg.url);
+      if (!isOSM && src && typeof (src as any).setUrl === 'function' && cfg.url) {
+        (src as any).setUrl(cfg.url);
       }
     });
-  }, [baseLayersConfig]);
+  }, [baseLayersConfig, mapReady]);
+
+  // افزودن/حذف لایه‌های نقشه‌های آفلاین فعال
+  useEffect(() => {
+    if (!mapReady) return;
+    const map = mapInstanceRef.current;
+    if (!map) return;
+
+    const refs = offlineLayerRefs.current;
+    const activeIds = new Set(activeOfflineMaps.map(item => `offline-${item.id}`));
+
+    // حذف لایه‌های غیرفعال شده
+    Object.entries(refs).forEach(([key, layer]) => {
+      if (!activeIds.has(key)) {
+        map.removeLayer(layer);
+        delete refs[key];
+      }
+    });
+
+    // افزودن یا به‌روزرسانی لایه‌های جدید
+    activeOfflineMaps.forEach(item => {
+      const key = `offline-${item.id}`;
+      let layer = refs[key];
+      if (!layer) {
+        layer = new TileLayer({
+          source: new XYZ({
+            url: item.url,
+            crossOrigin: 'anonymous',
+          }),
+          visible: true,
+          opacity: 1,
+        });
+        layer.set('title', item.name);
+        layer.set('name', key);
+        layer.set('layerType', 'offline');
+        layer.setZIndex(0);
+        map.addLayer(layer);
+        refs[key] = layer;
+      } else {
+        const source = layer.getSource();
+        if (source && typeof (source as any).setUrl === 'function') {
+          (source as any).setUrl(item.url);
+        }
+        layer.set('title', item.name);
+        layer.setVisible(true);
+      }
+    });
+  }, [activeOfflineMaps, mapReady]);
 
   // به‌روزرسانی مرکز و زوم نقشه
   useEffect(() => {
