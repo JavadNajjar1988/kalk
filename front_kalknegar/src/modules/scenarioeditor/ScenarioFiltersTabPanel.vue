@@ -516,7 +516,7 @@ function expandAllIcons() {
 <template>
   <div class="px-4">
     <header
-      class="bg-sidebar sticky top-0 z-10 -mx-4 flex h-12 items-center justify-between px-4 py-2"
+      class="filters-tab-panel-header sticky top-0 z-10 -mx-4 flex h-12 items-center justify-between px-4 py-2"
       dir="rtl"
     >
       <PanelHeading>انتخاب واحدها</PanelHeading>
@@ -623,3 +623,11 @@ function expandAllIcons() {
     </NewAccordionPanel>
   </div>
 </template>
+<style scoped>
+.filters-tab-panel-header {
+  background-color: transparent !important;
+  background: transparent !important;
+  border-bottom: none !important;
+  border: none !important;
+}
+</style>

@@ -74,6 +74,9 @@
   --heading: var(--color-slate-950);
   --subheading: var(--color-slate-800);
   --mpanel: var(--color-slate-50);
+  --surface-glass: rgba(21, 101, 192, 0.12);
+  --surface-border: rgba(21, 101, 192, 0.45);
+  --surface-shadow: rgba(21, 101, 192, 0.25);
 }
 
 .dark {
@@ -193,6 +196,85 @@
     text-align: right;
   }
 
+  /* Dashboard theme injected when Vue runs inside the React shell */
+  :root.react-integration-mode,
+  body.react-integration-mode {
+    background-color: #f0f4f8 !important;
+    color-scheme: light;
+    --background: 213 33% 96%;
+    --foreground: 220 46% 10%;
+    --card: 0 0% 100%;
+    --card-foreground: 220 46% 10%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 220 46% 10%;
+    --primary: 212 75% 42%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 207 72% 47%;
+    --secondary-foreground: 0 0% 100%;
+    --muted: 213 28% 88%;
+    --muted-foreground: 215 16% 34%;
+    --accent: 216 87% 34%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 213 28% 85%;
+    --input: 213 28% 85%;
+    --ring: 212 74% 45%;
+    --chart-1: 212 75% 42%;
+    --chart-2: 207 72% 47%;
+    --chart-3: 204 80% 45%;
+    --chart-4: 199 90% 56%;
+    --chart-5: 187 73% 52%;
+    --sidebar: 213 33% 96%;
+    --sidebar-foreground: 220 46% 10%;
+    --sidebar-primary: 212 75% 42%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 213 33% 90%;
+    --sidebar-accent-foreground: 220 46% 10%;
+    --sidebar-border: 213 28% 85%;
+    --sidebar-ring: 207 72% 47%;
+    --heading: #0d1421;
+    --subheading: #1f2937;
+    --panel: #ffffff;
+    --panel-foreground: #0d1421;
+    --mpanel: #f8fbff;
+    --color-background: #f0f4f8;
+    --color-foreground: #0d1421;
+    --color-card: #ffffff;
+    --color-card-foreground: #0d1421;
+    --color-popover: #ffffff;
+    --color-popover-foreground: #0d1421;
+    --color-primary: #1565c0;
+    --color-primary-foreground: #ffffff;
+    --color-secondary: #1976d2;
+    --color-secondary-foreground: #ffffff;
+    --color-muted: #e1e8ed;
+    --color-muted-foreground: #4b5563;
+    --color-accent: #0d47a1;
+    --color-accent-foreground: #ffffff;
+    --color-destructive: #dc2626;
+    --color-destructive-foreground: #ffffff;
+    --color-border: #cbd5e0;
+    --color-input: #cbd5e0;
+    --color-ring: #1976d2;
+    --color-sidebar: #f0f4f8;
+    --color-sidebar-foreground: #0d1421;
+    --color-sidebar-primary: #1565c0;
+    --color-sidebar-primary-foreground: #ffffff;
+    --color-sidebar-accent: #d1dce5;
+    --color-sidebar-accent-foreground: #0d1421;
+    --color-sidebar-border: #cbd5e0;
+    --color-sidebar-ring: #1976d2;
+  }
+
+  body.react-integration-mode {
+    background-color: #f0f4f8 !important;
+  }
+
+  body.react-integration-mode #app {
+    background-color: #f0f4f8;
+  }
+
   @layer base {
     button:not(:disabled),
     [role="button"]:not(:disabled) {
@@ -207,8 +289,11 @@
 }
 
 .dashboard-header {
-  @apply fixed top-0 left-0 right-0 z-50 bg-blue-300/40 dark:bg-blue-400/15 backdrop-blur backdrop-saturate-150 supports-[backdrop-filter]:bg-blue-300/30 dark:supports-[backdrop-filter]:bg-blue-400/20 border-b border-blue-300/60 dark:border-blue-400/30;
-}
+    @apply fixed top-0 left-0 right-0 z-50 backdrop-blur backdrop-saturate-150 border-b;
+    background-color: var(--surface-glass);
+    border-color: var(--surface-border);
+    box-shadow: 0 25px 60px var(--surface-shadow);
+  }
 
 .dashboard-sidebar {
   @apply fixed top-16 right-0 z-40 transition-transform duration-300 ease-in-out;

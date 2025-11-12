@@ -26,7 +26,7 @@ const selectedItems = useVModel(props, "modelValue", emit);
             ><slot>{{ label }}</slot></span
           >
           <span
-            class="ml-1.5 rounded bg-blue-300/20 dark:bg-blue-400/10 backdrop-blur-sm px-1.5 py-0.5 text-xs font-semibold text-gray-700 tabular-nums"
+            class="checkbox-dropdown-badge ml-1.5 rounded backdrop-blur-sm px-1.5 py-0.5 text-xs font-semibold text-gray-700 tabular-nums"
             >{{ selectedItems.length }}</span
           >
           <ChevronDownIcon
@@ -45,7 +45,7 @@ const selectedItems = useVModel(props, "modelValue", emit);
         leave-to-class="transform opacity-0 scale-95"
       >
         <PopoverPanel
-          class="ring-opacity-5 absolute right-0 z-50 mt-2 origin-top-right rounded-md bg-blue-300/20 dark:bg-blue-400/10 backdrop-blur-sm backdrop-saturate-150 p-4 shadow-2xl ring-1 ring-blue-300/40 dark:ring-blue-400/30 focus:outline-hidden"
+          class="checkbox-dropdown-panel ring-opacity-5 absolute right-0 z-50 mt-2 origin-top-right rounded-md backdrop-blur-sm backdrop-saturate-150 p-4 shadow-2xl ring-1 focus:outline-hidden"
         >
           <form class="space-y-4">
             <div
@@ -58,7 +58,7 @@ const selectedItems = useVModel(props, "modelValue", emit);
                 :value="option.value"
                 v-model="selectedItems"
                 type="checkbox"
-                class="h-4 w-4 rounded border-blue-300/40 dark:border-blue-400/30 text-blue-600 dark:text-blue-400 focus:ring-blue-500 dark:focus:ring-blue-400 cursor-pointer"
+                class="checkbox-dropdown-checkbox h-4 w-4 rounded cursor-pointer"
               />
               <label
                 :for="`filter-${option.value}`"
@@ -72,3 +72,43 @@ const selectedItems = useVModel(props, "modelValue", emit);
     </Popover>
   </PopoverGroup>
 </template>
+<style scoped>
+.checkbox-dropdown-badge {
+  background-color: color-mix(in srgb, var(--color-primary) 15%, transparent);
+}
+
+:global(.dark) .checkbox-dropdown-badge {
+  background-color: color-mix(in srgb, var(--color-primary) 8%, transparent);
+}
+
+.checkbox-dropdown-panel {
+  background-color: color-mix(in srgb, var(--color-primary) 15%, transparent);
+  border-color: color-mix(in srgb, var(--color-primary) 25%, transparent);
+  ring-color: color-mix(in srgb, var(--color-primary) 25%, transparent);
+}
+
+:global(.dark) .checkbox-dropdown-panel {
+  background-color: color-mix(in srgb, var(--color-primary) 8%, transparent);
+  border-color: color-mix(in srgb, var(--color-primary) 15%, transparent);
+  ring-color: color-mix(in srgb, var(--color-primary) 15%, transparent);
+}
+
+.checkbox-dropdown-checkbox {
+  border-color: color-mix(in srgb, var(--color-primary) 25%, transparent);
+  accent-color: var(--color-primary);
+}
+
+.checkbox-dropdown-checkbox:checked {
+  background-color: var(--color-primary);
+  border-color: var(--color-primary);
+}
+
+.checkbox-dropdown-checkbox:focus {
+  ring-color: var(--color-primary);
+  --tw-ring-color: var(--color-primary);
+}
+
+:global(.dark) .checkbox-dropdown-checkbox {
+  border-color: color-mix(in srgb, var(--color-primary) 15%, transparent);
+}
+</style>

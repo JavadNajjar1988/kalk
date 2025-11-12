@@ -13,10 +13,10 @@
   >
     <div
       ref="target"
-      class="flex h-full w-full flex-col overflow-hidden bg-blue-300/40 dark:bg-blue-400/15 backdrop-blur backdrop-saturate-150 supports-[backdrop-filter]:bg-blue-300/30 dark:supports-[backdrop-filter]:bg-blue-400/20 shadow-lg sm:rounded-2xl border border-blue-300/60 dark:border-blue-400/30"
+      class="grid-edit-container flex h-full w-full flex-col overflow-hidden backdrop-blur backdrop-saturate-150 shadow-lg sm:rounded-2xl border"
     >
       <header
-        class="flex shrink-0 items-center justify-between border-b border-blue-300/60 dark:border-blue-400/30 bg-blue-300/40 dark:bg-blue-400/15 backdrop-blur backdrop-saturate-150 supports-[backdrop-filter]:bg-blue-300/30 dark:supports-[backdrop-filter]:bg-blue-400/20 px-6 py-4 sm:px-8 rounded-t-2xl"
+        class="grid-edit-header flex shrink-0 items-center justify-between border-b backdrop-blur backdrop-saturate-150 px-6 py-4 sm:px-8 rounded-t-2xl"
       >
         <div class="flex w-full items-center space-x-2 overflow-x-auto sm:w-auto">
           <FilterQueryInput class="" v-model="filterQuery" />
@@ -76,10 +76,71 @@
           </tbody>
         </table></div>
      
-      <footer class="h-12 shrink-0 mt-auto border-t border-blue-300/60 dark:border-blue-400/30 bg-blue-300/40 dark:bg-blue-400/15 backdrop-blur backdrop-saturate-150 supports-[backdrop-filter]:bg-blue-300/30 dark:supports-[backdrop-filter]:bg-blue-400/20 rounded-b-2xl"></footer>
+      <footer class="grid-edit-footer h-12 shrink-0 mt-auto border-t backdrop-blur backdrop-saturate-150 rounded-b-2xl"></footer>
     </div>
   </div>
 </template>
+<style scoped>
+.grid-edit-container {
+  background-color: color-mix(in srgb, var(--color-primary) 20%, transparent);
+  border-color: color-mix(in srgb, var(--color-primary) 30%, transparent);
+}
+
+:global(.dark) .grid-edit-container {
+  background-color: color-mix(in srgb, var(--color-primary) 8%, transparent);
+  border-color: color-mix(in srgb, var(--color-primary) 15%, transparent);
+}
+
+@supports (backdrop-filter: blur(1px)) {
+  .grid-edit-container {
+    background-color: color-mix(in srgb, var(--color-primary) 15%, transparent);
+  }
+  
+  :global(.dark) .grid-edit-container {
+    background-color: color-mix(in srgb, var(--color-primary) 10%, transparent);
+  }
+}
+
+.grid-edit-header {
+  background-color: color-mix(in srgb, var(--color-primary) 20%, transparent);
+  border-bottom-color: color-mix(in srgb, var(--color-primary) 30%, transparent);
+}
+
+:global(.dark) .grid-edit-header {
+  background-color: color-mix(in srgb, var(--color-primary) 8%, transparent);
+  border-bottom-color: color-mix(in srgb, var(--color-primary) 15%, transparent);
+}
+
+@supports (backdrop-filter: blur(1px)) {
+  .grid-edit-header {
+    background-color: color-mix(in srgb, var(--color-primary) 15%, transparent);
+  }
+  
+  :global(.dark) .grid-edit-header {
+    background-color: color-mix(in srgb, var(--color-primary) 10%, transparent);
+  }
+}
+
+.grid-edit-footer {
+  background-color: color-mix(in srgb, var(--color-primary) 20%, transparent);
+  border-top-color: color-mix(in srgb, var(--color-primary) 30%, transparent);
+}
+
+:global(.dark) .grid-edit-footer {
+  background-color: color-mix(in srgb, var(--color-primary) 8%, transparent);
+  border-top-color: color-mix(in srgb, var(--color-primary) 15%, transparent);
+}
+
+@supports (backdrop-filter: blur(1px)) {
+  .grid-edit-footer {
+    background-color: color-mix(in srgb, var(--color-primary) 15%, transparent);
+  }
+  
+  :global(.dark) .grid-edit-footer {
+    background-color: color-mix(in srgb, var(--color-primary) 10%, transparent);
+  }
+}
+</style>
 
 <script setup lang="ts">
 import { useDebounce, useEventListener, useStorage } from "@vueuse/core";

@@ -1,5 +1,5 @@
-﻿<template>
-  <div class="bg-teal-50/80 dark:bg-teal-950/50 flex min-h-screen flex-col">
+<template>
+  <div :class="['landing-theme', selectedThemeClass, 'flex min-h-screen', pageBackgroundClass]" :style="pageBackgroundStyle">
     <!-- AppBar Header (Dashboard Style) -->
     <header class="fixed top-0 left-0 right-0 z-50">
       <div class="flex h-16 items-center px-4">
@@ -23,7 +23,7 @@
               <input
                 type="search"
                 placeholder="جستجو در سناریوها..."
-                class="flex h-10 w-full rounded-full border border-blue-300/60 dark:border-blue-400/30 bg-blue-100/40 dark:bg-blue-400/15 backdrop-blur backdrop-saturate-150 supports-[backdrop-filter]:bg-blue-300/30 dark:supports-[backdrop-filter]:bg-blue-400/20 px-3 py-2 pr-10 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-blue-500 dark:placeholder:text-blue-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                class="theme-input flex h-10 w-full rounded-full border px-3 py-2 pr-10 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                 v-model="searchQuery"
               />
             </div>
@@ -32,21 +32,72 @@
 
         <!-- Left Section (Actions) -->
         <div class="flex items-center gap-2">
-          <!-- Theme Toggle Button -->
-          <button 
-            @click="toggleTheme"
-            class="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-accent-foreground h-10 w-10"
-          >
-            <svg v-if="isDark" class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
-            </svg>
-            <svg v-else class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
-            </svg>
-          </button>
+          <!-- Theme Picker Button -->
+          <div class="relative theme-menu-trigger">
+            <button 
+              @click="showThemeMenu = !showThemeMenu"
+              class="inline-flex h-10 w-10 items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors hover:bg-accent/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+            >
+              <svg class="h-5 w-5 text-blue-600 dark:text-blue-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 3c-4.97 0-9 3.589-9 8 0 3.19 2.4 5.5 5 5.5h1.25a1.75 1.75 0 011.75 1.75c0 .966.784 1.75 1.75 1.75 4.142 0 7.5-3.358 7.5-7.5S16.142 3 12 3z" />
+                <circle cx="8.5" cy="9.5" r="1.2" stroke-width="1.6" />
+                <circle cx="12" cy="7" r="1.2" stroke-width="1.6" />
+                <circle cx="15.5" cy="10" r="1.2" stroke-width="1.6" />
+                <circle cx="14" cy="14.5" r="1.2" stroke-width="1.6" />
+              </svg>
+            </button>
+            <div 
+              v-if="showThemeMenu"
+              class="absolute left-0 top-full z-50 mt-2 w-64 rounded-2xl border border-blue-100/80 bg-white/95 p-4 shadow-2xl backdrop-blur dark:border-slate-700/60 dark:bg-slate-900/95"
+            >
+              <div class="flex items-center justify-between">
+                <div>
+                  <p class="text-xs font-bold text-slate-700 dark:text-slate-200">انتخاب تم</p>
+                  <p class="text-[11px] text-slate-500 dark:text-slate-400">مانند داشبورد ساجد</p>
+                </div>
+                <button
+                  class="text-[10px] text-blue-600 dark:text-blue-300"
+                  @click="showThemeMenu = false"
+                >
+                  بستن
+                </button>
+              </div>
+              <div class="mt-3 grid grid-cols-3 gap-3">
+                <button
+                  v-for="option in themeOptions"
+                  :key="option.key"
+                  @click="selectTheme(option.key)"
+                  class="group flex flex-col items-center rounded-xl border p-2 transition-all duration-200 shadow-sm"
+                  :class="selectedTheme === option.key ? 'scale-[1.02]' : 'hover:-translate-y-0.5'"
+                  :style="getThemeOptionStyle(option.key)"
+                >
+                  <span class="text-[11px] font-medium text-slate-600 dark:text-slate-300">{{ option.label }}</span>
+                  <span
+                    class="mt-2 block h-8 w-full rounded-lg shadow-inner"
+                    :style="{ background: option.preview }"
+                  ></span>
+                </button>
+              </div>
+              <div class="mt-4 rounded-xl border border-slate-200/70 bg-slate-50/80 p-3 dark:border-slate-700/70 dark:bg-slate-800/60">
+                <div class="flex items-center justify-between">
+                  <div>
+                    <p class="text-xs font-semibold text-slate-700 dark:text-slate-200">حالت تیره</p>
+                    <p class="text-[11px] text-slate-500 dark:text-slate-400">برای محیط‌های کم‌نور</p>
+                  </div>
+                  <button
+                    @click="toggleDark()"
+                    class="flex h-8 w-14 items-center rounded-full px-1 transition-all"
+                    :class="isDark ? 'bg-blue-600 justify-end' : 'bg-slate-300 justify-start'"
+                  >
+                    <span class="h-6 w-6 rounded-full bg-white shadow"></span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
           
           <!-- Profile Button -->
-          <div class="relative">
+          <div class="relative profile-menu-trigger">
             <button 
               @click="showProfileMenu = !showProfileMenu"
               class="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-accent-foreground h-10 w-10"
@@ -81,103 +132,88 @@
     </header>
 
     <!-- Main Content -->
-    <main class="flex-1 bg-teal-50/80 dark:bg-teal-950/50 backdrop-blur-md transition-all duration-300">
-      <!-- Hero Content Section -->
-      <div class="p-6 pt-20 bg-blue-50/20 dark:bg-blue-400/10 backdrop-blur backdrop-saturate-150 supports-[backdrop-filter]:bg-blue-300/20 dark:supports-[backdrop-filter]:bg-blue-400/15 border border-blue-300/60 dark:border-blue-400/30 shadow-lg shadow-blue-500/5 min-h-screen">
-        <!-- Interactive Map Section -->
-        <div class="relative w-full mb-8 flex justify-center items-center py-8">
-          <div class="w-4/5 max-w-6xl">
-            <InteractiveMap />
-          </div>
-        </div>
+    <main class="flex-1 w-full">
+      <div class="landing-content">
+        <div class="landing-scroll px-4 sm:px-6 lg:px-8 pt-24 pb-12">
         
-        <!-- Tactical Graphics Button -->
-        <div class="flex justify-center mb-8">
-          <button
-            @click="goToTacticalGraphics"
-            class="px-6 py-3 rounded-xl bg-indigo-500 hover:bg-indigo-600 text-white font-medium shadow-lg hover:shadow-xl transition-all duration-300 flex items-center gap-2 transform hover:-translate-y-1"
-          >
-            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-            </svg>
-            ساخت گرافیک تاکتیکال
-          </button>
-        </div>
-        
-        <!-- Dashboard Stats Cards -->
-        <div class="grid gap-4 md:grid-cols-2 md:gap-8 lg:grid-cols-4 mb-8">
-          <div class="rounded-xl border border-blue-200/30 dark:border-blue-700/30 bg-blue-100/60 dark:bg-blue-900/10 backdrop-blur-xl text-card-foreground shadow-lg shadow-blue-500/5">
-            <div class="p-6 flex flex-row items-center justify-between space-y-0 pb-2">
-              <div class="space-y-1">
-                <p class="text-sm font-medium leading-none text-blue-600 dark:text-blue-400">سناریوهای فعال</p>
-                <p class="text-3xl font-bold text-blue-800 dark:text-blue-200">۵</p>
-                <p class="text-xs text-blue-500 dark:text-blue-300">۲ در حال اجرا</p>
+          <!-- Interactive Map Section -->
+          <div class="relative w-full mb-8 flex justify-center items-center py-8">
+            <div class="w-full max-w-5xl">
+              <InteractiveMap />
+            </div>
+          </div>
+
+          <!-- Tactical Graphics Button -->
+          <div class="flex justify-center mb-8">
+            <button
+              @click="goToTacticalGraphics"
+              class="px-6 py-3 rounded-xl bg-indigo-500 hover:bg-indigo-600 text-white font-medium shadow-lg hover:shadow-xl transition-all duration-300 flex items-center gap-2 transform hover:-translate-y-1"
+            >
+              <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+              </svg>
+              ساخت گرافیک تاکتیکال
+            </button>
+          </div>
+
+          <!-- Dashboard Stats Cards -->
+          <div class="grid gap-4 md:grid-cols-2 md:gap-8 lg:grid-cols-4 mb-8">
+            <div class="stats-card" style="--stats-accent: var(--color-primary)">
+              <div class="stats-card__info">
+                <p class="stats-card__title">سناریوهای فعال</p>
+                <p class="stats-card__value">۵</p>
+                <p class="stats-card__meta">۲ در حال اجرا</p>
               </div>
-              <div class="h-12 w-12 rounded-full bg-blue-500/20 flex items-center justify-center">
-                <div class="h-8 w-8 rounded-full bg-blue-500 flex items-center justify-center">
-                  <svg class="h-4 w-4 text-white" fill="currentColor" viewBox="0 0 20 20">
-                    <path fill-rule="evenodd" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" clip-rule="evenodd" />
-                  </svg>
-                </div>
+              <div class="stats-card__icon">
+                <svg viewBox="0 0 20 20" fill="currentColor">
+                  <path fill-rule="evenodd" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" clip-rule="evenodd" />
+                </svg>
+              </div>
+            </div>
+
+            <div class="stats-card" style="--stats-accent: var(--color-secondary)">
+              <div class="stats-card__info">
+                <p class="stats-card__title">نبردهای تاریخی</p>
+                <p class="stats-card__value">۳</p>
+                <p class="stats-card__meta">آماده بررسی</p>
+              </div>
+              <div class="stats-card__icon">
+                <svg viewBox="0 0 20 20" fill="currentColor">
+                  <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-8.293l-3-3a1 1 0 00-1.414 1.414L10.586 9.5H7a1 1 0 100 2h3.586l-1.293 1.293a1 1 0 101.414 1.414l3-3a1 1 0 000-1.414z" clip-rule="evenodd" />
+                </svg>
+              </div>
+            </div>
+
+            <div class="stats-card" style="--stats-accent: var(--color-accent)">
+              <div class="stats-card__info">
+                <p class="stats-card__title">نیروها</p>
+                <p class="stats-card__value">۲۴۵</p>
+                <p class="stats-card__meta">واحد در دسترس</p>
+              </div>
+              <div class="stats-card__icon">
+                <svg viewBox="0 0 20 20" fill="currentColor">
+                  <path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z" />
+                </svg>
+              </div>
+            </div>
+
+            <div class="stats-card" style="--stats-accent: var(--color-secondary)">
+              <div class="stats-card__info">
+                <p class="stats-card__title">عملیات</p>
+                <p class="stats-card__value">۸</p>
+                <p class="stats-card__meta">در حال انجام</p>
+              </div>
+              <div class="stats-card__icon">
+                <svg viewBox="0 0 20 20" fill="currentColor">
+                  <path fill-rule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clip-rule="evenodd" />
+                </svg>
               </div>
             </div>
           </div>
-          
-          <div class="rounded-xl border border-blue-200/30 dark:border-blue-700/30 bg-blue-100/60 dark:bg-blue-900/10 backdrop-blur-xl text-card-foreground shadow-lg shadow-blue-500/5">
-            <div class="p-6 flex flex-row items-center justify-between space-y-0 pb-2">
-              <div class="space-y-1">
-                <p class="text-sm font-medium leading-none text-cyan-600 dark:text-cyan-400">نبردهای تاریخی</p>
-                <p class="text-3xl font-bold text-cyan-800 dark:text-cyan-200">۳</p>
-                <p class="text-xs text-cyan-500 dark:text-cyan-300">آماده بررسی</p>
-              </div>
-              <div class="h-12 w-12 rounded-full bg-cyan-500/20 flex items-center justify-center">
-                <div class="h-8 w-8 rounded-full bg-cyan-500 flex items-center justify-center">
-                  <svg class="h-4 w-4 text-white" fill="currentColor" viewBox="0 0 20 20">
-                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-8.293l-3-3a1 1 0 00-1.414 1.414L10.586 9.5H7a1 1 0 100 2h3.586l-1.293 1.293a1 1 0 101.414 1.414l3-3a1 1 0 000-1.414z" clip-rule="evenodd" />
-                  </svg>
-                </div>
-              </div>
-            </div>
-          </div>
-          
-          <div class="rounded-xl border border-blue-200/30 dark:border-blue-700/30 bg-blue-100/60 dark:bg-blue-900/10 backdrop-blur-xl text-card-foreground shadow-lg shadow-blue-500/5">
-            <div class="p-6 flex flex-row items-center justify-between space-y-0 pb-2">
-              <div class="space-y-1">
-                <p class="text-sm font-medium leading-none text-sky-600 dark:text-sky-400">نیروها</p>
-                <p class="text-3xl font-bold text-sky-800 dark:text-sky-200">۲۴۵</p>
-                <p class="text-xs text-sky-500 dark:text-sky-300">واحد در دسترس</p>
-              </div>
-              <div class="h-12 w-12 rounded-full bg-sky-500/20 flex items-center justify-center">
-                <div class="h-8 w-8 rounded-full bg-sky-500 flex items-center justify-center">
-                  <svg class="h-4 w-4 text-white" fill="currentColor" viewBox="0 0 20 20">
-                    <path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z" />
-                  </svg>
-                </div>
-              </div>
-            </div>
-          </div>
-          
-          <div class="rounded-xl border border-blue-200/30 dark:border-blue-700/30 bg-blue-100/60 dark:bg-blue-900/10 backdrop-blur-xl text-card-foreground shadow-lg shadow-blue-500/5">
-            <div class="p-6 flex flex-row items-center justify-between space-y-0 pb-2">
-              <div class="space-y-1">
-                <p class="text-sm font-medium leading-none text-indigo-600 dark:text-indigo-400">عملیات</p>
-                <p class="text-3xl font-bold text-indigo-800 dark:text-indigo-200">۸</p>
-                <p class="text-xs text-indigo-500 dark:text-indigo-300">در حال انجام</p>
-              </div>
-              <div class="h-12 w-12 rounded-full bg-indigo-500/20 flex items-center justify-center">
-                <div class="h-8 w-8 rounded-full bg-indigo-500 flex items-center justify-center">
-                  <svg class="h-4 w-4 text-white" fill="currentColor" viewBox="0 0 20 20">
-                    <path fill-rule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clip-rule="evenodd" />
-                  </svg>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-        
-        <!-- Scenario Management Section -->
+
+﻿        <!-- Scenario Management Section -->
         <div class="mt-8">
-          <div class="bg-blue-100/60 dark:bg-blue-900/10 backdrop-blur-xl rounded-3xl p-8 shadow-xl shadow-blue-500/5 border border-blue-200/30 dark:border-blue-700/30 hover:shadow-2xl hover:shadow-blue-500/10 transition-all duration-300">
+          <div :class="['rounded-3xl p-8 transition-all duration-300', scenarioContainerClass]" :style="scenarioContainerStyle">
             <div class="text-center mb-8">
               <h2 class="text-2xl md:text-3xl font-bold text-blue-700 dark:text-blue-300 mb-3">
                 مدیریت سناریوها
@@ -369,6 +405,7 @@
             </div>
           </div>
         </div>
+        </div>
       </div>
     </main>
     <LoadScenarioModal v-model="showImport" />
@@ -389,7 +426,7 @@ import { useRouter } from "vue-router";
 import { ref, computed, onMounted, onUnmounted } from "vue";
 import LoadScenarioModal from "@/components/LoadScenarioModal.vue";
 import DeleteConfirmModal from "@/components/DeleteConfirmModal.vue";
-import { NEW_SCENARIO_ROUTE, MAP_EDIT_MODE_ROUTE, TACTICAL_GRAPHICS_ROUTE } from "@/router/names";
+import { NEW_SCENARIO_ROUTE, MAP_EDIT_MODE_ROUTE, TACTICAL_GRAPHICS_ROUTE, TACTICAL_SYMBOL_DEFINITION_ROUTE } from "@/router/names";
 import { useDark, useToggle } from "@vueuse/core";
 import { scenarioApiService } from "@/services/api/scenarioApiService";
 import { useIndexedDb } from "@/scenariostore/localdb";
@@ -399,6 +436,293 @@ const router = useRouter();
 // Theme management
 const isDark = useDark();
 const toggleDark = useToggle(isDark);
+
+const isReactIntegration = ref(true);
+const pageBackgroundClass = computed(() =>
+  isReactIntegration.value ? '' : 'bg-teal-50/80 dark:bg-teal-950/50'
+);
+const pageBackgroundStyle = computed(() =>
+  isReactIntegration.value ? { backgroundColor: 'var(--color-background)' } : {}
+);
+const mainBackgroundClass = computed(() =>
+  isReactIntegration.value ? '' : 'bg-teal-50/80 dark:bg-teal-950/50'
+);
+const mainBackgroundStyle = computed(() =>
+  isReactIntegration.value ? { backgroundColor: 'var(--color-background)' } : {}
+);
+const heroWrapperClass = computed(() =>
+  isReactIntegration.value
+    ? 'glass-panel'
+    : 'glass-panel bg-blue-50/20 dark:bg-blue-400/10 backdrop-blur backdrop-saturate-150 supports-[backdrop-filter]:bg-blue-300/20 dark:supports-[backdrop-filter]:bg-blue-400/15 border border-blue-300/60 dark:border-blue-400/30 shadow-lg shadow-blue-500/5'
+);
+const heroWrapperStyle = computed(() =>
+  isReactIntegration.value
+    ? {
+        backgroundColor: 'var(--card)',
+        borderColor: 'var(--color-border)',
+        boxShadow: '0 30px 60px rgba(15, 23, 42, 0.08)'
+      }
+    : {}
+);
+const scenarioContainerClass = computed(() =>
+  isReactIntegration.value
+    ? 'glass-panel hover:-translate-y-0.5'
+    : 'glass-panel bg-blue-100/60 dark:bg-blue-900/10 backdrop-blur-xl shadow-xl shadow-blue-500/5 border border-blue-200/30 dark:border-blue-700/30 hover:shadow-2xl hover:shadow-blue-500/10'
+);
+const scenarioContainerStyle = computed(() =>
+  isReactIntegration.value
+    ? {
+        backgroundColor: 'var(--card)',
+        borderColor: 'var(--color-border)',
+        boxShadow: '0 25px 55px rgba(15, 23, 42, 0.08)'
+      }
+    : {}
+);
+
+type ThemeToneConfig = {
+  background: string;
+  foreground: string;
+  primary: string;
+  secondary: string;
+  accent: string;
+  muted: string;
+  mutedForeground: string;
+  border: string;
+  card?: string;
+  sidebar?: string;
+  sidebarForeground?: string;
+  heading?: string;
+  subheading?: string;
+};
+
+const createThemeVars = (config: ThemeToneConfig) => {
+  const cardColor = config.card ?? '#ffffff';
+  const sidebarColor = config.sidebar ?? config.background;
+  const sidebarForeground = config.sidebarForeground ?? config.foreground;
+  return {
+    '--background': config.background,
+    '--color-background': config.background,
+    '--foreground': config.foreground,
+    '--color-foreground': config.foreground,
+    '--card': cardColor,
+    '--color-card': cardColor,
+    '--card-foreground': config.foreground,
+    '--popover': cardColor,
+    '--color-popover': cardColor,
+    '--popover-foreground': config.foreground,
+    '--primary': config.primary,
+    '--color-primary': config.primary,
+    '--primary-foreground': '#ffffff',
+    '--secondary': config.secondary,
+    '--color-secondary': config.secondary,
+    '--secondary-foreground': '#ffffff',
+    '--accent': config.accent,
+    '--color-accent': config.accent,
+    '--accent-foreground': '#ffffff',
+    '--muted': config.muted,
+    '--color-muted': config.muted,
+    '--muted-foreground': config.mutedForeground,
+    '--border': config.border,
+    '--color-border': config.border,
+    '--input': config.border,
+    '--color-input': config.border,
+    '--ring': config.secondary,
+    '--color-ring': config.secondary,
+    '--chart-1': config.primary,
+    '--chart-2': config.secondary,
+    '--chart-3': config.accent,
+    '--chart-4': config.muted,
+    '--chart-5': config.foreground,
+    '--sidebar': sidebarColor,
+    '--color-sidebar': sidebarColor,
+    '--sidebar-foreground': sidebarForeground,
+    '--color-sidebar-foreground': sidebarForeground,
+    '--sidebar-primary': config.primary,
+    '--color-sidebar-primary': config.primary,
+    '--sidebar-primary-foreground': '#ffffff',
+    '--sidebar-accent': config.accent,
+    '--color-sidebar-accent': config.accent,
+    '--sidebar-accent-foreground': '#ffffff',
+    '--sidebar-border': config.border,
+    '--color-sidebar-border': config.border,
+    '--sidebar-ring': config.secondary,
+    '--color-sidebar-ring': config.secondary,
+    '--heading': config.heading ?? config.foreground,
+    '--subheading': config.subheading ?? config.foreground,
+    '--mpanel': cardColor,
+    '--color-mpanel': cardColor,
+    '--destructive': '#dc2626',
+    '--color-destructive': '#dc2626',
+    '--destructive-foreground': '#ffffff',
+    '--color-destructive-foreground': '#ffffff'
+  };
+};
+
+const themePresets = {
+  blue: {
+    label: 'آبی',
+    accent: '#2563eb',
+    preview: 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)',
+    vars: createThemeVars({
+      background: '#f0f4f8',
+      foreground: '#111111',
+      primary: '#1565c0',
+      secondary: '#1976d2',
+      accent: '#0d47a1',
+      muted: '#e1e8ed',
+      mutedForeground: '#475569',
+      border: '#cbd5e0'
+    })
+  },
+  green: {
+    label: 'سبز',
+    accent: '#1b7f5b',
+    preview: 'linear-gradient(135deg, #1b7f5b 0%, #0f4c3a 100%)',
+    vars: createThemeVars({
+      background: '#f0f5f3',
+      foreground: '#111111',
+      primary: '#1c684e',
+      secondary: '#2e7d63',
+      accent: '#0f4c3a',
+      muted: '#d1e0d9',
+      mutedForeground: '#355046',
+      border: '#c7d6cc'
+    })
+  },
+  red: {
+    label: 'قرمز',
+    accent: '#c53030',
+    preview: 'linear-gradient(135deg, #c53030 0%, #8b0000 100%)',
+    vars: createThemeVars({
+      background: '#faf0f0',
+      foreground: '#111111',
+      primary: '#8b0000',
+      secondary: '#b71c1c',
+      accent: '#590000',
+      muted: '#f5e6e6',
+      mutedForeground: '#5c2020',
+      border: '#e0cccc'
+    })
+  },
+  purple: {
+    label: 'بنفش',
+    accent: '#7c3aed',
+    preview: 'linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%)',
+    vars: createThemeVars({
+      background: '#f5f2ff',
+      foreground: '#111111',
+      primary: '#7c3aed',
+      secondary: '#a855f7',
+      accent: '#6d28d9',
+      muted: '#ede9fe',
+      mutedForeground: '#4c1d95',
+      border: '#ddd6fe',
+      heading: '#2e1065',
+      subheading: '#4c1d95'
+    })
+  },
+  orange: {
+    label: 'نارنجی',
+    accent: '#f97316',
+    preview: 'linear-gradient(135deg, #fb923c 0%, #f97316 50%, #ea580c 100%)',
+    vars: createThemeVars({
+      background: '#fff7ed',
+      foreground: '#111111',
+      primary: '#f97316',
+      secondary: '#fb923c',
+      accent: '#ea580c',
+      muted: '#ffe7d3',
+      mutedForeground: '#7c2d12',
+      border: '#fed7aa',
+      heading: '#431407',
+      subheading: '#7c2d12'
+    })
+  }
+} as const;
+
+type ThemeKey = keyof typeof themePresets;
+const THEME_STORAGE_KEY = 'kalk-theme-selection';
+
+const legacyThemeMap: Record<string, ThemeKey> = {
+  'military-blue': 'blue',
+  'field-green': 'green',
+  'command-red': 'red'
+};
+
+const themeOptions = Object.entries(themePresets).map(([key, config]) => ({
+  key: key as ThemeKey,
+  label: config.label,
+  preview: config.preview
+}));
+
+const selectedTheme = ref<ThemeKey>('blue');
+const selectedThemeClass = computed(() => `${selectedTheme.value}-theme`);
+const showThemeMenu = ref(false);
+
+const hexToRgba = (hex: string, alpha: number) => {
+  let normalized = hex.replace('#', '');
+  if (normalized.length === 3) {
+    normalized = normalized.split('').map(char => char + char).join('');
+  }
+  const bigint = Number.parseInt(normalized, 16);
+  const r = (bigint >> 16) & 255;
+  const g = (bigint >> 8) & 255;
+  const b = bigint & 255;
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+};
+
+const getThemeOptionStyle = (key: ThemeKey) => {
+  const preset = themePresets[key];
+  if (!preset) return {};
+  if (selectedTheme.value === key) {
+    return {
+      borderColor: preset.accent,
+      backgroundColor: hexToRgba(preset.accent, 0.08),
+      boxShadow: `0 12px 30px ${hexToRgba(preset.accent, 0.35)}`
+    };
+  }
+  return {
+    borderColor: 'rgba(148, 163, 184, 0.45)',
+    backgroundColor: 'rgba(248, 250, 252, 0.75)'
+  };
+};
+
+const applyThemePreset = (themeKey: ThemeKey) => {
+  const preset = themePresets[themeKey];
+  if (!preset) return;
+  if (typeof document === 'undefined') return;
+  const root = document.documentElement;
+  const body = document.body;
+  Object.entries(preset.vars).forEach(([token, value]) => {
+    root.style.setProperty(token, value);
+    body?.style.setProperty(token, value);
+  });
+  selectedTheme.value = themeKey;
+  if (typeof window !== 'undefined') {
+    localStorage.setItem(THEME_STORAGE_KEY, themeKey);
+  }
+};
+
+const selectTheme = (themeKey: ThemeKey) => {
+  applyThemePreset(themeKey);
+  showThemeMenu.value = false;
+};
+
+const resolveThemeKey = (candidate: string | null): ThemeKey | null => {
+  if (!candidate) return null;
+  const mapped = legacyThemeMap[candidate] ?? candidate;
+  return mapped in themePresets ? (mapped as ThemeKey) : null;
+};
+
+const initializeTheme = () => {
+  if (typeof window === 'undefined') return;
+  const savedTheme = resolveThemeKey(localStorage.getItem(THEME_STORAGE_KEY));
+  if (savedTheme) {
+    applyThemePreset(savedTheme);
+  } else {
+    applyThemePreset(selectedTheme.value);
+  }
+};
 
 // State for sidebar and search
 const sidebarOpen = ref(false);
@@ -475,6 +799,25 @@ const totalScenarios = ref(2); // تعداد کل سناریوها
 
   // Server scenarios (from backend)
   const serverScenarios = ref<Array<{ id: string; name: string; description?: string }>>([]);
+
+const handleGlobalClick = (event: MouseEvent) => {
+  const target = event.target as HTMLElement | null;
+  if (!target) {
+    showTabMenu.value = false;
+    showProfileMenu.value = false;
+    showThemeMenu.value = false;
+    return;
+  }
+  if (!target.closest('.tab-menu-trigger')) {
+    showTabMenu.value = false;
+  }
+  if (!target.closest('.profile-menu-trigger')) {
+    showProfileMenu.value = false;
+  }
+  if (!target.closest('.theme-menu-trigger')) {
+    showThemeMenu.value = false;
+  }
+};
 
 // Computed properties for pagination
 const totalPages = computed(() => Math.ceil(totalScenarios.value / 10));
@@ -765,11 +1108,6 @@ const runScenario = (scenarioId: number | string) => {
   }
 };
 
-// Theme toggle function
-const toggleTheme = () => {
-  toggleDark();
-};
-
 // Add this new method
 const goToTacticalGraphics = () => {
   router.push({ name: TACTICAL_GRAPHICS_ROUTE });
@@ -826,6 +1164,17 @@ const refreshScenarios = async () => {
 let dateTimeInterval: NodeJS.Timeout;
 
 onMounted(() => {
+  try {
+    const params = new URLSearchParams(window.location.search);
+    const integrationParam = params.get('integration');
+    if (integrationParam !== null) {
+      isReactIntegration.value = integrationParam === 'react';
+    }
+  } catch {
+    isReactIntegration.value = true;
+  }
+  initializeTheme();
+
   updateDateTime();
   dateTimeInterval = setInterval(updateDateTime, 60000); // Update every minute
   
@@ -851,15 +1200,7 @@ onMounted(() => {
   // Listen for scenario updates
   window.addEventListener('scenario-created', refreshScenarios);
   window.addEventListener('scenario-updated', refreshScenarios);
-  
-  // Close tab menu when clicking outside
-  document.addEventListener('click', (event) => {
-    const target = event.target as HTMLElement;
-    if (target && !target.closest('.relative')) {
-      showTabMenu.value = false;
-      showProfileMenu.value = false;
-    }
-  });
+  document.addEventListener('click', handleGlobalClick);
 });
 
 onUnmounted(() => {
@@ -868,5 +1209,216 @@ onUnmounted(() => {
   }
   window.removeEventListener('kalk-auth-applied', getUserInfoFromToken as any);
   window.removeEventListener('kalk-auth-cleared', getUserInfoFromToken as any);
+  document.removeEventListener('click', handleGlobalClick);
 });
 </script>
+
+<style>
+.landing-theme {
+  background-color: var(--color-background);
+  color: var(--color-foreground);
+  transition: background-color 0.3s ease, color 0.3s ease;
+  min-height: 100vh;
+  overflow: hidden;
+}
+
+.landing-theme * {
+  color: var(--color-foreground);
+}
+
+.glass-panel {
+  background: var(--card);
+  border: 1px solid var(--color-border);
+  border-radius: 1.5rem;
+  box-shadow: 0 30px 70px rgba(15, 23, 42, 0.08);
+}
+
+.landing-theme .theme-input {
+  border-color: var(--color-border);
+  background-color: color-mix(in srgb, var(--card) 85%, var(--color-background));
+  color: var(--color-foreground);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.landing-theme .theme-input::placeholder {
+  color: var(--muted-foreground);
+}
+
+.landing-theme .theme-input:focus-visible {
+  border-color: var(--color-ring);
+  box-shadow: 0 0 0 3px var(--ring-glow);
+}
+
+.landing-theme [class~="bg-white"],
+.landing-theme [class*="bg-white/"] {
+  background-color: var(--card) !important;
+  color: var(--color-foreground) !important;
+  border-color: var(--color-border) !important;
+}
+
+.landing-theme [class*="bg-blue-"],
+.landing-theme [class*="bg-cyan-"],
+.landing-theme [class*="bg-sky-"],
+.landing-theme [class*="bg-indigo-"],
+.landing-theme [class*="bg-green-"],
+.landing-theme [class*="bg-emerald-"],
+.landing-theme [class*="bg-purple-"],
+.landing-theme [class*="bg-red-"],
+.landing-theme [class*="bg-slate-"],
+.landing-theme [class*="bg-gray-"] {
+  background-color: var(--card) !important;
+  color: var(--color-foreground) !important;
+  border-color: var(--color-border) !important;
+}
+
+.landing-theme [class*="border-"] {
+  border-color: var(--color-border) !important;
+}
+
+.landing-theme .stats-card {
+  background: var(--card);
+  border: 1px solid var(--color-border);
+  border-radius: 1rem;
+  padding: 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  box-shadow: 0 25px 50px rgba(15, 23, 42, 0.08);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.landing-theme .stats-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 35px 70px rgba(15, 23, 42, 0.12);
+}
+
+.landing-theme .stats-card__info {
+  display: flex;
+  flex-direction: column;
+}
+
+.landing-theme .stats-card__title {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--muted-foreground);
+  margin: 0;
+}
+
+.landing-theme .stats-card__value {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--color-foreground);
+  margin: 0.15rem 0;
+}
+
+.landing-theme .stats-card__meta {
+  font-size: 0.85rem;
+  color: var(--muted-foreground);
+  margin: 0;
+}
+
+.landing-theme .stats-card__icon {
+  width: 3.5rem;
+  height: 3.5rem;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  color: #ffffff;
+  background: var(--stats-accent, var(--color-primary));
+  box-shadow: 0 10px 25px rgba(15, 23, 42, 0.15);
+}
+
+.landing-theme .stats-card__icon svg {
+  width: 1.5rem;
+  height: 1.5rem;
+}
+
+.landing-content {
+  width: calc(100% - 2cm);
+  max-width: 1900px;
+  margin: 6rem auto 2rem;
+  max-height: calc(100vh - 8rem);
+  min-height: calc(100vh - 8rem);
+  overflow: hidden;
+  padding: 0;
+  border-radius: 1.75rem;
+  background: var(--card);
+  box-shadow: 0 35px 80px rgba(15, 23, 42, 0.14);
+  border: 1px solid var(--color-border);
+}
+
+.landing-scroll {
+  height: 100%;
+  max-height: calc(100vh - 8rem);
+  overflow: auto;
+  scrollbar-gutter: stable both-inline;
+  overscroll-behavior: contain;
+  padding: 2.5rem;
+  border-radius: inherit;
+  backdrop-filter: blur(12px);
+}
+
+@media (max-width: 1024px) {
+  .landing-content {
+    width: 100%;
+    padding-inline: 1.5rem;
+    max-height: none;
+    min-height: auto;
+    margin: 2rem auto;
+  }
+  .landing-scroll {
+    max-height: none;
+    padding: 1.5rem;
+  }
+}
+
+.landing-scroll::-webkit-scrollbar {
+  width: 8px;
+}
+
+.landing-scroll::-webkit-scrollbar-track {
+  background: color-mix(in srgb, var(--card) 90%, var(--color-background));
+  border-radius: 999px;
+}
+
+.landing-scroll::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--color-primary) 45%, var(--color-border));
+  border-radius: 999px;
+}
+
+.landing-scroll::-webkit-scrollbar-thumb:hover {
+  background: color-mix(in srgb, var(--color-primary) 65%, var(--color-border));
+}
+
+.landing-theme.blue-theme {
+  background-image: radial-gradient(circle at top, rgba(255,255,255,0.65), transparent 45%), linear-gradient(180deg, #eef4ff 0%, #cfe8ff 60%, #b7d9ff 100%);
+}
+
+.landing-theme.blue-theme .landing-content {
+  background: rgba(255, 255, 255, 0.18);
+  border-color: rgba(255, 255, 255, 0.35);
+  box-shadow: 0 45px 90px rgba(30, 64, 175, 0.25);
+  backdrop-filter: blur(18px);
+}
+
+.landing-theme.blue-theme .landing-scroll,
+.landing-theme.blue-theme .glass-panel,
+.landing-theme.blue-theme .stats-card {
+  background: rgba(255, 255, 255, 0.62);
+  border-color: rgba(255, 255, 255, 0.4);
+  box-shadow: 0 20px 50px rgba(30, 64, 175, 0.18);
+  backdrop-filter: blur(22px);
+}
+
+.landing-theme.blue-theme .stats-card__title,
+.landing-theme.blue-theme .stats-card__meta {
+  color: rgba(15, 23, 42, 0.7);
+}
+
+.landing-theme.blue-theme .theme-input {
+  background: rgba(255, 255, 255, 0.7);
+  border-color: rgba(255, 255, 255, 0.4);
+  box-shadow: 0 10px 30px rgba(59, 130, 246, 0.2);
+}
+</style>

@@ -2,7 +2,7 @@
   <button
     ref="el"
     role="separator"
-    class="pointer-none:bg-blue-300 pointer-fine:hover:bg-blue-400 absolute top-0 bottom-0 z-30 w-1.5 cursor-col-resize touch-none pointer-none:w-3"
+    class="panel-resize-handle absolute top-0 bottom-0 z-30 w-1.5 cursor-col-resize touch-none pointer-none:w-3"
     :class="left ? 'left-0' : 'right-0'"
     @dblclick="resetWidth"
     @pointerdown="onPointerDown"
@@ -58,3 +58,28 @@ function resetWidth() {
 
 const throttledOnPointerMove = useThrottleFn(onPointerMove, 10);
 </script>
+<style scoped>
+.panel-resize-handle {
+  background-color: transparent;
+}
+
+.panel-resize-handle:hover {
+  background-color: color-mix(in srgb, var(--color-primary) 30%, transparent);
+}
+
+@media (pointer: coarse) {
+  .panel-resize-handle {
+    background-color: color-mix(in srgb, var(--color-primary) 20%, transparent);
+  }
+}
+
+:global(.dark) .panel-resize-handle:hover {
+  background-color: color-mix(in srgb, var(--color-primary) 20%, transparent);
+}
+
+@media (pointer: coarse) {
+  :global(.dark) .panel-resize-handle {
+    background-color: color-mix(in srgb, var(--color-primary) 15%, transparent);
+  }
+}
+</style>

@@ -6,7 +6,7 @@
         data-slot="select-trigger"
         :data-size="size"
         :id="id"
-        class="border-blue-300/40 dark:border-blue-400/20 data-[placeholder]:text-muted-foreground [&_svg:not([class*='text-'])]:text-muted-foreground focus-visible:border-blue-400 focus-visible:ring-blue-400/50 aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive dark:bg-blue-400/5 dark:hover:bg-blue-400/10 [&_svg:not([class*='size-'])]:size-4` block flex w-fit w-full items-center justify-between gap-2 rounded-md border bg-blue-100/10 dark:bg-blue-400/3 backdrop-blur backdrop-saturate-150 supports-[backdrop-filter]:bg-blue-300/10 dark:supports-[backdrop-filter]:bg-blue-400/5 px-3 py-2 text-sm whitespace-nowrap shadow-lg shadow-blue-500/3 transition-[color,box-shadow] outline-none focus-visible:ring-[3px] disabled:cursor-not-allowed disabled:opacity-50 data-[size=default]:h-9 data-[size=lg]:h-12 data-[size=sm]:h-8 *:data-[slot=select-value]:line-clamp-1 *:data-[slot=select-value]:flex *:data-[slot=select-value]:items-center *:data-[slot=select-value]:gap-2 [&_svg]:pointer-events-none [&_svg]:shrink-0"
+        class="simple-select data-[placeholder]:text-muted-foreground [&_svg:not([class*='text-'])]:text-muted-foreground aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive [&_svg:not([class*='size-'])]:size-4 block flex w-fit w-full items-center justify-between gap-2 rounded-md border backdrop-blur backdrop-saturate-150 px-3 py-2 text-sm whitespace-nowrap transition-[color,box-shadow] outline-none focus-visible:ring-[3px] disabled:cursor-not-allowed disabled:opacity-50 data-[size=default]:h-9 data-[size=lg]:h-12 data-[size=sm]:h-8 *:data-[slot=select-value]:line-clamp-1 *:data-[slot=select-value]:flex *:data-[slot=select-value]:items-center *:data-[slot=select-value]:gap-2 [&_svg]:pointer-events-none [&_svg]:shrink-0"
       >
         <option v-if="addNone" :value="null">هیچ</option>
         <option v-for="val in computedValues" :value="val.value" :key="val.value">
@@ -45,3 +45,38 @@ const computedValues = computed(() => {
   }));
 });
 </script>
+<style scoped>
+.simple-select {
+  background-color: color-mix(in srgb, var(--color-primary) 8%, transparent);
+  border-color: color-mix(in srgb, var(--color-primary) 25%, transparent);
+  box-shadow: 0 10px 15px -3px color-mix(in srgb, var(--color-primary) 3%, transparent);
+}
+
+.simple-select:hover {
+  background-color: color-mix(in srgb, var(--color-primary) 10%, transparent);
+}
+
+.simple-select:focus-visible {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary) 50%, transparent);
+}
+
+:global(.dark) .simple-select {
+  background-color: color-mix(in srgb, var(--color-primary) 3%, transparent);
+  border-color: color-mix(in srgb, var(--color-primary) 15%, transparent);
+}
+
+:global(.dark) .simple-select:hover {
+  background-color: color-mix(in srgb, var(--color-primary) 5%, transparent);
+}
+
+@supports (backdrop-filter: blur(1px)) {
+  .simple-select {
+    background-color: color-mix(in srgb, var(--color-primary) 10%, transparent);
+  }
+  
+  :global(.dark) .simple-select {
+    background-color: color-mix(in srgb, var(--color-primary) 5%, transparent);
+  }
+}
+</style>

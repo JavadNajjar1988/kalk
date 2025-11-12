@@ -1,6 +1,6 @@
 <template>
   <nav
-    class="pointer-events-auto flex w-auto items-center justify-between p-2 text-sm sm:p-3 rounded-2xl shadow-xl text-foreground backdrop-blur-md supports-[backdrop-filter]:bg-blue-400/15 bg-blue-400/10 border border-blue-400/30 dark:border-blue-500/30"
+    class="map-editor-main-toolbar pointer-events-auto flex w-auto items-center justify-between p-2 text-sm sm:p-3 rounded-2xl shadow-xl text-foreground backdrop-blur-md"
   >
     <section class="flex items-center justify-between">
       <MainToolbarButton
@@ -294,3 +294,24 @@ function selectEchelon(sidc: string) {
   currentEchelon.value = new Sidc(sidc).emt;
 }
 </script>
+<style scoped>
+.map-editor-main-toolbar {
+  background-color: color-mix(in srgb, var(--color-primary) 10%, transparent);
+  border: 1px solid color-mix(in srgb, var(--color-primary) 30%, transparent);
+}
+
+:global(.dark) .map-editor-main-toolbar {
+  background-color: color-mix(in srgb, var(--color-primary) 5%, transparent);
+  border-color: color-mix(in srgb, var(--color-primary) 15%, transparent);
+}
+
+@supports (backdrop-filter: blur(1px)) {
+  .map-editor-main-toolbar {
+    background-color: color-mix(in srgb, var(--color-primary) 15%, transparent);
+  }
+  
+  :global(.dark) .map-editor-main-toolbar {
+    background-color: color-mix(in srgb, var(--color-primary) 8%, transparent);
+  }
+}
+</style>

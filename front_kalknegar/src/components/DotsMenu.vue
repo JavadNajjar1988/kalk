@@ -22,11 +22,11 @@ const onItemClick = (item: MenuItemData<string | Function>) => {
   <div>
     <DropdownMenu>
       <DropdownMenuTrigger as="child" class="mr-2" @click.stop>
-        <Button variant="ghost" size="icon" class="text-muted-foreground">
+        <Button variant="ghost" size="icon" class="text-muted-foreground p-0">
           <EllipsisVertical class="size-4" />
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent class="" align="end" :portal="props.portal">
+      <DropdownMenuContent class="" align="start" :portal="props.portal">
         <DropdownMenuItem
           v-for="item in items"
           @select="onItemClick(item)"

@@ -42,6 +42,7 @@ class ReactBridge {
 
     if (this.isIntegrationMode) {
       console.log('[ReactBridge] Integration mode enabled');
+      this.applyDashboardTheme();
       
       // Check for token in URL parameter as fallback
       const tokenFromUrl = urlParams.get('token');
@@ -314,6 +315,101 @@ class ReactBridge {
       console.log(`[ReactBridge] Removed '${param}' from URL query`);
     } catch (error) {
       console.warn('[ReactBridge] Failed to strip query parameter', param, error);
+    }
+  }
+
+  private applyDashboardTheme() {
+    const applyTheme = () => {
+      const root = document.documentElement;
+      const body = document.body;
+      const app = document.getElementById('app');
+
+      root.classList.add('react-integration-mode');
+      root.style.backgroundColor = '#f0f4f8';
+      body.classList.add('react-integration-mode');
+      body.style.backgroundColor = '#f0f4f8';
+      if (app) {
+        app.style.backgroundColor = '#f0f4f8';
+      }
+
+      const themeVariables: Record<string, string> = {
+        '--background': '213 33% 96%',
+        '--foreground': '220 46% 10%',
+        '--card': '0 0% 100%',
+        '--card-foreground': '220 46% 10%',
+        '--popover': '0 0% 100%',
+        '--popover-foreground': '220 46% 10%',
+        '--primary': '212 75% 42%',
+        '--primary-foreground': '0 0% 100%',
+        '--secondary': '207 72% 47%',
+        '--secondary-foreground': '0 0% 100%',
+        '--muted': '213 28% 88%',
+        '--muted-foreground': '215 16% 34%',
+        '--accent': '216 87% 34%',
+        '--accent-foreground': '0 0% 100%',
+        '--destructive': '0 84% 60%',
+        '--destructive-foreground': '0 0% 100%',
+        '--border': '213 28% 85%',
+        '--input': '213 28% 85%',
+        '--ring': '212 74% 45%',
+        '--chart-1': '212 75% 42%',
+        '--chart-2': '207 72% 47%',
+        '--chart-3': '204 80% 45%',
+        '--chart-4': '199 90% 56%',
+        '--chart-5': '187 73% 52%',
+        '--sidebar': '213 33% 96%',
+        '--sidebar-foreground': '220 46% 10%',
+        '--sidebar-primary': '212 75% 42%',
+        '--sidebar-primary-foreground': '0 0% 100%',
+        '--sidebar-accent': '213 33% 90%',
+        '--sidebar-accent-foreground': '220 46% 10%',
+        '--sidebar-border': '213 28% 85%',
+        '--sidebar-ring': '207 72% 47%',
+        '--heading': '#0d1421',
+        '--subheading': '#1f2937',
+        '--panel': '#ffffff',
+        '--panel-foreground': '#0d1421',
+        '--mpanel': '#f8fbff',
+        '--color-background': '#f0f4f8',
+        '--color-foreground': '#0d1421',
+        '--color-card': '#ffffff',
+        '--color-card-foreground': '#0d1421',
+        '--color-popover': '#ffffff',
+        '--color-popover-foreground': '#0d1421',
+        '--color-primary': '#1565c0',
+        '--color-primary-foreground': '#ffffff',
+        '--color-secondary': '#1976d2',
+        '--color-secondary-foreground': '#ffffff',
+        '--color-muted': '#e1e8ed',
+        '--color-muted-foreground': '#4b5563',
+        '--color-accent': '#0d47a1',
+        '--color-accent-foreground': '#ffffff',
+        '--color-destructive': '#dc2626',
+        '--color-destructive-foreground': '#ffffff',
+        '--color-border': '#cbd5e0',
+        '--color-input': '#cbd5e0',
+        '--color-ring': '#1976d2',
+        '--color-sidebar': '#f0f4f8',
+        '--color-sidebar-foreground': '#0d1421',
+        '--color-sidebar-primary': '#1565c0',
+        '--color-sidebar-primary-foreground': '#ffffff',
+        '--color-sidebar-accent': '#d1dce5',
+        '--color-sidebar-accent-foreground': '#0d1421',
+        '--color-sidebar-border': '#cbd5e0',
+        '--color-sidebar-ring': '#1976d2'
+      };
+
+      Object.entries(themeVariables).forEach(([key, value]) => {
+        root.style.setProperty(key, value);
+      });
+
+      console.log('[ReactBridge] Dashboard theme variables injected');
+    };
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', applyTheme, { once: true });
+    } else {
+      applyTheme();
     }
   }
 }

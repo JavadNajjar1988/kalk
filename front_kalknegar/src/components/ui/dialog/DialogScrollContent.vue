@@ -32,7 +32,7 @@ const forwarded = useForwardPropsEmits(delegatedProps, emits);
       <DialogContent
         :class="
           cn(
-            'relative z-50 my-8 grid w-full max-w-lg gap-4 p-6 shadow-lg duration-200 sm:rounded-lg md:w-full bg-blue-300/40 dark:bg-blue-400/15 backdrop-blur backdrop-saturate-150 border border-blue-300/60 dark:border-blue-400/30 text-foreground',
+            'dialog-scroll-content relative z-50 my-8 grid w-full max-w-lg gap-4 p-6 shadow-lg duration-200 sm:rounded-lg md:w-full backdrop-blur backdrop-saturate-150 text-foreground',
             props.class,
           )
         "
@@ -62,3 +62,24 @@ const forwarded = useForwardPropsEmits(delegatedProps, emits);
     </DialogOverlay>
   </DialogPortal>
 </template>
+<style scoped>
+.dialog-scroll-content {
+  background-color: color-mix(in srgb, var(--color-primary) 20%, transparent);
+  border: 1px solid color-mix(in srgb, var(--color-primary) 35%, transparent);
+}
+
+:global(.dark) .dialog-scroll-content {
+  background-color: color-mix(in srgb, var(--color-primary) 8%, transparent);
+  border-color: color-mix(in srgb, var(--color-primary) 15%, transparent);
+}
+
+@supports (backdrop-filter: blur(1px)) {
+  .dialog-scroll-content {
+    background-color: color-mix(in srgb, var(--color-primary) 15%, transparent);
+  }
+  
+  :global(.dark) .dialog-scroll-content {
+    background-color: color-mix(in srgb, var(--color-primary) 10%, transparent);
+  }
+}
+</style>

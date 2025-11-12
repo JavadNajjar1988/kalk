@@ -20,11 +20,10 @@ const emit = defineEmits(["update:layerOpacity"]);
 const selected = defineModel<LayerInfo<any>>();
 const nsettings = computed(() => [...props.settings]);
 </script>
-
 <template>
   <RadioGroup v-model="selected">
     <RadioGroupLabel class="sr-only">انتخاب لایه نقشه پایه</RadioGroupLabel>
-    <div class="-space-y-px rounded-2xl border border-blue-400/30 dark:border-blue-500/30 bg-blue-400/10 supports-[backdrop-filter]:bg-blue-400/15 backdrop-blur-md">
+    <div class="base-layer-switcher-container -space-y-px rounded-2xl border backdrop-blur-md">
       <RadioGroupOption
         as="template"
         v-for="(setting, settingIdx) in nsettings"
@@ -36,15 +35,15 @@ const nsettings = computed(() => [...props.settings]);
           :class="[
             settingIdx === 0 ? 'rounded-tl-2xl rounded-tr-2xl' : '',
             settingIdx === settings.length - 1 ? 'rounded-br-2xl rounded-bl-2xl' : '',
-            checked ? 'z-10 border-blue-400/40 bg-blue-400/15' : 'border-blue-400/30',
+            checked ? 'base-layer-item-checked z-10' : 'base-layer-item-unchecked',
             'relative flex cursor-pointer border p-4 focus:outline-hidden',
           ]"
         >
           <span
-            class="shrink-0"
+            class="shrink-0 base-layer-radio"
             :class="[
-              checked ? 'border-transparent bg-blue-500' : 'border-blue-300 bg-white/80',
-              active ? 'ring-2 ring-blue-400 ring-offset-2' : '',
+              checked ? 'base-layer-radio-checked' : 'base-layer-radio-unchecked',
+              active ? 'base-layer-radio-active' : '',
               'mt-0.5 flex h-4 w-4 cursor-pointer items-center justify-center rounded-full border',
             ]"
             aria-hidden="true"
@@ -86,3 +85,51 @@ const nsettings = computed(() => [...props.settings]);
     </div>
   </RadioGroup>
 </template>
+<style scoped>
+.base-layer-switcher-container {
+  background-color: color-mix(in srgb, var(--color-primary) 15%, transparent);
+  border-color: color-mix(in srgb, var(--color-primary) 25%, transparent);
+}
+
+:global(.dark) .base-layer-switcher-container {
+  background-color: color-mix(in srgb, var(--color-primary) 8%, transparent);
+  border-color: color-mix(in srgb, var(--color-primary) 15%, transparent);
+}
+
+.base-layer-item-checked {
+  background-color: color-mix(in srgb, var(--color-primary) 10%, transparent);
+  border-color: color-mix(in srgb, var(--color-primary) 20%, transparent);
+}
+
+:global(.dark) .base-layer-item-checked {
+  background-color: color-mix(in srgb, var(--color-primary) 8%, transparent);
+  border-color: color-mix(in srgb, var(--color-primary) 15%, transparent);
+}
+
+.base-layer-item-unchecked {
+  border-color: color-mix(in srgb, var(--color-primary) 25%, transparent);
+}
+
+:global(.dark) .base-layer-item-unchecked {
+  border-color: color-mix(in srgb, var(--color-primary) 15%, transparent);
+}
+
+.base-layer-radio-checked {
+  background-color: var(--color-primary);
+  border-color: transparent;
+}
+
+.base-layer-radio-unchecked {
+  background-color: rgba(255, 255, 255, 0.8);
+  border-color: color-mix(in srgb, var(--color-primary) 25%, transparent);
+}
+
+:global(.dark) .base-layer-radio-unchecked {
+  background-color: color-mix(in srgb, var(--color-primary) 3%, transparent);
+  border-color: color-mix(in srgb, var(--color-primary) 15%, transparent);
+}
+
+.base-layer-radio-active {
+  box-shadow: 0 0 0 2px var(--color-background), 0 0 0 4px var(--color-primary);
+}
+</style>

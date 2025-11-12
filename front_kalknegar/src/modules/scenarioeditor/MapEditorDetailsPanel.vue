@@ -1,11 +1,11 @@
 <template>
     <div class="" dir="rtl">
       <aside
-        class="pointer-events-auto relative mt-4 flex max-h-[70vh] flex-col overflow-hidden rounded-2xl border border-blue-400/30 dark:border-blue-500/30 bg-blue-400/10 dark:bg-blue-500/10 backdrop-blur-md shadow-xl text-right"
+        class="map-editor-details-panel pointer-events-auto relative mt-4 flex max-h-[70vh] flex-col overflow-hidden rounded-2xl backdrop-blur-md shadow-xl text-right"
         :style="{ width: widthStore.detailsWidth + 'px' }"
       >
         <CloseButton class="absolute top-1 right-1 z-99" @click="emit('close')" />
-        <div class="flex-auto overflow-auto p-3 text-xs text-foreground bg-blue-400/5 dark:bg-blue-500/5 supports-[backdrop-filter]:bg-blue-400/10">
+        <div class="map-editor-details-content flex-auto overflow-auto p-3 text-xs text-foreground">
           <slot />
         </div>
         <PanelResizeHandle
@@ -41,3 +41,38 @@
     }
   });
   </script>
+<style scoped>
+.map-editor-details-panel {
+  background-color: color-mix(in srgb, var(--color-primary) 10%, transparent);
+  border: 1px solid color-mix(in srgb, var(--color-primary) 20%, transparent);
+}
+
+:global(.dark) .map-editor-details-panel {
+  background-color: color-mix(in srgb, var(--color-primary) 5%, transparent);
+  border-color: color-mix(in srgb, var(--color-primary) 10%, transparent);
+}
+
+@supports (backdrop-filter: blur(1px)) {
+  .map-editor-details-panel {
+    background-color: color-mix(in srgb, var(--color-primary) 8%, transparent);
+  }
+  
+  :global(.dark) .map-editor-details-panel {
+    background-color: color-mix(in srgb, var(--color-primary) 6%, transparent);
+  }
+}
+
+.map-editor-details-content {
+  background-color: color-mix(in srgb, var(--color-primary) 5%, transparent);
+}
+
+:global(.dark) .map-editor-details-content {
+  background-color: color-mix(in srgb, var(--color-primary) 3%, transparent);
+}
+
+@supports (backdrop-filter: blur(1px)) {
+  .map-editor-details-content {
+    background-color: color-mix(in srgb, var(--color-primary) 8%, transparent);
+  }
+}
+</style>

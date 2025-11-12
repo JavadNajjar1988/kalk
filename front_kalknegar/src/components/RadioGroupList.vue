@@ -1,7 +1,7 @@
 <template>
   <RadioGroup v-model="selected">
     <RadioGroupLabel class="sr-only">{{ label }}</RadioGroupLabel>
-    <div class="-space-y-px rounded-2xl border border-blue-300/40 dark:border-blue-400/20 bg-blue-100/30 dark:bg-blue-900/30 backdrop-blur-xl shadow-lg shadow-blue-500/3">
+    <div class="radio-group-list-container -space-y-px rounded-2xl border backdrop-blur-xl shadow-lg">
       <RadioGroupOption
         as="template"
         v-for="(item, settingIdx) in items"
@@ -13,15 +13,15 @@
           :class="[
             settingIdx === 0 ? 'rounded-tl-2xl rounded-tr-2xl' : '',
             settingIdx === items.length - 1 ? 'rounded-br-2xl rounded-bl-2xl' : '',
-            checked ? 'z-10 border-blue-400/30 bg-blue-400/10 dark:bg-blue-400/15' : 'border-blue-300/40 dark:border-blue-400/20',
+            checked ? 'radio-group-item-checked z-10' : 'radio-group-item-unchecked',
             'relative flex cursor-pointer border p-4 focus:outline-hidden',
           ]"
         >
           <span
-            class="shrink-0"
+            class="shrink-0 radio-group-radio"
             :class="[
-              checked ? 'border-transparent bg-blue-500' : 'border-blue-300/40 dark:border-blue-400/20 bg-blue-100/10 dark:bg-blue-400/3',
-              active ? 'ring-2 ring-blue-400 ring-offset-2' : '',
+              checked ? 'radio-group-radio-checked' : 'radio-group-radio-unchecked',
+              active ? 'radio-group-radio-active' : '',
               'mt-0.5 flex h-4 w-4 cursor-pointer items-center justify-center rounded-full border',
             ]"
             aria-hidden="true"
@@ -67,3 +67,52 @@ defineProps<{
 
 const selected = defineModel<string>();
 </script>
+<style scoped>
+.radio-group-list-container {
+  background-color: color-mix(in srgb, var(--color-primary) 15%, transparent);
+  border-color: color-mix(in srgb, var(--color-primary) 25%, transparent);
+  box-shadow: 0 10px 15px -3px color-mix(in srgb, var(--color-primary) 3%, transparent);
+}
+
+:global(.dark) .radio-group-list-container {
+  background-color: color-mix(in srgb, var(--color-primary) 8%, transparent);
+  border-color: color-mix(in srgb, var(--color-primary) 15%, transparent);
+}
+
+.radio-group-item-checked {
+  background-color: color-mix(in srgb, var(--color-primary) 10%, transparent);
+  border-color: color-mix(in srgb, var(--color-primary) 20%, transparent);
+}
+
+:global(.dark) .radio-group-item-checked {
+  background-color: color-mix(in srgb, var(--color-primary) 8%, transparent);
+  border-color: color-mix(in srgb, var(--color-primary) 15%, transparent);
+}
+
+.radio-group-item-unchecked {
+  border-color: color-mix(in srgb, var(--color-primary) 25%, transparent);
+}
+
+:global(.dark) .radio-group-item-unchecked {
+  border-color: color-mix(in srgb, var(--color-primary) 15%, transparent);
+}
+
+.radio-group-radio-checked {
+  background-color: var(--color-primary);
+  border-color: transparent;
+}
+
+.radio-group-radio-unchecked {
+  background-color: color-mix(in srgb, var(--color-primary) 8%, transparent);
+  border-color: color-mix(in srgb, var(--color-primary) 25%, transparent);
+}
+
+:global(.dark) .radio-group-radio-unchecked {
+  background-color: color-mix(in srgb, var(--color-primary) 3%, transparent);
+  border-color: color-mix(in srgb, var(--color-primary) 15%, transparent);
+}
+
+.radio-group-radio-active {
+  box-shadow: 0 0 0 2px var(--color-background), 0 0 0 4px var(--color-primary);
+}
+</style>

@@ -397,7 +397,7 @@ function onContextMenuAction(action: string, options?: Record<string, any>) {
   >
     <div
       ref="el"
-      class="mb-2 w-full sm:max-w-5xl lg:max-w-7xl mx-auto transform overflow-hidden rounded-2xl shadow-xl text-xs transition-all select-none relative text-foreground backdrop-blur-md bg-blue-400/10 supports-[backdrop-filter]:bg-blue-400/15 border border-blue-400/30 dark:border-blue-500/30"
+      class="scenario-timeline mb-2 w-full sm:max-w-5xl lg:max-w-7xl mx-auto transform overflow-hidden rounded-2xl shadow-xl text-xs transition-all select-none relative text-foreground backdrop-blur-md"
       style="direction: ltr; text-align: left;"
       @pointerdown="onPointerDown"
       @pointerup="onPointerUp"
@@ -499,8 +499,45 @@ function onContextMenuAction(action: string, options?: Record<string, any>) {
       <div class="absolute left-1 top-1 hidden gap-1 sm:flex">
         <button type="button" class="rounded bg-muted/60 px-1.5 py-0.5 text-[0.7rem] hover:bg-muted" @click.stop="majorWidth = Math.max(majorWidth - 40, 55)">-</button>
         <button type="button" class="rounded bg-muted/60 px-1.5 py-0.5 text-[0.7rem] hover:bg-muted" @click.stop="majorWidth += 40">+</button>
-        <button type="button" class="rounded bg-primary/15 px-1.5 py-0.5 text-[0.7rem] text-primary hover:bg-primary/20" @click.stop="setCurrentTime(Date.now())">اکنون</button>
+        <button type="button" class="timeline-now-button rounded px-1.5 py-0.5 text-[0.7rem] text-primary" @click.stop="setCurrentTime(Date.now())">اکنون</button>
       </div>
     </div>
   </TimelineContextMenu>
 </template>
+<style scoped>
+.scenario-timeline {
+  background-color: color-mix(in srgb, var(--color-primary) 8%, transparent);
+  border: 1px solid color-mix(in srgb, var(--color-primary) 20%, transparent);
+}
+
+:global(.dark) .scenario-timeline {
+  background-color: color-mix(in srgb, var(--color-primary) 5%, transparent);
+  border-color: color-mix(in srgb, var(--color-primary) 15%, transparent);
+}
+
+@supports (backdrop-filter: blur(1px)) {
+  .scenario-timeline {
+    background-color: color-mix(in srgb, var(--color-primary) 10%, transparent);
+  }
+  
+  :global(.dark) .scenario-timeline {
+    background-color: color-mix(in srgb, var(--color-primary) 6%, transparent);
+  }
+}
+
+.timeline-now-button {
+  background-color: color-mix(in srgb, var(--color-primary) 10%, transparent);
+}
+
+.timeline-now-button:hover {
+  background-color: color-mix(in srgb, var(--color-primary) 15%, transparent);
+}
+
+:global(.dark) .timeline-now-button {
+  background-color: color-mix(in srgb, var(--color-primary) 6%, transparent);
+}
+
+:global(.dark) .timeline-now-button:hover {
+  background-color: color-mix(in srgb, var(--color-primary) 10%, transparent);
+}
+</style>

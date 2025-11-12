@@ -13,11 +13,11 @@ const isOpen = defineModel<boolean>({ default: true });
 <template>
   <Collapsible
     v-model="isOpen"
-    class="relative mb-4 overflow-hidden rounded-2xl border border-blue-200/30 dark:border-blue-400/30 bg-blue-100/60 dark:bg-blue-400/15 shadow-xl shadow-blue-500/5 hover:shadow-2xl hover:shadow-blue-500/10 transition-all duration-300 supports-[backdrop-filter]:bg-blue-300/30 dark:supports-[backdrop-filter]:bg-blue-400/20 backdrop-blur backdrop-saturate-150"
+    class="new-accordion-panel relative mb-4 overflow-hidden rounded-2xl border shadow-xl hover:shadow-2xl transition-all duration-300 backdrop-blur backdrop-saturate-150"
     v-slot="{ open }"
   >
     <CollapsibleTrigger
-      class="group flex w-full items-center justify-between px-4 py-3 text-sm font-semibold text-blue-700 dark:text-blue-300 bg-gradient-to-l from-white/50 to-transparent dark:from-blue-900/20 hover:bg-white/70 dark:hover:bg-blue-900/30 transition-colors duration-200"
+      class="new-accordion-panel-trigger group flex w-full items-center justify-between px-4 py-3 text-sm font-semibold bg-gradient-to-l from-white/50 to-transparent hover:bg-white/70 transition-colors duration-200"
     >
       <h3 class="flex items-center gap-2">
         {{ label }}
@@ -40,3 +40,42 @@ const isOpen = defineModel<boolean>({ default: true });
     </CollapsibleContent>
   </Collapsible>
 </template>
+<style scoped>
+.new-accordion-panel {
+  background-color: color-mix(in srgb, var(--color-primary) 30%, transparent);
+  border-color: color-mix(in srgb, var(--color-primary) 20%, transparent);
+  box-shadow: 0 20px 25px -5px color-mix(in srgb, var(--color-primary) 5%, transparent);
+}
+
+.new-accordion-panel:hover {
+  box-shadow: 0 25px 50px -12px color-mix(in srgb, var(--color-primary) 10%, transparent);
+}
+
+:global(.dark) .new-accordion-panel {
+  background-color: color-mix(in srgb, var(--color-primary) 8%, transparent);
+  border-color: color-mix(in srgb, var(--color-primary) 15%, transparent);
+}
+
+@supports (backdrop-filter: blur(1px)) {
+  .new-accordion-panel {
+    background-color: color-mix(in srgb, var(--color-primary) 20%, transparent);
+  }
+  
+  :global(.dark) .new-accordion-panel {
+    background-color: color-mix(in srgb, var(--color-primary) 10%, transparent);
+  }
+}
+
+.new-accordion-panel-trigger {
+  color: color-mix(in srgb, var(--color-primary) 90%, black);
+}
+
+:global(.dark) .new-accordion-panel-trigger {
+  color: color-mix(in srgb, var(--color-primary) 100%, white);
+  background: linear-gradient(to left, color-mix(in srgb, var(--color-primary) 10%, transparent), transparent);
+}
+
+:global(.dark) .new-accordion-panel-trigger:hover {
+  background-color: color-mix(in srgb, var(--color-primary) 15%, transparent);
+}
+</style>

@@ -54,7 +54,7 @@ const { measurementUnit } = storeToRefs(useMeasurementsStore());
         <Bars3Icon class="h-5 w-5" />
       </DropdownMenuTrigger>
       <DropdownMenuContent
-        class="text-right bg-blue-300/40 dark:bg-blue-400/15 backdrop-blur backdrop-saturate-150 border border-blue-300/60 dark:border-blue-400/30 rtl:mr-2"
+        class="text-right rtl:mr-2"
         align="end"
         :side-offset="12"
         dir="rtl"
@@ -72,7 +72,7 @@ const { measurementUnit } = storeToRefs(useMeasurementsStore());
       <DropdownMenuSeparator />
       <DropdownMenuSub>
         <DropdownMenuSubTrigger>فایل</DropdownMenuSubTrigger>
-        <DropdownMenuSubContent side="left" align="start" class="bg-blue-300/40 dark:bg-blue-400/15 backdrop-blur backdrop-saturate-150 border border-blue-300/60 dark:border-blue-400/30">
+        <DropdownMenuSubContent side="left" align="start">
           <DropdownMenuItem @select="emit('action', 'exportJson')"
             >دانلود سناریو
           </DropdownMenuItem>

@@ -1,7 +1,7 @@
 <template>
   <div class="bg-background flex h-dvh flex-col overflow-hidden" ref="dropZoneRef">
     <nav
-      class="dashboard-header relative flex shrink-0 items-center justify-between rounded-b-xl py-1.5 pr-4 pl-6 text-sm text-foreground print:hidden bg-blue-300/40 dark:bg-blue-400/15 backdrop-blur backdrop-saturate-150 supports-[backdrop-filter]:bg-blue-300/30 dark:supports-[backdrop-filter]:bg-blue-400/20 border-b border-blue-300/60 dark:border-blue-400/30"
+      class="dashboard-header relative flex shrink-0 items-center justify-between rounded-b-xl py-1.5 pr-4 pl-6 text-sm text-foreground print:hidden border-b"
     >
       <div class="flex min-w-0 flex-auto items-center">
         <div class="flex min-w-0 flex-auto items-center">
@@ -15,7 +15,7 @@
           </button>
         </div>
       </div>
-      <div class="flex shrink-0 items-center gap-1 overflow-clip sm:gap-2">
+      <div class="flex shrink-0 items-center gap-1 sm:gap-2">
         <PlaybackMenu v-if="route.name === MAP_EDIT_MODE_ROUTE" />
         
         <button
@@ -79,6 +79,44 @@
        
           <IconKeyboard class="block h-5 w-5" />
         </button>
+
+        <div class="relative hidden sm:block" ref="themeMenuRef">
+          <button
+            @click="themeMenuOpen = !themeMenuOpen"
+            class="inline-flex items-center justify-center rounded-lg p-1.5 text-slate-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-600 hover:text-indigo-600 dark:hover:text-white focus:ring-2 focus:ring-indigo-300 dark:focus:ring-white focus:outline-hidden focus:ring-inset transition-all duration-200"
+            title="انتخاب تم"
+          >
+            <IconPalette class="block h-5 w-5" />
+          </button>
+          <div
+            v-if="themeMenuOpen"
+            dir="rtl"
+            class="absolute left-0 top-full z-50 mt-2 w-60 rounded-2xl border border-slate-200/70 bg-white/95 p-3 text-right shadow-2xl backdrop-blur-md dark:border-slate-700/60 dark:bg-slate-900/95"
+          >
+            <div
+              class="flex items-center justify-between border-b border-slate-200/70 pb-2 text-xs font-semibold text-slate-700 dark:border-slate-700/60 dark:text-slate-200"
+            >
+              <span>انتخاب تم</span>
+              <button class="theme-menu-close-button text-[11px]" @click="themeMenuOpen = false">بستن</button>
+            </div>
+            <p class="mt-2 text-[11px] text-slate-500 dark:text-slate-400">
+              یکی از ترکیب‌رنگ‌های زیر را برای محیط کار انتخاب کنید.
+            </p>
+            <div class="mt-3 grid grid-cols-2 gap-3">
+              <button
+                v-for="option in themeOptions"
+                :key="option.key"
+                @click="selectTheme(option.key)"
+                class="flex flex-col rounded-xl border p-2 text-right transition-all duration-200"
+                :class="selectedTheme === option.key ? 'scale-[1.02]' : 'hover:-translate-y-0.5'"
+                :style="getThemeOptionStyle(option.key)"
+              >
+                <span class="text-[11px] font-medium text-slate-600 dark:text-slate-300">{{ option.label }}</span>
+                <span class="mt-2 block h-8 w-full rounded-lg" :style="{ background: option.preview }"></span>
+              </button>
+            </div>
+          </div>
+        </div>
 
         <button
           class="inline-flex items-center justify-center rounded-lg p-1.5 text-slate-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-600 hover:text-slate-800 dark:hover:text-white focus:ring-2 focus:ring-red-300 dark:focus:ring-white focus:outline-hidden focus:ring-inset transition-all duration-200"
@@ -195,12 +233,21 @@ import { useRoute, useRouter } from "vue-router";
 import { useUiStore } from "@/stores/uiStore";
 import {
   IconKeyboard,
+  IconPalette,
   IconRedoVariant as IconRedo,
   IconSitemap,
   IconUndoVariant as IconUndo,
 } from "@iconify-prerendered/vue-mdi";
+import {
+  applyThemePreset,
+  initializeTheme,
+  persistThemeSelection,
+  themeOptions as sharedThemeOptions,
+  themePresets,
+  type ThemeKey,
+} from "@/constants/themePresets";
 
-import { createEventHook, useClipboard, useTitle, watchOnce } from "@vueuse/core";
+import { createEventHook, onClickOutside, useClipboard, useTitle, watchOnce } from "@vueuse/core";
 import MainViewSlideOver from "@/components/MainViewSlideOver.vue";
 import { type ScenarioActions, TAB_LAYERS, type UiAction } from "@/types/constants";
 import AppNotifications from "@/components/AppNotifications.vue";
@@ -305,6 +352,52 @@ const showLoadModal = ref(false);
 const shortcutsModalVisible = ref(false);
 const showExportModal = ref(false);
 const showImportModal = ref(false);
+const themeOptions = sharedThemeOptions;
+const selectedTheme = ref<ThemeKey>(initializeTheme());
+const themeMenuOpen = ref(false);
+const themeMenuRef = ref<HTMLElement | null>(null);
+
+onClickOutside(themeMenuRef, () => {
+  if (themeMenuOpen.value) themeMenuOpen.value = false;
+});
+
+const hexToRgba = (hex: string, alpha: number) => {
+  let normalized = hex.replace("#", "");
+  if (normalized.length === 3) {
+    normalized = normalized
+      .split("")
+      .map((char) => char + char)
+      .join("");
+  }
+  const bigint = Number.parseInt(normalized, 16);
+  const r = (bigint >> 16) & 255;
+  const g = (bigint >> 8) & 255;
+  const b = bigint & 255;
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+};
+
+const getThemeOptionStyle = (key: ThemeKey) => {
+  const preset = themePresets[key];
+  if (!preset) return {};
+  if (selectedTheme.value === key) {
+    return {
+      borderColor: preset.accent,
+      backgroundColor: hexToRgba(preset.accent, 0.08),
+      boxShadow: `0 12px 30px ${hexToRgba(preset.accent, 0.35)}`,
+    };
+  }
+  return {
+    borderColor: "rgba(148, 163, 184, 0.45)",
+    backgroundColor: "rgba(248, 250, 252, 0.85)",
+  };
+};
+
+const selectTheme = (themeKey: ThemeKey) => {
+  applyThemePreset(themeKey);
+  persistThemeSelection(themeKey);
+  selectedTheme.value = themeKey;
+  themeMenuOpen.value = false;
+};
 
 useTimeFormatterProvider({ activeScenario: props.activeScenario });
 
@@ -462,3 +555,21 @@ if (state.layers.length > 0) {
   activeLayerId.value = state.layers[0];
 }
 </script>
+<style scoped>
+.theme-menu-close-button {
+  color: color-mix(in srgb, var(--color-primary) 80%, black);
+}
+
+.theme-menu-close-button:hover {
+  color: color-mix(in srgb, var(--color-primary) 100%, black);
+}
+
+:global(.dark) .theme-menu-close-button {
+  color: color-mix(in srgb, var(--color-primary) 100%, white);
+}
+
+:global(.dark) .theme-menu-close-button:hover {
+  color: color-mix(in srgb, var(--color-primary) 100%, white);
+  opacity: 0.8;
+}
+</style>

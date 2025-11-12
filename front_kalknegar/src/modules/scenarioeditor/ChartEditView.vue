@@ -2,10 +2,10 @@
   <div class="relative flex min-h-0 flex-auto pt-11">
     <ResizablePanel
       v-model:width="panelWidth"
-      class="relative z-10 flex h-full flex-col justify-between overflow-auto overflow-visible border-r-2 bg-blue-300/20 dark:bg-blue-400/10 backdrop-blur-sm backdrop-saturate-150 print:hidden"
+      class="chart-edit-sidebar relative z-10 flex h-full flex-col justify-between overflow-auto overflow-visible border-r-2 backdrop-blur-sm backdrop-saturate-150 print:hidden"
     >
       <TabGroup :selected-index="selectedTab" @change="changeTab">
-        <TabList class="-mb-px flex border-b border-blue-300/40 dark:border-blue-400/30 bg-blue-300/20 dark:bg-blue-400/10 backdrop-blur-sm backdrop-saturate-150 rounded-t-2xl">
+        <TabList class="chart-edit-tab-list -mb-px flex border-b backdrop-blur-sm backdrop-saturate-150 rounded-t-2xl">
           <Tab
             as="template"
             v-for="tab in ['آرایش نبرد', 'تنظیمات نمودار']"
@@ -15,8 +15,8 @@
             <button
               :class="[
                 selected
-                  ? 'border-blue-500 text-blue-600 dark:text-blue-400 bg-blue-300/30 dark:bg-blue-400/20 backdrop-blur-sm'
-                  : 'border-transparent text-slate-500 hover:border-blue-300 hover:text-blue-600 dark:text-slate-400 dark:hover:text-blue-400',
+                  ? 'chart-edit-tab-active'
+                  : 'chart-edit-tab-inactive',
                 'w-1/2 border-b-2 px-4 py-4 text-center text-sm font-medium transition-all duration-200 rounded-t-lg',
               ]"
             >
@@ -36,12 +36,12 @@
         </TabPanels>
       </TabGroup>
     </ResizablePanel>
-    <main class="relative h-full flex-auto bg-blue-300/20 dark:bg-blue-400/10 backdrop-blur-sm backdrop-saturate-150">
+    <main class="chart-edit-main relative h-full flex-auto backdrop-blur-sm backdrop-saturate-150">
       <SimpleBreadcrumbs
-        class="bg-blue-300/20 dark:bg-blue-400/10 backdrop-blur-sm backdrop-saturate-150 border border-blue-300/40 dark:border-blue-400/30 absolute top-2 left-2 z-10 rounded-xl px-3 py-2 shadow-lg print:hidden"
+        class="chart-edit-breadcrumbs backdrop-blur-sm backdrop-saturate-150 border absolute top-2 left-2 z-10 rounded-xl px-3 py-2 shadow-lg print:hidden"
         :items="breadcrumbItems"
       />
-      <nav class="absolute top-2 right-4 z-10 rounded-2xl bg-blue-300/20 dark:bg-blue-400/10 backdrop-blur-sm backdrop-saturate-150 border border-blue-300/40 dark:border-blue-400/30 shadow-lg print:hidden">
+      <nav class="chart-edit-nav absolute top-2 right-4 z-10 rounded-2xl backdrop-blur-sm backdrop-saturate-150 border shadow-lg print:hidden">
         <DotsMenu :items="menuItems" />
       </nav>
 
@@ -235,3 +235,81 @@ const menuItems: MenuItemData<Function>[] = [
   { label: "دانلود به عنوان PNG", action: doPNGDownload },
 ];
 </script>
+<style scoped>
+.chart-edit-sidebar {
+  background-color: color-mix(in srgb, var(--color-primary) 15%, transparent);
+  border-right-color: color-mix(in srgb, var(--color-primary) 25%, transparent);
+}
+
+:global(.dark) .chart-edit-sidebar {
+  background-color: color-mix(in srgb, var(--color-primary) 8%, transparent);
+  border-right-color: color-mix(in srgb, var(--color-primary) 15%, transparent);
+}
+
+.chart-edit-tab-list {
+  background-color: color-mix(in srgb, var(--color-primary) 15%, transparent);
+  border-bottom-color: color-mix(in srgb, var(--color-primary) 25%, transparent);
+}
+
+:global(.dark) .chart-edit-tab-list {
+  background-color: color-mix(in srgb, var(--color-primary) 8%, transparent);
+  border-bottom-color: color-mix(in srgb, var(--color-primary) 15%, transparent);
+}
+
+.chart-edit-tab-active {
+  border-bottom-color: var(--color-primary);
+  color: color-mix(in srgb, var(--color-primary) 90%, black);
+  background-color: color-mix(in srgb, var(--color-primary) 20%, transparent);
+}
+
+:global(.dark) .chart-edit-tab-active {
+  color: color-mix(in srgb, var(--color-primary) 100%, white);
+  background-color: color-mix(in srgb, var(--color-primary) 10%, transparent);
+}
+
+.chart-edit-tab-inactive {
+  border-bottom-color: transparent;
+  color: rgb(100 116 139);
+}
+
+.chart-edit-tab-inactive:hover {
+  border-bottom-color: color-mix(in srgb, var(--color-primary) 25%, transparent);
+  color: color-mix(in srgb, var(--color-primary) 80%, black);
+}
+
+:global(.dark) .chart-edit-tab-inactive {
+  color: rgb(148 163 184);
+}
+
+:global(.dark) .chart-edit-tab-inactive:hover {
+  color: color-mix(in srgb, var(--color-primary) 100%, white);
+}
+
+.chart-edit-main {
+  background-color: color-mix(in srgb, var(--color-primary) 15%, transparent);
+}
+
+:global(.dark) .chart-edit-main {
+  background-color: color-mix(in srgb, var(--color-primary) 8%, transparent);
+}
+
+.chart-edit-breadcrumbs {
+  background-color: color-mix(in srgb, var(--color-primary) 15%, transparent);
+  border-color: color-mix(in srgb, var(--color-primary) 25%, transparent);
+}
+
+:global(.dark) .chart-edit-breadcrumbs {
+  background-color: color-mix(in srgb, var(--color-primary) 8%, transparent);
+  border-color: color-mix(in srgb, var(--color-primary) 15%, transparent);
+}
+
+.chart-edit-nav {
+  background-color: color-mix(in srgb, var(--color-primary) 15%, transparent);
+  border-color: color-mix(in srgb, var(--color-primary) 25%, transparent);
+}
+
+:global(.dark) .chart-edit-nav {
+  background-color: color-mix(in srgb, var(--color-primary) 8%, transparent);
+  border-color: color-mix(in srgb, var(--color-primary) 15%, transparent);
+}
+</style>

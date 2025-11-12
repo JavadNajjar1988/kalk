@@ -24,17 +24,17 @@
           leave-to="opacity-0 scale-95 -translate-y-4"
         >
           <DialogPanel
-            class="ring-opacity-5 mx-auto max-w-xl transform divide-y divide-cyan-200/30 overflow-hidden rounded-2xl shadow-2xl ring-1 ring-cyan-300/30 transition-all backdrop-blur-xl backdrop-saturate-150"
-            :class="isGeoSearch ? 'bg-red-500/20' : 'bg-cyan-50/20 dark:bg-cyan-900/20'"
+            class="command-palette-panel ring-opacity-5 mx-auto max-w-xl transform divide-y overflow-hidden rounded-2xl shadow-2xl ring-1 transition-all backdrop-blur-xl backdrop-saturate-150"
+            :class="isGeoSearch ? 'command-palette-geo' : ''"
           >
             <Combobox @update:modelValue="onSelect">
               <div class="relative">
                 <MagnifyingGlass
-                  class="pointer-events-none absolute top-3.5 left-4 h-5 w-5 text-cyan-600 dark:text-cyan-400"
+                  class="command-palette-icon pointer-events-none absolute top-3.5 left-4 h-5 w-5"
                   aria-hidden="true"
                 />
                 <ComboboxInput
-                  class="h-12 w-full border-0 bg-transparent pr-4 pl-11 text-cyan-800 dark:text-cyan-200 placeholder:text-cyan-500 dark:placeholder:text-cyan-400 focus:ring-0 sm:text-sm"
+                  class="command-palette-input h-12 w-full border-0 bg-transparent pr-4 pl-11 focus:ring-0 sm:text-sm"
                   placeholder="جستجو..."
                   @change="rawQuery = $event.target.value"
                 />
@@ -264,3 +264,64 @@ function onSelect(
   open.value = false;
 }
 </script>
+<style scoped>
+.command-palette-panel {
+  background-color: color-mix(in srgb, var(--color-primary) 20%, transparent);
+  border-color: color-mix(in srgb, var(--color-primary) 35%, transparent);
+}
+
+.command-palette-panel > * {
+  border-color: color-mix(in srgb, var(--color-primary) 20%, transparent);
+}
+
+:global(.dark) .command-palette-panel {
+  background-color: color-mix(in srgb, var(--color-primary) 8%, transparent);
+  border-color: color-mix(in srgb, var(--color-primary) 15%, transparent);
+}
+
+:global(.dark) .command-palette-panel > * {
+  border-color: color-mix(in srgb, var(--color-primary) 15%, transparent);
+}
+
+@supports (backdrop-filter: blur(1px)) {
+  .command-palette-panel {
+    background-color: color-mix(in srgb, var(--color-primary) 15%, transparent);
+  }
+  
+  :global(.dark) .command-palette-panel {
+    background-color: color-mix(in srgb, var(--color-primary) 10%, transparent);
+  }
+}
+
+.command-palette-geo {
+  background-color: color-mix(in srgb, var(--color-destructive) 20%, transparent) !important;
+}
+
+:global(.dark) .command-palette-geo {
+  background-color: color-mix(in srgb, var(--color-destructive) 8%, transparent) !important;
+}
+
+.command-palette-icon {
+  color: color-mix(in srgb, var(--color-primary) 80%, black);
+}
+
+:global(.dark) .command-palette-icon {
+  color: color-mix(in srgb, var(--color-primary) 100%, white);
+}
+
+.command-palette-input {
+  color: color-mix(in srgb, var(--color-primary) 90%, black);
+}
+
+.command-palette-input::placeholder {
+  color: color-mix(in srgb, var(--color-primary) 60%, transparent);
+}
+
+:global(.dark) .command-palette-input {
+  color: color-mix(in srgb, var(--color-primary) 100%, white);
+}
+
+:global(.dark) .command-palette-input::placeholder {
+  color: color-mix(in srgb, var(--color-primary) 70%, transparent);
+}
+</style>

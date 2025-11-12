@@ -1,6 +1,6 @@
 <template>
   <aside
-    class="pointer-events-auto relative hidden max-h-[80vh] overflow-auto rounded-2xl md:block bg-blue-300/40 dark:bg-blue-400/15 backdrop-blur-md backdrop-saturate-150 supports-[backdrop-filter]:bg-blue-300/30 dark:supports-[backdrop-filter]:bg-blue-400/20 border border-blue-300/60 dark:border-blue-400/30 shadow-xl mt-2 text-right"
+    class="map-editor-panel pointer-events-auto relative hidden max-h-[80vh] overflow-auto rounded-2xl md:block backdrop-blur-md backdrop-saturate-150 shadow-xl mt-2 text-right"
     dir="rtl"
     :style="{ width: orbatPanelWidth + 'px' }"
   >
@@ -12,7 +12,7 @@
       @change="changeTab"
     >
       <TabList
-        class="flex flex-0 w-full justify-between border-b rounded-t-2xl rtl:flex-row-reverse bg-blue-300/30 dark:bg-blue-400/10 backdrop-blur-sm border-blue-300/50 dark:border-blue-400/30"
+        class="map-editor-tab-list flex flex-0 w-full justify-between border-b rounded-t-2xl rtl:flex-row-reverse backdrop-blur-sm"
       >
         <div class="flex items-center gap-1 w-full">
           <Tab
@@ -24,8 +24,8 @@
             <button
               :class="[
                 selected
-                  ? 'text-blue-900 dark:text-blue-100 border-b-2 border-blue-300/60 dark:border-blue-400/30 bg-blue-300/30 dark:bg-blue-400/10 backdrop-blur-sm'
-                  : 'text-muted-foreground hover:text-foreground hover:bg-blue-300/20 dark:hover:bg-blue-400/10',
+                  ? 'map-editor-tab-active backdrop-blur-sm'
+                  : 'map-editor-tab-inactive text-muted-foreground hover:text-foreground',
                 'flex-1 px-2 py-1.5 text-center text-xs font-medium rounded-t-lg transition-all duration-200',
               ]"
             >
@@ -107,3 +107,54 @@ function onEventClick(scenarioEvent: ScenarioEvent) {
   activeScenarioEventId.value = scenarioEvent.id;
 }
 </script>
+<style scoped>
+.map-editor-panel {
+  background-color: color-mix(in srgb, var(--color-primary) 20%, transparent);
+  border: 1px solid color-mix(in srgb, var(--color-primary) 35%, transparent);
+}
+
+:global(.dark) .map-editor-panel {
+  background-color: color-mix(in srgb, var(--color-primary) 8%, transparent);
+  border-color: color-mix(in srgb, var(--color-primary) 15%, transparent);
+}
+
+@supports (backdrop-filter: blur(1px)) {
+  .map-editor-panel {
+    background-color: color-mix(in srgb, var(--color-primary) 15%, transparent);
+  }
+  
+  :global(.dark) .map-editor-panel {
+    background-color: color-mix(in srgb, var(--color-primary) 10%, transparent);
+  }
+}
+
+.map-editor-tab-list {
+  background-color: color-mix(in srgb, var(--color-primary) 18%, transparent);
+  border-color: color-mix(in srgb, var(--color-primary) 30%, transparent);
+}
+
+:global(.dark) .map-editor-tab-list {
+  background-color: color-mix(in srgb, var(--color-primary) 6%, transparent);
+  border-color: color-mix(in srgb, var(--color-primary) 15%, transparent);
+}
+
+.map-editor-tab-active {
+  color: color-mix(in srgb, var(--color-primary) 90%, black);
+  border-bottom: 2px solid color-mix(in srgb, var(--color-primary) 35%, transparent);
+  background-color: color-mix(in srgb, var(--color-primary) 18%, transparent);
+}
+
+:global(.dark) .map-editor-tab-active {
+  color: color-mix(in srgb, var(--color-primary) 100%, white);
+  border-bottom-color: color-mix(in srgb, var(--color-primary) 15%, transparent);
+  background-color: color-mix(in srgb, var(--color-primary) 6%, transparent);
+}
+
+.map-editor-tab-inactive:hover {
+  background-color: color-mix(in srgb, var(--color-primary) 12%, transparent);
+}
+
+:global(.dark) .map-editor-tab-inactive:hover {
+  background-color: color-mix(in srgb, var(--color-primary) 5%, transparent);
+}
+</style>

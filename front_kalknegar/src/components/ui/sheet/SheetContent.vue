@@ -39,7 +39,7 @@ const forwarded = useForwardPropsEmits(delegatedProps, emits);
       data-slot="sheet-content"
       :class="
         cn(
-          'bg-blue-400/10 supports-[backdrop-filter]:bg-blue-400/15 backdrop-blur-md border border-blue-400/30 dark:border-blue-500/30 text-foreground data-[state=open]:animate-in data-[state=closed]:animate-out fixed z-50 flex flex-col gap-4 shadow-xl transition ease-in-out data-[state=closed]:duration-300 data-[state=open]:duration-500',
+          'sheet-content backdrop-blur-md text-foreground data-[state=open]:animate-in data-[state=closed]:animate-out fixed z-50 flex flex-col gap-4 shadow-xl transition ease-in-out data-[state=closed]:duration-300 data-[state=open]:duration-500',
           side === 'right' &&
             'data-[state=closed]:slide-out-to-left data-[state=open]:slide-in-from-left inset-y-0 left-0 h-full w-3/4 sm:max-w-sm rounded-r-2xl rtl:sm:rounded-l-2xl rtl:sm:rounded-r-none',
           side === 'left' &&
@@ -64,3 +64,24 @@ const forwarded = useForwardPropsEmits(delegatedProps, emits);
     </DialogContent>
   </DialogPortal>
 </template>
+<style scoped>
+.sheet-content {
+  background-color: color-mix(in srgb, var(--color-primary) 10%, transparent);
+  border-color: color-mix(in srgb, var(--color-primary) 30%, transparent);
+}
+
+:global(.dark) .sheet-content {
+  background-color: color-mix(in srgb, var(--color-primary) 5%, transparent);
+  border-color: color-mix(in srgb, var(--color-primary) 15%, transparent);
+}
+
+@supports (backdrop-filter: blur(1px)) {
+  .sheet-content {
+    background-color: color-mix(in srgb, var(--color-primary) 15%, transparent);
+  }
+  
+  :global(.dark) .sheet-content {
+    background-color: color-mix(in srgb, var(--color-primary) 8%, transparent);
+  }
+}
+</style>
