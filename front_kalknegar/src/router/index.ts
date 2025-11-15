@@ -10,8 +10,7 @@ import {
   NEW_SCENARIO_ROUTE,
   ORBAT_CHART_ROUTE,
   STORY_MODE_ROUTE,
-  TACTICAL_GRAPHICS_ROUTE,
-  TACTICAL_SYMBOL_DEFINITION_ROUTE,
+  ODIN_SYMBOLS_DEMO_ROUTE,
 } from "@/router/names";
 
 declare module "vue-router" {
@@ -36,9 +35,8 @@ const ScenarioEditorMap = () => import("@/modules/scenarioeditor/ScenarioEditorM
   console.error('Failed to load ScenarioEditorMap:', err);
   return import("@/views/ErrorFallback.vue"); // Fallback component
 });
-const TacticalGraphicsView = () => import("../views/TacticalGraphicsView.vue");
 const SymbolDesignerPage = () => import("../modules/tactical-symbol-designer/SymbolDesignerPage.vue");
-const TacticalSymbolDefinitionPage = () => import("../modules/tactical-symbols/TacticalSymbolDefinitionPage.vue");
+const OdinSymbolsDemo = () => import("../views/OdinSymbolsDemo.vue");
 const routes = [
   {
     path: "/scenario/:scenarioId",
@@ -116,19 +114,11 @@ const routes = [
       NProgress.start();
     },
   },
-  {
-    path: "/tactical-symbols",
-    name: TACTICAL_SYMBOL_DEFINITION_ROUTE,
-    component: TacticalSymbolDefinitionPage,
-    beforeEnter: (to, from) => {
-      NProgress.start();
-    },
-  },
   { path: "/", name: LANDING_PAGE_ROUTE, component: LandingPage },
   {
-    path: "/tactical-graphics",
-    name: TACTICAL_GRAPHICS_ROUTE,
-    component: TacticalGraphicsView,
+    path: "/odin-symbols-demo",
+    name: ODIN_SYMBOLS_DEMO_ROUTE,
+    component: OdinSymbolsDemo,
     beforeEnter: (to, from) => {
       NProgress.start();
     },
