@@ -1,4 +1,4 @@
-import { PI_OVER_4 } from '../../Math'
+import { PI_OVER_4 } from '../Math'
 
 const COLOR_WHITE = 'white'
 const COLOR_BLACK = 'black'

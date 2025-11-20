@@ -1,5 +1,5 @@
 import * as TS from '../ts'
-import { PI_OVER_2 } from '../../Math'
+import { PI_OVER_2 } from '../Math'
 
 const canvas = document.createElement('canvas')
 const context = canvas.getContext('2d')

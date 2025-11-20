@@ -1,6 +1,6 @@
 import * as R from 'ramda'
 import * as olStyle from 'ol/style'
-import { PI_OVER_2, PI } from '../../Math'
+import { PI_OVER_2, PI } from '../Math'
 import { Symbol } from '@syncpoint/signs'
 import * as patterns from './patterns'
 

@@ -179,3 +179,25 @@ export const specialization = sidc => {
   else if (geometry && geometry.layout === 'corridor') return 'CORRIDOR'
   else return
 }
+
+// Default export for compatibility
+export default {
+  parameterized,
+  schemaCode,
+  battleDimensionCode,
+  identityCode,
+  statusCode,
+  functionIdCode,
+  modifierCode,
+  echelonCode,
+  mobilityCode,
+  format,
+  MODIFIERS,
+  symbols,
+  descriptors,
+  descriptor,
+  geometry,
+  geometryType,
+  className,
+  specialization
+}

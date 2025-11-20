@@ -1,8 +1,8 @@
 import Feature from 'ol/Feature'
 import * as geom from 'ol/geom'
 import { getPointResolution } from 'ol/proj'
-import * as TS from '../ol/ts'
-import { codeUTM, firstCoordinate } from '../epsg'
+import * as TS from './ts'
+import { codeUTM, firstCoordinate } from './epsg'
 
 export const geometryType = arg => {
   // OpenLayers:

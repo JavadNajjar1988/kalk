@@ -4,7 +4,7 @@
  * مطابق با Vue ORBAT Mapper
  */
 
-import React, { useMemo, useState, useEffect, useCallback, memo } from 'react';
+import React, { useMemo, useCallback, memo } from 'react';
 import {
   Box,
   Typography,
@@ -12,6 +12,8 @@ import {
   useTheme,
   alpha
 } from '@mui/material';
+import ms from 'milsymbol';
+import type { SymbolOptions } from 'milsymbol';
 import { buildSIDC } from '../constants/militarySymbols';
 
 interface MilitarySymbolPreviewProps {
@@ -22,13 +24,8 @@ interface MilitarySymbolPreviewProps {
   size?: number;
   showDetails?: boolean;
   compact?: boolean; // New prop for dropdown usage
-}
-
-// Global reference to milsymbol library
-declare global {
-  interface Window {
-    ms: any;
-  }
+  symbologyStandard?: string;
+  symbolOptions?: Partial<SymbolOptions>;
 }
 
 // Error boundary component for handling symbol rendering errors
@@ -62,35 +59,86 @@ class SymbolErrorBoundary extends React.Component<
 const symbolCache = new Map<string, string>();
 const MAX_CACHE_SIZE = 100;
 
+// Custom color modes (mirrors Kalknegar implementation for special identities)
+const CUSTOM_IDENTITY_COLOR_MODE = (() => {
+  const base = ms.getColorMode('Light');
+  return { ...base, Friend: 'rgb(170, 176, 116)' };
+})();
+
+const CUSTOM_IDENTITY_FRAME_COLOR = (() => {
+  const base = ms.getColorMode('FrameColor');
+  return { ...base, Friend: 'rgb(65, 70, 22)' };
+})();
+
+const CUSTOM_ALT_IDENTITY_COLOR_MODE = (() => {
+  const base = ms.getColorMode('Light');
+  return { ...base, Friend: base.Hostile };
+})();
+
+const replaceCharAt = (value: string, index: number, char: string) => {
+  if (index < 0 || index >= value.length) return value;
+  return value.substring(0, index) + char + value.substring(index + 1);
+};
+
+const prepareIdentityOptions = (sidc: string, options: Partial<SymbolOptions> = {}) => {
+  if (!sidc || sidc.length <= 3) {
+    return { sidc, options };
+  }
+  
+  const identity = sidc.charAt(3);
+  if (identity === '7') {
+    return {
+      sidc: replaceCharAt(sidc, 3, '3'),
+      options: {
+        ...options,
+        colorMode: CUSTOM_IDENTITY_COLOR_MODE,
+        frameColor: CUSTOM_IDENTITY_FRAME_COLOR,
+        iconColor: CUSTOM_IDENTITY_FRAME_COLOR
+      }
+    };
+  }
+  
+  if (identity === '8') {
+    return {
+      sidc: replaceCharAt(sidc, 3, '3'),
+      options: {
+        ...options,
+        colorMode: CUSTOM_ALT_IDENTITY_COLOR_MODE
+      }
+    };
+  }
+  
+  return { sidc, options };
+};
+
 // Performance-optimized symbol generator with caching
-const generateSymbolWithCache = (sidc: string, options: any): string | null => {
-  const cacheKey = `${sidc}_${JSON.stringify(options)}`;
+const generateSymbolWithCache = (sidc: string, options: Partial<SymbolOptions> = {}): string | null => {
+  const { sidc: normalizedSidc, options: normalizedOptions } = prepareIdentityOptions(sidc, options);
+  const cacheKey = `${normalizedSidc}_${JSON.stringify(normalizedOptions)}`;
   
   // Check cache first
   if (symbolCache.has(cacheKey)) {
     return symbolCache.get(cacheKey)!;
   }
   
-  // Generate new symbol
-  if (typeof window !== 'undefined' && window.ms) {
-    try {
-      const symbol = new window.ms.Symbol(sidc, options);
-      const svgString = symbol.asSVG();
-      
-      if (svgString && svgString.trim() !== '') {
-        // Add to cache (with size limit)
-        if (symbolCache.size >= MAX_CACHE_SIZE) {
-          const firstKey = symbolCache.keys().next().value;
-          if (firstKey) {
-            symbolCache.delete(firstKey);
-          }
+  // Generate new symbol using milsymbol library
+  try {
+    const symbol = new ms.Symbol(normalizedSidc, normalizedOptions);
+    const svgString = symbol.asSVG();
+    
+    if (svgString && svgString.trim() !== '') {
+      // Add to cache (with size limit)
+      if (symbolCache.size >= MAX_CACHE_SIZE) {
+        const firstKey = symbolCache.keys().next().value;
+        if (firstKey) {
+          symbolCache.delete(firstKey);
         }
-        symbolCache.set(cacheKey, svgString);
-        return svgString;
       }
-    } catch (error) {
-      console.warn('Error generating cached symbol:', error);
+      symbolCache.set(cacheKey, svgString);
+      return svgString;
     }
+  } catch (error) {
+    console.warn('Error generating cached symbol:', error);
   }
   
   return null;
@@ -103,24 +151,11 @@ const MilitarySymbolPreview = memo<MilitarySymbolPreviewProps>(({
   fillColor,
   size = 60,
   showDetails = false,
-  compact = false
+  compact = false,
+  symbologyStandard,
+  symbolOptions: customSymbolOptions
 }) => {
   const theme = useTheme();
-  const [isLibraryReady, setIsLibraryReady] = useState(false);
-  
-  // Check if milsymbol library is loaded
-  useEffect(() => {
-    const checkLibrary = () => {
-      if (typeof window !== 'undefined' && window.ms) {
-        setIsLibraryReady(true);
-      } else {
-        // Retry after a short delay
-        setTimeout(checkLibrary, 100);
-      }
-    };
-    
-    checkLibrary();
-  }, []);
   
   // Build SIDC code (مطابق با Vue ORBAT Mapper)
   const sidc = useMemo(() => {
@@ -145,19 +180,17 @@ const MilitarySymbolPreview = memo<MilitarySymbolPreviewProps>(({
   
   // Generate symbol using cached milsymbol library for performance
   const symbolSvg = useMemo(() => {
-    // Check if milsymbol library is loaded
-    if (!isLibraryReady || typeof window === 'undefined' || !window.ms) {
-      console.debug('MilSymbol library not loaded yet');
-      return null;
-    }
+    const resolvedFillColor = customSymbolOptions?.fillColor ?? fillColor ?? getIdentityColor(standardIdentity);
     
-    const symbolOptions = {
-      size: size,
-      fillColor: getIdentityColor(standardIdentity),
-      simpleStatusModifier: true,
+    const symbolOptions: Partial<SymbolOptions> = {
+      size,
       outlineColor: 'white',
-      outlineWidth: compact ? 2 : 4,
-      strokeWidth: 0 // Remove stroke as requested
+      outlineWidth: compact ? 4 : 8,
+      strokeWidth: 0,
+      simpleStatusModifier: false,
+      ...(symbologyStandard ? { symbologyStandard } : {}),
+      ...customSymbolOptions,
+      fillColor: resolvedFillColor
     };
     
     // Use cached symbol generation for better performance
@@ -168,7 +201,7 @@ const MilitarySymbolPreview = memo<MilitarySymbolPreviewProps>(({
     
     console.warn('Failed to generate symbol:', sidc);
     return null;
-  }, [sidc, size, standardIdentity, compact, isLibraryReady, getIdentityColor]);
+  }, [sidc, size, standardIdentity, compact, getIdentityColor, customSymbolOptions, symbologyStandard, fillColor]);
   
   // Get fallback component for error boundary
   const fallbackComponent = (

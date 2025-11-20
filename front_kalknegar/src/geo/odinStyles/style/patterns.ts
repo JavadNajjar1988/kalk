@@ -1,5 +1,5 @@
 import { DEVICE_PIXEL_RATIO } from 'ol/has'
-import { DEG2RAD } from '../../Math'
+import { DEG2RAD } from '../Math'
 
 const patterns = {
   hatch: {

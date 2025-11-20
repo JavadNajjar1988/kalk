@@ -12,3 +12,9 @@ export const svg = (sidc, options = defaultOptions) => {
   const symbol = new Symbol(format(sidc), options)
   return symbol.asSVG()
 }
+
+// Default export for compatibility
+export default {
+  svg,
+  format
+}

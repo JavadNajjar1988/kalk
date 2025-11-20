@@ -38,6 +38,7 @@ export function prepareOdinFeature(
     
     // Resolution signals (باید از map view دریافت شود)
     centerResolution: options.centerResolution || Signal.of(1),
+    selectionMode: Signal.of('default'),
     
     // Style signals
     globalStyle: Signal.of(options.globalStyle || {}),

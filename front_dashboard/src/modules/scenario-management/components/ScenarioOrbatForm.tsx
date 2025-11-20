@@ -220,6 +220,7 @@ const ScenarioOrbatForm: React.FC<ScenarioOrbatFormProps> = ({
                               size={24}
                               showDetails={false}
                               compact={true}
+                              symbologyStandard={formData.symbologyStandard}
                             />
                             <Typography variant="body2">{option.label}</Typography>
                           </Box>
@@ -292,6 +293,8 @@ const ScenarioOrbatForm: React.FC<ScenarioOrbatFormProps> = ({
                             size={50}
                             showDetails={false}
                             compact={true}
+                            symbologyStandard={formData.symbologyStandard}
+                            symbolOptions={side.symbolOptions}
                           />
                         </Box>
                       </Grid>
@@ -329,6 +332,8 @@ const ScenarioOrbatForm: React.FC<ScenarioOrbatFormProps> = ({
                                     size={24}
                                     showDetails={false}
                                     compact={true}
+                                    symbologyStandard={formData.symbologyStandard}
+                                    symbolOptions={side.symbolOptions}
                                   />
                                   <Typography variant="body2">{option.label}</Typography>
                                 </Box>
@@ -358,6 +363,8 @@ const ScenarioOrbatForm: React.FC<ScenarioOrbatFormProps> = ({
                                     size={24}
                                     showDetails={false}
                                     compact={true}
+                                    symbologyStandard={formData.symbologyStandard}
+                                    symbolOptions={side.symbolOptions}
                                   />
                                   <Typography variant="body2">{option.label}</Typography>
                                 </Box>

@@ -46,22 +46,83 @@
             </h2>
             
             <div class="space-y-2">
-              <button
+              <div
                 v-for="category in symbolCategories"
                 :key="category.id"
-                @click="selectedCategory = category.id"
-                :class="[
-                  'w-full text-right px-4 py-3 rounded-lg transition-all',
-                  selectedCategory === category.id
-                    ? 'bg-blue-600 text-white shadow-md'
-                    : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
-                ]"
+                class="rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/80"
               >
-                <div class="flex items-center justify-between">
-                  <span class="font-medium">{{ category.title }}</span>
-                  <span class="text-sm opacity-75">({{ category.count }})</span>
-                </div>
-              </button>
+                <button
+                  type="button"
+                  @click="toggleCategory(category.id)"
+                  :class="[
+                    'w-full text-right px-4 py-3 flex items-center justify-between gap-3 rounded-t-lg transition-all',
+                    selectedCategory === category.id
+                      ? 'bg-blue-600 text-white shadow-md'
+                      : 'text-gray-700 dark:text-gray-200'
+                  ]"
+                >
+                  <div class="flex flex-col text-sm">
+                    <span class="font-semibold">{{ category.title }}</span>
+                    <span class="text-xs opacity-80">{{ category.description }}</span>
+                  </div>
+                  <div class="flex items-center gap-2 text-xs font-medium">
+                    <span class="opacity-80">({{ category.count }})</span>
+                    <svg
+                      class="w-4 h-4 transition-transform"
+                      :class="{ 'rotate-180': expandedCategory === category.id }"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </div>
+                </button>
+
+                <transition name="fade">
+                  <div
+                    v-if="expandedCategory === category.id"
+                    class="px-3 py-3 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900/60 rounded-b-lg"
+                  >
+                    <template v-if="category.id === 'point'">
+                      <p class="text-xs text-gray-500 dark:text-gray-400 mb-2">
+                        چند نماد نمونه نقطه‌ای را می‌توانید بکشید و روی نقشه رها کنید.
+                      </p>
+                      <div class="space-y-2">
+                        <button
+                          v-for="symbol in sampleSymbols.point"
+                          :key="symbol.sidc"
+                          class="w-full flex items-center justify-between gap-3 border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 bg-white dark:bg-gray-800 hover:border-blue-400 cursor-grab"
+                          draggable="true"
+                          @dragstart="handleSymbolDragStart($event, symbol)"
+                          @dragend="handleSymbolDragEnd"
+                        >
+                          <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-md bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
+                              <NewMilitarySymbol
+                                :sidc="symbol.sidc"
+                                :size="26"
+                                :title="symbol.name"
+                                :options="{ monoColor: '#1f2937', strokeWidth: 10 }"
+                              />
+                            </div>
+                            <div class="text-right">
+                              <p class="text-sm font-medium text-gray-900 dark:text-gray-100">{{ symbol.name }}</p>
+                              <p class="text-[11px] font-mono text-gray-500 dark:text-gray-400">{{ symbol.sidc }}</p>
+                            </div>
+                          </div>
+                          <span class="text-[11px] font-semibold text-blue-600 dark:text-blue-400">درگ کنید</span>
+                        </button>
+                      </div>
+                    </template>
+                    <template v-else>
+                      <div class="text-xs text-gray-500 dark:text-gray-400 py-1">
+                        به‌زودی نمادهای نمونه این دسته اضافه می‌شود.
+                      </div>
+                    </template>
+                  </div>
+                </transition>
+              </div>
             </div>
           </div>
 
@@ -143,7 +204,13 @@
             </div>
 
             <!-- Map Container -->
-            <div ref="mapContainer" class="w-full h-[600px] relative">
+            <div
+              ref="mapContainer"
+              class="w-full h-[600px] relative"
+              @dragover.prevent="handleMapDragOver"
+              @dragleave="handleMapDragLeave"
+              @drop.prevent="handleMapDrop"
+            >
               <div v-if="loading" class="absolute inset-0 flex items-center justify-center bg-black/10 z-10">
                 <div class="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-xl">
                   <div class="flex items-center gap-3">
@@ -151,6 +218,12 @@
                     <span class="text-gray-700 dark:text-gray-300">در حال بارگذاری...</span>
                   </div>
                 </div>
+              </div>
+              <div
+                v-if="isMapDragActive"
+                class="absolute inset-0 bg-blue-500/10 border-4 border-dashed border-blue-400 flex items-center justify-center text-blue-700 dark:text-blue-200 text-sm font-semibold pointer-events-none z-10"
+              >
+                رها کنید تا نماد روی نقشه قرار بگیرد
               </div>
             </div>
 
@@ -206,15 +279,19 @@ import { fromLonLat } from 'ol/proj'
 import { defaults as defaultControls } from 'ol/control'
 import Signal from '@syncpoint/signal'
 import { createOdinStyleFunction } from '@/geo/odinStyles'
+import NewMilitarySymbol from '@/components/NewMilitarySymbol.vue'
 
 const mapContainer = ref<HTMLElement>()
 const map = ref<Map>()
 const vectorSource = ref<VectorSource>()
 const loading = ref(true)
 const selectedCategory = ref<string>('point')
+const expandedCategory = ref<string | null>('point')
 const selectedView = ref<string>('all')
 const showLabels = ref(true)
 const selectedFeature = ref<any>(null)
+const draggedSymbol = ref<{ sidc: string; name: string } | null>(null)
+const isMapDragActive = ref(false)
 
 // Symbol Categories
 const symbolCategories = ref([
@@ -431,11 +508,77 @@ function toggleLabels() {
   showLabels.value = !showLabels.value
   // TODO: Implement label toggle
 }
+
+function toggleCategory(categoryId: string) {
+  if (selectedCategory.value !== categoryId) {
+    selectedCategory.value = categoryId
+  }
+  expandedCategory.value = expandedCategory.value === categoryId ? null : categoryId
+}
+
+function handleSymbolDragStart(event: DragEvent, symbol: { sidc: string; name: string }) {
+  draggedSymbol.value = symbol
+  if (event.dataTransfer) {
+    event.dataTransfer.setData('text/plain', symbol.sidc)
+    event.dataTransfer.effectAllowed = 'copy'
+    const target = event.currentTarget as HTMLElement | null
+    if (target) {
+      event.dataTransfer.setDragImage(target, target.clientWidth / 2, target.clientHeight / 2)
+    }
+  }
+}
+
+function handleSymbolDragEnd() {
+  draggedSymbol.value = null
+  isMapDragActive.value = false
+}
+
+function handleMapDragOver(event: DragEvent) {
+  if (!draggedSymbol.value) return
+  event.preventDefault()
+  if (event.dataTransfer) {
+    event.dataTransfer.dropEffect = 'copy'
+  }
+  isMapDragActive.value = true
+}
+
+function handleMapDragLeave() {
+  isMapDragActive.value = false
+}
+
+function handleMapDrop(event: DragEvent) {
+  event.preventDefault()
+  if (!draggedSymbol.value || !map.value || !vectorSource.value) {
+    isMapDragActive.value = false
+    return
+  }
+  const coordinate = map.value.getEventCoordinate(event)
+  if (!coordinate) {
+    isMapDragActive.value = false
+    return
+  }
+  const feature = new Feature({
+    geometry: new Point(coordinate),
+    sidc: draggedSymbol.value.sidc,
+    name: draggedSymbol.value.name
+  })
+  vectorSource.value.addFeature(feature)
+  draggedSymbol.value = null
+  isMapDragActive.value = false
+}
 </script>
 
 <style scoped>
 .map-container {
   position: relative;
+}
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.2s ease;
+}
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
 }
 </style>
 

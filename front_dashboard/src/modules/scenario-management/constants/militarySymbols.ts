@@ -37,14 +37,14 @@ export const ECHELON_LEVELS = {
 
 // Land Unit Icons (مطابق دقیق با Vue ORBAT mainToolbarData.ts)
 export const LAND_UNIT_ICONS = [
+  { value: '000000', label: 'Unspecified', text: 'Unspecified' },
+  { value: '110000', label: 'Command & Control', text: 'Command & Control' },
   { value: '121100', label: 'Infantry', text: 'Infantry' },
+  { value: '121000', label: 'Combined Arms', text: 'Combined Arms' },
   { value: '121102', label: 'Mechanized Infantry', text: 'Mechanized Infantry' },
-  { value: '121300', label: 'Scout', text: 'Scout' },
   { value: '130300', label: 'Artillery', text: 'Artillery' },
   { value: '120500', label: 'Armor', text: 'Armor' },
-  { value: '160600', label: 'Combat Service Support', text: 'Combat Service Support' },
-  { value: '130100', label: 'Air Defense', text: 'Air Defense' },
-  { value: '140700', label: 'Engineer', text: 'Engineer' }
+  { value: '160600', label: 'Combat Support', text: 'Combat Support' }
 ] as const;
 
 // Helper functions
@@ -58,16 +58,11 @@ export const buildSIDC = (
   echelon: string = '18',
   icon: string = '121100'
 ): string => {
-  // Exact format from Vue ORBAT helpers.ts:
-  // For standard identities: "100" + code + "10" + "00" + "00" + "0000000000"
-  // For units with echelon: "100" + sid + "10" + "00" + echelon + "0000000000"
-  // For units with icons: "100" + sid + symbolSet + "0000" + icon + "0000"
-  
-  // Default format for units (symbolSet = "10" for land units)
-  const symbolSet = "10";
+  // Mirrors the Kalknegar helper: 100 + SID + symbolSet + 00 + echelon + icon + 0000
+  const symbolSet = '10';
   const iconPadded = icon.padStart(6, '0');
   
-  return `100${standardIdentity}${symbolSet}00${echelon}${iconPadded.substring(0, 4)}0000`;
+  return `100${standardIdentity}${symbolSet}00${echelon}${iconPadded}0000`;
 };
 
 // Type definitions for export
