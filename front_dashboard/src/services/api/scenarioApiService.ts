@@ -1,7 +1,6 @@
 import { BaseApiClient, handleApiResponse, ApiClientError } from './baseApiClient';
 import { ApiResponse, ScenarioQuery, ExportOptions, FileUploadResponse } from './types';
 import { EnhancedScenario } from '@/types';
-import { mockApiServer, shouldUseMockApi } from './mockApiServer';
 
 // Form-specific types for scenario creation/editing to handle optional fields
 export interface ScenarioFormData {
@@ -34,19 +33,12 @@ function transformFormToScenario(formData: ScenarioFormData): Omit<EnhancedScena
 }
 
 export class ScenarioApiService extends BaseApiClient {
-  private useMockApi: boolean;
-
   constructor() {
     super(((import.meta as any).env?.VITE_API_URL as string) || '/api');
-    const env = (import.meta as any).env || {};
-    const viteMock = env.VITE_USE_MOCK;
-    const isViteDev = Boolean(env.DEV);
-    const reactMock = (typeof process !== 'undefined' && (process as any).env?.REACT_APP_USE_MOCK_API) || 'false';
-    const isNodeDev = typeof process !== 'undefined' && (process as any).env?.NODE_ENV === 'development';
-    this.useMockApi = viteMock === 'true' || reactMock === 'true' || isViteDev || isNodeDev;
   }
 
-  private authHeaders() {
+  // Override getAuthHeaders to include authentication token
+  protected getAuthHeaders(): Record<string, string> {
     const token = localStorage.getItem('access_token');
     return token ? { Authorization: `Bearer ${token}` } : {};
   }
@@ -71,14 +63,10 @@ export class ScenarioApiService extends BaseApiClient {
     return apiItem as EnhancedScenario;
   }
 
+
   // GET /api/scenarios
   async getScenarios(query?: ScenarioQuery): Promise<EnhancedScenario[]> {
     try {
-      if (this.useMockApi) {
-        const response = await mockApiServer.getScenarios(query);
-        return handleApiResponse(response);
-      }
-
       const response = await this.get<any[]>('/scenarios', query);
       const data = handleApiResponse(response);
       return (Array.isArray(data) ? data : []).map((i) => this.mapScenarioOutToEnhanced(i));
@@ -91,13 +79,8 @@ export class ScenarioApiService extends BaseApiClient {
   // GET /api/scenarios/:id
   async getScenarioById(id: string): Promise<EnhancedScenario> {
     try {
-      console.log(`ScenarioApiService: Fetching scenario ${id}, useMockApi: ${this.useMockApi}`);
+      console.log(`ScenarioApiService: Fetching scenario ${id}`);
       
-      if (this.useMockApi) {
-        const response = await mockApiServer.getScenarioById(id);
-        return handleApiResponse(response);
-      }
-
       const response = await this.get<any>(`/scenarios/${id}`);
       const data = handleApiResponse(response);
       return this.mapScenarioOutToEnhanced(data);
@@ -111,12 +94,6 @@ export class ScenarioApiService extends BaseApiClient {
   async createScenario(formData: ScenarioFormData): Promise<EnhancedScenario> {
     try {
       const scenarioData = transformFormToScenario(formData);
-
-      if (this.useMockApi) {
-        const response = await mockApiServer.createScenario(scenarioData);
-        return handleApiResponse(response);
-      }
-
       const payload = this.buildScenarioPayload(scenarioData as any);
       const response = await this.post<any>('/scenarios', payload);
       const data = handleApiResponse(response);
@@ -130,11 +107,6 @@ export class ScenarioApiService extends BaseApiClient {
   // PUT /api/scenarios/:id
   async updateScenario(id: string, updates: Partial<EnhancedScenario>): Promise<EnhancedScenario> {
     try {
-      if (this.useMockApi) {
-        const response = await mockApiServer.updateScenario(id, updates);
-        return handleApiResponse(response);
-      }
-
       const payload = this.buildScenarioPayload({ ...(updates as any), id } as EnhancedScenario);
       const response = await this.put<any>(`/scenarios/${id}`, payload);
       const data = handleApiResponse(response);
@@ -148,11 +120,6 @@ export class ScenarioApiService extends BaseApiClient {
   // PATCH /api/scenarios/:id (for partial updates)
   async patchScenario(id: string, updates: Partial<EnhancedScenario>): Promise<EnhancedScenario> {
     try {
-      if (this.useMockApi) {
-        const response = await mockApiServer.updateScenario(id, updates);
-        return handleApiResponse(response);
-      }
-
       const payload = { ...this.buildScenarioPayload({ ...(updates as any), id } as EnhancedScenario) };
       const response = await this.patch<any>(`/scenarios/${id}`, payload);
       const data = handleApiResponse(response);
@@ -164,16 +131,12 @@ export class ScenarioApiService extends BaseApiClient {
   }
 
   // DELETE /api/scenarios/:id
-  async deleteScenario(id: string): Promise<void> {
+  async deleteScenario(id: string): Promise<{ id: string }> {
     try {
-      if (this.useMockApi) {
-        const response = await mockApiServer.deleteScenario(id);
-        handleApiResponse(response);
-        return;
-      }
-
       const response = await this.delete<{ id: string }>(`/scenarios/${id}`);
-      handleApiResponse(response);
+      const data = handleApiResponse(response);
+      // Return the id to ensure it's available for the reducer
+      return data || { id };
     } catch (error) {
       console.error(`Failed to delete scenario ${id}:`, error);
       throw error;
@@ -183,11 +146,6 @@ export class ScenarioApiService extends BaseApiClient {
   // GET /api/scenarios/demo/:demoId
   async getDemoScenario(demoId: string): Promise<any> {
     try {
-      if (this.useMockApi) {
-        const response = await mockApiServer.getDemoScenario(demoId);
-        return handleApiResponse(response);
-      }
-
       const response = await this.get<any>(`/scenarios/demo/${demoId}`);
       return handleApiResponse(response);
     } catch (error) {
@@ -199,11 +157,6 @@ export class ScenarioApiService extends BaseApiClient {
   // POST /api/scenarios/import
   async importScenario(file: File): Promise<EnhancedScenario> {
     try {
-      if (this.useMockApi) {
-        const response = await mockApiServer.importScenario(file);
-        return handleApiResponse(response);
-      }
-
       const response = await this.uploadFile<EnhancedScenario>('/scenarios/import', file);
       return handleApiResponse(response);
     } catch (error) {
@@ -215,11 +168,6 @@ export class ScenarioApiService extends BaseApiClient {
   // GET /api/scenarios/:id/export
   async exportScenario(id: string, options?: ExportOptions): Promise<{ url: string; filename: string }> {
     try {
-      if (this.useMockApi) {
-        const response = await mockApiServer.exportScenario(id);
-        return handleApiResponse(response);
-      }
-
       const response = await this.get<{ url: string; filename: string }>(
         `/scenarios/${id}/export`,
         options
@@ -269,11 +217,6 @@ export class ScenarioApiService extends BaseApiClient {
     recent: number;
   }> {
     try {
-      if (this.useMockApi) {
-        const response = await mockApiServer.getScenarioStats();
-        return handleApiResponse(response);
-      }
-
       const response = await this.get<{
         total: number;
         byStatus: Record<string, number>;
@@ -292,12 +235,17 @@ export class ScenarioApiService extends BaseApiClient {
       const originalScenario = await this.getScenarioById(id);
       const { id: _, createdAt, updatedAt, ...scenarioData } = originalScenario;
       
+      // ساخت سناریوی کپی شده با تمام محتوا (بدون id, createdAt, updatedAt)
       const duplicatedScenario = {
         ...scenarioData,
         name: newName || `${originalScenario.name} (Copy)`,
-      };
+      } as Omit<EnhancedScenario, 'id' | 'createdAt' | 'updatedAt'>;
 
-      return this.createScenario(duplicatedScenario);
+      // استفاده مستقیم از buildScenarioPayload برای حفظ تمام محتوا
+      const payload = this.buildScenarioPayload(duplicatedScenario as any);
+      const response = await this.post<any>('/scenarios', payload);
+      const data = handleApiResponse(response);
+      return this.mapScenarioOutToEnhanced(data);
     } catch (error) {
       console.error(`Failed to duplicate scenario ${id}:`, error);
       throw error;

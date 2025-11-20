@@ -1,20 +1,33 @@
 import * as TS from '../ts'
+<<<<<<< Updated upstream
 import { PI_OVER_2 } from '../Math'
+=======
+import { PI_OVER_2 } from '../shared/Math'
+>>>>>>> Stashed changes
 
 const canvas = document.createElement('canvas')
 const context = canvas.getContext('2d')
 
+<<<<<<< Updated upstream
 /**
  *
  */
 const textBoundingBox = (resolution, style) => {
+=======
+const textBoundingBox = (resolution: number, style: any): any => {
+>>>>>>> Stashed changes
   const textField = style['text-field']
   if (!textField) return null
   if (style['text-clipping'] === 'none') return null
 
   // Prepare bounding box geometry (dimensions only, including padding).
   const lines = textField.split('\n')
+<<<<<<< Updated upstream
   const [maxWidthPx, maxHeightPx] = lines.reduce((acc, line) => {
+=======
+  const [maxWidthPx, maxHeightPx] = lines.reduce((acc: number[], line: string) => {
+    if (!context) return acc
+>>>>>>> Stashed changes
     context.font = style['text-font']
     const metrics = context.measureText(line)
     const width = metrics.width
@@ -43,9 +56,15 @@ const textBoundingBox = (resolution, style) => {
   const justify = style['text-justify'] || 'center'
   const [offsetX, offsetY] = style['text-offset'] || [0, 0]
 
+<<<<<<< Updated upstream
   const flipX = { start: -1, end: 1, center: 0 }
   const flipY = rotate < -PI_OVER_2 || rotate > PI_OVER_2 ? -1 : 1
   const tx = (-offsetX + flipX[justify] * (maxWidthPx / 2)) * resolution
+=======
+  const flipX: Record<string, number> = { start: -1, end: 1, center: 0 }
+  const flipY = rotate < -PI_OVER_2 || rotate > PI_OVER_2 ? -1 : 1
+  const tx = (-offsetX + (flipX[justify] || 0) * (maxWidthPx / 2)) * resolution
+>>>>>>> Stashed changes
   const ty = flipY * offsetY * resolution
 
   const theta = 2 * Math.PI - rotate
@@ -56,11 +75,15 @@ const textBoundingBox = (resolution, style) => {
   return at.transform(geometry)
 }
 
+<<<<<<< Updated upstream
 
 /**
  *
  */
 const iconBoundingBox = (resolution, style) => {
+=======
+const iconBoundingBox = (resolution: number, style: any): any => {
+>>>>>>> Stashed changes
   const scale = style['icon-scale']
   if (!scale) return null
 
@@ -81,15 +104,26 @@ const iconBoundingBox = (resolution, style) => {
   return rotation.transform(geometry)
 }
 
+<<<<<<< Updated upstream
 const bbox = resolution => style => {
+=======
+const bbox = (resolution: number) => (style: any): any => {
+>>>>>>> Stashed changes
   if (style['text-field']) return textBoundingBox(resolution, style)
   else if (style['icon-image']) return iconBoundingBox(resolution, style)
   else return null
 }
 
+<<<<<<< Updated upstream
 /**
  *
  */
 export default (resolution, styles) => styles
   .map(bbox(resolution))
   .filter(Boolean)
+=======
+export default (resolution: number, styles: any[]): any[] => styles
+  .map(bbox(resolution))
+  .filter(Boolean)
+
+>>>>>>> Stashed changes

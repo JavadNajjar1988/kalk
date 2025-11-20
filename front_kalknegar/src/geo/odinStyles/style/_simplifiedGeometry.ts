@@ -1,8 +1,12 @@
+<<<<<<< Updated upstream
 
 /**
  *
  */
 export default (geometry, resolution) => {
+=======
+export default (geometry: any, resolution: number): any => {
+>>>>>>> Stashed changes
   const geometryType = geometry.getType()
   const coordinates = geometry.getCoordinates()
   const simplify =
@@ -13,3 +17,7 @@ export default (geometry, resolution) => {
     ? geometry.simplify(resolution)
     : geometry
 }
+<<<<<<< Updated upstream
+=======
+
+>>>>>>> Stashed changes

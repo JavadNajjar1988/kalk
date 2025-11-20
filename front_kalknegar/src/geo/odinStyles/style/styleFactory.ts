@@ -1,10 +1,15 @@
 import * as R from 'ramda'
 import * as olStyle from 'ol/style'
+<<<<<<< Updated upstream
 import { PI_OVER_2, PI } from '../Math'
+=======
+import { PI_OVER_2, PI } from '../shared/Math'
+>>>>>>> Stashed changes
 import { Symbol } from '@syncpoint/signs'
 import * as patterns from './patterns'
 
 const Styles = {
+<<<<<<< Updated upstream
   stroke: options => new olStyle.Stroke(options),
   fill: options => new olStyle.Fill(options),
   text: options => new olStyle.Text(options),
@@ -15,6 +20,18 @@ const Styles = {
 }
 
 const TEXT_ALIGN = {
+=======
+  stroke: (options: any) => new olStyle.Stroke(options),
+  fill: (options: any) => new olStyle.Fill(options),
+  text: (options: any) => new olStyle.Text(options),
+  circle: (options: any) => new olStyle.Circle(options),
+  regularShape: (options: any) => new olStyle.RegularShape(options),
+  icon: (options: any) => new olStyle.Icon(options),
+  style: (options: any) => new olStyle.Style(options)
+}
+
+const TEXT_ALIGN: Record<string, string> = {
+>>>>>>> Stashed changes
   start: 'end',
   end: 'start',
   left: 'right',
@@ -22,7 +39,11 @@ const TEXT_ALIGN = {
   center: 'center'
 }
 
+<<<<<<< Updated upstream
 const makeStroke = props => {
+=======
+const makeStroke = (props: any) => {
+>>>>>>> Stashed changes
   if (!props['line-width']) return null
   return Styles.stroke({
     color: props['line-color'],
@@ -33,7 +54,11 @@ const makeStroke = props => {
   })
 }
 
+<<<<<<< Updated upstream
 const makeFill = props => {
+=======
+const makeFill = (props: any) => {
+>>>>>>> Stashed changes
   if (props['fill-color']) {
     return Styles.fill({ color: props['fill-color'] })
   } else if (props['fill-pattern']) {
@@ -48,11 +73,19 @@ const makeFill = props => {
       strokeFillWidth: props['line-width']
     })
 
+<<<<<<< Updated upstream
+=======
+    if (!color) return null
+>>>>>>> Stashed changes
     return new olStyle.Fill({ color })
   } else return null
 }
 
+<<<<<<< Updated upstream
 const makeText = props => {
+=======
+const makeText = (props: any) => {
+>>>>>>> Stashed changes
   if (!props['text-field']) return null
 
   const rotate = props['text-rotate']
@@ -84,7 +117,11 @@ const makeText = props => {
   })
 }
 
+<<<<<<< Updated upstream
 const makeCircle = props => {
+=======
+const makeCircle = (props: any) => {
+>>>>>>> Stashed changes
   const fill = Styles.fill({ color: props['circle-fill-color'] })
   const stroke = props['circle-line-color']
     ? Styles.stroke({
@@ -100,7 +137,11 @@ const makeCircle = props => {
   })
 }
 
+<<<<<<< Updated upstream
 const makeShape = props => {
+=======
+const makeShape = (props: any) => {
+>>>>>>> Stashed changes
   const fillColor = props['shape-fill-color']
   const fill = fillColor ? Styles.fill({ color: fillColor }) : null
   const stroke = Styles.stroke({
@@ -121,11 +162,19 @@ const makeShape = props => {
   })
 }
 
+<<<<<<< Updated upstream
 const makeSymbol = props => {
   const modes = { dark: 'Dark', medium: 'Medium', light: 'Light' }
 
   const fromEntries = entries => Object.fromEntries(entries)
   const entries = obj => Object.entries(obj)
+=======
+const makeSymbol = (props: any) => {
+  const modes: Record<string, string> = { dark: 'Dark', medium: 'Medium', light: 'Light' }
+
+  const fromEntries = (entries: [string, any][]) => Object.fromEntries(entries)
+  const entries = (obj: any) => Object.entries(obj)
+>>>>>>> Stashed changes
   const rejectNil = R.reject(([, v]) => R.isNil(v))
   const filter = R.compose(fromEntries, rejectNil, entries)
 
@@ -160,7 +209,11 @@ const makeSymbol = props => {
   })
 }
 
+<<<<<<< Updated upstream
 const makeIcon = props => {
+=======
+const makeIcon = (props: any) => {
+>>>>>>> Stashed changes
   return Styles.icon({
     src: props['icon-url'],
     scale: props['icon-scale'] || 1,
@@ -168,7 +221,11 @@ const makeIcon = props => {
   })
 }
 
+<<<<<<< Updated upstream
 const makeImage = props => {
+=======
+const makeImage = (props: any) => {
+>>>>>>> Stashed changes
   if (props['circle-radius']) return makeCircle(props)
   else if (props['shape-radius']) return makeShape(props)
   else if (props['symbol-code']) return makeSymbol(props)
@@ -176,6 +233,7 @@ const makeImage = props => {
   else return null
 }
 
+<<<<<<< Updated upstream
 const makeStyle = props => Array.isArray(props)
   ? props.map(makeStyle)
   : Styles.style(props)
@@ -185,6 +243,14 @@ const makeStyle = props => Array.isArray(props)
  */
 export const styleFactory = props => {
   const styleOptions = []
+=======
+const makeStyle = (props: any): any => Array.isArray(props)
+  ? props.map(makeStyle)
+  : Styles.style(props)
+
+export const styleFactory = (props: any): any => {
+  const styleOptions: any[] = []
+>>>>>>> Stashed changes
 
   if (props['line-halo-width']) {
     styleOptions.push({
@@ -209,3 +275,7 @@ export const styleFactory = props => {
 
   return makeStyle(styleOptions)
 }
+<<<<<<< Updated upstream
+=======
+
+>>>>>>> Stashed changes

@@ -1,7 +1,10 @@
 import Signal from '@syncpoint/signal'
+<<<<<<< Updated upstream
 import labels from './linestring-styles/labels'
 import styles from './linestring-styles/index'
 import placement from './linestring-styles/placement'
+=======
+>>>>>>> Stashed changes
 import graphics from './graphics'
 import keyequals from './keyequals'
 
@@ -13,7 +16,17 @@ import _shape from './_shape'
 import _lineSmoothing from './_lineSmoothing'
 import _selection from './_selection'
 
+<<<<<<< Updated upstream
 const specifics = $ => {
+=======
+// Note: این فایل‌ها باید از linestring-styles import شوند
+// برای حالا placeholder ایجاد می‌کنیم
+const labels: Record<string, any> = {}
+const styles: Record<string, any> = {}
+const placement = (geometry: any) => geometry
+
+const specifics = ($: any) => {
+>>>>>>> Stashed changes
   $.simplifiedGeometry = Signal.link(_simplifiedGeometry, [$.geometry, $.centerResolution], { equals: keyequals() })
   $.jtsSimplifiedGeometry = $.simplifiedGeometry.ap($.read)
   $.lineSmoothing = $.effectiveStyle.map(_lineSmoothing)
@@ -32,3 +45,7 @@ const specifics = $ => {
 }
 
 export default graphics(specifics)
+<<<<<<< Updated upstream
+=======
+
+>>>>>>> Stashed changes

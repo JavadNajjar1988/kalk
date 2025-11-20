@@ -2,7 +2,10 @@ import * as R from 'ramda'
 import data from './2525c.json'
 import * as skkm from './skkm'
 
+<<<<<<< Updated upstream
 /* eslint-disable no-unused-vars */
+=======
+>>>>>>> Stashed changes
 const SCHEMA = 0
 const IDENTITY = 1 // a.k.a Standard Identity
 const BATTLE_DIMENSION = 2
@@ -12,6 +15,7 @@ const MODIFIER = 10
 const MOBILITY = 10
 const INSTALLATION = 10
 const ECHELON = 11
+<<<<<<< Updated upstream
 /* eslint-enable no-unused-vars */
 
 // E.g. 'GFGPOAO----****' (15) => 'G*G*OAO---' (10)
@@ -24,15 +28,33 @@ export const schemaCode = sidc => sidc
   : null
 
 export const battleDimensionCode = sidc => sidc
+=======
+
+// E.g. 'GFGPOAO----****' (15) => 'G*G*OAO---' (10)
+export const parameterized = (sidc: string | null | undefined): string | null => sidc
+  ? `${sidc[0]}*${sidc[2]}*${sidc.substring(4, 10)}`
+  : null
+
+export const schemaCode = (sidc: string | null | undefined): string | null => sidc
+  ? sidc[SCHEMA]
+  : null
+
+export const battleDimensionCode = (sidc: string | null | undefined): string | null => sidc
+>>>>>>> Stashed changes
   ? sidc[BATTLE_DIMENSION]
   : null
 
 // Standard Identity (ex. Affiliation)
+<<<<<<< Updated upstream
 export const identityCode = sidc => sidc
+=======
+export const identityCode = (sidc: string | null | undefined): string => sidc
+>>>>>>> Stashed changes
   ? sidc[IDENTITY]
   : 'U'
 
 // status or P - PRESENT
+<<<<<<< Updated upstream
 export const statusCode = sidc => sidc
   ? sidc[STATUS]
   : 'P'
@@ -54,6 +76,40 @@ export const mobilityCode = sidc => sidc
   : '--'
 
 export const format = (sidc, options) => {
+=======
+export const statusCode = (sidc: string | null | undefined): string => sidc
+  ? sidc[STATUS]
+  : 'P'
+
+export const functionIdCode = (sidc: string | null | undefined): string | null => sidc
+  ? sidc.substring(FUNCTION_ID, FUNCTION_ID + 6)
+  : null
+
+export const modifierCode = (sidc: string | null | undefined): string => sidc
+  ? sidc[MODIFIER]
+  : '-'
+
+export const echelonCode = (sidc: string | null | undefined): string => sidc
+  ? sidc[ECHELON]
+  : '-'
+
+export const mobilityCode = (sidc: string | null | undefined): string => sidc
+  ? sidc[MOBILITY] + sidc[MOBILITY + 1]
+  : '--'
+
+export interface FormatOptions {
+  schema?: string
+  identity?: string
+  battleDimension?: string
+  status?: string
+  modifier?: string
+  echelon?: string
+  mobility?: string
+  functionId?: string
+}
+
+export const format = (sidc: string | null | undefined, options: FormatOptions): string | null => {
+>>>>>>> Stashed changes
   if (!sidc) return null
 
   let formatted = sidc
@@ -68,7 +124,11 @@ export const format = (sidc, options) => {
   return formatted
 }
 
+<<<<<<< Updated upstream
 export const MODIFIERS = {
+=======
+export const MODIFIERS: Record<string, string> = {
+>>>>>>> Stashed changes
   aa: 'specialHeadquarters',
   ad: 'platformType',
   ae: 'equipmentTeardownTime',
@@ -100,12 +160,23 @@ export const MODIFIERS = {
 /**
  * 2525-C only
  */
+<<<<<<< Updated upstream
 export const symbols = data
   .filter(({ unsupported }) => !unsupported)
   .reduce((acc, descriptor) => {
     const sidc = parameterized(descriptor.sidc)
     const dimensions = descriptor.dimensions
       ? descriptor.dimensions.split(',').map(s => s.trim()).filter(R.identity)
+=======
+export const symbols = (data as any[])
+  .filter(({ unsupported }: any) => !unsupported)
+  .reduce((acc: any, descriptor: any) => {
+    const sidc = parameterized(descriptor.sidc)
+    if (!sidc) return acc
+    
+    const dimensions = descriptor.dimensions
+      ? descriptor.dimensions.split(',').map((s: string) => s.trim()).filter(R.identity)
+>>>>>>> Stashed changes
       : []
 
     acc[sidc] = {
@@ -122,16 +193,25 @@ export const symbols = data
     }
 
     return acc
+<<<<<<< Updated upstream
   }, {})
+=======
+  }, {} as Record<string, any>)
+>>>>>>> Stashed changes
 
 /**
  * 2525-C + SKKM
  */
+<<<<<<< Updated upstream
 export const descriptors = Object.entries(skkm.symbols).reduce((acc, [k, v]) => {
+=======
+export const descriptors = Object.entries(skkm.symbols).reduce((acc: any, [k, v]) => {
+>>>>>>> Stashed changes
   acc[k] = v
   return acc
 }, { ...symbols })
 
+<<<<<<< Updated upstream
 export const descriptor = sidc => {
   if (!sidc) return
   return descriptors[parameterized(sidc)]
@@ -163,10 +243,44 @@ export const className = sidc => {
   else if (!descriptor.geometry) return 'POINT'
   else if (descriptor.geometry.type !== 'Point') {
     if (descriptor.parameterized === 'G*G*GLB---') return 'BOUNDARIES'
+=======
+export const descriptor = (sidc: string | null | undefined): any => {
+  if (!sidc) return
+  return descriptors[parameterized(sidc) || '']
+}
+
+export const geometry = (sidc: string | null | undefined): any => {
+  if (!sidc) return
+  const desc = descriptors[parameterized(sidc) || '']
+  return desc && desc.geometry
+}
+
+export const geometryType = (sidc: string | null | undefined): string | null => {
+  if (!sidc) return null
+  const desc = descriptors[parameterized(sidc) || '']
+  return desc && desc.geometry && desc.geometry.type
+}
+
+export const className = (sidc: string | null | undefined): string | null => {
+  if (!sidc) return null
+  const desc = descriptors[parameterized(sidc) || '']
+  if (!desc) return null
+
+  if (desc.scope === 'UNIT') return 'UNIT'
+  else if (desc.scope === 'INSTALLATION') return 'INSTALLATION'
+  else if (desc.scope === 'EQUIPMENT') return 'EQUIPMENT'
+  else if (desc.scope === 'ACTIVITY') return 'ACTIVITY'
+  else if (desc.scope === 'SKKM') return `SKKM/${desc.class}`
+  // No geometry type defaults to POINT:
+  else if (!desc.geometry) return 'POINT'
+  else if (desc.geometry.type !== 'Point') {
+    if (desc.parameterized === 'G*G*GLB---') return 'BOUNDARIES'
+>>>>>>> Stashed changes
     else return 'GRAPHICS'
   } else return 'POINT'
 }
 
+<<<<<<< Updated upstream
 export const specialization = sidc => {
   if (!sidc) return
   const descriptor = descriptors[parameterized(sidc)]
@@ -201,3 +315,18 @@ export default {
   className,
   specialization
 }
+=======
+export const specialization = (sidc: string | null | undefined): string | null => {
+  if (!sidc) return null
+  const desc = descriptors[parameterized(sidc) || '']
+  if (!desc) return null
+
+  const { geometry } = desc
+  if (desc.parameterized === 'G*G*GLB---') return 'BOUNDARIES'
+  else if (geometry && geometry.layout === 'rectangle') return 'RECTANGLE'
+  else if (geometry && geometry.layout === 'circle') return 'CIRCLE'
+  else if (geometry && geometry.layout === 'corridor') return 'CORRIDOR'
+  else return null
+}
+
+>>>>>>> Stashed changes

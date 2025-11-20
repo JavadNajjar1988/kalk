@@ -6,4 +6,11 @@ export const ORBAT_CHART_ROUTE = "OrbatChartRoute";
 export const GRID_EDIT_ROUTE = "GridEditRoute";
 export const CHART_EDIT_MODE_ROUTE = "ChartModeRoute";
 export const MAP_EDIT_MODE_ROUTE = "MapBetaModeRoute";
+<<<<<<< Updated upstream
 export const ODIN_SYMBOLS_DEMO_ROUTE = "OdinSymbolsDemoRoute";
+=======
+export const TACTICAL_GRAPHICS_ROUTE = "TacticalGraphicsRoute";
+export const TACTICAL_SYMBOL_DEFINITION_ROUTE = "TacticalSymbolDefinitionRoute";
+export const CONTROL_SYMBOLS_ROUTE = "ControlSymbolsRoute";
+export const ODIN_SYMBOL_TEST_ROUTE = "OdinSymbolTestRoute";
+>>>>>>> Stashed changes
