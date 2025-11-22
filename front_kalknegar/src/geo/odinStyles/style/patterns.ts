@@ -1,7 +1,13 @@
 import { DEVICE_PIXEL_RATIO } from 'ol/has'
-import { DEG2RAD } from '../../Math'
+<<<<<<< Updated upstream
+import { DEG2RAD } from '../Math'
 
 const patterns = {
+=======
+import { DEG2RAD } from '../shared/Math'
+
+const patterns: Record<string, any> = {
+>>>>>>> Stashed changes
   hatch: {
     width: 5,
     height: 5,
@@ -14,9 +20,26 @@ const patterns = {
   }
 }
 
+<<<<<<< Updated upstream
 const patternDescriptor = options => {
   const d = Math.round(options.spacing) || 10
   const pattern = patterns[options.pattern]
+=======
+interface PatternOptions {
+  spacing?: number
+  pattern?: string
+  angle?: number
+  size?: number
+  strokeColor?: string
+  strokeWidth?: number
+  strokeFillColor?: string
+  strokeFillWidth?: number
+}
+
+const patternDescriptor = (options: PatternOptions) => {
+  const d = Math.round(options.spacing || 10)
+  const pattern = patterns[options.pattern || 'hatch']
+>>>>>>> Stashed changes
 
   let a = Math.round(((options.angle || 0) - 90) % 360)
   if (a > 180) a -= 360
@@ -53,9 +76,17 @@ const patternDescriptor = options => {
   return pattern
 }
 
+<<<<<<< Updated upstream
 export const fill = options => {
   const canvas = document.createElement('canvas')
   const context = canvas.getContext('2d')
+=======
+export const fill = (options: PatternOptions): CanvasPattern | null => {
+  const canvas = document.createElement('canvas')
+  const context = canvas.getContext('2d')
+  if (!context) return null
+  
+>>>>>>> Stashed changes
   const descriptor = patternDescriptor(options)
 
   canvas.width = Math.round(descriptor.width * DEVICE_PIXEL_RATIO)
@@ -67,6 +98,10 @@ export const fill = options => {
     [options.strokeColor, options.strokeWidth],
     [options.strokeFillColor, options.strokeFillWidth]
   ].forEach(([strokeStyle, lineWidth]) => {
+<<<<<<< Updated upstream
+=======
+    if (!strokeStyle || !lineWidth) return
+>>>>>>> Stashed changes
     context.lineWidth = lineWidth
     context.strokeStyle = strokeStyle
     const repeat = descriptor.repeat || [[0, 0]]
@@ -88,3 +123,7 @@ export const fill = options => {
 
   return context.createPattern(canvas, 'repeat')
 }
+<<<<<<< Updated upstream
+=======
+
+>>>>>>> Stashed changes

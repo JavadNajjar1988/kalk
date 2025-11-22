@@ -1,11 +1,18 @@
 import * as R from 'ramda'
 
+<<<<<<< Updated upstream
 export const defs = proj4 => {
+=======
+export const defs = (proj4: any) => {
+>>>>>>> Stashed changes
   predef.forEach(projection => {
     proj4.defs(projection.code, projection.definition)
   })
 
+<<<<<<< Updated upstream
   // TODO: remove once updated to proj4 v2.15.0+
+=======
+>>>>>>> Stashed changes
   // Register all 60 N/S UTM zones with proj4:
   R.range(1, 61).forEach(i => {
     proj4.defs(`EPSG:${32600 + i}`, `+proj=utm +zone=${i} +ellps=WGS84 +datum=WGS84 +units=m +no_defs`)
@@ -72,3 +79,7 @@ const predef = [
     definition: '+proj=somerc +lat_0=46.95240555555556 +lon_0=7.439583333333333 +k_0=1 +x_0=600000 +y_0=200000 +ellps=bessel +towgs84=674.4,15.1,405.3,0,0,0,0 +units=m +no_defs'
   }
 ]
+<<<<<<< Updated upstream
+=======
+
+>>>>>>> Stashed changes

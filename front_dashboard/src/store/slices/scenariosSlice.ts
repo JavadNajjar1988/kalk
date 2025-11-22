@@ -103,8 +103,9 @@ export const deleteScenario = createAsyncThunk(
   'scenarios/deleteScenario',
   async (id: string, { rejectWithValue }) => {
     try {
-      await scenarioApiService.deleteScenario(id);
-      return id;
+      const result = await scenarioApiService.deleteScenario(id);
+      // Return the id from the result or use the provided id
+      return result?.id || id;
     } catch (error: any) {
       const message = error instanceof ApiClientError 
         ? error.message 

@@ -4,13 +4,20 @@ import "nprogress/nprogress.css";
 import LandingPage from "../views/LandingPage.vue";
 import {
   CHART_EDIT_MODE_ROUTE,
+  CONTROL_SYMBOLS_ROUTE,
   GRID_EDIT_ROUTE,
   LANDING_PAGE_ROUTE,
   MAP_EDIT_MODE_ROUTE,
   NEW_SCENARIO_ROUTE,
   ORBAT_CHART_ROUTE,
   STORY_MODE_ROUTE,
+<<<<<<< Updated upstream
   ODIN_SYMBOLS_DEMO_ROUTE,
+=======
+  TACTICAL_GRAPHICS_ROUTE,
+  TACTICAL_SYMBOL_DEFINITION_ROUTE,
+  ODIN_SYMBOL_TEST_ROUTE,
+>>>>>>> Stashed changes
 } from "@/router/names";
 
 declare module "vue-router" {
@@ -36,7 +43,13 @@ const ScenarioEditorMap = () => import("@/modules/scenarioeditor/ScenarioEditorM
   return import("@/views/ErrorFallback.vue"); // Fallback component
 });
 const SymbolDesignerPage = () => import("../modules/tactical-symbol-designer/SymbolDesignerPage.vue");
+<<<<<<< Updated upstream
 const OdinSymbolsDemo = () => import("../views/OdinSymbolsDemo.vue");
+=======
+const TacticalSymbolDefinitionPage = () => import("../modules/tactical-symbols/TacticalSymbolDefinitionPage.vue");
+const ControlSymbolsLab = () => import("../views/ControlSymbolsLab.vue");
+const OdinSymbolTestView = () => import("../views/OdinSymbolTestView.vue");
+>>>>>>> Stashed changes
 const routes = [
   {
     path: "/scenario/:scenarioId",
@@ -114,11 +127,38 @@ const routes = [
       NProgress.start();
     },
   },
+<<<<<<< Updated upstream
+=======
+  {
+    path: "/control-symbols",
+    name: CONTROL_SYMBOLS_ROUTE,
+    component: ControlSymbolsLab,
+    beforeEnter: (to, from) => {
+      NProgress.start();
+    },
+  },
+  {
+    path: "/tactical-symbols",
+    name: TACTICAL_SYMBOL_DEFINITION_ROUTE,
+    component: TacticalSymbolDefinitionPage,
+    beforeEnter: (to, from) => {
+      NProgress.start();
+    },
+  },
+>>>>>>> Stashed changes
   { path: "/", name: LANDING_PAGE_ROUTE, component: LandingPage },
   {
     path: "/odin-symbols-demo",
     name: ODIN_SYMBOLS_DEMO_ROUTE,
     component: OdinSymbolsDemo,
+    beforeEnter: (to, from) => {
+      NProgress.start();
+    },
+  },
+  {
+    path: "/odin-symbol-test",
+    name: ODIN_SYMBOL_TEST_ROUTE,
+    component: OdinSymbolTestView,
     beforeEnter: (to, from) => {
       NProgress.start();
     },

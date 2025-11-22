@@ -1,6 +1,12 @@
 import { Stroke, Circle, RegularShape, Style } from 'ol/style'
+<<<<<<< Updated upstream
 
 const crosshair = (color, radius = 30) => {
+=======
+import Signal from '@syncpoint/signal'
+
+const crosshair = (color: string, radius: number = 30) => {
+>>>>>>> Stashed changes
   const stroke = new Stroke({ color, width: 2 })
   const bigCircle = new Circle({ stroke, radius: 30 })
   const smallCircle = new Circle({ stroke, radius: radius / 15 })
@@ -16,6 +22,7 @@ const crosshair = (color, radius = 30) => {
         radius: radius / 2,
         displacement: [0, 0.8 * radius]
       })
+<<<<<<< Updated upstream
     }))]
 }
 
@@ -25,3 +32,16 @@ export default $ =>
       ? crosshair('black')
       : crosshair('red')
 )
+=======
+    }))
+  ]
+}
+
+export default ($: any) =>
+  $.selectionMode.map((mode: string) =>
+    mode === 'default'
+      ? crosshair('black')
+      : crosshair('red')
+  )
+
+>>>>>>> Stashed changes

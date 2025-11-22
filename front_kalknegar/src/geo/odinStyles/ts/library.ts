@@ -14,6 +14,7 @@ import LengthIndexedLine from 'jsts/org/locationtech/jts/linearref/LengthIndexed
 import BufferOp from 'jsts/org/locationtech/jts/operation/buffer/BufferOp.js'
 import OverlayOp from 'jsts/org/locationtech/jts/operation/overlay/OverlayOp.js'
 import RelateOp from 'jsts/org/locationtech/jts/operation/relate/RelateOp.js'
+<<<<<<< Updated upstream
 
 
 import BufferParameters from 'jsts/org/locationtech/jts/operation/buffer/BufferParameters.js'
@@ -52,6 +53,30 @@ const geometryFactory = new GeometryFactory()
 export const buffer = (opts = {}) => geometry => distance => {
   // NOTE: 3-ary form not supported, use either 0, 1, 2 or 4 arguments.
   // SEE: https://locationtech.github.io/jts/javadoc/org/locationtech/jts/operation/buffer/BufferParameters.html
+=======
+import BufferParameters from 'jsts/org/locationtech/jts/operation/buffer/BufferParameters.js'
+
+const Types = {
+  isNumber: (v: any): v is number => typeof v === 'number',
+  isArray: Array.isArray,
+  isCoordinate: (v: any): v is Coordinate => v instanceof Coordinate,
+  isLineSegment: (v: any): v is LineSegment => v instanceof LineSegment,
+  isEnvelope: (v: any): v is Envelope => v instanceof Envelope,
+  isPolygon: (v: any): v is Polygon => v instanceof Polygon
+}
+
+const geometryFactory = new GeometryFactory()
+
+export interface BufferOptions {
+  quadrantSegments?: number
+  endCapStyle?: number
+  joinStyle?: number
+  mitreLimit?: number
+  singleSided?: boolean
+}
+
+export const buffer = (opts: BufferOptions = {}) => (geometry: any) => (distance: number) => {
+>>>>>>> Stashed changes
   const params = new BufferParameters(
     opts.quadrantSegments || BufferParameters.DEFAULT_QUADRANT_SEGMENTS,
     opts.endCapStyle || BufferParameters.CAP_ROUND,
@@ -64,6 +89,7 @@ export const buffer = (opts = {}) => geometry => distance => {
   return BufferOp.bufferOp(geometry, distance, params)
 }
 
+<<<<<<< Updated upstream
 /**
  * pointBuffer :: geometry -> distance -> geometry
  */
@@ -72,27 +98,37 @@ export const pointBuffer = buffer()
 /**
  * lineBuffer :: geometry -> distance -> geometry
  */
+=======
+export const pointBuffer = buffer()
+>>>>>>> Stashed changes
 export const lineBuffer = buffer({
   joinStyle: BufferParameters.JOIN_ROUND,
   endCapStyle: BufferParameters.CAP_FLAT
 })
+<<<<<<< Updated upstream
 
 /**
  * singleSidedLineBuffer :: geometry -> distance -> geometry
  */
+=======
+>>>>>>> Stashed changes
 export const singleSidedLineBuffer = buffer({
   joinStyle: BufferParameters.JOIN_ROUND,
   endCapStyle: BufferParameters.CAP_FLAT,
   singleSided: true
 })
+<<<<<<< Updated upstream
 
 /**
  * simpleBuffer :: geometry -> distance -> geometry
  */
+=======
+>>>>>>> Stashed changes
 export const simpleBuffer = buffer({
   endCapStyle: BufferParameters.CAP_ROUND
 })
 
+<<<<<<< Updated upstream
 /**
  * polygon :: jts.geom.Coordinate m => [m] -> jts.geom.Polygon
  */
@@ -118,12 +154,27 @@ export const segment = (...args) => {
  * lineString :: ...[jts.geom.Coordinate] -> jts.geom.LineString
  */
 export const lineString = (...args) => {
+=======
+export const polygon = (coordinates: any) => geometryFactory.createPolygon(coordinates)
+
+export const segment = (...args: any[]): LineSegment => {
+  switch (args.length) {
+    case 1: return Types.isLineSegment(args[0]) ? args[0] : new LineSegment(args[0][0], args[0][1])
+    case 2: return new LineSegment(args[0], args[1])
+    case 3: return segment(args[0])
+    default: throw new Error('Invalid arguments for segment')
+  }
+}
+
+export const lineString = (...args: any[]): any => {
+>>>>>>> Stashed changes
   if (args.length === 1) {
     if (Types.isLineSegment(args[0])) return args[0].toGeometry(geometryFactory)
     else if (Types.isArray(args[0])) return geometryFactory.createLineString(args[0])
   } else return geometryFactory.createLineString([...args])
 }
 
+<<<<<<< Updated upstream
 /**
  * multiLineString :: [jts.geom.LineString] -> jts.geom.MultiLineString
  */
@@ -162,16 +213,34 @@ export const collect = geometries => geometryFactory.createGeometryCollection(ge
  * coordinates :: [jts.geom.Geometry] -> [jts.geom.Coordinate]
  */
 export const coordinates = (...args) => {
+=======
+export const multiLineString = (lineStrings: any[]) => geometryFactory.createMultiLineString(lineStrings)
+export const point = (coordinate: any) => geometryFactory.createPoint(coordinate)
+export const multiPoint = (points: any[]) => geometryFactory.createMultiPoint(points)
+export const lengthIndexedLine = (geometry: any) => new LengthIndexedLine(geometry)
+
+export const segments = (lineString: any) => R
+  .aperture(2, coordinates(lineString))
+  .map(segment)
+
+export const collect = (geometries: any[]) => geometryFactory.createGeometryCollection(geometries)
+
+export const coordinates = (...args: any[]): any[] => {
+>>>>>>> Stashed changes
   if (Types.isArray(args[0])) return args[0].flatMap(coordinates)
   else return args[0].getCoordinates()
 }
 
+<<<<<<< Updated upstream
 /**
  * coordinate :: jts.geom.Point -> jts.geom.Coordinate
  * coordinate :: [Number, Number] -> jts.geom.Coordinate
  * coordinate :: (Number, Number) -> jts.geom.Coordinate
  */
 export const coordinate = (...args) => {
+=======
+export const coordinate = (...args: any[]): Coordinate | undefined => {
+>>>>>>> Stashed changes
   if (args[0] instanceof Geometry) return args[0].getCoordinate()
   else if (Types.isArray(args[0])) return coordinate(...args[0])
   else if (args.length === 2) {
@@ -180,6 +249,7 @@ export const coordinate = (...args) => {
   } else return undefined
 }
 
+<<<<<<< Updated upstream
 /**
  * boundary :: jts.geom.Geometry -> jts.geom.Geometry
  */
@@ -226,6 +296,21 @@ export const geometries = geometryCollection => R
  * translate :: (Number -> jts.geom.Geometry) -> Number -> jts.geom.Geometry
  */
 export const translate = (angle, geometry) => distance => {
+=======
+export const boundary = (geometry: any) => geometry.getBoundary()
+export const union = (geometries: any[]) => geometries.reduce(OverlayOp.union)
+export const difference = (geometries: any[]) => geometries.reduce(OverlayOp.difference)
+export const intersection = (geometries: any[]) => geometries.reduce(OverlayOp.intersection)
+export const startPoint = (geometry: any) => geometry.getStartPoint()
+export const endPoint = (geometry: any) => geometry.getEndPoint()
+export const minimumRectangle = (geometry: any) => MinimumDiameter.getMinimumRectangle(geometry)
+
+export const geometries = (geometryCollection: any) => R
+  .range(0, geometryCollection.getNumGeometries())
+  .map(i => geometryCollection.getGeometryN(i))
+
+export const translate = (angle: number, geometry: any) => (distance: number) => {
+>>>>>>> Stashed changes
   const α = Angle.PI_TIMES_2 - angle
   const [tx, ty] = [-Math.cos(α) * distance, Math.sin(α) * distance]
   const transform = AffineTransformation.translationInstance(tx, ty)
@@ -234,33 +319,46 @@ export const translate = (angle, geometry) => distance => {
   return translated
 }
 
+<<<<<<< Updated upstream
 /**
  * reflect :: Number n => (n, n, n, n) -> jts.geom.Geometry -> jts.geom.Geometry
  */
 export const reflect = (x0, y0, x1, y1) => geometry => {
+=======
+export const reflect = (x0: number, y0: number, x1: number, y1: number) => (geometry: any) => {
+>>>>>>> Stashed changes
   const transform = AffineTransformation.reflectionInstance(x0, y0, x1, y1)
   const translated = geometry.copy()
   translated.apply(transform)
   return translated
 }
 
+<<<<<<< Updated upstream
 /**
  * projectCoordinate :: jts.geom.Coordinate -> [angle, distance] -> jts.geom.Coordinate
  */
 export const projectCoordinate = ({ x, y }) => ([angle, distance]) => new Coordinate(
+=======
+export const projectCoordinate = ({ x, y }: { x: number; y: number }) => ([angle, distance]: [number, number]) => new Coordinate(
+>>>>>>> Stashed changes
   x + Math.cos(angle) * distance,
   y + Math.sin(angle) * distance
 )
 
+<<<<<<< Updated upstream
 /**
  * projectCoordinates :: Number n, jts.geom.Coordinate m => (n, n, m) -> [n] -> [m]
  */
 export const projectCoordinates = (distance, angle, coordinate) => fractions =>
+=======
+export const projectCoordinates = (distance: number, angle: number, coordinate: any) => (fractions: number[][]) =>
+>>>>>>> Stashed changes
   fractions
     .map(cs => cs.map(c => c * distance))
     .map(([a, b]) => [angle - Math.atan2(b, a), Math.hypot(a, b)])
     .map(projectCoordinate(coordinate))
 
+<<<<<<< Updated upstream
 /**
  * segmentize :: (jts.geom.LineSegment, Number) -> [jts.geom.Coordinate]
  */
@@ -302,10 +400,21 @@ export const normalizePositive = angle => Angle.normalizePositive(angle)
  * arc :: jts.geom.Coordinate m, Number n => (m, n, n, n, n) -> [m]
  */
 export const arc = ({ x, y }, radius, α1, α2, n) => R.range(0, n)
+=======
+export const segmentize = (segment: LineSegment, n: number) => R
+  .range(0, n + 1)
+  .map(i => segment.pointAlong(i / n))
+
+export const rotation = (segment: LineSegment) => Angle.normalize(Angle.PI_TIMES_2 - segment.angle())
+export const normalizePositive = (angle: number) => Angle.normalizePositive(angle)
+
+export const arc = ({ x, y }: { x: number; y: number }, radius: number, α1: number, α2: number, n: number) => R.range(0, n)
+>>>>>>> Stashed changes
   .map(i => α1 - α2 / n * i)
   .map(α => [x + radius * Math.cos(α), y + radius * Math.sin(α)])
   .map(coordinate)
 
+<<<<<<< Updated upstream
 /**
  * centroid :: jts.geom.Geometry -> jts.geom.Coordinate
  */
@@ -321,6 +430,11 @@ export const centroid = geometry => Centroid.getCentroid(geometry)
  * points :: jts.geom.GeometryCollection -> [jts.geom.Point]
  */
 export const points = geometry => {
+=======
+export const centroid = (geometry: any) => Centroid.getCentroid(geometry)
+
+export const points = (geometry: any): any[] => {
+>>>>>>> Stashed changes
   const type = geometry.getGeometryType()
 
   switch (type) {
@@ -329,7 +443,11 @@ export const points = geometry => {
     case 'LineString': return R.range(0, geometry.getNumPoints()).map(i => geometry.getPointN(i))
     case 'LinearRing': return R.range(0, geometry.getNumPoints()).map(i => geometry.getPointN(i))
     case 'Polygon': return points(geometry.getExteriorRing())
+<<<<<<< Updated upstream
     case 'GeometryCollection': return geometries(geometry).reduce((acc, geometry) => {
+=======
+    case 'GeometryCollection': return geometries(geometry).reduce((acc: any[], geometry: any) => {
+>>>>>>> Stashed changes
       acc.push(...points(geometry))
       return acc
     }, [])
@@ -337,6 +455,7 @@ export const points = geometry => {
   }
 }
 
+<<<<<<< Updated upstream
 /**
  * equals :: jts.geom.Geometry -> jts.geom.Geometry -> Boolean
  * Reference: https://github.com/bjornharrtell/jsts/blob/master/src/org/locationtech/jts/monkey.js
@@ -354,3 +473,14 @@ export const intersects = (g1, g2) => RelateOp.intersects(g1, g2)
  * Reference: https://github.com/bjornharrtell/jsts/blob/master/src/org/locationtech/jts/monkey.js
  */
 export const convexHull = geometry => new ConvexHull(geometry).getConvexHull()
+=======
+export const equals = (g1: any, g2: any) => RelateOp.equalsTopo(g1, g2)
+export const intersects = (g1: any, g2: any) => RelateOp.intersects(g1, g2)
+export const convexHull = (geometry: any) => new ConvexHull(geometry).getConvexHull()
+
+// Export Angle constants
+export const AngleConstants = {
+  PI_TIMES_2: Angle.PI_TIMES_2
+}
+
+>>>>>>> Stashed changes

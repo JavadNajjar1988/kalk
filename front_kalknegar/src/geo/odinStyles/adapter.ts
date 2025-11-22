@@ -1,3 +1,4 @@
+<<<<<<< Updated upstream
 /**
  * ODIN Styles Adapter for OpenLayers
  * 
@@ -38,6 +39,7 @@ export function prepareOdinFeature(
     
     // Resolution signals (باید از map view دریافت شود)
     centerResolution: options.centerResolution || Signal.of(1),
+    selectionMode: Signal.of('default'),
     
     // Style signals
     globalStyle: Signal.of(options.globalStyle || {}),
@@ -210,5 +212,60 @@ export function cleanupFeature(feature: Feature) {
     // حذف $ property
     delete odinFeature.$
   }
+=======
+import Signal from '@syncpoint/signal'
+import type { FeatureLike } from 'ol/Feature'
+import type { Geometry } from 'ol/geom'
+
+export interface OdinStyleOptions {
+  resolution?: number
+  globalStyle?: Record<string, any>
+  layerStyle?: Record<string, any>
+  featureStyle?: Record<string, any>
+  selectionMode?: string | null
+}
+
+/**
+ * Adapter برای تبدیل Feature OpenLayers به فرمت مورد نیاز ODINv2
+ */
+export function adaptFeatureForOdinStyle(
+  feature: FeatureLike,
+  options: OdinStyleOptions = {}
+) {
+  const $: any = {
+    properties: Signal.of(feature.getProperties()),
+    geometry: Signal.of(feature.getGeometry()),
+    globalStyle: Signal.of(options.globalStyle || {}),
+    layerStyle: Signal.of(options.layerStyle || {}),
+    featureStyle: Signal.of(options.featureStyle || {}),
+    selectionMode: Signal.of(options.selectionMode || null),
+    centerResolution: Signal.of(options.resolution || 1)
+  }
+  
+  ;(feature as any).$ = $
+  return feature
+}
+
+/**
+ * تبدیل Signal به Promise برای استفاده در Vue
+ */
+export function signalToPromise<T>(signal: any): Promise<T> {
+  return new Promise((resolve) => {
+    signal.subscribe((value: T) => {
+      resolve(value)
+    })
+  })
+}
+
+/**
+ * تبدیل Signal به Array از مقادیر
+ */
+export function signalToArray<T>(signal: any): T[] {
+  let result: T[] = []
+  signal.subscribe((value: T) => {
+    result = Array.isArray(value) ? value : [value]
+  })
+  return result
+>>>>>>> Stashed changes
 }
 

@@ -25,15 +25,20 @@ export class ApiClientError extends Error {
 
 // Base API client class
 export class BaseApiClient {
-  private baseUrl: string;
-  private timeout: number;
+  protected baseUrl: string;
+  protected timeout: number;
 
   constructor(baseUrl: string = API_CONFIG.baseUrl, timeout: number = API_CONFIG.timeout) {
     this.baseUrl = baseUrl;
     this.timeout = timeout;
   }
 
-  private async makeRequest<T>(
+  // Override this method in child classes to add auth headers
+  protected getAuthHeaders(): Record<string, string> {
+    return {};
+  }
+
+  protected async makeRequest<T>(
     endpoint: string,
     options: RequestInit = {}
   ): Promise<ApiResponse<T>> {
@@ -44,10 +49,13 @@ export class BaseApiClient {
       'Accept': 'application/json',
     };
 
+    const authHeaders = this.getAuthHeaders();
+
     const config: RequestInit = {
       ...options,
       headers: {
         ...defaultHeaders,
+        ...authHeaders,
         ...options.headers,
       },
       signal: AbortSignal.timeout(this.timeout),

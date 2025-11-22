@@ -1,7 +1,11 @@
 import * as R from 'ramda'
 
 /** 2525C, table TABLE XIII */
+<<<<<<< Updated upstream
 const schemes = {
+=======
+const schemes: Record<string, Record<string, string>> = {
+>>>>>>> Stashed changes
   dark: {
     red: '#C80000', // RGB(200, 0, 0)
     blue: '#006B8C', // RGB(0, 107, 140)
@@ -25,6 +29,7 @@ const schemes = {
   }
 }
 
+<<<<<<< Updated upstream
 const includes = xs => x => xs.includes(x)
 
 export const lineColor = scheme => R.cond([
@@ -32,6 +37,15 @@ export const lineColor = scheme => R.cond([
   [includes(['H', 'J', 'K', 'S']), R.always(schemes[scheme].red)],
   [includes(['N', 'L']), R.always(schemes[scheme].green)],
   [includes(['U', 'P', 'G', 'W']), R.always(schemes[scheme].yellow)],
+=======
+const includes = (xs: string[]) => (x: string) => xs.includes(x)
+
+export const lineColor = (scheme: string) => R.cond([
+  [includes(['A', 'F', 'M', 'D']), R.always(schemes[scheme]?.blue || 'blue')],
+  [includes(['H', 'J', 'K', 'S']), R.always(schemes[scheme]?.red || 'red')],
+  [includes(['N', 'L']), R.always(schemes[scheme]?.green || 'green')],
+  [includes(['U', 'P', 'G', 'W']), R.always(schemes[scheme]?.yellow || 'yellow')],
+>>>>>>> Stashed changes
   [R.T, R.always('black')]
 ])
 

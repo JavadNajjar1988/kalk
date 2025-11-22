@@ -21,8 +21,8 @@ export * as SymbolLibrary from './ts/library'
 export * as SymbolParser from './ts/parser'
 
 // Symbology dictionaries
-export { default as MIL_STD_2525C } from './symbology/2525c'
-export { default as SymbolDefinitions } from './symbology/symbol'
+export * as MIL_STD_2525C from './symbology/2525c'
+export * as SymbolDefinitions from './symbology/symbol'
 
 // Utility functions
 export * as Geometry from './geometry'

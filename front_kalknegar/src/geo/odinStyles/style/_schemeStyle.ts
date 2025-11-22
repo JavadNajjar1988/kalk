@@ -1,10 +1,16 @@
 import * as Colors from './color-schemes'
 import { identityCode, statusCode } from '../symbology/2525c'
 
+<<<<<<< Updated upstream
 /**
  *
  */
 export default (sidc, colorScheme) => {
+=======
+export default (sidc: string | null, colorScheme: string): Record<string, any> => {
+  if (!sidc) return {}
+  
+>>>>>>> Stashed changes
   const status = statusCode(sidc)
   const identity = identityCode(sidc)
   const simpleIdentity = identity === 'H' || identity === 'S'
@@ -20,3 +26,7 @@ export default (sidc, colorScheme) => {
     'line-halo-dash-array': status === 'A' ? [20, 10] : null
   }
 }
+<<<<<<< Updated upstream
+=======
+
+>>>>>>> Stashed changes

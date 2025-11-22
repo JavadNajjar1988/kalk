@@ -1,4 +1,8 @@
-import { PI_OVER_4 } from '../../Math'
+<<<<<<< Updated upstream
+import { PI_OVER_4 } from '../Math'
+=======
+import { PI_OVER_4 } from '../shared/Math'
+>>>>>>> Stashed changes
 
 const COLOR_WHITE = 'white'
 const COLOR_BLACK = 'black'
@@ -8,11 +12,15 @@ const DASH_ARRAY_10_10 = [10, 10]
 const DASH_ARRAY_14_6 = [14, 6]
 const DASH_ARRAY_20_8_2_8 = [20, 8, 2, 8]
 
+<<<<<<< Updated upstream
 /**
  * Registry of predefined styles.
  */
 export default (options) => {
 
+=======
+export default (options: Record<string, any>) => {
+>>>>>>> Stashed changes
   const font = options['text-font'] || [
     options['text-font-style'],
     options['text-font-variant'],
@@ -21,7 +29,11 @@ export default (options) => {
     options['text-font-family']
   ].filter(Boolean).join(' ')
 
+<<<<<<< Updated upstream
   const registry = {}
+=======
+  const registry: Record<string, any> = {}
+>>>>>>> Stashed changes
 
   registry['style:2525c/symbol'] = {
     'color-scheme': options['color-scheme'],
@@ -165,5 +177,11 @@ export default (options) => {
     'line-width': 1.5
   }
 
+<<<<<<< Updated upstream
   return ({ id, ...props }) => ({ ...(registry[id] || {}), ...props })
 }
+=======
+  return ({ id, ...props }: { id: string; [key: string]: any }) => ({ ...(registry[id] || {}), ...props })
+}
+
+>>>>>>> Stashed changes

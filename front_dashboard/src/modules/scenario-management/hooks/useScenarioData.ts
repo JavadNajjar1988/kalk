@@ -1,10 +1,10 @@
 /**
  * useScenarioData Hook
- * هوک مدیریت داده‌های سناریو با ارتباط ORBAT
+ * هوک مدیریت داده‌های سناریو با ارتباط به API سرور
  */
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import { useOrbatData } from '../../orbat-integration';
+import { scenarioApiService } from '@/services/api/scenarioApiService';
 import type { 
   ScenarioMetadata, 
   DemoScenario, 
@@ -14,6 +14,7 @@ import type {
   UploadResult,
   UrlLoadResult
 } from '../types';
+import type { EnhancedScenario } from '@/types';
 
 // Demo scenarios (مطابق با Vue)
 const DEMO_SCENARIOS: DemoScenario[] = [
@@ -63,17 +64,6 @@ interface UseScenarioDataOptions {
 
 export const useScenarioData = (options: UseScenarioDataOptions = {}): UseScenarioDataResult => {
   const { autoLoad = true, enableDemoScenarios = true } = options;
-  
-  // ORBAT integration
-  const {
-    scenarios: orbatScenarios,
-    isLoading: orbatLoading,
-    error: orbatError,
-    loadScenarios: loadOrbatScenarios,
-    addScenario,
-    updateScenario,
-    deleteScenario
-  } = useOrbatData({ autoLoad });
 
   // Local state
   const [state, setState] = useState<LandingPageState>({
@@ -87,29 +77,19 @@ export const useScenarioData = (options: UseScenarioDataOptions = {}): UseScenar
     selectedScenarios: []
   });
 
-  // Convert ORBAT scenarios to our format
-  const convertOrbatScenarios = useCallback((orbatData: any[]): ScenarioMetadata[] => {
-    return orbatData.map(scenario => ({
+  // Convert API scenarios to our format
+  const convertApiScenarios = useCallback((apiData: any[]): ScenarioMetadata[] => {
+    return apiData.map((scenario: any) => ({
       id: scenario.id,
       name: scenario.name || 'بدون نام',
-      description: scenario.description || scenario.meta?.description,
-      created: scenario.meta?.createdDate || scenario.createdAt || new Date(),
-      modified: scenario.meta?.lastModifiedDate || scenario.updatedAt || new Date(),
-      type: scenario.type || 'ORBAT-mapper',
-      version: scenario.version
+      description: scenario.description || '',
+      created: scenario.created ? new Date(scenario.created) : (scenario.createdAt ? new Date(scenario.createdAt) : new Date()),
+      modified: scenario.modified ? new Date(scenario.modified) : (scenario.updatedAt ? new Date(scenario.updatedAt) : new Date()),
+      type: 'scenario',
+      version: scenario.metadata?.version || scenario.version,
+      image: scenario.image
     }));
   }, []);
-
-  // Update scenarios when ORBAT data changes
-  useEffect(() => {
-    const convertedScenarios = convertOrbatScenarios(orbatScenarios || []);
-    setState(prev => ({
-      ...prev,
-      scenarios: convertedScenarios,
-      isLoading: orbatLoading,
-      error: orbatError
-    }));
-  }, [orbatScenarios, orbatLoading, orbatError, convertOrbatScenarios]);
 
   // Sort options
   const sortOptions: SortOption[] = useMemo(() => [
@@ -179,43 +159,70 @@ export const useScenarioData = (options: UseScenarioDataOptions = {}): UseScenar
 
   // Actions
   const loadScenarios = useCallback(async () => {
+    setState(prev => ({ ...prev, isLoading: true, error: null }));
     try {
-      await loadOrbatScenarios();
+      const apiScenarios = await scenarioApiService.getScenarios();
+      const convertedScenarios = convertApiScenarios(apiScenarios);
+      setState(prev => ({
+        ...prev,
+        scenarios: convertedScenarios,
+        isLoading: false
+      }));
     } catch (error) {
       setState(prev => ({ 
         ...prev, 
+        isLoading: false,
         error: error instanceof Error ? error.message : 'خطا در بارگذاری سناریوها' 
       }));
     }
-  }, [loadOrbatScenarios]);
+  }, [convertApiScenarios]);
 
   const handleScenarioAction = useCallback(async (action: ScenarioAction, scenarioId: string) => {
     try {
       switch (action) {
         case 'open':
-          // Navigate to scenario editor
-          window.location.href = `/orbat-editor/${scenarioId}`;
+          // Navigate to kalknegar editor
+          window.open(`/kalknegar/#/scenario/${scenarioId}`, '_blank');
           break;
           
         case 'delete':
           if (window.confirm('آیا مطمئن هستید که می‌خواهید این سناریو را حذف کنید؟')) {
-            await deleteScenario(scenarioId);
+            await scenarioApiService.deleteScenario(scenarioId);
+            // Refresh scenarios list
+            await loadScenarios();
           }
           break;
           
         case 'download':
-          // Implement download functionality
-          console.log('Download scenario:', scenarioId);
+          // Download scenario as JSON
+          try {
+            await scenarioApiService.downloadScenarioAsJson(scenarioId);
+          } catch (error) {
+            console.error('Failed to download scenario:', error);
+            setState(prev => ({ 
+              ...prev, 
+              error: 'خطا در دانلود سناریو' 
+            }));
+          }
           break;
           
         case 'duplicate':
-          // Implement duplicate functionality
-          console.log('Duplicate scenario:', scenarioId);
+          // Duplicate scenario
+          try {
+            const duplicated = await scenarioApiService.duplicateScenario(scenarioId);
+            await loadScenarios();
+          } catch (error) {
+            console.error('Failed to duplicate scenario:', error);
+            setState(prev => ({ 
+              ...prev, 
+              error: 'خطا در کپی سناریو' 
+            }));
+          }
           break;
           
         case 'edit':
-          // Navigate to scenario editor in edit mode
-          window.location.href = `/orbat-editor/${scenarioId}?mode=edit`;
+          // Navigate to kalknegar editor in edit mode
+          window.open(`/kalknegar/#/scenario/${scenarioId}`, '_blank');
           break;
       }
     } catch (error) {
@@ -224,16 +231,16 @@ export const useScenarioData = (options: UseScenarioDataOptions = {}): UseScenar
         error: error instanceof Error ? error.message : 'خطا در انجام عملیات' 
       }));
     }
-  }, [deleteScenario]);
+  }, [loadScenarios]);
 
   const handleDemoScenarioSelect = useCallback((scenarioId: string) => {
-    // Navigate to demo scenario
-    window.location.href = `/orbat-editor/demo-${scenarioId}`;
+    // Navigate to demo scenario in kalknegar
+    window.open(`/kalknegar/#/scenario/demo-${scenarioId}`, '_blank');
   }, []);
 
   const handleNewScenario = useCallback(() => {
-    // Navigate to new scenario page
-    window.location.href = '/dashboard/scenario-management/new';
+    // Navigate to kalknegar new scenario page
+    window.open('/kalknegar/#/newscenario', '_blank');
   }, []);
 
   const handleUploadScenario = useCallback(async (file: File): Promise<UploadResult> => {
@@ -241,16 +248,15 @@ export const useScenarioData = (options: UseScenarioDataOptions = {}): UseScenar
       const text = await file.text();
       const scenarioData = JSON.parse(text);
       
-      // Validate scenario structure
-      if (!scenarioData.type || scenarioData.type !== 'ORBAT-mapper') {
-        throw new Error('فایل انتخاب شده سناریوی معتبر نیست');
-      }
-
-      const newScenario = await addScenario(scenarioData);
+      // Import scenario using API service
+      const importedScenario = await scenarioApiService.importScenario(file);
+      
+      // Refresh scenarios list
+      await loadScenarios();
       
       return {
         success: true,
-        scenario: convertOrbatScenarios([newScenario])[0]
+        scenario: convertApiScenarios([importedScenario])[0]
       };
     } catch (error) {
       return {
@@ -258,7 +264,7 @@ export const useScenarioData = (options: UseScenarioDataOptions = {}): UseScenar
         error: error instanceof Error ? error.message : 'خطا در بارگذاری فایل'
       };
     }
-  }, [addScenario, convertOrbatScenarios]);
+  }, [convertApiScenarios, loadScenarios]);
 
   const handleLoadFromUrl = useCallback(async (url: string): Promise<UrlLoadResult> => {
     try {
@@ -268,18 +274,18 @@ export const useScenarioData = (options: UseScenarioDataOptions = {}): UseScenar
         throw new Error('دریافت فایل از URL ناموفق بود');
       }
       
-      const scenarioData = await response.json();
+      const blob = await response.blob();
+      const file = new File([blob], 'scenario.json', { type: 'application/json' });
       
-      // Validate scenario structure
-      if (!scenarioData.type || scenarioData.type !== 'ORBAT-mapper') {
-        throw new Error('فایل دریافت شده سناریوی معتبر نیست');
-      }
-
-      const newScenario = await addScenario(scenarioData);
+      // Import scenario using API service
+      const importedScenario = await scenarioApiService.importScenario(file);
+      
+      // Refresh scenarios list
+      await loadScenarios();
       
       return {
         success: true,
-        scenario: convertOrbatScenarios([newScenario])[0]
+        scenario: convertApiScenarios([importedScenario])[0]
       };
     } catch (error) {
       return {
@@ -287,7 +293,7 @@ export const useScenarioData = (options: UseScenarioDataOptions = {}): UseScenar
         error: error instanceof Error ? error.message : 'خطا در بارگذاری از URL'
       };
     }
-  }, [addScenario, convertOrbatScenarios]);
+  }, [convertApiScenarios, loadScenarios]);
 
   const handleSearch = useCallback((query: string) => {
     setState(prev => ({ ...prev, searchQuery: query }));
@@ -304,6 +310,13 @@ export const useScenarioData = (options: UseScenarioDataOptions = {}): UseScenar
   const refreshData = useCallback(async () => {
     await loadScenarios();
   }, [loadScenarios]);
+
+  // Auto-load effect
+  useEffect(() => {
+    if (autoLoad) {
+      loadScenarios();
+    }
+  }, [autoLoad, loadScenarios]);
 
   return {
     state,
