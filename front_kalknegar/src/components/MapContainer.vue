@@ -43,6 +43,7 @@ onMounted(async () => {
     layers: await createBaseLayers(view, props.baseLayerName),
     view,
     controls: defaultControls({
+      zoom: false,
       attributionOptions: {
         collapsible: true,
       },
