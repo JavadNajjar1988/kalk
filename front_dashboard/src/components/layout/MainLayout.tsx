@@ -56,8 +56,6 @@ import SidePanel from './SidePanel';
 import PersianDateTime from '@/components/common/PersianDateTime';
 import { useTranslation } from '@/hooks/useTranslation';
 import SearchBar from '@/components/common/SearchBar';
-import KalknegarLaunchDialog from '@/components/common/KalknegarLaunchDialog';
-import KalknegarLoadingDialog from '@/components/common/KalknegarLoadingDialog';
 
 const DRAWER_WIDTH = 180; // further narrow sidebar width for more main content space
 const DRAWER_WIDTH_COLLAPSED = 60;
@@ -83,8 +81,6 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
   const [searchValue, setSearchValue] = useState('');
   const [notifDialogOpen, setNotifDialogOpen] = useState(false);
   const [notifDialogData, setNotifDialogData] = useState<any>(null);
-  const [kalknegarDialogOpen, setKalknegarDialogOpen] = useState(false);
-  const [kalknegarLoadingOpen, setKalknegarLoadingOpen] = useState(false);
   // حذف stateهای جداگانه و استفاده از یک state واحد برای مدیریت نمایش المان‌ها
   const [sidebarElementsVisible, setSidebarElementsVisible] = useState({
     labels: !layout.sidebarCollapsed,
@@ -178,13 +174,6 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
       roles: ['admin', 'commander', 'operator']
     },
     { 
-      id: 'kalknegar', 
-      label: 'کالک نگار', 
-      icon: <MilitaryTech />, 
-      path: '/kalknegar',
-      roles: ['admin', 'commander', 'operator']
-    },
-    { 
       id: 'users', 
       label: 'مدیریت کاربران', 
       icon: <People />, 
@@ -243,11 +232,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
   };
 
   const handleMenuItemClick = (path: string, itemId: string) => {
-    if (itemId === 'kalknegar') {
-      setKalknegarDialogOpen(true);
-    } else {
-      navigate(path);
-    }
+    navigate(path);
   };
 
   const isActiveRoute = (path: string): boolean => {
@@ -285,24 +270,6 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
     }
   };
 
-  const handleKalknegarDialogClose = () => {
-    setKalknegarDialogOpen(false);
-  };
-
-  const handleKalknegarLaunch = () => {
-    setKalknegarDialogOpen(false);
-    setKalknegarLoadingOpen(true);
-    const token = localStorage.getItem('access_token');
-    if (token) {
-      sessionStorage.setItem('access_token', token);
-      console.log('[MainLayout] Token copied to sessionStorage for iframe access');
-    }
-    // کاهش مدت زمان به 1 ثانیه برای عملیات ضروری
-    setTimeout(() => {
-      setKalknegarLoadingOpen(false);
-      navigate('/kalknegar');
-    }, 1000);
-  };
 
   return (
     <Box sx={{ display: 'flex', height: '100vh' }}>
@@ -796,18 +763,6 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
 
       {/* Side Panel (Gmail-like) */}
       <SidePanel />
-
-      {/* دیالوگ راه‌اندازی کالک نگار */}
-      <KalknegarLaunchDialog
-        open={kalknegarDialogOpen}
-        onClose={handleKalknegarDialogClose}
-        onLaunch={handleKalknegarLaunch}
-      />
-
-      {/* دیالوگ لودینگ کالک نگار */}
-      <KalknegarLoadingDialog
-        open={kalknegarLoadingOpen}
-      />
 
       {/* محتوای اصلی */}
       <Box

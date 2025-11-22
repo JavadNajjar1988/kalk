@@ -85,7 +85,7 @@ declare module 'milsymbol' {
     infoColor?: string;
     infoFields?: boolean;
     infoSize?: number;
-    colorMode?: string;
+    colorMode?: any;
     [key: string]: any;
   }
 
@@ -97,4 +97,7 @@ declare module 'milsymbol' {
     getSize(): { width: number; height: number };
     getOctagonAnchor(): { x: number; y: number };
   }
+
+  // Helper to get built-in color modes (Light, FrameColor, etc.)
+  export function getColorMode(name: string): any;
 } 

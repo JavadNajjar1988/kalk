@@ -54,6 +54,7 @@ interface NewScenarioDialogProps {
   open: boolean;
   onClose: () => void;
   onSave: (scenario: Partial<Scenario>) => void;
+  scenario?: Scenario; // در حالت ویرایش، سناریوی موجود را می‌گیریم
 }
 
 interface SideData {
@@ -116,6 +117,7 @@ const NewScenarioDialog: React.FC<NewScenarioDialogProps> = ({
   open,
   onClose,
   onSave,
+  scenario,
 }) => {
   const { t } = useTranslation();
   const theme = useTheme();
@@ -174,36 +176,125 @@ const NewScenarioDialog: React.FC<NewScenarioDialogProps> = ({
     dustLevel: 'low',
   });
 
-  // Reset form when dialog opens
+  // مقداردهی فرم هنگام باز شدن دیالوگ (ایجاد یا ویرایش)
   useEffect(() => {
     if (open) {
       setActiveStep(0);
-      setFormData({
-        name: 'سناریوی جدید',
-        description: '',
-        scenarioCode: generateScenarioCode(),
-        authorName: '',
-        createdDate: '',
-        purpose: '',
-        bboxText: '',
-        symbologyStandard: 'app6',
-        timeZone: 'UTC',
-        year: new Date().getFullYear(),
-        month: new Date().getMonth() + 1,
-        day: new Date().getDate(),
-        hour: 0,
-        minute: 0,
-        endTime: '',
-        status: 'draft' as ScenarioStatus,
-        objectives: [],
-        tags: [],
-      });
-      setNoInitialOrbat(false);
-      setSides([]);
-      setPreviewImageUrl(null);
-      setPreviewImageFile(null);
+
+      if (scenario) {
+        const meta = (scenario.metadata || {}) as any;
+
+        // استخراج زمان شروع برای پر کردن فیلدهای تاریخ/ساعت
+        let year = new Date().getFullYear();
+        let month = new Date().getMonth() + 1;
+        let day = new Date().getDate();
+        let hour = 0;
+        let minute = 0;
+        if (scenario.startTime) {
+          const d = new Date(scenario.startTime);
+          if (!isNaN(d.getTime())) {
+            year = d.getFullYear();
+            month = d.getMonth() + 1;
+            day = d.getDate();
+            hour = d.getHours();
+            minute = d.getMinutes();
+          }
+        }
+
+        setFormData({
+          name: scenario.name || 'سناریو',
+          description: scenario.description || '',
+          scenarioCode: meta.scenarioCode || generateScenarioCode(),
+          authorName: meta.authorName || '',
+          createdDate: meta.createdDate || '',
+          purpose: meta.purpose || '',
+          bboxText: '', // فعلاً از متادیتا برنمی‌گردانیم
+          symbologyStandard: (meta.symbologyStandard === '2525' ? '2525' : 'app6'),
+          timeZone: meta.timeZone || 'UTC',
+          year,
+          month,
+          day,
+          hour,
+          minute,
+          endTime: scenario.endTime || '',
+          status: scenario.status || ('draft' as ScenarioStatus),
+          objectives: scenario.objectives || [],
+          tags: Array.isArray(meta.tags) ? meta.tags : [],
+        });
+
+        setNoInitialOrbat(Array.isArray(meta.sides) ? meta.sides.length === 0 : true);
+        setSides(Array.isArray(meta.sides) ? meta.sides : []);
+
+        // هواشناسی
+        if (meta.weather) {
+          setWeather((prev) => ({
+            ...prev,
+            ...meta.weather,
+          }));
+        } else {
+          // در غیر اینصورت همان مقادیر پیش‌فرض قبلی را نگه می‌داریم
+        }
+
+        // پیش‌نمایش تصویر
+        if (meta.image && typeof meta.image === 'string') {
+          setPreviewImageUrl(meta.image);
+        } else {
+          setPreviewImageUrl(null);
+        }
+        setPreviewImageFile(null);
+      } else {
+        // حالت ایجاد سناریوی جدید
+        setFormData({
+          name: 'سناریوی جدید',
+          description: '',
+          scenarioCode: generateScenarioCode(),
+          authorName: '',
+          createdDate: '',
+          purpose: '',
+          bboxText: '',
+          symbologyStandard: 'app6',
+          timeZone: 'UTC',
+          year: new Date().getFullYear(),
+          month: new Date().getMonth() + 1,
+          day: new Date().getDate(),
+          hour: 0,
+          minute: 0,
+          endTime: '',
+          status: 'draft' as ScenarioStatus,
+          objectives: [],
+          tags: [],
+        });
+        setNoInitialOrbat(false);
+        setSides([]);
+        setPreviewImageUrl(null);
+        setPreviewImageFile(null);
+        setWeather({
+          sunPhase: 'day',
+          sunElevationDeg: 30,
+          sky: '',
+          cloudCeilingFt: 0,
+          cloudCoveragePct: 0,
+          visibilityKm: 10,
+          visibilityReductionPct: 0,
+          temperatureC: 20,
+          humidityPct: 40,
+          pressureHpa: 1013,
+          windSurfaceSpeedKt: 0,
+          windSurfaceDirDeg: 0,
+          windUpperSpeedKt: 0,
+          windUpperDirDeg: 0,
+          precipitationType: 'none',
+          precipitationIntensity: 0,
+          precipitationDurationMin: 0,
+          groundCondition: 'dry',
+          groundIcing: false,
+          movementEnergyLossPct: 0,
+          airQualityIndex: 50,
+          dustLevel: 'low',
+        });
+      }
     }
-  }, [open]);
+  }, [open, scenario]);
 
   const handleNext = () => {
     setActiveStep((prevActiveStep) => prevActiveStep + 1);
@@ -339,6 +430,11 @@ const NewScenarioDialog: React.FC<NewScenarioDialogProps> = ({
         image: previewImageUrl || undefined,
       } as any,
     };
+
+    // اگر در حالت ویرایش هستیم، شناسه سناریو را هم اضافه کن
+    if (scenario && scenario.id) {
+      (scenarioData as any).id = scenario.id;
+    }
 
     onSave(scenarioData);
     onClose();

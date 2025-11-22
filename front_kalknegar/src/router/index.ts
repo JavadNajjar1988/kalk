@@ -1,14 +1,12 @@
 import { createRouter, createWebHistory, type RouteRecordRaw } from "vue-router";
 import NProgress from "nprogress";
 import "nprogress/nprogress.css";
-import LandingPage from "../views/LandingPage.vue";
 import {
   CHART_EDIT_MODE_ROUTE,
   CONTROL_SYMBOLS_ROUTE,
+  CONTROL_SYMBOLS_ROUTE,
   GRID_EDIT_ROUTE,
-  LANDING_PAGE_ROUTE,
   MAP_EDIT_MODE_ROUTE,
-  NEW_SCENARIO_ROUTE,
   ORBAT_CHART_ROUTE,
   STORY_MODE_ROUTE,
 <<<<<<< Updated upstream
@@ -16,6 +14,7 @@ import {
 =======
   TACTICAL_GRAPHICS_ROUTE,
   TACTICAL_SYMBOL_DEFINITION_ROUTE,
+  ODIN_SYMBOL_TEST_ROUTE,
   ODIN_SYMBOL_TEST_ROUTE,
 >>>>>>> Stashed changes
 } from "@/router/names";
@@ -29,7 +28,6 @@ declare module "vue-router" {
 
 const ScenarioEditorWrapper = () =>
   import("../modules/scenarioeditor/ScenarioEditorWrapper.vue");
-const NewScenarioView = () => import("../modules/scenarioeditor/NewScenarioView.vue");
 const StoryModeView = () => import("../modules/storymode/StoryModeWrapper.vue");
 const OrbatChartView = () => import("../modules/charteditor/OrbatChartViewWrapper.vue");
 const ComponentsTestView = () => import("../views/ComponentsTestView.vue");
@@ -50,6 +48,8 @@ const TacticalSymbolDefinitionPage = () => import("../modules/tactical-symbols/T
 const ControlSymbolsLab = () => import("../views/ControlSymbolsLab.vue");
 const OdinSymbolTestView = () => import("../views/OdinSymbolTestView.vue");
 >>>>>>> Stashed changes
+const ControlSymbolsLab = () => import("../views/ControlSymbolsLab.vue");
+const OdinSymbolTestView = () => import("../views/OdinSymbolTestView.vue");
 const routes = [
   {
     path: "/scenario/:scenarioId",
@@ -78,14 +78,6 @@ const routes = [
         meta: { helpUrl: "https://docs.orbat-mapper.app/guide/chart-edit-mode" },
       },
     ],
-  },
-  {
-    path: "/newscenario",
-    name: NEW_SCENARIO_ROUTE,
-    component: NewScenarioView,
-    beforeEnter: (to, from) => {
-      NProgress.start();
-    },
   },
   {
     path: "/storymode",
@@ -127,6 +119,14 @@ const routes = [
       NProgress.start();
     },
   },
+  {
+    path: "/control-symbols",
+    name: CONTROL_SYMBOLS_ROUTE,
+    component: ControlSymbolsLab,
+    beforeEnter: (to, from) => {
+      NProgress.start();
+    },
+  },
 <<<<<<< Updated upstream
 =======
   {
@@ -163,6 +163,14 @@ const routes = [
       NProgress.start();
     },
   },
+  {
+    path: "/odin-symbol-test",
+    name: ODIN_SYMBOL_TEST_ROUTE,
+    component: OdinSymbolTestView,
+    beforeEnter: (to, from) => {
+      NProgress.start();
+    },
+  },
 ] as RouteRecordRaw[];
 
 export const router = createRouter({
@@ -181,3 +189,4 @@ router.afterEach((to, from) => {
   // Complete the animation of the route progress bar.
   NProgress.done();
 });
+

@@ -13,22 +13,66 @@ export interface ScenarioFormData {
   [key: string]: any;
 }
 
-// Transform form data to scenario data
-function transformFormToScenario(formData: ScenarioFormData): Omit<EnhancedScenario, 'id' | 'createdAt' | 'updatedAt'> {
+/**
+ * تبدیل داده‌های فرم داشبورد به یک سناریوی سازگار با ORBAT-mapper
+ * این ساختار در فیلد `content` در بک‌اند ذخیره می‌شود تا مستقیماً توسط کالک‌نگار قابل لود باشد.
+ */
+function transformFormToScenario(formData: ScenarioFormData): any {
+  const nowIso = new Date().toISOString();
+
+  // شناسه موقت برای سناریو؛ شناسه نهایی از طرف بک‌اند (UUID) برمی‌گردد
+  const tempId =
+    typeof crypto !== 'undefined' && 'randomUUID' in crypto
+      ? (crypto as any).randomUUID()
+      : `scn-${Date.now()}`;
+
   return {
+    // فیلدهای اصلی مورد انتظار کالک‌نگار
+    id: tempId,
+    type: 'ORBAT-mapper',
+    version: '0.40.0',
     name: formData.name,
     description: formData.description || '',
-    startTime: formData.startTime || new Date().toISOString(),
+
+    // زمان شروع/پایان سناریو (برای هر دو طرف قابل استفاده است)
+    startTime: formData.startTime || nowIso,
     endTime: formData.endTime,
-    status: 'draft' as any,
-    units: [],
-    layers: [],
-    events: [],
+
+    // وضعیت و اهداف (هم در داشبورد و هم در کالک‌نگار به کار می‌آیند)
+    status: 'draft',
     objectives: formData.objectives || [],
-    metadata: {},
-    phases: [],
-    environmentalConditions: [],
-    executionStatus: 'not_started' as any,
+
+    // مجموعه‌های اصلی ORBAT – در ابتدا خالی هستند و در ادیتور نقشه پر می‌شوند
+    sides: [],
+    events: [],
+    layers: [],
+    mapLayers: [],
+
+    // تنظیمات سناریو – خالی نگه داشته می‌شود تا کالک‌نگار مقادیر پیش‌فرض را اعمال کند
+    settings: {
+      rangeRingGroups: [],
+      statuses: [],
+      supplyClasses: [],
+      supplyUoMs: [],
+    },
+
+    // متادیتا و فیلدهای توسعه‌یافته‌ای که هر دو فرانت می‌توانند از آن استفاده کنند
+    meta: {
+      createdDate: nowIso,
+      lastModifiedDate: nowIso,
+    },
+    terrainAnalysis: undefined,
+    battleInformation: undefined,
+    commandStructure: [],
+    simulationSettings: undefined,
+    currentTime: undefined,
+    simulationSpeed: 1.0,
+    executionStatus: 'not_started',
+    analysisResults: [],
+    tags: [],
+    metadata: {
+      source: 'dashboard',
+    },
   };
 }
 
@@ -58,6 +102,13 @@ export class ScenarioApiService extends BaseApiClient {
         id: apiItem.id ?? base.id,
         name: apiItem.name ?? base.name,
         description: apiItem.description ?? base.description,
+        // اضافه کردن image از apiItem یا base
+        image: apiItem.image ?? base.image,
+        // اگر image در metadata نباشد، آن را اضافه می‌کنیم
+        metadata: {
+          ...(base.metadata || {}),
+          image: apiItem.image ?? base.image ?? base.metadata?.image,
+        },
       } as EnhancedScenario;
     }
     return apiItem as EnhancedScenario;
@@ -150,6 +201,40 @@ export class ScenarioApiService extends BaseApiClient {
       return handleApiResponse(response);
     } catch (error) {
       console.error(`Failed to fetch demo scenario ${demoId}:`, error);
+      throw error;
+    }
+  }
+
+  // Create a full scenario on the server from a demo scenario definition
+  async duplicateDemoScenario(demoId: string, newName?: string): Promise<EnhancedScenario> {
+    try {
+      const demoScenario = await this.getDemoScenario(demoId);
+
+      // Depending on backend implementation, demo scenario might be wrapped or plain
+      const base: any = demoScenario?.content ?? demoScenario;
+
+      const {
+        id: _,
+        createdAt: _createdAt,
+        updatedAt: _updatedAt,
+        ...scenarioData
+      } = base || {};
+
+      const duplicatedScenario = {
+        ...scenarioData,
+        name:
+          newName ||
+          demoScenario?.name ||
+          base?.name ||
+          `Demo Scenario ${demoId}`,
+      } as Omit<EnhancedScenario, 'id' | 'createdAt' | 'updatedAt'>;
+
+      const payload = this.buildScenarioPayload(duplicatedScenario as any);
+      const response = await this.post<any>('/scenarios', payload);
+      const data = handleApiResponse(response);
+      return this.mapScenarioOutToEnhanced(data);
+    } catch (error) {
+      console.error(`Failed to duplicate demo scenario ${demoId}:`, error);
       throw error;
     }
   }

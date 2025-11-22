@@ -85,9 +85,10 @@ export const useScenarioData = (options: UseScenarioDataOptions = {}): UseScenar
       description: scenario.description || '',
       created: scenario.created ? new Date(scenario.created) : (scenario.createdAt ? new Date(scenario.createdAt) : new Date()),
       modified: scenario.modified ? new Date(scenario.modified) : (scenario.updatedAt ? new Date(scenario.updatedAt) : new Date()),
-      type: 'scenario',
+      // API فعلی همه سناریوها را از نوع ORBAT-mapper برمی‌گرداند؛ در آینده می‌توان این را از متادیتا تشخیص داد
+      type: (scenario.metadata?.type as 'ORBAT-mapper' | 'custom') ?? 'ORBAT-mapper',
       version: scenario.metadata?.version || scenario.version,
-      image: scenario.image
+      imageUrl: scenario.image
     }));
   }, []);
 
@@ -182,7 +183,7 @@ export const useScenarioData = (options: UseScenarioDataOptions = {}): UseScenar
       switch (action) {
         case 'open':
           // Navigate to kalknegar editor
-          window.open(`/kalknegar/#/scenario/${scenarioId}`, '_blank');
+          window.open(`/kalknegar/scenario/${scenarioId}?integration=react`, '_self');
           break;
           
         case 'delete':
@@ -222,7 +223,7 @@ export const useScenarioData = (options: UseScenarioDataOptions = {}): UseScenar
           
         case 'edit':
           // Navigate to kalknegar editor in edit mode
-          window.open(`/kalknegar/#/scenario/${scenarioId}`, '_blank');
+          window.open(`/kalknegar/scenario/${scenarioId}?integration=react`, '_self');
           break;
       }
     } catch (error) {
@@ -235,12 +236,12 @@ export const useScenarioData = (options: UseScenarioDataOptions = {}): UseScenar
 
   const handleDemoScenarioSelect = useCallback((scenarioId: string) => {
     // Navigate to demo scenario in kalknegar
-    window.open(`/kalknegar/#/scenario/demo-${scenarioId}`, '_blank');
+    window.open(`/kalknegar/scenario/demo-${scenarioId}?integration=react`, '_self');
   }, []);
 
   const handleNewScenario = useCallback(() => {
     // Navigate to kalknegar new scenario page
-    window.open('/kalknegar/#/newscenario', '_blank');
+    window.open('/kalknegar/newscenario?integration=react', '_self');
   }, []);
 
   const handleUploadScenario = useCallback(async (file: File): Promise<UploadResult> => {

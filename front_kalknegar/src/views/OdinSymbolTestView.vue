@@ -4,14 +4,14 @@
     <header class="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700">
       <div class="px-6 py-4 flex items-center justify-between">
         <div class="flex items-center gap-4">
-          <RouterLink
-            :to="{ name: 'LandingPageRoute' }"
+          <button
+            @click="goToDashboard"
             class="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300"
           >
             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
             </svg>
-          </RouterLink>
+          </button>
           <h1 class="text-2xl font-bold text-gray-900 dark:text-white">
             تست سیستم نمادهای ODINv2
           </h1>
@@ -127,7 +127,6 @@
 
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, computed } from 'vue'
-import { RouterLink } from 'vue-router'
 import Map from 'ol/Map'
 import View from 'ol/View'
 import { Tile as TileLayer } from 'ol/layer'
@@ -786,6 +785,14 @@ function clearFeatures() {
   if (!vectorSource.value) return
   vectorSource.value.clear()
   featureCount.value = 0
+}
+
+// Function to redirect to dashboard
+function goToDashboard() {
+  const parentOrigin = window.parent !== window 
+    ? (document.referrer ? new URL(document.referrer).origin : window.location.origin)
+    : window.location.origin;
+  window.location.href = parentOrigin;
 }
 </script>
 

@@ -43,7 +43,20 @@ export class ScenarioApiService extends BaseApiClient {
     base = base.replace(/\/+$/, '');
     base = base.replace(/\/scenarios$/, '');
     console.log('[ScenarioApiService] Base URL:', base);
+
+    // ابتدا سازنده پایه را صدا بزنیم، بعد از آن به this دسترسی داشته باشیم
     super(base);
+
+    // اگر از طریق داشبورد (integration=react) وارد شده‌ایم، همیشه از API واقعی استفاده کن
+    try {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('integration') === 'react') {
+        this.useMockApi = false;
+        console.log('[ScenarioApiService] integration=react detected → disabling mock API');
+      }
+    } catch (e) {
+      console.warn('[ScenarioApiService] Failed to inspect URL params for integration mode', e);
+    }
   }
 
   private authHeaders() {

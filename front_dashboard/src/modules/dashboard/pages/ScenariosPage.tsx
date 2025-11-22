@@ -35,14 +35,10 @@ import {
   Select,
   SelectChangeEvent,
   Alert,
-<<<<<<< Updated upstream
   ToggleButtonGroup,
   ToggleButton,
-=======
-  alpha,
   useMediaQuery,
   Fade,
->>>>>>> Stashed changes
 } from '@mui/material';
 import {
   Add,
@@ -84,13 +80,10 @@ import type { Scenario } from '@/types';
 import { ScenarioStatus } from '@/types';
 import { useTranslation } from '@/hooks/useTranslation';
 import { useNavigate } from 'react-router-dom';
-<<<<<<< Updated upstream
 import NewScenarioDialog from '@/components/scenarios/NewScenarioDialog';
 import { scenarioApiService } from '@/services/api/scenarioApiService';
-=======
 import KalknegarLaunchDialog from '@/components/common/KalknegarLaunchDialog';
 import KalknegarLoadingDialog from '@/components/common/KalknegarLoadingDialog';
->>>>>>> Stashed changes
 
 // انواع وضعیت سناریو
 const getStatusOptions = (t: (key: string) => string): { value: ScenarioStatus; label: string; color: 'default' | 'primary' | 'secondary' | 'error' | 'info' | 'success' | 'warning' }[] => [
@@ -145,6 +138,46 @@ const ScenarioStats: React.FC<{ scenarios: Scenario[] }> = ({ scenarios }) => {
     </Grid>
   );
 };
+
+// سناریوهای نمونه (demo) برگرفته از لندینگ کالک‌نگار
+const DEMO_SCENARIOS: Scenario[] = [
+  {
+    id: 'demo-Operation_Beit_ol_Moqaddas_1982_FA',
+    name: 'آزادسازی خرمشهر – عملیات بیت‌المقدس (۱۳۶۱)',
+    description: 'سناریوی نمونه تاریخی عملیات بیت‌المقدس برای نمایش توانمندی‌های سامانه.',
+    startTime: '1982-05-01T00:00:00.000Z',
+    endTime: '1982-06-01T00:00:00.000Z',
+    status: ScenarioStatus.ACTIVE,
+    units: [],
+    layers: [],
+    events: [],
+    objectives: ['آزادسازی خرمشهر'],
+    metadata: {
+      demo: true,
+      source: 'kalknegar-landing',
+    },
+    createdAt: '1982-05-01T00:00:00.000Z',
+    updatedAt: '1982-06-01T00:00:00.000Z',
+  },
+  {
+    id: 'demo-Operation_Mersad_1988_FA',
+    name: 'عملیات مرصاد (۱۳۶۷) – مقابله با تهاجم منافقین/حمایت عراق',
+    description: 'سناریوی نمونه تاریخی عملیات مرصاد برای آموزش و نمایش قابلیت‌ها.',
+    startTime: '1988-07-25T00:00:00.000Z',
+    endTime: '1988-08-05T00:00:00.000Z',
+    status: ScenarioStatus.ACTIVE,
+    units: [],
+    layers: [],
+    events: [],
+    objectives: ['دفع تهاجم منافقین', 'تثبیت خطوط دفاعی غرب کشور'],
+    metadata: {
+      demo: true,
+      source: 'kalknegar-landing',
+    },
+    createdAt: '1988-07-25T00:00:00.000Z',
+    updatedAt: '1988-08-05T00:00:00.000Z',
+  },
+];
 
 // فرم ایجاد/ویرایش سناریو
 interface ScenarioDialogProps {
@@ -372,7 +405,6 @@ const ScenariosPage: React.FC = () => {
   const [menuScenario, setMenuScenario] = useState<Scenario | null>(null);
   const [scenarioToDelete, setScenarioToDelete] = useState<Scenario | null>(null);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
-<<<<<<< Updated upstream
   const [viewMode, setViewMode] = useState<'cards' | 'table'>('table');
   const [importDialogOpen, setImportDialogOpen] = useState(false);
   const [importing, setImporting] = useState(false);
@@ -381,20 +413,21 @@ const ScenariosPage: React.FC = () => {
   const [selectedFileInfo, setSelectedFileInfo] = useState<{ name?: string; description?: string; type?: string } | null>(null);
   const [isDragActive, setIsDragActive] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
-=======
   const [executionDialogOpen, setExecutionDialogOpen] = useState(false);
   const [kalknegarLaunchDialogOpen, setKalknegarLaunchDialogOpen] = useState(false);
   const [kalknegarLoadingOpen, setKalknegarLoadingOpen] = useState(false);
   const [kalknegarTargetUrl, setKalknegarTargetUrl] = useState<string>('');
->>>>>>> Stashed changes
 
   // بارگذاری اولیه
   useEffect(() => {
     dispatch(fetchScenarios());
   }, [dispatch]);
 
+  // افزودن سناریوهای demo به سناریوهای سرور
+  const allScenarios: Scenario[] = [...DEMO_SCENARIOS, ...scenarios];
+
   // فیلتر کردن سناریوها
-  const filteredScenarios = scenarios.filter(scenario => {
+  const filteredScenarios = allScenarios.filter(scenario => {
     const matchesSearch = scenario.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          scenario.description.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = statusFilter === 'all' || scenario.status === statusFilter;
@@ -480,9 +513,42 @@ const ScenariosPage: React.FC = () => {
     );
   };
 
-  // مشاهده جزئیات سناریو
+  // مشاهده جزئیات سناریو - باز کردن کالک نگار با دیالوگ تأیید و اسپلش
   const handleViewScenarioDetails = (scenarioId: string) => {
-    navigate(`/dashboard/scenarios/${scenarioId}`);
+    // ساخت URL هدف برای کالک نگار (ویرایشگر نقشه)
+    // نسخه جدید کالک نگار از history mode با base=/kalknegar/ استفاده می‌کند
+    // بنابراین نباید از هَش (#/scenario/...) استفاده کنیم
+    const base = window.location.origin;
+    const target = `${base}/kalknegar/scenario/${scenarioId}?integration=react`;
+    setKalknegarTargetUrl(target);
+    setKalknegarLaunchDialogOpen(true);
+  };
+
+  // اجرای سناریو = باز کردن ادیتور نقشه کالک‌نگار برای همان سناریو
+  const handleExecuteScenario = (scenarioId: string) => {
+    handleViewScenarioDetails(scenarioId);
+  };
+
+  // کپی سناریو روی سرور (برای سناریوهای معمولی و demo)
+  const handleCopyScenario = async (scenario: Scenario) => {
+    try {
+      // اگر سناریوی demo باشد، از منبع demo در بک‌اند یک سناریوی کامل می‌سازیم
+      if ((scenario as any)?.metadata?.demo) {
+        const rawId = String(scenario.id);
+        const demoId = rawId.startsWith('demo-') ? rawId.replace(/^demo-/, '') : rawId;
+        await scenarioApiService.duplicateDemoScenario(demoId, `${scenario.name} (کپی)`);
+      } else {
+        // سناریوهای عادی که روی سرور ذخیره شده‌اند
+        await scenarioApiService.duplicateScenario(String(scenario.id), `${scenario.name} (کپی)` as any);
+      }
+
+      // بارگذاری مجدد لیست سناریوها
+      dispatch(fetchScenarios());
+      dispatch(showSuccessNotification('سناریو با موفقیت کپی شد.'));
+    } catch (error) {
+      console.error('Failed to duplicate scenario', error);
+      dispatch(showErrorNotification('کپی سناریو با خطا مواجه شد.'));
+    }
   };
 
   const canEdit = user?.role === 'admin' || user?.role === 'commander';
@@ -622,7 +688,7 @@ const ScenariosPage: React.FC = () => {
       )}
 
       {/* آمار سناریوها */}
-      <ScenarioStats scenarios={scenarios} />
+      <ScenarioStats scenarios={allScenarios} />
 
       {/* نوار ابزار */}
       <Card sx={{ mb: 3 }}>
@@ -676,7 +742,6 @@ const ScenariosPage: React.FC = () => {
           </ToggleButtonGroup>
 
           {canEdit && (
-<<<<<<< Updated upstream
             <Box sx={{ display: 'flex', gap: 1 }}>
               <Button
                 variant="contained"
@@ -697,19 +762,6 @@ const ScenariosPage: React.FC = () => {
                 بارگذاری سناریو
               </Button>
             </Box>
-=======
-            <Button
-              variant="contained"
-              startIcon={<Add />}
-              onClick={() => {
-                // باز کردن دیالوگ لانچ برای ایجاد سناریو جدید
-                setKalknegarTargetUrl('/kalknegar/#/newscenario');
-                setKalknegarLaunchDialogOpen(true);
-              }}
-            >
-              {t('scenarios.toolbar.newScenarioButton')}
-            </Button>
->>>>>>> Stashed changes
           )}
         </Toolbar>
       </Card>
@@ -1398,3 +1450,4 @@ const ScenariosPage: React.FC = () => {
 };
 
 export default ScenariosPage; 
+

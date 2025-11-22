@@ -14,7 +14,6 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useUiStore } from "@/stores/uiStore";
-import { LANDING_PAGE_ROUTE } from "@/router/names";
 
 import type { ScenarioActions, UiAction } from "@/types/constants";
 import { useRoute } from "vue-router";
@@ -45,6 +44,14 @@ const { coordinateFormat, showLocation, showScaleLine, showDayNightTerminator } 
   storeToRefs(useMapSettingsStore());
 
 const { measurementUnit } = storeToRefs(useMeasurementsStore());
+
+// Function to redirect to dashboard
+const goToDashboard = () => {
+  const parentOrigin = window.parent !== window 
+    ? (document.referrer ? new URL(document.referrer).origin : window.location.origin)
+    : window.location.origin;
+  window.location.href = parentOrigin;
+};
 </script>
 
 <template>
@@ -59,10 +66,8 @@ const { measurementUnit } = storeToRefs(useMeasurementsStore());
         :side-offset="12"
         dir="rtl"
       >
-      <DropdownMenuItem as-child>
-        <router-link :to="{ name: LANDING_PAGE_ROUTE }" class="font-medium flex w-full justify-end text-right"
-          >خانه
-        </router-link>
+      <DropdownMenuItem @select="goToDashboard" class="font-medium flex w-full justify-end text-right">
+        بازگشت به داشبورد
       </DropdownMenuItem>
 
       <DropdownMenuSeparator />
@@ -81,9 +86,6 @@ const { measurementUnit } = storeToRefs(useMeasurementsStore());
           </DropdownMenuItem>
           <DropdownMenuItem @select="emit('action', 'loadNew')">
             بارگذاری سناریو...
-          </DropdownMenuItem>
-          <DropdownMenuItem @select="emit('action', 'createNew')">
-            سناریوی جدید...
           </DropdownMenuItem>
 
           <DropdownMenuSeparator />
