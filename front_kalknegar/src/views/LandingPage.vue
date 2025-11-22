@@ -91,26 +91,24 @@
           </div>
         </div>
         
-<<<<<<< Updated upstream
-        <!-- ODIN Symbols Demo Button -->
+        <!-- ODIN Symbols Demo, Tactical Graphics, Control Symbols, and ODIN Symbol Test Buttons -->
         <div class="mb-8 flex flex-wrap justify-center gap-3">
           <RouterLink
             :to="{ name: ODIN_SYMBOLS_DEMO_ROUTE }"
             class="px-6 py-3 rounded-xl bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-medium shadow-lg hover:shadow-xl transition-all duration-300 flex items-center gap-2 transform hover:-translate-y-1"
-=======
-        <!-- Tactical Graphics / Control Symbols Buttons -->
-        <div class="mb-8 flex flex-wrap justify-center gap-3">
-          <button
-            @click="goToTacticalGraphics"
-            class="px-6 py-3 rounded-xl bg-indigo-500 hover:bg-indigo-600 text-white font-medium shadow-lg hover:shadow-xl transition-all duration-300 flex items-center gap-2 transform hover:-translate-y-1"
->>>>>>> Stashed changes
           >
             <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
             </svg>
-<<<<<<< Updated upstream
             نمایش نمادهای ODINv2
-=======
+          </RouterLink>
+          <button
+            @click="goToTacticalGraphics"
+            class="px-6 py-3 rounded-xl bg-indigo-500 hover:bg-indigo-600 text-white font-medium shadow-lg hover:shadow-xl transition-all duration-300 flex items-center gap-2 transform hover:-translate-y-1"
+          >
+            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+            </svg>
             ساخت گرافیک تاکتیکال
           </button>
           <RouterLink
@@ -127,7 +125,6 @@
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
             تست سیستم نمادهای ODINv2
->>>>>>> Stashed changes
           </RouterLink>
         </div>
         
@@ -406,11 +403,7 @@ import { useRouter } from "vue-router";
 import { ref, computed, onMounted, onUnmounted } from "vue";
 import LoadScenarioModal from "@/components/LoadScenarioModal.vue";
 import DeleteConfirmModal from "@/components/DeleteConfirmModal.vue";
-<<<<<<< Updated upstream
-import { NEW_SCENARIO_ROUTE, MAP_EDIT_MODE_ROUTE, ODIN_SYMBOLS_DEMO_ROUTE } from "@/router/names";
-=======
-import { CONTROL_SYMBOLS_ROUTE, NEW_SCENARIO_ROUTE, MAP_EDIT_MODE_ROUTE, TACTICAL_GRAPHICS_ROUTE, TACTICAL_SYMBOL_DEFINITION_ROUTE, ODIN_SYMBOL_TEST_ROUTE } from "@/router/names";
->>>>>>> Stashed changes
+import { CONTROL_SYMBOLS_ROUTE, NEW_SCENARIO_ROUTE, MAP_EDIT_MODE_ROUTE, TACTICAL_GRAPHICS_ROUTE, TACTICAL_SYMBOL_DEFINITION_ROUTE, ODIN_SYMBOLS_DEMO_ROUTE, ODIN_SYMBOL_TEST_ROUTE } from "@/router/names";
 import { useDark, useToggle } from "@vueuse/core";
 import { scenarioApiService } from "@/services/api/scenarioApiService";
 import { useIndexedDb } from "@/scenariostore/localdb";
@@ -479,6 +472,11 @@ const logout = () => {
   // Redirect to login
   console.log('User logged out');
   window.location.replace(`${window.location.origin}/auth/login`);
+};
+
+// Navigate to Tactical Graphics
+const goToTacticalGraphics = () => {
+  router.push({ name: TACTICAL_GRAPHICS_ROUTE });
 };
 
 // State for scenarios section

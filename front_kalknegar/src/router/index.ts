@@ -1,22 +1,20 @@
 import { createRouter, createWebHistory, type RouteRecordRaw } from "vue-router";
 import NProgress from "nprogress";
 import "nprogress/nprogress.css";
+import LandingPage from "../views/LandingPage.vue";
 import {
   CHART_EDIT_MODE_ROUTE,
   CONTROL_SYMBOLS_ROUTE,
-  CONTROL_SYMBOLS_ROUTE,
   GRID_EDIT_ROUTE,
+  LANDING_PAGE_ROUTE,
   MAP_EDIT_MODE_ROUTE,
+  NEW_SCENARIO_ROUTE,
   ORBAT_CHART_ROUTE,
   STORY_MODE_ROUTE,
-<<<<<<< Updated upstream
-  ODIN_SYMBOLS_DEMO_ROUTE,
-=======
   TACTICAL_GRAPHICS_ROUTE,
   TACTICAL_SYMBOL_DEFINITION_ROUTE,
+  ODIN_SYMBOLS_DEMO_ROUTE,
   ODIN_SYMBOL_TEST_ROUTE,
-  ODIN_SYMBOL_TEST_ROUTE,
->>>>>>> Stashed changes
 } from "@/router/names";
 
 declare module "vue-router" {
@@ -28,6 +26,7 @@ declare module "vue-router" {
 
 const ScenarioEditorWrapper = () =>
   import("../modules/scenarioeditor/ScenarioEditorWrapper.vue");
+const NewScenarioView = () => import("../modules/scenarioeditor/NewScenarioView.vue");
 const StoryModeView = () => import("../modules/storymode/StoryModeWrapper.vue");
 const OrbatChartView = () => import("../modules/charteditor/OrbatChartViewWrapper.vue");
 const ComponentsTestView = () => import("../views/ComponentsTestView.vue");
@@ -41,16 +40,19 @@ const ScenarioEditorMap = () => import("@/modules/scenarioeditor/ScenarioEditorM
   return import("@/views/ErrorFallback.vue"); // Fallback component
 });
 const SymbolDesignerPage = () => import("../modules/tactical-symbol-designer/SymbolDesignerPage.vue");
-<<<<<<< Updated upstream
 const OdinSymbolsDemo = () => import("../views/OdinSymbolsDemo.vue");
-=======
-const TacticalSymbolDefinitionPage = () => import("../modules/tactical-symbols/TacticalSymbolDefinitionPage.vue");
-const ControlSymbolsLab = () => import("../views/ControlSymbolsLab.vue");
-const OdinSymbolTestView = () => import("../views/OdinSymbolTestView.vue");
->>>>>>> Stashed changes
+const TacticalSymbolDefinitionPage = () => import("../modules/tactical-symbols/TacticalSymbolDefinitionView.vue");
 const ControlSymbolsLab = () => import("../views/ControlSymbolsLab.vue");
 const OdinSymbolTestView = () => import("../views/OdinSymbolTestView.vue");
 const routes = [
+  {
+    path: "/newscenario",
+    name: NEW_SCENARIO_ROUTE,
+    component: NewScenarioView,
+    beforeEnter: (to, from) => {
+      NProgress.start();
+    },
+  },
   {
     path: "/scenario/:scenarioId",
     props: true,
@@ -120,24 +122,6 @@ const routes = [
     },
   },
   {
-    path: "/control-symbols",
-    name: CONTROL_SYMBOLS_ROUTE,
-    component: ControlSymbolsLab,
-    beforeEnter: (to, from) => {
-      NProgress.start();
-    },
-  },
-<<<<<<< Updated upstream
-=======
-  {
-    path: "/control-symbols",
-    name: CONTROL_SYMBOLS_ROUTE,
-    component: ControlSymbolsLab,
-    beforeEnter: (to, from) => {
-      NProgress.start();
-    },
-  },
-  {
     path: "/tactical-symbols",
     name: TACTICAL_SYMBOL_DEFINITION_ROUTE,
     component: TacticalSymbolDefinitionPage,
@@ -145,7 +129,6 @@ const routes = [
       NProgress.start();
     },
   },
->>>>>>> Stashed changes
   { path: "/", name: LANDING_PAGE_ROUTE, component: LandingPage },
   {
     path: "/odin-symbols-demo",

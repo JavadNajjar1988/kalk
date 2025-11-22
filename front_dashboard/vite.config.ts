@@ -113,7 +113,8 @@ export default defineConfig({
         secure: false,
       },
       '/kalknegar': {
-        target: 'http://127.0.0.1:5173',
+        // کالک‌نگار الان روی پورت 5180 اجرا می‌شود (نه 5173)
+        target: 'http://127.0.0.1:5180',
         changeOrigin: true,
         secure: false,
         ws: true,
