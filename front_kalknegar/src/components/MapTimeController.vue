@@ -2,8 +2,8 @@
   <div class="flex items-center space-x-2">
     <p
       v-if="!hideTime"
-      class="pointer-events-none font-mono text-xl font-bold sm:text-2xl"
-      style="text-shadow: white 0 0 5px"
+      class="pointer-events-none font-mono text-xl font-bold sm:text-2xl text-gray-900 dark:text-gray-100"
+      style="text-shadow: 0 0 8px rgba(255, 255, 255, 0.8), 0 0 4px rgba(0, 0, 0, 0.3);"
     >
       {{ persianTimeDisplay }}
     </p>

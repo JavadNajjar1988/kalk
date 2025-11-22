@@ -1,7 +1,7 @@
 <template>
     <div class="" dir="rtl">
       <aside
-        class="map-editor-details-panel pointer-events-auto relative mt-4 flex max-h-[70vh] flex-col overflow-hidden rounded-2xl backdrop-blur-md shadow-xl text-right"
+        class="map-editor-details-panel pointer-events-auto absolute top-24 left-4 flex max-h-[70vh] flex-col overflow-hidden rounded-2xl backdrop-blur-md shadow-xl text-right"
         :style="{ width: widthStore.detailsWidth + 'px' }"
       >
         <CloseButton class="absolute top-1 right-1 z-99" @click="emit('close')" />

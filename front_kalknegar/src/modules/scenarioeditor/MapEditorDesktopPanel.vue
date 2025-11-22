@@ -1,6 +1,6 @@
 <template>
   <aside
-    class="map-editor-panel pointer-events-auto relative hidden max-h-[80vh] overflow-auto rounded-2xl md:block backdrop-blur-md backdrop-saturate-150 shadow-xl mt-2 text-right"
+    class="map-editor-panel pointer-events-auto absolute top-24 right-4 hidden max-h-[80vh] overflow-auto rounded-2xl md:block backdrop-blur-md backdrop-saturate-150 shadow-xl text-right"
     dir="rtl"
     :style="{ width: orbatPanelWidth + 'px' }"
   >

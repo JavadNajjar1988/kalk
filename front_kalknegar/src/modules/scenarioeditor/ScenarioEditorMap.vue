@@ -6,24 +6,20 @@
         v-if="mapRef"
         class="pointer-events-none absolute inset-0 flex flex-col justify-between"
       >
-        <header class="flex flex-none items-center justify-end p-2">
-          <MapTimeController
-            class="pointer-events-auto"
-            :show-controls="isMobile ? ui.mobilePanelOpen : false"
-            @open-time-modal="openTimeDialog()"
-            @show-settings="emit('show-settings')"
-            @inc-day="onIncDay()"
-            @dec-day="onDecDay()"
-            @next-event="goToNextScenarioEvent()"
-            @prev-event="goToPrevScenarioEvent()"
-          />
-          <IconButton
-            @click.stop="onShowPlaceSearch"
-            class="pointer-events-auto ml-2"
-            title="جستجو"
-          >
-            <MagnifyingGlassIcon class="h-5 w-5 text-gray-500" />
-          </IconButton>
+        <header class="flex flex-none items-center justify-between p-8 pt-13 pl-13">
+          <div class="flex items-center space-x-2 space-x-reverse">
+            <MapTimeController
+              class="pointer-events-auto"
+              :show-controls="isMobile ? ui.mobilePanelOpen : false"
+              @open-time-modal="openTimeDialog()"
+              @show-settings="emit('show-settings')"
+              @inc-day="onIncDay()"
+              @dec-day="onDecDay()"
+              @next-event="goToNextScenarioEvent()"
+              @prev-event="goToPrevScenarioEvent()"
+            />
+          </div>
+          
         </header>
         <section v-if="!isMobile" class="flex flex-auto justify-between p-2" style="direction: ltr;">
           <template v-if="rtlPanels">
@@ -52,9 +48,9 @@
                 type="button"
                 @click="onOpenDetailsPanel()"
                 title="نمایش پنل"
-                class="bg-opacity-70 pointer-events-auto absolute -my-12 left-0 rounded bg-white p-1 text-gray-600 hover:text-gray-900"
+                class="pointer-events-auto absolute top-24 left-4 rounded-lg bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border border-gray-200/50 dark:border-gray-700/50 p-2 text-gray-700 dark:text-gray-300 hover:bg-white dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-gray-100 shadow-md hover:shadow-lg transition-all duration-200"
               >
-                <ShowPanelIcon class="h-7 w-7" />
+                <ShowPanelIcon class="h-6 w-6" />
               </button>
             </div>
 
@@ -65,7 +61,7 @@
                 type="button"
                 @click="toggleLeftPanel()"
                 title="نمایش پنل آرایش نبرد"
-                class="bg-opacity-70 pointer-events-auto absolute top-1/2 -translate-y-1/2 -right-2 rounded-full bg-white/90 p-1.5 text-gray-600 shadow hover:text-gray-900"
+                class="pointer-events-auto absolute top-24 right-4 rounded-lg bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border border-gray-200/50 dark:border-gray-700/50 p-2 text-gray-700 dark:text-gray-300 hover:bg-white dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-gray-100 shadow-md hover:shadow-lg transition-all duration-200"
               >
                 <ShowPanelIcon class="h-6 w-6 rotate-180" />
               </button>
@@ -79,7 +75,7 @@
                 type="button"
                 @click="toggleLeftPanel()"
                 title="نمایش پنل"
-                class="bg-opacity-70 pointer-events-auto absolute top-1/2 -translate-y-1/2 -left-2 rounded-full bg-white/90 p-1.5 text-gray-600 shadow hover:text-gray-900"
+                class="pointer-events-auto absolute top-6 left-4 rounded-lg bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border border-gray-200/50 dark:border-gray-700/50 p-2 text-gray-700 dark:text-gray-300 hover:bg-white dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-gray-100 shadow-md hover:shadow-lg transition-all duration-200"
               >
                 <ShowPanelIcon class="h-6 w-6" />
               </button>
@@ -108,7 +104,7 @@
                 type="button"
                 @click="onOpenDetailsPanel()"
                 title="نمایش پنل"
-                class="bg-opacity-70 pointer-events-auto absolute top-1/2 -translate-y-1/2 -right-2 rounded-full bg-white/90 p-1.5 text-gray-600 shadow hover:text-gray-900"
+                class="pointer-events-auto absolute top-6 right-4 rounded-lg bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border border-gray-200/50 dark:border-gray-700/50 p-2 text-gray-700 dark:text-gray-300 hover:bg-white dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-gray-100 shadow-md hover:shadow-lg transition-all duration-200"
               >
                 <ShowPanelIcon class="h-6 w-6 rotate-180" />
               </button>
@@ -228,7 +224,7 @@ import {
   activeScenarioKey,
   timeModalKey,
 } from "@/components/injects";
-import { IconChevronRightBoxOutline as ShowPanelIcon } from "@iconify-prerendered/vue-mdi";
+import { PhSidebarSimple as ShowPanelIcon } from "@phosphor-icons/vue";
 import { injectStrict } from "@/utils";
 import MapTimeController from "@/components/MapTimeController.vue";
 import MapEditorMainToolbar from "@/modules/scenarioeditor/MapEditorMainToolbar.vue";

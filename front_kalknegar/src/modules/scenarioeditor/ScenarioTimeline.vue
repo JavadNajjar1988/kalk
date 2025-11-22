@@ -487,20 +487,8 @@ function onContextMenuAction(action: string, options?: Record<string, any>) {
       />
 
       <!-- Hover tooltip -->
-      <div
-        v-if="showHoverMarker && !isDragging && formattedHoveredDate"
-        class="absolute -top-6 translate-x-1 bg-popover text-popover-foreground border border-border rounded px-1.5 py-0.5 text-[0.7rem] shadow"
-        :style="`left: ${Math.max(8, Math.min(hoveredX - 24, (el?.getBoundingClientRect()?.width || 0) - 72))}px;`"
-      >
-        {{ formattedHoveredDate }}
-      </div>
+      
 
-      <!-- Compact controls -->
-      <div class="absolute left-1 top-1 hidden gap-1 sm:flex">
-        <button type="button" class="rounded bg-muted/60 px-1.5 py-0.5 text-[0.7rem] hover:bg-muted" @click.stop="majorWidth = Math.max(majorWidth - 40, 55)">-</button>
-        <button type="button" class="rounded bg-muted/60 px-1.5 py-0.5 text-[0.7rem] hover:bg-muted" @click.stop="majorWidth += 40">+</button>
-        <button type="button" class="timeline-now-button rounded px-1.5 py-0.5 text-[0.7rem] text-primary" @click.stop="setCurrentTime(Date.now())">اکنون</button>
-      </div>
     </div>
   </TimelineContextMenu>
 </template>
@@ -525,19 +513,4 @@ function onContextMenuAction(action: string, options?: Record<string, any>) {
   }
 }
 
-.timeline-now-button {
-  background-color: color-mix(in srgb, var(--color-primary) 10%, transparent);
-}
-
-.timeline-now-button:hover {
-  background-color: color-mix(in srgb, var(--color-primary) 15%, transparent);
-}
-
-:global(.dark) .timeline-now-button {
-  background-color: color-mix(in srgb, var(--color-primary) 6%, transparent);
-}
-
-:global(.dark) .timeline-now-button:hover {
-  background-color: color-mix(in srgb, var(--color-primary) 10%, transparent);
-}
 </style>
