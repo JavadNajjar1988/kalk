@@ -137,13 +137,49 @@ export class BaseApiClient {
       });
     }
 
-    return this.makeRequest<T>(endpoint, {
+    const url = `${this.baseUrl}${endpoint}`;
+    const authHeaders = this.getAuthHeaders();
+
+    // برای FormData نباید Content-Type را تنظیم کنیم - مرورگر خودش boundary را اضافه می‌کند
+    const config: RequestInit = {
       method: 'POST',
       body: formData,
       headers: {
-        // Don't set Content-Type for FormData, let browser set it with boundary
+        'Accept': 'application/json',
+        ...authHeaders,
       },
-    });
+      signal: AbortSignal.timeout(this.timeout),
+    };
+
+    try {
+      const response = await fetch(url, config);
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new ApiClientError(
+          data.message || 'API request failed',
+          data.code,
+          data.details,
+          response.status
+        );
+      }
+
+      return data;
+    } catch (error) {
+      if (error instanceof ApiClientError) {
+        throw error;
+      }
+
+      if (error instanceof DOMException && error.name === 'TimeoutError') {
+        throw new ApiClientError('Request timeout', 'TIMEOUT');
+      }
+
+      if (error instanceof TypeError) {
+        throw new ApiClientError('Network error', 'NETWORK_ERROR');
+      }
+
+      throw new ApiClientError('Unknown error', 'UNKNOWN_ERROR');
+    }
   }
 }
 

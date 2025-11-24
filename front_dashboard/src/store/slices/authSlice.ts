@@ -128,10 +128,10 @@ const authSlice = createSlice({
           const user: User = {
             id: payload.uid || '1',
             username: payload.sub || 'unknown',
-            name: payload.sub === 'admin' ? 'U.O_UOO? O3UOO3O?U.' : 'OU_OOOU^O O3UOO3OU.',
+            name: payload.sub === 'admin' ? 'مدیر سیستم' : 'اپراتور سیستم',
             role: payload.roles?.includes('ADMIN') ? 'admin' : 'operator',
-            rank: payload.sub === 'admin' ? 'O3OUU+U_' : 'O3OU^OU+',
-            unit: payload.sub === 'admin' ? 'U?OU.OU+O_UO UcU,' : 'U.OUcO O1U.U,UOOO',
+            rank: payload.sub === 'admin' ? 'سرهنگ' : 'ستوان',
+            unit: payload.sub === 'admin' ? 'فرماندهی کل' : 'مرکز عملیات',
           };
           state.user = user;
           state.isAuthenticated = true;

@@ -1,5 +1,5 @@
-import { BaseApiClient, handleApiResponse, ApiClientError } from './baseApiClient';
-import { ApiResponse, ScenarioQuery, ExportOptions, FileUploadResponse } from './types';
+import { BaseApiClient, handleApiResponse } from './baseApiClient';
+import { ScenarioQuery, ExportOptions } from './types';
 import { EnhancedScenario } from '@/types';
 
 // Form-specific types for scenario creation/editing to handle optional fields
@@ -26,6 +26,34 @@ function transformFormToScenario(formData: ScenarioFormData): any {
       ? (crypto as any).randomUUID()
       : `scn-${Date.now()}`;
 
+  // دریافت تصویر از formData.image یا formData.metadata?.image
+  const image = (formData as any)?.image || (formData as any)?.metadata?.image;
+
+  // تبدیل startTime از ISO string به timestamp (number)
+  let startTime: number;
+  if (formData.startTime) {
+    const date = new Date(formData.startTime);
+    startTime = isNaN(date.getTime()) ? new Date().setHours(12, 0, 0, 0) : date.getTime();
+  } else {
+    startTime = new Date().setHours(12, 0, 0, 0);
+  }
+
+  // تبدیل endTime از ISO string به timestamp (number) اگر وجود داشته باشد
+  let endTime: number | undefined;
+  if (formData.endTime) {
+    const date = new Date(formData.endTime);
+    endTime = isNaN(date.getTime()) ? undefined : date.getTime();
+  }
+
+  // دریافت timeZone و symbologyStandard از metadata
+  const metadata = (formData as any)?.metadata || {};
+  const timeZone = metadata.timeZone || 'UTC';
+  const symbologyStandard = metadata.symbologyStandard || 'app6';
+
+  // ایجاد یک لایه خالی برای features
+  // استفاده از یک ID ساده برای لایه
+  const defaultLayerId = `layer-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+
   return {
     // فیلدهای اصلی مورد انتظار کالک‌نگار
     id: tempId,
@@ -34,26 +62,49 @@ function transformFormToScenario(formData: ScenarioFormData): any {
     name: formData.name,
     description: formData.description || '',
 
-    // زمان شروع/پایان سناریو (برای هر دو طرف قابل استفاده است)
-    startTime: formData.startTime || nowIso,
-    endTime: formData.endTime,
+    // زمان شروع/پایان سناریو (باید timestamp باشد نه ISO string)
+    startTime: startTime,
+    endTime: endTime,
+
+    // timeZone و symbologyStandard باید در سطح اصلی باشند
+    timeZone: timeZone,
+    symbologyStandard: symbologyStandard,
 
     // وضعیت و اهداف (هم در داشبورد و هم در کالک‌نگار به کار می‌آیند)
     status: 'draft',
     objectives: formData.objectives || [],
 
+    // تصویر سناریو
+    image: image,
+
     // مجموعه‌های اصلی ORBAT – در ابتدا خالی هستند و در ادیتور نقشه پر می‌شوند
     sides: [],
     events: [],
-    layers: [],
+    // حداقل یک لایه خالی برای features
+    layers: [{ id: defaultLayerId, name: 'Features', features: [] }],
     mapLayers: [],
 
-    // تنظیمات سناریو – خالی نگه داشته می‌شود تا کالک‌نگار مقادیر پیش‌فرض را اعمال کند
+    // تنظیمات سناریو – باید baseMapId داشته باشد
     settings: {
       rangeRingGroups: [],
       statuses: [],
-      supplyClasses: [],
-      supplyUoMs: [],
+      supplyClasses: [
+        { name: 'Class I' },
+        { name: 'Class II' },
+        { name: 'Class III' },
+        { name: 'Class IV' },
+        { name: 'Class V' },
+      ],
+      supplyUoMs: [
+        { name: 'Kilogram', code: 'KG', type: 'weight' },
+        { name: 'Liter', code: 'LI', type: 'volume' },
+        { name: 'Each', code: 'EA', type: 'quantity' },
+        { name: 'Meter', code: 'MR', type: 'distance' },
+        { name: 'Gallon', code: 'GL', type: 'volume' },
+      ],
+      map: {
+        baseMapId: 'osm',
+      },
     },
 
     // متادیتا و فیلدهای توسعه‌یافته‌ای که هر دو فرانت می‌توانند از آن استفاده کنند
@@ -72,6 +123,10 @@ function transformFormToScenario(formData: ScenarioFormData): any {
     tags: [],
     metadata: {
       source: 'dashboard',
+      // حفظ تصویر در metadata هم برای سازگاری
+      ...(image ? { image } : {}),
+      // حفظ سایر metadata از formData
+      ...metadata,
     },
   };
 }
@@ -90,7 +145,8 @@ export class ScenarioApiService extends BaseApiClient {
   private buildScenarioPayload(data: EnhancedScenario) {
     const name = (data as any)?.name || '';
     const description = (data as any)?.description || '';
-    const image = (data as any)?.image;
+    // دریافت تصویر از image یا metadata.image
+    const image = (data as any)?.image || (data as any)?.metadata?.image;
     return { name, description, image, content: data } as any;
   }
 
@@ -250,6 +306,17 @@ export class ScenarioApiService extends BaseApiClient {
     }
   }
 
+  // POST /api/scenarios/images
+  async uploadScenarioImage(file: File): Promise<{ filename: string; url: string }> {
+    try {
+      const response = await this.uploadFile<{ filename: string; url: string }>('/scenarios/images', file);
+      return handleApiResponse(response);
+    } catch (error) {
+      console.error('Failed to upload scenario image:', error);
+      throw error;
+    }
+  }
+
   // GET /api/scenarios/:id/export
   async exportScenario(id: string, options?: ExportOptions): Promise<{ url: string; filename: string }> {
     try {
@@ -333,6 +400,20 @@ export class ScenarioApiService extends BaseApiClient {
       return this.mapScenarioOutToEnhanced(data);
     } catch (error) {
       console.error(`Failed to duplicate scenario ${id}:`, error);
+      throw error;
+    }
+  }
+
+  // POST /api/scenarios/:id/unity-launch
+  async requestUnityLaunch(id: string): Promise<Record<string, any>> {
+    try {
+      const response = await this.post<Record<string, any>>(
+        `/scenarios/${id}/unity-launch`,
+        {},
+      );
+      return handleApiResponse(response);
+    } catch (error) {
+      console.warn(`Unity launch request failed for scenario ${id}:`, error);
       throw error;
     }
   }

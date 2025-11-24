@@ -82,8 +82,8 @@ import { useTranslation } from '@/hooks/useTranslation';
 import { useNavigate } from 'react-router-dom';
 import NewScenarioDialog from '@/components/scenarios/NewScenarioDialog';
 import { scenarioApiService } from '@/services/api/scenarioApiService';
-import KalknegarLaunchDialog from '@/components/common/KalknegarLaunchDialog';
-import KalknegarLoadingDialog from '@/components/common/KalknegarLoadingDialog';
+import UnityLaunchDialog from '@/components/common/UnityLaunchDialog';
+import TransformFarsiNumbers from '@/components/common/TransformFarsiNumbers';
 
 // انواع وضعیت سناریو
 const getStatusOptions = (t: (key: string) => string): { value: ScenarioStatus; label: string; color: 'default' | 'primary' | 'secondary' | 'error' | 'info' | 'success' | 'warning' }[] => [
@@ -124,7 +124,7 @@ const ScenarioStats: React.FC<{ scenarios: Scenario[] }> = ({ scenarios }) => {
                     {stat.title}
                   </Typography>
                   <Typography variant="h4" component="div" sx={{ fontWeight: 700 }}>
-                    {stat.value}
+                    <TransformFarsiNumbers>{stat.value}</TransformFarsiNumbers>
                   </Typography>
                 </Box>
                 <Avatar sx={{ bgcolor: `${stat.color}.main`, width: 48, height: 48 }}>
@@ -155,10 +155,12 @@ const DEMO_SCENARIOS: Scenario[] = [
     metadata: {
       demo: true,
       source: 'kalknegar-landing',
+      image: '/kalknegar/scenarios/images/خرمشهر.jpg',
     },
+    image: '/kalknegar/scenarios/images/خرمشهر.jpg',
     createdAt: '1982-05-01T00:00:00.000Z',
     updatedAt: '1982-06-01T00:00:00.000Z',
-  },
+  } as any,
   {
     id: 'demo-Operation_Mersad_1988_FA',
     name: 'عملیات مرصاد (۱۳۶۷) – مقابله با تهاجم منافقین/حمایت عراق',
@@ -173,11 +175,44 @@ const DEMO_SCENARIOS: Scenario[] = [
     metadata: {
       demo: true,
       source: 'kalknegar-landing',
+      image: '/kalknegar/scenarios/images/مرصاد.jpg',
     },
+    image: '/kalknegar/scenarios/images/مرصاد.jpg',
     createdAt: '1988-07-25T00:00:00.000Z',
     updatedAt: '1988-08-05T00:00:00.000Z',
-  },
+  } as any,
 ];
+
+const UNITY_HTTP_BRIDGE = (import.meta as any).env?.VITE_UNITY_LAUNCH_URL as string | undefined;
+const UNITY_PROTOCOL_BASE = (import.meta as any).env?.VITE_UNITY_PROTOCOL_BASE as string | undefined;
+
+const buildUnityLaunchUrl = (scenario: Scenario, backendLaunchUrl?: string, token?: string) => {
+  if (backendLaunchUrl) {
+    return backendLaunchUrl;
+  }
+
+  if (UNITY_HTTP_BRIDGE) {
+    const params = new URLSearchParams({
+      scenarioId: String(scenario.id ?? ''),
+      scenarioName: scenario.name ?? '',
+    });
+    if (token) {
+      params.set('token', token);
+    }
+    const separator = UNITY_HTTP_BRIDGE.includes('?') ? '&' : '?';
+    return `${UNITY_HTTP_BRIDGE}${separator}${params.toString()}`;
+  }
+
+  const protocolBase = UNITY_PROTOCOL_BASE || 'kalkunity://scenario';
+  const payload = encodeURIComponent(
+    JSON.stringify({
+      id: scenario.id,
+      name: scenario.name,
+      token,
+    }),
+  );
+  return `${protocolBase}?payload=${payload}`;
+};
 
 // فرم ایجاد/ویرایش سناریو
 interface ScenarioDialogProps {
@@ -414,9 +449,11 @@ const ScenariosPage: React.FC = () => {
   const [isDragActive, setIsDragActive] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [executionDialogOpen, setExecutionDialogOpen] = useState(false);
-  const [kalknegarLaunchDialogOpen, setKalknegarLaunchDialogOpen] = useState(false);
-  const [kalknegarLoadingOpen, setKalknegarLoadingOpen] = useState(false);
-  const [kalknegarTargetUrl, setKalknegarTargetUrl] = useState<string>('');
+  const [unityDialogOpen, setUnityDialogOpen] = useState(false);
+  const [unityTargetScenario, setUnityTargetScenario] = useState<Scenario | null>(null);
+  const [unityLaunching, setUnityLaunching] = useState(false);
+  const [unityLaunchError, setUnityLaunchError] = useState<string | null>(null);
+  const [unityFallbackLink, setUnityFallbackLink] = useState<string | null>(null);
 
   // بارگذاری اولیه
   useEffect(() => {
@@ -437,14 +474,18 @@ const ScenariosPage: React.FC = () => {
 
   // عملیات CRUD
   const handleCreateScenario = (scenarioData: Partial<Scenario>) => {
-    // تبدیل به ScenarioFormData
-    const formData = {
+    // تبدیل به ScenarioFormData - شامل تمام فیلدها از جمله image و metadata
+    const formData: any = {
       name: scenarioData.name || '',
       description: scenarioData.description || '',
       status: scenarioData.status || ScenarioStatus.DRAFT,
       startTime: scenarioData.startTime || '',
       endTime: scenarioData.endTime,
       objectives: scenarioData.objectives || [],
+      // اضافه کردن تصویر از سطح اصلی یا metadata
+      image: (scenarioData as any)?.image || (scenarioData as any)?.metadata?.image,
+      // اضافه کردن metadata کامل
+      metadata: (scenarioData as any)?.metadata || {},
     };
     dispatch(createScenario(formData))
       .unwrap()
@@ -513,20 +554,79 @@ const ScenariosPage: React.FC = () => {
     );
   };
 
-  // مشاهده جزئیات سناریو - باز کردن کالک نگار با دیالوگ تأیید و اسپلش
+  // مشاهده جزئیات سناریو - هدایت به صفحه جزئیات سناریو
   const handleViewScenarioDetails = (scenarioId: string) => {
-    // ساخت URL هدف برای کالک نگار (ویرایشگر نقشه)
-    // نسخه جدید کالک نگار از history mode با base=/kalknegar/ استفاده می‌کند
-    // بنابراین نباید از هَش (#/scenario/...) استفاده کنیم
-    const base = window.location.origin;
-    const target = `${base}/kalknegar/scenario/${scenarioId}?integration=react`;
-    setKalknegarTargetUrl(target);
-    setKalknegarLaunchDialogOpen(true);
+    navigate(`/dashboard/scenarios/${scenarioId}`);
   };
 
-  // اجرای سناریو = باز کردن ادیتور نقشه کالک‌نگار برای همان سناریو
+  // اجرای سناریو = باز کردن شبیه ساز سه‌بعدی با سناریوی انتخابی
   const handleExecuteScenario = (scenarioId: string) => {
-    handleViewScenarioDetails(scenarioId);
+    const targetScenario = allScenarios.find(
+      (scenario) => String(scenario.id) === String(scenarioId),
+    );
+
+    if (!targetScenario) {
+      dispatch(showErrorNotification('سناریوی مورد نظر یافت نشد.'));
+      return;
+    }
+
+    setUnityTargetScenario(targetScenario);
+    setUnityLaunchError(null);
+    setUnityFallbackLink(null);
+    setUnityDialogOpen(true);
+  };
+
+  const handleConfirmUnityLaunch = async () => {
+    if (!unityTargetScenario) {
+      setUnityLaunchError('سناریویی برای اجرا انتخاب نشده است.');
+      return;
+    }
+
+    setUnityLaunching(true);
+    setUnityLaunchError(null);
+    setUnityFallbackLink(null);
+
+    let backendLaunchUrl: string | undefined;
+    let launchToken: string | undefined;
+
+    try {
+      const response = await scenarioApiService.requestUnityLaunch(String(unityTargetScenario.id));
+      backendLaunchUrl = response?.launchUrl || response?.url;
+      launchToken = response?.token || response?.launchToken;
+    } catch (apiError) {
+      console.warn('Unity launch handshake failed. Using client-side payload as fallback.', apiError);
+    }
+
+    const targetUrl = buildUnityLaunchUrl(unityTargetScenario, backendLaunchUrl, launchToken);
+
+    try {
+      const popup = window.open(targetUrl, '_blank', 'noopener,noreferrer');
+      if (!popup) {
+        setUnityLaunchError('مرورگر مانع باز شدن شبیه ساز شد. لینک دستی زیر را اجرا کنید.');
+        setUnityFallbackLink(targetUrl);
+        return;
+      }
+
+      dispatch(showSuccessNotification('درخواست اجرا به شبیه ساز ارسال شد.'));
+      setUnityDialogOpen(false);
+      setUnityTargetScenario(null);
+    } catch (openError) {
+      console.error('Failed to open Unity application', openError);
+      setUnityLaunchError('باز کردن شبیه ساز با مشکل مواجه شد. لینک زیر را به صورت دستی باز کنید.');
+      setUnityFallbackLink(targetUrl);
+    } finally {
+      setUnityLaunching(false);
+    }
+  };
+
+  const handleUnityDialogClose = () => {
+    if (unityLaunching) {
+      return;
+    }
+    setUnityDialogOpen(false);
+    setUnityTargetScenario(null);
+    setUnityLaunchError(null);
+    setUnityFallbackLink(null);
   };
 
   // کپی سناریو روی سرور (برای سناریوهای معمولی و demo)
@@ -583,7 +683,7 @@ const ScenariosPage: React.FC = () => {
       const data = JSON.parse(text);
 
       if (data?.type && data.type !== 'ORBAT-mapper') {
-        throw new Error('این فایل با ساختار ORBAT-mapper سازگار نیست.');
+        throw new Error('این فایل با ساختار کالک نگار سازگار نیست.');
       }
 
       return {
@@ -772,7 +872,11 @@ const ScenariosPage: React.FC = () => {
 
           {filteredScenarios.length > 0 ? (
             <Grid container spacing={3}>
-              {filteredScenarios.map((scenario) => (
+              {filteredScenarios.map((scenario) => {
+                // دریافت تصویر سناریو از فیلد image یا metadata.image
+                const scenarioImage = (scenario as any)?.image || (scenario as any)?.metadata?.image;
+                
+                return (
                 <Grid key={scenario.id} item xs={12} sm={6} md={4}>
                   <Card
                     sx={{
@@ -781,56 +885,136 @@ const ScenariosPage: React.FC = () => {
                       flexDirection: 'column',
                       border: `1px solid ${alpha(theme.palette.divider, 0.4)}`,
                       transition: 'all 0.2s ease',
+                      position: 'relative',
+                      overflow: 'hidden',
+                      ...(scenarioImage ? {
+                        backgroundImage: `url(${scenarioImage})`,
+                        backgroundSize: 'cover',
+                        backgroundPosition: 'center',
+                        backgroundRepeat: 'no-repeat',
+                        '&::before': {
+                          content: '""',
+                          position: 'absolute',
+                          top: 0,
+                          left: 0,
+                          right: 0,
+                          bottom: 0,
+                          background: 'linear-gradient(to bottom, rgba(0,0,0,0.3) 0%, rgba(0,0,0,0.5) 100%)',
+                          zIndex: 0,
+                        }
+                      } : {}),
                       '&:hover': {
                         boxShadow: `0 8px 30px ${alpha(theme.palette.primary.main, 0.1)}`,
                         transform: 'translateY(-4px)'
                       }
                     }}
                   >
-                    <CardContent sx={{ flexGrow: 1 }}>
+                    <CardContent sx={{ flexGrow: 1, position: 'relative', zIndex: 1 }}>
                       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
                         <Box>
                           <Typography
                             variant="h6"
                             sx={{
                               fontWeight: 700,
-                              cursor: 'pointer'
+                              cursor: 'pointer',
+                              ...(scenarioImage ? { color: 'white', textShadow: '0 2px 4px rgba(0,0,0,0.5)' } : {})
                             }}
-                            onClick={() => handleViewScenarioDetails(scenario.id)}
+                            onClick={() => handleExecuteScenario(scenario.id)}
                           >
                             {scenario.name}
                           </Typography>
-                          <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+                          <Typography 
+                            variant="body2" 
+                            sx={{ 
+                              mt: 0.5,
+                              ...(scenarioImage ? { 
+                                color: 'rgba(255,255,255,0.9)', 
+                                textShadow: '0 1px 2px rgba(0,0,0,0.5)' 
+                              } : { color: 'text.secondary' })
+                            }}
+                          >
                             {scenario.description || 'بدون توضیح'}
                           </Typography>
                         </Box>
                         <IconButton
                           size="small"
                           onClick={(e) => handleMenuOpen(e, scenario)}
+                          sx={{
+                            ...(scenarioImage ? {
+                              color: 'white',
+                              backgroundColor: alpha(theme.palette.common.white, 0.2),
+                              '&:hover': {
+                                backgroundColor: alpha(theme.palette.common.white, 0.3),
+                              }
+                            } : {})
+                          }}
                         >
                           <MoreVert fontSize="small" />
                         </IconButton>
                       </Box>
 
                       <Box sx={{ mb: 2 }}>
-                        {getStatusChip(scenario.status)}
+                        <Chip
+                          label={statusOptions.find(opt => opt.value === scenario.status)?.label || scenario.status}
+                          color={statusOptions.find(opt => opt.value === scenario.status)?.color || 'default'}
+                          size="small"
+                          sx={{
+                            ...(scenarioImage ? {
+                              backgroundColor: alpha(theme.palette.common.white, 0.9),
+                              color: theme.palette.text.primary,
+                              fontWeight: 600,
+                            } : {})
+                          }}
+                        />
                       </Box>
 
                       <Grid container spacing={1} sx={{ mb: 1 }}>
                         <Grid item xs={6}>
-                          <Typography variant="caption" color="text.secondary">
+                          <Typography 
+                            variant="caption" 
+                            sx={{
+                              ...(scenarioImage ? { 
+                                color: 'rgba(255,255,255,0.8)', 
+                                textShadow: '0 1px 2px rgba(0,0,0,0.5)' 
+                              } : { color: 'text.secondary' })
+                            }}
+                          >
                             شروع
                           </Typography>
-                          <Typography variant="body2">
-                            {scenario.startTime ? new Date(scenario.startTime).toLocaleDateString('fa-IR') : '---'}
+                          <Typography 
+                            variant="body2"
+                            sx={{
+                              ...(scenarioImage ? { 
+                                color: 'white', 
+                                textShadow: '0 1px 2px rgba(0,0,0,0.5)' 
+                              } : {})
+                            }}
+                          >
+                            <TransformFarsiNumbers>{scenario.startTime ? new Date(scenario.startTime).toLocaleDateString('fa-IR') : '---'}</TransformFarsiNumbers>
                           </Typography>
                         </Grid>
                         <Grid item xs={6}>
-                          <Typography variant="caption" color="text.secondary">
+                          <Typography 
+                            variant="caption"
+                            sx={{
+                              ...(scenarioImage ? { 
+                                color: 'rgba(255,255,255,0.8)', 
+                                textShadow: '0 1px 2px rgba(0,0,0,0.5)' 
+                              } : { color: 'text.secondary' })
+                            }}
+                          >
                             پایان
                           </Typography>
-                          <Typography variant="body2">
-                            {scenario.endTime ? new Date(scenario.endTime).toLocaleDateString('fa-IR') : '---'}
+                          <Typography 
+                            variant="body2"
+                            sx={{
+                              ...(scenarioImage ? { 
+                                color: 'white', 
+                                textShadow: '0 1px 2px rgba(0,0,0,0.5)' 
+                              } : {})
+                            }}
+                          >
+                            <TransformFarsiNumbers>{scenario.endTime ? new Date(scenario.endTime).toLocaleDateString('fa-IR') : '---'}</TransformFarsiNumbers>
                           </Typography>
                         </Grid>
                       </Grid>
@@ -838,23 +1022,53 @@ const ScenariosPage: React.FC = () => {
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                         <Chip
                           icon={<Assignment fontSize="small" />}
-                          label={`${scenario.objectives?.length || 0} هدف`}
+                          label={<TransformFarsiNumbers>{`${scenario.objectives?.length || 0} هدف`}</TransformFarsiNumbers>}
                           size="small"
                           variant="outlined"
+                          sx={{
+                            ...(scenarioImage ? {
+                              borderColor: 'rgba(255,255,255,0.5)',
+                              color: 'white',
+                              '& .MuiChip-icon': {
+                                color: 'white',
+                              }
+                            } : {})
+                          }}
                         />
                         {scenario.units && (
                           <Chip
                             icon={<Group fontSize="small" />}
-                            label={`${scenario.units.length} یگان`}
+                            label={<TransformFarsiNumbers>{`${scenario.units.length} یگان`}</TransformFarsiNumbers>}
                             size="small"
                             variant="outlined"
+                            sx={{
+                              ...(scenarioImage ? {
+                                borderColor: 'rgba(255,255,255,0.5)',
+                                color: 'white',
+                                '& .MuiChip-icon': {
+                                  color: 'white',
+                                }
+                              } : {})
+                            }}
                           />
                         )}
                       </Box>
                     </CardContent>
 
-                    <CardActions sx={{ justifyContent: 'space-between' }}>
-                      <Button size="small" onClick={() => handleViewScenarioDetails(scenario.id)}>
+                    <CardActions sx={{ justifyContent: 'space-between', position: 'relative', zIndex: 1 }}>
+                      <Button 
+                        size="small" 
+                        onClick={() => handleViewScenarioDetails(scenario.id)}
+                        sx={{
+                          ...(scenarioImage ? {
+                            color: 'white',
+                            backgroundColor: alpha(theme.palette.primary.main, 0.8),
+                            '&:hover': {
+                              backgroundColor: alpha(theme.palette.primary.main, 0.9),
+                            }
+                          } : {})
+                        }}
+                      >
                         مشاهده جزئیات
                       </Button>
                       {canEdit && (
@@ -864,6 +1078,15 @@ const ScenariosPage: React.FC = () => {
                             setSelectedScenario(scenario);
                             setDialogOpen(true);
                           }}
+                          sx={{
+                            ...(scenarioImage ? {
+                              color: 'white',
+                              backgroundColor: alpha(theme.palette.secondary.main, 0.8),
+                              '&:hover': {
+                                backgroundColor: alpha(theme.palette.secondary.main, 0.9),
+                              }
+                            } : {})
+                          }}
                         >
                           ویرایش
                         </Button>
@@ -871,7 +1094,8 @@ const ScenariosPage: React.FC = () => {
                     </CardActions>
                   </Card>
                 </Grid>
-              ))}
+              );
+              })}
             </Grid>
           ) : (
             !loading && (
@@ -919,7 +1143,7 @@ const ScenariosPage: React.FC = () => {
                               color: 'primary.main'
                             }
                           }}
-                          onClick={() => handleViewScenarioDetails(scenario.id)}
+                          onClick={() => handleExecuteScenario(scenario.id)}
                         >
                           {scenario.name}
                         </Typography>
@@ -934,21 +1158,25 @@ const ScenariosPage: React.FC = () => {
                     </TableCell>
                     
                     <TableCell>
-                      {scenario.startTime ? 
-                        new Date(scenario.startTime).toLocaleDateString('fa-IR') : 
-                        '---'
-                      }
+                      <TransformFarsiNumbers>
+                        {scenario.startTime ? 
+                          new Date(scenario.startTime).toLocaleDateString('fa-IR') : 
+                          '---'
+                        }
+                      </TransformFarsiNumbers>
                     </TableCell>
                     
                     <TableCell>
-                      {scenario.endTime ? 
-                        new Date(scenario.endTime).toLocaleDateString('fa-IR') : 
-                        '---'
-                      }
+                      <TransformFarsiNumbers>
+                        {scenario.endTime ? 
+                          new Date(scenario.endTime).toLocaleDateString('fa-IR') : 
+                          '---'
+                        }
+                      </TransformFarsiNumbers>
                     </TableCell>
                     
                     <TableCell>
-                      {scenario.objectives?.length || 0}
+                      <TransformFarsiNumbers>{scenario.objectives?.length || 0}</TransformFarsiNumbers>
                     </TableCell>
                     
                     <TableCell align="center">
@@ -993,7 +1221,7 @@ const ScenariosPage: React.FC = () => {
         <DialogTitle>بارگذاری سناریو</DialogTitle>
         <DialogContent>
           <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-            فایل سناریو ذخیره‌شده از کالک نگار (فرمت JSON مبتنی بر ORBAT-mapper) را بارگذاری کنید. می‌توانید فایل را بکشید و رها کنید یا از طریق دکمه زیر انتخاب نمایید.
+            فایل سناریو ذخیره‌شده از کالک نگار را بارگذاری کنید. می‌توانید فایل را بکشید و رها کنید یا از طریق دکمه زیر انتخاب نمایید.
           </Typography>
 
           <Box
@@ -1047,7 +1275,7 @@ const ScenariosPage: React.FC = () => {
                   {selectedFile.name}
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
-                  اندازه فایل: {(selectedFile.size / 1024).toFixed(1)} کیلوبایت
+                  <TransformFarsiNumbers>اندازه فایل: {(selectedFile.size / 1024).toFixed(1)} کیلوبایت</TransformFarsiNumbers>
                 </Typography>
                 {selectedFileInfo?.name && (
                   <Typography variant="body2" color="text.secondary">
@@ -1056,7 +1284,7 @@ const ScenariosPage: React.FC = () => {
                 )}
                 {selectedFileInfo?.type && (
                   <Typography variant="body2" color="text.secondary">
-                    نوع: {selectedFileInfo.type}
+                    نوع: {selectedFileInfo.type === 'ORBAT-mapper' ? 'کالک نگار' : selectedFileInfo.type}
                   </Typography>
                 )}
               </Box>
@@ -1100,7 +1328,9 @@ const ScenariosPage: React.FC = () => {
         </MenuItem>
         
         <MenuItem onClick={() => {
-          setExecutionDialogOpen(true);
+          if (menuScenario) {
+            handleExecuteScenario(menuScenario.id);
+          }
           handleMenuClose();
         }}>
           <PlayArrow sx={{ mr: 1 }} />
@@ -1142,9 +1372,9 @@ const ScenariosPage: React.FC = () => {
         {canEdit && (
           <MenuItem onClick={() => {
             if (menuScenario) {
-              // باز کردن دیالوگ لانچ برای ویرایش سناریو
-              setKalknegarTargetUrl(`/kalknegar/#/scenario/${menuScenario.id}`);
-              setKalknegarLaunchDialogOpen(true);
+              // باز کردن دیالوگ 6 مرحله‌ای برای ویرایش سناریو
+              setSelectedScenario(menuScenario);
+              setDialogOpen(true);
             }
             handleMenuClose();
           }}>
@@ -1155,30 +1385,16 @@ const ScenariosPage: React.FC = () => {
 
       </Menu>
 
-      {/* دیالوگ ایجاد سناریو جدید */}
-      {!selectedScenario && (
-        <NewScenarioDialog
-          open={dialogOpen && !selectedScenario}
-          onClose={() => {
-            setDialogOpen(false);
-            setSelectedScenario(undefined);
-          }}
-          onSave={handleCreateScenario}
-        />
-      )}
-      
-      {/* دیالوگ ویرایش سناریو (استفاده از دیالوگ قدیمی برای ویرایش) */}
-      {selectedScenario && (
-        <ScenarioDialog
-          open={dialogOpen && !!selectedScenario}
-          onClose={() => {
-            setDialogOpen(false);
-            setSelectedScenario(undefined);
-          }}
-          scenario={selectedScenario}
-          onSave={handleUpdateScenario}
-        />
-      )}
+      {/* دیالوگ ایجاد/ویرایش سناریو (6 مرحله‌ای) */}
+      <NewScenarioDialog
+        open={dialogOpen}
+        onClose={() => {
+          setDialogOpen(false);
+          setSelectedScenario(undefined);
+        }}
+        onSave={selectedScenario ? handleUpdateScenario : handleCreateScenario}
+        scenario={selectedScenario}
+      />
 
       {/* دیالوگ تأیید حذف */}
       <Dialog
@@ -1423,28 +1639,15 @@ const ScenariosPage: React.FC = () => {
         </DialogActions>
       </Dialog>
 
-      {/* دیالوگ راه‌اندازی کالک نگار */}
-      <KalknegarLaunchDialog
-        open={kalknegarLaunchDialogOpen}
-        onClose={() => setKalknegarLaunchDialogOpen(false)}
-        onLaunch={() => {
-          setKalknegarLaunchDialogOpen(false);
-          setKalknegarLoadingOpen(true);
-          const token = localStorage.getItem('access_token');
-          if (token) {
-            sessionStorage.setItem('access_token', token);
-            console.log('[ScenariosPage] Token copied to sessionStorage for iframe access');
-          }
-          // کاهش مدت زمان به 1 ثانیه برای عملیات ضروری
-          setTimeout(() => {
-            setKalknegarLoadingOpen(false);
-            window.open(kalknegarTargetUrl, '_blank');
-          }, 1000);
-        }}
+      <UnityLaunchDialog
+        open={unityDialogOpen}
+        scenario={unityTargetScenario}
+        onClose={handleUnityDialogClose}
+        onLaunch={handleConfirmUnityLaunch}
+        isLaunching={unityLaunching}
+        error={unityLaunchError}
+        fallbackLink={unityFallbackLink}
       />
-
-      {/* دیالوگ لودینگ کالک نگار */}
-      <KalknegarLoadingDialog open={kalknegarLoadingOpen} />
     </Box>
   );
 };

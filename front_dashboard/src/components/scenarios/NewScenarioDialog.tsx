@@ -387,7 +387,7 @@ const NewScenarioDialog: React.FC<NewScenarioDialogProps> = ({
     ));
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     // Calculate start time
     const startTime = new Date(
       formData.year,
@@ -406,6 +406,22 @@ const NewScenarioDialog: React.FC<NewScenarioDialogProps> = ({
       }
     }
 
+    // آپلود تصویر به سرور اگر فایل جدید انتخاب شده باشد
+    let imageUrl: string | undefined = previewImageUrl || undefined;
+    
+    // اگر previewImageUrl یک data URL است (base64) و فایل هم وجود دارد، باید آپلود کنیم
+    if (previewImageFile && previewImageUrl && previewImageUrl.startsWith('data:')) {
+      try {
+        const { scenarioApiService } = await import('@/services/api/scenarioApiService');
+        const uploadResult = await scenarioApiService.uploadScenarioImage(previewImageFile);
+        imageUrl = uploadResult.url;
+      } catch (error) {
+        console.error('Failed to upload image:', error);
+        // اگر آپلود با خطا مواجه شد، از data URL استفاده نمی‌کنیم (بیش از 500 کاراکتر است)
+        imageUrl = undefined;
+      }
+    }
+
     const scenarioData: Partial<Scenario> = {
       name: formData.name,
       description: formData.description,
@@ -413,6 +429,8 @@ const NewScenarioDialog: React.FC<NewScenarioDialogProps> = ({
       startTime,
       endTime: formData.endTime ? new Date(formData.endTime).toISOString() : undefined,
       objectives: formData.objectives.filter(obj => obj.trim()),
+      // اضافه کردن تصویر در سطح اصلی سناریو (فقط URL، نه base64)
+      image: imageUrl,
       // Add comprehensive metadata matching kalknegar structure
       metadata: {
         scenarioCode: formData.scenarioCode,
@@ -427,7 +445,8 @@ const NewScenarioDialog: React.FC<NewScenarioDialogProps> = ({
         },
         sides: noInitialOrbat ? [] : sides,
         boundingBox,
-        image: previewImageUrl || undefined,
+        // حفظ تصویر در metadata هم برای سازگاری (فقط URL)
+        image: imageUrl,
       } as any,
     };
 
@@ -1576,7 +1595,9 @@ const NewScenarioDialog: React.FC<NewScenarioDialogProps> = ({
     >
       <DialogTitle>
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <Typography variant="h6">ایجاد سناریوی جدید</Typography>
+          <Typography variant="h6">
+            {scenario ? 'ویرایش سناریو' : 'ایجاد سناریوی جدید'}
+          </Typography>
           <IconButton onClick={onClose} size="small">
             <Close />
           </IconButton>
@@ -1617,7 +1638,7 @@ const NewScenarioDialog: React.FC<NewScenarioDialogProps> = ({
             onClick={handleSubmit}
             disabled={!formData.name.trim()}
           >
-            ایجاد سناریو
+            {scenario ? 'اعمال تغییرات' : 'ایجاد سناریو'}
           </Button>
         )}
       </DialogActions>

@@ -66,6 +66,7 @@ import { getRandomMartyr } from '@/config/martyrs';
 import { convertToFarsiNumber } from '@/utils/numberUtils';
 import FarsiTypography from '@/components/common/FarsiTypography';
 import FarsiNumber from '@/components/common/FarsiNumber';
+import TransformFarsiNumbers from '@/components/common/TransformFarsiNumbers';
 import { useTranslation } from '@/hooks/useTranslation';
 
 // تایپ‌های مورد نیاز برای کارت‌های آماری
@@ -1906,7 +1907,9 @@ const HomePage: React.FC = () => {
                   <Box key={index} sx={{ mb: 2 }}>
                     <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
                       <FarsiTypography variant="body2">{status.name}</FarsiTypography>
-                      <FarsiTypography variant="body2">{status.value}%</FarsiTypography>
+                      <FarsiTypography variant="body2">
+                        <TransformFarsiNumbers>{status.value}%</TransformFarsiNumbers>
+                      </FarsiTypography>
                     </Box>
                     <LinearProgress
                       variant="determinate"

@@ -45,6 +45,7 @@ import {
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from '@/hooks/useTranslation';
 import { useAppDispatch, useAppSelector } from '@/store';
+import TransformFarsiNumbers from '@/components/common/TransformFarsiNumbers';
 import { 
   fetchScenarioById, 
   selectCurrentScenario, 
@@ -186,7 +187,7 @@ const ScenarioAnalysis: React.FC<{ scenario: EnhancedScenario }> = ({ scenario }
                         {t('scenarios.analysis.effectiveness')}
                       </Typography>
                       <Typography variant="h6">
-                        {lastResult.data.statistics.effectiveness.toFixed(1)}%
+                        <TransformFarsiNumbers>{lastResult.data.statistics.effectiveness.toFixed(1)}%</TransformFarsiNumbers>
                       </Typography>
                     </Grid>
                     <Grid item xs={4}>
@@ -194,7 +195,7 @@ const ScenarioAnalysis: React.FC<{ scenario: EnhancedScenario }> = ({ scenario }
                         {t('scenarios.analysis.probability')}
                       </Typography>
                       <Typography variant="h6">
-                        {lastResult.data.statistics.probability.toFixed(1)}%
+                        <TransformFarsiNumbers>{lastResult.data.statistics.probability.toFixed(1)}%</TransformFarsiNumbers>
                       </Typography>
                     </Grid>
                     <Grid item xs={4}>
@@ -202,7 +203,7 @@ const ScenarioAnalysis: React.FC<{ scenario: EnhancedScenario }> = ({ scenario }
                         {t('scenarios.analysis.risk')}
                       </Typography>
                       <Typography variant="h6">
-                        {lastResult.data.statistics.risk.toFixed(1)}%
+                        <TransformFarsiNumbers>{lastResult.data.statistics.risk.toFixed(1)}%</TransformFarsiNumbers>
                       </Typography>
                     </Grid>
                   </Grid>

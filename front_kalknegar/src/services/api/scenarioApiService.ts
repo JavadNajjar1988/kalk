@@ -72,15 +72,48 @@ export class ScenarioApiService extends BaseApiClient {
   }
 
   private mapOut(apiItem: any): Scenario {
+    console.log('[ScenarioApiService.mapOut] Input:', apiItem);
+    
+    // اگر apiItem خودش یک Scenario است (بدون wrapper)
+    if (apiItem && typeof apiItem === 'object' && apiItem.type === 'ORBAT-mapper') {
+      console.log('[ScenarioApiService.mapOut] Direct scenario object');
+      return apiItem as Scenario;
+    }
+    
+    // اگر apiItem دارای content است
     if (apiItem && typeof apiItem === 'object' && 'content' in apiItem && apiItem.content) {
       const base = apiItem.content;
-      return {
+      console.log('[ScenarioApiService.mapOut] Extracting from content:', base);
+      
+      // اگر content خودش یک Scenario است
+      if (base && typeof base === 'object' && base.type === 'ORBAT-mapper') {
+        const mapped = {
+          ...base,
+          id: apiItem.id ?? base.id,
+          name: apiItem.name ?? base.name,
+          description: apiItem.description ?? base.description,
+          // اضافه کردن image از apiItem یا base
+          image: apiItem.image ?? base.image,
+        } as Scenario;
+        console.log('[ScenarioApiService.mapOut] Mapped scenario:', mapped);
+        return mapped;
+      }
+      
+      // اگر content یک object است اما type ندارد، سعی می‌کنیم آن را به عنوان Scenario در نظر بگیریم
+      console.warn('[ScenarioApiService.mapOut] Content does not have type, assuming ORBAT-mapper');
+      const mapped = {
         ...base,
+        type: 'ORBAT-mapper',
         id: apiItem.id ?? base.id,
         name: apiItem.name ?? base.name,
         description: apiItem.description ?? base.description,
+        image: apiItem.image ?? base.image,
       } as Scenario;
+      console.log('[ScenarioApiService.mapOut] Mapped scenario (with type added):', mapped);
+      return mapped;
     }
+    
+    console.warn('[ScenarioApiService.mapOut] No content found, returning as-is');
     return apiItem as Scenario;
   }
 
@@ -106,9 +139,14 @@ export class ScenarioApiService extends BaseApiClient {
       const res = await mockApiServer.getScenarioById(id);
       return handleApiResponse(res);
     }
+    console.log('[ScenarioApiService] Fetching scenario:', id);
     const res = await super.get<any>(`/scenarios/${id}`);
+    console.log('[ScenarioApiService] API response:', res);
     const data = handleApiResponse(res);
-    return this.mapOut(data);
+    console.log('[ScenarioApiService] Parsed data:', data);
+    const mapped = this.mapOut(data);
+    console.log('[ScenarioApiService] Mapped scenario:', mapped);
+    return mapped;
   }
 
   async create(scn: Scenario): Promise<Scenario> {

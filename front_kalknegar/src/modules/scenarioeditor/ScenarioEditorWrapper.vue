@@ -30,18 +30,89 @@ watch(
       localReady.value = true;
     } else {
       try {
+        console.log('[ScenarioEditorWrapper] Loading scenario:', newScenarioId);
         const scn = await scenarioApiService.getById(newScenarioId);
-        if (scn) {
-          scenario.value.io.loadFromObject(scn);
-          selectedItems.clear();
-          selectedItems.showScenarioInfo.value = true;
+        console.log('[ScenarioEditorWrapper] Scenario loaded:', scn);
+        console.log('[ScenarioEditorWrapper] Scenario type:', scn?.type);
+        console.log('[ScenarioEditorWrapper] Scenario keys:', scn ? Object.keys(scn) : 'null');
+        
+        // بررسی اینکه آیا سناریو ساختار درستی دارد
+        if (scn && typeof scn === 'object') {
+          // اگر type وجود ندارد، اضافه می‌کنیم
+          if (!scn.type) {
+            console.warn('[ScenarioEditorWrapper] Scenario missing type, adding ORBAT-mapper');
+            scn.type = 'ORBAT-mapper';
+          }
+          
+          // اگر version وجود ندارد، اضافه می‌کنیم
+          if (!scn.version) {
+            console.warn('[ScenarioEditorWrapper] Scenario missing version, adding 0.40.0');
+            scn.version = '0.40.0';
+          }
+          
+          // اگر layers وجود ندارد یا خالی است، یک لایه خالی اضافه می‌کنیم
+          if (!scn.layers || !Array.isArray(scn.layers) || scn.layers.length === 0) {
+            console.warn('[ScenarioEditorWrapper] Scenario missing layers, adding default layer');
+            scn.layers = [{ id: `layer-${Date.now()}`, name: 'Features', features: [] }];
+          }
+          
+          // اگر sides وجود ندارد، اضافه می‌کنیم
+          if (!scn.sides) {
+            scn.sides = [];
+          }
+          
+          // اگر events وجود ندارد، اضافه می‌کنیم
+          if (!scn.events) {
+            scn.events = [];
+          }
+          
+          // اگر mapLayers وجود ندارد، اضافه می‌کنیم
+          if (!scn.mapLayers) {
+            scn.mapLayers = [];
+          }
+          
+          // اگر settings وجود ندارد، اضافه می‌کنیم
+          if (!scn.settings) {
+            scn.settings = {
+              rangeRingGroups: [],
+              statuses: [],
+              supplyClasses: [
+                { name: 'Class I' },
+                { name: 'Class II' },
+                { name: 'Class III' },
+                { name: 'Class IV' },
+                { name: 'Class V' },
+              ],
+              supplyUoMs: [
+                { name: 'Kilogram', code: 'KG', type: 'weight' },
+                { name: 'Liter', code: 'LI', type: 'volume' },
+                { name: 'Each', code: 'EA', type: 'quantity' },
+                { name: 'Meter', code: 'MR', type: 'distance' },
+                { name: 'Gallon', code: 'GL', type: 'volume' },
+              ],
+              map: {
+                baseMapId: 'osm',
+              },
+            };
+          }
+          
+          console.log('[ScenarioEditorWrapper] Scenario after fixes:', scn);
+          
+          if (scn.type === 'ORBAT-mapper') {
+            scenario.value.io.loadFromObject(scn as any);
+            selectedItems.clear();
+            selectedItems.showScenarioInfo.value = true;
+          } else {
+            console.error('[ScenarioEditorWrapper] Invalid scenario type:', scn.type);
+            scenarioNotFound.value = true;
+          }
         } else {
+          console.error('[ScenarioEditorWrapper] Invalid scenario structure:', scn);
           scenarioNotFound.value = true;
-          console.error("Scenario not found");
         }
       } catch (e) {
+        console.error('[ScenarioEditorWrapper] Failed to load scenario:', e);
         scenarioNotFound.value = true;
-        console.error("Scenario not found");
       }
       localReady.value = true;
     }
