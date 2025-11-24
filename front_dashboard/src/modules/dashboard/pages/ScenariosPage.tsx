@@ -82,6 +82,8 @@ import { useTranslation } from '@/hooks/useTranslation';
 import { useNavigate } from 'react-router-dom';
 import NewScenarioDialog from '@/components/scenarios/NewScenarioDialog';
 import { scenarioApiService } from '@/services/api/scenarioApiService';
+import KalknegarLaunchDialog from '@/components/common/KalknegarLaunchDialog';
+import KalknegarLoadingDialog from '@/components/common/KalknegarLoadingDialog';
 import UnityLaunchDialog from '@/components/common/UnityLaunchDialog';
 import TransformFarsiNumbers from '@/components/common/TransformFarsiNumbers';
 
@@ -449,6 +451,9 @@ const ScenariosPage: React.FC = () => {
   const [isDragActive, setIsDragActive] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [executionDialogOpen, setExecutionDialogOpen] = useState(false);
+  const [kalknegarLaunchDialogOpen, setKalknegarLaunchDialogOpen] = useState(false);
+  const [kalknegarLoadingOpen, setKalknegarLoadingOpen] = useState(false);
+  const [kalknegarTargetUrl, setKalknegarTargetUrl] = useState<string>('');
   const [unityDialogOpen, setUnityDialogOpen] = useState(false);
   const [unityTargetScenario, setUnityTargetScenario] = useState<Scenario | null>(null);
   const [unityLaunching, setUnityLaunching] = useState(false);
@@ -557,6 +562,13 @@ const ScenariosPage: React.FC = () => {
   // مشاهده جزئیات سناریو - هدایت به صفحه جزئیات سناریو
   const handleViewScenarioDetails = (scenarioId: string) => {
     navigate(`/dashboard/scenarios/${scenarioId}`);
+  };
+
+  const handleOpenScenarioInKalknegar = (scenarioId: string) => {
+    const base = window.location.origin;
+    const target = `${base}/kalknegar/scenario/${scenarioId}?integration=react`;
+    setKalknegarTargetUrl(target);
+    setKalknegarLaunchDialogOpen(true);
   };
 
   // اجرای سناریو = باز کردن شبیه ساز سه‌بعدی با سناریوی انتخابی
@@ -1143,7 +1155,7 @@ const ScenariosPage: React.FC = () => {
                               color: 'primary.main'
                             }
                           }}
-                          onClick={() => handleExecuteScenario(scenario.id)}
+                          onClick={() => handleOpenScenarioInKalknegar(scenario.id)}
                         >
                           {scenario.name}
                         </Typography>
@@ -1638,6 +1650,36 @@ const ScenariosPage: React.FC = () => {
           </Button>
         </DialogActions>
       </Dialog>
+
+      <KalknegarLaunchDialog
+        open={kalknegarLaunchDialogOpen}
+        onClose={() => setKalknegarLaunchDialogOpen(false)}
+        onLaunch={() => {
+          if (!kalknegarTargetUrl) {
+            dispatch(showErrorNotification('آدرس کالک نگار نامشخص است.'));
+            return;
+          }
+          setKalknegarLaunchDialogOpen(false);
+          setKalknegarLoadingOpen(true);
+          try {
+            const token = localStorage.getItem('access_token');
+            if (token) {
+              sessionStorage.setItem('access_token', token);
+            }
+          } catch (storageError) {
+            console.warn('Failed to persist auth token for Kalknegar bridge', storageError);
+          }
+          setTimeout(() => {
+            setKalknegarLoadingOpen(false);
+            const popup = window.open(kalknegarTargetUrl, '_blank');
+            if (!popup) {
+              dispatch(showErrorNotification('مرورگر مانع باز شدن کالک نگار شد. لطفاً پاپ‌آپ‌ها را فعال کنید.'));
+            }
+          }, 1000);
+        }}
+      />
+
+      <KalknegarLoadingDialog open={kalknegarLoadingOpen} />
 
       <UnityLaunchDialog
         open={unityDialogOpen}
