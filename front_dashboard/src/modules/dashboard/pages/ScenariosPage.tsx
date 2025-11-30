@@ -571,7 +571,11 @@ const ScenariosPage: React.FC = () => {
     setKalknegarLaunchDialogOpen(true);
   };
 
-  // اجرای سناریو = باز کردن شبیه ساز سه‌بعدی با سناریوی انتخابی
+  // State for simulator launch warning dialog
+  const [simulatorWarningOpen, setSimulatorWarningOpen] = useState(false);
+  const [pendingScenarioId, setPendingScenarioId] = useState<string | null>(null);
+
+  // اجرای سناریو = نمایش مودال هشدار و سپس باز کردن شبیه ساز
   const handleExecuteScenario = (scenarioId: string) => {
     const targetScenario = allScenarios.find(
       (scenario) => String(scenario.id) === String(scenarioId),
@@ -582,10 +586,53 @@ const ScenariosPage: React.FC = () => {
       return;
     }
 
-    setUnityTargetScenario(targetScenario);
-    setUnityLaunchError(null);
-    setUnityFallbackLink(null);
-    setUnityDialogOpen(true);
+    // نمایش مودال هشدار
+    setPendingScenarioId(scenarioId);
+    setSimulatorWarningOpen(true);
+  };
+
+  // تایید و باز کردن simulator
+  const handleConfirmSimulatorLaunch = () => {
+    if (!pendingScenarioId) {
+      setSimulatorWarningOpen(false);
+      return;
+    }
+
+    const targetScenario = allScenarios.find(
+      (scenario) => String(scenario.id) === String(pendingScenarioId),
+    );
+
+    if (!targetScenario) {
+      dispatch(showErrorNotification('سناریوی مورد نظر یافت نشد.'));
+      setSimulatorWarningOpen(false);
+      return;
+    }
+
+    // باز کردن simulator در پنجره جدید
+    const simulatorBaseUrl = (import.meta as any).env?.VITE_SIMULATOR_URL || 'http://localhost:3001';
+    const simulatorUrl = `${simulatorBaseUrl}?scenarioId=${pendingScenarioId}`;
+    
+    try {
+      const popup = window.open(simulatorUrl, '_blank', 'noopener,noreferrer,width=1920,height=1080');
+      if (!popup) {
+        dispatch(showErrorNotification('مرورگر مانع باز شدن شبیه ساز شد. لطفاً popup blocker را غیرفعال کنید.'));
+        setSimulatorWarningOpen(false);
+        return;
+      }
+      
+      dispatch(showSuccessNotification(`شبیه ساز برای سناریو "${targetScenario.name}" در حال باز شدن است...`));
+      setSimulatorWarningOpen(false);
+      setPendingScenarioId(null);
+    } catch (error) {
+      console.error('Failed to open simulator', error);
+      dispatch(showErrorNotification('باز کردن شبیه ساز با مشکل مواجه شد.'));
+      setSimulatorWarningOpen(false);
+    }
+  };
+
+  const handleCancelSimulatorLaunch = () => {
+    setSimulatorWarningOpen(false);
+    setPendingScenarioId(null);
   };
 
   const handleConfirmUnityLaunch = async () => {
@@ -1647,6 +1694,79 @@ const ScenariosPage: React.FC = () => {
             }}
           >
             بستن
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* مودال هشدار ورود به شبیه ساز */}
+      <Dialog
+        open={simulatorWarningOpen}
+        onClose={handleCancelSimulatorLaunch}
+        maxWidth="sm"
+        fullWidth
+        aria-labelledby="simulator-warning-dialog-title"
+      >
+        <DialogTitle
+          id="simulator-warning-dialog-title"
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 2,
+            borderBottom: (theme) => `1px solid ${alpha(theme.palette.divider, 0.4)}`,
+          }}
+        >
+          <Box
+            sx={{
+              width: 48,
+              height: 48,
+              borderRadius: '14px',
+              backgroundColor: alpha(theme.palette.warning.main, 0.15),
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            <Warning color="warning" />
+          </Box>
+          <Box>
+            <Typography variant="h6" sx={{ fontWeight: 700 }}>
+              هشدار ورود به شبیه ساز
+            </Typography>
+          </Box>
+        </DialogTitle>
+        <DialogContent sx={{ pt: 3 }}>
+          <Alert severity="warning" sx={{ mb: 2 }}>
+            شما در حال ورود به محیط شبیه‌ساز سه‌بعدی هستید.
+          </Alert>
+          <Typography variant="body1" paragraph>
+            با تایید این درخواست، شبیه‌ساز در یک پنجره جدید باز خواهد شد.
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            • اطمینان حاصل کنید که popup blocker مرورگر شما غیرفعال است
+            <br />
+            • شبیه‌ساز ممکن است چند ثانیه طول بکشد تا بارگذاری شود
+            <br />
+            • می‌توانید از طریق دکمه "بازگشت به داشبورد" در شبیه‌ساز به این صفحه برگردید
+          </Typography>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2, gap: 1 }}>
+          <Button
+            onClick={handleCancelSimulatorLaunch}
+            variant="outlined"
+            color="inherit"
+          >
+            انصراف
+          </Button>
+          <Button
+            onClick={handleConfirmSimulatorLaunch}
+            variant="contained"
+            color="primary"
+            startIcon={<PlayArrow />}
+            sx={{
+              px: 3,
+            }}
+          >
+            ورود به شبیه ساز
           </Button>
         </DialogActions>
       </Dialog>
