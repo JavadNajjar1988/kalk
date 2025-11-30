@@ -128,6 +128,19 @@ const UserDetailsModal: React.FC<UserDetailsModalProps> = ({
 
   if (!user) return null;
 
+  const displayFullName =
+    (user.personalInfo?.fullName || user.personalInfo?.fullNameEn || user.username || user.userCode || 'کاربر').trim();
+  const initials =
+    displayFullName
+      .split(/\s+/)
+      .filter(Boolean)
+      .map(part => part[0])
+      .join('') ||
+    displayFullName.slice(0, 2) ||
+    '؟';
+  const mobileNumbers = Array.isArray(user.contactInfo?.mobile) ? user.contactInfo.mobile : [];
+  const permissions = Array.isArray(user.systemInfo?.permissions) ? user.systemInfo.permissions : [];
+
   const getRoleColor = (role: string) => {
     switch (role) {
       case 'مدیر سیستم': return theme.palette.error.main;
@@ -139,7 +152,8 @@ const UserDetailsModal: React.FC<UserDetailsModalProps> = ({
     }
   };
 
-  const getAccessLevelColor = (accessLevel: string) => {
+  const getAccessLevelColor = (accessLevel?: string) => {
+    if (!accessLevel) return theme.palette.grey[500];
     if (accessLevel.includes('سطح 1')) return theme.palette.error.main;
     if (accessLevel.includes('سطح 2')) return theme.palette.warning.main;
     if (accessLevel.includes('سطح 3')) return theme.palette.info.main;
@@ -240,12 +254,12 @@ const UserDetailsModal: React.FC<UserDetailsModalProps> = ({
                 boxShadow: `0 12px 30px ${alpha(getRoleColor(user.systemInfo.role), 0.35)}`,
               }}
             >
-              {user.personalInfo.fullName.split(' ').map(n => n[0]).join('')}
+              {initials}
             </Avatar>
             
             <Box>
               <Typography variant="h5" fontWeight={600}>
-                {user.personalInfo.fullName}
+                {displayFullName}
               </Typography>
               {user.personalInfo.fullNameEn && (
                 <Typography variant="subtitle1" color="text.secondary">
@@ -328,10 +342,10 @@ const UserDetailsModal: React.FC<UserDetailsModalProps> = ({
                   </Box>
                 )}
                 
-                {user.contactInfo.mobile.length > 0 && (
+                {mobileNumbers.length > 0 && (
                   <Box sx={{ mb: 2 }}>
                     <Box component="span" sx={{ display: 'block', fontSize: '0.875rem', color: 'text.secondary' }}>شماره موبایل:</Box>
-                    {user.contactInfo.mobile.map((mobile, index) => (
+                    {mobileNumbers.map((mobile, index) => (
                       <Box key={index} component="span" sx={{ display: 'block', fontSize: '1rem' }}>
                         <FarsiNumber>{mobile}</FarsiNumber>
                       </Box>
@@ -470,8 +484,8 @@ const UserDetailsModal: React.FC<UserDetailsModalProps> = ({
                 
                 <Box sx={{ mb: 2 }}>
                   <Box component="div" sx={{ fontSize: '0.875rem', color: 'text.secondary' }}>مجوزها:</Box>
-                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, mt: 0.5 }}>
-                    {user.systemInfo.permissions.map((permission) => (
+                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, mt: 0.5 }}>
+                    {permissions.map((permission) => (
                       <Chip
                         key={permission}
                         label={permission}

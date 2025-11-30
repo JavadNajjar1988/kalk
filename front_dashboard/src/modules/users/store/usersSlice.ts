@@ -1,6 +1,15 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
-import type { User, UserState, UserFilters, Role, AccessLevel, QuickActionPayload, ViewMode, PasswordChangeData, AccessLevelChangeData } from '../types';
-import { loadUsersData } from '../utils/dataLoader';
+import type {
+  User,
+  UserState,
+  UserFilters,
+  Role,
+  AccessLevel,
+  QuickActionPayload,
+  ViewMode,
+} from '../types';
+import { userApiService } from '@/services/api/userApiService';
+import type { RootState } from '@/store';
 
 // Initial state
 const initialState: UserState = {
@@ -20,126 +29,81 @@ const initialState: UserState = {
 };
 
 // Async thunks
-export const fetchUsers = createAsyncThunk(
-  'users/fetchUsers',
-  async (filters?: UserFilters) => {
-    const data = await loadUsersData();
-    let filteredUsers = data.users;
-
-    // Apply filters
-    if (filters?.search) {
-      const searchLower = filters.search.toLowerCase();
-      filteredUsers = filteredUsers.filter(user => 
-        user.personalInfo.fullName.toLowerCase().includes(searchLower) ||
-        user.userCode.toLowerCase().includes(searchLower) ||
-        user.contactInfo.email?.toLowerCase().includes(searchLower)
-      );
-    }
-
-    if (filters?.role) {
-      filteredUsers = filteredUsers.filter(user => user.systemInfo.role === filters.role);
-    }
-
-    if (filters?.accessLevel) {
-      filteredUsers = filteredUsers.filter(user => user.systemInfo.accessLevel === filters.accessLevel);
-    }
-
-    if (filters?.nationality) {
-      filteredUsers = filteredUsers.filter(user => user.personalInfo.nationality === filters.nationality);
-    }
-
-    if (filters?.gender) {
-      filteredUsers = filteredUsers.filter(user => user.personalInfo.gender === filters.gender);
-    }
-
-    if (filters?.status) {
-      filteredUsers = filteredUsers.filter(user => user.professionalInfo.status === filters.status);
-    }
-
-    if (filters?.isActive !== undefined) {
-      filteredUsers = filteredUsers.filter(user => user.isActive === filters.isActive);
-    }
-
-    return {
-      users: filteredUsers,
-      roles: data.roles,
-      accessLevels: data.accessLevels,
-      total: filteredUsers.length,
-    };
+export const fetchUsers = createAsyncThunk<
+  { users: User[]; roles: Role[]; accessLevels: AccessLevel[]; total: number },
+  void,
+  { state: RootState; rejectValue: string }
+>('users/fetchUsers', async (_: void, { getState, rejectWithValue }) => {
+  try {
+    const { filters } = (getState() as RootState).users;
+    const response = await userApiService.getUsers(filters);
+    return response;
+  } catch (error: any) {
+    return rejectWithValue(error?.message || 'خطا در بارگذاری کاربران');
   }
-);
+});
 
-export const createUser = createAsyncThunk(
-  'users/createUser',
-  async (userData: Omit<User, 'id' | 'createdAt' | 'updatedAt'>) => {
-    // TODO: Replace with actual API call
-    await new Promise(resolve => setTimeout(resolve, 500));
-    const newUser: User = {
-      ...userData,
-      id: Date.now().toString(),
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    };
-    return newUser;
+export const fetchUserById = createAsyncThunk<
+  User,
+  string,
+  { rejectValue: string }
+>('users/fetchUserById', async (id, { rejectWithValue }) => {
+  try {
+    return await userApiService.getUserById(id);
+  } catch (error: any) {
+    return rejectWithValue(error?.message || 'خطا در بارگذاری کاربر');
   }
-);
+});
 
-export const updateUser = createAsyncThunk(
-  'users/updateUser',
-  async ({ id, userData }: { id: string; userData: Partial<User> }) => {
-    // TODO: Replace with actual API call
-    await new Promise(resolve => setTimeout(resolve, 500));
-    return {
-      id,
-      ...userData,
-      updatedAt: new Date().toISOString(),
-    };
+export const createUser = createAsyncThunk<
+  User,
+  Omit<User, 'id' | 'createdAt' | 'updatedAt'> & { username?: string },
+  { rejectValue: string }
+>('users/createUser', async (userData, { rejectWithValue }) => {
+  try {
+    return await userApiService.createUser(userData);
+  } catch (error: any) {
+    return rejectWithValue(error?.message || 'خطا در ایجاد کاربر');
   }
-);
+});
 
-export const deleteUser = createAsyncThunk(
-  'users/deleteUser',
-  async (id: string) => {
-    // TODO: Replace with actual API call
-    await new Promise(resolve => setTimeout(resolve, 500));
+export const updateUser = createAsyncThunk<
+  User,
+  { id: string; userData: Partial<User> },
+  { rejectValue: string }
+>('users/updateUser', async ({ id, userData }, { rejectWithValue }) => {
+  try {
+    return await userApiService.updateUser(id, userData);
+  } catch (error: any) {
+    return rejectWithValue(error?.message || 'خطا در بروزرسانی کاربر');
+  }
+});
+
+export const deleteUser = createAsyncThunk<
+  string,
+  string,
+  { rejectValue: string }
+>('users/deleteUser', async (id, { rejectWithValue }) => {
+  try {
+    await userApiService.deleteUser(id);
     return id;
+  } catch (error: any) {
+    return rejectWithValue(error?.message || 'خطا در حذف کاربر');
   }
-);
+});
 
 // Quick Actions
-export const performQuickAction = createAsyncThunk(
-  'users/performQuickAction',
-  async (payload: QuickActionPayload) => {
-    await new Promise(resolve => setTimeout(resolve, 300));
-    
-    switch (payload.action) {
-      case 'toggleActive':
-        return {
-          userId: payload.userId,
-          updates: { isActive: payload.data.isActive }
-        };
-      case 'changePassword':
-        return {
-          userId: payload.userId,
-          updates: { 
-            password: payload.data.newPassword,
-            passwordLastChanged: new Date().toISOString()
-          }
-        };
-      case 'updateAccessLevel':
-        return {
-          userId: payload.userId,
-          updates: {
-            'systemInfo.accessLevel': payload.data.newAccessLevel,
-            'systemInfo.role': payload.data.newRole,
-            'systemInfo.permissions': payload.data.newPermissions
-          }
-        };
-      default:
-        throw new Error('Unknown action type');
-    }
+export const performQuickAction = createAsyncThunk<
+  User,
+  QuickActionPayload,
+  { rejectValue: string }
+>('users/performQuickAction', async (payload, { rejectWithValue }) => {
+  try {
+    return await userApiService.performQuickAction(payload.userId, payload);
+  } catch (error: any) {
+    return rejectWithValue(error?.message || 'خطا در انجام عملیات');
   }
-);
+});
 
 // Slice
 const usersSlice = createSlice({
@@ -181,7 +145,7 @@ const usersSlice = createSlice({
       })
       .addCase(fetchUsers.rejected, (state, action) => {
         state.isLoading = false;
-        state.error = action.error.message || 'خطا در بارگذاری کاربران';
+        state.error = (action.payload as string) || action.error.message || 'خطا در بارگذاری کاربران';
       })
       // Create user
       .addCase(createUser.pending, (state) => {
@@ -195,7 +159,7 @@ const usersSlice = createSlice({
       })
       .addCase(createUser.rejected, (state, action) => {
         state.isLoading = false;
-        state.error = action.error.message || 'خطا در ایجاد کاربر';
+        state.error = (action.payload as string) || action.error.message || 'خطا در ایجاد کاربر';
       })
       // Update user
       .addCase(updateUser.pending, (state) => {
@@ -204,17 +168,18 @@ const usersSlice = createSlice({
       })
       .addCase(updateUser.fulfilled, (state, action) => {
         state.isLoading = false;
-        const index = state.users.findIndex(user => user.id === action.payload.id);
+        const updatedUser = action.payload;
+        const index = state.users.findIndex(user => user.id === updatedUser.id);
         if (index !== -1) {
-          state.users[index] = { ...state.users[index], ...action.payload };
+          state.users[index] = updatedUser;
         }
-        if (state.selectedUser?.id === action.payload.id) {
-          state.selectedUser = { ...state.selectedUser, ...action.payload };
+        if (state.selectedUser?.id === updatedUser.id) {
+          state.selectedUser = updatedUser;
         }
       })
       .addCase(updateUser.rejected, (state, action) => {
         state.isLoading = false;
-        state.error = action.error.message || 'خطا در بروزرسانی کاربر';
+        state.error = (action.payload as string) || action.error.message || 'خطا در بروزرسانی کاربر';
       })
       // Delete user
       .addCase(deleteUser.pending, (state) => {
@@ -231,7 +196,7 @@ const usersSlice = createSlice({
       })
       .addCase(deleteUser.rejected, (state, action) => {
         state.isLoading = false;
-        state.error = action.error.message || 'خطا در حذف کاربر';
+        state.error = (action.payload as string) || action.error.message || 'خطا در حذف کاربر';
       })
       // Quick Actions
       .addCase(performQuickAction.pending, (state) => {
@@ -240,48 +205,42 @@ const usersSlice = createSlice({
       })
       .addCase(performQuickAction.fulfilled, (state, action) => {
         state.isLoading = false;
-        const { userId, updates } = action.payload;
-        const userIndex = state.users.findIndex(user => user.id === userId);
-        
+        const updatedUser = action.payload;
+        const userIndex = state.users.findIndex(user => user.id === updatedUser.id);
+
         if (userIndex !== -1) {
-          // Apply updates to the user using safer type approach
-          Object.entries(updates).forEach(([key, value]) => {
-            if (key.includes('.')) {
-              // Handle nested updates like 'systemInfo.accessLevel'
-              const [parent, child] = key.split('.');
-              const userParent = state.users[userIndex][parent as keyof User];
-              if (userParent && typeof userParent === 'object') {
-                (userParent as Record<string, any>)[child] = value;
-              }
-            } else {
-              // Handle direct property updates
-              (state.users[userIndex] as Record<string, any>)[key] = value;
-            }
-          });
-          
-          state.users[userIndex].updatedAt = new Date().toISOString();
+          state.users[userIndex] = updatedUser;
         }
-        
-        // Update selected user if it's the same user
-        if (state.selectedUser?.id === userId) {
-          Object.entries(updates).forEach(([key, value]) => {
-            if (key.includes('.')) {
-              const [parent, child] = key.split('.');
-              const selectedUserParent = state.selectedUser![parent as keyof User];
-              if (selectedUserParent && typeof selectedUserParent === 'object') {
-                (selectedUserParent as Record<string, any>)[child] = value;
-              }
-            } else {
-              // Handle direct property updates
-              (state.selectedUser as Record<string, any>)[key] = value;
-            }
-          });
-          state.selectedUser!.updatedAt = new Date().toISOString();
+
+        if (state.selectedUser?.id === updatedUser.id) {
+          state.selectedUser = updatedUser;
         }
       })
       .addCase(performQuickAction.rejected, (state, action) => {
         state.isLoading = false;
-        state.error = action.error.message || 'خطا در انجام عملیات';
+        state.error = (action.payload as string) || action.error.message || 'خطا در انجام عملیات';
+      })
+      // Fetch user by ID
+      .addCase(fetchUserById.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(fetchUserById.fulfilled, (state, action) => {
+        state.isLoading = false;
+        state.selectedUser = action.payload;
+        // Also update in users list if exists
+        const index = state.users.findIndex(user => user.id === action.payload.id);
+        if (index !== -1) {
+          state.users[index] = action.payload;
+        } else {
+          // Add to list if not exists
+          state.users.push(action.payload);
+        }
+      })
+      .addCase(fetchUserById.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = (action.payload as string) || action.error.message || 'خطا در بارگذاری کاربر';
+        state.selectedUser = null;
       });
   },
 });

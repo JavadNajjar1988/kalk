@@ -99,17 +99,19 @@ const DynamicForm: React.FC<DynamicFormProps> = ({ tab, data, errors, onChange, 
     return undefined;
   }, [categoryType, tab.id, tab.name]);
 
-  // Debug log پس از تعریف متغیرها
-  console.log('DynamicForm render:', { 
-    tabId: tab.id, 
-    tabName: tab.name, 
-    data, 
-    errors, 
-    fieldsCount: tab.fields.length, 
-    categoryType,
-    isLegalInformationTab,
-    determineCategoryType
-  });
+  // Debug log (only in development)
+  if (import.meta.env.DEV) {
+    console.debug('DynamicForm render:', { 
+      tabId: tab.id, 
+      tabName: tab.name, 
+      data, 
+      errors, 
+      fieldsCount: tab.fields.length, 
+      categoryType,
+      isLegalInformationTab,
+      determineCategoryType
+    });
+  }
 
   const renderField = (field: FieldDefinition, isHierarchicalField: boolean = false) => {
     // Get the current value directly from data, don't override with defaults
@@ -133,7 +135,9 @@ const DynamicForm: React.FC<DynamicFormProps> = ({ tab, data, errors, onChange, 
       return false;
     };
     
-    console.log(`Rendering field ${field.id}, type: ${field.type}, current value:`, value, 'type:', typeof value, 'isHierarchical:', isHierarchicalField, 'isComposite:', isCompositeField(), 'defaultValue:', enhancedField.defaultValue);
+    if (import.meta.env.DEV) {
+      console.debug(`Rendering field ${field.id}, type: ${field.type}, current value:`, value, 'type:', typeof value, 'isHierarchical:', isHierarchicalField, 'isComposite:', isCompositeField(), 'defaultValue:', enhancedField.defaultValue);
+    }
 
     const commonProps = {
       fullWidth: true,
@@ -247,7 +251,7 @@ const DynamicForm: React.FC<DynamicFormProps> = ({ tab, data, errors, onChange, 
             type={field.type}
             value={value || ''} // Ensure we always have a string
             onChange={(e) => {
-              console.log('Text field change:', field.id, e.target.value); // Debug log
+              if (import.meta.env.DEV) console.debug('Text field change:', field.id, e.target.value);
               onChange(field.id, e.target.value);
             }}
             placeholder={`${field.name} را وارد کنید`}
@@ -402,7 +406,7 @@ const DynamicForm: React.FC<DynamicFormProps> = ({ tab, data, errors, onChange, 
             type={field.type}
             value={value || ''} // Ensure we always have a string
             onChange={(e) => {
-              console.log('Text field change:', field.id, e.target.value); // Debug log
+              if (import.meta.env.DEV) console.debug('Text field change:', field.id, e.target.value);
               onChange(field.id, e.target.value);
             }}
             placeholder={`${field.name} را وارد کنید`}
@@ -422,7 +426,7 @@ const DynamicForm: React.FC<DynamicFormProps> = ({ tab, data, errors, onChange, 
             rows={3}
             value={value || ''}
             onChange={(e) => {
-              console.log('Textarea field change:', field.id, e.target.value);
+              if (import.meta.env.DEV) console.debug('Textarea field change:', field.id, e.target.value);
               onChange(field.id, e.target.value);
             }}
             placeholder={`${field.name} را وارد کنید`}
@@ -436,7 +440,7 @@ const DynamicForm: React.FC<DynamicFormProps> = ({ tab, data, errors, onChange, 
             type="number"
             value={value || ''}
             onChange={(e) => {
-              console.log('Number field change:', field.id, e.target.value);
+              if (import.meta.env.DEV) console.debug('Number field change:', field.id, e.target.value);
               onChange(field.id, e.target.value ? Number(e.target.value) : '');
             }}
             placeholder={`${field.name} را وارد کنید`}
@@ -494,7 +498,7 @@ const DynamicForm: React.FC<DynamicFormProps> = ({ tab, data, errors, onChange, 
             <Select
               value={value || ''} // Ensure we always have a value
               onChange={(e) => {
-                console.log('Select field change:', field.id, e.target.value);
+                if (import.meta.env.DEV) console.debug('Select field change:', field.id, e.target.value);
                 onChange(field.id, e.target.value);
               }}
               label={field.name}
@@ -522,7 +526,7 @@ const DynamicForm: React.FC<DynamicFormProps> = ({ tab, data, errors, onChange, 
               multiple
               value={Array.isArray(value) ? value : []}
               onChange={(e) => {
-                console.log('Multiselect field change:', field.id, e.target.value);
+                if (import.meta.env.DEV) console.debug('Multiselect field change:', field.id, e.target.value);
                 onChange(field.id, e.target.value);
               }}
               input={<OutlinedInput label={field.name} />}
@@ -629,14 +633,14 @@ const DynamicForm: React.FC<DynamicFormProps> = ({ tab, data, errors, onChange, 
               categoryType={determineCategoryType}
               value={data.hierarchicalPath || []}
               onChange={(path, finalNodeId) => {
-                console.log('Hierarchical path changed:', { path, finalNodeId });
+                if (import.meta.env.DEV) console.debug('Hierarchical path changed:', { path, finalNodeId });
                 onChange('hierarchicalPath', path);
                 if (finalNodeId) {
                   onChange('finalNodeId', finalNodeId);
                 }
               }}
               onFieldsChange={(fields) => {
-                console.log('Hierarchical fields changed:', fields);
+                if (import.meta.env.DEV) console.debug('Hierarchical fields changed:', fields);
                 // در اینجا می‌توانیم فیلدهای نهایی را به form اضافه کنیم
                 onChange('hierarchicalFields', fields);
               }}

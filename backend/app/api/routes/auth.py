@@ -31,17 +31,33 @@ def _get_admin_password() -> str:
 
 @router.post("/token", response_model=Token)
 async def login(db: DbSession, form_data: OAuth2PasswordRequestForm = Depends()):
-    # Ensure admin exists (bootstrap if not)
+    # Ensure admin exists (fallback bootstrap if migration hasn't run)
     result = await db.execute(select(User).where(User.username == "admin"))
     admin_user = result.scalar_one_or_none()
     if not admin_user:
+        logger.warning("Admin user not found. Creating fallback admin. Please run migrations to create admin properly.")
         now = datetime.now(timezone.utc)
         admin_user = User(
             id=str(uuid.uuid4()),
             username="admin",
+            user_code="USR-ADMIN",
             password_hash=get_password_hash(_get_admin_password()),
             roles="ADMIN,OPERATOR",
             is_active=True,
+            personal_info={
+                "fullName": "مدیر سیستم",
+                "nationality": "ایرانی",
+                "gender": "نامشخص",
+            },
+            contact_info={"email": "admin@example.com"},
+            professional_info={"status": "نظامی", "details": {}},
+            system_info={
+                "role": "مدیر سیستم",
+                "accessLevel": "سطح 1 - دسترسی کامل",
+                "permissions": ["مدیریت کاربران", "مدیریت سیستم"],
+                "loginCount": 0,
+                "passwordLastChanged": now.isoformat(),
+            },
             created_at=now,
             updated_at=now,
         )
@@ -64,17 +80,33 @@ async def login(db: DbSession, form_data: OAuth2PasswordRequestForm = Depends())
 
 @router.post("/token_json", response_model=Token)
 async def login_json(payload: LoginRequest, db: DbSession):
-    # Ensure admin exists (bootstrap if not)
+    # Ensure admin exists (fallback bootstrap if migration hasn't run)
     result = await db.execute(select(User).where(User.username == "admin"))
     admin_user = result.scalar_one_or_none()
     if not admin_user:
+        logger.warning("Admin user not found. Creating fallback admin. Please run migrations to create admin properly.")
         now = datetime.now(timezone.utc)
         admin_user = User(
             id=str(uuid.uuid4()),
             username="admin",
+            user_code="USR-ADMIN",
             password_hash=get_password_hash(_get_admin_password()),
             roles="ADMIN,OPERATOR",
             is_active=True,
+            personal_info={
+                "fullName": "مدیر سیستم",
+                "nationality": "ایرانی",
+                "gender": "نامشخص",
+            },
+            contact_info={"email": "admin@example.com"},
+            professional_info={"status": "نظامی", "details": {}},
+            system_info={
+                "role": "مدیر سیستم",
+                "accessLevel": "سطح 1 - دسترسی کامل",
+                "permissions": ["مدیریت کاربران", "مدیریت سیستم"],
+                "loginCount": 0,
+                "passwordLastChanged": now.isoformat(),
+            },
             created_at=now,
             updated_at=now,
         )

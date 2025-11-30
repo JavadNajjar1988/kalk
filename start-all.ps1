@@ -168,8 +168,16 @@ $maxTries = 10
 $try = 1
 while ($try -le $maxTries) {
   Write-Host "Running DB migrations (attempt $try of $maxTries)..."
-  $result = & docker compose exec -T api sh -lc "alembic -c alembic.ini upgrade head" 2>&1
-  if ($LASTEXITCODE -eq 0) {
+  $ErrorActionPreference = 'Continue'
+  try {
+    $result = & docker compose exec -T api sh -lc "alembic -c alembic.ini upgrade head" 2>&1 | Out-String
+    $exitCode = $LASTEXITCODE
+  } catch {
+    $result = $_.Exception.Message
+    $exitCode = 1
+  }
+  $ErrorActionPreference = 'Stop'
+  if ($exitCode -eq 0) {
     Write-Host "Migrations applied successfully."
     break
   }

@@ -47,7 +47,10 @@ const UsersTableView: React.FC<UsersTableViewProps> = ({
     return isActive ? 'success' : 'error';
   };
 
-  const getAccessLevelColor = (accessLevel: string) => {
+  const getAccessLevelColor = (accessLevel: string | undefined) => {
+    if (!accessLevel || typeof accessLevel !== 'string') {
+      return theme.palette.grey[500];
+    }
     if (accessLevel.includes('سطح 1')) return theme.palette.error.main;
     if (accessLevel.includes('سطح 2')) return theme.palette.warning.main;
     if (accessLevel.includes('سطح 3')) return theme.palette.info.main;
@@ -55,7 +58,10 @@ const UsersTableView: React.FC<UsersTableViewProps> = ({
     return theme.palette.grey[500];
   };
 
-  const getRoleColor = (role: string) => {
+  const getRoleColor = (role: string | undefined) => {
+    if (!role || typeof role !== 'string') {
+      return theme.palette.grey[500];
+    }
     switch (role) {
       case 'مدیر سیستم': return theme.palette.error.main;
       case 'سرپرست': return theme.palette.warning.main;
@@ -145,9 +151,9 @@ const UsersTableView: React.FC<UsersTableViewProps> = ({
               <TableCell>
                 <Box>
                   <Typography variant="body2" fontWeight={500}>
-                    {user.personalInfo.fullName}
+                    {user.personalInfo?.fullName || 'نامشخص'}
                   </Typography>
-                  {user.personalInfo.fullNameEn && (
+                  {user.personalInfo?.fullNameEn && (
                     <Typography variant="caption" color="text.secondary">
                       {user.personalInfo.fullNameEn}
                     </Typography>
@@ -158,14 +164,14 @@ const UsersTableView: React.FC<UsersTableViewProps> = ({
               {/* تابعیت */}
               <TableCell>
                 <Typography variant="body2">
-                  {user.personalInfo.nationality}
+                  {user.personalInfo?.nationality || 'نامشخص'}
                 </Typography>
               </TableCell>
               
               {/* نقش */}
               <TableCell>
                 <Chip
-                  label={user.systemInfo.role}
+                  label={user.systemInfo.role || 'نامشخص'}
                   size="small"
                   sx={{
                     bgcolor: getRoleColor(user.systemInfo.role),
@@ -178,7 +184,7 @@ const UsersTableView: React.FC<UsersTableViewProps> = ({
               {/* سطح دسترسی */}
               <TableCell>
                 <Chip
-                  label={user.systemInfo.accessLevel}
+                  label={user.systemInfo.accessLevel || 'نامشخص'}
                   size="small"
                   variant="outlined"
                   sx={{

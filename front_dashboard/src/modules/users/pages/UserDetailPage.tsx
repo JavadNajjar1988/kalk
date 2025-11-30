@@ -31,9 +31,10 @@ import {
   Security as SecurityIcon,
 } from '@mui/icons-material';
 import { useAppDispatch, useAppSelector } from '@/store';
-import { setSelectedUser, deleteUser, clearError } from '../store/usersSlice';
+import { fetchUserById, deleteUser, updateUser, clearError } from '../store/usersSlice';
 import type { User } from '../types';
 import { useTranslation } from '@/hooks/useTranslation';
+import DynamicModal from '@/components/common/DynamicModal';
 
 const UserDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -47,48 +48,11 @@ const UserDetailPage: React.FC = () => {
 
   useEffect(() => {
     if (id) {
-      // TODO: Fetch user by ID or find in current users list
-      // For now, we'll simulate finding the user
-      const mockUser: User = {
-        id: id,
-        personalInfo: {
-          fullName: 'نمونه کاربر',
-          fullNameEn: 'Sample User',
-          fatherName: 'نام پدر',
-          nationalId: '1234567890',
-          nationality: 'ایرانی',
-          birthDate: '1990-01-01',
-          gender: 'مرد',
-          birthPlace: 'تهران',
-          maritalStatus: 'متاهل',
-        },
-        contactInfo: {
-          landline: '02112345678',
-          mobile: ['09123456789'],
-          addresses: 'آدرس نمونه',
-          email: 'user@example.com',
-          postalCode: '1234567890',
-          socialNetworks: [
-            { platform: 'Instagram', username: '@sample_user' }
-          ],
-        },
-        legalInfo: {
-          status: 'نظامی',
-          details: {
-            forceType: 'ارتش',
-            rank: 'ستوان',
-            position: 'افسر اطلاعات',
-            serviceNumber: 'A123456',
-            unit: 'یگان ویژه',
-          },
-        },
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-        isActive: true,
-      };
-      
-      dispatch(setSelectedUser(mockUser));
+      dispatch(fetchUserById(id));
     }
+    return () => {
+      dispatch(clearError());
+    };
   }, [id, dispatch]);
 
   const handleBack = () => {
@@ -205,24 +169,29 @@ const UserDetailPage: React.FC = () => {
                   bgcolor: 'primary.main',
                 }}
               >
-                {selectedUser.personalInfo.fullName.charAt(0)}
+                {(selectedUser.personalInfo?.fullName || '؟').charAt(0)}
               </Avatar>
               <Typography variant="h5" fontWeight={600} sx={{ mb: 1 }}>
-                {selectedUser.personalInfo.fullName}
+                {selectedUser.personalInfo?.fullName || 'نامشخص'}
               </Typography>
-              {selectedUser.personalInfo.fullNameEn && (
+              {selectedUser.personalInfo?.fullNameEn && (
                 <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
                   {selectedUser.personalInfo.fullNameEn}
                 </Typography>
               )}
               <Chip
-                label={selectedUser.legalInfo.status}
-                color={getStatusColor(selectedUser.legalInfo.status) as any}
+                label={selectedUser.professionalInfo?.status || 'نامشخص'}
+                color={getStatusColor(selectedUser.professionalInfo?.status || '') as any}
                 sx={{ mb: 2 }}
               />
               <Typography variant="body2" color="text.secondary">
-                شماره ملی: {selectedUser.personalInfo.nationalId}
+                شماره ملی: {selectedUser.personalInfo?.nationalId || 'نامشخص'}
               </Typography>
+              {selectedUser.userCode && (
+                <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+                  کد کاربری: {selectedUser.userCode}
+                </Typography>
+              )}
             </CardContent>
           </Card>
         </Grid>
@@ -241,19 +210,19 @@ const UserDetailPage: React.FC = () => {
                   <Grid container spacing={2}>
                     <Grid item xs={12} sm={6}>
                       <Typography variant="body2" color="text.secondary">نام پدر</Typography>
-                      <Typography variant="body1">{selectedUser.personalInfo.fatherName}</Typography>
+                      <Typography variant="body1">{selectedUser.personalInfo?.fatherName || 'نامشخص'}</Typography>
                     </Grid>
                     <Grid item xs={12} sm={6}>
                       <Typography variant="body2" color="text.secondary">تاریخ تولد</Typography>
-                      <Typography variant="body1">{selectedUser.personalInfo.birthDate}</Typography>
+                      <Typography variant="body1">{selectedUser.personalInfo?.birthDate || 'نامشخص'}</Typography>
                     </Grid>
                     <Grid item xs={12} sm={6}>
                       <Typography variant="body2" color="text.secondary">جنسیت</Typography>
-                      <Typography variant="body1">{selectedUser.personalInfo.gender}</Typography>
+                      <Typography variant="body1">{selectedUser.personalInfo?.gender || 'نامشخص'}</Typography>
                     </Grid>
                     <Grid item xs={12} sm={6}>
                       <Typography variant="body2" color="text.secondary">تابعیت</Typography>
-                      <Typography variant="body1">{selectedUser.personalInfo.nationality}</Typography>
+                      <Typography variant="body1">{selectedUser.personalInfo?.nationality || 'نامشخص'}</Typography>
                     </Grid>
                     {selectedUser.personalInfo.birthPlace && (
                       <Grid item xs={12} sm={6}>
@@ -281,7 +250,7 @@ const UserDetailPage: React.FC = () => {
                     اطلاعات تماس
                   </Typography>
                   <Grid container spacing={2}>
-                    {selectedUser.contactInfo.mobile.length > 0 && (
+                    {selectedUser.contactInfo?.mobile && selectedUser.contactInfo.mobile.length > 0 && (
                       <Grid item xs={12} sm={6}>
                         <Typography variant="body2" color="text.secondary">شماره موبایل</Typography>
                         {selectedUser.contactInfo.mobile.map((mobile, index) => (
@@ -318,46 +287,122 @@ const UserDetailPage: React.FC = () => {
               </Card>
             </Grid>
 
-            {/* Legal Information */}
+            {/* Professional Information */}
+            <Grid item xs={12}>
+              <Card sx={{ borderRadius: 2 }}>
+                <CardContent>
+                  <Typography variant="h6" sx={{ mb: 2, display: 'flex', alignItems: 'center' }}>
+                    <WorkIcon sx={{ mr: 1 }} />
+                    اطلاعات حرفه‌ای
+                  </Typography>
+                  <Grid container spacing={2}>
+                    <Grid item xs={12} sm={6}>
+                      <Typography variant="body2" color="text.secondary">وضعیت</Typography>
+                      <Typography variant="body1">{selectedUser.professionalInfo?.status || 'نامشخص'}</Typography>
+                    </Grid>
+                    {selectedUser.professionalInfo?.status === 'نظامی' && selectedUser.professionalInfo.details && 'forceType' in selectedUser.professionalInfo.details && (
+                      <>
+                        <Grid item xs={12} sm={6}>
+                          <Typography variant="body2" color="text.secondary">نوع نیرو</Typography>
+                          <Typography variant="body1">{(selectedUser.professionalInfo.details as any).forceType || 'نامشخص'}</Typography>
+                        </Grid>
+                        {(selectedUser.professionalInfo.details as any).rank && (
+                          <Grid item xs={12} sm={6}>
+                            <Typography variant="body2" color="text.secondary">درجه</Typography>
+                            <Typography variant="body1">{(selectedUser.professionalInfo.details as any).rank}</Typography>
+                          </Grid>
+                        )}
+                        {(selectedUser.professionalInfo.details as any).position && (
+                          <Grid item xs={12} sm={6}>
+                            <Typography variant="body2" color="text.secondary">سمت</Typography>
+                            <Typography variant="body1">{(selectedUser.professionalInfo.details as any).position}</Typography>
+                          </Grid>
+                        )}
+                        {(selectedUser.professionalInfo.details as any).serviceNumber && (
+                          <Grid item xs={12} sm={6}>
+                            <Typography variant="body2" color="text.secondary">شماره خدمتی</Typography>
+                            <Typography variant="body1">{(selectedUser.professionalInfo.details as any).serviceNumber}</Typography>
+                          </Grid>
+                        )}
+                        {(selectedUser.professionalInfo.details as any).unit && (
+                          <Grid item xs={12} sm={6}>
+                            <Typography variant="body2" color="text.secondary">یگان</Typography>
+                            <Typography variant="body1">{(selectedUser.professionalInfo.details as any).unit}</Typography>
+                          </Grid>
+                        )}
+                      </>
+                    )}
+                    {selectedUser.professionalInfo?.status === 'غیرنظامی' && selectedUser.professionalInfo.details && (
+                      <>
+                        {(selectedUser.professionalInfo.details as any).organization && (
+                          <Grid item xs={12} sm={6}>
+                            <Typography variant="body2" color="text.secondary">سازمان</Typography>
+                            <Typography variant="body1">{(selectedUser.professionalInfo.details as any).organization}</Typography>
+                          </Grid>
+                        )}
+                        {(selectedUser.professionalInfo.details as any).jobTitle && (
+                          <Grid item xs={12} sm={6}>
+                            <Typography variant="body2" color="text.secondary">سمت</Typography>
+                            <Typography variant="body1">{(selectedUser.professionalInfo.details as any).jobTitle}</Typography>
+                          </Grid>
+                        )}
+                      </>
+                    )}
+                    {selectedUser.professionalInfo?.status === 'آزاد' && selectedUser.professionalInfo.details && (
+                      <>
+                        {(selectedUser.professionalInfo.details as any).businessType && (
+                          <Grid item xs={12} sm={6}>
+                            <Typography variant="body2" color="text.secondary">نوع کسب و کار</Typography>
+                            <Typography variant="body1">{(selectedUser.professionalInfo.details as any).businessType}</Typography>
+                          </Grid>
+                        )}
+                      </>
+                    )}
+                  </Grid>
+                </CardContent>
+              </Card>
+            </Grid>
+
+            {/* System Information */}
             <Grid item xs={12}>
               <Card sx={{ borderRadius: 2 }}>
                 <CardContent>
                   <Typography variant="h6" sx={{ mb: 2, display: 'flex', alignItems: 'center' }}>
                     <SecurityIcon sx={{ mr: 1 }} />
-                    اطلاعات حقوقی
+                    اطلاعات سیستمی
                   </Typography>
                   <Grid container spacing={2}>
                     <Grid item xs={12} sm={6}>
-                      <Typography variant="body2" color="text.secondary">وضعیت</Typography>
-                      <Typography variant="body1">{selectedUser.legalInfo.status}</Typography>
+                      <Typography variant="body2" color="text.secondary">نقش</Typography>
+                      <Typography variant="body1">{selectedUser.systemInfo?.role || 'نامشخص'}</Typography>
                     </Grid>
-                    {selectedUser.legalInfo.status === 'نظامی' && 'forceType' in selectedUser.legalInfo.details && (
-                      <>
-                        <Grid item xs={12} sm={6}>
-                          <Typography variant="body2" color="text.secondary">نوع نیرو</Typography>
-                          <Typography variant="body1">{selectedUser.legalInfo.details.forceType}</Typography>
-                        </Grid>
-                        <Grid item xs={12} sm={6}>
-                          <Typography variant="body2" color="text.secondary">درجه</Typography>
-                          <Typography variant="body1">{selectedUser.legalInfo.details.rank}</Typography>
-                        </Grid>
-                        <Grid item xs={12} sm={6}>
-                          <Typography variant="body2" color="text.secondary">سمت</Typography>
-                          <Typography variant="body1">{selectedUser.legalInfo.details.position}</Typography>
-                        </Grid>
-                        {selectedUser.legalInfo.details.serviceNumber && (
-                          <Grid item xs={12} sm={6}>
-                            <Typography variant="body2" color="text.secondary">شماره خدمتی</Typography>
-                            <Typography variant="body1">{selectedUser.legalInfo.details.serviceNumber}</Typography>
-                          </Grid>
-                        )}
-                        {selectedUser.legalInfo.details.unit && (
-                          <Grid item xs={12} sm={6}>
-                            <Typography variant="body2" color="text.secondary">یگان</Typography>
-                            <Typography variant="body1">{selectedUser.legalInfo.details.unit}</Typography>
-                          </Grid>
-                        )}
-                      </>
+                    <Grid item xs={12} sm={6}>
+                      <Typography variant="body2" color="text.secondary">سطح دسترسی</Typography>
+                      <Typography variant="body1">{selectedUser.systemInfo?.accessLevel || 'نامشخص'}</Typography>
+                    </Grid>
+                    {selectedUser.systemInfo?.permissions && selectedUser.systemInfo.permissions.length > 0 && (
+                      <Grid item xs={12}>
+                        <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>دسترسی‌ها</Typography>
+                        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                          {selectedUser.systemInfo.permissions.map((permission, index) => (
+                            <Chip key={index} label={permission} size="small" variant="outlined" />
+                          ))}
+                        </Box>
+                      </Grid>
+                    )}
+                    <Grid item xs={12} sm={6}>
+                      <Typography variant="body2" color="text.secondary">وضعیت</Typography>
+                      <Chip 
+                        label={selectedUser.isActive ? 'فعال' : 'غیرفعال'} 
+                        color={selectedUser.isActive ? 'success' : 'error'}
+                        size="small"
+                      />
+                    </Grid>
+                    {selectedUser.systemInfo?.loginCount !== undefined && (
+                      <Grid item xs={12} sm={6}>
+                        <Typography variant="body2" color="text.secondary">تعداد ورود</Typography>
+                        <Typography variant="body1">{selectedUser.systemInfo.loginCount}</Typography>
+                      </Grid>
                     )}
                   </Grid>
                 </CardContent>
@@ -367,12 +412,70 @@ const UserDetailPage: React.FC = () => {
         </Grid>
       </Grid>
 
-      {/* TODO: Edit User Modal */}
-      {showEditModal && (
-        <div>
-          {/* DynamicModal will be implemented later */}
-          <Typography>Edit User Modal - To be implemented</Typography>
-        </div>
+      {/* Edit User Modal */}
+      {showEditModal && selectedUser && (
+        <DynamicModal
+          open={showEditModal}
+          onClose={() => setShowEditModal(false)}
+          onSave={async (formData: Record<string, any>) => {
+            // Transform form data similar to UsersListPage
+            const personalInfo = formData['pr-2-1'] || {};
+            const contactInfo = formData['pr-2-2'] || {};
+            const legalInfo = formData['pr-2-3'] || {};
+            const educationInfo = formData['pr-2-4'] || {};
+            
+            // Determine professional status
+            let professionalStatus: 'آزاد' | 'نظامی' | 'غیرنظامی' = selectedUser.professionalInfo?.status || 'آزاد';
+            let professionalDetails: any = selectedUser.professionalInfo?.details || {};
+            
+            if (legalInfo.hierarchicalPath) {
+              const selectedPath = legalInfo.hierarchicalPath || [];
+              if (selectedPath.includes('نظامی') || selectedPath.includes('Military')) {
+                professionalStatus = 'نظامی';
+              } else if (selectedPath.includes('دولتی') || selectedPath.includes('Government') || selectedPath.includes('خصوصی') || selectedPath.includes('Private')) {
+                professionalStatus = 'غیرنظامی';
+              }
+            }
+            
+            const updatedData: Partial<User> = {
+              personalInfo: {
+                fullName: personalInfo['pf-full-name'] || selectedUser.personalInfo?.fullName || '',
+                fullNameEn: personalInfo['pf-full-name-en'] || selectedUser.personalInfo?.fullNameEn,
+                fatherName: personalInfo['pf-father-name'] || selectedUser.personalInfo?.fatherName || '',
+                nationalId: personalInfo['pf-national-id'] || selectedUser.personalInfo?.nationalId || '',
+                nationality: personalInfo['pf-nationality'] || selectedUser.personalInfo?.nationality || 'ایرانی',
+                birthDate: personalInfo['pf-birth-date'] || selectedUser.personalInfo?.birthDate || '',
+                gender: personalInfo['pf-gender'] || selectedUser.personalInfo?.gender || 'مرد',
+                birthPlace: personalInfo['pf-birth-place'] || selectedUser.personalInfo?.birthPlace,
+                maritalStatus: personalInfo['pf-marital-status'] || selectedUser.personalInfo?.maritalStatus,
+              },
+              contactInfo: {
+                landline: contactInfo['cf-landline'] || selectedUser.contactInfo?.landline,
+                mobile: Array.isArray(contactInfo['cf-mobile']) ? contactInfo['cf-mobile'] : 
+                        (contactInfo['cf-mobile'] ? [contactInfo['cf-mobile']] : 
+                        (selectedUser.contactInfo?.mobile || [])),
+                addresses: contactInfo['cf-address'] || selectedUser.contactInfo?.addresses,
+                email: contactInfo['cf-email'] || selectedUser.contactInfo?.email,
+                postalCode: contactInfo['cf-postal-code'] || selectedUser.contactInfo?.postalCode,
+                socialNetworks: Array.isArray(contactInfo['cf-social-networks']) ? contactInfo['cf-social-networks'] : 
+                               (selectedUser.contactInfo?.socialNetworks || []),
+              },
+              professionalInfo: {
+                status: professionalStatus,
+                details: professionalDetails,
+              },
+            };
+            
+            await dispatch(updateUser({ id: selectedUser.id, userData: updatedData }));
+            setShowEditModal(false);
+            // Refresh user data
+            await dispatch(fetchUserById(selectedUser.id));
+          }}
+          categoryType="users"
+          title="ویرایش کاربر"
+          mode="edit"
+          initialData={selectedUser}
+        />
       )}
     </Box>
   );

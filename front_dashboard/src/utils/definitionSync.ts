@@ -40,7 +40,7 @@ class DefinitionSyncManager {
    * Register a listener for definition changes
    */
   addListener(listener: SyncListener): void {
-    console.log(`Registering definition sync listener: ${listener.id}`);
+    if (import.meta.env.DEV) console.debug(`Registering definition sync listener: ${listener.id}`);
     this.listeners.set(listener.id, listener);
   }
 
@@ -48,7 +48,7 @@ class DefinitionSyncManager {
    * Remove a listener
    */
   removeListener(listenerId: string): void {
-    console.log(`Removing definition sync listener: ${listenerId}`);
+    if (import.meta.env.DEV) console.debug(`Removing definition sync listener: ${listenerId}`);
     this.listeners.delete(listenerId);
   }
 
@@ -56,7 +56,7 @@ class DefinitionSyncManager {
    * Notify all relevant listeners about a definition change
    */
   notifyChange(event: DefinitionChangeEvent): void {
-    console.log('Definition change detected:', event);
+    if (import.meta.env.DEV) console.debug('Definition change detected:', event);
     
     // Add to history
     this.addToHistory(event);
@@ -180,7 +180,7 @@ class DefinitionSyncManager {
    * In a real implementation, this would use file watchers or WebSockets
    */
   private startWatcher(): void {
-    console.log('Starting definition sync watcher...');
+    if (import.meta.env.DEV) console.debug('Starting definition sync watcher...');
     
     // Simulate file watching with interval checks
     this.watcherInterval = setInterval(() => {
@@ -216,7 +216,7 @@ class DefinitionSyncManager {
       this.watcherInterval = null;
     }
     this.listeners.clear();
-    console.log('Definition sync watcher stopped');
+    if (import.meta.env.DEV) console.debug('Definition sync watcher stopped');
   }
 }
 

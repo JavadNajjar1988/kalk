@@ -40,6 +40,17 @@ const DeleteConfirmationModal: React.FC<DeleteConfirmationModalProps> = ({
 
   if (!user) return null;
 
+  const displayFullName =
+    (user.personalInfo?.fullName || user.personalInfo?.fullNameEn || user.username || user.userCode || 'کاربر').trim();
+  const initials =
+    displayFullName
+      .split(/\s+/)
+      .filter(Boolean)
+      .map(part => part[0])
+      .join('') ||
+    displayFullName.slice(0, 2) ||
+    '؟';
+
   const handleConfirm = () => {
     onConfirm(user);
   };
@@ -167,12 +178,12 @@ const DeleteConfirmationModal: React.FC<DeleteConfirmationModalProps> = ({
                 mr: 2,
               }}
             >
-              {user.personalInfo.fullName.split(' ').map(n => n[0]).join('')}
+              {initials}
             </Avatar>
 
             <Box sx={{ flex: 1 }}>
               <Typography variant="h6" fontWeight={600}>
-                {user.personalInfo.fullName}
+                {displayFullName}
               </Typography>
               {user.personalInfo.fullNameEn && (
                 <Typography variant="body2" color="text.secondary">
@@ -190,7 +201,7 @@ const DeleteConfirmationModal: React.FC<DeleteConfirmationModalProps> = ({
 
           <Box sx={{ mt: 3 }}>
             <Typography variant="body1" sx={{ mb: 2 }}>
-              آیا مطمئن هستید که می‌خواهید کاربر <strong>{user.personalInfo.fullName}</strong> را حذف کنید؟
+              آیا مطمئن هستید که می‌خواهید کاربر <strong>{displayFullName}</strong> را حذف کنید؟
             </Typography>
 
             <Typography variant="body2" color="text.secondary">

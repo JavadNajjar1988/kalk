@@ -70,8 +70,10 @@ const DynamicModal: React.FC<DynamicModalProps> = ({
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   
-  // Debug log
-  console.log('DynamicModal state:', { categoryType, definitionData, loading, error, open });
+  // Debug log (only in development)
+  if (import.meta.env.DEV) {
+    console.debug('DynamicModal state:', { categoryType, definitionData, loading, error, open });
+  }
   const [activeTab, setActiveTab] = useState(0);
   const [formData, setFormData] = useState<Record<string, any>>({});
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
@@ -128,7 +130,7 @@ const DynamicModal: React.FC<DynamicModalProps> = ({
   // Initialize form when modal opens and definitionData is available
   useEffect(() => {
     if (open && definitionData && !isInitialized) {
-      console.log('Initializing form data...');
+      if (import.meta.env.DEV) console.debug('Initializing form data...');
       const initialFormData: Record<string, any> = {};
       
       // Initialize empty data structure for each tab
@@ -148,7 +150,7 @@ const DynamicModal: React.FC<DynamicModalProps> = ({
         });
       });
       
-      console.log('Setting initial form data:', initialFormData);
+      if (import.meta.env.DEV) console.debug('Setting initial form data:', initialFormData);
       setFormData(initialFormData);
       setActiveTab(0);
       setFormErrors({});
@@ -164,8 +166,10 @@ const DynamicModal: React.FC<DynamicModalProps> = ({
   }, [open]);
 
   const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
-    console.log('Tab change:', newValue, definitionData?.tabs[newValue]?.name); // Debug log
-    console.log('Available tabs:', definitionData?.tabs.length);
+    if (import.meta.env.DEV) {
+      console.debug('Tab change:', newValue, definitionData?.tabs[newValue]?.name);
+      console.debug('Available tabs:', definitionData?.tabs.length);
+    }
     
     if (definitionData && newValue >= 0 && newValue < definitionData.tabs.length) {
       setActiveTab(newValue);
@@ -173,7 +177,7 @@ const DynamicModal: React.FC<DynamicModalProps> = ({
   };
 
   const handleFieldChange = (tabId: string, fieldId: string, value: any) => {
-    console.log('Field change:', tabId, fieldId, value); // Debug log
+    if (import.meta.env.DEV) console.debug('Field change:', tabId, fieldId, value);
     
     setFormData(prev => {
       const newData = {
@@ -183,7 +187,7 @@ const DynamicModal: React.FC<DynamicModalProps> = ({
           [fieldId]: value
         }
       };
-      console.log('Updated form data:', newData);
+      if (import.meta.env.DEV) console.debug('Updated form data:', newData);
       return newData;
     });
 
@@ -310,7 +314,12 @@ const DynamicModal: React.FC<DynamicModalProps> = ({
         }}
       >
         <PersonIcon sx={{ color: theme.palette.primary.main }} />
-        <Typography variant={isMobile ? 'h6' : 'h5'} fontWeight={700} sx={{ color: theme.palette.primary.main }}>
+        <Typography
+          component="div"
+          variant={isMobile ? 'h6' : 'h5'}
+          fontWeight={700}
+          sx={{ color: theme.palette.primary.main }}
+        >
           {modalTitle}
         </Typography>
         <IconButton
@@ -358,8 +367,8 @@ const DynamicModal: React.FC<DynamicModalProps> = ({
           </Box>
         ) : (
           <Box>
-            {(() => {
-              console.log('Rendering modal content with definitionData:', definitionData);
+            {import.meta.env.DEV && (() => {
+              console.debug('Rendering modal content with definitionData:', definitionData);
               return null;
             })()}
             {/* Tabs */}
@@ -440,7 +449,7 @@ const DynamicModal: React.FC<DynamicModalProps> = ({
                       }, {} as Record<string, string>)
                     }
                     onChange={(fieldId: string, value: any) => {
-                      console.log('DynamicForm onChange called:', tab.id, fieldId, value);
+                      if (import.meta.env.DEV) console.debug('DynamicForm onChange called:', tab.id, fieldId, value);
                       handleFieldChange(tab.id, fieldId, value);
                     }}
                     categoryType={categoryType}
@@ -517,4 +526,3 @@ const DynamicModal: React.FC<DynamicModalProps> = ({
 };
 
 export default DynamicModal;
-

@@ -56,6 +56,17 @@ const EditUserModal: React.FC<EditUserModalProps> = ({
 
   if (!user) return null;
 
+  const displayFullName =
+    (user.personalInfo?.fullName || user.personalInfo?.fullNameEn || user.username || user.userCode || 'کاربر').trim();
+  const initials =
+    displayFullName
+      .split(/\s+/)
+      .filter(Boolean)
+      .map(part => part[0])
+      .join('') ||
+    displayFullName.slice(0, 2) ||
+    '؟';
+
   const handleChange = (field: string, value: any) => {
     const keys = field.split('.');
     setFormData(prev => {
@@ -99,7 +110,7 @@ const EditUserModal: React.FC<EditUserModalProps> = ({
     >
       <DialogTitle sx={{ pb: 1, display: 'flex', alignItems: 'center' }}>
         <EditIcon sx={{ mr: 1, color: theme.palette.primary.main }} />
-        <Typography variant="h6">ویرایش اطلاعات کاربر</Typography>
+        <Typography component="div" variant="h6">ویرایش اطلاعات کاربر</Typography>
       </DialogTitle>
       
       <DialogContent dividers>
@@ -115,12 +126,12 @@ const EditUserModal: React.FC<EditUserModalProps> = ({
               mr: 2,
             }}
           >
-            {user.personalInfo.fullName.split(' ').map(n => n[0]).join('')}
+            {initials}
           </Avatar>
           
           <Box>
             <Typography variant="h6" fontWeight={600}>
-              {user.personalInfo.fullName}
+              {displayFullName}
             </Typography>
             <Typography variant="body2" color="text.secondary">
               کد کاربری: {user.userCode}

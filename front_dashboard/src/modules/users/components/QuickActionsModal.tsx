@@ -54,6 +54,9 @@ const QuickActionsModal: React.FC<QuickActionsModalProps> = ({
 }) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const displayFullName =
+    (user?.personalInfo?.fullName || user?.personalInfo?.fullNameEn || user?.username || user?.userCode || 'کاربر').trim();
+  const permissions = Array.isArray(user?.systemInfo?.permissions) ? user.systemInfo.permissions : [];
 
   const getSoftSurface = () => {
     const primary = (theme.palette.primary.main || '#4a90e2').toLowerCase();
@@ -293,7 +296,7 @@ const QuickActionsModal: React.FC<QuickActionsModalProps> = ({
 
       >
 
-        اقدامات سریع برای: {user?.personalInfo.fullName}
+        اقدامات سریع برای: {displayFullName}
 
       </Typography>
 
@@ -591,7 +594,7 @@ const renderAccessLevelForm = () => (
 
         <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
 
-          {user?.systemInfo.permissions.map((permission) => (
+          {permissions.map((permission) => (
 
             <Chip
 
@@ -717,7 +720,7 @@ const renderToggleActiveConfirmation = () => (
 
       >
 
-        <Typography variant="body2"><strong>نام:</strong> {user?.personalInfo.fullName}</Typography>
+        <Typography variant="body2"><strong>نام:</strong> {displayFullName}</Typography>
 
         <Typography variant="body2"><strong>کد کاربری:</strong> {user?.userCode}</Typography>
 

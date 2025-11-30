@@ -22,6 +22,7 @@ DB_URL=postgresql+asyncpg://postgres:postgres@localhost:5432/kalk
 JWT_SECRET=change_me
 JWT_ALG=HS256
 ACCESS_TOKEN_EXPIRE_MINUTES=60
+ADMIN_BOOTSTRAP_PASSWORD=your_secure_password_here  # رمز عبور کاربر ادمین اولیه
 ```
 
 ## Docker Compose
@@ -33,6 +34,11 @@ docker-compose up -d
 ```powershell
 alembic -c alembic.ini upgrade head
 ```
+
+این دستور کاربر ادمین اولیه را نیز ایجاد می‌کند:
+- **Username**: `admin`
+- **Password**: از متغیر محیطی `ADMIN_BOOTSTRAP_PASSWORD` یا پیش‌فرض `admin123`
+- **نکته**: پس از اولین ورود، رمز عبور را تغییر دهید!
 
 ## تست‌ها
 ```powershell

@@ -49,7 +49,10 @@ const UsersCardView: React.FC<UsersCardViewProps> = ({
     return isActive ? 'success' : 'error';
   };
 
-  const getAccessLevelColor = (accessLevel: string) => {
+  const getAccessLevelColor = (accessLevel: string | undefined) => {
+    if (!accessLevel || typeof accessLevel !== 'string') {
+      return theme.palette.grey[500];
+    }
     if (accessLevel.includes('سطح 1')) return theme.palette.error.main;
     if (accessLevel.includes('سطح 2')) return theme.palette.warning.main;
     if (accessLevel.includes('سطح 3')) return theme.palette.info.main;
@@ -57,7 +60,10 @@ const UsersCardView: React.FC<UsersCardViewProps> = ({
     return theme.palette.grey[500];
   };
 
-  const getRoleColor = (role: string) => {
+  const getRoleColor = (role: string | undefined) => {
+    if (!role || typeof role !== 'string') {
+      return theme.palette.grey[500];
+    }
     switch (role) {
       case 'مدیر سیستم': return theme.palette.error.main;
       case 'سرپرست': return theme.palette.warning.main;
@@ -106,16 +112,16 @@ const UsersCardView: React.FC<UsersCardViewProps> = ({
                     mr: 2,
                   }}
                 >
-                  {user.personalInfo.fullName.split(' ').map(n => n[0]).join('')}
+                  {(user.personalInfo?.fullName || 'نامشخص').split(' ').map(n => n[0]).join('')}
                 </Avatar>
                 
                 <Box sx={{ flex: 1 }}>
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                     <Box>
                       <Typography variant="h6" component="div" sx={{ mb: 0.5, fontWeight: 600 }}>
-                        {user.personalInfo.fullName}
+                        {user.personalInfo?.fullName || 'نامشخص'}
                       </Typography>
-                      {user.personalInfo.fullNameEn && (
+                      {user.personalInfo?.fullNameEn && (
                         <Typography variant="caption" color="text.secondary">
                           {user.personalInfo.fullNameEn}
                         </Typography>
@@ -143,7 +149,7 @@ const UsersCardView: React.FC<UsersCardViewProps> = ({
 
               {/* اطلاعات تماس */}
               <Box sx={{ mb: 1.5 }}>
-                {user.contactInfo.email && (
+                {user.contactInfo?.email && (
                   <Box sx={{ display: 'flex', alignItems: 'center', mb: 0.5 }}>
                     <EmailIcon sx={{ fontSize: 16, color: theme.palette.text.secondary, mr: 1 }} />
                     <Typography variant="caption" color="text.secondary">
@@ -152,7 +158,7 @@ const UsersCardView: React.FC<UsersCardViewProps> = ({
                   </Box>
                 )}
                 
-                {user.contactInfo.mobile[0] && (
+                {user.contactInfo?.mobile?.[0] && (
                   <Box sx={{ display: 'flex', alignItems: 'center' }}>
                     <PhoneIcon sx={{ fontSize: 16, color: theme.palette.text.secondary, mr: 1 }} />
                     <Typography variant="caption" color="text.secondary">
@@ -170,11 +176,11 @@ const UsersCardView: React.FC<UsersCardViewProps> = ({
                   نقش سیستمی:
                 </Typography>
                 <Chip
-                  label={user.systemInfo.role}
+                  label={user.systemInfo?.role || 'نامشخص'}
                   size="small"
                   sx={{
-                    bgcolor: getRoleColor(user.systemInfo.role),
-                    color: theme.palette.getContrastText(getRoleColor(user.systemInfo.role)),
+                    bgcolor: getRoleColor(user.systemInfo?.role),
+                    color: theme.palette.getContrastText(getRoleColor(user.systemInfo?.role)),
                     fontWeight: 500,
                     mb: 1,
                   }}
@@ -184,12 +190,12 @@ const UsersCardView: React.FC<UsersCardViewProps> = ({
                   سطح دسترسی:
                 </Typography>
                 <Chip
-                  label={user.systemInfo.accessLevel}
+                  label={user.systemInfo?.accessLevel || 'نامشخص'}
                   size="small"
                   variant="outlined"
                   sx={{
-                    borderColor: getAccessLevelColor(user.systemInfo.accessLevel),
-                    color: getAccessLevelColor(user.systemInfo.accessLevel),
+                    borderColor: getAccessLevelColor(user.systemInfo?.accessLevel),
+                    color: getAccessLevelColor(user.systemInfo?.accessLevel),
                     fontWeight: 500,
                   }}
                 />
@@ -197,7 +203,7 @@ const UsersCardView: React.FC<UsersCardViewProps> = ({
 
               {/* تابعیت */}
               <Typography variant="body2" color="text.secondary">
-                تابعیت: {user.personalInfo.nationality}
+                تابعیت: {user.personalInfo?.nationality || 'نامشخص'}
               </Typography>
             </CardContent>
 

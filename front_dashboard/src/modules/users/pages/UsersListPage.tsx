@@ -31,7 +31,6 @@ import {
 } from '@mui/icons-material';
 import { useAppDispatch, useAppSelector } from '@/store';
 import { fetchUsers, setFilters, clearFilters, setPagination, clearError, createUser, setViewMode, updateUser, deleteUser, performQuickAction } from '../store/usersSlice';
-import { invalidateUsersCache } from '../utils/dataLoader';
 import type { User, UserFilters, QuickActionPayload } from '../types';
 import { useTranslation } from '@/hooks/useTranslation';
 import DynamicModal from '@/components/common/DynamicModal';
@@ -64,10 +63,8 @@ const UsersListPage: React.FC = () => {
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
 
   useEffect(() => {
-    // Clear cache to ensure fresh data is loaded
-    invalidateUsersCache();
     dispatch(clearError());
-    dispatch(fetchUsers(filters));
+    dispatch(fetchUsers());
   }, [dispatch, filters, pagination.page]);
 
   const handleSearch = (value: string) => {
@@ -247,16 +244,12 @@ const UsersListPage: React.FC = () => {
       
       console.log('Final transformed user data:', userData);
       
-      const result = await dispatch(createUser(userData));
-      console.log('Create user result:', result);
-      
-      if (createUser.fulfilled.match(result)) {
+      const resultAction = await dispatch(createUser(userData));
+      if (createUser.fulfilled.match(resultAction)) {
         setShowAddModal(false);
-        console.log('User created successfully');
-        // Refresh the users list
-        dispatch(fetchUsers(filters));
+        dispatch(fetchUsers());
       } else {
-        console.error('Failed to create user:', result.error);
+        console.error('Failed to create user:', resultAction.error);
       }
     } catch (error) {
       console.error('Error in handleSaveUser:', error);
@@ -473,8 +466,8 @@ const UsersListPage: React.FC = () => {
         <>
           {/* Results Count */}
           <Box sx={{ mb: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <Typography variant="body2" color="text.secondary">
-              {users.length} کاربر یافت شد
+            <Typography component="div" variant="body2" color="text.secondary">
+              {pagination.total} کاربر یافت شد
               {Object.keys(filters).length > 0 && (
                 <Chip 
                   label={`${Object.keys(filters).length} فیلتر فعال`} 

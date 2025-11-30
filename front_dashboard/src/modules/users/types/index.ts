@@ -1,6 +1,7 @@
 // User Types and Interfaces
 
 export interface User {
+  username?: string;
   id: string;
   userCode: string; // کد کاربری
   personalInfo: {
@@ -64,19 +65,19 @@ export interface CivilianInfo {
 export interface Role {
   id: string;
   name: string;
-  englishName: string;
-  description: string;
-  accessLevel: string;
-  permissions: string[];
+  englishName?: string;
+  description?: string;
+  accessLevel?: string;
+  permissions?: string[];
 }
 
 export interface AccessLevel {
   id: string;
   name: string;
-  englishName: string;
-  description: string;
-  color: string;
-  priority: number;
+  englishName?: string;
+  description?: string;
+  color?: string;
+  priority?: number;
 }
 
 // Quick Actions interfaces
