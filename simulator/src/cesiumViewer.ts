@@ -1,9 +1,8 @@
 import * as Cesium from 'cesium';
 
-// Set Cesium Ion access token (you can get a free token from cesium.com)
-// For now, we'll use OpenStreetMap which doesn't require a token
-// If you want to use Cesium Ion imagery, get a free token from https://cesium.com/ion/
-// Cesium.Ion.defaultAccessToken = 'YOUR_TOKEN_HERE';
+// تنظیم Cesium Ion access token (توکن کاربر)
+Cesium.Ion.defaultAccessToken =
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiIxZDc3NTY2Ni0wN2E0LTQ1MzMtYWY3OC02NTlhMzgxNDNhNTEiLCJpZCI6MzY1NDQ2LCJpYXQiOjE3NjQ1Nzg2MDB9.tY9HMk_DfrqUhMPnsvjWR_EoCFAv6No8lkyZwJTvJdY';
 
 // Helper function to resolve tile server base URL (same as dashboard)
 const resolveTileServerBase = (): string => {
@@ -45,50 +44,47 @@ export function createCesiumViewer(containerId: string): Cesium.Viewer {
   // Remove default imagery layer (Bing Maps or other default)
   viewer.imageryLayers.removeAll();
 
-  // اگر در آینده نیاز بود از tile server استفاده کنیم، از این مقدار استفاده می‌کنیم
+  // آدرس پایه tile server برای نقشه‌های آفلاین
   const tileServerBase = resolveTileServerBase();
-  void tileServerBase; // فعلا فقط برای جلوگیری از هشدار استفاده نشده
 
-  // Add map layers from dashboard (same as dashboard mapSlice.ts)
-  // Strategy: Add OpenStreetMap first (always works), then try to add offline map on top
-  
-  // 1. Add OpenStreetMap as base layer (always works, good fallback)
+  // Add base imagery using Cesium Ion World Imagery (به‌جای OpenStreetMap)
+  Cesium.IonImageryProvider.fromAssetId(3)
+    .then((ionImagery) => {
+      viewer.imageryLayers.addImageryProvider(ionImagery);
+      console.log('✅ Cesium Ion World Imagery added as base layer');
+    })
+    .catch((ionError) => {
+      console.error('❌ Failed to add Cesium Ion imagery, falling back to OSM:', ionError);
+
+      // Fallback: OpenStreetMap به‌صورت آنلاین
+      try {
+        const osmImagery = new Cesium.UrlTemplateImageryProvider({
+          url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+          subdomains: ['a', 'b', 'c'],
+          maximumLevel: 19,
+          credit: '© OpenStreetMap contributors'
+        });
+        viewer.imageryLayers.addImageryProvider(osmImagery);
+        console.log('✅ OpenStreetMap imagery provider added successfully (fallback)');
+      } catch (osmError) {
+        console.error('❌ Failed to add OpenStreetMap imagery:', osmError);
+      }
+    });
+
+  // 2. افزودن لایه نقشه آفلاین (اگر tileserver در حال اجرا باشد)
   try {
-    const osmImagery = new Cesium.UrlTemplateImageryProvider({
-      url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
-      subdomains: ['a', 'b', 'c'],
+    const offlineUrl = `${tileServerBase}/data/maps.mbtiles/{z}/{x}/{y}.png`;
+    const offlineImagery = new Cesium.UrlTemplateImageryProvider({
+      url: offlineUrl,
       maximumLevel: 19,
-      credit: '© OpenStreetMap contributors'
+      credit: 'نقشه آفلاین'
     });
-    viewer.imageryLayers.addImageryProvider(osmImagery);
-    console.log('✅ OpenStreetMap imagery provider added successfully');
-    console.log('Total imagery layers:', viewer.imageryLayers.length);
-    
-    // Verify the layer was added
-    viewer.imageryLayers.layerAdded.addEventListener(() => {
-      console.log('✅ Imagery layer added event fired');
-    });
-  } catch (osmError) {
-    console.error('❌ Failed to add OpenStreetMap imagery:', osmError);
-    
-    // Fallback: Try satellite imagery
-    try {
-      const satelliteImagery = new Cesium.UrlTemplateImageryProvider({
-        url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
-        maximumLevel: 19,
-        credit: '© Esri'
-      });
-      viewer.imageryLayers.addImageryProvider(satelliteImagery);
-      console.log('✅ Satellite imagery added as fallback');
-    } catch (satError) {
-      console.error('❌ All imagery providers failed:', satError);
-      console.warn('⚠️ No imagery available, map will show as solid color');
-    }
+    // لایه آفلاین را به‌عنوان لایه بالایی اضافه می‌کنیم، بدون دست‌کاری لایه OSM
+    viewer.imageryLayers.addImageryProvider(offlineImagery);
+    console.log('✅ Offline imagery layer added on top of base map:', offlineUrl);
+  } catch (offlineError) {
+    console.warn('⚠️ Failed to add offline imagery layer, continuing with online maps:', offlineError);
   }
-  
-  // 2. (موقتا غیرفعال) تلاش برای اضافه کردن نقشه آفلاین از tile server
-  // برای پایدار شدن رفتار نقشه، فعلا فقط از OpenStreetMap / Satellite استفاده می‌کنیم
-  // اگر لازم شد بعدا منطق نقشه آفلاین را دوباره (به‌صورت امن‌تر) فعال می‌کنیم.
 
   // Set scene mode to 3D (globe)
   viewer.scene.mode = Cesium.SceneMode.SCENE3D;
@@ -134,6 +130,35 @@ export function createCesiumViewer(containerId: string): Cesium.Viewer {
       console.log(`✅ Found ${viewer.imageryLayers.length} imagery layer(s)`);
     }
   }, 2000);
+
+  // --- پین تستی ساده روی ایران (مثلاً تهران) ---
+  try {
+    const tehranPosition = Cesium.Cartesian3.fromDegrees(51.3890, 35.6892, 0);
+    viewer.entities.add({
+      id: 'debug-tehran-pin',
+      position: tehranPosition,
+      point: {
+        pixelSize: 14,
+        color: Cesium.Color.LIME,
+        outlineColor: Cesium.Color.BLACK,
+        outlineWidth: 2,
+        heightReference: Cesium.HeightReference.CLAMP_TO_GROUND,
+      },
+      label: {
+        text: 'تهران (تستی)',
+        font: '18px sans-serif',
+        fillColor: Cesium.Color.WHITE,
+        outlineColor: Cesium.Color.BLACK,
+        outlineWidth: 2,
+        style: Cesium.LabelStyle.FILL_AND_OUTLINE,
+        verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
+        pixelOffset: new Cesium.Cartesian2(0, -20),
+      },
+    });
+    console.log('✅ Debug pin for Tehran added');
+  } catch (e) {
+    console.error('Failed to add debug Tehran pin:', e);
+  }
   
   // Set initial view for 2D mode after a short delay to ensure scene is ready
   setTimeout(() => {
@@ -170,9 +195,24 @@ export function createCesiumViewer(containerId: string): Cesium.Viewer {
     }
   }, 100);
 
-  // For 3D mode, enable terrain (optional - can use EllipsoidTerrainProvider for flat terrain)
-  // viewer.terrainProvider = Cesium.createWorldTerrain(); // Uncomment for real terrain
-  viewer.terrainProvider = new Cesium.EllipsoidTerrainProvider(); // Using flat terrain for now
+  // For 3D mode, enable terrain
+  // ابتدا از EllipsoidTerrainProvider به‌عنوان fallback استفاده می‌کنیم
+  viewer.terrainProvider = new Cesium.EllipsoidTerrainProvider();
+
+  // سپس تلاش می‌کنیم World Terrain را از طریق Cesium Ion فعال کنیم
+  Cesium
+    .createWorldTerrainAsync({
+      requestVertexNormals: true,
+      requestWaterMask: true,
+    })
+    .then((terrainProvider) => {
+      viewer.terrainProvider = terrainProvider;
+      console.log('✅ Cesium World Terrain enabled via Ion');
+    })
+    .catch((error) => {
+      console.warn('⚠️ Failed to enable World Terrain. Using ellipsoid terrain instead:', error);
+      // در صورت خطا همان EllipsoidTerrainProvider باقی می‌ماند
+    });
 
   // Hide Cesium attribution/logo
   const creditContainer = viewer.cesiumWidget.creditContainer as HTMLElement;

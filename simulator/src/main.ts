@@ -271,6 +271,14 @@ async function initializeCesium() {
     cesiumViewer = createCesiumViewer('cesiumContainer');
     console.log('Cesium viewer initialized');
     
+    // پس از آماده شدن Cesium، پین‌های سناریوها را اضافه کن
+    try {
+      const { addScenarioPins } = await import('./scenarioPins');
+      await addScenarioPins(cesiumViewer as any);
+    } catch (pinError) {
+      console.error('Failed to add scenario pins:', pinError);
+    }
+    
     // Initialize coordinate converter with Tehran as origin
     coordinateConverter = new CoordinateConverter(51.3890, 35.6892, 0);
     
