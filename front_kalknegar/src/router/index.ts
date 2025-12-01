@@ -13,6 +13,7 @@ import {
   STORY_MODE_ROUTE,
   TACTICAL_GRAPHICS_ROUTE,
   TACTICAL_SYMBOL_DEFINITION_ROUTE,
+  SIMPLE_TACTICAL_MAP_ROUTE,
   ODIN_SYMBOLS_DEMO_ROUTE,
   ODIN_SYMBOL_TEST_ROUTE,
 } from "@/router/names";
@@ -43,6 +44,7 @@ const SymbolDesignerPage = () => import("../modules/tactical-symbol-designer/Sym
 const OdinSymbolsDemo = () => import("../views/OdinSymbolsDemo.vue");
 const TacticalSymbolDefinitionPage = () => import("../modules/tactical-symbols/TacticalSymbolDefinitionView.vue");
 const ControlSymbolsLab = () => import("../views/ControlSymbolsLab.vue");
+const SimpleTacticalMapView = () => import("../views/SimpleTacticalMapView.vue");
 const OdinSymbolTestView = () => import("../views/OdinSymbolTestView.vue");
 const routes = [
   {
@@ -125,6 +127,14 @@ const routes = [
     path: "/tactical-symbols",
     name: TACTICAL_SYMBOL_DEFINITION_ROUTE,
     component: TacticalSymbolDefinitionPage,
+    beforeEnter: (to, from) => {
+      NProgress.start();
+    },
+  },
+  {
+    path: "/simple-tactical-map",
+    name: SIMPLE_TACTICAL_MAP_ROUTE,
+    component: SimpleTacticalMapView,
     beforeEnter: (to, from) => {
       NProgress.start();
     },

@@ -45,7 +45,9 @@ export function createCesiumViewer(containerId: string): Cesium.Viewer {
   // Remove default imagery layer (Bing Maps or other default)
   viewer.imageryLayers.removeAll();
 
+  // اگر در آینده نیاز بود از tile server استفاده کنیم، از این مقدار استفاده می‌کنیم
   const tileServerBase = resolveTileServerBase();
+  void tileServerBase; // فعلا فقط برای جلوگیری از هشدار استفاده نشده
 
   // Add map layers from dashboard (same as dashboard mapSlice.ts)
   // Strategy: Add OpenStreetMap first (always works), then try to add offline map on top
@@ -60,9 +62,9 @@ export function createCesiumViewer(containerId: string): Cesium.Viewer {
     });
     viewer.imageryLayers.addImageryProvider(osmImagery);
     console.log('✅ OpenStreetMap imagery provider added successfully');
+    console.log('Total imagery layers:', viewer.imageryLayers.length);
     
     // Verify the layer was added
-    console.log('Total imagery layers:', viewer.imageryLayers.length);
     viewer.imageryLayers.layerAdded.addEventListener(() => {
       console.log('✅ Imagery layer added event fired');
     });
@@ -80,89 +82,13 @@ export function createCesiumViewer(containerId: string): Cesium.Viewer {
       console.log('✅ Satellite imagery added as fallback');
     } catch (satError) {
       console.error('❌ All imagery providers failed:', satError);
+      console.warn('⚠️ No imagery available, map will show as solid color');
     }
   }
   
-  // 2. Try to add offline map from tile server (if available, will be on top)
-  // Note: Cesium uses standard Web Mercator (Y from top), tile server uses TMS (Y from bottom)
-  // We need to create a custom imagery provider that flips Y coordinate
-  // First, check if tile server is accessible
-  const checkTileServer = async () => {
-    try {
-      const healthUrl = `${tileServerBase}/health`;
-      const response = await fetch(healthUrl);
-      if (response.ok) {
-        console.log('✅ Tile server is accessible:', tileServerBase);
-        return true;
-      }
-    } catch (error) {
-      console.warn('⚠️ Tile server not accessible, using OpenStreetMap:', error);
-    }
-    return false;
-  };
-  
-  // Try to add offline map
-  checkTileServer().then((isAvailable) => {
-    if (isAvailable) {
-      try {
-        const mapFilename = 'maps'; // Default map name (without .mbtiles extension)
-        const tileServerUrl = `${tileServerBase}/data/${mapFilename}/{z}/{x}/{y}.png`;
-        
-        // Create a custom imagery provider that handles TMS Y coordinate flipping
-        class TMSImageryProvider extends Cesium.UrlTemplateImageryProvider {
-          constructor(options: any) {
-            super(options);
-          }
-          
-          requestImage(x: number, y: number, level: number): any {
-            // Flip Y coordinate for TMS: TMS Y = (2^level - 1) - Web Mercator Y
-            const tmsY = Math.pow(2, level) - 1 - y;
-            const url = this.url
-              .replace('{z}', String(level))
-              .replace('{x}', String(x))
-              .replace('{y}', String(tmsY));
-            
-            // Use the parent's requestImage with the flipped Y
-            return Cesium.ImageryProvider.loadImage(this, url);
-          }
-        }
-        
-        const offlineImagery = new TMSImageryProvider({
-          url: tileServerUrl,
-          maximumLevel: 19,
-          credit: 'نقشه آفلاین',
-          tilingScheme: new Cesium.WebMercatorTilingScheme(),
-        });
-        
-        // Add offline map and make it the base layer (remove OpenStreetMap if offline works)
-        viewer.imageryLayers.addImageryProvider(offlineImagery);
-        
-        // Monitor if offline map loads successfully
-        viewer.scene.globe.tileLoadProgressEvent.addEventListener(() => {
-          // Check if offline map tiles are loading
-          const layers = viewer.imageryLayers;
-          if (layers.length > 1) {
-            // Offline map is on top, hide OpenStreetMap
-            const osmLayer = layers.get(0);
-            if (osmLayer) {
-              // Check if it's OpenStreetMap by checking the URL pattern
-              const provider = osmLayer.imageryProvider as any;
-              if (provider && provider.url && provider.url.includes('openstreetmap.org')) {
-                osmLayer.show = false;
-                console.log('✅ نقشه آفلاین فعال شد - OpenStreetMap به عنوان fallback نگه داشته شد');
-              }
-            }
-          }
-        });
-        
-        console.log('🔄 در حال تلاش برای بارگذاری نقشه آفلاین:', tileServerUrl);
-      } catch (error) {
-        console.warn('❌ خطا در افزودن نقشه آفلاین (از OpenStreetMap استفاده می‌شود):', error);
-      }
-    } else {
-      console.log('ℹ️ نقشه آنلاین (OpenStreetMap) در حال استفاده است');
-    }
-  });
+  // 2. (موقتا غیرفعال) تلاش برای اضافه کردن نقشه آفلاین از tile server
+  // برای پایدار شدن رفتار نقشه، فعلا فقط از OpenStreetMap / Satellite استفاده می‌کنیم
+  // اگر لازم شد بعدا منطق نقشه آفلاین را دوباره (به‌صورت امن‌تر) فعال می‌کنیم.
 
   // Set scene mode to 3D (globe)
   viewer.scene.mode = Cesium.SceneMode.SCENE3D;
@@ -171,10 +97,43 @@ export function createCesiumViewer(containerId: string): Cesium.Viewer {
   // Enable lighting for 3D mode (optional, can be disabled if preferred)
   viewer.scene.globe.enableLighting = true;
   
+  // اطمینان از اینکه globe نمایش داده می‌شود
+  viewer.scene.globe.show = true;
+  
   // Wait for imagery to load before setting view
-  viewer.scene.globe.tileLoadProgressEvent.addEventListener(() => {
-    console.log('Cesium tiles loading...');
+  viewer.scene.globe.tileLoadProgressEvent.addEventListener((numberOfPendingLoads: number) => {
+    if (numberOfPendingLoads > 0) {
+      console.log(`Cesium tiles loading... (${numberOfPendingLoads} pending)`);
+    } else {
+      console.log('✅ All Cesium tiles loaded');
+    }
   });
+  
+  // بررسی خطاهای tile loading
+  viewer.scene.imageryLayers.layerRemoved.addEventListener(() => {
+    console.warn('⚠️ An imagery layer was removed');
+  });
+  
+  // بررسی اینکه آیا imagery layers وجود دارند (بعد از 2 ثانیه)
+  setTimeout(() => {
+    if (viewer.imageryLayers.length === 0) {
+      console.error('❌ No imagery layers found! Adding fallback...');
+      // اضافه کردن یک imagery layer ساده
+      try {
+        const fallbackImagery = new Cesium.UrlTemplateImageryProvider({
+          url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+          maximumLevel: 19,
+          credit: '© Esri'
+        });
+        viewer.imageryLayers.addImageryProvider(fallbackImagery);
+        console.log('✅ Fallback imagery added');
+      } catch (error) {
+        console.error('❌ Failed to add fallback imagery:', error);
+      }
+    } else {
+      console.log(`✅ Found ${viewer.imageryLayers.length} imagery layer(s)`);
+    }
+  }, 2000);
   
   // Set initial view for 2D mode after a short delay to ensure scene is ready
   setTimeout(() => {

@@ -160,8 +160,16 @@
         <span class="sr-only">انتخاب زمان و تاریخ</span>
         <CalendarIcon class="size-5 transition-all duration-300" aria-hidden="true" />
       </MainToolbarButton>
-      
-      
+
+      <MainToolbarButton
+        title="نمادهای تاکتیکال ساده"
+        class="toolbar-icon-button hidden sm:flex"
+        @click="openSimpleTacticalSymbols"
+      >
+        <span class="sr-only">نمادهای تاکتیکال ساده</span>
+        <SimpleTacticalIcon class="size-5 transition-all duration-300" aria-hidden="true" />
+      </MainToolbarButton>
+
       <MainToolbarButton
         title="برو به زمان پایان سناریو"
         class="toolbar-icon-button end-time-button hidden sm:flex"
@@ -243,7 +251,10 @@ import {
   PhCaretDown as IconChevronDown,
   PhClockCountdown as IconClockStart,
   PhClockClockwise as IconClockEnd,
+  PhSquaresFour as SimpleTacticalIcon,
 } from "@phosphor-icons/vue";
+import { useRouter } from "vue-router";
+import { SIMPLE_TACTICAL_MAP_ROUTE } from "@/router/names";
 import {
   IconSpeedometer,
   IconSpeedometerSlow,
@@ -288,6 +299,8 @@ const emit = defineEmits([
   "prev-event",
   "show-settings",
 ]);
+
+const router = useRouter();
 
 const {
   store: { undo, redo, canRedo, canUndo, groupUpdate, state },
@@ -451,6 +464,11 @@ function goToEndTime() {
       setCurrentTime(lastEvent.startTime);
     }
   }
+}
+
+function openSimpleTacticalSymbols() {
+  const route = router.resolve({ name: SIMPLE_TACTICAL_MAP_ROUTE });
+  window.open(route.href, "_blank");
 }
 </script>
 <style scoped>

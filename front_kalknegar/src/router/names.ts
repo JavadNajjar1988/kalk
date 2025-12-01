@@ -8,6 +8,7 @@ export const CHART_EDIT_MODE_ROUTE = "ChartModeRoute";
 export const MAP_EDIT_MODE_ROUTE = "MapBetaModeRoute";
 export const TACTICAL_GRAPHICS_ROUTE = "TacticalGraphicsRoute";
 export const TACTICAL_SYMBOL_DEFINITION_ROUTE = "TacticalSymbolDefinitionRoute";
+export const SIMPLE_TACTICAL_MAP_ROUTE = "SimpleTacticalMapRoute";
 export const CONTROL_SYMBOLS_ROUTE = "ControlSymbolsRoute";
 export const ODIN_SYMBOL_TEST_ROUTE = "OdinSymbolTestRoute";
 export const ODIN_SYMBOLS_DEMO_ROUTE = "OdinSymbolsDemoRoute";
