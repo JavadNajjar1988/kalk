@@ -18,17 +18,55 @@
         font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       }
 
+      #mainContainer {
+        width: 100%;
+        height: 100%;
+        position: relative;
+        opacity: 0;
+        transition: opacity 0.5s ease-in-out;
+      }
+
+      #mainContainer.visible {
+        opacity: 1;
+      }
+
+      #cesiumContainer {
+        width: 100%;
+        height: 100%;
+        position: absolute;
+        top: 0;
+        left: 0;
+        z-index: 1;
+      }
+
+      #babylonContainer {
+        width: 100%;
+        height: 100%;
+        position: absolute;
+        top: 0;
+        left: 0;
+        z-index: 2;
+        pointer-events: none;
+      }
+
       #renderCanvas {
         width: 100%;
         height: 100%;
         display: block;
         touch-action: none;
-        opacity: 0;
-        transition: opacity 0.5s ease-in-out;
+        pointer-events: none; /* Disable pointer events so Cesium can handle zoom/pan */
+        background: transparent;
       }
 
-      #renderCanvas.visible {
-        opacity: 1;
+      /* Cesium widget styles */
+      .cesium-widget {
+        width: 100% !important;
+        height: 100% !important;
+      }
+
+      .cesium-widget canvas {
+        width: 100% !important;
+        height: 100% !important;
       }
 
       #splashScreen {
@@ -85,6 +123,11 @@
         transition: opacity 0.5s ease-in-out;
       }
 
+      #mainContainer {
+        margin-top: 60px;
+        height: calc(100vh - 60px);
+      }
+
       #header.visible {
         opacity: 1;
       }
@@ -139,7 +182,12 @@
       </video>
       <div id="loading">در حال بارگذاری...</div>
     </div>
-    <canvas id="renderCanvas"></canvas>
+    <div id="mainContainer">
+      <div id="cesiumContainer"></div>
+      <div id="babylonContainer">
+        <canvas id="renderCanvas"></canvas>
+      </div>
+    </div>
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>

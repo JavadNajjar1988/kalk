@@ -12,7 +12,9 @@
   "dependencies": {
     "@babylonjs/core": "^6.0.0",
     "@babylonjs/loaders": "^6.0.0",
-    "@babylonjs/materials": "^6.0.0"
+    "@babylonjs/materials": "^6.0.0",
+    "cesium": "^1.135.0",
+    "vite-plugin-cesium": "^1.2.23"
   },
   "devDependencies": {
     "@types/node": "^20.11.16",
@@ -24,4 +26,3 @@
     "npm": ">=9.0.0"
   }
 }
-
