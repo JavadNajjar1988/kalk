@@ -156,6 +156,25 @@ export function createCesiumViewer(containerId: string): Cesium.Viewer {
       },
     });
     console.log('✅ Debug pin for Tehran added');
+
+    // اطمینان از اینکه تست عمق نسبت به Terrain فعال است تا مدل روی زمین قفل شود
+    viewer.scene.globe.depthTestAgainstTerrain = true;
+
+    // --- مدل تستی تانک انیمیشنی روی همان مختصات ---
+    viewer.entities.add({
+      id: 'debug-tank-animated',
+      position: tehranPosition,
+      model: {
+        uri: '/Model/tank_animated/scene.gltf',
+        minimumPixelSize: 64,
+        maximumScale: 20000,
+        scale: 1.0,
+        runAnimations: true,
+        heightReference: Cesium.HeightReference.CLAMP_TO_GROUND,
+      },
+      description: 'تانک انیمیشنی تستی روی تهران',
+    });
+    console.log('✅ Animated tank model added at Tehran position');
   } catch (e) {
     console.error('Failed to add debug Tehran pin:', e);
   }

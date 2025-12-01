@@ -60,9 +60,10 @@ import { useNavigate } from 'react-router-dom';
 import { useAppSelector, useAppDispatch } from '@/store';
 import { selectUser } from '@/store/slices/authSlice';
 import { selectScenarios, fetchScenarios } from '@/store/slices/scenariosSlice';
-import { addNotification } from '@/store/slices/uiSlice';
-import { getRandomQuote } from '@/config/quotes';
-import { getRandomMartyr } from '@/config/martyrs';
+import { addNotification, selectHeaderSettings, HeaderSettings } from '@/store/slices/uiSlice';
+import { getRandomQuote, quotes, Quote } from '@/config/quotes';
+import { getRandomMartyr, martyrs } from '@/config/martyrs';
+import type { Martyr } from '@/config/martyrs';
 import { convertToFarsiNumber } from '@/utils/numberUtils';
 import FarsiTypography from '@/components/common/FarsiTypography';
 import FarsiNumber from '@/components/common/FarsiNumber';
@@ -1129,8 +1130,22 @@ const HomePage: React.FC = () => {
   const dispatch = useAppDispatch();
   const user = useAppSelector(selectUser);
   const scenarios = useAppSelector(selectScenarios);
-  const [quote, setQuote] = useState(getRandomQuote('wisdom'));
-  const [martyr, setMartyr] = useState(getRandomMartyr());
+  const rawHeaderSettings = useAppSelector(selectHeaderSettings) as HeaderSettings | undefined;
+  const headerSettings: HeaderSettings = rawHeaderSettings || {
+    enabled: true,
+    quoteMode: 'random',
+    fixedQuoteIndex: null,
+    martyrMode: 'random',
+    fixedMartyrId: null,
+    customQuoteText: null,
+    customQuoteAuthor: null,
+    customMartyrName: null,
+    customMartyrPosition: null,
+    customMartyrDate: null,
+    customMartyrImage: null,
+  };
+  const [quote, setQuote] = useState<Quote>(getRandomQuote('wisdom'));
+  const [martyr, setMartyr] = useState<Martyr>(getRandomMartyr());
   const { t } = useTranslation();
   const [activitiesLoading, setActivitiesLoading] = useState(false);
   const [settingsAnchorEl, setSettingsAnchorEl] = useState<null | HTMLElement>(null);
@@ -1386,10 +1401,65 @@ const HomePage: React.FC = () => {
       }));
     }
     
-    // انتخاب یک سخن تصادفی و یک شهید تصادفی
-    setQuote(getRandomQuote());
-    setMartyr(getRandomMartyr());
-  }, [dispatch, user]);
+    // تنظیم هدر زیارتی بر اساس تنظیمات کاربر
+    const effectiveHeader: HeaderSettings = rawHeaderSettings || {
+      enabled: true,
+      quoteMode: 'random',
+      fixedQuoteIndex: null,
+      martyrMode: 'random',
+      fixedMartyrId: null,
+      customQuoteText: null,
+      customQuoteAuthor: null,
+      customMartyrName: null,
+      customMartyrPosition: null,
+      customMartyrDate: null,
+      customMartyrImage: null,
+    };
+
+    if (effectiveHeader.enabled) {
+      // سخن
+      if (
+        effectiveHeader.quoteMode === 'fixed' &&
+        effectiveHeader.fixedQuoteIndex !== null &&
+        quotes[effectiveHeader.fixedQuoteIndex]
+      ) {
+        setQuote(quotes[effectiveHeader.fixedQuoteIndex]);
+      } else if (
+        effectiveHeader.quoteMode === 'custom' &&
+        effectiveHeader.customQuoteText &&
+        effectiveHeader.customQuoteAuthor
+      ) {
+        setQuote({
+          text: effectiveHeader.customQuoteText,
+          author: effectiveHeader.customQuoteAuthor,
+        });
+      } else {
+        setQuote(getRandomQuote());
+      }
+
+      // شهید
+      if (
+        effectiveHeader.martyrMode === 'fixed' &&
+        effectiveHeader.fixedMartyrId !== null
+      ) {
+        const fixedMartyr = martyrs.find(m => m.id === effectiveHeader.fixedMartyrId);
+        setMartyr(fixedMartyr || getRandomMartyr());
+      } else if (
+        effectiveHeader.martyrMode === 'custom' &&
+        effectiveHeader.customMartyrName
+      ) {
+        setMartyr({
+          id: -1,
+          name: effectiveHeader.customMartyrName,
+          position: effectiveHeader.customMartyrPosition || '',
+          martyrdomDate: effectiveHeader.customMartyrDate || '',
+          image: effectiveHeader.customMartyrImage || 'shahid.jpg',
+        });
+      } else {
+        setMartyr(getRandomMartyr());
+      }
+    }
+  }, [dispatch, user, rawHeaderSettings, t]);
 
   // فعالیت‌های اخیر بر اساس نقش کاربر
   const recentActivities = useMemo(() => {
@@ -1538,6 +1608,7 @@ const HomePage: React.FC = () => {
     <Box sx={{ p: 4, minHeight: '100%' }}>
       
       {/* Header */}
+      {headerSettings.enabled && (
       <Card 
         component={Paper}
         elevation={0}
@@ -1700,6 +1771,7 @@ const HomePage: React.FC = () => {
           </Grid>
         </Grid>
       </Card>
+      )}
 
       {/* آمار */}
       <DashboardStats />

@@ -67,6 +67,21 @@ export interface ChartSettings {
 
 export type ChartStandard = 'app6d' | 'milstd2525d' | 'milstd2525c';
 
+// تنظیمات هدر زیارتی داشبورد
+export interface HeaderSettings {
+  enabled: boolean;
+  quoteMode: 'random' | 'fixed' | 'custom';
+  fixedQuoteIndex: number | null;
+  martyrMode: 'random' | 'fixed' | 'custom';
+  fixedMartyrId: number | null;
+  customQuoteText: string | null;
+  customQuoteAuthor: string | null;
+  customMartyrName: string | null;
+  customMartyrPosition: string | null;
+  customMartyrDate: string | null;
+  customMartyrImage: string | null;
+}
+
 interface UIState {
   // Theme settings
   theme: {
@@ -118,6 +133,9 @@ interface UIState {
   };
 
   chart: ChartSettings;
+
+  // Header (زیارتی) settings
+  header: HeaderSettings;
 }
 
 const initialState: UIState = {
@@ -173,7 +191,20 @@ const initialState: UIState = {
     standard: 'app6d',
     defaultUnitType: '110000',
     useLegacySymbols: false,
-  }
+  },
+  header: {
+    enabled: true,
+    quoteMode: 'random',
+    fixedQuoteIndex: null,
+    martyrMode: 'random',
+    fixedMartyrId: null,
+    customQuoteText: null,
+    customQuoteAuthor: null,
+    customMartyrName: null,
+    customMartyrPosition: null,
+    customMartyrDate: null,
+    customMartyrImage: null,
+  },
 };
 
 const uiSlice = createSlice({
@@ -212,6 +243,11 @@ const uiSlice = createSlice({
     },
     toggleReducedMotion: (state) => {
       state.theme.reducedMotion = !state.theme.reducedMotion;
+    },
+
+    // Header (زیارتی) settings
+    updateHeaderSettings: (state, action: PayloadAction<Partial<HeaderSettings>>) => {
+      state.header = { ...state.header, ...action.payload };
     },
 
     // Dark Mode specific actions
@@ -401,6 +437,7 @@ const uiSlice = createSlice({
       state.theme.highContrast = initialState.theme.highContrast;
       state.theme.reducedMotion = initialState.theme.reducedMotion;
       state.theme.darkModeSettings = { ...initialState.theme.darkModeSettings };
+      state.header = { ...initialState.header };
       // حفظ زبان و جهت به حالت فعلی
     },
     
@@ -449,6 +486,7 @@ export const {
   setFontSize,
   toggleHighContrast,
   toggleReducedMotion,
+  updateHeaderSettings,
   setDarkModeAccentColor,
   setDarkModeContrastLevel,
   toggleDarkModePureBlack,
@@ -550,6 +588,7 @@ export const selectTheme = (state: RootState) => state.ui.theme;
 export const selectLayout = (state: RootState) => state.ui.layout;
 export const selectSidePanel = (state: RootState) => state.ui.sidePanel;
 export const selectNotifications = (state: RootState) => state.ui.notifications;
+export const selectHeaderSettings = (state: RootState) => state.ui.header;
 
 // استفاده از createSelector برای بهینه‌سازی سلکتور و جلوگیری از رندر مجدد غیرضروری
 export const selectUnreadNotifications = createSelector(
