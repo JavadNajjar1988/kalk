@@ -162,6 +162,26 @@
         border-color: rgba(255, 255, 255, 0.3);
         transform: translateY(-2px);
       }
+
+      .floating-btn {
+        position: fixed;
+        left: 16px;
+        bottom: 16px;
+        z-index: 12000;
+        background: #4caf50;
+        color: #fff;
+        border: none;
+        border-radius: 10px;
+        padding: 10px 14px;
+        font-size: 14px;
+        font-weight: 700;
+        cursor: pointer;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+      }
+
+      .floating-btn:hover {
+        background: #43a047;
+      }
     </style>
   </head>
   <body>
@@ -188,7 +208,24 @@
         <canvas id="renderCanvas"></canvas>
       </div>
     </div>
+    <button id="focusModelBtn" class="floating-btn">رفتن به مدل</button>
+    <button id="toggleAnimationBtn" class="floating-btn" style="bottom: 60px;">پلی/توقف انیمیشن</button>
     <script type="module" src="/src/main.ts"></script>
+    <script>
+      // button to focus model pin (Cesium)
+      document.getElementById('focusModelBtn')?.addEventListener('click', () => {
+        if (window.flyToModelPin) {
+          window.flyToModelPin();
+        }
+      });
+      
+      // button to toggle model animation
+      document.getElementById('toggleAnimationBtn')?.addEventListener('click', () => {
+        if (window.toggleModelAnimation) {
+          window.toggleModelAnimation();
+        }
+      });
+    </script>
   </body>
 </html>
 

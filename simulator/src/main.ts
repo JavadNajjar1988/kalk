@@ -1,4 +1,4 @@
-import { Engine, Scene, ArcRotateCamera, HemisphericLight, Vector3, MeshBuilder, StandardMaterial, Color3, Color4 } from '@babylonjs/core';
+import { Engine, Scene, ArcRotateCamera, HemisphericLight, Vector3, Color3, Color4 } from '@babylonjs/core';
 import '@babylonjs/core/Helpers/sceneHelpers';
 import { CoordinateConverter } from './coordinateConverter';
 import * as Cesium from 'cesium';
@@ -141,42 +141,7 @@ function setupMainScene() {
   // Make Babylon.js scene transparent so Cesium shows through
   scene.clearColor = new Color4(0, 0, 0, 0); // Transparent background
 
-  // Wait for coordinate converter to be ready before placing objects
-  if (coordinateConverter) {
-    // Place 3D models at geographic locations
-    // Example: Tank at Tehran coordinates
-    const tankPos = coordinateConverter.geographicToLocal(51.3890, 35.6892, 0);
-    const tank = MeshBuilder.CreateBox('tank', { width: 50, height: 25, depth: 75 }, scene);
-    tank.position = tankPos;
-    tank.position.y = 25; // Height above ground
-    const tankMaterial = new StandardMaterial('tankMaterial', scene);
-    tankMaterial.diffuseColor = new Color3(0.3, 0.3, 0.3);
-    tankMaterial.specularColor = new Color3(0.2, 0.2, 0.2);
-    tank.material = tankMaterial;
-
-    // Example: Aircraft at a nearby location
-    const aircraftPos = coordinateConverter.geographicToLocal(51.4, 35.7, 1000);
-    const aircraft = MeshBuilder.CreateCylinder('aircraft', { height: 20, diameter: 40 }, scene);
-    aircraft.position = aircraftPos;
-    aircraft.rotation.z = Math.PI / 4;
-    const aircraftMaterial = new StandardMaterial('aircraftMaterial', scene);
-    aircraftMaterial.diffuseColor = new Color3(0.5, 0.5, 0.6);
-    aircraftMaterial.specularColor = new Color3(0.3, 0.3, 0.3);
-    aircraft.material = aircraftMaterial;
-
-    // Add rotation animation to objects
-    scene.registerBeforeRender(() => {
-      tank.rotation.y += 0.005;
-      aircraft.rotation.y += 0.01;
-    });
-  } else {
-    // Fallback: create objects at origin if converter not ready
-    const tank = MeshBuilder.CreateBox('tank', { width: 50, height: 25, depth: 75 }, scene);
-    tank.position = new Vector3(0, 25, 0);
-    const tankMaterial = new StandardMaterial('tankMaterial', scene);
-    tankMaterial.diffuseColor = new Color3(0.3, 0.3, 0.3);
-    tank.material = tankMaterial;
-  }
+  // (Babylon placeholder geometry removed; Cesium handles models instead)
 }
 
 // Setup main scene - will be called again after Cesium is initialized

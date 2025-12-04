@@ -1,0 +1,11 @@
+Model Information:
+* title:	T-35 heavy five-turret tank
+* source:	https://sketchfab.com/3d-models/t-35-heavy-five-turret-tank-4d0794e2f56c491aaf7a0f43cd561977
+* author:	pinkycolada (https://sketchfab.com/pinkycolada)
+
+Model License:
+* license type:	CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
+* requirements:	Author must be credited. Commercial use is allowed.
+
+If you use this 3D model in your project be sure to copy paste this credit wherever you share it:
+This work is based on "T-35 heavy five-turret tank" (https://sketchfab.com/3d-models/t-35-heavy-five-turret-tank-4d0794e2f56c491aaf7a0f43cd561977) by pinkycolada (https://sketchfab.com/pinkycolada) licensed under CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
