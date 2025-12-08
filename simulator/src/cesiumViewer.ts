@@ -1,13 +1,30 @@
 import * as Cesium from 'cesium';
 
 // Simple terrain-aware "gravity" tuning
-const ENABLE_TERRAIN_FOLLOW = false; // set true to re-enable terrain-aware gravity
+const ENABLE_TERRAIN_FOLLOW = true; // clamp model to ground/tiles
 const ENABLE_AUTO_MODEL_FLYTO = false; // keep initial globe view unless enabled
 const MODEL_GRAVITY_ACCEL = 9.81; // m/s^2 downward
 const MODEL_MAX_FALL_SPEED = 120; // m/s cap to avoid tunneling through the ground
-const MODEL_GROUND_OFFSET = 5000; // meters above terrain/ellipsoid so it stays visible
+const MODEL_GROUND_OFFSET = 1; // meters above terrain/tiles to sit on surface
 const MODEL_FLY_RANGE = 30000; // meters for camera range when focusing model
 const INITIAL_VIEW_HEIGHT = 2000000; // meters altitude for initial view focused on Iran
+const PATH_VISUAL_OFFSET = 5; // meters to lift the drawn path for visibility when zoomed in
+const EXPLOSION_DURATION = 6; // seconds
+const EXPLOSION_MIN_RADIUS = 20;
+const EXPLOSION_MAX_RADIUS = 40;
+const SMOKE_DURATION = EXPLOSION_DURATION * 1.2;
+const SMOKE_MAX_RADIUS = 15; // tight to impact
+const PLUME_DURATION = SMOKE_DURATION;
+const PLUME_MAX_RADIUS = 12; // very small plume
+const PLUME_HEIGHT_OFFSET = 6; // minimal lift
+let ENABLE_CLOUDS = false; // CloudCollection disabled to avoid renderer errors
+const CLOUD_LIFETIME_MS = SMOKE_DURATION * 1000;
+const CLOUD_START_SCALE = 20;
+const CLOUD_PEAK_SCALE = 90;
+const CLOUD_END_SCALE = 60;
+const CLOUD_MAX_SIZE_START = new Cesium.Cartesian3(50, 30, 20);
+const CLOUD_MAX_SIZE_PEAK = new Cesium.Cartesian3(100, 70, 50);
+const CLOUD_MAX_SIZE_END = new Cesium.Cartesian3(80, 55, 40);
 
 // تنظیم Cesium Ion access token (توکن کاربر)
 Cesium.Ion.defaultAccessToken =
@@ -20,10 +37,23 @@ let isModelAnimationPlaying = true; // Track animation state
 let modelPositionProperty: Cesium.ConstantPositionProperty | undefined;
 let detachTerrainFollower: (() => void) | undefined;
 let hasAutoFocusedOnModel = false;
+let pathSamples: Cesium.SampledPositionProperty | undefined;
+let pathWaypointTimes: Cesium.JulianDate[] = [];
+let lastTriggeredWaypointIndex = -1;
+let explosionWatcherAttached = false;
+let explosionClouds: Cesium.CloudCollection | undefined;
+let cloudAnimations: {
+  cloud: Cesium.Cloud;
+  start: Cesium.JulianDate;
+  duration: number;
+}[] = [];
+let cloudUpdaterAttached = false;
+let smokeSpriteCanvas: HTMLCanvasElement | undefined;
 
 // Scratch objects reused each frame to avoid allocations
 const scratchCartographic = new Cesium.Cartographic();
 const scratchCartesian = new Cesium.Cartesian3();
+const scratchCartesian2 = new Cesium.Cartesian3();
 
 // Helper function to resolve tile server base URL (same as dashboard)
 const resolveTileServerBase = (): string => {
@@ -54,18 +84,55 @@ function enableTerrainFollowing(
 
   const follow = (scene: Cesium.Scene, time: Cesium.JulianDate) => {
     const current = positionProperty.getValue(time, scratchCartesian);
-    if (!current) return;
+    if (
+      !current ||
+      !Number.isFinite(current.x) ||
+      !Number.isFinite(current.y) ||
+      !Number.isFinite(current.z)
+    ) {
+      return;
+    }
 
     const carto = Cesium.Cartographic.fromCartesian(current, Cesium.Ellipsoid.WGS84, scratchCartographic);
+    if (
+      !carto ||
+      !Number.isFinite(carto.longitude) ||
+      !Number.isFinite(carto.latitude) ||
+      !Number.isFinite(carto.height)
+    ) {
+      return;
+    }
+    if (!Number.isFinite(carto.height)) {
+      carto.height = 0;
+    }
     const dt =
       physicsState.lastUpdate === undefined
         ? 0
         : Cesium.JulianDate.secondsDifference(time, physicsState.lastUpdate);
     physicsState.lastUpdate = Cesium.JulianDate.clone(time, physicsState.lastUpdate);
 
-    const terrainHeight =
-      scene.sampleHeight(carto) ?? viewer.scene.globe.getHeight(carto) ?? carto.height ?? 0;
-    const desiredHeight = terrainHeight + offsetMeters;
+    let surfaceHeight: number | undefined;
+    try {
+      const clampedCart = scene.clampToHeight(
+        Cesium.Cartesian3.fromRadians(carto.longitude, carto.latitude, carto.height, scratchCartesian2),
+        undefined,
+        scratchCartesian2
+      );
+      if (clampedCart) {
+        const cc = Cesium.Cartographic.fromCartesian(clampedCart, Cesium.Ellipsoid.WGS84, scratchCartographic);
+        surfaceHeight = cc?.height;
+      }
+    } catch (err) {
+      // ignore clamp errors, fall back to sampleHeight
+    }
+    if (!Number.isFinite(surfaceHeight)) {
+      surfaceHeight =
+        scene.sampleHeight(carto) ?? viewer.scene.globe.getHeight(carto) ?? carto.height ?? 0;
+    }
+    const desiredHeight = (surfaceHeight ?? 0) + offsetMeters;
+    if (!Number.isFinite(desiredHeight)) {
+      return;
+    }
 
     // Even if there is no delta time yet, make sure we never sit below the ground
     if (dt <= 0) {
@@ -77,19 +144,9 @@ function enableTerrainFollowing(
       return;
     }
 
-    // Apply simple gravity
-    physicsState.verticalVelocity = Math.max(
-      physicsState.verticalVelocity - MODEL_GRAVITY_ACCEL * dt,
-      -MODEL_MAX_FALL_SPEED
-    );
-
-    let nextHeight = carto.height + physicsState.verticalVelocity * dt;
-
-    // Prevent tunneling below terrain; snap to surface if we hit it
-    if (!Number.isFinite(nextHeight) || nextHeight < desiredHeight) {
-      nextHeight = desiredHeight;
-      physicsState.verticalVelocity = 0;
-    }
+    // Hard clamp to surface height (disable vertical drift)
+    physicsState.verticalVelocity = 0;
+    let nextHeight = desiredHeight;
 
     positionProperty.setValue(
       Cesium.Cartesian3.fromRadians(carto.longitude, carto.latitude, nextHeight, Cesium.Ellipsoid.WGS84)
@@ -98,6 +155,519 @@ function enableTerrainFollowing(
 
   viewer.scene.preRender.addEventListener(follow);
   return () => viewer.scene.preRender.removeEventListener(follow);
+}
+
+function isFiniteCartesian(c: Cesium.Cartesian3 | undefined): c is Cesium.Cartesian3 {
+  return !!c && Number.isFinite(c.x) && Number.isFinite(c.y) && Number.isFinite(c.z);
+}
+
+function disableClouds(viewer: Cesium.Viewer) {
+  cloudAnimations = [];
+  if (explosionClouds && !explosionClouds.isDestroyed?.()) {
+    try {
+      viewer.scene.primitives.remove(explosionClouds);
+    } catch {
+      /* ignore */
+    }
+  }
+  explosionClouds = undefined;
+}
+
+function ensureCloudCollection(viewer: Cesium.Viewer): Cesium.CloudCollection | undefined {
+  if (!ENABLE_CLOUDS) return undefined;
+  if (!explosionClouds || explosionClouds.isDestroyed?.()) {
+    try {
+      explosionClouds = viewer.scene.primitives.add(
+        new Cesium.CloudCollection({
+          noiseDetail: 16.0,
+          noiseOffset: Cesium.Cartesian3.ZERO,
+        })
+      );
+    } catch (err) {
+      console.warn('CloudCollection not supported, disabling volumetric clouds:', err);
+      ENABLE_CLOUDS = false;
+      disableClouds(viewer);
+      return undefined;
+    }
+  }
+  return explosionClouds;
+}
+
+function ensureCloudUpdater(viewer: Cesium.Viewer) {
+  if (!ENABLE_CLOUDS) {
+    cloudAnimations = [];
+    return;
+  }
+  if (cloudUpdaterAttached) return;
+  viewer.clock.onTick.addEventListener((clock) => {
+    if (!cloudAnimations.length) return;
+    if (!ENABLE_CLOUDS || !explosionClouds || explosionClouds.isDestroyed?.()) {
+      cloudAnimations = [];
+      return;
+    }
+    const now = clock.currentTime;
+    cloudAnimations = cloudAnimations.filter((anim) => {
+      const t = Cesium.JulianDate.secondsDifference(now, anim.start);
+      if (t < 0) return true;
+      if (t > anim.duration) {
+        try {
+          anim.cloud.show = false;
+          const clouds = explosionClouds;
+          if (clouds && !clouds.isDestroyed?.()) {
+            clouds.remove(anim.cloud);
+          }
+        } catch {
+          /* ignore */
+        }
+        return false;
+      }
+
+      const norm = Cesium.Math.clamp(t / anim.duration, 0, 1);
+      const growPhase = Math.min(norm / 0.6, 1);
+      const fadePhase = norm < 0.7 ? 0 : (norm - 0.7) / 0.3;
+
+      const scale = norm < 0.6
+        ? Cesium.Math.lerp(CLOUD_START_SCALE, CLOUD_PEAK_SCALE, growPhase)
+        : Cesium.Math.lerp(CLOUD_PEAK_SCALE, CLOUD_END_SCALE, fadePhase);
+      const maxSize = new Cesium.Cartesian3(
+        norm < 0.6
+          ? Cesium.Math.lerp(CLOUD_MAX_SIZE_START.x, CLOUD_MAX_SIZE_PEAK.x, growPhase)
+          : Cesium.Math.lerp(CLOUD_MAX_SIZE_PEAK.x, CLOUD_MAX_SIZE_END.x, fadePhase),
+        norm < 0.6
+          ? Cesium.Math.lerp(CLOUD_MAX_SIZE_START.y, CLOUD_MAX_SIZE_PEAK.y, growPhase)
+          : Cesium.Math.lerp(CLOUD_MAX_SIZE_PEAK.y, CLOUD_MAX_SIZE_END.y, fadePhase),
+        norm < 0.6
+          ? Cesium.Math.lerp(CLOUD_MAX_SIZE_START.z, CLOUD_MAX_SIZE_PEAK.z, growPhase)
+          : Cesium.Math.lerp(CLOUD_MAX_SIZE_PEAK.z, CLOUD_MAX_SIZE_END.z, fadePhase)
+      );
+
+      const alphaBase = 0.9 * (1 - Math.pow(norm, 1.3));
+      const color = Cesium.Color.fromBytes(255, 140, 60).withAlpha(Cesium.Math.clamp(alphaBase, 0, 0.8));
+
+      anim.cloud.scale = new Cesium.Cartesian2(scale, scale * 0.65);
+      anim.cloud.maximumSize = maxSize;
+      anim.cloud.color = color;
+      anim.cloud.brightness = 1.1 - 0.3 * norm;
+      return true;
+    });
+  });
+  cloudUpdaterAttached = true;
+}
+
+function getSmokeSprite(): HTMLCanvasElement {
+  if (smokeSpriteCanvas) return smokeSpriteCanvas;
+  const size = 128;
+  const canvas = document.createElement('canvas');
+  canvas.width = canvas.height = size;
+  const ctx = canvas.getContext('2d');
+  if (ctx) {
+    const grd = ctx.createRadialGradient(size / 2, size / 2, 10, size / 2, size / 2, size / 2);
+    grd.addColorStop(0, 'rgba(255,160,80,0.9)');
+    grd.addColorStop(0.4, 'rgba(120,80,60,0.6)');
+    grd.addColorStop(1, 'rgba(40,40,40,0)');
+    ctx.fillStyle = grd;
+    ctx.fillRect(0, 0, size, size);
+  }
+  smokeSpriteCanvas = canvas;
+  return canvas;
+}
+
+function spawnExplosion(viewer: Cesium.Viewer, position: Cesium.Cartesian3) {
+  if (!isFiniteCartesian(position)) return;
+
+  // Compute a stable, ground-clamped position without using clampToHeight (avoid undefined worker states)
+  const cartoBase = Cesium.Cartographic.fromCartesian(position, Cesium.Ellipsoid.WGS84, scratchCartographic);
+  if (
+    !cartoBase ||
+    !Number.isFinite(cartoBase.longitude) ||
+    !Number.isFinite(cartoBase.latitude)
+  ) {
+    return;
+  }
+  const carto = new Cesium.Cartographic(
+    cartoBase.longitude,
+    cartoBase.latitude,
+    Number.isFinite(cartoBase.height) ? cartoBase.height : 0
+  );
+  const sampledHeight =
+    viewer.scene.sampleHeight(carto) ?? viewer.scene.globe.getHeight(carto) ?? carto.height ?? 0;
+  const finalHeight = Number.isFinite(sampledHeight) ? sampledHeight : 0;
+
+  const pos = Cesium.Cartesian3.fromRadians(
+    carto.longitude,
+    carto.latitude,
+    finalHeight + MODEL_GROUND_OFFSET,
+    undefined,
+    scratchCartesian2
+  );
+  if (!isFiniteCartesian(pos)) return;
+  const startTime = viewer.clock.currentTime.clone();
+  const stopTime = Cesium.JulianDate.addSeconds(startTime, EXPLOSION_DURATION, new Cesium.JulianDate());
+  const smokeStopTime = Cesium.JulianDate.addSeconds(startTime, SMOKE_DURATION, new Cesium.JulianDate());
+  const radiusCb = new Cesium.CallbackProperty((time) => {
+    const t = Cesium.JulianDate.secondsDifference(time, startTime);
+    if (t < 0 || t > EXPLOSION_DURATION) return 0;
+    return Cesium.Math.lerp(EXPLOSION_MIN_RADIUS, EXPLOSION_MAX_RADIUS, t / EXPLOSION_DURATION);
+  }, false);
+  const colorCb = new Cesium.CallbackProperty((time) => {
+    const t = Cesium.JulianDate.secondsDifference(time, startTime);
+    const alpha = Cesium.Math.clamp(1 - t / EXPLOSION_DURATION, 0, 1);
+    return Cesium.Color.ORANGE.withAlpha(alpha);
+  }, false);
+
+  // Shockwave on the ground
+  viewer.entities.add({
+    position: pos,
+    availability: new Cesium.TimeIntervalCollection([
+      new Cesium.TimeInterval({ start: startTime, stop: stopTime }),
+    ]),
+    ellipse: {
+      semiMajorAxis: radiusCb,
+      semiMinorAxis: radiusCb,
+      heightReference: Cesium.HeightReference.CLAMP_TO_GROUND,
+      material: new Cesium.ColorMaterialProperty(colorCb),
+      outline: false,
+    },
+  });
+
+  // Smoke puff (ground-clamped, growing and fading)
+  const smokeRadiusCb = new Cesium.CallbackProperty((time) => {
+    const t = Cesium.JulianDate.secondsDifference(time, startTime);
+    if (t < 0 || t > SMOKE_DURATION) return 0;
+    const k = Cesium.Math.clamp(t / SMOKE_DURATION, 0, 1);
+    return Cesium.Math.lerp(EXPLOSION_MIN_RADIUS * 0.3, SMOKE_MAX_RADIUS, k);
+  }, false);
+  const smokeColorCb = new Cesium.CallbackProperty((time) => {
+    const t = Cesium.JulianDate.secondsDifference(time, startTime);
+    const alpha = Cesium.Math.clamp(1 - t / SMOKE_DURATION, 0, 1) * 0.6;
+    return Cesium.Color.fromBytes(80, 80, 80).withAlpha(alpha);
+  }, false);
+
+  viewer.entities.add({
+    position: pos,
+    availability: new Cesium.TimeIntervalCollection([
+      new Cesium.TimeInterval({ start: startTime, stop: smokeStopTime }),
+    ]),
+    ellipse: {
+      semiMajorAxis: smokeRadiusCb,
+      semiMinorAxis: smokeRadiusCb,
+      heightReference: Cesium.HeightReference.CLAMP_TO_GROUND,
+      material: new Cesium.ColorMaterialProperty(smokeColorCb),
+      outline: false,
+    },
+  });
+
+  // Rising orange plume (ellipse slightly above ground)
+  const plumeStopTime = Cesium.JulianDate.addSeconds(startTime, PLUME_DURATION, new Cesium.JulianDate());
+  const plumeRadiusCb = new Cesium.CallbackProperty((time) => {
+    const t = Cesium.JulianDate.secondsDifference(time, startTime);
+    if (t < 0 || t > PLUME_DURATION) return 0;
+    const k = Cesium.Math.clamp(t / PLUME_DURATION, 0, 1);
+    return Cesium.Math.lerp(EXPLOSION_MIN_RADIUS * 0.4, PLUME_MAX_RADIUS, k);
+  }, false);
+  const plumeColorCb = new Cesium.CallbackProperty((time) => {
+    const t = Cesium.JulianDate.secondsDifference(time, startTime);
+    const alpha = Cesium.Math.clamp(1 - t / PLUME_DURATION, 0, 1) * 0.5;
+    return Cesium.Color.fromBytes(255, 150, 60).withAlpha(alpha);
+  }, false);
+
+  viewer.entities.add({
+    position: Cesium.Cartesian3.fromElements(pos.x, pos.y, pos.z + PLUME_HEIGHT_OFFSET, new Cesium.Cartesian3()),
+    availability: new Cesium.TimeIntervalCollection([
+      new Cesium.TimeInterval({ start: startTime, stop: plumeStopTime }),
+    ]),
+    ellipse: {
+      semiMajorAxis: plumeRadiusCb,
+      semiMinorAxis: plumeRadiusCb,
+      heightReference: Cesium.HeightReference.NONE,
+      material: new Cesium.ColorMaterialProperty(plumeColorCb),
+      outline: false,
+    },
+  });
+
+  // Billboard-based smoke blob (safe alternative to volumetric cloud)
+  const billboardStart = Cesium.JulianDate.clone(startTime);
+  const billboardStop = Cesium.JulianDate.addSeconds(startTime, PLUME_DURATION, new Cesium.JulianDate());
+  const billboardScaleCb = new Cesium.CallbackProperty((time) => {
+    const t = Cesium.JulianDate.secondsDifference(time, billboardStart);
+    if (t < 0 || t > PLUME_DURATION) return 0;
+    const norm = Cesium.Math.clamp(t / PLUME_DURATION, 0, 1);
+    const grow = Math.min(norm / 0.6, 1);
+    const shrink = norm < 0.7 ? 0 : (norm - 0.7) / 0.3;
+    return norm < 0.6
+      ? Cesium.Math.lerp(4.0, 12.0, grow)
+      : Cesium.Math.lerp(12.0, 8.0, shrink);
+  }, false);
+  const billboardColorCb = new Cesium.CallbackProperty((time) => {
+    const t = Cesium.JulianDate.secondsDifference(time, billboardStart);
+    const norm = Cesium.Math.clamp(t / PLUME_DURATION, 0, 1);
+    const alpha = Cesium.Math.clamp(1 - norm, 0, 1) * 0.7;
+    return Cesium.Color.fromBytes(255, 150, 60).withAlpha(alpha);
+  }, false);
+
+  viewer.entities.add({
+    position: Cesium.Cartesian3.fromElements(pos.x, pos.y, pos.z + PLUME_HEIGHT_OFFSET * 1.2, new Cesium.Cartesian3()),
+    availability: new Cesium.TimeIntervalCollection([
+      new Cesium.TimeInterval({ start: billboardStart, stop: billboardStop }),
+    ]),
+    billboard: {
+      image: getSmokeSprite(),
+      scale: billboardScaleCb,
+      color: billboardColorCb,
+      heightReference: Cesium.HeightReference.NONE,
+      alignedAxis: Cesium.Cartesian3.UNIT_Z,
+      disableDepthTestDistance: Number.POSITIVE_INFINITY,
+    },
+  });
+
+  // Dark cap smoke slightly higher, growing then fading
+  const capStopTime = Cesium.JulianDate.addSeconds(startTime, PLUME_DURATION, new Cesium.JulianDate());
+  const capRadiusCb = new Cesium.CallbackProperty((time) => {
+    const t = Cesium.JulianDate.secondsDifference(time, startTime);
+    if (t < 0 || t > PLUME_DURATION) return 0;
+    const k = Cesium.Math.clamp(t / PLUME_DURATION, 0, 1);
+    return Cesium.Math.lerp(EXPLOSION_MIN_RADIUS * 0.3, PLUME_MAX_RADIUS * 0.7, k);
+  }, false);
+  const capColorCb = new Cesium.CallbackProperty((time) => {
+    const t = Cesium.JulianDate.secondsDifference(time, startTime);
+    const alpha = Cesium.Math.clamp(1 - t / PLUME_DURATION, 0, 1) * 0.7;
+    return Cesium.Color.fromBytes(60, 60, 60).withAlpha(alpha);
+  }, false);
+
+  viewer.entities.add({
+    position: Cesium.Cartesian3.fromElements(pos.x, pos.y, pos.z + PLUME_HEIGHT_OFFSET * 1.6, new Cesium.Cartesian3()),
+    availability: new Cesium.TimeIntervalCollection([
+      new Cesium.TimeInterval({ start: startTime, stop: capStopTime }),
+    ]),
+    ellipse: {
+      semiMajorAxis: capRadiusCb,
+      semiMinorAxis: capRadiusCb,
+      heightReference: Cesium.HeightReference.NONE,
+      material: new Cesium.ColorMaterialProperty(capColorCb),
+      outline: false,
+    },
+  });
+
+  // Volumetric-ish cloud (using CloudCollection) with orange/gray tint
+  const clouds = ensureCloudCollection(viewer);
+  if (ENABLE_CLOUDS && clouds) {
+    const cloud = clouds.add({
+      position: pos,
+      scale: new Cesium.Cartesian2(CLOUD_START_SCALE, CLOUD_START_SCALE * 0.65),
+      maximumSize: CLOUD_MAX_SIZE_START,
+      color: Cesium.Color.fromBytes(255, 140, 60, 160),
+      slice: 0.3,
+      brightness: 1.1,
+    });
+    cloudAnimations.push({
+      cloud,
+      start: startTime.clone(),
+      duration: SMOKE_DURATION,
+    });
+    ensureCloudUpdater(viewer);
+  }
+}
+
+function attachExplosionWatcher(viewer: Cesium.Viewer) {
+  if (explosionWatcherAttached) return;
+  viewer.clock.onTick.addEventListener((clock) => {
+    if (!pathWaypointTimes.length || !pathSamples) return;
+    const current = clock.currentTime;
+    if (Cesium.JulianDate.lessThan(current, pathWaypointTimes[0])) {
+      lastTriggeredWaypointIndex = -1;
+      return;
+    }
+    let idx = -1;
+    for (let i = 0; i < pathWaypointTimes.length; i++) {
+      if (Cesium.JulianDate.lessThanOrEquals(pathWaypointTimes[i], current)) {
+        idx = i;
+      } else {
+        break;
+      }
+    }
+    if (idx > lastTriggeredWaypointIndex && idx >= 0) {
+      lastTriggeredWaypointIndex = idx;
+      const rawPos = pathSamples.getValue(current, new Cesium.Cartesian3());
+      if (isFiniteCartesian(rawPos)) {
+        spawnExplosion(viewer, rawPos);
+      }
+    }
+  });
+  explosionWatcherAttached = true;
+}
+
+function applyPathGraphics(entity: Cesium.Entity) {
+  entity.path = new Cesium.PathGraphics({
+    show: true,
+    leadTime: Number.POSITIVE_INFINITY,
+    trailTime: Number.POSITIVE_INFINITY,
+    width: 20,
+    resolution: 1,
+    material: new Cesium.PolylineGlowMaterialProperty({
+      glowPower: 0.5,
+      color: Cesium.Color.fromCssColorString('#ff00ff').withAlpha(0.9),
+    }),
+  });
+}
+
+// Build a simple path for the model to follow and drive the Cesium clock
+async function startModelPath(viewer: Cesium.Viewer) {
+  if (!tankModelEntity || !modelPositionProperty) {
+    console.warn('Cannot start model path; model not ready');
+    return;
+  }
+
+  // When using a sampled path, stop the terrain follower that expects setValue()
+  if (detachTerrainFollower) {
+    detachTerrainFollower();
+    detachTerrainFollower = undefined;
+  }
+
+  // Define a larger loop over Tehran area
+  const waypoints = [
+    { lon: 51.3890, lat: 35.6892, height: MODEL_GROUND_OFFSET }, // center-ish
+    { lon: 51.36, lat: 35.72,  height: MODEL_GROUND_OFFSET },
+    { lon: 51.41, lat: 35.75,  height: MODEL_GROUND_OFFSET },
+    { lon: 51.46, lat: 35.72,  height: MODEL_GROUND_OFFSET },
+    { lon: 51.48, lat: 35.68,  height: MODEL_GROUND_OFFSET },
+    { lon: 51.44, lat: 35.65,  height: MODEL_GROUND_OFFSET },
+    { lon: 51.38, lat: 35.64,  height: MODEL_GROUND_OFFSET },
+    { lon: 51.34, lat: 35.66,  height: MODEL_GROUND_OFFSET },
+    { lon: 51.36, lat: 35.69,  height: MODEL_GROUND_OFFSET },
+    { lon: 51.3890, lat: 35.6892, height: MODEL_GROUND_OFFSET }, // close loop
+  ];
+
+  // Sample terrain heights for all waypoints to keep model glued to surface
+  try {
+    const cartos = waypoints.map(
+      (wp) => new Cesium.Cartographic(Cesium.Math.toRadians(wp.lon), Cesium.Math.toRadians(wp.lat), wp.height)
+    );
+    const updated = await Cesium.sampleTerrainMostDetailed(viewer.terrainProvider, cartos);
+    updated.forEach((c, idx) => {
+      if (Number.isFinite(c.height)) {
+        waypoints[idx].height = c.height + MODEL_GROUND_OFFSET;
+      }
+    });
+    // Refine with clampToHeight against tiles if available
+    waypoints.forEach((wp, idx) => {
+      try {
+        const cart = Cesium.Cartesian3.fromDegrees(wp.lon, wp.lat, wp.height);
+        const clamped = viewer.scene.clampToHeight(cart, undefined, scratchCartesian2);
+        if (clamped) {
+          const cc = Cesium.Cartographic.fromCartesian(clamped, Cesium.Ellipsoid.WGS84, scratchCartographic);
+          if (cc && Number.isFinite(cc.height)) {
+            waypoints[idx].height = cc.height + MODEL_GROUND_OFFSET;
+          }
+        }
+      } catch (err) {
+        // ignore clamp errors
+      }
+    });
+  } catch (e) {
+    console.warn('Terrain sampling failed for path; using default heights', e);
+  }
+
+  const SEGMENT_SECONDS = 120; // slower pace per waypoint segment
+    const start = Cesium.JulianDate.now();
+    const stop = Cesium.JulianDate.addSeconds(
+      start,
+      SEGMENT_SECONDS * Math.max(1, waypoints.length - 1),
+      new Cesium.JulianDate()
+  );
+
+  const samples = new Cesium.SampledPositionProperty();
+  samples.setInterpolationOptions({
+    interpolationDegree: 1,
+    interpolationAlgorithm: Cesium.LinearApproximation,
+  });
+
+  waypoints.forEach((wp, idx) => {
+    const t = Cesium.JulianDate.addSeconds(start, idx * SEGMENT_SECONDS, new Cesium.JulianDate());
+    // Store zero-height samples; actual clamping is done in the callback for perfect ground contact
+    samples.addSample(t, Cesium.Cartesian3.fromDegrees(wp.lon, wp.lat, 0));
+  });
+  samples.addSample(stop, Cesium.Cartesian3.fromDegrees(waypoints[0].lon, waypoints[0].lat, 0));
+
+  // Drive clock for the path
+  viewer.clock.startTime = start.clone();
+  viewer.clock.stopTime = stop.clone();
+  viewer.clock.currentTime = start.clone();
+  viewer.clock.clockRange = Cesium.ClockRange.LOOP_STOP;
+  viewer.clock.clockStep = Cesium.ClockStep.SYSTEM_CLOCK_MULTIPLIER;
+  viewer.clock.multiplier = 5;
+  viewer.clock.shouldAnimate = true;
+
+  pathSamples = samples;
+  const clampedCallback = new Cesium.CallbackProperty((time, result) => {
+    if (!pathSamples) return undefined;
+    const target = pathSamples.getValue(time, scratchCartesian);
+    if (!target) return undefined;
+    let groundHeight: number | undefined;
+    try {
+      const clamped = viewer.scene.clampToHeight(target, undefined, scratchCartesian2);
+      if (clamped) {
+        const cc = Cesium.Cartographic.fromCartesian(clamped, Cesium.Ellipsoid.WGS84, scratchCartographic);
+        groundHeight = cc?.height;
+      }
+    } catch (err) {
+      // ignore clamp errors
+    }
+    const carto = Cesium.Cartographic.fromCartesian(target, Cesium.Ellipsoid.WGS84, scratchCartographic);
+    const h = groundHeight ?? viewer.scene.sampleHeight(carto) ?? viewer.scene.globe.getHeight(carto) ?? carto.height ?? 0;
+    return Cesium.Cartesian3.fromRadians(carto.longitude, carto.latitude, h + MODEL_GROUND_OFFSET, undefined, result);
+  }, false);
+
+  modelPositionProperty = clampedCallback as any;
+  tankModelEntity.position = modelPositionProperty;
+  tankModelEntity.orientation = new Cesium.VelocityOrientationProperty(samples);
+  tankModelEntity.availability = new Cesium.TimeIntervalCollection([
+    new Cesium.TimeInterval({ start, stop }),
+  ]);
+  pathWaypointTimes = [];
+  waypoints.forEach((_, idx) => {
+    const t = Cesium.JulianDate.addSeconds(start, idx * SEGMENT_SECONDS, new Cesium.JulianDate());
+    pathWaypointTimes.push(t);
+  });
+  pathWaypointTimes.push(stop.clone());
+  lastTriggeredWaypointIndex = -1;
+  attachExplosionWatcher(viewer);
+
+  // Add a bold polyline for the path so it is always visible
+  // Draw the visual path clamped to ground so it never goes below tiles/terrain
+  const polylinePositions = waypoints.map((wp) =>
+    Cesium.Cartesian3.fromDegrees(wp.lon, wp.lat)
+  );
+  // close loop visually
+  polylinePositions.push(Cesium.Cartesian3.fromDegrees(waypoints[0].lon, waypoints[0].lat));
+
+  const existingPathLine = viewer.entities.getById('model-path-line');
+  if (existingPathLine) {
+    viewer.entities.remove(existingPathLine);
+  }
+  viewer.entities.add({
+    id: 'model-path-line',
+    polyline: {
+      positions: polylinePositions,
+      width: 18,
+      arcType: Cesium.ArcType.GEODESIC,
+      clampToGround: true,
+      material: new Cesium.PolylineOutlineMaterialProperty({
+        color: Cesium.Color.fromCssColorString('#ff00ff').withAlpha(0.9),
+        outlineWidth: 2,
+        outlineColor: Cesium.Color.BLACK,
+      }),
+    },
+  });
+
+  const pin = viewer.entities.getById('model-pin-tehran');
+  if (pin) {
+    pin.position = modelPositionProperty;
+    modelPinEntity = pin;
+  }
+  const debugBox = viewer.entities.getById('debug-model-box');
+  if (debugBox) {
+    debugBox.position = modelPositionProperty;
+  }
 }
 
 export function createCesiumViewer(containerId: string): Cesium.Viewer {
@@ -289,26 +859,39 @@ export function createCesiumViewer(containerId: string): Cesium.Viewer {
           
           console.log('Creating tank model at position:', pos);
           modelPositionProperty = new Cesium.ConstantPositionProperty(pos);
+          try {
+            const clamped = viewer.scene.clampToHeight(pos, undefined, scratchCartesian2);
+            if (clamped) {
+              const cc = Cesium.Cartographic.fromCartesian(clamped, Cesium.Ellipsoid.WGS84, scratchCartographic);
+              if (cc && Number.isFinite(cc.longitude) && Number.isFinite(cc.latitude) && Number.isFinite(cc.height)) {
+                modelPositionProperty.setValue(Cesium.Cartesian3.fromRadians(cc.longitude, cc.latitude, cc.height + MODEL_GROUND_OFFSET));
+              }
+            }
+          } catch (err) {
+            // ignore clamp errors
+          }
           
           tankModelEntity = viewer.entities.add({
             id: 'tank-model',
             position: modelPositionProperty,
             model: {
               uri: CESIUM_MODEL_URI,
-              scale: 200.0, // Much larger scale for visibility
-              minimumPixelSize: 256, // Larger minimum pixel size
-              maximumScale: 500000, // Larger maximum scale
+              scale: 5.0, // realistic scale
+              minimumPixelSize: 32, // smaller minimum for distance
+              maximumScale: 5000, // cap to avoid huge jumps
               runAnimations: isModelAnimationPlaying, // Use the animation state variable
-              heightReference: Cesium.HeightReference.NONE,
+              heightReference: Cesium.HeightReference.CLAMP_TO_GROUND,
             },
           });
+          applyPathGraphics(tankModelEntity);
           
           console.log('Tank model entity created:', tankModelEntity);
           
+          // Terrain follower runs only while position property is a constant
           if (detachTerrainFollower) {
             detachTerrainFollower();
           }
-          if (ENABLE_TERRAIN_FOLLOW) {
+          if (ENABLE_TERRAIN_FOLLOW && modelPositionProperty && (modelPositionProperty as any).setValue) {
             detachTerrainFollower = enableTerrainFollowing(viewer, modelPositionProperty, MODEL_GROUND_OFFSET);
           }
 
@@ -322,6 +905,8 @@ export function createCesiumViewer(containerId: string): Cesium.Viewer {
               // swallow focus errors
             });
           }
+          
+          startModelPath(viewer);
           
           // Add error handling for model loading
           if (tankModelEntity.model) {
@@ -356,7 +941,7 @@ export function createCesiumViewer(containerId: string): Cesium.Viewer {
               color: Cesium.Color.RED, // Red color for better visibility
               outlineColor: Cesium.Color.WHITE,
               outlineWidth: 4,
-              heightReference: Cesium.HeightReference.NONE,
+              heightReference: Cesium.HeightReference.CLAMP_TO_GROUND,
             },
             label: {
               text: 'مدل تانک T-35',
@@ -383,11 +968,11 @@ export function createCesiumViewer(containerId: string): Cesium.Viewer {
             position: modelPositionProperty,
             model: {
               uri: CESIUM_MODEL_URI,
-              scale: 200.0,
-              minimumPixelSize: 256,
-              maximumScale: 500000,
+              scale: 5.0,
+              minimumPixelSize: 32,
+              maximumScale: 5000,
               runAnimations: true,
-              heightReference: Cesium.HeightReference.NONE,
+              heightReference: Cesium.HeightReference.CLAMP_TO_GROUND,
             },
           });
           
@@ -396,7 +981,7 @@ export function createCesiumViewer(containerId: string): Cesium.Viewer {
           if (detachTerrainFollower) {
             detachTerrainFollower();
           }
-          if (ENABLE_TERRAIN_FOLLOW) {
+          if (ENABLE_TERRAIN_FOLLOW && modelPositionProperty && (modelPositionProperty as any).setValue) {
             detachTerrainFollower = enableTerrainFollowing(viewer, modelPositionProperty, MODEL_GROUND_OFFSET);
           }
 
@@ -407,6 +992,8 @@ export function createCesiumViewer(containerId: string): Cesium.Viewer {
               duration: 1.5,
             }).catch(() => {});
           }
+
+          startModelPath(viewer);
         });
     } catch (err) {
       console.warn('Error placing tank model:', err);
@@ -419,20 +1006,21 @@ export function createCesiumViewer(containerId: string): Cesium.Viewer {
           position: modelPositionProperty,
           model: {
             uri: CESIUM_MODEL_URI,
-            scale: 200.0,
-            minimumPixelSize: 256,
-            maximumScale: 500000,
+            scale: 5.0,
+            minimumPixelSize: 32,
+            maximumScale: 5000,
             runAnimations: true,
-            heightReference: Cesium.HeightReference.NONE,
+            heightReference: Cesium.HeightReference.CLAMP_TO_GROUND,
           },
         });
+        applyPathGraphics(tankModelEntity);
         
         console.log('Tank model created in catch block:', tankModelEntity);
 
         if (detachTerrainFollower) {
           detachTerrainFollower();
         }
-        if (ENABLE_TERRAIN_FOLLOW) {
+        if (ENABLE_TERRAIN_FOLLOW && modelPositionProperty && (modelPositionProperty as any).setValue) {
           detachTerrainFollower = enableTerrainFollowing(viewer, modelPositionProperty, MODEL_GROUND_OFFSET);
         }
 
@@ -443,6 +1031,8 @@ export function createCesiumViewer(containerId: string): Cesium.Viewer {
             duration: 1.5,
           }).catch(() => {});
         }
+
+        startModelPath(viewer);
       } catch (fallbackErr) {
         console.error('Failed to create tank model even in fallback:', fallbackErr);
       }
@@ -554,11 +1144,11 @@ export function createCesiumViewer(containerId: string): Cesium.Viewer {
               position: modelPositionProperty ?? currentPosition,
               model: {
                 uri: CESIUM_MODEL_URI,
-                scale: 200.0,
-                minimumPixelSize: 256,
-                maximumScale: 500000,
+                scale: 5.0,
+                minimumPixelSize: 32,
+                maximumScale: 5000,
                 runAnimations: isModelAnimationPlaying,
-                heightReference: Cesium.HeightReference.NONE,
+                heightReference: Cesium.HeightReference.CLAMP_TO_GROUND,
               },
             });
             
@@ -641,66 +1231,8 @@ export function createCesiumViewer(containerId: string): Cesium.Viewer {
   
   // Sample entities removed - you can add your own entities here as needed
 
-  // Enable auto-rotation for the globe
-  let autoRotationEnabled = true;
-  let rotationSpeed = 0.0002; // Rotation speed (radians per frame)
-  let isUserInteracting = false;
-  
-  // Make autoRotationEnabled accessible globally
-  (viewer as any).autoRotationEnabled = autoRotationEnabled;
-  (viewer as any).setAutoRotation = (enabled: boolean) => {
-    autoRotationEnabled = enabled;
-    (viewer as any).autoRotationEnabled = enabled; // Update global reference
-  };
-  
-  // Track user interaction to pause auto-rotation
-  viewer.cesiumWidget.screenSpaceEventHandler.setInputAction(() => {
-    isUserInteracting = true;
-    setTimeout(() => {
-      isUserInteracting = false;
-    }, 2000); // Resume auto-rotation after 2 seconds of no interaction
-  }, Cesium.ScreenSpaceEventType.LEFT_DOWN);
-  
-  viewer.cesiumWidget.screenSpaceEventHandler.setInputAction(() => {
-    isUserInteracting = true;
-    setTimeout(() => {
-      isUserInteracting = false;
-    }, 2000);
-  }, Cesium.ScreenSpaceEventType.MIDDLE_DOWN);
-  
-  viewer.cesiumWidget.screenSpaceEventHandler.setInputAction(() => {
-    isUserInteracting = true;
-    setTimeout(() => {
-      isUserInteracting = false;
-    }, 2000);
-  }, Cesium.ScreenSpaceEventType.RIGHT_DOWN);
-  
-  // Function to handle auto-rotation around vertical axis (North-South axis)
-  function rotateGlobe() {
-    // Use the local variable which should be updated by the setter
-    if (autoRotationEnabled && 
-        viewer.scene.mode === Cesium.SceneMode.SCENE3D && 
-        !isUserInteracting) {
-      // Rotate the camera around the globe's vertical axis (North-South)
-      // Simply rotate the camera around the Z-axis (vertical axis)
-      viewer.camera.rotate(Cesium.Cartesian3.UNIT_Z, rotationSpeed);
-    }
-  }
-  
-  // Start auto-rotation using Cesium's render loop
-  viewer.scene.postRender.addEventListener(rotateGlobe);
-  
-  // Zoom controls are enabled by default in Cesium
-  // Mouse wheel: scroll to zoom in/out
-  // Touch: pinch to zoom (on mobile devices)
-  // The default Cesium zoom behavior should work without additional configuration
-  console.log('Zoom controls enabled (mouse wheel and touch pinch - default Cesium behavior)');
-  
-  (viewer as any).setRotationSpeed = (speed: number) => {
-    rotationSpeed = speed;
-  };
-  
-  console.log('Cesium viewer created successfully with auto-rotation and zoom controls');
+  // Auto-rotation disabled for inspection/debug
+  console.log('Auto-rotation disabled for inspection/debug');
 
   return viewer;
 }
