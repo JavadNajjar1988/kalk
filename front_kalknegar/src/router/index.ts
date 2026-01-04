@@ -1,12 +1,10 @@
 import { createRouter, createWebHistory, type RouteRecordRaw } from "vue-router";
 import NProgress from "nprogress";
 import "nprogress/nprogress.css";
-import LandingPage from "../views/LandingPage.vue";
 import {
   CHART_EDIT_MODE_ROUTE,
   CONTROL_SYMBOLS_ROUTE,
   GRID_EDIT_ROUTE,
-  LANDING_PAGE_ROUTE,
   MAP_EDIT_MODE_ROUTE,
   NEW_SCENARIO_ROUTE,
   ORBAT_CHART_ROUTE,
@@ -14,8 +12,6 @@ import {
   TACTICAL_GRAPHICS_ROUTE,
   TACTICAL_SYMBOL_DEFINITION_ROUTE,
   SIMPLE_TACTICAL_MAP_ROUTE,
-  ODIN_SYMBOLS_DEMO_ROUTE,
-  ODIN_SYMBOL_TEST_ROUTE,
 } from "@/router/names";
 
 declare module "vue-router" {
@@ -41,11 +37,9 @@ const ScenarioEditorMap = () => import("@/modules/scenarioeditor/ScenarioEditorM
   return import("@/views/ErrorFallback.vue"); // Fallback component
 });
 const SymbolDesignerPage = () => import("../modules/tactical-symbol-designer/SymbolDesignerPage.vue");
-const OdinSymbolsDemo = () => import("../views/OdinSymbolsDemo.vue");
 const TacticalSymbolDefinitionPage = () => import("../modules/tactical-symbols/TacticalSymbolDefinitionView.vue");
 const ControlSymbolsLab = () => import("../views/ControlSymbolsLab.vue");
 const SimpleTacticalMapView = () => import("../views/SimpleTacticalMapView.vue");
-const OdinSymbolTestView = () => import("../views/OdinSymbolTestView.vue");
 const routes = [
   {
     path: "/newscenario",
@@ -139,30 +133,9 @@ const routes = [
       NProgress.start();
     },
   },
-  { path: "/", name: LANDING_PAGE_ROUTE, component: LandingPage },
   {
-    path: "/odin-symbols-demo",
-    name: ODIN_SYMBOLS_DEMO_ROUTE,
-    component: OdinSymbolsDemo,
-    beforeEnter: (to, from) => {
-      NProgress.start();
-    },
-  },
-  {
-    path: "/odin-symbol-test",
-    name: ODIN_SYMBOL_TEST_ROUTE,
-    component: OdinSymbolTestView,
-    beforeEnter: (to, from) => {
-      NProgress.start();
-    },
-  },
-  {
-    path: "/odin-symbol-test",
-    name: ODIN_SYMBOL_TEST_ROUTE,
-    component: OdinSymbolTestView,
-    beforeEnter: (to, from) => {
-      NProgress.start();
-    },
+    path: "/",
+    redirect: { name: NEW_SCENARIO_ROUTE },
   },
 ] as RouteRecordRaw[];
 

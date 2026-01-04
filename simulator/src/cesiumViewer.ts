@@ -26,9 +26,13 @@ const CLOUD_MAX_SIZE_START = new Cesium.Cartesian3(50, 30, 20);
 const CLOUD_MAX_SIZE_PEAK = new Cesium.Cartesian3(100, 70, 50);
 const CLOUD_MAX_SIZE_END = new Cesium.Cartesian3(80, 55, 40);
 
-// تنظیم Cesium Ion access token (توکن کاربر)
-Cesium.Ion.defaultAccessToken =
-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiIxZDc3NTY2Ni0wN2E0LTQ1MzMtYWY3OC02NTlhMzgxNDNhNTEiLCJpZCI6MzY1NDQ2LCJpYXQiOjE3NjQ1Nzg2MDB9.tY9HMk_DfrqUhMPnsvjWR_EoCFAv6No8lkyZwJTvJdY';
+// تنظیم Cesium Ion access token (توکن کاربر) از env
+const ION_TOKEN = (import.meta as any).env?.VITE_CESIUM_ION_TOKEN as string | undefined;
+if (ION_TOKEN && ION_TOKEN.trim().length > 0) {
+  Cesium.Ion.defaultAccessToken = ION_TOKEN.trim();
+} else {
+  console.warn('⚠️ VITE_CESIUM_ION_TOKEN تعریف نشده است؛ امکانات Ion در دسترس نخواهد بود.');
+}
 
 // Global variables for model entities
 let tankModelEntity: Cesium.Entity | undefined;
@@ -36,19 +40,70 @@ let modelPinEntity: Cesium.Entity | undefined;
 let isModelAnimationPlaying = true; // Track animation state
 let modelPositionProperty: Cesium.ConstantPositionProperty | undefined;
 let detachTerrainFollower: (() => void) | undefined;
+let autoRotationEnabled = false;
 let hasAutoFocusedOnModel = false;
 let pathSamples: Cesium.SampledPositionProperty | undefined;
 let pathWaypointTimes: Cesium.JulianDate[] = [];
 let lastTriggeredWaypointIndex = -1;
 let explosionWatcherAttached = false;
 let explosionClouds: Cesium.CloudCollection | undefined;
+let explosionWatcher: ((clock: Cesium.Clock) => void) | undefined;
 let cloudAnimations: {
   cloud: Cesium.Cloud;
   start: Cesium.JulianDate;
   duration: number;
 }[] = [];
+let cloudUpdaterHandler: ((clock: Cesium.Clock) => void) | undefined;
 let cloudUpdaterAttached = false;
 let smokeSpriteCanvas: HTMLCanvasElement | undefined;
+let loggedInvalidGroundHeight = false;
+
+const cleanupTasks: Array<() => void> = [];
+const registerCleanup = (fn: () => void) => cleanupTasks.push(fn);
+function runCleanup(viewer: Cesium.Viewer) {
+  cleanupTasks.splice(0).forEach((fn) => {
+    try {
+      fn();
+    } catch {
+      /* ignore */
+    }
+  });
+  try {
+    disableClouds(viewer);
+  } catch {
+    /* ignore */
+  }
+  try {
+    if (detachTerrainFollower) {
+      detachTerrainFollower();
+      detachTerrainFollower = undefined;
+    }
+  } catch {
+    /* ignore */
+  }
+  try {
+    if (explosionWatcher) {
+      viewer.clock.onTick.removeEventListener(explosionWatcher);
+    }
+  } catch {
+    /* ignore */
+  }
+  try {
+    if (cloudUpdaterHandler) {
+      viewer.clock.onTick.removeEventListener(cloudUpdaterHandler);
+    }
+  } catch {
+    /* ignore */
+  }
+}
+function installViewerCleanup(viewer: Cesium.Viewer) {
+  if (typeof window === 'undefined') return;
+  if ((viewer as any)._cleanupHookAttached) return;
+  const handler = () => runCleanup(viewer);
+  window.addEventListener('unload', handler);
+  registerCleanup(() => window.removeEventListener('unload', handler));
+  (viewer as any)._cleanupHookAttached = true;
+}
 
 // Scratch objects reused each frame to avoid allocations
 const scratchCartographic = new Cesium.Cartographic();
@@ -199,7 +254,7 @@ function ensureCloudUpdater(viewer: Cesium.Viewer) {
     return;
   }
   if (cloudUpdaterAttached) return;
-  viewer.clock.onTick.addEventListener((clock) => {
+  cloudUpdaterHandler = (clock) => {
     if (!cloudAnimations.length) return;
     if (!ENABLE_CLOUDS || !explosionClouds || explosionClouds.isDestroyed?.()) {
       cloudAnimations = [];
@@ -250,6 +305,12 @@ function ensureCloudUpdater(viewer: Cesium.Viewer) {
       anim.cloud.brightness = 1.1 - 0.3 * norm;
       return true;
     });
+  };
+  viewer.clock.onTick.addEventListener(cloudUpdaterHandler);
+  registerCleanup(() => {
+    if (cloudUpdaterHandler) {
+      viewer.clock.onTick.removeEventListener(cloudUpdaterHandler);
+    }
   });
   cloudUpdaterAttached = true;
 }
@@ -470,7 +531,7 @@ function spawnExplosion(viewer: Cesium.Viewer, position: Cesium.Cartesian3) {
 
 function attachExplosionWatcher(viewer: Cesium.Viewer) {
   if (explosionWatcherAttached) return;
-  viewer.clock.onTick.addEventListener((clock) => {
+  explosionWatcher = (clock) => {
     if (!pathWaypointTimes.length || !pathSamples) return;
     const current = clock.currentTime;
     if (Cesium.JulianDate.lessThan(current, pathWaypointTimes[0])) {
@@ -491,6 +552,12 @@ function attachExplosionWatcher(viewer: Cesium.Viewer) {
       if (isFiniteCartesian(rawPos)) {
         spawnExplosion(viewer, rawPos);
       }
+    }
+  };
+  viewer.clock.onTick.addEventListener(explosionWatcher);
+  registerCleanup(() => {
+    if (explosionWatcher) {
+      viewer.clock.onTick.removeEventListener(explosionWatcher);
     }
   });
   explosionWatcherAttached = true;
@@ -614,6 +681,9 @@ async function startModelPath(viewer: Cesium.Viewer) {
     }
     const carto = Cesium.Cartographic.fromCartesian(target, Cesium.Ellipsoid.WGS84, scratchCartographic);
     const h = groundHeight ?? viewer.scene.sampleHeight(carto) ?? viewer.scene.globe.getHeight(carto) ?? carto.height ?? 0;
+    if (!Number.isFinite(h) && !loggedInvalidGroundHeight) {
+      loggedInvalidGroundHeight = true;
+    }
     return Cesium.Cartesian3.fromRadians(carto.longitude, carto.latitude, h + MODEL_GROUND_OFFSET, undefined, result);
   }, false);
 
@@ -693,6 +763,7 @@ export function createCesiumViewer(containerId: string): Cesium.Viewer {
     shouldAnimate: true, // keep Cesium clock running so model animations play
     requestRenderMode: false, // Ensure continuous rendering
   });
+  installViewerCleanup(viewer);
   
   // Remove default imagery layer (Bing Maps or other default)
   viewer.imageryLayers.removeAll();
@@ -1132,27 +1203,11 @@ export function createCesiumViewer(containerId: string): Cesium.Viewer {
             tankModelEntity.position?.getValue(Cesium.JulianDate.now());
           
           if (currentPosition) {
-            if (modelPositionProperty) {
-              modelPositionProperty.setValue(currentPosition);
+            if (tankModelEntity.model) {
+              tankModelEntity.model.runAnimations = isModelAnimationPlaying;
+              viewer.scene.requestRender();
             }
-            // Remove the old entity
-            viewer.entities.remove(tankModelEntity);
-            
-            // Recreate the entity with the new animation state
-            tankModelEntity = viewer.entities.add({
-              id: 'tank-model',
-              position: modelPositionProperty ?? currentPosition,
-              model: {
-                uri: CESIUM_MODEL_URI,
-                scale: 5.0,
-                minimumPixelSize: 32,
-                maximumScale: 5000,
-                runAnimations: isModelAnimationPlaying,
-                heightReference: Cesium.HeightReference.CLAMP_TO_GROUND,
-              },
-            });
-            
-            console.log('Model recreated with animation state:', isModelAnimationPlaying);
+            console.log('Model animation state updated:', isModelAnimationPlaying);
           }
         } else {
           console.log('No tank model entity found to update animation state');

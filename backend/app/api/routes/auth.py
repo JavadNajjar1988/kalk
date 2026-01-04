@@ -12,6 +12,10 @@ from sqlalchemy import select
 from app.models.user import User
 from app.schemas.auth import Token, LoginRequest
 
+# Import Keycloak if enabled
+if settings.USE_KEYCLOAK:
+    from app.core.keycloak import get_keycloak_client
+
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 logger = logging.getLogger(__name__)
@@ -125,4 +129,94 @@ async def login_json(payload: LoginRequest, db: DbSession):
         data={"sub": user.username, "roles": roles, "uid": user.id}, expires_delta=access_token_expires
     )
     return Token(access_token=access_token)
+
+
+# Keycloak SSO endpoints
+if settings.USE_KEYCLOAK:
+    @router.get("/keycloak/login-url")
+    async def get_keycloak_login_url():
+        """Get Keycloak login URL for frontend redirect"""
+        keycloak = get_keycloak_client()
+        config = await keycloak.get_well_known_config()
+        auth_url = config.get("authorization_endpoint")
+        if not auth_url:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Keycloak authorization endpoint not found"
+            )
+        
+        # Build authorization URL with parameters
+        from urllib.parse import urlencode
+        params = {
+            "client_id": settings.KEYCLOAK_CLIENT_ID,
+            "response_type": "code",
+            "scope": "openid profile email",
+            "redirect_uri": "http://localhost:5173/auth/callback",  # Should be configurable
+        }
+        login_url = f"{auth_url}?{urlencode(params)}"
+        
+        return {"login_url": login_url}
+    
+    @router.post("/keycloak/callback")
+    async def keycloak_callback(code: str, db: DbSession):
+        """Handle Keycloak OAuth callback"""
+        keycloak = get_keycloak_client()
+        config = await keycloak.get_well_known_config()
+        token_url = config.get("token_endpoint")
+        
+        if not token_url:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Keycloak token endpoint not found"
+            )
+        
+        # Exchange authorization code for tokens
+        import httpx
+        async with httpx.AsyncClient() as client:
+            try:
+                response = await client.post(
+                    token_url,
+                    data={
+                        "grant_type": "authorization_code",
+                        "code": code,
+                        "client_id": settings.KEYCLOAK_CLIENT_ID,
+                        "client_secret": settings.KEYCLOAK_CLIENT_SECRET,
+                        "redirect_uri": "http://localhost:5173/auth/callback",
+                    },
+                    headers={"Content-Type": "application/x-www-form-urlencoded"},
+                    timeout=10.0
+                )
+                response.raise_for_status()
+                token_data = response.json()
+                
+                # Verify and extract user info from token
+                access_token = token_data.get("access_token")
+                if not access_token:
+                    raise HTTPException(
+                        status_code=status.HTTP_400_BAD_REQUEST,
+                        detail="No access token in response"
+                    )
+                
+                # Get user info
+                user_info = await keycloak.get_user_info(access_token)
+                payload = await keycloak.verify_token(access_token)
+                roles = keycloak.extract_roles_from_token(payload)
+                
+                return {
+                    "access_token": access_token,
+                    "refresh_token": token_data.get("refresh_token"),
+                    "token_type": token_data.get("token_type", "Bearer"),
+                    "expires_in": token_data.get("expires_in"),
+                    "user": {
+                        "username": user_info.get("preferred_username") or user_info.get("sub"),
+                        "email": user_info.get("email"),
+                        "roles": roles,
+                    }
+                }
+            except httpx.HTTPError as e:
+                logger.error(f"Keycloak token exchange failed: {e}")
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Failed to exchange authorization code"
+                )
 

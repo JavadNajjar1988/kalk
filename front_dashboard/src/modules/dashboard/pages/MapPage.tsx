@@ -625,7 +625,14 @@ const MapPage: React.FC = () => {
       let layer = baseLayerRefs.current[cfg.id];
       const isOSM = (cfg.url || '').includes('{s}.tile.openstreetmap.org');
       if (!layer) {
-        const source = isOSM ? new OSM() : new XYZ({ url: cfg.url || '', crossOrigin: 'anonymous' });
+        const xyzOptions: any = { url: cfg.url || '', crossOrigin: 'anonymous' };
+        if (typeof cfg.maxZoom === 'number') {
+          xyzOptions.maxZoom = cfg.maxZoom;
+        }
+        if (typeof cfg.minZoom === 'number') {
+          xyzOptions.minZoom = cfg.minZoom;
+        }
+        const source = isOSM ? new OSM() : new XYZ(xyzOptions);
         layer = new TileLayer({ source });
         map.addLayer(layer);
         layer.setZIndex(0);
@@ -662,11 +669,18 @@ const MapPage: React.FC = () => {
       const key = `offline-${item.id}`;
       let layer = refs[key];
       if (!layer) {
+        const xyzOptions: any = {
+          url: item.url,
+          crossOrigin: 'anonymous',
+        };
+        if (typeof item.maxZoom === 'number') {
+          xyzOptions.maxZoom = item.maxZoom;
+        }
+        if (typeof item.minZoom === 'number') {
+          xyzOptions.minZoom = item.minZoom;
+        }
         layer = new TileLayer({
-          source: new XYZ({
-            url: item.url,
-            crossOrigin: 'anonymous',
-          }),
+          source: new XYZ(xyzOptions),
           visible: true,
           opacity: 1,
         });

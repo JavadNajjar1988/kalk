@@ -152,7 +152,6 @@ function hasZippedFileType(file: File): boolean {
   const zippedTypes = ["application/vnd.google-earth.kmz", "application/zip"];
   if (zippedTypes.includes(file.type)) return true;
   if (file.name.endsWith(".kmz")) return true;
-  if (file.name.endsWith(".odin")) return true;
   return file.name.endsWith(".milxlyz");
 }
 

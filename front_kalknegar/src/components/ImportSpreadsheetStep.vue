@@ -7,10 +7,6 @@ import { injectStrict } from "@/utils";
 import { activeScenarioKey } from "@/components/injects";
 import type { ImportedFileInfo } from "@/importexport/fileHandling";
 import { detectSpreadsheetDialect } from "@/importexport/spreadsheets/utils";
-import {
-  type OdinUnitInfoRow,
-  parseOdinDragon,
-} from "@/importexport/spreadsheets/odinDragon";
 import { computed, h, ref, shallowRef } from "vue";
 import type { Unit } from "@/types/scenarioModels";
 import SymbolCodeSelect from "@/components/SymbolCodeSelect.vue";
@@ -88,12 +84,6 @@ const columns: ColumnDef<Unit, any>[] = [
     size: 450,
     enableSorting: false,
   },
-  {
-    accessorKey: "TEMPLATE NAME",
-    header: "قالب",
-    size: 300,
-    accessorFn: (u) => rowMapTest.value?.get(+u.id)?.["TEMPLATE NAME"],
-  },
 ];
 
 const initialTableState: InitialTableState = {
@@ -106,31 +96,11 @@ const { send } = useNotifications();
 const workbook = readSpreadsheet(props.fileInfo.dataAsArrayBuffer);
 const dialect = detectSpreadsheetDialect(workbook);
 const importedUnits = shallowRef<Unit[]>([]);
-const rowMapTest = shallowRef<Map<number, OdinUnitInfoRow>>();
-if (dialect === "ODIN_DRAGON") {
-  const { rootUnits, rowMap } = parseOdinDragon(workbook, {
-    rowsOnly: false,
-    expandTemplates: false,
-  });
-  importedUnits.value = rootUnits;
-  rowMapTest.value = rowMap;
-}
 
 async function onLoad(e: Event) {
-  if (!(dialect === "ODIN_DRAGON")) {
-    send({
-      message: "Invalid file format",
-      type: "error",
-    });
-    return;
-  }
-  const { rootUnits } = parseOdinDragon(workbook, {
-    expandTemplates: expandTemplates.value,
-    includeEquipment: includeEquipment.value,
-    includePersonnel: includePersonnel.value,
-  });
-  rootUnits.forEach((unit) => {
-    addUnitHierarchy(unit, parentUnitId.value, scenario);
+  send({
+    message: "Import functionality for this format is not available",
+    type: "error",
   });
   emit("loaded");
 }
@@ -141,55 +111,13 @@ async function onLoad(e: Event) {
       <div class="shrink-0 overflow-auto">
         <div class="prose prose-sm max-w-none">
           <p>
-            Import units exported from
-            <a
-              href="https://odin.tradoc.army.mil/DATEWORLD"
-              target="_blank"
-              rel="noopener noreferrer"
-              >https://odin.tradoc.army.mil/DATEWORLD</a
-            >. Only the DRAGON Excel export format is currently supported.
+            Import functionality is currently not available.
           </p>
         </div>
 
         <section class="mt-4 space-y-4 px-1">
-          <div class="grid gap-4 sm:grid-cols-3">
-            <InputCheckbox
-              label="گسترش قالب‌های واحد"
-              description="This will create a lot of units!"
-              v-model="expandTemplates"
-            />
-            <template v-if="expandTemplates">
-              <InputCheckbox
-                label="شامل تجهیزات"
-                v-model="includeEquipment"
-                :disabled="!expandTemplates"
-              />
-              <InputCheckbox
-                label="شامل پرسنل"
-                v-model="includePersonnel"
-                :disabled="!expandTemplates"
-              />
-            </template>
-          </div>
-          <SymbolCodeSelect
-            label="انتخاب واحد والد"
-            :items="rootUnitItems"
-            v-model="parentUnitId"
-          />
         </section>
       </div>
-      <section class="mt-2 flex-auto">
-        <DataGrid
-          :data="importedUnits"
-          :columns="columns"
-          :row-count="rowMapTest?.size"
-          :row-height="40"
-          class="max-h-[40vh]"
-          show-global-filter
-          :initial-state="initialTableState"
-          :get-sub-rows="(row) => row.subUnits"
-        />
-      </section>
 
       <footer class="flex shrink-0 items-center justify-end space-x-2 pt-4">
         <BaseButton type="submit" primary small>وارد کردن</BaseButton>

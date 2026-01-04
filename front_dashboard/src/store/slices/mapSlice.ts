@@ -46,6 +46,8 @@ export interface MapLayer {
   type: 'base' | 'overlay' | 'vector' | 'military';
   visible: boolean;
   opacity: number;
+  minZoom?: number;
+  maxZoom?: number;
   url?: string;
   data?: any;
 }
@@ -54,6 +56,8 @@ export interface OfflineTileLayer {
   id: number;
   name: string;
   url: string;
+  minZoom?: number;
+  maxZoom?: number;
 }
 
 export interface MapState {
@@ -84,6 +88,7 @@ const initialState: MapState = {
       type: 'base',
       visible: true,
       opacity: 1,
+      maxZoom: 13,
       url: `${defaultTileServerBase}/data/maps.mbtiles/{z}/{x}/{y}.png`,
     },
     {

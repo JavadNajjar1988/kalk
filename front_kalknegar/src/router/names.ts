@@ -1,6 +1,5 @@
 export const OLD_MAP_ROUTE = "ScenarioRoute";
 export const NEW_SCENARIO_ROUTE = "NewScenarioRoute";
-export const LANDING_PAGE_ROUTE = "LandingPageRoute";
 export const STORY_MODE_ROUTE = "StoryModeRoute";
 export const ORBAT_CHART_ROUTE = "OrbatChartRoute";
 export const GRID_EDIT_ROUTE = "GridEditRoute";
@@ -10,5 +9,3 @@ export const TACTICAL_GRAPHICS_ROUTE = "TacticalGraphicsRoute";
 export const TACTICAL_SYMBOL_DEFINITION_ROUTE = "TacticalSymbolDefinitionRoute";
 export const SIMPLE_TACTICAL_MAP_ROUTE = "SimpleTacticalMapRoute";
 export const CONTROL_SYMBOLS_ROUTE = "ControlSymbolsRoute";
-export const ODIN_SYMBOL_TEST_ROUTE = "OdinSymbolTestRoute";
-export const ODIN_SYMBOLS_DEMO_ROUTE = "OdinSymbolsDemoRoute";
