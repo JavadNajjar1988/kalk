@@ -109,7 +109,7 @@ FILESYSTEM_TILE_ROOT=/mnt/external-maps
 
 ### مرحله 3: اسکریپت یکدست راه‌اندازی
 
-اسکریپت `start-unified.ps1` که:
+اسکریپت `start.ps1` که:
 1. پیش‌نیازها را بررسی می‌کند
 2. فایل `.env` را ایجاد می‌کند (در صورت نیاز)
 3. پورت‌ها را بررسی می‌کند
@@ -148,7 +148,7 @@ cd kalk
 .\check-prerequisites.ps1
 
 # راه‌اندازی سیستم
-.\start-unified.ps1
+.\start.ps1
 ```
 
 ## بررسی مشکلات

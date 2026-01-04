@@ -21,10 +21,7 @@
 
 ```bash
 # Windows PowerShell
-
-
-# Linux/Mac
-./start-all.sh
+.\start.ps1
 
 # یا به صورت دستی
 docker compose up -d
@@ -102,7 +99,7 @@ docker compose logs -f db
 ### اجرای Migration
 
 ```bash
-# Migration به صورت خودکار در start-all.ps1 اجرا می‌شود
+# Migration به صورت خودکار در start.ps1 اجرا می‌شود
 # یا به صورت دستی:
 docker compose exec api alembic upgrade head
 ```
@@ -136,8 +133,8 @@ docker compose down -v --remove-orphans
 # Rebuild بدون cache
 docker compose build --no-cache
 
-# یا با start-all.ps1
-.\start-all.ps1 -Rebuild
+# یا با start.ps1
+.\start.ps1 -Rebuild
 ```
 
 ## قابلیت انتقال (Portability)

@@ -46,7 +46,7 @@ kalk/
 ├── front_dashboard/   # فرانت‌اند React
 ├── front_kalknegar/   # فرانت‌اند Vue
 ├── docker-compose.yml # تنظیمات Docker
-├── start-all.ps1      # اسکریپت راه‌اندازی
+├── start.ps1      # اسکریپت راه‌اندازی
 └── README.md
 ```
 
@@ -55,33 +55,11 @@ kalk/
 #### روش 1: استفاده از اسکریپت PowerShell (پیشنهادی)
 ```powershell
 # اجرای کامل سیستم
-.\start-all.ps1
+.\start.ps1
 
 # یا با گزینه‌های مختلف:
-.\start-all.ps1 -Rebuild    # بازسازی کانتینرها
-.\start-all.ps1 -Purge      # پاک کردن کامل
-```
-
-#### روش 2: اجرای دستی
-```bash
-# 1. راه‌اندازی Docker services
-docker compose up -d
-
-# 2. نصب dependencies فرانت‌اند
-cd front_dashboard
-npm install
-cd ..
-
-cd front_kalknegar
-npm install
-cd ..
-
-# 3. اجرای فرانت‌اندها
-cd front_dashboard
-npm run dev
-# در ترمینال جدید:
-cd front_kalknegar
-npm run dev-host
+.\start.ps1 -Rebuild    # بازسازی کانتینرها
+.\start.ps1 -Purge      # پاک کردن کامل
 ```
 
 ## بررسی وضعیت سیستم
@@ -141,7 +119,7 @@ docker compose --profile maps up -d
 - در داشبورد → «نقشه‌های آفلاین» با انتخاب گزینه «ثبت پوشه» مسیر نقشه را وارد کنید؛ سرویس وجود فایل‌های `.sqlitedb` را بررسی و نقشه جدید را ثبت می‌کند.
 - پس از ثبت، آدرس کاشی‌ها به شکل `/api/tile-cache/<map_id>/{z}/{x}/{y}` فراهم است و فرانت‌اندها به‌طور خودکار آن را مصرف می‌کنند.
 - در محیط توسعه به دلیل پیکربندی پروکسی، همان الگو با پیشوند `/api/...` قابل استفاده است.
-- اجرای `start-all.ps1` وجود این پوشه‌ها را تشخیص داده و پیام راهنما چاپ می‌کند.
+- اجرای `start.ps1` وجود این پوشه‌ها را تشخیص داده و پیام راهنما چاپ می‌کند.
 
 
 ## عیب‌یابی مشکلات رایج

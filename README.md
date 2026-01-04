@@ -16,13 +16,7 @@
 .\check-prerequisites.ps1
 
 # راه‌اندازی کامل سیستم
-.\start-unified.ps1
-```
-
-### روش 2: استفاده از اسکریپت اصلی
-
-```powershell
-.\start-all.ps1
+.\start.ps1
 ```
 
 ## مستندات

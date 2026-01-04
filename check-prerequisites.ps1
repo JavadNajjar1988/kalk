@@ -1,4 +1,4 @@
-# اسکریپت بررسی پیش‌نیازهای پروژه
+﻿# اسکریپت بررسی پیش‌نیازهای پروژه
 # این اسکریپت تمام پیش‌نیازها را بررسی می‌کند
 
 param(
@@ -44,7 +44,18 @@ try {
 # بررسی npm
 Write-Host "[2/6] بررسی npm..." -ForegroundColor Yellow
 try {
-    $npmVersion = npm --version 2>$null
+    $npmVersion = $null
+    $npmCommand = $null
+    $npmVersion = & cmd.exe /c "npm --version" 2>$null
+    if (-not $npmVersion) {
+        $npmCommand = Get-Command npm -ErrorAction SilentlyContinue
+        if ($npmCommand) {
+            $npmVersion = & $npmCommand.Source --version 2>$null
+        }
+    }
+    if ($npmVersion -is [array]) {
+        $npmVersion = $npmVersion | Select-Object -First 1
+    }
     if ($npmVersion) {
         $npmMajor = [int]($npmVersion -split '\.')[0]
         if ($npmMajor -ge 9) {

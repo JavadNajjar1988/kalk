@@ -26,9 +26,9 @@ alembic upgrade head
 
 ### گزینه 2: راه‌اندازی PostgreSQL با Docker
 
-از اسکریپت `start-all.ps1` استفاده کنید:
+از اسکریپت `start.ps1` استفاده کنید:
 ```powershell
-.\start-all.ps1
+.\start.ps1
 ```
 
 این اسکریپت PostgreSQL را در Docker راه‌اندازی می‌کند.

@@ -74,7 +74,7 @@
 
 **راه‌حل‌ها:**
 - گزینه A: استفاده از SQLite (تغییر در `config.py`)
-- گزینه B: راه‌اندازی PostgreSQL با `start-all.ps1`
+- گزینه B: راه‌اندازی PostgreSQL با `start.ps1`
 
 **دستور:**
 ```powershell
