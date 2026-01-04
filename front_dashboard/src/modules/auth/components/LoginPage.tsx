@@ -86,10 +86,13 @@ const LoginPage: React.FC = () => {
   // Redirect اگر کاربر قبلاً احراز هویت شده
   useEffect(() => {
     if (isAuthenticated) {
-      const from = location.state?.from?.pathname || '/dashboard';
+      // اولویت با query parameter redirect، سپس location.state، سپس dashboard
+      const searchParams = new URLSearchParams(location.search);
+      const redirectUrl = searchParams.get('redirect');
+      const from = redirectUrl || location.state?.from?.pathname || '/dashboard';
       navigate(from, { replace: true });
     }
-  }, [isAuthenticated, navigate, location.state]);
+  }, [isAuthenticated, navigate, location.state, location.search]);
 
   // اعتبارسنجی فرم
   const validateForm = (): boolean => {

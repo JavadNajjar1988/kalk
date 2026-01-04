@@ -1,4 +1,4 @@
-import { createRouter, createWebHistory, type RouteRecordRaw } from "vue-router";
+import { createRouter, createWebHistory, type RouteRecordRaw, type NavigationGuardNext, type RouteLocationNormalized } from "vue-router";
 import NProgress from "nprogress";
 import "nprogress/nprogress.css";
 import {
@@ -18,7 +18,68 @@ declare module "vue-router" {
   interface RouteMeta {
     // is optional
     helpUrl?: string;
+    requiresAuth?: boolean;
   }
+}
+
+/**
+ * Route guard برای چک کردن احراز هویت
+ */
+function requireAuth(
+  to: RouteLocationNormalized,
+  from: RouteLocationNormalized,
+  next: NavigationGuardNext
+) {
+  NProgress.start();
+  
+  // چک کردن وجود token
+  const token = localStorage.getItem('access_token');
+  
+  if (!token) {
+    // چک کردن اینکه آیا در حالت integration هستیم
+    const urlParams = new URLSearchParams(window.location.search);
+    const isIntegrationMode = urlParams.get('integration') === 'react';
+    
+    if (isIntegrationMode) {
+      // اگر در حالت integration هستیم، به parent window پیام می‌دهیم
+      const parentOrigin = (() => {
+        const raw = (import.meta as any).env?.VITE_PARENT_ORIGIN as string | undefined;
+        return raw && raw.trim().length > 0 ? raw : 'http://127.0.0.1:3000';
+      })();
+      
+      console.warn('[Router] No authentication token found in integration mode, requesting auth from parent');
+      
+      // درخواست احراز هویت از parent window
+      if (window.parent && window.parent !== window) {
+        try {
+          window.parent.postMessage({
+            type: 'ORBAT_AUTH_REQUIRED',
+            origin: 'vue',
+            timestamp: Date.now(),
+            redirectUrl: window.location.href
+          }, parentOrigin);
+        } catch (e) {
+          console.error('[Router] Failed to send auth request to parent:', e);
+        }
+      }
+      
+      // Redirect به صفحه login در React app
+      const loginUrl = `${parentOrigin}/auth/login?redirect=${encodeURIComponent(window.location.href)}`;
+      console.log('[Router] Redirecting to login:', loginUrl);
+      window.location.href = loginUrl;
+      return;
+    } else {
+      // اگر در حالت عادی هستیم، به صفحه login در React app redirect می‌کنیم
+      console.warn('[Router] No authentication token found, redirecting to login');
+      const parentOrigin = 'http://127.0.0.1:3000';
+      const loginUrl = `${parentOrigin}/auth/login?redirect=${encodeURIComponent(window.location.href)}`;
+      window.location.href = loginUrl;
+      return;
+    }
+  }
+  
+  // اگر token وجود دارد، ادامه می‌دهیم
+  next();
 }
 
 const ScenarioEditorWrapper = () =>
@@ -45,17 +106,15 @@ const routes = [
     path: "/newscenario",
     name: NEW_SCENARIO_ROUTE,
     component: NewScenarioView,
-    beforeEnter: (to, from) => {
-      NProgress.start();
-    },
+    meta: { requiresAuth: true },
+    beforeEnter: requireAuth,
   },
   {
     path: "/scenario/:scenarioId",
     props: true,
     component: ScenarioEditorWrapper,
-    beforeEnter: (to, from) => {
-      NProgress.start();
-    },
+    meta: { requiresAuth: true },
+    beforeEnter: requireAuth,
     children: [
       {
         path: "",
