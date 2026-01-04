@@ -28,6 +28,9 @@ class User(Base):
     professional_info: Mapped[Dict[str, Any]] = mapped_column(JSONB, nullable=False, default=_json_default)
     system_info: Mapped[Dict[str, Any]] = mapped_column(JSONB, nullable=False, default=_json_default)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    failed_login_count: Mapped[int] = mapped_column(default=0, nullable=False)
+    locked_until: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+    last_login_attempt: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         nullable=False,

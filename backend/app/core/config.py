@@ -28,6 +28,13 @@ class Settings(BaseSettings):
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60
     ADMIN_BOOTSTRAP_PASSWORD: str = Field(default="admin123", repr=False)
 
+    # Security settings
+    MAX_LOGIN_ATTEMPTS: int = 5  # Maximum failed login attempts before lockout
+    LOCKOUT_DURATION_MINUTES: int = 30  # Account lockout duration in minutes
+    RATE_LIMIT_LOGIN_PER_MINUTE: int = 10  # Maximum login attempts per minute per IP
+    MIN_PASSWORD_LENGTH: int = 8  # Minimum password length
+    REQUIRE_PASSWORD_COMPLEXITY: bool = True  # Require password complexity (uppercase, lowercase, number)
+
     # وقتی True باشد، تمام بررسی‌های احراز هویت در backend نادیده گرفته می‌شود.
     DISABLE_AUTH: bool = False
     TILESERVER_URL: str = "http://127.0.0.1:8480"

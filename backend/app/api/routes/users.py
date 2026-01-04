@@ -12,6 +12,7 @@ from sqlalchemy.exc import IntegrityError
 
 from app.core.response import success
 from app.core.security import get_password_hash, require_roles
+from app.core.password_policy import validate_password
 from app.deps import DbSession
 from app.models.user import User
 from app.schemas.user import (
@@ -229,6 +230,9 @@ async def create_user(payload: UserCreate, db: DbSession) -> dict[str, Any]:
     await _ensure_unique(db, username, user_code)
 
     plain_password = payload.systemInfo.password or secrets.token_urlsafe(8)
+    is_valid, error_msg = validate_password(plain_password)
+    if not is_valid:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=error_msg)
     hashed_password = get_password_hash(plain_password)
 
     user = User(
@@ -281,6 +285,9 @@ async def update_user(user_id: str, payload: UserUpdate, db: DbSession) -> dict[
         system_updates = data["systemInfo"].copy()
         new_password = system_updates.pop("password", None)
         if new_password:
+            is_valid, error_msg = validate_password(new_password)
+            if not is_valid:
+                raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=error_msg)
             user.password_hash = get_password_hash(new_password)
             system_updates["passwordLastChanged"] = datetime.now(timezone.utc).isoformat()
         user.system_info = {**(user.system_info or {}), **system_updates}
@@ -325,6 +332,9 @@ async def perform_quick_action(user_id: str, payload: QuickActionPayload, db: Db
         new_password = data.get("newPassword")
         if not new_password:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="رمز عبور جدید ارسال نشده است")
+        is_valid, error_msg = validate_password(new_password)
+        if not is_valid:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=error_msg)
         user.password_hash = get_password_hash(new_password)
         system_info = user.system_info or {}
         system_info["passwordLastChanged"] = datetime.now(timezone.utc).isoformat()
