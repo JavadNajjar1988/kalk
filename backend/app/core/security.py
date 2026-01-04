@@ -9,10 +9,6 @@ from passlib.context import CryptContext
 from app.core.config import settings
 import logging
 
-# Import Keycloak client if enabled
-if settings.USE_KEYCLOAK:
-    from app.core.keycloak import get_keycloak_client
-
 logger = logging.getLogger(__name__)
 
 pwd_context = CryptContext(schemes=["pbkdf2_sha256"], deprecated="auto")
@@ -49,23 +45,7 @@ async def get_current_user(token: str = Depends(oauth2_scheme)) -> dict[str, Any
         headers={"WWW-Authenticate": "Bearer"},
     )
     
-    # Use Keycloak if enabled
-    if settings.USE_KEYCLOAK:
-        try:
-            keycloak = get_keycloak_client()
-            payload = await keycloak.verify_token(token)
-            username: str | None = payload.get("preferred_username") or payload.get("sub")
-            roles: list[str] = keycloak.extract_roles_from_token(payload)
-            if username is None:
-                raise credentials_exception
-            return {"username": username, "roles": roles, "uid": payload.get("sub")}
-        except HTTPException:
-            raise
-        except Exception as e:
-            logger.error(f"Keycloak authentication error: {e}")
-            raise credentials_exception
-    
-    # Fallback to local JWT authentication
+    # Local JWT authentication
     try:
         payload = decode_access_token(token)
         username: str | None = payload.get("sub")

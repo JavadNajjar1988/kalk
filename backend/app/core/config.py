@@ -38,15 +38,6 @@ class Settings(BaseSettings):
     CATALOG_TMP_PATH: str = "backend/static/maps/layers.tmp.json"
     DEFAULT_ROLES: list[str] = ["user"]
 
-    # Keycloak SSO Settings
-    USE_KEYCLOAK: bool = False
-    KEYCLOAK_SERVER_URL: str = "http://localhost:9090"
-    KEYCLOAK_REALM: str = "kalk"
-    KEYCLOAK_CLIENT_ID: str = "kalk-backend"
-    KEYCLOAK_CLIENT_SECRET: str = Field(default="", repr=False)
-    KEYCLOAK_ADMIN_CLI_CLIENT_ID: str = "admin-cli"
-    KEYCLOAK_ADMIN_CLI_CLIENT_SECRET: str = Field(default="", repr=False)
-
     @field_validator("DISABLE_AUTH", mode="before")
     def _coerce_bool(cls, v):  # type: ignore[no-redef]
         if isinstance(v, str):
