@@ -1,7 +1,7 @@
 import { User } from '@/types';
 
 // صادر کردن نوع UserRole از فایل اصلی برای استفاده در همه‌جا
-export type UserRole = 'admin' | 'commander' | 'operator' | 'viewer';
+export type UserRole = 'super_admin' | 'commander' | 'viewer';
 
 // تایپ‌های مورد نیاز
 export interface Country {

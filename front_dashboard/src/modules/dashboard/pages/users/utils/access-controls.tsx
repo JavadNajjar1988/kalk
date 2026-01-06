@@ -40,25 +40,22 @@ export const getAccessLevelsByRole = (role: UserRole): AccessLevel[] => {
 
   switch (role) {
     case 'viewer':
+      // ناظر مهمان: فقط مشاهده
       return allPermissions.filter(p => 
         ['dashboard_view', 'map_view', 'data_view', 'reports_view'].includes(p.key)
       );
     
-    case 'operator':
-      return allPermissions.filter(p => 
-        ['dashboard_view', 'map_view', 'map_edit', 'data_view', 'data_edit', 
-         'reports_view', 'reports_generate', 'simulation_run', 'export_data'].includes(p.key)
-      );
-    
     case 'commander':
+      // فرمانده: دسترسی عملیاتی کامل (بدون مدیریت کاربران و تنظیمات سیستم)
       return allPermissions.filter(p => 
         ['dashboard_view', 'map_view', 'map_edit', 'users_view', 'data_view', 
          'data_edit', 'reports_view', 'reports_generate', 'simulation_run', 
          'simulation_stop', 'export_data', 'import_data'].includes(p.key)
       );
     
-    case 'admin':
-      return allPermissions; // همه دسترسی‌ها
+    case 'super_admin':
+      // سوپر ادمین: همه دسترسی‌ها
+      return allPermissions;
     
     default:
       return [];
@@ -68,9 +65,8 @@ export const getAccessLevelsByRole = (role: UserRole): AccessLevel[] => {
 // توابع کمکی نمایش نقش
 export const getRoleIcon = (role: UserRole) => {
   switch (role) {
-    case 'admin': return 'AdminPanelSettings';
+    case 'super_admin': return 'AdminPanelSettings';
     case 'commander': return 'Security';
-    case 'operator': return 'Engineering';
     case 'viewer': return 'Visibility';
     default: return 'Person';
   }
@@ -78,9 +74,8 @@ export const getRoleIcon = (role: UserRole) => {
 
 export const getRoleColor = (role: UserRole) => {
   switch (role) {
-    case 'admin': return 'error';
+    case 'super_admin': return 'error';
     case 'commander': return 'success';
-    case 'operator': return 'primary';
     case 'viewer': return 'info';
     default: return 'default';
   }
@@ -88,10 +83,9 @@ export const getRoleColor = (role: UserRole) => {
 
 export const getRoleText = (role: UserRole) => {
   switch (role) {
-    case 'admin': return 'مدیر کل';
+    case 'super_admin': return 'سوپر ادمین';
     case 'commander': return 'فرمانده';
-    case 'operator': return 'اپراتور';
-    case 'viewer': return 'بیننده';
+    case 'viewer': return 'ناظر مهمان';
     default: return 'نامشخص';
   }
 };

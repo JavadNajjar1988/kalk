@@ -42,7 +42,7 @@ async def list_scenarios(db: DbSession):
 @router.post(
     "/images",
     response_model=dict,
-    dependencies=[Depends(require_roles("ADMIN", "OPERATOR"))],
+    dependencies=[Depends(require_roles("SUPER_ADMIN", "COMMANDER"))],
 )
 async def upload_scenario_image(request: Request, file: UploadFile = File(...)):
     if not file.filename:
@@ -118,7 +118,7 @@ async def get_scenario_image(filename: str):
     "/import",
     status_code=status.HTTP_201_CREATED,
     response_model=dict,
-    dependencies=[Depends(require_roles("ADMIN", "OPERATOR"))],
+    dependencies=[Depends(require_roles("SUPER_ADMIN", "COMMANDER"))],
 )
 async def import_scenario(db: DbSession, file: UploadFile = File(...)):
     """
@@ -252,7 +252,7 @@ async def get_scenario(scenario_id: UUID, db: DbSession):
     return success(ScenarioOut.model_validate(obj).model_dump())
 
 
-@router.post("", status_code=status.HTTP_201_CREATED, response_model=dict, dependencies=[Depends(require_roles("ADMIN", "OPERATOR"))])
+@router.post("", status_code=status.HTTP_201_CREATED, response_model=dict, dependencies=[Depends(require_roles("SUPER_ADMIN", "COMMANDER"))])
 async def create_scenario(payload: ScenarioCreate, db: DbSession):
     now = datetime.now(timezone.utc)
     obj = Scenario(
@@ -271,7 +271,7 @@ async def create_scenario(payload: ScenarioCreate, db: DbSession):
     return success(ScenarioOut.model_validate(obj).model_dump())
 
 
-@router.put("/{scenario_id}", response_model=dict, dependencies=[Depends(require_roles("ADMIN", "OPERATOR"))])
+@router.put("/{scenario_id}", response_model=dict, dependencies=[Depends(require_roles("SUPER_ADMIN", "COMMANDER"))])
 async def update_scenario(scenario_id: UUID, payload: ScenarioUpdate, db: DbSession):
     obj = await db.get(Scenario, str(scenario_id))
     if not obj:
@@ -286,7 +286,7 @@ async def update_scenario(scenario_id: UUID, payload: ScenarioUpdate, db: DbSess
     return success(ScenarioOut.model_validate(obj).model_dump())
 
 
-@router.delete("/{scenario_id}", status_code=status.HTTP_200_OK, dependencies=[Depends(require_roles("ADMIN"))])
+@router.delete("/{scenario_id}", status_code=status.HTTP_200_OK, dependencies=[Depends(require_roles("SUPER_ADMIN"))])
 async def delete_scenario(scenario_id: UUID, db: DbSession):
     obj = await db.get(Scenario, str(scenario_id))
     if not obj:

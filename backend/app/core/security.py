@@ -37,7 +37,7 @@ def decode_access_token(token: str) -> dict[str, Any]:
 async def get_current_user(token: str = Depends(oauth2_scheme)) -> dict[str, Any]:
     # در حالت غیرفعال بودن احراز هویت، کاربر فرضی admin با تمام نقش‌ها برمی‌گردد.
     if settings.DISABLE_AUTH:
-        return {"username": "dev", "roles": ["ADMIN", "OPERATOR", "USER"]}
+        return {"username": "dev", "roles": ["SUPER_ADMIN", "COMMANDER", "VIEWER"]}
     
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,

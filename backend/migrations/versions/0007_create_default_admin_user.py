@@ -81,7 +81,7 @@ def upgrade() -> None:
             "username": "admin",
             "user_code": "USR-ADMIN",
             "password_hash": password_hash,
-            "roles": "ADMIN,OPERATOR",
+            "roles": "SUPER_ADMIN",
             "is_active": True,
             "personal_info": personal_info,
             "contact_info": contact_info,

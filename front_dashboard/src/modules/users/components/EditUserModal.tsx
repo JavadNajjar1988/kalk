@@ -286,11 +286,9 @@ const EditUserModal: React.FC<EditUserModalProps> = ({
                 onChange={(e) => handleChange('systemInfo.role', e.target.value)}
                 label="نقش سیستمی"
               >
-                <MenuItem value="مدیر سیستم">مدیر سیستم</MenuItem>
-                <MenuItem value="سرپرست">سرپرست</MenuItem>
-                <MenuItem value="اپراتور">اپراتور</MenuItem>
-                <MenuItem value="تحلیلگر">تحلیلگر</MenuItem>
-                <MenuItem value="مهمان">مهمان</MenuItem>
+                <MenuItem value="مدیر سیستم">سوپر ادمین</MenuItem>
+                <MenuItem value="فرمانده">فرمانده</MenuItem>
+                <MenuItem value="ناظر مهمان">ناظر مهمان</MenuItem>
               </Select>
             </FormControl>
           </Grid>

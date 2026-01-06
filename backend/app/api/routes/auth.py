@@ -153,7 +153,7 @@ async def login(
             username="admin",
             user_code="USR-ADMIN",
             password_hash=get_password_hash(_get_admin_password()),
-            roles="ADMIN,OPERATOR",
+            roles="SUPER_ADMIN",
             is_active=True,
             failed_login_count=0,
             personal_info={
@@ -202,7 +202,7 @@ async def login_json(payload: LoginRequest, db: DbSession, request: Request):
             username="admin",
             user_code="USR-ADMIN",
             password_hash=get_password_hash(_get_admin_password()),
-            roles="ADMIN,OPERATOR",
+            roles="SUPER_ADMIN",
             is_active=True,
             failed_login_count=0,
             personal_info={

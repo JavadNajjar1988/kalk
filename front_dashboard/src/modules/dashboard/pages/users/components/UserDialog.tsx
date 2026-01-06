@@ -1443,7 +1443,7 @@ export const UserDialog: React.FC<UserDialogProps> = ({
                   value={formData.role || 'viewer'}
                   label="نقش کاربر"
                   onChange={(e: SelectChangeEvent) => {
-                    const selectedRole = e.target.value as 'admin' | 'commander' | 'operator' | 'viewer';
+                    const selectedRole = e.target.value as 'super_admin' | 'commander' | 'viewer';
                     const rolePermissions = getAccessLevelsByRole(selectedRole).map(p => p.key);
                     setFormData({
                       ...formData,
@@ -1452,10 +1452,10 @@ export const UserDialog: React.FC<UserDialogProps> = ({
                     });
                   }}
                 >
-                  <MenuItem value="admin">
+                  <MenuItem value="super_admin">
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                       <AdminPanelSettings fontSize="small" color="error" />
-                      <span>مدیر کل</span>
+                      <span>سوپر ادمین</span>
                     </Box>
                   </MenuItem>
                   <MenuItem value="commander">
@@ -1464,16 +1464,10 @@ export const UserDialog: React.FC<UserDialogProps> = ({
                       <span>فرمانده</span>
                     </Box>
                   </MenuItem>
-                  <MenuItem value="operator">
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                      <Engineering fontSize="small" color="primary" />
-                      <span>اپراتور</span>
-                    </Box>
-                  </MenuItem>
                   <MenuItem value="viewer">
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                       <Visibility fontSize="small" color="info" />
-                      <span>بیننده</span>
+                      <span>ناظر مهمان</span>
                     </Box>
                   </MenuItem>
                 </Select>

@@ -14,7 +14,7 @@ class MigrationTestHelper {
   constructor(private page: Page) {}
 
   async login() {
-    await this.page.goto(`${BASE_URL}/login`);
+    await this.page.goto(`${BASE_URL}/auth/login`);
     await this.page.fill('[data-testid="username"]', ADMIN_USER.username);
     await this.page.fill('[data-testid="password"]', ADMIN_USER.password);
     await this.page.click('[data-testid="login-button"]');

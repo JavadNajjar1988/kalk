@@ -123,8 +123,8 @@ const authFetch = async (baseUrl: string, endpoint: string, options: RequestInit
   if (response.status === 401) {
     localStorage.removeItem('access_token');
     // Optionally redirect to login or show toast
-    if (window.location.pathname !== '/login') {
-      window.location.href = '/login?reason=session_expired';
+    if (window.location.pathname !== '/auth/login') {
+      window.location.href = '/auth/login?reason=session_expired';
     }
     throw new Error('Session expired. Please login again.');
   }

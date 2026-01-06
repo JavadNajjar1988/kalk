@@ -23,7 +23,7 @@ from app.schemas.user import (
 )
 
 
-router = APIRouter(prefix="/users", tags=["users"], dependencies=[Depends(require_roles("ADMIN"))])
+router = APIRouter(prefix="/users", tags=["users"], dependencies=[Depends(require_roles("SUPER_ADMIN"))])
 
 
 def _slugify(value: str) -> str:
@@ -115,14 +115,15 @@ async def _ensure_unique(db: DbSession, username: str, user_code: str, exclude_u
 
 def _derive_internal_roles(system_role: Optional[str]) -> str:
     if not system_role:
-        return "USER"
+        return "VIEWER"
     mapping = {
-        "مدیر سیستم": "ADMIN",
-        "سرپرست": "OPERATOR",
-        "اپراتور": "OPERATOR",
-        "فرمانده": "OPERATOR",
+        "مدیر سیستم": "SUPER_ADMIN",
+        "سوپر ادمین": "SUPER_ADMIN",
+        "فرمانده": "COMMANDER",
+        "ناظر مهمان": "VIEWER",
+        "مهمان": "VIEWER",
     }
-    return mapping.get(system_role, "USER")
+    return mapping.get(system_role, "VIEWER")
 
 
 def _filters(
