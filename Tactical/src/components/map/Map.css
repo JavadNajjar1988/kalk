@@ -1,0 +1,47 @@
+.map {
+  touch-action: none;
+  position: absolute !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  cursor: crosshair;
+  outline: none;
+  background: #f0f0f0 !important;
+  z-index: 10 !important;
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  pointer-events: auto !important;
+}
+
+/* Ensure OpenLayers viewport is visible */
+.map .ol-viewport {
+  position: relative !important;
+  width: 100% !important;
+  height: 100% !important;
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+/* Ensure canvas is visible */
+.map canvas {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  z-index: 1 !important;
+  position: absolute !important;
+  pointer-events: auto !important;
+}
+
+/**
+ * Since map controls container has
+ * pointer-events: none, we have to allow
+ * pointer events for rotate control.
+ */
+.ol-rotate {
+  pointer-events: auto;
+}
