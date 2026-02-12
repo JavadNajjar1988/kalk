@@ -105,7 +105,7 @@ const props = defineProps({
   }
 })
 
-const emit = defineEmits(['measureRef'])
+const emit = defineEmits(['measureRef', 'symbol-dblclick'])
 
 const cardRef = ref(null)
 const sidebarEmitter = useEmitter('sidebar')
@@ -168,6 +168,7 @@ const handleClick = (event) => {
 }
 
 const handleDoubleClick = async () => {
+  emit('symbol-dblclick', props.id)
   const svcs = servicesRef?.value
   if (!svcs) return
   

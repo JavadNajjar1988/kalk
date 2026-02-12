@@ -15,7 +15,7 @@ import {
   alpha
 } from '@mui/material';
 import { OrbatProvider } from '../../orbat-integration';
-import { ScenarioLandingPageProps } from '../types';
+import { ScenarioLandingPageProps, ScenarioAction } from '../types';
 import { useScenarioData } from '../hooks';
 import ScenarioGrid from './ScenarioGrid';
 
@@ -57,8 +57,8 @@ const ScenarioLandingPage: React.FC<ScenarioLandingPageProps> = ({
   }, [initialScenarios]);
 
   // Handle scenario actions with callbacks
-  const handleScenarioActionWithCallback = async (action: string, scenarioId: string) => {
-    await handleScenarioAction(action as any, scenarioId);
+  const handleScenarioActionWithCallback = async (action: ScenarioAction, scenarioId: string) => {
+    await handleScenarioAction(action, scenarioId);
     onScenarioAction?.(action, scenarioId);
   };
 

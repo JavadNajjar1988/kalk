@@ -25,7 +25,7 @@ export interface DemoScenario {
 }
 
 // Scenario actions available in UI
-export type ScenarioAction = 'open' | 'delete' | 'download' | 'duplicate' | 'edit';
+export type ScenarioAction = 'open' | 'delete' | 'download' | 'duplicate' | 'edit' | 'run';
 
 // Scenario loading source
 export type ScenarioSource = 'local' | 'url' | 'file' | 'demo';

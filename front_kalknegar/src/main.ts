@@ -1,3 +1,5 @@
+import { Buffer } from "buffer";
+import process from "process";
 import "./dayjs";
 import { createApp } from "vue";
 import { createPinia } from "pinia";
@@ -5,6 +7,18 @@ import "./styles.css";
 import App from "./App.vue";
 import { router } from "./router";
 import persianNumberDirectives from "@/utils/persianNumberDirective";
+
+if (!globalThis.Buffer) {
+  globalThis.Buffer = Buffer;
+}
+if (!globalThis.process) {
+  globalThis.process = process;
+}
+if (typeof globalThis.process.nextTick !== "function") {
+  globalThis.process.nextTick = (cb: (...args: unknown[]) => void, ...args: unknown[]) => {
+    queueMicrotask(() => cb(...args));
+  };
+}
 
 // Import React integration bridge with error handling
 try {

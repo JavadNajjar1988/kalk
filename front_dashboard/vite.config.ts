@@ -112,6 +112,18 @@ export default defineConfig({
         changeOrigin: true,
         secure: false,
       },
+      '/simulator': {
+        target: 'http://127.0.0.1:3001',
+        changeOrigin: true,
+        secure: false,
+        ws: true,
+        rewrite: (path) => {
+          if (path === '/simulator') {
+            return '/simulator/';
+          }
+          return path.replace(/^\/simulator/, '/simulator');
+        },
+      },
       '/kalknegar': {
         // کالک‌نگار الان روی پورت 5180 اجرا می‌شود (نه 5173)
         target: 'http://127.0.0.1:5180',

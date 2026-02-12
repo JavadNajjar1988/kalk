@@ -14,7 +14,12 @@ import isEqual from 'react-fast-compare'
  * create input signals for style calculation.
  */
 const readFeature = R.curry((state, source) => {
-  const feature = format.readFeature(source)
+  let feature
+  try {
+    feature = format.readFeature(source)
+  } catch {
+    return null
+  }
   const featureId = feature.getId()
   const layerId = ID.layerId(featureId)
   const { geometry, ...properties } = feature.getProperties()
@@ -129,6 +134,7 @@ export const featureSource = services => {
     const features = tuples
       .map(([id, value]) => ({ id, ...value }))
       .map(readFeature(state))
+      .filter(Boolean)
     source.addFeatures(features)
   })()
 

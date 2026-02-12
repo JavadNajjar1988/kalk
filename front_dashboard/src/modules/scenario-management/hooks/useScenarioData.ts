@@ -185,6 +185,18 @@ export const useScenarioData = (options: UseScenarioDataOptions = {}): UseScenar
           // Navigate to kalknegar editor
           window.open(`/kalknegar/scenario/${scenarioId}?integration=react`, '_self');
           break;
+        case 'run': {
+          const simulatorBaseUrl = (import.meta as any).env?.VITE_SIMULATOR_URL || 'http://localhost:3001';
+          const simulatorUrl = `${simulatorBaseUrl}?scenarioId=${encodeURIComponent(scenarioId)}`;
+          const popup = window.open(simulatorUrl, '_blank', 'noopener,noreferrer,width=1920,height=1080');
+          if (!popup) {
+            setState(prev => ({
+              ...prev,
+              error: 'مرورگر مانع باز شدن شبیه‌ساز شد. لطفاً popup blocker را غیرفعال کنید.'
+            }));
+          }
+          break;
+        }
           
         case 'delete':
           if (window.confirm('آیا مطمئن هستید که می‌خواهید این سناریو را حذف کنید؟')) {

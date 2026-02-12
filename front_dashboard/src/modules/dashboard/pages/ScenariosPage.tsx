@@ -978,7 +978,7 @@ const ScenariosPage: React.FC = () => {
                               cursor: 'pointer',
                               ...(scenarioImage ? { color: 'white', textShadow: '0 2px 4px rgba(0,0,0,0.5)' } : {})
                             }}
-                            onClick={() => handleExecuteScenario(scenario.id)}
+                            onClick={() => handleOpenScenarioInKalknegar(scenario.id)}
                           >
                             {scenario.name}
                           </Typography>

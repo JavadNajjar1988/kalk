@@ -15,6 +15,10 @@ export const useServicesStore = defineStore('services', () => {
   const sessionStore = ref(null)
   const emitter = ref(null)
   const store = ref(null) // Main data store
+  const featureStore = ref(null)
+  const selection = ref(null)
+  const osdDriver = ref(null)
+  const ipcRenderer = ref(null)
   
   // Initialize services
   const initialize = async () => {
@@ -54,7 +58,11 @@ export const useServicesStore = defineStore('services', () => {
     preferencesStore: preferencesStore.value,
     sessionStore: sessionStore.value,
     emitter: emitter.value,
-    store: store.value
+      store: store.value,
+      featureStore: featureStore.value,
+      selection: selection.value,
+      osdDriver: osdDriver.value,
+      ipcRenderer: ipcRenderer.value
   })
   
   return {
@@ -63,6 +71,10 @@ export const useServicesStore = defineStore('services', () => {
     sessionStore,
     emitter,
     store,
+    featureStore,
+    selection,
+    osdDriver,
+    ipcRenderer,
     initialize,
     getServices
   }

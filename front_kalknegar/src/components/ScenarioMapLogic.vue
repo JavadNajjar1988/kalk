@@ -1,9 +1,11 @@
 <script setup lang="ts">
 import OLMap from "ol/Map";
+import Draw from "ol/interaction/Draw";
 import { computed, onUnmounted, shallowRef, watch } from "vue";
 import Select from "ol/interaction/Select";
 import { injectStrict } from "@/utils";
 import { activeScenarioKey } from "@/components/injects";
+import "@/modules/tactical-symbol-map/epsg";
 import { useUiStore } from "@/stores/uiStore";
 import {
   useGeoStore,
@@ -37,6 +39,12 @@ import { useScenarioEvents } from "@/modules/scenarioeditor/scenarioEvents";
 import { useSearchActions } from "@/composables/searchActions";
 import { useScenarioFeatureLayers } from "@/modules/scenarioeditor/scenarioFeatureLayers";
 import { useSelectedItems } from "@/stores/selectedStore";
+import { useServicesStore } from "@/modules/tactical-symbol-map/stores/services.js";
+import tacticalInteractions from "@/modules/tactical-symbol-map/ol/interaction";
+import vectorSources from "@/modules/tactical-symbol-map/components/map/vectorSources";
+import createLayerStyles from "@/modules/tactical-symbol-map/components/map/layerStyles";
+import createVectorLayers from "@/modules/tactical-symbol-map/components/map/vectorLayers";
+import registerEventHandlers from "@/modules/tactical-symbol-map/components/map/eventHandlers";
 
 const props = defineProps<{ olMap: OLMap }>();
 const emit = defineEmits<{
@@ -118,6 +126,9 @@ const {
 });
 
 const { selectedFeatureIds } = useSelectedItems();
+const servicesStore = useServicesStore();
+const tacticalInteractionReady = shallowRef(false);
+const tacticalLayersReady = shallowRef(false);
 
 // Order of select interactions is important. The interaction that is added last
 // will be the one that receives the select event first and can stop the propagation.
@@ -139,6 +150,24 @@ const { moveInteraction: moveUnitInteraction } = useMoveInteraction(
 
 useOlEvent(unitLayerGroup.on("change:visible", toggleMoveUnitInteraction));
 olMap.addInteraction(moveUnitInteraction);
+
+const scenarioInteractions = [
+  unitSelectInteraction,
+  boxSelectInteraction,
+  waypointSelect,
+  historyModify,
+  ctrlClickInteraction,
+  featureSelectInteraction,
+  moveUnitInteraction,
+];
+
+const setScenarioInteractionsActive = (active: boolean) => {
+  scenarioInteractions.forEach((interaction) => {
+    if (interaction && typeof interaction.setActive === "function") {
+      interaction.setActive(active);
+    }
+  });
+};
 
 const { showLocation, coordinateFormat, showScaleLine } =
   storeToRefs(useMapSettingsStore());
@@ -171,6 +200,55 @@ function toggleMoveUnitInteraction(event: ObjectEvent) {
 }
 
 emit("map-ready", { olMap, featureSelectInteraction, unitSelectInteraction });
+
+watch(
+  () => servicesStore.getServices(),
+  async (services) => {
+    if (
+      !services?.store ||
+      !services?.featureStore ||
+      !services?.emitter ||
+      !services?.sessionStore ||
+      !services?.selection ||
+      !services?.osdDriver ||
+      !services?.ipcRenderer
+    ) {
+      return;
+    }
+    if (!tacticalLayersReady.value) {
+      const sources = await vectorSources(services);
+      const styles = createLayerStyles(services, sources);
+      const vectorLayers = createVectorLayers(sources, styles);
+      Object.values(vectorLayers).forEach((layer) => {
+        layer.setZIndex(300);
+        olMap.addLayer(layer);
+      });
+      registerEventHandlers({ services, sources, vectorLayers, map: olMap });
+      if (!tacticalInteractionReady.value) {
+        tacticalInteractions({
+          hitTolerance: 3,
+          map: olMap,
+          services,
+          sources,
+          styles,
+        });
+        tacticalInteractionReady.value = true;
+        olMap.getInteractions().on("add", ({ element }) => {
+          if (element instanceof Draw) {
+            setScenarioInteractionsActive(false);
+          }
+        });
+        olMap.getInteractions().on("remove", ({ element }) => {
+          if (element instanceof Draw) {
+            setScenarioInteractionsActive(true);
+          }
+        });
+      }
+      tacticalLayersReady.value = true;
+    }
+  },
+  { immediate: true },
+);
 
 function redrawUnits() {
   drawUnits();

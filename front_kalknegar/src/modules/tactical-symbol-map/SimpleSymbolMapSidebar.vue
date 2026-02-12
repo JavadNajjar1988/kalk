@@ -33,6 +33,7 @@
             :selected="state.selected.includes(entry.id)"
             :editing="state.editing"
             :onClick="onClick"
+            @symbol-dblclick="handleSymbolDoubleClick"
           />
           </div>
         </transition>
@@ -43,20 +44,22 @@
 
 <script setup>
 import { ref, reactive, watch, onMounted, onUnmounted, inject, computed } from 'vue'
-import { useMemento } from '../composables/useMemento.js'
-import { useEmitter } from '../composables/useEmitter.js'
-import { Disposable } from '../shared/disposable.js'
-import { multiselect } from '../model/selection/multiselect.js'
-import { defaultState } from './sidebar/state.js'
-import { matcher, preventDefault } from './events.js'
+import { useMemento } from './composables/useMemento.js'
+import { useEmitter } from './composables/useEmitter.js'
+import { Disposable } from './shared/disposable.js'
+import { multiselect } from './model/selection/multiselect.js'
+import { defaultState } from './components/sidebar/state.js'
+import { matcher, preventDefault } from './components/events.js'
 import * as R from 'ramda'
-import * as ID from '../ids.js'
+import * as ID from './ids.js'
 // Use Ramda's equals for deep equality check
 const isEqual = (a, b) => JSON.stringify(a) === JSON.stringify(b)
-import FilterInput from './sidebar/FilterInput.vue'
-import LazyList from './sidebar/LazyList.vue'
-import Card from './sidebar/Card.vue'
-import './sidebar/Sidebar.css'
+import FilterInput from './components/sidebar/FilterInput.vue'
+import LazyList from './components/sidebar/LazyList.vue'
+import Card from './components/sidebar/Card.vue'
+import './components/sidebar/Sidebar.css'
+
+const emit = defineEmits(['selection-change', 'symbol-dblclick'])
 
 // Custom default search with @symbol scope
 const symbolDefaultSearch = {
@@ -137,6 +140,16 @@ const onKeyDown = (event) => {
 
 const onFocus = () => {
   dispatch({ type: 'focus' })
+}
+
+const findEntryById = (id) => {
+  if (!id) return null
+  return state.entries.find((entry) => entry.id === id) || null
+}
+
+const handleSymbolDoubleClick = (id) => {
+  const entry = findEntryById(id)
+  emit('symbol-dblclick', { id, entry })
 }
 
 // Category name translation to Persian
@@ -387,6 +400,15 @@ watch(() => groupedEntries.value, (entries) => {
     }
   })
 }, { immediate: true })
+
+watch(
+  () => state.selected,
+  (selected) => {
+    const id = selected[selected.length - 1] || null
+    emit('selection-change', { id, entry: findEntryById(id) })
+  },
+  { deep: true }
+)
 
 // Check if category is expanded
 const isCategoryExpanded = (categoryName) => {
@@ -781,7 +803,7 @@ onMounted(() => {
 </script>
 
 <style scoped>
-@import './sidebar/Sidebar.css';
+@import './components/sidebar/Sidebar.css';
 
 .symbol-categories {
   height: 100%;
@@ -884,4 +906,3 @@ onMounted(() => {
   padding-bottom: 0;
 }
 </style>
-

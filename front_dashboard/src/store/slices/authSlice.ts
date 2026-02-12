@@ -33,14 +33,15 @@ export const loginUser = createAsyncThunk(
   'auth/loginUser',
   async (credentials: { username: string; password: string }, { rejectWithValue }) => {
     try {
-      // Call real API endpoint
-      const formData = new FormData();
-      formData.append('username', credentials.username);
-      formData.append('password', credentials.password);
-      
+      // OAuth2 token endpoint expects application/x-www-form-urlencoded (not FormData/multipart)
+      const body = new URLSearchParams();
+      body.append('username', credentials.username);
+      body.append('password', credentials.password);
+
       const response = await fetch('/api/auth/token', {
         method: 'POST',
-        body: formData,
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: body.toString(),
       });
       
       if (!response.ok) {

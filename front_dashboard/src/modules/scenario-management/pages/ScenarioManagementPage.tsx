@@ -6,6 +6,7 @@
 import React from 'react';
 import { Box } from '@mui/material';
 import { ScenarioLandingPage } from '../components';
+import type { ScenarioAction } from '../types';
 
 const ScenarioManagementPage: React.FC = () => {
   const handleScenarioSelect = (scenarioId: string) => {
@@ -13,7 +14,7 @@ const ScenarioManagementPage: React.FC = () => {
     // TODO: Navigate to scenario editor or implement custom logic
   };
 
-  const handleScenarioAction = (action: string, scenarioId: string) => {
+  const handleScenarioAction = (action: ScenarioAction, scenarioId: string) => {
     console.log('Scenario action:', action, scenarioId);
     // TODO: Handle scenario actions (open, delete, download, etc.)
   };

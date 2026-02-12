@@ -236,12 +236,24 @@ async function initializeCesium() {
     cesiumViewer = createCesiumViewer('cesiumContainer');
     console.log('Cesium viewer initialized');
     
-    // پس از آماده شدن Cesium، پین‌های سناریوها را اضافه کن
+    // پس از آماده شدن Cesium، پین‌ها و نمادهای سناریوها را اضافه کن
     try {
-      const { addScenarioPins } = await import('./scenarioPins');
-      await addScenarioPins(cesiumViewer as any);
+      const { fetchScenarios, fetchScenarioById, addScenarioPins } = await import('./scenarioPins');
+      const scenarioId =
+        typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('scenarioId') : null;
+      let scenarios = [];
+      if (scenarioId) {
+        const scenario = await fetchScenarioById(scenarioId);
+        scenarios = scenario ? [scenario] : [];
+      }
+      if (!scenarios.length) {
+        scenarios = await fetchScenarios();
+      }
+      await addScenarioPins(cesiumViewer as any, scenarios);
+      const { addScenarioSymbols } = await import('./scenarioSymbols');
+      await addScenarioSymbols(cesiumViewer as any, scenarios);
     } catch (pinError) {
-      console.error('Failed to add scenario pins:', pinError);
+      console.error('Failed to add scenario pins/symbols:', pinError);
     }
     
     // Initialize coordinate converter with Tehran as origin

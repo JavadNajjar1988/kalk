@@ -134,6 +134,19 @@ services:
     profiles:
       - sdi
 
+  simulator:
+    build:
+      context: ./simulator
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    ports:
+      - "3001:3001"
+    volumes:
+      - ./simulator:/app
+      - /app/node_modules
+    networks:
+      - kalknet
+
 volumes:
   db-data:
   geoserver-data:

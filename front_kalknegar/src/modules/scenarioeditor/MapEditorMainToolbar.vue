@@ -162,11 +162,11 @@
       </MainToolbarButton>
 
       <MainToolbarButton
-        title="نمادهای تاکتیکال ساده"
+        title="کتابخانه نمادهای تاکتیکی"
         class="toolbar-icon-button hidden sm:flex"
-        @click="openSimpleTacticalSymbols"
+        @click="openSymbolSidebar"
       >
-        <span class="sr-only">نمادهای تاکتیکال ساده</span>
+        <span class="sr-only">کتابخانه نمادهای تاکتیکی</span>
         <SimpleTacticalIcon class="size-5 transition-all duration-300" aria-hidden="true" />
       </MainToolbarButton>
 
@@ -226,6 +226,7 @@
       </Button>
     </FloatingPanel>
   </nav>
+  <SymbolSidebarModal v-model:open="symbolSidebarOpen" />
 </template>
 <script setup lang="ts">
 import {
@@ -268,7 +269,7 @@ import { useUnitSettingsStore } from "@/stores/geoStore";
 import { useEventBus, useToggle } from "@vueuse/core";
 import PanelSymbolButton from "@/components/PanelSymbolButton.vue";
 import FloatingPanel from "@/components/FloatingPanel.vue";
-import { computed, onMounted, type Ref, watch } from "vue";
+import { computed, onMounted, ref, type Ref, watch } from "vue";
 import { SID_INDEX, Sidc } from "@/symbology/sidc";
 import { useGetMapLocation } from "@/composables/geoMapLocation";
 import { useMapSelectStore } from "@/stores/mapSelectStore";
@@ -290,6 +291,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { usePlaybackStore } from "@/stores/playbackStore";
 import { useTimeFormatStore } from "@/stores/timeFormatStore";
+import SymbolSidebarModal from "./SymbolSidebarModal.vue";
 
 const emit = defineEmits([
   "open-time-modal",
@@ -464,6 +466,12 @@ function goToEndTime() {
       setCurrentTime(lastEvent.startTime);
     }
   }
+}
+
+const symbolSidebarOpen = ref(false)
+
+function openSymbolSidebar() {
+  symbolSidebarOpen.value = true
 }
 
 function openSimpleTacticalSymbols() {

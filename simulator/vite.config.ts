@@ -3,6 +3,7 @@ import { resolve } from 'path';
 import cesium from 'vite-plugin-cesium';
 
 export default defineConfig({
+  base: '/simulator/',
   plugins: [cesium()],
   resolve: {
     alias: {
@@ -11,7 +12,9 @@ export default defineConfig({
     dedupe: ['cesium'],
   },
   server: {
+    host: true,
     port: 3001,
+    strictPort: true,
     open: true,
   },
   build: {

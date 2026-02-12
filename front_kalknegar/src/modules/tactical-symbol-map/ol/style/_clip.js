@@ -16,7 +16,10 @@ export default resolution => {
       : styles[0].geometry
 
     // Replace primary geometry with clipped geometry:
-    styles[0].geometry = clip(geometry)
+    if (!geometry || typeof geometry.getGeometryType !== 'function') return styles
+    const clipped = clip(geometry)
+    if (!clipped || typeof clipped.getGeometryType !== 'function') return styles
+    styles[0].geometry = clipped
 
     return styles
   }

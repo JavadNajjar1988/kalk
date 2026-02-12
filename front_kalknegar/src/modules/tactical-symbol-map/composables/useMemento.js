@@ -4,23 +4,32 @@ import { useServices } from './useServices'
 export function useMemento(key, defaultValue) {
   const { preferencesStore } = useServices()
   const value = ref(defaultValue)
+  let stopUpdates = null
 
   const put = async (newValue) => {
     await preferencesStore.put(key, newValue)
   }
 
-  onMounted(async () => {
-    const stored = await preferencesStore.get(key, defaultValue)
-    value.value = stored
-
+  onMounted(() => {
     const handleUpdates = ({ value: newValue }) => {
       value.value = newValue
     }
-    preferencesStore.on(key, handleUpdates)
 
-    onUnmounted(() => {
-      preferencesStore.off(key, handleUpdates)
-    })
+    stopUpdates = () => {
+      if (preferencesStore) {
+        preferencesStore.off(key, handleUpdates)
+      }
+    }
+
+    ;(async () => {
+      const stored = await preferencesStore.get(key, defaultValue)
+      value.value = stored
+      preferencesStore.on(key, handleUpdates)
+    })()
+  })
+
+  onUnmounted(() => {
+    if (stopUpdates) stopUpdates()
   })
 
   return [value, put]

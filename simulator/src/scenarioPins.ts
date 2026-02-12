@@ -7,7 +7,7 @@ interface ApiResponse<T> {
   timestamp: string;
 }
 
-interface BackendScenario {
+export interface BackendScenario {
   id: string;
   name: string;
   description?: string | null;
@@ -64,7 +64,7 @@ function getScenarioCenter(s: BackendScenario, index: number, total: number): { 
   return { lon, lat };
 }
 
-export async function addScenarioPins(viewer: Cesium.Viewer): Promise<void> {
+export async function fetchScenarios(): Promise<BackendScenario[]> {
   try {
     const baseUrl = resolveApiBase();
     const url = `${baseUrl}/scenarios`;
@@ -83,25 +83,73 @@ export async function addScenarioPins(viewer: Cesium.Viewer): Promise<void> {
     const res = await fetch(url, { headers });
     if (!res.ok) {
       console.error('Failed to fetch scenarios:', res.status, res.statusText);
-      return;
+      return [];
     }
 
-    const json = (await res.json()) as ApiResponse<BackendScenario[]>;
-    if (!json.success || !Array.isArray(json.data)) {
+    const json = (await res.json()) as ApiResponse<BackendScenario[]> | BackendScenario[];
+    const scenarios = Array.isArray((json as ApiResponse<BackendScenario[]>).data)
+      ? (json as ApiResponse<BackendScenario[]>).data
+      : Array.isArray(json)
+      ? json
+      : [];
+    if (scenarios.length === 0) {
       console.error('Invalid scenarios API response:', json);
-      return;
+      return [];
     }
-
-    const scenarios = json.data;
     console.log(`Loaded ${scenarios.length} scenarios for pins`);
 
-    if (scenarios.length === 0) {
+    return scenarios;
+  } catch (error) {
+    console.error('Error while fetching scenarios:', error);
+    return [];
+  }
+}
+
+export async function fetchScenarioById(id: string): Promise<BackendScenario | null> {
+  if (!id) return null;
+  try {
+    const baseUrl = resolveApiBase();
+    const url = `${baseUrl}/scenarios/${encodeURIComponent(id)}`;
+    const headers: Record<string, string> = {
+      Accept: 'application/json',
+    };
+    const token = localStorage.getItem('access_token');
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+    console.log('Fetching scenario for simulator:', url);
+    const res = await fetch(url, { headers });
+    if (!res.ok) {
+      console.error('Failed to fetch scenario:', res.status, res.statusText);
+      return null;
+    }
+    const json = (await res.json()) as ApiResponse<BackendScenario> | BackendScenario;
+    const scenario = (json as ApiResponse<BackendScenario>).data ?? (json as BackendScenario);
+    if (!scenario || typeof scenario !== 'object') {
+      console.error('Invalid scenario API response:', json);
+      return null;
+    }
+    return scenario;
+  } catch (error) {
+    console.error('Error while fetching scenario by id:', error);
+    return null;
+  }
+}
+
+export async function addScenarioPins(
+  viewer: Cesium.Viewer,
+  scenarios?: BackendScenario[]
+): Promise<void> {
+  try {
+    const resolvedScenarios = scenarios ?? (await fetchScenarios());
+
+    if (!resolvedScenarios.length) {
       return;
     }
 
     // افزودن پین برای هر سناریو
-    scenarios.forEach((scenario, index) => {
-      const { lon, lat } = getScenarioCenter(scenario, index, scenarios.length);
+    resolvedScenarios.forEach((scenario, index) => {
+      const { lon, lat } = getScenarioCenter(scenario, index, resolvedScenarios.length);
 
       const position = Cesium.Cartesian3.fromDegrees(lon, lat, 0);
 

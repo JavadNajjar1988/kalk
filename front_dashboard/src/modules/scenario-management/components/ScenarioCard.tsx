@@ -192,8 +192,12 @@ const ScenarioCard: React.FC<ScenarioCardProps> = ({
         }}
       >
         <MenuItem onClick={() => handleAction('open')}>
+          <EditIcon sx={{ mr: 1, fontSize: 20 }} />
+          ویرایش در کالک‌نگار
+        </MenuItem>
+        <MenuItem onClick={() => handleAction('run')}>
           <PlayArrowIcon sx={{ mr: 1, fontSize: 20 }} />
-          اجرا
+          اجرا در شبیه‌ساز
         </MenuItem>
         <MenuItem onClick={() => handleAction('duplicate')}>
           <ContentCopyIcon sx={{ mr: 1, fontSize: 20 }} />

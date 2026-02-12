@@ -3,13 +3,13 @@
  * انواع داده‌های مخصوص صفحه فرود
  */
 
-import { ScenarioMetadata, DemoScenario, SortOption } from './scenario';
+import { ScenarioMetadata, DemoScenario, SortOption, ScenarioAction } from './scenario';
 
 // Props for main landing page component
 export interface ScenarioLandingPageProps {
   className?: string;
   onScenarioSelect?: (scenarioId: string) => void;
-  onScenarioAction?: (action: string, scenarioId: string) => void;
+  onScenarioAction?: (action: ScenarioAction, scenarioId: string) => void;
   initialScenarios?: ScenarioMetadata[];
   showDemoScenarios?: boolean;
   enableUpload?: boolean;
@@ -19,7 +19,7 @@ export interface ScenarioLandingPageProps {
 // Props for scenario card component
 export interface ScenarioCardProps {
   scenario: ScenarioMetadata;
-  onAction: (action: string) => void;
+  onAction: (action: ScenarioAction) => void;
   onSelect?: () => void;
   selected?: boolean;
   showActions?: boolean;
@@ -38,7 +38,7 @@ export interface DemoScenarioCardProps {
 export interface ScenarioGridProps {
   scenarios: ScenarioMetadata[];
   demoScenarios?: DemoScenario[];
-  onScenarioAction: (action: string, scenarioId: string) => void;
+  onScenarioAction: (action: ScenarioAction, scenarioId: string) => void;
   onDemoScenarioSelect: (scenarioId: string) => void;
   onNewScenario: () => void;
   onUploadScenario?: (file: File) => void;
@@ -77,7 +77,7 @@ export interface ScenarioSectionProps {
   title: string;
   scenarios?: ScenarioMetadata[];
   demoScenarios?: DemoScenario[];
-  onScenarioAction?: (action: string, scenarioId: string) => void;
+  onScenarioAction?: (action: ScenarioAction, scenarioId: string) => void;
   onDemoSelect?: (scenarioId: string) => void;
   loading?: boolean;
   error?: string;

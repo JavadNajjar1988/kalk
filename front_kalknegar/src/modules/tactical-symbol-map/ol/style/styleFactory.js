@@ -3,6 +3,8 @@ import * as olStyle from 'ol/style'
 import { PI_OVER_2, PI } from '../../shared/Math'
 import { Symbol } from '@syncpoint/signs'
 import * as patterns from './patterns'
+import * as TS from '../ts'
+import GeoJSON from 'ol/format/GeoJSON'
 
 const Styles = {
   stroke: options => new olStyle.Stroke(options),
@@ -176,9 +178,34 @@ const makeImage = props => {
   else return null
 }
 
+const geojson = new GeoJSON({
+  dataProjection: 'EPSG:3857',
+  featureProjection: 'EPSG:3857'
+})
+
+const normalizeGeometry = geometry => {
+  if (!geometry) return geometry
+  if (typeof geometry.getType === 'function') return geometry
+  if (typeof geometry.getGeometryType === 'function') {
+    try {
+      return TS.write(geometry)
+    } catch {
+      return undefined
+    }
+  }
+  if (geometry.type) {
+    try {
+      return geojson.readGeometry(geometry)
+    } catch {
+      return undefined
+    }
+  }
+  return undefined
+}
+
 const makeStyle = props => Array.isArray(props)
   ? props.map(makeStyle)
-  : Styles.style(props)
+  : Styles.style({ ...props, geometry: normalizeGeometry(props.geometry) })
 
 /**
  *

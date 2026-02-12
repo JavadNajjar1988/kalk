@@ -110,6 +110,14 @@ const format = feature => {
  *    options :: FeatureDescriptor -> (string ~> any) - actual options passed to interaction
  *    complete :: (ol/Map, ol/Feature) -> unit - optionally rewrite feature's geometry
  */
+const withMaxPoints = (options, descriptor) => {
+  const maxPoints = Number(descriptor?.geometry?.maxPoints)
+  if (Number.isFinite(maxPoints)) {
+    return { ...options, maxPoints }
+  }
+  return options
+}
+
 const geometries = [
 
   /* Point. */
@@ -132,7 +140,7 @@ const geometries = [
   /* LineString. */
   {
     match: ({ geometry }) => geometry.type === GeometryType.LINE_STRING,
-    options: descriptor => ({ type: GeometryType.LINE_STRING, maxPoints: descriptor.geometry.maxPoints })
+    options: descriptor => withMaxPoints({ type: GeometryType.LINE_STRING }, descriptor)
   },
 
   /* GeometryCollection/orbit. */
@@ -232,7 +240,7 @@ const geometries = [
   /* GeometryCollection/corridor (2-/n-point) */
   {
     match: ({ geometry }) => geometry.layout === 'corridor',
-    options: descriptor => ({ type: GeometryType.LINE_STRING, maxPoints: descriptor.geometry.maxPoints }),
+    options: descriptor => withMaxPoints({ type: GeometryType.LINE_STRING }, descriptor),
     complete: (map, feature) => {
       const geometry = feature.getGeometry()
       const { read, write } = format(feature)
