@@ -102,7 +102,7 @@ export const translations = {
     },
     dashboard: {
       stats: {
-        activeScenarios: 'سناریوهای فعال',
+        activeScenarios: 'سناریوهای آرشیو',
         availableForces: 'نیروهای موجود',
         ongoingOperations: 'عملیات در حال اجرا',
         securityAlerts: 'هشدارهای امنیتی',

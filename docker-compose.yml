@@ -77,7 +77,7 @@ services:
     depends_on:
       - api
 
-  # سرور نقشه جداگانه برای داده‌های سنگین (10TB+)
+  # سرور نقشه جداگانه برای داده‌هایب سنگین (10TB+)
   # این سرور برای نقشه‌های بزرگ روی هارد خارجی طراحی شده است
   # استفاده: docker compose --profile heavy-maps up -d
   external-tileserver:
