@@ -57,12 +57,21 @@ export const loginUser = createAsyncThunk(
       
       // Decode JWT to get user info (basic decode without verification for now)
       const payload = JSON.parse(atob(access_token.split('.')[1]));
+
+      const mapBackendRolesToUiRole = (roles: unknown): User['role'] => {
+        const roleList = Array.isArray(roles) ? roles.map(String) : [];
+        // Backend roles currently look like: SUPER_ADMIN / COMMANDER / VIEWER
+        if (roleList.includes('SUPER_ADMIN') || roleList.includes('ADMIN')) return 'admin';
+        if (roleList.includes('COMMANDER')) return 'commander';
+        if (roleList.includes('VIEWER')) return 'viewer';
+        return 'operator';
+      };
       
       const user: User = {
         id: payload.uid || '1',
         username: payload.sub || credentials.username,
         name: payload.sub === 'admin' ? 'مدیر سیستم' : 'اپراتور سیستم',
-        role: payload.roles?.includes('ADMIN') ? 'admin' : 'operator',
+        role: mapBackendRolesToUiRole(payload.roles),
         rank: payload.sub === 'admin' ? 'سرهنگ' : 'ستوان',
         unit: payload.sub === 'admin' ? 'فرماندهی کل' : 'مرکز عملیات',
       };
@@ -123,6 +132,15 @@ const authSlice = createSlice({
       }
       try {
         const payload = JSON.parse(atob(token.split('.')[1]));
+
+        const mapBackendRolesToUiRole = (roles: unknown): User['role'] => {
+          const roleList = Array.isArray(roles) ? roles.map(String) : [];
+          if (roleList.includes('SUPER_ADMIN') || roleList.includes('ADMIN')) return 'admin';
+          if (roleList.includes('COMMANDER')) return 'commander';
+          if (roleList.includes('VIEWER')) return 'viewer';
+          return 'operator';
+        };
+
         const now = Math.floor(Date.now() / 1000);
         // Check if token is not expired
         if (payload.exp && payload.exp > now) {
@@ -130,7 +148,7 @@ const authSlice = createSlice({
             id: payload.uid || '1',
             username: payload.sub || 'unknown',
             name: payload.sub === 'admin' ? 'مدیر سیستم' : 'اپراتور سیستم',
-            role: payload.roles?.includes('ADMIN') ? 'admin' : 'operator',
+            role: mapBackendRolesToUiRole(payload.roles),
             rank: payload.sub === 'admin' ? 'سرهنگ' : 'ستوان',
             unit: payload.sub === 'admin' ? 'فرماندهی کل' : 'مرکز عملیات',
           };

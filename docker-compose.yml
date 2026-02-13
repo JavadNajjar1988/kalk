@@ -36,6 +36,10 @@ services:
       DB_URL: ${DB_URL:-postgresql+asyncpg://postgres:postgres@db:5432/kalk}
       CORS_ORIGINS: '["http://localhost:5173","http://localhost:5174","http://localhost:3000","http://127.0.0.1:5173","http://127.0.0.1:3000"]'
       DISABLE_AUTH: ${DISABLE_AUTH:-false}
+      JWT_SECRET: ${JWT_SECRET:-kalk-dev-local-jwt-secret}
+      JWT_ALG: ${JWT_ALG:-HS256}
+      ACCESS_TOKEN_EXPIRE_MINUTES: ${ACCESS_TOKEN_EXPIRE_MINUTES:-60}
+      ADMIN_BOOTSTRAP_PASSWORD: ${ADMIN_BOOTSTRAP_PASSWORD:-admin123}
       # استفاده از مسیر خارجی یا مسیر محلی
       # اگر EXTERNAL_MAPS_PATH در .env تنظیم شده باشد، از /mnt/external-maps استفاده می‌شود
       # در غیر این صورت از backend/static/maps (مسیر محلی) استفاده می‌شود

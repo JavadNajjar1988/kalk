@@ -49,9 +49,21 @@ async def get_current_user(token: str = Depends(oauth2_scheme)) -> dict[str, Any
     try:
         payload = decode_access_token(token)
         username: str | None = payload.get("sub")
-        roles: list[str] = payload.get("roles", [])
+        roles_raw = payload.get("roles", [])
+        
+        # Handle both list and string formats
+        if isinstance(roles_raw, str):
+            # If roles is a string, split by comma
+            roles = [r.strip() for r in roles_raw.split(",") if r.strip()]
+        elif isinstance(roles_raw, list):
+            roles = [str(r).strip() for r in roles_raw if r]
+        else:
+            roles = []
+            
         if username is None:
             raise credentials_exception
+        # Logging برای debugging
+        logger.info(f"JWT decoded - User: {username}, Roles from token (raw): {roles_raw}, Parsed: {roles}")
         return {"username": username, "roles": roles}
     except JWTError:
         raise credentials_exception
@@ -61,8 +73,40 @@ def require_roles(*required_roles: str):
     async def _inner(user: dict[str, Any] = Depends(get_current_user)):
         if settings.DISABLE_AUTH:
             return user
-        user_roles = set(user.get("roles", []))
-        if not set(required_roles).issubset(user_roles):
+        raw_roles = user.get("roles", []) or []
+        # نرمال‌سازی نقش‌ها برای پشتیبانی از اسامی معادل (مثلاً ADMIN ~ SUPER_ADMIN)
+        normalized_user_roles = set()
+        for role in raw_roles:
+            if not role:
+                continue
+            r = str(role).strip().upper()
+            if r == "ADMIN":
+                r = "SUPER_ADMIN"
+            normalized_user_roles.add(r)
+
+        normalized_required = {str(r).strip().upper() for r in required_roles}
+
+        # Logging برای بررسی نقش‌ها (INFO level برای debugging)
+        logger.info(
+            "Permission check - User: %s, Raw roles: %s, Normalized: %s",
+            user.get("username"),
+            raw_roles,
+            normalized_user_roles,
+        )
+        logger.info(
+            "Permission check - Required (ANY of): %s, Normalized: %s",
+            required_roles,
+            normalized_required,
+        )
+
+        # منطق مجوزها: داشتن «حداقل یکی» از نقش‌های موردنیاز کافی است (OR)
+        if not (normalized_required & normalized_user_roles):
+            logger.error(
+                "ACCESS DENIED - User: %s, Has roles: %s, Needs ANY of: %s",
+                user.get("username"),
+                normalized_user_roles,
+                normalized_required,
+            )
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Insufficient permissions")
         return user
 

@@ -79,8 +79,8 @@ class ReactBridge {
     const checkInterval = setInterval(() => {
       // Check if Vue app is mounted (look for Vue app element)
       const appElement = document.getElementById('app');
-      console.log('[ReactBridge] App element:', appElement, 'Children:', appElement?.children.length);
-      if (appElement && appElement.children.length > 0) {
+      const isMounted = Boolean(appElement?.hasAttribute('data-v-app'));
+      if (isMounted) {
         clearInterval(checkInterval);
         console.log('[ReactBridge] Vue app mounted, notifying ready');
         // Add a small delay to ensure Vue is fully initialized

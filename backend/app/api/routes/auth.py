@@ -7,8 +7,9 @@ from fastapi import APIRouter, Depends, HTTPException, status, Request
 from fastapi.security import OAuth2PasswordRequestForm
 
 from app.core.config import settings
-from app.core.security import create_access_token, verify_password, get_password_hash
+from app.core.security import create_access_token, verify_password, get_password_hash, get_current_user
 from app.core.rate_limit import rate_limiter
+from app.core.response import success
 from app.deps import DbSession
 from sqlalchemy import select
 from app.models.user import User
@@ -181,7 +182,10 @@ async def login(
     user = await _authenticate_user(db, form_data.username, form_data.password, client_ip, request)
 
     # Generate token
-    roles = [r.strip() for r in (user.roles or "").split(",") if r.strip()]
+    # Parse roles from comma-separated string, handling empty/None cases
+    roles_str = user.roles or ""
+    roles = [r.strip() for r in roles_str.split(",") if r.strip()] if roles_str else []
+    logger.info(f"Login successful - User: {user.username}, Roles from DB: '{roles_str}', Parsed: {roles}")
     access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = create_access_token(
         data={"sub": user.username, "roles": roles, "uid": user.id}, expires_delta=access_token_expires
@@ -230,9 +234,24 @@ async def login_json(payload: LoginRequest, db: DbSession, request: Request):
     user = await _authenticate_user(db, payload.username, payload.password, client_ip, request)
 
     # Generate token
-    roles = [r.strip() for r in (user.roles or "").split(",") if r.strip()]
+    # Parse roles from comma-separated string, handling empty/None cases
+    roles_str = user.roles or ""
+    roles = [r.strip() for r in roles_str.split(",") if r.strip()] if roles_str else []
+    logger.info(f"Login successful - User: {user.username}, Roles from DB: '{roles_str}', Parsed: {roles}")
     access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = create_access_token(
         data={"sub": user.username, "roles": roles, "uid": user.id}, expires_delta=access_token_expires
     )
     return Token(access_token=access_token)
+
+
+@router.get("/me", response_model=dict)
+async def get_current_user_info(current_user: dict = Depends(get_current_user)):
+    """
+    Endpoint تست برای بررسی نقش‌های کاربر فعلی
+    """
+    return success({
+        "username": current_user.get("username"),
+        "roles": current_user.get("roles", []),
+        "roles_type": str(type(current_user.get("roles", []))),
+    })

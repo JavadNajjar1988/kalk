@@ -434,19 +434,27 @@ export function useScenarioIO(store: ShallowRef<NewScenarioStore>) {
 
   async function loadDemoScenario(id: string | "Operation_Beit_ol_Moqaddas_1982_FA" | "Operation_Mersad_1988_FA" | "Iran_Israel_War_June_2025_FA") {
     isLoading.value = true;
-    const base = (import.meta as any).env?.BASE_URL || "/";
-    const idUrlMap: Record<string, string> = {
-      Operation_Beit_ol_Moqaddas_1982_FA: `${base}scenarios/Operation_Beit_ol_Moqaddas_1982_FA.json`,
-      Operation_Mersad_1988_FA: `${base}scenarios/Operation_Mersad_1988_FA.json`,
-      Iran_Israel_War_June_2025_FA: `${base}scenarios/Iran_Israel_War_June_2025_FA.json`,
-    };
-    const url = idUrlMap[id];
-    if (!url) {
-      console.warn("Unknown scenario id", id);
-      return;
+    try {
+      const base = (import.meta as any).env?.BASE_URL || "/";
+      const idUrlMap: Record<string, string> = {
+        Operation_Beit_ol_Moqaddas_1982_FA: `${base}scenarios/Operation_Beit_ol_Moqaddas_1982_FA.json`,
+        Operation_Mersad_1988_FA: `${base}scenarios/Operation_Mersad_1988_FA.json`,
+        Iran_Israel_War_June_2025_FA: `${base}scenarios/Iran_Israel_War_June_2025_FA.json`,
+        // Backward compatibility with older demo IDs still used in some routes/views
+        falkland82: `${base}scenarios/falkland82.json`,
+        falklands82: `${base}scenarios/falkland82.json`,
+        "demo-falklands82": `${base}scenarios/falkland82.json`,
+      };
+      const normalizedId = String(id).trim();
+      const url = idUrlMap[normalizedId];
+      if (!url) {
+        console.warn("Unknown scenario id", id);
+        return;
+      }
+      await loadFromUrl(url);
+    } finally {
+      isLoading.value = false;
     }
-    await loadFromUrl(url);
-    isLoading.value = false;
   }
 
   async function downloadAsJson(fileName?: string) {

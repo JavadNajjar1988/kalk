@@ -505,6 +505,35 @@ const ScenariosPage: React.FC = () => {
 
   const handleUpdateScenario = (scenarioData: Partial<Scenario>) => {
     if (scenarioData.id) {
+      const scenarioId = String(scenarioData.id);
+      const isDemoScenario =
+        scenarioId.startsWith('demo-') || Boolean((scenarioData as any)?.metadata?.demo);
+
+      if (isDemoScenario) {
+        const formData: any = {
+          name: scenarioData.name || '',
+          description: scenarioData.description || '',
+          status: scenarioData.status || ScenarioStatus.DRAFT,
+          startTime: scenarioData.startTime || '',
+          endTime: scenarioData.endTime,
+          objectives: scenarioData.objectives || [],
+          image: (scenarioData as any)?.image || (scenarioData as any)?.metadata?.image,
+          metadata: (scenarioData as any)?.metadata || {},
+        };
+        dispatch(createScenario(formData))
+          .unwrap()
+          .then(() => {
+            setDialogOpen(false);
+            setSelectedScenario(undefined);
+            dispatch(fetchScenarios());
+            dispatch(showSuccessNotification(t('scenarios.notifications.createSuccess')));
+          })
+          .catch(() => {
+            dispatch(showErrorNotification(t('scenarios.notifications.createError')));
+          });
+        return;
+      }
+
       dispatch(updateScenario({ id: scenarioData.id, updates: scenarioData }))
         .unwrap()
         .then(() => {

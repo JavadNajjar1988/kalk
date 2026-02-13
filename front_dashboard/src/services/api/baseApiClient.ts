@@ -38,6 +38,23 @@ export class BaseApiClient {
     return {};
   }
 
+  protected handleUnauthorized(): void {
+    try {
+      localStorage.removeItem('access_token');
+      localStorage.removeItem('access_token_exp');
+      localStorage.removeItem('persist:sajed-root');
+      sessionStorage.removeItem('access_token');
+      sessionStorage.removeItem('access_token_exp');
+    } catch {
+      // ignore storage cleanup issues
+    }
+
+    if (typeof window !== 'undefined' && !window.location.pathname.startsWith('/auth/login')) {
+      const next = encodeURIComponent(`${window.location.pathname}${window.location.search}`);
+      window.location.assign(`/auth/login?reason=unauthorized&next=${next}`);
+    }
+  }
+
   protected async makeRequest<T>(
     endpoint: string,
     options: RequestInit = {}
@@ -63,13 +80,21 @@ export class BaseApiClient {
 
     try {
       const response = await fetch(url, config);
-      const data = await response.json();
+      let data: any = null;
+      try {
+        data = await response.json();
+      } catch {
+        data = null;
+      }
 
       if (!response.ok) {
+        if (response.status === 401 && !endpoint.startsWith('/auth/')) {
+          this.handleUnauthorized();
+        }
         throw new ApiClientError(
-          data.message || 'API request failed',
-          data.code,
-          data.details,
+          data?.message || 'API request failed',
+          data?.code,
+          data?.details,
           response.status
         );
       }
@@ -153,13 +178,21 @@ export class BaseApiClient {
 
     try {
       const response = await fetch(url, config);
-      const data = await response.json();
+      let data: any = null;
+      try {
+        data = await response.json();
+      } catch {
+        data = null;
+      }
 
       if (!response.ok) {
+        if (response.status === 401 && !endpoint.startsWith('/auth/')) {
+          this.handleUnauthorized();
+        }
         throw new ApiClientError(
-          data.message || 'API request failed',
-          data.code,
-          data.details,
+          data?.message || 'API request failed',
+          data?.code,
+          data?.details,
           response.status
         );
       }
