@@ -12,10 +12,6 @@ import mapSlice from './slices/mapSlice';
 import resourcesSlice from './slices/resourcesSlice';
 import orbatSlice from './slices/orbatSlice';
 import tabularResourcesSlice from './slices/tabularResourcesSlice';
-
-import definitionEditorSlice, { setExpandedNodes as deSetExpandedNodes, setHighlightedNodes as deSetHighlightedNodes } from '../modules/definition-editor/store/definitionEditorSlice';
-import equipmentFieldsReducer from '../modules/definition-editor/store/equipmentFieldsSlice';
-import hierarchyLevelsReducer from '../modules/definition-editor/store/hierarchyLevelsSlice';
 import usersSlice from '../modules/users/store/usersSlice';
 import resourcesModuleSlice from '../modules/resources/store/resourcesSlice';
 
@@ -28,10 +24,6 @@ const rootReducer = combineReducers({
 	resources: resourcesSlice,
 	orbat: orbatSlice,
 	tabularResources: tabularResourcesSlice,
-
-	definitionEditor: definitionEditorSlice,
-	equipmentFields: equipmentFieldsReducer,
-	hierarchyLevels: hierarchyLevelsReducer,
 	users: usersSlice,
 	resourcesModule: resourcesModuleSlice,
 });
@@ -41,25 +33,7 @@ const persistConfig = {
 	key: 'sajed-root',
 	storage,
 	whitelist: ['auth', 'ui'], // auth و ui persist میشوند
-	version: 2, // برای migration
-	migrate: async (state: any) => {
-		try {
-			if (!state) return state;
-			// نمونه: تبدیل Set های قدیمی به آرایه در definitionEditor (در صورت وجود در نسخه‌های گذشته)
-			const de = state.definitionEditor;
-			if (de) {
-				if (de.expandedNodes && !Array.isArray(de.expandedNodes)) {
-					de.expandedNodes = Array.from(de.expandedNodes);
-				}
-				if (de.highlightedNodes && !Array.isArray(de.highlightedNodes)) {
-					de.highlightedNodes = Array.from(de.highlightedNodes);
-				}
-			}
-			return state;
-		} catch {
-			return state;
-		}
-	},
+	version: 2,
 };
 
 const persistedReducer = persistReducer(persistConfig, rootReducer);
@@ -71,36 +45,12 @@ export const store = configureStore({
 		getDefaultMiddleware({
 			serializableCheck: {
 				ignoredActions: ['persist/PERSIST', 'persist/REHYDRATE'],
-				ignoredPaths: ['definitionEditor.expandedNodes', 'definitionEditor.highlightedNodes'],
 			},
 		}),
 	devTools: process.env.NODE_ENV !== 'production',
 });
 
 export const persistor = persistStore(store);
-
-// یک‌بار در شروع برنامه وضعیت definitionEditor را سالم‌سازی می‌کنیم تا اگر به‌صورت Set مانده بود، به آرایه تبدیل شود
-try {
-	const state: any = store.getState();
-	const de = state?.definitionEditor;
-	if (de) {
-		const expanded = Array.isArray(de.expandedNodes)
-			? de.expandedNodes
-			: Array.from(de.expandedNodes ?? []);
-		const highlighted = Array.isArray(de.highlightedNodes)
-			? de.highlightedNodes
-			: Array.from(de.highlightedNodes ?? []);
-
-		if (!Array.isArray(de.expandedNodes)) {
-			store.dispatch(deSetExpandedNodes(expanded));
-		}
-		if (!Array.isArray(de.highlightedNodes)) {
-			store.dispatch(deSetHighlightedNodes(highlighted));
-		}
-	}
-} catch (e) {
-	// نادیده بگیر
-}
 
 // Types
 export type RootState = ReturnType<typeof store.getState>;

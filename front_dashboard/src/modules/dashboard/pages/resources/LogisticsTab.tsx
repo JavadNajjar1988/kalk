@@ -44,8 +44,7 @@ import {
 import LogisticsModal from './modals/LogisticsModal';
 import LogisticsDeleteConfirmModal from '@/modules/dashboard/pages/resources/LogisticsDeleteConfirmModal';
 
-// Import logistics data
-// import logisticsData from '@/data/resources/logistics.json'; // Remove static import
+import logisticsData from '@/data/resources/logistics.json';
 
 const LogisticsTab: React.FC = () => {
   const { t } = useTranslation();
@@ -349,7 +348,7 @@ const LogisticsTab: React.FC = () => {
         onClose={handleCloseModal}
         onSave={handleSave}
         logistics={selectedLogistics}
-        categories={[]} // No longer needed - using hierarchical selector
+        categories={logisticsData.categories}
       />
 
       <LogisticsDeleteConfirmModal

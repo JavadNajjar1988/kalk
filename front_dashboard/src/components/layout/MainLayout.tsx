@@ -31,10 +31,8 @@ import {
   Dashboard,
   People,
   Help,
-  MilitaryTech,
   Warning as WarningIcon,
   CheckCircle,
-  Edit as EditIcon,
   AccountBox,
   ExitToApp,
   Assignment,
@@ -188,20 +186,6 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
       roles: ['admin', 'commander', 'operator']
     },
 
-    { 
-      id: 'definition-editor', 
-      label: t('menu.definitionEditor'), 
-      icon: <EditIcon />, 
-      path: '/dashboard/definition-editor',
-      roles: ['admin', 'commander', 'operator']
-    },
-    { 
-      id: 'military-symbol-generator', 
-      label: t('menu.militarySymbolGenerator'), 
-      icon: <MilitaryTech />, 
-      path: '/dashboard/military-symbol-generator',
-      roles: ['admin', 'commander', 'operator']
-    },
   ];
 
   const filteredMenuItems = menuItems.filter(item => 

@@ -3,6 +3,10 @@ import {
   Box,
   Typography,
   Button,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
   Card,
   CardContent,
   Grid,
@@ -29,7 +33,6 @@ import { useAppDispatch, useAppSelector } from '@/store';
 import { fetchResources, setFilters, clearFilters, createResource, clearError } from '../store/resourcesSlice';
 import type { Resource, ResourceFilters } from '../types';
 import { useTranslation } from '@/hooks/useTranslation';
-import DynamicModal from '@/components/common/DynamicModal';
 
 const ResourcesListPage: React.FC = () => {
   const dispatch = useAppDispatch();
@@ -45,6 +48,15 @@ const ResourcesListPage: React.FC = () => {
 
   const [searchTerm, setSearchTerm] = useState(filters.search || '');
   const [showAddModal, setShowAddModal] = useState(false);
+  const [newResourceForm, setNewResourceForm] = useState({
+    fullName: '',
+    birthDate: '',
+    gender: 'مرد' as 'مرد' | 'زن',
+    nationality: 'ایرانی' as 'ایرانی' | 'غیرایرانی' | 'تبعه مضاعف',
+    birthPlace: '',
+    status: 'اشخاص کلیدی' as 'اشخاص کلیدی' | 'نظامی' | 'غیرنظامی',
+    subStatus: 'زنده' as 'زنده' | 'شهید' | 'آسیب دیده',
+  });
 
   useEffect(() => {
     dispatch(fetchResources(filters));
@@ -68,21 +80,40 @@ const ResourcesListPage: React.FC = () => {
     setShowAddModal(true);
   };
 
-  const handleSaveResource = async (formData: Record<string, any>) => {
+  const handleSaveResource = async () => {
     try {
-      // Transform form data to Resource format
       const resourceData: Omit<Resource, 'id' | 'createdAt' | 'updatedAt'> = {
-        personalInfo: formData['pr-1-1'] || {},
+        personalInfo: {
+          fullName: newResourceForm.fullName || 'منبع جدید',
+          birthDate: newResourceForm.birthDate || new Date().toISOString(),
+          gender: newResourceForm.gender,
+          nationality: newResourceForm.nationality,
+          birthPlace: newResourceForm.birthPlace || undefined,
+        },
         legalInfo: {
-          status: 'اشخاص کلیدی' as const, // Default, will be determined by form data
-          subStatus: 'زنده' as const,
-          details: formData['pr-1-2'] || {},
+          status: newResourceForm.status,
+          subStatus: newResourceForm.subStatus,
+          details:
+            newResourceForm.status === 'اشخاص کلیدی'
+              ? { position: 'نامشخص', authorityLevel: 'فرمانده پایین' }
+              : newResourceForm.status === 'نظامی'
+                ? { forceType: 'ارتش', rank: 'نامشخص', position: 'نامشخص' }
+                : { occupation: 'نامشخص' },
         },
         isActive: true,
       };
       
       await dispatch(createResource(resourceData));
       setShowAddModal(false);
+      setNewResourceForm({
+        fullName: '',
+        birthDate: '',
+        gender: 'مرد',
+        nationality: 'ایرانی',
+        birthPlace: '',
+        status: 'اشخاص کلیدی',
+        subStatus: 'زنده',
+      });
     } catch (error) {
       console.error('Error creating resource:', error);
     }
@@ -325,16 +356,118 @@ const ResourcesListPage: React.FC = () => {
         <AddIcon />
       </Fab>
 
-      {/* Dynamic Modal for Adding Resources */}
-      <DynamicModal
+      <Dialog
         open={showAddModal}
         onClose={() => setShowAddModal(false)}
-        onSave={handleSaveResource}
-        categoryType="resources"
-        mode="create"
-        title="افزودن منبع جدید"
-        maxWidth="lg"
-      />
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle>افزودن منبع جدید</DialogTitle>
+        <DialogContent dividers>
+          <Grid container spacing={2} sx={{ mt: 0.5 }}>
+            <Grid item xs={12}>
+              <TextField
+                fullWidth
+                label="نام و نام خانوادگی"
+                value={newResourceForm.fullName}
+                onChange={(e) => setNewResourceForm((prev) => ({ ...prev, fullName: e.target.value }))}
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <TextField
+                fullWidth
+                type="date"
+                label="تاریخ تولد"
+                InputLabelProps={{ shrink: true }}
+                value={newResourceForm.birthDate}
+                onChange={(e) => setNewResourceForm((prev) => ({ ...prev, birthDate: e.target.value }))}
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <FormControl fullWidth>
+                <InputLabel>جنسیت</InputLabel>
+                <Select
+                  value={newResourceForm.gender}
+                  label="جنسیت"
+                  onChange={(e) => setNewResourceForm((prev) => ({ ...prev, gender: e.target.value as 'مرد' | 'زن' }))}
+                >
+                  <MenuItem value="مرد">مرد</MenuItem>
+                  <MenuItem value="زن">زن</MenuItem>
+                </Select>
+              </FormControl>
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <FormControl fullWidth>
+                <InputLabel>تابعیت</InputLabel>
+                <Select
+                  value={newResourceForm.nationality}
+                  label="تابعیت"
+                  onChange={(e) =>
+                    setNewResourceForm((prev) => ({
+                      ...prev,
+                      nationality: e.target.value as 'ایرانی' | 'غیرایرانی' | 'تبعه مضاعف',
+                    }))
+                  }
+                >
+                  <MenuItem value="ایرانی">ایرانی</MenuItem>
+                  <MenuItem value="غیرایرانی">غیرایرانی</MenuItem>
+                  <MenuItem value="تبعه مضاعف">تبعه مضاعف</MenuItem>
+                </Select>
+              </FormControl>
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <TextField
+                fullWidth
+                label="محل تولد"
+                value={newResourceForm.birthPlace}
+                onChange={(e) => setNewResourceForm((prev) => ({ ...prev, birthPlace: e.target.value }))}
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <FormControl fullWidth>
+                <InputLabel>وضعیت اصلی</InputLabel>
+                <Select
+                  value={newResourceForm.status}
+                  label="وضعیت اصلی"
+                  onChange={(e) =>
+                    setNewResourceForm((prev) => ({
+                      ...prev,
+                      status: e.target.value as 'اشخاص کلیدی' | 'نظامی' | 'غیرنظامی',
+                    }))
+                  }
+                >
+                  <MenuItem value="اشخاص کلیدی">اشخاص کلیدی</MenuItem>
+                  <MenuItem value="نظامی">نظامی</MenuItem>
+                  <MenuItem value="غیرنظامی">غیرنظامی</MenuItem>
+                </Select>
+              </FormControl>
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <FormControl fullWidth>
+                <InputLabel>وضعیت فرعی</InputLabel>
+                <Select
+                  value={newResourceForm.subStatus}
+                  label="وضعیت فرعی"
+                  onChange={(e) =>
+                    setNewResourceForm((prev) => ({
+                      ...prev,
+                      subStatus: e.target.value as 'زنده' | 'شهید' | 'آسیب دیده',
+                    }))
+                  }
+                >
+                  <MenuItem value="زنده">زنده</MenuItem>
+                  <MenuItem value="شهید">شهید</MenuItem>
+                  <MenuItem value="آسیب دیده">آسیب دیده</MenuItem>
+                </Select>
+              </FormControl>
+            </Grid>
+          </Grid>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setShowAddModal(false)}>انصراف</Button>
+          <Button variant="contained" onClick={handleSaveResource}>ذخیره</Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 };

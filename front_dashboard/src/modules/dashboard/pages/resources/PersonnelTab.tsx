@@ -4,6 +4,10 @@ import {
   Typography,
   Paper,
   Button,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
   Table,
   TableBody,
   TableCell,
@@ -41,7 +45,6 @@ import {
   selectTabFilters,
   selectTabPagination,
 } from '@/store/slices/tabularResourcesSlice';
-import DynamicModal from '@/components/common/DynamicModal';
 import PersonnelDeleteConfirmModal from './PersonnelDeleteConfirmModal';
 
 const PersonnelTab: React.FC = () => {
@@ -58,6 +61,19 @@ const PersonnelTab: React.FC = () => {
   // Local state
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedPersonnel, setSelectedPersonnel] = useState<PersonnelItem | null>(null);
+  const [personnelForm, setPersonnelForm] = useState({
+    personalCode: '',
+    firstName: '',
+    lastName: '',
+    nationalId: '',
+    rank: '',
+    unit: '',
+    position: '',
+    phoneNumber: '',
+    email: '',
+    status: 'active' as 'active' | 'inactive' | 'leave' | 'mission',
+    startDate: '',
+  });
   const [searchTerm, setSearchTerm] = useState(filters.search || '');
   const [statusFilter, setStatusFilter] = useState<string>(filters.status || 'all');
   const [rankFilter, setRankFilter] = useState<string>((filters as any).rank || 'all');
@@ -79,6 +95,19 @@ const PersonnelTab: React.FC = () => {
 
   const handleOpenModal = (person?: PersonnelItem) => {
     setSelectedPersonnel(person || null);
+    setPersonnelForm({
+      personalCode: person?.personalCode || '',
+      firstName: person?.firstName || '',
+      lastName: person?.lastName || '',
+      nationalId: person?.nationalId || '',
+      rank: person?.rank || '',
+      unit: person?.unit || '',
+      position: person?.position || '',
+      phoneNumber: person?.phoneNumber || '',
+      email: person?.email || '',
+      status: person?.status || 'active',
+      startDate: person?.startDate || '',
+    });
     setModalOpen(true);
   };
 
@@ -87,41 +116,21 @@ const PersonnelTab: React.FC = () => {
     setSelectedPersonnel(null);
   };
 
-  const handleSave = async (formData: Record<string, any>) => {
+  const handleSave = async () => {
     try {
-      console.log('Form data received from DynamicModal:', formData);
-      
-      // Show form data structure for debugging
-      Object.keys(formData).forEach(tabId => {
-        console.log(`Tab ${tabId}:`, formData[tabId]);
-      });
-      
-      // Extract data from each tab based on the resources definition structure
-      // The exact tab IDs will depend on the definitions editor configuration
-      const extractedData: Record<string, any> = {};
-      
-      // Flatten the hierarchical form data into a single object
-      Object.keys(formData).forEach(tabId => {
-        Object.assign(extractedData, formData[tabId]);
-      });
-      
-      // Ensure required fields are present with defaults for PersonnelItem compatibility
       const personnelData = {
-        personalCode: extractedData.personalCode || `PER${Date.now().toString().slice(-6)}`,
-        firstName: extractedData.firstName || '',
-        lastName: extractedData.lastName || '',
-        nationalId: extractedData.nationalId || '',
-        rank: extractedData.rank || '',
-        unit: extractedData.unit || '',
-        position: extractedData.position || '',
-        phoneNumber: extractedData.phoneNumber || '',
-        email: extractedData.email || '',
-        status: extractedData.status || 'active' as const,
-        startDate: extractedData.startDate || new Date().toISOString().split('T')[0],
-        ...extractedData // Include any additional fields from the dynamic form
+        personalCode: personnelForm.personalCode || `PER${Date.now().toString().slice(-6)}`,
+        firstName: personnelForm.firstName,
+        lastName: personnelForm.lastName,
+        nationalId: personnelForm.nationalId,
+        rank: personnelForm.rank,
+        unit: personnelForm.unit,
+        position: personnelForm.position,
+        phoneNumber: personnelForm.phoneNumber,
+        email: personnelForm.email,
+        status: personnelForm.status,
+        startDate: personnelForm.startDate || new Date().toISOString().split('T')[0],
       };
-      
-      console.log('Processed personnel data:', personnelData);
       
       if (selectedPersonnel) {
         // Update existing personnel
@@ -418,17 +427,63 @@ const PersonnelTab: React.FC = () => {
         />
       </Paper>
 
-      {/* Dynamic Personnel Modal */}
-      <DynamicModal
+      <Dialog
         open={modalOpen}
         onClose={handleCloseModal}
-        onSave={handleSave}
-        categoryType="resources"
-        mode={selectedPersonnel ? "edit" : "create"}
-        title={selectedPersonnel ? "ویرایش شخص" : "افزودن شخص جدید"}
-        initialData={selectedPersonnel || {}}
-        maxWidth="lg"
-      />
+        maxWidth="md"
+        fullWidth
+      >
+        <DialogTitle>{selectedPersonnel ? "ویرایش شخص" : "افزودن شخص جدید"}</DialogTitle>
+        <DialogContent dividers>
+          <Grid container spacing={2} sx={{ mt: 0.5 }}>
+            <Grid item xs={12} sm={6}>
+              <TextField fullWidth label="کد پرسنلی" value={personnelForm.personalCode} onChange={(e) => setPersonnelForm((p) => ({ ...p, personalCode: e.target.value }))} />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <TextField fullWidth label="کد ملی" value={personnelForm.nationalId} onChange={(e) => setPersonnelForm((p) => ({ ...p, nationalId: e.target.value }))} />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <TextField fullWidth label="نام" value={personnelForm.firstName} onChange={(e) => setPersonnelForm((p) => ({ ...p, firstName: e.target.value }))} />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <TextField fullWidth label="نام خانوادگی" value={personnelForm.lastName} onChange={(e) => setPersonnelForm((p) => ({ ...p, lastName: e.target.value }))} />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <TextField fullWidth label="درجه" value={personnelForm.rank} onChange={(e) => setPersonnelForm((p) => ({ ...p, rank: e.target.value }))} />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <TextField fullWidth label="یگان" value={personnelForm.unit} onChange={(e) => setPersonnelForm((p) => ({ ...p, unit: e.target.value }))} />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <TextField fullWidth label="سمت" value={personnelForm.position} onChange={(e) => setPersonnelForm((p) => ({ ...p, position: e.target.value }))} />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <TextField fullWidth label="شماره تماس" value={personnelForm.phoneNumber} onChange={(e) => setPersonnelForm((p) => ({ ...p, phoneNumber: e.target.value }))} />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <TextField fullWidth label="ایمیل" value={personnelForm.email} onChange={(e) => setPersonnelForm((p) => ({ ...p, email: e.target.value }))} />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <TextField
+                select
+                fullWidth
+                label="وضعیت"
+                value={personnelForm.status}
+                onChange={(e) => setPersonnelForm((p) => ({ ...p, status: e.target.value as 'active' | 'inactive' | 'leave' | 'mission' }))}
+              >
+                <MenuItem value="active">فعال</MenuItem>
+                <MenuItem value="inactive">غیرفعال</MenuItem>
+                <MenuItem value="leave">مرخصی</MenuItem>
+                <MenuItem value="mission">ماموریت</MenuItem>
+              </TextField>
+            </Grid>
+          </Grid>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseModal}>انصراف</Button>
+          <Button variant="contained" onClick={handleSave}>ذخیره</Button>
+        </DialogActions>
+      </Dialog>
 
       <PersonnelDeleteConfirmModal
         open={deleteOpen}

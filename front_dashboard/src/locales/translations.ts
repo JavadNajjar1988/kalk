@@ -82,8 +82,6 @@ export const translations = {
       scenarios: 'سناریوها',
       resources: 'منابع',
 
-      definitionEditor: 'ویرایشگر تعاریف',
-      militarySymbolGenerator: 'تولید نماد نظامی',
       users: 'کاربران',
       userManagement: 'مدیریت کاربران',
       resourceManagement: 'مدیریت منابع',
@@ -817,8 +815,6 @@ export const translations = {
       scenarios: 'Scenarios',
       resources: 'Resources',
 
-      definitionEditor: 'Definition Editor',
-      militarySymbolGenerator: 'Military Symbol Generator',
       users: 'Users',
       settings: 'Settings',
       help: 'Help',
@@ -1175,8 +1171,6 @@ export const translations = {
       scenarios: 'السيناريوهات',
       resources: 'الموارد',
 
-      definitionEditor: 'محرر التعريفات',
-      militarySymbolGenerator: 'مولد الرموز العسكرية',
       users: 'المستخدمون',
       settings: 'الإعدادات',
       help: 'المساعدة',

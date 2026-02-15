@@ -13,7 +13,6 @@ import SettingsPage from '../pages/SettingsPage';
 import ScenariosPage from '../pages/ScenariosPage';
 import ScenarioDetailPage from '../pages/ScenarioDetailPage';
 import ResourcesPage from '../pages/ResourcesPage';
-import MilitarySymbolGeneratorPage from '../pages/MilitarySymbolGeneratorPage';
 import UsersPage from '../pages/users';
 import UsersRoutes from '../../users/routes';
 import HierarchicalSelectorTest from '../../../components/test/HierarchicalSelectorTest';
@@ -33,8 +32,6 @@ import TestsPage from '@/components/test/TestsPage';
 // import SmartFieldPreviewSyncTest from '@/test/SmartFieldPreviewSyncTest';
 
  
-import DefinitionEditorRoutes from '../../definition-editor/routes';
-
 const DashboardRoutes: React.FC = () => {
   return (
     <Routes>
@@ -57,8 +54,6 @@ const DashboardRoutes: React.FC = () => {
         </Route>
         <Route path="resources" element={<ResourcesPage />} />
         
-        <Route path="definition-editor/*" element={<DefinitionEditorRoutes />} />
-        <Route path="military-symbol-generator" element={<MilitarySymbolGeneratorPage />} />
         <Route path="users/*" element={<UsersRoutes />} />
         
         {/* روت‌های تست */}

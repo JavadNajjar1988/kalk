@@ -34,7 +34,7 @@ import { useAppDispatch, useAppSelector } from '@/store';
 import { fetchUserById, deleteUser, updateUser, clearError } from '../store/usersSlice';
 import type { User } from '../types';
 import { useTranslation } from '@/hooks/useTranslation';
-import DynamicModal from '@/components/common/DynamicModal';
+import EditUserModal from '../components/EditUserModal';
 
 const UserDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -413,70 +413,17 @@ const UserDetailPage: React.FC = () => {
       </Grid>
 
       {/* Edit User Modal */}
-      {showEditModal && selectedUser && (
-        <DynamicModal
-          open={showEditModal}
-          onClose={() => setShowEditModal(false)}
-          onSave={async (formData: Record<string, any>) => {
-            // Transform form data similar to UsersListPage
-            const personalInfo = formData['pr-2-1'] || {};
-            const contactInfo = formData['pr-2-2'] || {};
-            const legalInfo = formData['pr-2-3'] || {};
-            const educationInfo = formData['pr-2-4'] || {};
-            
-            // Determine professional status
-            let professionalStatus: 'آزاد' | 'نظامی' | 'غیرنظامی' = selectedUser.professionalInfo?.status || 'آزاد';
-            let professionalDetails: any = selectedUser.professionalInfo?.details || {};
-            
-            if (legalInfo.hierarchicalPath) {
-              const selectedPath = legalInfo.hierarchicalPath || [];
-              if (selectedPath.includes('نظامی') || selectedPath.includes('Military')) {
-                professionalStatus = 'نظامی';
-              } else if (selectedPath.includes('دولتی') || selectedPath.includes('Government') || selectedPath.includes('خصوصی') || selectedPath.includes('Private')) {
-                professionalStatus = 'غیرنظامی';
-              }
-            }
-            
-            const updatedData: Partial<User> = {
-              personalInfo: {
-                fullName: personalInfo['pf-full-name'] || selectedUser.personalInfo?.fullName || '',
-                fullNameEn: personalInfo['pf-full-name-en'] || selectedUser.personalInfo?.fullNameEn,
-                fatherName: personalInfo['pf-father-name'] || selectedUser.personalInfo?.fatherName || '',
-                nationalId: personalInfo['pf-national-id'] || selectedUser.personalInfo?.nationalId || '',
-                nationality: personalInfo['pf-nationality'] || selectedUser.personalInfo?.nationality || 'ایرانی',
-                birthDate: personalInfo['pf-birth-date'] || selectedUser.personalInfo?.birthDate || '',
-                gender: personalInfo['pf-gender'] || selectedUser.personalInfo?.gender || 'مرد',
-                birthPlace: personalInfo['pf-birth-place'] || selectedUser.personalInfo?.birthPlace,
-                maritalStatus: personalInfo['pf-marital-status'] || selectedUser.personalInfo?.maritalStatus,
-              },
-              contactInfo: {
-                landline: contactInfo['cf-landline'] || selectedUser.contactInfo?.landline,
-                mobile: Array.isArray(contactInfo['cf-mobile']) ? contactInfo['cf-mobile'] : 
-                        (contactInfo['cf-mobile'] ? [contactInfo['cf-mobile']] : 
-                        (selectedUser.contactInfo?.mobile || [])),
-                addresses: contactInfo['cf-address'] || selectedUser.contactInfo?.addresses,
-                email: contactInfo['cf-email'] || selectedUser.contactInfo?.email,
-                postalCode: contactInfo['cf-postal-code'] || selectedUser.contactInfo?.postalCode,
-                socialNetworks: Array.isArray(contactInfo['cf-social-networks']) ? contactInfo['cf-social-networks'] : 
-                               (selectedUser.contactInfo?.socialNetworks || []),
-              },
-              professionalInfo: {
-                status: professionalStatus,
-                details: professionalDetails,
-              },
-            };
-            
-            await dispatch(updateUser({ id: selectedUser.id, userData: updatedData }));
-            setShowEditModal(false);
-            // Refresh user data
-            await dispatch(fetchUserById(selectedUser.id));
-          }}
-          categoryType="users"
-          title="ویرایش کاربر"
-          mode="edit"
-          initialData={selectedUser}
-        />
-      )}
+      <EditUserModal
+        user={selectedUser}
+        open={showEditModal}
+        onClose={() => setShowEditModal(false)}
+        onSave={async (user, updatedData) => {
+          await dispatch(updateUser({ id: user.id, userData: updatedData }));
+          setShowEditModal(false);
+          await dispatch(fetchUserById(user.id));
+        }}
+        isSaving={isLoading}
+      />
     </Box>
   );
 };

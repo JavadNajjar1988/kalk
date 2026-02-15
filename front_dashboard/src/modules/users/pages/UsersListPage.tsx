@@ -3,6 +3,10 @@ import {
   Box,
   Typography,
   Button,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
   Card,
   CardContent,
   Grid,
@@ -33,7 +37,6 @@ import { useAppDispatch, useAppSelector } from '@/store';
 import { fetchUsers, setFilters, clearFilters, setPagination, clearError, createUser, setViewMode, updateUser, deleteUser, performQuickAction } from '../store/usersSlice';
 import type { User, UserFilters, QuickActionPayload } from '../types';
 import { useTranslation } from '@/hooks/useTranslation';
-import DynamicModal from '@/components/common/DynamicModal';
 import { UsersTableView, UsersCardView, QuickActionsModal, UserDetailsModal, EditUserModal, DeleteConfirmationModal } from '../components';
 
 const UsersListPage: React.FC = () => {
@@ -61,6 +64,16 @@ const UsersListPage: React.FC = () => {
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [newUserForm, setNewUserForm] = useState({
+    fullName: '',
+    nationalId: '',
+    gender: 'مرد' as 'مرد' | 'زن',
+    nationality: 'ایرانی' as 'ایرانی' | 'غیرایرانی' | 'تبعه مضاعف',
+    mobile: '',
+    role: 'مهمان',
+    accessLevel: 'سطح 4 - دسترسی مهمان',
+    status: 'آزاد' as 'آزاد' | 'نظامی' | 'غیرنظامی',
+  });
 
   useEffect(() => {
     dispatch(clearError());
@@ -125,115 +138,37 @@ const UsersListPage: React.FC = () => {
     }
   };
 
-  const handleSaveUser = async (formData: Record<string, any>) => {
+  const handleSaveUser = async () => {
     try {
-      console.log('Form data received from DynamicModal:', formData);
-      
-      // Show form data structure for debugging
-      Object.keys(formData).forEach(tabId => {
-        console.log(`Tab ${tabId}:`, formData[tabId]);
-      });
-      
-      // Extract data from each tab
-      const personalInfo = formData['pr-2-1'] || {};
-      const contactInfo = formData['pr-2-2'] || {};
-      const legalInfo = formData['pr-2-3'] || {}; // This might contain hierarchical data
-      const educationInfo = formData['pr-2-4'] || {};
-      
-      console.log('Extracted tab data:', { personalInfo, contactInfo, legalInfo, educationInfo });
-      
-      // Generate user code
       const userCode = `USR${Date.now().toString().slice(-6)}`;
-      
-      // Determine professional status and details based on legal information
-      let professionalStatus: 'آزاد' | 'نظامی' | 'غیرنظامی' = 'آزاد';
-      let professionalDetails: any = {};
-      
-      // Check if hierarchical legal info was selected
-      if (legalInfo.hierarchicalFields && legalInfo.hierarchicalFields.length > 0) {
-        // Process hierarchical form data
-        const hierarchicalData: Record<string, any> = {};
-        legalInfo.hierarchicalFields.forEach((field: any) => {
-          if (legalInfo[field.id]) {
-            hierarchicalData[field.id] = legalInfo[field.id];
-          }
-        });
-        
-        // Determine status based on selected path
-        const selectedPath = legalInfo.hierarchicalPath || [];
-        if (selectedPath.includes('نظامی') || selectedPath.includes('Military')) {
-          professionalStatus = 'نظامی';
-          professionalDetails = {
-            forceType: hierarchicalData['legal-military-force'] || 'ارتش',
-            rank: hierarchicalData['legal-military-rank'] || 'سرباز',
-            position: hierarchicalData['legal-military-position'] || 'کارمند',
-            serviceNumber: hierarchicalData['legal-military-service-number'] || '',
-            unit: hierarchicalData['legal-military-unit'] || 'واحد عمومی'
-          };
-        } else if (selectedPath.includes('دولتی') || selectedPath.includes('Government')) {
-          professionalStatus = 'غیرنظامی';
-          professionalDetails = {
-            organization: hierarchicalData['legal-gov-organization'] || 'سازمان دولتی',
-            department: hierarchicalData['legal-gov-department'] || 'بخش عمومی',
-            jobTitle: hierarchicalData['legal-gov-job-title'] || 'کارمند',
-            employeeCode: hierarchicalData['legal-gov-employee-code'] || ''
-          };
-        } else if (selectedPath.includes('خصوصی') || selectedPath.includes('Private')) {
-          professionalStatus = 'غیرنظامی';
-          professionalDetails = {
-            companyName: hierarchicalData['legal-private-company-name'] || 'شرکت خصوصی',
-            position: hierarchicalData['legal-private-position'] || 'کارمند',
-            industry: hierarchicalData['legal-private-industry'] || 'عمومی'
-          };
-        } else {
-          // Default to freelance
-          professionalDetails = {
-            businessType: hierarchicalData['legal-freelance-business-type'] || 'کسب و کار آزاد',
-            expertise: hierarchicalData['legal-freelance-specialization'] || 'عمومی',
-            experienceYears: hierarchicalData['legal-freelance-experience-years'] || 0
-          };
-        }
-      } else {
-        // If no hierarchical data, use simple default
-        professionalDetails = {
-          businessType: 'کسب و کار آزاد',
-          expertise: 'عمومی'
-        };
-      }
-      
-      // Transform form data to User format with comprehensive data
+
+      const professionalDetails: User['professionalInfo']['details'] =
+        newUserForm.status === 'نظامی'
+          ? { forceType: 'ارتش' as const, rank: 'سرباز', position: 'کارمند' }
+          : newUserForm.status === 'غیرنظامی'
+            ? { occupation: 'نامشخص' }
+            : { businessType: 'کسب و کار آزاد', expertise: 'عمومی' };
+
       const userData: Omit<User, 'id' | 'createdAt' | 'updatedAt'> = {
         userCode,
         personalInfo: {
-          fullName: personalInfo['pf-full-name'] || personalInfo['fullName'] || 'کاربر جدید',
-          fullNameEn: personalInfo['pf-full-name-en'] || personalInfo['fullNameEn'] || '',
-          fatherName: personalInfo['pf-father-name'] || personalInfo['fatherName'] || '',
-          nationalId: personalInfo['pf-national-id'] || personalInfo['nationalId'] || `${Date.now().toString().slice(-10)}`,
-          nationality: personalInfo['pf-nationality'] || personalInfo['nationality'] || 'ایرانی',
-          birthDate: personalInfo['pf-birth-date'] || personalInfo['birthDate'] || new Date().toISOString(),
-          gender: personalInfo['pf-gender'] || personalInfo['gender'] || 'مرد',
-          birthPlace: personalInfo['pf-birth-place'] || personalInfo['birthPlace'] || '',
-          maritalStatus: personalInfo['pf-marital-status'] || personalInfo['maritalStatus'] || 'مجرد',
+          fullName: newUserForm.fullName || 'کاربر جدید',
+          fatherName: '',
+          nationalId: newUserForm.nationalId || `${Date.now().toString().slice(-10)}`,
+          nationality: newUserForm.nationality,
+          birthDate: new Date().toISOString(),
+          gender: newUserForm.gender,
         },
         contactInfo: {
-          landline: contactInfo['cf-landline'] || contactInfo['landline'] || '',
-          mobile: Array.isArray(contactInfo['cf-mobile']) ? contactInfo['cf-mobile'] : 
-                  (contactInfo['cf-mobile'] ? [contactInfo['cf-mobile']] : 
-                  (contactInfo['mobile'] ? (Array.isArray(contactInfo['mobile']) ? contactInfo['mobile'] : [contactInfo['mobile']]) : 
-                  [`0912${Date.now().toString().slice(-7)}`])),
-          addresses: contactInfo['cf-address'] || contactInfo['addresses'] || '',
-          email: contactInfo['cf-email'] || contactInfo['email'] || '',
-          postalCode: contactInfo['cf-postal-code'] || contactInfo['postalCode'] || '',
-          socialNetworks: Array.isArray(contactInfo['cf-social-networks']) ? contactInfo['cf-social-networks'] : 
-                         (contactInfo['socialNetworks'] ? contactInfo['socialNetworks'] : []),
+          mobile: [newUserForm.mobile || `0912${Date.now().toString().slice(-7)}`],
         },
         professionalInfo: {
-          status: professionalStatus,
+          status: newUserForm.status,
           details: professionalDetails,
         },
         systemInfo: {
-          role: 'مهمان',
-          accessLevel: 'سطح 4 - دسترسی مهمان',
+          role: newUserForm.role,
+          accessLevel: newUserForm.accessLevel,
           permissions: ['مشاهده محدود'],
           loginCount: 0,
           password: 'temp_password',
@@ -241,15 +176,21 @@ const UsersListPage: React.FC = () => {
         },
         isActive: true,
       };
-      
-      console.log('Final transformed user data:', userData);
-      
+
       const resultAction = await dispatch(createUser(userData));
       if (createUser.fulfilled.match(resultAction)) {
         setShowAddModal(false);
+        setNewUserForm({
+          fullName: '',
+          nationalId: '',
+          gender: 'مرد',
+          nationality: 'ایرانی',
+          mobile: '',
+          role: 'مهمان',
+          accessLevel: 'سطح 4 - دسترسی مهمان',
+          status: 'آزاد',
+        });
         dispatch(fetchUsers());
-      } else {
-        console.error('Failed to create user:', resultAction.error);
       }
     } catch (error) {
       console.error('Error in handleSaveUser:', error);
@@ -517,16 +458,97 @@ const UsersListPage: React.FC = () => {
         <AddIcon />
       </Fab>
 
-      {/* Dynamic Modal for Adding Users */}
-      <DynamicModal
+      <Dialog
         open={showAddModal}
         onClose={() => setShowAddModal(false)}
-        onSave={handleSaveUser}
-        categoryType="users"
-        mode="create"
-        title="افزودن کاربر جدید"
-        maxWidth="lg"
-      />
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle>افزودن کاربر جدید</DialogTitle>
+        <DialogContent dividers>
+          <Grid container spacing={2} sx={{ mt: 0.5 }}>
+            <Grid item xs={12}>
+              <TextField
+                fullWidth
+                label="نام و نام خانوادگی"
+                value={newUserForm.fullName}
+                onChange={(e) => setNewUserForm((prev) => ({ ...prev, fullName: e.target.value }))}
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <TextField
+                fullWidth
+                label="کد ملی"
+                value={newUserForm.nationalId}
+                onChange={(e) => setNewUserForm((prev) => ({ ...prev, nationalId: e.target.value }))}
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <TextField
+                fullWidth
+                label="شماره موبایل"
+                value={newUserForm.mobile}
+                onChange={(e) => setNewUserForm((prev) => ({ ...prev, mobile: e.target.value }))}
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <FormControl fullWidth>
+                <InputLabel>جنسیت</InputLabel>
+                <Select
+                  value={newUserForm.gender}
+                  label="جنسیت"
+                  onChange={(e) => setNewUserForm((prev) => ({ ...prev, gender: e.target.value as 'مرد' | 'زن' }))}
+                >
+                  <MenuItem value="مرد">مرد</MenuItem>
+                  <MenuItem value="زن">زن</MenuItem>
+                </Select>
+              </FormControl>
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <FormControl fullWidth>
+                <InputLabel>تابعیت</InputLabel>
+                <Select
+                  value={newUserForm.nationality}
+                  label="تابعیت"
+                  onChange={(e) =>
+                    setNewUserForm((prev) => ({
+                      ...prev,
+                      nationality: e.target.value as 'ایرانی' | 'غیرایرانی' | 'تبعه مضاعف',
+                    }))
+                  }
+                >
+                  <MenuItem value="ایرانی">ایرانی</MenuItem>
+                  <MenuItem value="غیرایرانی">غیرایرانی</MenuItem>
+                  <MenuItem value="تبعه مضاعف">تبعه مضاعف</MenuItem>
+                </Select>
+              </FormControl>
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <FormControl fullWidth>
+                <InputLabel>وضعیت حرفه‌ای</InputLabel>
+                <Select
+                  value={newUserForm.status}
+                  label="وضعیت حرفه‌ای"
+                  onChange={(e) =>
+                    setNewUserForm((prev) => ({
+                      ...prev,
+                      status: e.target.value as 'آزاد' | 'نظامی' | 'غیرنظامی',
+                    }))
+                  }
+                >
+                  <MenuItem value="آزاد">آزاد</MenuItem>
+                  <MenuItem value="نظامی">نظامی</MenuItem>
+                  <MenuItem value="غیرنظامی">غیرنظامی</MenuItem>
+                </Select>
+              </FormControl>
+            </Grid>
+          </Grid>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setShowAddModal(false)}>انصراف</Button>
+          <Button variant="contained" onClick={handleSaveUser}>ذخیره</Button>
+        </DialogActions>
+      </Dialog>
 
       {/* Quick Actions Modal */}
       <QuickActionsModal
