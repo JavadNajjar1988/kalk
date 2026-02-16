@@ -52,14 +52,18 @@ def upgrade() -> None:
         
         # Update roles field
         if old_roles:
-            roles_list = [r.strip() for r in old_roles.split(",") if r.strip()]
-            
-            # Map old roles to new roles
-            if "ADMIN" in roles_list:
+            # Normalize roles to avoid case-sensitivity bugs and preserve existing SUPER_ADMIN
+            roles_list = [r.strip().upper() for r in old_roles.split(",") if r.strip()]
+
+            # Map old/new roles to new roles
+            if "SUPER_ADMIN" in roles_list or "ADMIN" in roles_list:
                 new_roles = "SUPER_ADMIN"
                 needs_update = True
-            elif "OPERATOR" in roles_list:
+            elif "COMMANDER" in roles_list or "OPERATOR" in roles_list:
                 new_roles = "COMMANDER"
+                needs_update = True
+            elif "VIEWER" in roles_list or "USER" in roles_list:
+                new_roles = "VIEWER"
                 needs_update = True
             else:
                 new_roles = "VIEWER"

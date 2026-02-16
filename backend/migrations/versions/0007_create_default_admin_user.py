@@ -72,7 +72,7 @@ def upgrade() -> None:
                 created_at, updated_at
             ) VALUES (
                 :id, :username, :user_code, :password_hash, :roles, :is_active,
-                :personal_info::jsonb, :contact_info::jsonb, :professional_info::jsonb, :system_info::jsonb,
+                CAST(:personal_info AS jsonb), CAST(:contact_info AS jsonb), CAST(:professional_info AS jsonb), CAST(:system_info AS jsonb),
                 :created_at, :updated_at
             )
         """),

@@ -162,35 +162,37 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
       label: t('menu.dashboard'), 
       icon: <Dashboard />, 
       path: '/dashboard',
-      roles: ['admin', 'commander', 'operator']
+      roles: ['admin', 'commander', 'operator', 'viewer']
     },
     { 
       id: 'scenarios', 
       label: 'مدیریت سناریوها', 
       icon: <Assignment />, 
       path: '/dashboard/scenarios',
-      roles: ['admin', 'commander', 'operator']
+      roles: ['admin', 'commander', 'operator', 'viewer']
     },
     { 
       id: 'users', 
       label: 'مدیریت کاربران', 
       icon: <People />, 
       path: '/dashboard/users',
-      roles: ['admin', 'commander']
+      roles: ['admin', 'commander', 'operator', 'viewer']
     },
     { 
       id: 'resources-module', 
       label: 'مدیریت منابع', 
       icon: <AccountBox />, 
       path: '/dashboard/resources',
-      roles: ['admin', 'commander', 'operator']
+      roles: ['admin', 'commander', 'operator', 'viewer']
     },
 
   ];
 
-  const filteredMenuItems = menuItems.filter(item => 
-    item.roles.includes(user?.role || 'operator')
-  );
+  const currentRole = user?.role || 'operator';
+  const filteredMenuItems = menuItems.filter(item => item.roles.includes(currentRole));
+  const visibleMenuItems = filteredMenuItems.length > 0
+    ? filteredMenuItems
+    : menuItems.filter(item => item.id === 'home');
 
   const handleNotificationsMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
     setNotificationsMenuAnchor(event.currentTarget);
@@ -650,7 +652,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
         }}
       >
         <List sx={{ pt: 2 }}>
-          {filteredMenuItems.map((item) => (
+          {visibleMenuItems.map((item) => (
             <ListItem key={item.id} disablePadding>
               <ListItemButton
                 onClick={(e) => {

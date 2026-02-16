@@ -25,6 +25,10 @@ from app.schemas.user import (
 
 router = APIRouter(prefix="/users", tags=["users"], dependencies=[Depends(require_roles("SUPER_ADMIN"))])
 
+# Canonical UI roles for user management filters/forms.
+# Keep these visible even if no user currently has one of them.
+DEFAULT_SYSTEM_ROLES = ["مدیر سیستم", "فرمانده", "ناظر مهمان"]
+
 
 def _slugify(value: str) -> str:
     normalized = value.strip().lower()
@@ -203,6 +207,7 @@ async def list_users(
     access_stmt = select(func.distinct(User.system_info["accessLevel"].astext))
 
     role_values = (await db.execute(roles_stmt)).scalars().all()
+    role_values = [*DEFAULT_SYSTEM_ROLES, *[v for v in role_values if v and v not in DEFAULT_SYSTEM_ROLES]]
     access_values = (await db.execute(access_stmt)).scalars().all()
 
     payload = {
