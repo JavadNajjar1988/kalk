@@ -80,8 +80,7 @@ export async function createBaseLayers(view: View, currentBaseLayerName = "osm")
         (item: any) => item && typeof item.url_template === "string" && item.url_template.length > 0,
       );
       if (activeMaps.length) {
-        const preferredLayerName =
-          currentBaseLayerName === "osm" ? `offline-${activeMaps[0].id}` : currentBaseLayerName;
+        const preferredLayerName = currentBaseLayerName;
         for (let i = activeMaps.length - 1; i >= 0; i -= 1) {
           const activeMap = activeMaps[i];
           const offlineLayerName = `offline-${activeMap.id}`;

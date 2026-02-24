@@ -5,7 +5,11 @@
     @keydown="onKeyDown"
     @click="onClick(null)"
   >
-    <FilterInput @focus="onFocus" />
+    <FilterInput
+      @focus="onFocus"
+      memento-key="ui.sidebar.symbol-search"
+      :initial-search="symbolDefaultSearch"
+    />
     <div class="symbol-categories">
       <div
         v-for="(category, categoryName) in groupedEntries"
@@ -23,7 +27,7 @@
         </div>
         <transition name="slide">
           <div 
-            v-show="isCategoryExpanded(categoryName)"
+            v-if="isCategoryExpanded(categoryName)"
             class="category-items"
           >
           <Card
@@ -55,7 +59,6 @@ import * as ID from './ids.js'
 // Use Ramda's equals for deep equality check
 const isEqual = (a, b) => JSON.stringify(a) === JSON.stringify(b)
 import FilterInput from './components/sidebar/FilterInput.vue'
-import LazyList from './components/sidebar/LazyList.vue'
 import Card from './components/sidebar/Card.vue'
 import './components/sidebar/Sidebar.css'
 
@@ -66,11 +69,12 @@ const symbolDefaultSearch = {
   history: [{ key: 'root', scope: `@${ID.SYMBOL}`, label: 'symbol' }],
   filter: ''
 }
+const symbolRootHistory = [{ key: 'root', scope: `@${ID.SYMBOL}`, label: 'symbol' }]
 
 // Get project-specific services from parent
 const servicesRef = inject('services')
 const services = computed(() => servicesRef?.value || {})
-const [search, setSearch] = useMemento('ui.simpleSymbolMap.sidebar.search', symbolDefaultSearch)
+const [search, setSearch] = useMemento('ui.sidebar.symbol-search', symbolDefaultSearch)
 const emitter = useEmitter('sidebar')
 const state = reactive({ ...defaultState })
 const lastSearch = ref(null)
@@ -392,14 +396,27 @@ const groupedEntries = computed(() => {
 // Accordion state for categories
 const expandedCategories = ref({})
 
-// Initialize all categories as expanded by default
+// Initialize categories expansion state depending on search query and count
 watch(() => groupedEntries.value, (entries) => {
+  const isFiltering = search.value && search.value.filter && search.value.filter.length > 0
+  const isSmallList = Object.keys(entries).length <= 2 || state.entries.length <= 50
+  const shouldExpand = isFiltering || isSmallList
+  
   Object.keys(entries).forEach(categoryName => {
     if (!(categoryName in expandedCategories.value)) {
-      expandedCategories.value[categoryName] = true
+      expandedCategories.value[categoryName] = shouldExpand
     }
   })
 }, { immediate: true })
+
+// Also watch search filter to expand automatically when searching
+watch(() => search.value?.filter, (filter) => {
+  if (filter && filter.length > 0) {
+    Object.keys(expandedCategories.value).forEach(category => {
+      expandedCategories.value[category] = true
+    })
+  }
+})
 
 watch(
   () => state.selected,
@@ -689,6 +706,9 @@ const translateText = (text) => {
 
 // Effects
 onMounted(() => {
+  // Always start symbol sidebar from symbol scope so the full list is visible.
+  setSearch({ history: symbolRootHistory, filter: '' })
+
   // Wait for services to be available
   watch(() => servicesRef?.value, (svcs) => {
     if (!svcs) return
@@ -746,10 +766,16 @@ onMounted(() => {
     disposable.on(emitter, 'layer/open', ({ id }) => layerOpen(id))
 
     // Fetch entries when history and/or filter changed
-    watch([() => search.value.history, () => search.value.filter, () => search.value.force], async ([history, filter, force]) => {
-      if (!svcs.searchIndex) return
-      
-      const terms = `${R.last(history).scope} ${filter}`
+    watch([() => search.value.history, () => search.value.filter, () => search.value.force], async ([history, filter, force], _, onCleanup) => {
+      if (!svcs.searchIndex) {
+        dispatch({ type: 'entries', entries: [] })
+        return
+      }
+
+      const safeHistory = Array.isArray(history) && history.length ? history : symbolRootHistory
+      const safeScope = R.last(safeHistory)?.scope || `@${ID.SYMBOL}`
+      const safeFilter = typeof filter === 'string' ? filter : ''
+      const terms = `${safeScope} ${safeFilter}`.trim()
       const options = { force: force || false }
 
       // Updated search/filter must clear any selection
@@ -763,11 +789,11 @@ onMounted(() => {
 
       lastSearch.value = { ...search.value }
 
-      return () => {
+      onCleanup(() => {
         if (queryDisposable && queryDisposable.dispose) {
           queryDisposable.dispose()
         }
-      }
+      })
     }, { immediate: true })
 
     // Sync global selection with list model
@@ -786,12 +812,10 @@ onMounted(() => {
       }
     })
 
-    // Listen for focus event
+    // Keep this sidebar fixed on symbol scope.
     if (svcs.selection) {
       disposable.on(svcs.selection, 'focus', ({ id }) => {
-        const scope = ID.scope(id)
         dispatch({ type: 'focus', id })
-        setHistory([{ key: 'root', scope: `@${scope}`, label: scope }])
       })
     }
 

@@ -392,7 +392,11 @@ const uiStore = useUiStore();
 const { showSearch } = storeToRefs(uiStore);
 
 const mapStore = useMapSettingsStore();
-mapStore.baseLayerName = state.mapSettings.baseMapId;
+if (state.mapSettings.baseMapId !== mapStore.baseLayerName) {
+  props.activeScenario.store.update((s) => {
+    s.mapSettings.baseMapId = mapStore.baseLayerName;
+  });
+}
 
 const originalTitle = useTitle().value;
 const windowTitle = computed(() => state.info.name);

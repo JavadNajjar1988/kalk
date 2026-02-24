@@ -45,6 +45,7 @@ import vectorSources from "@/modules/tactical-symbol-map/components/map/vectorSo
 import createLayerStyles from "@/modules/tactical-symbol-map/components/map/layerStyles";
 import createVectorLayers from "@/modules/tactical-symbol-map/components/map/vectorLayers";
 import registerEventHandlers from "@/modules/tactical-symbol-map/components/map/eventHandlers";
+import { ensureScenarioTacticalServices } from "@/modules/tactical-symbol-map/services/scenarioProjectServices";
 
 const props = defineProps<{ olMap: OLMap }>();
 const emit = defineEmits<{
@@ -129,6 +130,7 @@ const { selectedFeatureIds } = useSelectedItems();
 const servicesStore = useServicesStore();
 const tacticalInteractionReady = shallowRef(false);
 const tacticalLayersReady = shallowRef(false);
+const tacticalServicesInitInProgress = shallowRef(false);
 
 // Order of select interactions is important. The interaction that is added last
 // will be the one that receives the select event first and can stop the propagation.
@@ -200,6 +202,34 @@ function toggleMoveUnitInteraction(event: ObjectEvent) {
 }
 
 emit("map-ready", { olMap, featureSelectInteraction, unitSelectInteraction });
+
+async function ensureTacticalServicesForScenario() {
+  if (tacticalServicesInitInProgress.value) {
+    return;
+  }
+
+  tacticalServicesInitInProgress.value = true;
+  try {
+    await ensureScenarioTacticalServices({
+      scenarioId: state.id,
+      metadata: state.metadata,
+      servicesStore,
+    });
+  } catch (error) {
+    console.error("Failed to initialize tactical services for map:", error);
+  } finally {
+    tacticalServicesInitInProgress.value = false;
+  }
+}
+
+void ensureTacticalServicesForScenario();
+
+watch(
+  () => state.id,
+  () => {
+    void ensureTacticalServicesForScenario();
+  },
+);
 
 watch(
   () => servicesStore.getServices(),

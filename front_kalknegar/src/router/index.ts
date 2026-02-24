@@ -14,6 +14,28 @@ import {
   SIMPLE_TACTICAL_MAP_ROUTE,
 } from "@/router/names";
 
+function lazyImportWithRetry<T>(
+  importer: () => Promise<T>,
+  retries = 2,
+  retryDelayMs = 300,
+): () => Promise<T> {
+  return async () => {
+    let lastError: unknown;
+    for (let attempt = 0; attempt <= retries; attempt += 1) {
+      try {
+        return await importer();
+      } catch (error) {
+        lastError = error;
+        if (attempt === retries) {
+          throw error;
+        }
+        await new Promise((resolve) => setTimeout(resolve, retryDelayMs * (attempt + 1)));
+      }
+    }
+    throw lastError;
+  };
+}
+
 declare module "vue-router" {
   interface RouteMeta {
     // is optional
@@ -83,7 +105,7 @@ function requireAuth(
 }
 
 const ScenarioEditorWrapper = () =>
-  import("../modules/scenarioeditor/ScenarioEditorWrapper.vue");
+  lazyImportWithRetry(() => import("../modules/scenarioeditor/ScenarioEditorWrapper.vue"))();
 const NewScenarioView = () => import("../modules/scenarioeditor/NewScenarioView.vue");
 const StoryModeView = () => import("../modules/storymode/StoryModeWrapper.vue");
 const OrbatChartView = () => import("../modules/charteditor/OrbatChartViewWrapper.vue");
@@ -93,10 +115,11 @@ const GridTestView = () => import("@/modules/grid/GridTestView.vue");
 const TanstackGridTestView = () => import("@/modules/grid/TanstackGridTestView.vue");
 const GridEditView = () => import("@/modules/scenarioeditor/GridEditView.vue");
 const ChartEditView = () => import("@/modules/scenarioeditor/ChartEditView.vue");
-const ScenarioEditorMap = () => import("@/modules/scenarioeditor/ScenarioEditorMap.vue").catch(err => {
-  console.error('Failed to load ScenarioEditorMap:', err);
-  return import("@/views/ErrorFallback.vue"); // Fallback component
-});
+const ScenarioEditorMap = () =>
+  lazyImportWithRetry(() => import("@/modules/scenarioeditor/ScenarioEditorMap.vue"))().catch((err) => {
+    console.error("Failed to load ScenarioEditorMap:", err);
+    return import("@/views/ErrorFallback.vue"); // Fallback component
+  });
 const SymbolDesignerPage = () => import("../modules/tactical-symbol-designer/SymbolDesignerPage.vue");
 const TacticalSymbolDefinitionPage = () => import("../modules/tactical-symbols/TacticalSymbolDefinitionView.vue");
 const ControlSymbolsLab = () => import("../views/ControlSymbolsLab.vue");

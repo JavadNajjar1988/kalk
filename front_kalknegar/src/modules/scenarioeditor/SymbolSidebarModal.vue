@@ -105,7 +105,7 @@ import {
 } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import SimpleSymbolMapSidebar from "@/modules/tactical-symbol-map/SimpleSymbolMapSidebar.vue";
-import { initializeProjectServices } from "@/modules/tactical-symbol-map/services/projectServices.js";
+import { ensureScenarioTacticalServices } from "@/modules/tactical-symbol-map/services/scenarioProjectServices";
 import { injectStrict } from "@/utils";
 import { activeScenarioKey } from "@/components/injects";
 import { useServicesStore } from "@/modules/tactical-symbol-map/stores/services.js";
@@ -123,11 +123,15 @@ const emit = defineEmits<{
 const servicesReady = ref(false);
 const services = ref<any>(null);
 const servicesStore = useServicesStore();
+const symbolSidebarDefaultSearch = {
+  history: [{ key: "root", scope: "@symbol", label: "symbol" }],
+  filter: "",
+};
 
 // Provide services to child components
 provide("services", services);
 
-injectStrict(activeScenarioKey);
+const activeScenario = injectStrict(activeScenarioKey);
 
 const selectedSymbolId = ref<string | null>(null);
 const selectedSymbolTitle = ref<string | null>(null);
@@ -157,24 +161,21 @@ function handleOutsideInteraction(event: Event) {
 }
 
 const initializeServices = async () => {
-  if (services.value) {
-    servicesReady.value = true;
-    return;
-  }
-
   try {
-    const projectUUID = "kalknegar-default";
-    const projectServices = await initializeProjectServices(projectUUID);
+    servicesReady.value = false;
+    if (services.value) {
+      cancelPlacement();
+    }
+    const projectServices = await ensureScenarioTacticalServices({
+      scenarioId: activeScenario.store.state.id,
+      metadata: activeScenario.store.state.metadata,
+      servicesStore,
+    });
+    await projectServices.preferencesStore?.put(
+      "ui.sidebar.symbol-search",
+      symbolSidebarDefaultSearch,
+    );
     services.value = projectServices;
-    servicesStore.projectStore = projectServices.projectStore;
-    servicesStore.preferencesStore = projectServices.preferencesStore;
-    servicesStore.sessionStore = projectServices.sessionStore;
-    servicesStore.emitter = projectServices.emitter;
-    servicesStore.store = projectServices.store;
-    servicesStore.featureStore = projectServices.featureStore;
-    servicesStore.selection = projectServices.selection;
-    servicesStore.osdDriver = projectServices.osdDriver;
-    servicesStore.ipcRenderer = projectServices.ipcRenderer;
     servicesReady.value = true;
   } catch (error) {
     console.error("Failed to initialize symbol sidebar services:", error);
@@ -272,11 +273,20 @@ function cancelPlacement() {
 watch(
   () => props.open,
   (isOpen) => {
-    if (isOpen && !servicesReady.value) {
+    if (isOpen) {
       initializeServices();
     }
     if (!isOpen) {
       cancelPlacement();
+    }
+  },
+);
+
+watch(
+  () => activeScenario.store.state.id,
+  () => {
+    if (props.open) {
+      initializeServices();
     }
   },
 );

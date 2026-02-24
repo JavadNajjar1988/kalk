@@ -27,10 +27,18 @@ const props = defineProps({
   onFocus: {
     type: Function,
     default: () => {}
+  },
+  mementoKey: {
+    type: String,
+    default: 'ui.sidebar.search'
+  },
+  initialSearch: {
+    type: Object,
+    default: () => defaultSearch
   }
 })
 
-const [search, setSearch] = useMemento('ui.sidebar.search', defaultSearch)
+const [search, setSearch] = useMemento(props.mementoKey, props.initialSearch)
 const cursor = ref(null)
 const inputRef = ref(null)
 

@@ -10,12 +10,14 @@ import Emitter from '../shared/emitter.js'
  */
 export const useServicesStore = defineStore('services', () => {
   // Services
+  const projectUUID = ref(null)
   const projectStore = ref(null)
   const preferencesStore = ref(null)
   const sessionStore = ref(null)
   const emitter = ref(null)
   const store = ref(null) // Main data store
   const featureStore = ref(null)
+  const searchIndex = ref(null)
   const selection = ref(null)
   const osdDriver = ref(null)
   const ipcRenderer = ref(null)
@@ -54,24 +56,28 @@ export const useServicesStore = defineStore('services', () => {
   
   // Get services object for components
   const getServices = () => ({
+    projectUUID: projectUUID.value,
     projectStore: projectStore.value,
     preferencesStore: preferencesStore.value,
     sessionStore: sessionStore.value,
     emitter: emitter.value,
       store: store.value,
       featureStore: featureStore.value,
+      searchIndex: searchIndex.value,
       selection: selection.value,
       osdDriver: osdDriver.value,
       ipcRenderer: ipcRenderer.value
   })
   
   return {
+    projectUUID,
     projectStore,
     preferencesStore,
     sessionStore,
     emitter,
     store,
     featureStore,
+    searchIndex,
     selection,
     osdDriver,
     ipcRenderer,

@@ -1,6 +1,13 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import { resolve } from 'path'
+import http from 'node:http'
+
+const proxyKeepAliveAgent = new http.Agent({
+  keepAlive: true,
+  maxSockets: 128,
+  maxFreeSockets: 32,
+})
 
 // https://vitejs.dev/config/
 export default defineConfig({
@@ -111,12 +118,14 @@ export default defineConfig({
         target: 'http://127.0.0.1:8000',
         changeOrigin: true,
         secure: false,
+        agent: proxyKeepAliveAgent,
       },
       '/simulator': {
         target: 'http://127.0.0.1:3001',
         changeOrigin: true,
         secure: false,
         ws: true,
+        agent: proxyKeepAliveAgent,
         rewrite: (path) => {
           if (path === '/simulator') {
             return '/simulator/';
@@ -130,6 +139,7 @@ export default defineConfig({
         changeOrigin: true,
         secure: false,
         ws: true,
+        agent: proxyKeepAliveAgent,
         rewrite: (path) => {
           if (path === '/kalknegar') {
             return '/kalknegar/';

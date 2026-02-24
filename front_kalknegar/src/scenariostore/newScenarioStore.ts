@@ -53,6 +53,7 @@ import { upgradeScenarioIfNecessary } from "@/scenariostore/upgrade";
 export interface ScenarioState {
   id: EntityId;
   meta: ScenarioMetadata;
+  metadata?: Record<string, any>;
   unitMap: Record<EntityId, NUnit>;
   sideMap: Record<EntityId, NSide>;
   sideGroupMap: Record<EntityId, NSideGroup>;
@@ -426,6 +427,7 @@ export function prepareScenario(newScenario: Scenario): ScenarioState {
   return {
     id: scenarioId,
     meta,
+    metadata: scenario.metadata ? klona(scenario.metadata) : undefined,
     layers,
     mapLayers: mapLayers,
     mapLayerMap: mapLayerMap,
