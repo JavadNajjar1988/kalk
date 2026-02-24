@@ -1,74 +1,6 @@
-<template>
-  <div class="relative flex min-h-0 flex-auto pt-11">
-    <ResizablePanel
-      v-model:width="panelWidth"
-      class="chart-edit-sidebar relative z-10 flex h-full flex-col justify-between overflow-auto overflow-visible border-r-2 backdrop-blur-sm backdrop-saturate-150 print:hidden"
-    >
-      <TabGroup :selected-index="selectedTab" @change="changeTab">
-        <TabList class="chart-edit-tab-list -mb-px flex border-b backdrop-blur-sm backdrop-saturate-150 rounded-t-2xl">
-          <Tab
-            as="template"
-            v-for="tab in ['آرایش نبرد', 'تنظیمات نمودار']"
-            :key="tab"
-            v-slot="{ selected }"
-          >
-            <button
-              :class="[
-                selected
-                  ? 'chart-edit-tab-active'
-                  : 'chart-edit-tab-inactive',
-                'w-1/2 border-b-2 px-4 py-4 text-center text-sm font-medium transition-all duration-200 rounded-t-lg',
-              ]"
-            >
-              {{ tab }}
-            </button>
-          </Tab>
-        </TabList>
-        <TabPanels class="min-h-0 flex-auto overflow-auto">
-          <TabPanel :unmount="false">
-            <OrbatPanel class="space-y-1" hide-filter>
-              <template #header></template>
-            </OrbatPanel>
-          </TabPanel>
-          <TabPanel :unmount="false">
-            <OrbatChartSettings chart-mode :tab="currentTab" />
-          </TabPanel>
-        </TabPanels>
-      </TabGroup>
-    </ResizablePanel>
-    <main class="chart-edit-main relative h-full flex-auto backdrop-blur-sm backdrop-saturate-150">
-      <SimpleBreadcrumbs
-        class="chart-edit-breadcrumbs backdrop-blur-sm backdrop-saturate-150 border absolute top-2 left-2 z-10 rounded-xl px-3 py-2 shadow-lg print:hidden"
-        :items="breadcrumbItems"
-      />
-      <nav class="chart-edit-nav absolute top-2 right-4 z-10 rounded-2xl backdrop-blur-sm backdrop-saturate-150 border shadow-lg print:hidden">
-        <DotsMenu :items="menuItems" />
-      </nav>
-
-      
-      <p v-if="!activeUnit" class="p-8 text-center">واحد ریشه را در نوار کناری انتخاب کنید</p>
-      <OrbatChart
-        :unit="activeUnit"
-        :width="width"
-        :height="height"
-        :symbol-generator="symbolGenerator"
-        chart-id="chartId"
-        :options="options.$state"
-        :specific-options="specificOptions.$state"
-        enable-pan-zoom
-        :interactive="isInteractive"
-        @unitclick="onUnitClick"
-        @levelclick="onLevelClick"
-        @branchclick="onBranchClick"
-        :debug="debug"
-      />
-    </main>
-  </div>
-</template>
-
 <script setup lang="ts">
 import { computed, nextTick, ref } from "vue";
-import { Tab, TabGroup, TabList, TabPanel, TabPanels } from "@headlessui/vue";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import OrbatPanel from "@/modules/scenarioeditor/OrbatPanel.vue";
 import { symbolGenerator } from "@/symbology/milsymbwrapper";
 import {
@@ -104,7 +36,6 @@ const specificOptions = useSpecificChartOptionsStore();
 const { activeUnitId } = useSelectedItems();
 const {
   unitActions,
-  store: { state },
   helpers: { getUnitById },
 } = injectStrict(activeScenarioKey);
 const activeUnit = computed(
@@ -125,7 +56,7 @@ const breadcrumbItems = computed((): BreadcrumbItem[] => {
   const { side, sideGroup, parents } = unitActions.getUnitHierarchy(activeUnitId.value);
   return [
     { name: side.name, static: true },
-    { name: sideGroup.name, static: true },
+    { name: sideGroup?.name ?? "ریشه", static: true },
     ...parents.map((e) => ({ name: e.name, static: true })),
     { name: activeUnit.value?.name!, static: true },
   ];
@@ -136,6 +67,11 @@ const ORBAT_TAB = 0;
 const SETTINGS_TAB = 1;
 
 const selectedTab = ref(ORBAT_TAB);
+const selectedTabString = computed({
+  get: () => selectedTab.value.toString(),
+  set: (v) => (selectedTab.value = parseInt(v)),
+});
+
 const isInteractive = ref(true);
 
 function changeTab(index: number) {
@@ -187,9 +123,9 @@ const doPNGDownload = async () => {
 };
 
 function downloadSvgAsPng(elementId: string, width: number, height: number) {
-  let svgElement = document.getElementById(elementId);
+  const svgElement = document.getElementById(elementId);
   if (!svgElement) return;
-  // need this for Firefox (https://stackoverflow.com/questions/28690643/firefox-error-rendering-an-svg-image-to-html5-canvas-with-drawimage)
+  // needed for Firefox when rasterizing SVG
   const savedWidth = svgElement.getAttribute("width") || "";
   const savedHeight = svgElement.getAttribute("height") || "";
   const scaleFactor = 2;
@@ -220,7 +156,7 @@ function downloadSvgAsPng(elementId: string, width: number, height: number) {
 }
 
 async function downloadElementAsSVG(elementId: string) {
-  let svgElement = document.getElementById(elementId);
+  const svgElement = document.getElementById(elementId);
   if (!svgElement) return;
   await saveBlobToLocalFile(
     new Blob([new XMLSerializer().serializeToString(svgElement)], {
@@ -235,81 +171,67 @@ const menuItems: MenuItemData<Function>[] = [
   { label: "دانلود به عنوان PNG", action: doPNGDownload },
 ];
 </script>
-<style scoped>
-.chart-edit-sidebar {
-  background-color: color-mix(in srgb, var(--color-primary) 15%, transparent);
-  border-right-color: color-mix(in srgb, var(--color-primary) 25%, transparent);
-}
 
-:global(.dark) .chart-edit-sidebar {
-  background-color: color-mix(in srgb, var(--color-primary) 8%, transparent);
-  border-right-color: color-mix(in srgb, var(--color-primary) 15%, transparent);
-}
+<template>
+  <div class="relative flex min-h-0 flex-auto pt-11">
+    <ResizablePanel
+      v-model:width="panelWidth"
+      class="bg-muted dark:bg-background relative z-10 flex h-full flex-col justify-between overflow-auto overflow-visible border-r-2 print:hidden"
+    >
+      <Tabs v-model="selectedTabString" class="flex h-full flex-col">
+        <TabsList
+          class="flex w-full rounded-none border-b border-gray-200 bg-transparent p-0"
+        >
+          <TabsTrigger
+            v-for="(tab, index) in ['آرایش نبرد', 'تنظیمات نمودار']"
+            :key="tab"
+            :value="index.toString()"
+            class="text-muted-foreground hover:text-muted-foreground data-[state=active]:border-primary data-[state=active]:text-primary flex-1 rounded-none border-b-2 border-transparent bg-transparent px-1 py-4 text-center text-sm font-medium shadow-none transition-none hover:border-gray-300 focus-visible:ring-0 data-[state=active]:bg-transparent data-[state=active]:shadow-none"
+          >
+            {{ tab }}
+          </TabsTrigger>
+        </TabsList>
+        <div class="min-h-0 flex-auto overflow-auto">
+          <TabsContent value="0" class="mt-0 h-full">
+            <OrbatPanel class="space-y-1" hide-filter>
+              <template #header></template>
+            </OrbatPanel>
+          </TabsContent>
+          <TabsContent value="1" class="mt-0 h-full">
+            <OrbatChartSettings chart-mode :tab="currentTab" />
+          </TabsContent>
+        </div>
+      </Tabs>
+    </ResizablePanel>
 
-.chart-edit-tab-list {
-  background-color: color-mix(in srgb, var(--color-primary) 15%, transparent);
-  border-bottom-color: color-mix(in srgb, var(--color-primary) 25%, transparent);
-}
+    <main class="bg-muted/50 relative h-full flex-auto">
+      <SimpleBreadcrumbs
+        class="bg-opacity-80 bg-background absolute top-2 left-2 z-10 print:hidden"
+        :items="breadcrumbItems"
+      />
+      <nav class="bg-background absolute top-2 right-4 z-10 rounded-full print:hidden">
+        <DotsMenu :items="menuItems" />
+      </nav>
 
-:global(.dark) .chart-edit-tab-list {
-  background-color: color-mix(in srgb, var(--color-primary) 8%, transparent);
-  border-bottom-color: color-mix(in srgb, var(--color-primary) 15%, transparent);
-}
-
-.chart-edit-tab-active {
-  border-bottom-color: var(--color-primary);
-  color: color-mix(in srgb, var(--color-primary) 90%, black);
-  background-color: color-mix(in srgb, var(--color-primary) 20%, transparent);
-}
-
-:global(.dark) .chart-edit-tab-active {
-  color: color-mix(in srgb, var(--color-primary) 100%, white);
-  background-color: color-mix(in srgb, var(--color-primary) 10%, transparent);
-}
-
-.chart-edit-tab-inactive {
-  border-bottom-color: transparent;
-  color: rgb(100 116 139);
-}
-
-.chart-edit-tab-inactive:hover {
-  border-bottom-color: color-mix(in srgb, var(--color-primary) 25%, transparent);
-  color: color-mix(in srgb, var(--color-primary) 80%, black);
-}
-
-:global(.dark) .chart-edit-tab-inactive {
-  color: rgb(148 163 184);
-}
-
-:global(.dark) .chart-edit-tab-inactive:hover {
-  color: color-mix(in srgb, var(--color-primary) 100%, white);
-}
-
-.chart-edit-main {
-  background-color: color-mix(in srgb, var(--color-primary) 15%, transparent);
-}
-
-:global(.dark) .chart-edit-main {
-  background-color: color-mix(in srgb, var(--color-primary) 8%, transparent);
-}
-
-.chart-edit-breadcrumbs {
-  background-color: color-mix(in srgb, var(--color-primary) 15%, transparent);
-  border-color: color-mix(in srgb, var(--color-primary) 25%, transparent);
-}
-
-:global(.dark) .chart-edit-breadcrumbs {
-  background-color: color-mix(in srgb, var(--color-primary) 8%, transparent);
-  border-color: color-mix(in srgb, var(--color-primary) 15%, transparent);
-}
-
-.chart-edit-nav {
-  background-color: color-mix(in srgb, var(--color-primary) 15%, transparent);
-  border-color: color-mix(in srgb, var(--color-primary) 25%, transparent);
-}
-
-:global(.dark) .chart-edit-nav {
-  background-color: color-mix(in srgb, var(--color-primary) 8%, transparent);
-  border-color: color-mix(in srgb, var(--color-primary) 15%, transparent);
-}
-</style>
+      <ToggleField class="absolute right-2 bottom-2 z-10 print:hidden" v-model="debug"
+        >حالت اشکال‌زدایی</ToggleField
+      >
+      <p v-if="!activeUnit" class="p-8 text-center">واحد ریشه را در نوار کناری انتخاب کنید</p>
+      <OrbatChart
+        :unit="activeUnit"
+        :width="width"
+        :height="height"
+        :symbol-generator="symbolGenerator"
+        chart-id="chartId"
+        :options="options.$state"
+        :specific-options="specificOptions.$state"
+        enable-pan-zoom
+        :interactive="isInteractive"
+        @unitclick="onUnitClick"
+        @levelclick="onLevelClick"
+        @branchclick="onBranchClick"
+        :debug="debug"
+      />
+    </main>
+  </div>
+</template>

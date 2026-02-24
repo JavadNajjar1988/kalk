@@ -6,7 +6,7 @@
         v-if="mapRef"
         class="pointer-events-none absolute inset-0 flex flex-col justify-between"
       >
-        <header class="flex flex-none items-center justify-between p-8 pt-13 pl-13">
+        <header class="flex flex-none items-center justify-between px-4 pt-4">
           <div class="flex items-center space-x-2 space-x-reverse">
             <MapTimeController
               class="pointer-events-auto"
@@ -48,7 +48,7 @@
                 type="button"
                 @click="onOpenDetailsPanel()"
                 title="نمایش پنل"
-                class="pointer-events-auto absolute top-24 left-4 rounded-lg bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border border-gray-200/50 dark:border-gray-700/50 p-2 text-gray-700 dark:text-gray-300 hover:bg-white dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-gray-100 shadow-md hover:shadow-lg transition-all duration-200"
+                class="panel-toggle-button pointer-events-auto absolute top-24 left-4"
               >
                 <ShowPanelIcon class="h-6 w-6" />
               </button>
@@ -61,7 +61,7 @@
                 type="button"
                 @click="toggleLeftPanel()"
                 title="نمایش پنل آرایش نبرد"
-                class="pointer-events-auto absolute top-24 right-4 rounded-lg bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border border-gray-200/50 dark:border-gray-700/50 p-2 text-gray-700 dark:text-gray-300 hover:bg-white dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-gray-100 shadow-md hover:shadow-lg transition-all duration-200"
+                class="panel-toggle-button pointer-events-auto absolute top-24 right-4"
               >
                 <ShowPanelIcon class="h-6 w-6 rotate-180" />
               </button>
@@ -75,7 +75,7 @@
                 type="button"
                 @click="toggleLeftPanel()"
                 title="نمایش پنل"
-                class="pointer-events-auto absolute top-6 left-4 rounded-lg bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border border-gray-200/50 dark:border-gray-700/50 p-2 text-gray-700 dark:text-gray-300 hover:bg-white dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-gray-100 shadow-md hover:shadow-lg transition-all duration-200"
+                class="panel-toggle-button pointer-events-auto absolute top-6 left-4"
               >
                 <ShowPanelIcon class="h-6 w-6" />
               </button>
@@ -104,7 +104,7 @@
                 type="button"
                 @click="onOpenDetailsPanel()"
                 title="نمایش پنل"
-                class="pointer-events-auto absolute top-6 right-4 rounded-lg bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border border-gray-200/50 dark:border-gray-700/50 p-2 text-gray-700 dark:text-gray-300 hover:bg-white dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-gray-100 shadow-md hover:shadow-lg transition-all duration-200"
+                class="panel-toggle-button pointer-events-auto absolute top-6 right-4"
               >
                 <ShowPanelIcon class="h-6 w-6 rotate-180" />
               </button>
@@ -112,55 +112,9 @@
           </template>
         </section>
       </main>
-      <!-- Floating breadcrumb pill (top-center) -->
-      <div
-        v-if="mapRef"
-        class="pointer-events-none absolute inset-x-0 top-16 z-50 flex justify-center px-2"
-      >
-        <div class="pointer-events-auto">
-          <button
-            v-if="!breadcrumbOpen"
-            type="button"
-            class="breadcrumb-pill-button backdrop-blur-md rounded-full px-3 py-1 text-xs shadow-md text-foreground"
-            @click.stop="breadcrumbOpen = true"
-            title="نمایش مسیر آرایش نبرد"
-          >
-            مسیر آرایش نبرد
-          </button>
-          <div
-            v-else
-            class="breadcrumb-panel backdrop-blur-md rounded-2xl shadow-xl max-w-[90vw] sm:max-w-3xl lg:max-w-5xl overflow-hidden"
-          >
-            <div class="breadcrumb-panel-header flex items-center justify-between px-3 py-1.5">
-              <span class="text-xs text-foreground">مسیر آرایش نبرد</span>
-              <button
-                type="button"
-                class="breadcrumb-close-button rounded px-2 py-1 text-xs"
-                @click.stop="breadcrumbOpen = false"
-                title="بستن"
-              >
-                ×
-              </button>
-            </div>
-            <div class="breadcrumb-panel-content max-h-52 overflow-auto p-2 rounded-2xl text-foreground [&_.bg-sidebar]:bg-transparent [&_.sm\:p-3]:p-2">
-              <UnitBreadcrumbs />
-            </div>
-          </div>
-        </div>
-      </div>
-      <!-- Overlay breadcrumb and timeline to avoid affecting map layout -->
-      <div
-        v-if="mapRef"
-        class="pointer-events-none absolute inset-x-0 bottom-2 z-40 flex flex-col items-center gap-2 px-2"
-      >
-        <!-- Breadcrumb moved to top floating pill -->
-        <div v-if="ui.showTimeline" class="pointer-events-auto w-full sm:max-w-4xl lg:max-w-6xl">
-          <ScenarioTimeline />
-        </div>
-      </div>
       <footer
         v-if="mapRef && ui.showToolbar"
-        class="pointer-events-none sm:absolute sm:bottom-28 sm:left-1/2 sm:-translate-x-1/2 sm:p-2 z-50"
+        class="pointer-events-none flex justify-center sm:absolute sm:bottom-2 sm:w-full sm:p-2 z-50"
       >
         <MapEditorMainToolbar
           @open-time-modal="openTimeDialog()"
@@ -203,7 +157,9 @@
       @keyup.t="openTimeDialog"
       @keyup.s="ui.showSearch = true"
     />
-    
+    <UnitBreadcrumbs v-if="ui.showOrbatBreadcrumbs && !isMobile" />
+    <ScenarioTimeline v-if="ui.showTimeline" />
+
   </div>
 </template>
 
@@ -244,8 +200,6 @@ import { useUiStore } from "@/stores/uiStore";
 import { inputEventFilter } from "@/components/helpers";
 import { GlobalEvents } from "vue-global-events";
 import SearchScenarioActions from "@/modules/scenarioeditor/SearchScenarioActions.vue";
-import IconButton from "@/components/IconButton.vue";
-import { MagnifyingGlassIcon } from "@heroicons/vue/24/solid";
 import ScenarioEventDetails from "@/modules/scenarioeditor/ScenarioEventDetails.vue";
 import { useSelectedItems } from "@/stores/selectedStore";
 import ScenarioMapLayerDetails from "@/modules/scenarioeditor/ScenarioMapLayerDetails.vue";
@@ -261,7 +215,7 @@ const emit = defineEmits(["showExport", "showLoad", "show-settings"]);
 const activeScenario = injectStrict(activeScenarioKey);
 
 const { getModalTimestamp } = injectStrict(timeModalKey);
-const { state, update } = activeScenario.store;
+const { state } = activeScenario.store;
 const {
   time: { setCurrentTime, add, subtract, goToNextScenarioEvent, goToPrevScenarioEvent },
 } = activeScenario;
@@ -269,7 +223,6 @@ const toolbarStore = useMainToolbarStore();
 const activeUnitStore = useActiveUnitStore();
 const ui = useUiStore();
 const playback = usePlaybackStore();
-const breadcrumbOpen = shallowRef(false);
 // For fa-IR UI, prefer details on the left and orbat on the right
 const rtlPanels = true;
 
@@ -355,13 +308,8 @@ function onDecDay() {
   subtract(1, "day", true);
 }
 
-function onShowPlaceSearch() {
-  ui.searchGeoMode = true;
-  ui.showSearch = true;
-}
-
-const { pause, resume, isActive } = useRafFn(
-  ({ delta }) => {
+const { pause, resume } = useRafFn(
+  () => {
     if (
       playback.playbackLooping &&
       playback.endMarker !== undefined &&
@@ -392,83 +340,29 @@ watch(
 );
 </script>
 <style scoped>
-.breadcrumb-pill-button {
-  background-color: color-mix(in srgb, var(--color-primary) 8%, transparent);
-  border: 1px solid color-mix(in srgb, var(--color-primary) 25%, transparent);
+.panel-toggle-button {
+  border-radius: 10px;
+  border: 1px solid var(--surface-border);
+  background-color: var(--surface-panel);
+  color: hsl(var(--foreground));
+  padding: 0.5rem;
+  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.16);
+  transition:
+    background-color 0.2s ease,
+    box-shadow 0.2s ease,
+    transform 0.2s ease;
 }
 
-:global(.dark) .breadcrumb-pill-button {
-  background-color: color-mix(in srgb, var(--color-primary) 5%, transparent);
-  border-color: color-mix(in srgb, var(--color-primary) 15%, transparent);
+.panel-toggle-button:hover {
+  background-color: var(--surface-panel-muted);
+  box-shadow: 0 10px 22px rgba(15, 23, 42, 0.2);
 }
 
-@supports (backdrop-filter: blur(1px)) {
-  .breadcrumb-pill-button {
-    background-color: color-mix(in srgb, var(--color-primary) 12%, transparent);
-  }
-  
-  :global(.dark) .breadcrumb-pill-button {
-    background-color: color-mix(in srgb, var(--color-primary) 8%, transparent);
-  }
+:global(.dark) .panel-toggle-button {
+  box-shadow: 0 8px 18px rgba(2, 6, 23, 0.45);
 }
 
-.breadcrumb-panel {
-  background-color: color-mix(in srgb, var(--color-primary) 8%, transparent);
-  border: 1px solid color-mix(in srgb, var(--color-primary) 25%, transparent);
-}
-
-:global(.dark) .breadcrumb-panel {
-  background-color: color-mix(in srgb, var(--color-primary) 5%, transparent);
-  border-color: color-mix(in srgb, var(--color-primary) 15%, transparent);
-}
-
-@supports (backdrop-filter: blur(1px)) {
-  .breadcrumb-panel {
-    background-color: color-mix(in srgb, var(--color-primary) 10%, transparent);
-  }
-  
-  :global(.dark) .breadcrumb-panel {
-    background-color: color-mix(in srgb, var(--color-primary) 6%, transparent);
-  }
-}
-
-.breadcrumb-panel-header {
-  background-color: color-mix(in srgb, var(--color-primary) 6%, transparent);
-}
-
-:global(.dark) .breadcrumb-panel-header {
-  background-color: color-mix(in srgb, var(--color-primary) 3%, transparent);
-}
-
-.breadcrumb-close-button:hover {
-  background-color: color-mix(in srgb, var(--color-primary) 12%, transparent);
-}
-
-:global(.dark) .breadcrumb-close-button:hover {
-  background-color: color-mix(in srgb, var(--color-primary) 8%, transparent);
-}
-
-.breadcrumb-panel-content {
-  background-color: color-mix(in srgb, var(--color-primary) 6%, transparent);
-  border: 1px solid color-mix(in srgb, var(--color-primary) 18%, transparent);
-}
-
-:global(.dark) .breadcrumb-panel-content {
-  background-color: color-mix(in srgb, var(--color-primary) 3%, transparent);
-  border-color: color-mix(in srgb, var(--color-primary) 15%, transparent);
-}
-
-@supports (backdrop-filter: blur(1px)) {
-  .breadcrumb-panel-content {
-    background-color: color-mix(in srgb, var(--color-primary) 10%, transparent);
-  }
-}
-
-.breadcrumb-panel-content :deep(.border-b) {
-  border-color: color-mix(in srgb, var(--color-primary) 18%, transparent) !important;
-}
-
-:global(.dark) .breadcrumb-panel-content :deep(.border-b) {
-  border-color: color-mix(in srgb, var(--color-primary) 15%, transparent) !important;
+.panel-toggle-button:active {
+  transform: translateY(1px);
 }
 </style>

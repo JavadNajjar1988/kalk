@@ -1,14 +1,14 @@
 <template>
   <div class="bg-background flex h-dvh flex-col overflow-hidden" ref="dropZoneRef">
     <nav
-      class="dashboard-header relative flex shrink-0 items-center justify-between rounded-b-xl py-1.5 pr-4 pl-6 text-sm text-foreground print:hidden border-b"
+      class="dashboard-header scenario-header relative flex shrink-0 items-center justify-between px-3 py-1.5 text-sm text-foreground print:hidden"
     >
       <div class="flex min-w-0 flex-auto items-center">
         <div class="flex min-w-0 flex-auto items-center">
           <MainMenu @action="onScenarioAction" @ui-action="onUiAction" />
           <button
             type="button"
-            class="hidden truncate pl-3 mr-4 text-slate-600 dark:text-gray-400 hover:text-slate-800 dark:hover:text-gray-200 sm:block transition-colors duration-200"
+            class="scenario-title-button hidden truncate pl-3 mr-4 sm:block"
             @click="showInfo()"
           >
             {{ activeScenario.store.state.info.name }}
@@ -18,33 +18,30 @@
       <div class="flex shrink-0 items-center gap-1 sm:gap-2">
         <button
           @click="showSearch = true"
-          class="header-icon-button search-button inline-flex items-center justify-center rounded-lg p-1.5 text-slate-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-600 hover:text-slate-800 dark:hover:text-white focus:ring-2 focus:ring-blue-300 dark:focus:ring-white focus:outline-hidden focus:ring-inset transition-all duration-200"
+          class="header-icon-button search-button inline-flex items-center justify-center rounded-md p-1.5"
         >
           <SearchIcon class="block h-5 w-5 transition-all duration-300" />
         
         </button>
-        <div class="flex items-center gap-1 absolute left-1/2 -translate-x-1/2">
+        <div class="header-mode-switcher flex items-center gap-1">
           <router-link
             :to="{ name: MAP_EDIT_MODE_ROUTE }"
             title="حالت ویرایش نقشه"
-            exact-active-class="text-green-600 bg-green-100 dark:text-green-400 dark:bg-green-900/30"
-            class="header-icon-button map-button inline-flex items-center justify-center rounded-md p-1.5 text-slate-600 dark:text-gray-400 hover:bg-green-50 dark:hover:bg-slate-600 hover:text-green-600 dark:hover:text-green-400 focus:ring-2 focus:ring-green-300 dark:focus:ring-white focus:outline-hidden focus:ring-inset transition-all duration-200"
+            class="header-icon-button map-button inline-flex items-center justify-center rounded-md p-1.5"
           >
             <GlobeAltIcon class="h-5 w-5 transition-all duration-300" />
           </router-link>
           <router-link
             :to="{ name: GRID_EDIT_ROUTE }"
             title="حالت ویرایش جدول"
-            exact-active-class="text-blue-600 bg-blue-100 dark:text-blue-400 dark:bg-blue-900/30"
-            class="header-icon-button grid-button inline-flex items-center justify-center rounded-md p-1.5 text-slate-600 dark:text-gray-400 hover:bg-blue-50 dark:hover:bg-slate-600 hover:text-blue-600 dark:hover:text-blue-400 focus:ring-2 focus:ring-blue-300 dark:focus:ring-white focus:outline-hidden focus:ring-inset transition-all duration-200"
+            class="header-icon-button grid-button inline-flex items-center justify-center rounded-md p-1.5"
           >
             <TableIcon class="h-5 w-5 transition-all duration-300" />
           </router-link>
           <router-link
             :to="{ name: CHART_EDIT_MODE_ROUTE }"
             title="حالت ویرایش نمودار"
-            exact-active-class="text-orange-600 bg-orange-100 dark:text-orange-400 dark:bg-orange-900/30"
-            class="header-icon-button chart-button inline-flex items-center justify-center rounded-md p-1.5 text-slate-600 dark:text-gray-400 hover:bg-orange-50 dark:hover:bg-slate-600 hover:text-orange-600 dark:hover:text-orange-400 focus:ring-2 focus:ring-orange-300 dark:focus:ring-white focus:outline-hidden focus:ring-inset transition-all duration-200"
+            class="header-icon-button chart-button inline-flex items-center justify-center rounded-md p-1.5"
           >
             <IconSitemap class="h-5 w-5 transition-all duration-300" />
            
@@ -53,7 +50,7 @@
         <div class="flex items-center">
           <button
             @click="undo()"
-            class="header-icon-button undo-button hidden items-center justify-center rounded-lg p-1.5 text-slate-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-600 hover:text-slate-800 dark:hover:text-white focus:ring-2 focus:ring-yellow-300 dark:focus:ring-white focus:outline-hidden focus:ring-inset disabled:opacity-40 disabled:cursor-not-allowed sm:block transition-all duration-200"
+            class="header-icon-button undo-button hidden items-center justify-center rounded-md p-1.5 disabled:cursor-not-allowed disabled:opacity-40 sm:block"
             title="لغو عمل (ctrl+z)"
             :disabled="!canUndo"
           >
@@ -61,7 +58,7 @@
           </button>
           <button
             @click="redo()"
-            class="header-icon-button redo-button hidden items-center justify-center rounded-lg p-1.5 text-slate-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-600 hover:text-slate-800 dark:hover:text-white focus:ring-2 focus:ring-teal-300 dark:focus:ring-white focus:outline-hidden focus:ring-inset disabled:opacity-40 disabled:cursor-not-allowed sm:block transition-all duration-200"
+            class="header-icon-button redo-button hidden items-center justify-center rounded-md p-1.5 disabled:cursor-not-allowed disabled:opacity-40 sm:block"
             title="انجام مجدد عمل"
             :disabled="!canRedo"
           >
@@ -71,7 +68,7 @@
         </div>
         <button
           @click="showKeyboardShortcuts"
-          class="header-icon-button keyboard-button hidden items-center justify-center rounded-lg p-1.5 text-slate-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-600 hover:text-slate-800 dark:hover:text-white focus:ring-2 focus:ring-pink-300 dark:focus:ring-white focus:outline-hidden focus:ring-inset sm:block transition-all duration-200"
+          class="header-icon-button keyboard-button hidden items-center justify-center rounded-md p-1.5 sm:block"
           title="نمایش میانبرهای صفحه کلید"
         >
        
@@ -81,7 +78,7 @@
         <div class="relative hidden sm:block" ref="themeMenuRef">
           <button
             @click="themeMenuOpen = !themeMenuOpen"
-            class="header-icon-button palette-button inline-flex items-center justify-center rounded-lg p-1.5 text-slate-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-600 hover:text-indigo-600 dark:hover:text-white focus:ring-2 focus:ring-indigo-300 dark:focus:ring-white focus:outline-hidden focus:ring-inset transition-all duration-200"
+            class="header-icon-button palette-button inline-flex items-center justify-center rounded-md p-1.5"
             title="انتخاب تم"
           >
             <IconPalette class="block h-5 w-5 transition-all duration-300" />
@@ -89,15 +86,15 @@
           <div
             v-if="themeMenuOpen"
             dir="rtl"
-            class="absolute left-0 top-full z-50 mt-2 w-60 rounded-2xl border border-slate-200/70 bg-white/95 p-3 text-right shadow-2xl backdrop-blur-md dark:border-slate-700/60 dark:bg-slate-900/95"
+            class="theme-menu-panel absolute left-0 top-full z-50 mt-2 w-60 rounded-xl border p-3 text-right"
           >
             <div
-              class="flex items-center justify-between border-b border-slate-200/70 pb-2 text-xs font-semibold text-slate-700 dark:border-slate-700/60 dark:text-slate-200"
+              class="flex items-center justify-between border-b pb-2 text-xs font-semibold text-foreground"
             >
               <span>انتخاب تم</span>
               <button class="theme-menu-close-button text-[11px]" @click="themeMenuOpen = false">بستن</button>
             </div>
-            <p class="mt-2 text-[11px] text-slate-500 dark:text-slate-400">
+            <p class="mt-2 text-[11px] text-muted-foreground">
               یکی از ترکیب‌رنگ‌های زیر را برای محیط کار انتخاب کنید.
             </p>
             <div class="mt-3 grid grid-cols-2 gap-3">
@@ -109,7 +106,7 @@
                 :class="selectedTheme === option.key ? 'scale-[1.02]' : 'hover:-translate-y-0.5'"
                 :style="getThemeOptionStyle(option.key)"
               >
-                <span class="text-[11px] font-medium text-slate-600 dark:text-slate-300">{{ option.label }}</span>
+                <span class="text-[11px] font-medium text-muted-foreground">{{ option.label }}</span>
                 <span class="mt-2 block h-8 w-full rounded-lg" :style="{ background: option.preview }"></span>
               </button>
             </div>
@@ -117,7 +114,7 @@
         </div>
 
         <button
-          class="header-icon-button settings-button inline-flex items-center justify-center rounded-lg p-1.5 text-slate-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-600 hover:text-slate-800 dark:hover:text-white focus:ring-2 focus:ring-red-300 dark:focus:ring-white focus:outline-hidden focus:ring-inset transition-all duration-200"
+          class="header-icon-button settings-button inline-flex items-center justify-center rounded-md p-1.5"
           @click="isOpen = !isOpen"
         >
           <SettingsIcon class="block h-5 w-5 transition-all duration-300" />
@@ -551,164 +548,98 @@ if (state.layers.length > 0) {
 }
 </script>
 <style scoped>
-.theme-menu-close-button {
-  color: color-mix(in srgb, var(--color-primary) 80%, black);
+.scenario-header {
+  min-height: 52px;
 }
 
-.theme-menu-close-button:hover {
-  color: color-mix(in srgb, var(--color-primary) 100%, black);
+.scenario-title-button {
+  max-width: min(36vw, 460px);
+  color: rgb(31 41 55);
+  font-weight: 600;
+  letter-spacing: 0;
+  transition: color 0.15s ease;
 }
 
-:global(.dark) .theme-menu-close-button {
-  color: color-mix(in srgb, var(--color-primary) 100%, white);
+.scenario-title-button:hover {
+  color: rgb(15 23 42);
 }
 
-:global(.dark) .theme-menu-close-button:hover {
-  color: color-mix(in srgb, var(--color-primary) 100%, white);
-  opacity: 0.8;
+.header-mode-switcher {
+  border: 1px solid rgba(148, 158, 171, 0.45);
+  background: rgba(238, 240, 242, 0.95);
+  border-radius: 0.75rem;
+  padding: 0.2rem;
+  gap: 0.2rem;
 }
 
-/* انیمیشن‌های آیکون‌های هدبار */
 .header-icon-button {
-  position: relative;
-  overflow: visible;
+  color: rgb(75 85 99) !important;
+  border-radius: 0.5rem;
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease,
+    border-color 0.15s ease;
 }
 
-.header-icon-button::before {
-  content: '';
-  position: absolute;
-  inset: -2px;
-  border-radius: inherit;
-  background: radial-gradient(circle, rgba(59, 130, 246, 0.1) 0%, transparent 70%);
-  opacity: 0;
-  transition: opacity 0.3s ease;
-  pointer-events: none;
+.header-icon-button:hover {
+  background-color: rgba(229, 231, 235, 0.95) !important;
+  color: rgb(17 24 39) !important;
 }
 
-.header-icon-button:hover::before {
-  opacity: 1;
+.header-icon-button:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(148, 163, 184, 0.45);
 }
 
 .header-icon-button:active {
-  transform: scale(0.95);
+  transform: translateY(1px);
 }
 
-.header-icon-button svg,
-.header-icon-button .h-5 {
-  will-change: transform;
-  transform-origin: center;
+.header-icon-button.router-link-active,
+.header-icon-button.router-link-exact-active {
+  background-color: rgba(141, 165, 58, 0.24) !important;
+  color: rgb(42 55 18) !important;
 }
 
-/* انیمیشن pulse برای آیکون‌های فعال */
-.header-icon-button.router-link-active svg,
-.header-icon-button.router-link-active .h-5 {
-  animation: pulse-glow 2s ease-in-out infinite;
+.theme-menu-panel {
+  background-color: var(--surface-panel);
+  border-color: var(--surface-border);
+  box-shadow: 0 12px 30px var(--surface-shadow);
 }
 
-@keyframes pulse-glow {
-  0%, 100% {
-    filter: drop-shadow(0 0 2px currentColor);
-  }
-  50% {
-    filter: drop-shadow(0 0 6px currentColor);
-  }
+.theme-menu-close-button {
+  color: var(--color-muted-foreground);
 }
 
-/* انیمیشن‌های متنوع برای هر آیکون */
-
-/* آیکون همبرگر - چرخش 90 درجه */
-.hamburger-button:hover svg {
-  transform: rotate(90deg) scale(1.15);
-  filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.2));
+.theme-menu-close-button:hover {
+  color: var(--color-foreground);
 }
 
-/* آیکون چرخ دنده - چرخش 360 درجه */
-.settings-button:hover svg {
-  animation: spin-smooth 0.8s ease-in-out;
-  filter: drop-shadow(0 2px 8px rgba(239, 68, 68, 0.4));
+:global(.dark) .scenario-title-button {
+  color: rgb(226 232 240);
 }
 
-@keyframes spin-smooth {
-  from {
-    transform: rotate(0deg) scale(1);
-  }
-  to {
-    transform: rotate(360deg) scale(1.2);
-  }
+:global(.dark) .scenario-title-button:hover {
+  color: rgb(248 250 252);
 }
 
-/* آیکون جستجو - pulse + rotate 90 */
-.search-button:hover svg {
-  animation: search-pulse 0.6s ease-in-out;
-  filter: drop-shadow(0 2px 6px rgba(59, 130, 246, 0.4));
+:global(.dark) .header-mode-switcher {
+  border-color: rgba(100, 116, 139, 0.5);
+  background: rgba(30, 41, 59, 0.85);
 }
 
-@keyframes search-pulse {
-  0% {
-    transform: scale(1) rotate(0deg);
-  }
-  50% {
-    transform: scale(1.3) rotate(90deg);
-  }
-  100% {
-    transform: scale(1.25) rotate(90deg);
-  }
+:global(.dark) .header-icon-button {
+  color: rgb(203 213 225) !important;
 }
 
-/* آیکون نقشه - چرخش 180 درجه */
-.map-button:hover svg {
-  transform: rotate(180deg) scale(1.2);
-  filter: drop-shadow(0 2px 8px rgba(34, 197, 94, 0.4));
+:global(.dark) .header-icon-button:hover {
+  background-color: rgba(71, 85, 105, 0.52) !important;
+  color: rgb(248 250 252) !important;
 }
 
-/* آیکون جدول - چرخش معکوس و scale */
-.grid-button:hover svg {
-  transform: rotate(-15deg) scale(1.2);
-  filter: drop-shadow(0 2px 8px rgba(59, 130, 246, 0.4));
-}
-
-/* آیکون نمودار - چرخش 45 درجه */
-.chart-button:hover svg {
-  transform: rotate(45deg) scale(1.2);
-  filter: drop-shadow(0 2px 8px rgba(249, 115, 22, 0.4));
-}
-
-/* آیکون Undo - چرخش به چپ */
-.undo-button:hover svg {
-  transform: rotate(-90deg) scale(1.15);
-  filter: drop-shadow(0 2px 6px rgba(234, 179, 8, 0.4));
-}
-
-/* آیکون Redo - چرخش به راست */
-.redo-button:hover svg {
-  transform: rotate(90deg) scale(1.15);
-  filter: drop-shadow(0 2px 6px rgba(20, 184, 166, 0.4));
-}
-
-/* آیکون کیبورد - bounce */
-.keyboard-button:hover svg {
-  animation: keyboard-bounce 0.5s ease-in-out;
-  filter: drop-shadow(0 2px 6px rgba(236, 72, 153, 0.4));
-}
-
-@keyframes keyboard-bounce {
-  0%, 100% {
-    transform: translateY(0) scale(1);
-  }
-  50% {
-    transform: translateY(-4px) scale(1.2);
-  }
-}
-
-/* آیکون پالت - چرخش 180 درجه */
-.palette-button:hover svg {
-  transform: rotate(180deg) scale(1.2);
-  filter: drop-shadow(0 2px 8px rgba(99, 102, 241, 0.4));
-}
-
-/* افکت کلی برای همه آیکون‌ها */
-:global(.dark) .header-icon-button:hover svg,
-:global(.dark) .header-icon-button:hover .h-5 {
-  filter: drop-shadow(0 2px 6px rgba(255, 255, 255, 0.15));
+:global(.dark) .header-icon-button.router-link-active,
+:global(.dark) .header-icon-button.router-link-exact-active {
+  background-color: rgba(141, 165, 58, 0.32) !important;
+  color: rgb(240 253 244) !important;
 }
 </style>

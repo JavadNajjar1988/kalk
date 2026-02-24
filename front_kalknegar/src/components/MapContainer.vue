@@ -76,49 +76,45 @@ onUnmounted(() => {
 .ol-zoom-in,
 .ol-zoom-out {
   @apply border shadow-lg;
-  border-radius: 12px;
-  background-color: rgba(236, 254, 255, 0.25);
-  border-color: rgba(34, 211, 238, 0.5);
-  color: rgb(21, 94, 117);
-  backdrop-filter: blur(16px) saturate(180%);
-  -webkit-backdrop-filter: blur(16px) saturate(180%);
+  border-radius: 10px;
+  background-color: rgba(255, 255, 255, 0.95);
+  border-color: rgba(148, 163, 184, 0.55);
+  color: rgb(51, 65, 85);
   transition: all 0.2s ease;
 }
 
 .dark .ol-zoom-in,
 .dark .ol-zoom-out {
-  background-color: rgba(6, 78, 59, 0.25);
-  border-color: rgba(34, 211, 238, 0.4);
-  color: rgb(153, 246, 228);
+  background-color: rgba(15, 23, 42, 0.92);
+  border-color: rgba(100, 116, 139, 0.55);
+  color: rgb(226, 232, 240);
 }
 
 .ol-zoom-in:hover,
 .ol-zoom-out:hover {
-  background-color: rgba(236, 254, 255, 0.4);
-  border-color: rgba(34, 211, 238, 0.7);
-  transform: scale(1.05);
+  background-color: rgba(255, 255, 255, 1);
+  border-color: rgba(100, 116, 139, 0.7);
+  transform: translateY(-1px);
 }
 
 .dark .ol-zoom-in:hover,
 .dark .ol-zoom-out:hover {
-  background-color: rgba(6, 78, 59, 0.4);
-  border-color: rgba(34, 211, 238, 0.6);
+  background-color: rgba(30, 41, 59, 0.95);
+  border-color: rgba(148, 163, 184, 0.7);
 }
 
 .ol-attribution {
   @apply border shadow-lg;
-  border-radius: 12px;
-  background-color: rgba(236, 254, 255, 0.25);
-  border-color: rgba(34, 211, 238, 0.5);
-  color: rgb(21, 94, 117);
-  backdrop-filter: blur(16px) saturate(180%);
-  -webkit-backdrop-filter: blur(16px) saturate(180%);
+  border-radius: 10px;
+  background-color: rgba(255, 255, 255, 0.95);
+  border-color: rgba(148, 163, 184, 0.55);
+  color: rgb(51, 65, 85);
   transition: all 0.2s ease;
 }
 
 .dark .ol-attribution {
-  background-color: rgba(6, 78, 59, 0.25);
-  border-color: rgba(34, 211, 238, 0.4);
-  color: rgb(153, 246, 228);
+  background-color: rgba(15, 23, 42, 0.92);
+  border-color: rgba(100, 116, 139, 0.55);
+  color: rgb(226, 232, 240);
 }
 </style>

@@ -38,7 +38,7 @@ const forwarded = useForwardPropsEmits(delegatedProps, emits);
       v-bind="{ ...forwarded, ...$attrs }"
       :class="
         cn(
-          'popover-content text-popover-foreground data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 z-50 w-72 origin-(--reka-popover-content-transform-origin) rounded-2xl border p-3 shadow-xl outline-hidden backdrop-blur-md',
+          'popover-content text-popover-foreground data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 z-50 w-72 origin-(--reka-popover-content-transform-origin) rounded-2xl border p-3 shadow-xl outline-hidden',
           props.class,
         )
       "
@@ -49,22 +49,8 @@ const forwarded = useForwardPropsEmits(delegatedProps, emits);
 </template>
 <style scoped>
 .popover-content {
-  background-color: color-mix(in srgb, var(--color-primary) 10%, transparent);
-  border-color: color-mix(in srgb, var(--color-primary) 30%, transparent);
-}
-
-:global(.dark) .popover-content {
-  background-color: color-mix(in srgb, var(--color-primary) 5%, transparent);
-  border-color: color-mix(in srgb, var(--color-primary) 15%, transparent);
-}
-
-@supports (backdrop-filter: blur(1px)) {
-  .popover-content {
-    background-color: color-mix(in srgb, var(--color-primary) 15%, transparent);
-  }
-  
-  :global(.dark) .popover-content {
-    background-color: color-mix(in srgb, var(--color-primary) 8%, transparent);
-  }
+  background-color: var(--surface-panel);
+  border-color: var(--surface-border);
+  box-shadow: 0 10px 24px var(--surface-shadow);
 }
 </style>

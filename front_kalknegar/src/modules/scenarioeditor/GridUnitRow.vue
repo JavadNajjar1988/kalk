@@ -3,9 +3,9 @@ import { ChevronRightIcon } from "@heroicons/vue/20/solid";
 import type { TableColumn } from "@/modules/scenarioeditor/types";
 import type { NUnit } from "@/types/internalModels";
 import GridEditableCell from "@/modules/scenarioeditor/GridEditableCell.vue";
-import MilitarySymbol from "@/components/MilitarySymbol.vue";
 import { injectStrict } from "@/utils";
 import { activeScenarioKey } from "@/components/injects";
+import MilitarySymbol from "@/components/MilitarySymbol.vue";
 
 interface Props {
   unit: NUnit;
@@ -34,14 +34,14 @@ function toggleOpen() {
 }
 </script>
 <template>
-  <tr :id="`item-${unit.id}`" class="divide-x divide-gray-200 dark:divide-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800">
+  <tr :id="`item-${unit.id}`" class="divide-border hover:bg-muted/50 h-12 divide-x">
     <td class="relative">
-      <div v-if="isActive" class="absolute inset-y-0 right-0 w-0.5 bg-blue-500 dark:bg-blue-400"></div>
+      <div v-if="isActive" class="bg-primary absolute inset-y-0 right-0 w-0.5"></div>
     </td>
     <td>
       <div
         :id="`cell-${itemIndex}-0`"
-        class="flex items-center py-3 text-right text-sm whitespace-nowrap text-gray-900 outline-0"
+        class="border-card text-foreground focus-within:border-ring flex h-12 items-center border-2 py-3 text-sm whitespace-nowrap outline-0"
         :style="`padding-left: ${level + 1}rem`"
         tabindex="0"
         @keydown.enter.exact="toggleOpen()"
@@ -49,7 +49,7 @@ function toggleOpen() {
       >
         <button v-if="unit.subUnits.length" @click="toggleOpen()">
           <ChevronRightIcon
-            class="h-6 w-6 transform text-gray-600 dark:text-gray-400 transition-transform group-hover:text-gray-700 dark:group-hover:text-gray-300"
+            class="text-muted-foreground group-hover:text-foreground h-6 w-6 transform transition-transform"
             :class="{
               'rotate-90': unit._isOpen,
             }"
@@ -57,11 +57,17 @@ function toggleOpen() {
         </button>
         <MilitarySymbol
           :sidc="unit.sidc"
-          class="ml-2"
+          class="ml-2 max-w-10"
           :class="{ 'ml-8': !unit.subUnits.length }"
-          :options="getCombinedSymbolOptions(unit)"
+          :options="{
+            ...getCombinedSymbolOptions(unit),
+            outlineColor: 'rgba(255, 255, 255, 0.8)',
+            outlineWidth: 10,
+          }"
         />
-        <button class="ml-2 truncate hover:underline">{{ unit.name }}</button>
+        <button class="ml-2 truncate text-sm font-medium hover:underline">
+          {{ unit.name }}
+        </button>
       </div>
     </td>
     <td v-for="(column, colIndex) in columns" :key="column.value" class="">

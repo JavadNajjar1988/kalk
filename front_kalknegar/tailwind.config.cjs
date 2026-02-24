@@ -1,5 +1,3 @@
-const defaultTheme = require("tailwindcss/defaultTheme");
-
 module.exports = {
   darkMode: ["class"],
   safelist: ["dark"],
@@ -20,7 +18,16 @@ module.exports = {
     },
     extend: {
       fontFamily: {
-        sans: ["InterVariable", ...defaultTheme.fontFamily.sans],
+        sans: [
+          "IranSans",
+          "IRANSansX",
+          "IRANSansWeb",
+          "Iranian Sans",
+          "Tahoma",
+          "Segoe UI",
+          "Arial",
+          "sans-serif",
+        ],
       },
       colors: {
         army: "#4b5320",

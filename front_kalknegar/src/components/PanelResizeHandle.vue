@@ -64,22 +64,12 @@ const throttledOnPointerMove = useThrottleFn(onPointerMove, 10);
 }
 
 .panel-resize-handle:hover {
-  background-color: color-mix(in srgb, var(--color-primary) 30%, transparent);
+  background-color: color-mix(in srgb, var(--surface-border) 70%, transparent);
 }
 
 @media (pointer: coarse) {
   .panel-resize-handle {
-    background-color: color-mix(in srgb, var(--color-primary) 20%, transparent);
-  }
-}
-
-:global(.dark) .panel-resize-handle:hover {
-  background-color: color-mix(in srgb, var(--color-primary) 20%, transparent);
-}
-
-@media (pointer: coarse) {
-  :global(.dark) .panel-resize-handle {
-    background-color: color-mix(in srgb, var(--color-primary) 15%, transparent);
+    background-color: color-mix(in srgb, var(--surface-border) 50%, transparent);
   }
 }
 </style>

@@ -165,8 +165,8 @@ onUnmounted(() => {
 
 <template>
   <ScrollArea
-    class="relative flex border-b p-4 sm:p-3"
-    :class="isDragged ? 'bg-gray-200' : 'bg-sidebar'"
+    class="relative flex rounded-xl border border-slate-300/80 px-3 py-1.5 shadow-sm dark:border-slate-600/80"
+    :class="isDragged ? 'bg-slate-200 dark:bg-slate-700' : 'bg-[var(--surface-panel)]'"
   >
     <div class="sm:flex sm:items-center sm:justify-center">
       <Breadcrumb class="w-max">

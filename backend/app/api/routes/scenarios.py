@@ -5,7 +5,6 @@ import json
 import shutil
 import uuid
 from pathlib import Path
-from uuid import UUID
 
 from fastapi import APIRouter, Depends, File, HTTPException, Request, UploadFile, status
 from fastapi.responses import FileResponse
@@ -245,8 +244,8 @@ async def import_scenario(db: DbSession, file: UploadFile = File(...)):
 
 
 @router.get("/{scenario_id}", response_model=dict)
-async def get_scenario(scenario_id: UUID, db: DbSession):
-    obj = await db.get(Scenario, str(scenario_id))
+async def get_scenario(scenario_id: str, db: DbSession):
+    obj = await db.get(Scenario, scenario_id)
     if not obj:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Scenario not found")
     return success(ScenarioOut.model_validate(obj).model_dump())
@@ -272,8 +271,8 @@ async def create_scenario(payload: ScenarioCreate, db: DbSession):
 
 
 @router.put("/{scenario_id}", response_model=dict, dependencies=[Depends(require_roles("SUPER_ADMIN", "COMMANDER"))])
-async def update_scenario(scenario_id: UUID, payload: ScenarioUpdate, db: DbSession):
-    obj = await db.get(Scenario, str(scenario_id))
+async def update_scenario(scenario_id: str, payload: ScenarioUpdate, db: DbSession):
+    obj = await db.get(Scenario, scenario_id)
     if not obj:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Scenario not found")
     data = payload.model_dump(exclude_unset=True)
@@ -287,8 +286,8 @@ async def update_scenario(scenario_id: UUID, payload: ScenarioUpdate, db: DbSess
 
 
 @router.delete("/{scenario_id}", status_code=status.HTTP_200_OK, dependencies=[Depends(require_roles("SUPER_ADMIN"))])
-async def delete_scenario(scenario_id: UUID, db: DbSession):
-    obj = await db.get(Scenario, str(scenario_id))
+async def delete_scenario(scenario_id: str, db: DbSession):
+    obj = await db.get(Scenario, scenario_id)
     if not obj:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Scenario not found")
     await db.delete(obj)

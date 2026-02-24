@@ -1,5 +1,5 @@
 <template>
-  <div class="space-y-1 pt-0.5 px-0.5 text-[10px] leading-4">
+  <div class="space-y-1 pt-2 text-sm leading-6">
     <slot name="header" />
     <OrbatSide
       v-for="side in sides"
@@ -10,12 +10,7 @@
       @side-action="onSideAction"
       :hide-filter="hideFilter"
     />
-    <OrbatPanelAddSide
-      v-if="sides.length < 2"
-      :simple="sides.length >= 1"
-      class="mt-8"
-      @add="addSide()"
-    />
+    <OrbatPanelAddSide v-if="sides.length < 2" :simple="sides.length >= 1" class="mt-8" @add="addSide()" />
   </div>
   <div
     v-if="isDragging && isCopying"

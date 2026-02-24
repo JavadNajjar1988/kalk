@@ -17,9 +17,9 @@ const props = defineProps<Props>();
 const emit = defineEmits(["toggle", "expand", "updateSide", "nextCell", "activeItem"]);
 </script>
 <template>
-  <tr class="divide-x divide-gray-200 dark:divide-gray-700 bg-white dark:bg-gray-900">
+  <tr class="divide-border bg-muted/50 h-12 divide-x">
     <td class="relative">
-      <div v-if="isActive" class="absolute inset-y-0 right-0 w-0.5 bg-blue-500 dark:bg-blue-400"></div>
+      <div v-if="isActive" class="bg-primary absolute inset-y-0 right-0 w-0.5"></div>
     </td>
     <td>
       <div
@@ -27,18 +27,20 @@ const emit = defineEmits(["toggle", "expand", "updateSide", "nextCell", "activeI
         @click="emit('toggle', side)"
         @keydown.enter.exact="emit('toggle', side)"
         tabindex="0"
-        class="flex h-12 items-center px-4 py-2 pr-3 text-right font-bold font-medium whitespace-nowrap text-gray-900 hover:cursor-pointer sm:px-0"
+        class="border-card text-foreground focus-within:border-ring flex h-12 items-center border-2 px-4 py-2 pr-3 text-left font-semibold whitespace-nowrap hover:cursor-pointer sm:px-0"
       >
         <button @click.stop="emit('toggle', side)" class="ml-0">
           <ChevronRightIcon
-            class="h-6 w-6 transform text-gray-600 dark:text-gray-400 transition-transform group-hover:text-gray-700 dark:group-hover:text-gray-300"
+            class="text-muted-foreground group-hover:text-foreground h-6 w-6 transform transition-transform"
             :class="{
               'rotate-90': sideOpen.get(side) ?? true,
             }"
           />
         </button>
 
-        <button class="ml-2 hover:underline">{{ side.name }}</button>
+        <button class="ml-2 text-sm font-semibold hover:underline">
+          {{ side.name }}
+        </button>
       </div>
     </td>
     <td class="">

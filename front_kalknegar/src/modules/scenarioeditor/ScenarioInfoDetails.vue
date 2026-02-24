@@ -19,7 +19,10 @@
     </form>
     <div v-else class="space-y-4 p-0">
       <DescriptionItem label="توضیحات">
-        <div class="prose-sm prose dark:prose-invert" v-html="hDescription"></div>
+        <div
+          class="prose prose-sm max-w-none text-right text-foreground dark:prose-invert [&_*]:text-inherit [&_p]:text-right [&_li]:text-right"
+          v-html="hDescription"
+        ></div>
       </DescriptionItem>
 
       <DescriptionItem label="زمان شروع"

@@ -1,6 +1,6 @@
 <template>
   <nav
-    class="map-editor-main-toolbar pointer-events-auto flex w-auto items-center justify-between p-2 text-sm sm:p-3 rounded-2xl shadow-xl text-foreground backdrop-blur-md"
+    class="map-editor-main-toolbar pointer-events-auto flex w-auto items-center justify-between rounded-xl border p-2 text-sm text-foreground sm:p-3"
   >
     <section class="flex items-center justify-between">
       <MainToolbarButton
@@ -481,236 +481,27 @@ function openSimpleTacticalSymbols() {
 </script>
 <style scoped>
 .map-editor-main-toolbar {
-  background-color: color-mix(in srgb, var(--color-primary) 10%, transparent);
-  border: 1px solid color-mix(in srgb, var(--color-primary) 30%, transparent);
+  background-color: var(--surface-panel);
+  border-color: var(--surface-border);
+  box-shadow: 0 8px 22px rgba(17, 24, 39, 0.16);
+  opacity: 1;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
 }
 
 :global(.dark) .map-editor-main-toolbar {
-  background-color: color-mix(in srgb, var(--color-primary) 5%, transparent);
-  border-color: color-mix(in srgb, var(--color-primary) 15%, transparent);
-}
-
-@supports (backdrop-filter: blur(1px)) {
-  .map-editor-main-toolbar {
-    background-color: color-mix(in srgb, var(--color-primary) 15%, transparent);
-  }
-  
-  :global(.dark) .map-editor-main-toolbar {
-    background-color: color-mix(in srgb, var(--color-primary) 8%, transparent);
-  }
-}
-
-/* انیمیشن‌های متنوع برای آیکون‌های toolbar */
-
-.toolbar-icon-button {
-  position: relative;
+  box-shadow: 0 10px 24px rgba(2, 6, 23, 0.42);
 }
 
 .toolbar-icon-button svg {
-  will-change: transform;
-  transform-origin: center;
+  transition:
+    transform 0.2s ease,
+    filter 0.2s ease;
 }
 
-/* آیکون قفل - bounce */
-.lock-button:hover svg {
-  animation: lock-bounce 0.5s ease-in-out;
-  filter: drop-shadow(0 2px 6px rgba(107, 114, 128, 0.4));
-}
-
-@keyframes lock-bounce {
-  0%, 100% {
-    transform: translateY(0) scale(1);
-  }
-  50% {
-    transform: translateY(-3px) scale(1.15);
-  }
-}
-
-/* آیکون انتخاب - pulse */
-.select-button:hover svg {
-  animation: select-pulse 0.6s ease-in-out;
-  filter: drop-shadow(0 2px 6px rgba(59, 130, 246, 0.4));
-}
-
-@keyframes select-pulse {
-  0%, 100% {
-    transform: scale(1);
-  }
-  50% {
-    transform: scale(1.2);
-  }
-}
-
-/* آیکون جابجایی - shake */
-.move-button:hover svg {
-  animation: move-shake 0.5s ease-in-out;
-  filter: drop-shadow(0 2px 6px rgba(34, 197, 94, 0.4));
-}
-
-@keyframes move-shake {
-  0%, 100% {
-    transform: translateX(0) rotate(0deg);
-  }
-  25% {
-    transform: translateX(-3px) rotate(-5deg);
-  }
-  75% {
-    transform: translateX(3px) rotate(5deg);
-  }
-}
-
-/* آیکون تنظیمات - چرخش */
-.settings-toolbar-button:hover svg {
-  animation: settings-spin 0.8s ease-in-out;
-  filter: drop-shadow(0 2px 8px rgba(99, 102, 241, 0.4));
-}
-
-@keyframes settings-spin {
-  from {
-    transform: rotate(0deg) scale(1);
-  }
-  to {
-    transform: rotate(360deg) scale(1.2);
-  }
-}
-
-/* آیکون اندازه‌گیری - scale up */
-.measurement-button:hover svg {
-  transform: scale(1.25) rotate(5deg);
-  filter: drop-shadow(0 2px 8px rgba(168, 85, 247, 0.4));
-}
-
-/* آیکون کشیدن - rotate */
-.draw-button:hover svg {
-  transform: rotate(15deg) scale(1.2);
-  filter: drop-shadow(0 2px 8px rgba(236, 72, 153, 0.4));
-}
-
-/* آیکون مسیر - wave */
-.track-button:hover svg {
-  animation: track-wave 0.6s ease-in-out;
-  filter: drop-shadow(0 2px 8px rgba(249, 115, 22, 0.4));
-}
-
-@keyframes track-wave {
-  0%, 100% {
-    transform: translateY(0) rotate(0deg);
-  }
-  50% {
-    transform: translateY(-4px) rotate(10deg);
-  }
-}
-
-/* آیکون افزودن واحد - pulse + scale */
-.group:hover .bg-opacity-70 {
-  animation: add-pulse 0.5s ease-in-out;
-  transform: scale(1.3);
-}
-
-@keyframes add-pulse {
-  0%, 100% {
-    transform: scale(1);
-  }
-  50% {
-    transform: scale(1.3);
-  }
-}
-
-/* آیکون پخش/توقف - bounce */
-.playback-button:hover svg {
-  animation: playback-bounce 0.5s ease-in-out;
-  filter: drop-shadow(0 2px 8px rgba(34, 197, 94, 0.4));
-}
-
-@keyframes playback-bounce {
-  0%, 100% {
-    transform: scale(1);
-  }
-  50% {
-    transform: scale(1.25);
-  }
-}
-
-/* آیکون منوی پخش - rotate down */
-.playback-menu-button:hover svg {
-  transform: rotate(180deg) scale(1.15);
-  filter: drop-shadow(0 2px 6px rgba(59, 130, 246, 0.4));
-}
-
-/* آیکون تقویم - flip */
-.calendar-button:hover svg {
-  animation: calendar-flip 0.6s ease-in-out;
-  filter: drop-shadow(0 2px 8px rgba(168, 85, 247, 0.4));
-}
-
-@keyframes calendar-flip {
-  0% {
-    transform: rotateY(0deg) scale(1);
-  }
-  50% {
-    transform: rotateY(180deg) scale(1.2);
-  }
-  100% {
-    transform: rotateY(360deg) scale(1.15);
-  }
-}
-
-/* آیکون پایان سناریو - slide right */
-.end-time-button:hover svg {
-  animation: fast-forward-slide 0.5s ease-in-out;
-  filter: drop-shadow(0 2px 8px rgba(34, 197, 94, 0.4));
-}
-
-@keyframes fast-forward-slide {
-  0%, 100% {
-    transform: translateX(0) scale(1);
-  }
-  50% {
-    transform: translateX(5px) scale(1.2);
-  }
-}
-
-/* آیکون رویداد بعدی - slide right */
-.next-event-button:hover svg {
-  transform: translateX(3px) scale(1.2);
-  filter: drop-shadow(0 2px 8px rgba(59, 130, 246, 0.4));
-}
-
-/* آیکون روز بعد - slide right */
-.next-day-button:hover svg {
-  transform: translateX(4px) scale(1.2);
-  filter: drop-shadow(0 2px 8px rgba(34, 197, 94, 0.4));
-}
-
-/* آیکون روز قبل - slide left */
-.prev-day-button:hover svg {
-  transform: translateX(-4px) scale(1.2);
-  filter: drop-shadow(0 2px 8px rgba(34, 197, 94, 0.4));
-}
-
-/* آیکون رویداد قبلی - slide left */
-.prev-event-button:hover svg {
-  transform: translateX(-3px) scale(1.2);
-  filter: drop-shadow(0 2px 8px rgba(59, 130, 246, 0.4));
-}
-
-/* آیکون شروع سناریو - slide left */
-.start-time-button:hover svg {
-  animation: rewind-slide 0.5s ease-in-out;
-  filter: drop-shadow(0 2px 8px rgba(34, 197, 94, 0.4));
-}
-
-@keyframes rewind-slide {
-  0%, 100% {
-    transform: translateX(0) scale(1);
-  }
-  50% {
-    transform: translateX(-5px) scale(1.2);
-  }
-}
-
-/* افکت کلی برای dark mode */
-:global(.dark) .toolbar-icon-button:hover svg {
-  filter: drop-shadow(0 2px 6px rgba(255, 255, 255, 0.15));
+.toolbar-icon-button:hover svg,
+.toolbar-icon-button:active svg {
+  transform: none;
+  filter: none;
 }
 </style>

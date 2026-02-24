@@ -57,11 +57,11 @@ const goToDashboard = () => {
 <template>
   <div class="flex items-center">
     <DropdownMenu>
-      <DropdownMenuTrigger as="button" dir="rtl" class="header-icon-button hamburger-button relative inline-flex items-center justify-center rounded-lg p-1.5 text-slate-600 dark:text-slate-300 hover:bg-gray-100 dark:hover:bg-slate-600 focus:ring-2 focus:ring-white focus:outline-hidden focus:ring-inset transition-all duration-200">
+      <DropdownMenuTrigger as="button" dir="rtl" class="header-icon-button hamburger-button relative inline-flex items-center justify-center rounded-md p-1.5">
         <Bars3Icon class="h-5 w-5 transition-all duration-300" />
       </DropdownMenuTrigger>
       <DropdownMenuContent
-        class="text-right rtl:mr-2"
+        class="header-menu-content text-right rtl:mr-2"
         align="end"
         :side-offset="12"
         dir="rtl"
@@ -201,18 +201,11 @@ const goToDashboard = () => {
      
       </DropdownMenuContent>
     </DropdownMenu>
-    <span class="mr-2 hidden font-medium tracking-tight text-slate-700 dark:text-slate-200 sm:block">کالک نگار</span>
+    <span class="mr-2 hidden text-sm font-semibold tracking-tight text-foreground sm:block">کالک نگار</span>
   </div>
 </template>
 <style scoped>
-/* انیمیشن آیکون همبرگر */
-.hamburger-button:hover svg {
-  transform: rotate(90deg) scale(1.15);
-  filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.2));
-  transition: all 0.3s ease;
-}
-
-:global(.dark) .hamburger-button:hover svg {
-  filter: drop-shadow(0 2px 6px rgba(255, 255, 255, 0.2));
+.header-menu-content {
+  min-width: 14rem;
 }
 </style>

@@ -27,12 +27,12 @@ const forwarded = useForwardPropsEmits(delegatedProps, emits);
 <template>
   <DialogPortal>
     <DialogOverlay
-      class="data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-transparent backdrop-blur-sm sm:backdrop-blur-md"
+      class="data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/25"
     >
       <DialogContent
         :class="
           cn(
-            'dialog-scroll-content relative z-50 my-8 grid w-full max-w-lg gap-4 p-6 shadow-lg duration-200 sm:rounded-lg md:w-full backdrop-blur backdrop-saturate-150 text-foreground',
+            'dialog-scroll-content relative z-50 my-8 grid w-full max-w-lg gap-4 p-6 shadow-lg duration-200 sm:rounded-lg md:w-full text-foreground',
             props.class,
           )
         "
@@ -64,22 +64,8 @@ const forwarded = useForwardPropsEmits(delegatedProps, emits);
 </template>
 <style scoped>
 .dialog-scroll-content {
-  background-color: color-mix(in srgb, var(--color-primary) 20%, transparent);
-  border: 1px solid color-mix(in srgb, var(--color-primary) 35%, transparent);
-}
-
-:global(.dark) .dialog-scroll-content {
-  background-color: color-mix(in srgb, var(--color-primary) 8%, transparent);
-  border-color: color-mix(in srgb, var(--color-primary) 15%, transparent);
-}
-
-@supports (backdrop-filter: blur(1px)) {
-  .dialog-scroll-content {
-    background-color: color-mix(in srgb, var(--color-primary) 15%, transparent);
-  }
-  
-  :global(.dark) .dialog-scroll-content {
-    background-color: color-mix(in srgb, var(--color-primary) 10%, transparent);
-  }
+  background-color: var(--surface-panel);
+  border: 1px solid var(--surface-border);
+  box-shadow: 0 10px 24px var(--surface-shadow);
 }
 </style>

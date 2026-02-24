@@ -1,4 +1,4 @@
-type ThemeToneConfig = {
+﻿type ThemeToneConfig = {
   background: string;
   foreground: string;
   primary: string;
@@ -94,22 +94,26 @@ export type ThemeOption = {
 
 export const themePresets: Record<ThemeKey, ThemePreset> = {
   blue: {
-    label: "O�O\"UO",
-    accent: "#2563eb",
-    preview: "linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)",
+    label: "ORBAT Classic",
+    accent: "#8da53a",
+    preview: "linear-gradient(135deg, #8da53a 0%, #788d31 100%)",
     vars: createThemeVars({
-      background: "#f0f4f8",
-      foreground: "#111111",
-      primary: "#1565c0",
-      secondary: "#1976d2",
-      accent: "#0d47a1",
-      muted: "#e1e8ed",
-      mutedForeground: "#475569",
-      border: "#cbd5e0",
+      background: "#f2f2f2",
+      foreground: "#1f2933",
+      primary: "#8da53a",
+      secondary: "#5f6670",
+      accent: "#6f7c33",
+      muted: "#ebebeb",
+      mutedForeground: "#4d5560",
+      border: "#c9ced4",
+      card: "#f5f5f5",
+      sidebar: "#f0f0f0",
+      heading: "#111827",
+      subheading: "#1f2937",
     }),
   },
   green: {
-    label: "O3O\"O�",
+    label: "Green",
     accent: "#1b7f5b",
     preview: "linear-gradient(135deg, #1b7f5b 0%, #0f4c3a 100%)",
     vars: createThemeVars({
@@ -124,7 +128,7 @@ export const themePresets: Record<ThemeKey, ThemePreset> = {
     }),
   },
   red: {
-    label: "U,O�U.O�",
+    label: "Red",
     accent: "#c53030",
     preview: "linear-gradient(135deg, #c53030 0%, #8b0000 100%)",
     vars: createThemeVars({
@@ -139,7 +143,7 @@ export const themePresets: Record<ThemeKey, ThemePreset> = {
     }),
   },
   purple: {
-    label: "O\"U+U?O''",
+    label: "Purple",
     accent: "#7c3aed",
     preview: "linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%)",
     vars: createThemeVars({
@@ -156,7 +160,7 @@ export const themePresets: Record<ThemeKey, ThemePreset> = {
     }),
   },
   orange: {
-    label: "U+OO�U+O�UO",
+    label: "Orange",
     accent: "#f97316",
     preview: "linear-gradient(135deg, #fb923c 0%, #f97316 50%, #ea580c 100%)",
     vars: createThemeVars({
@@ -173,7 +177,6 @@ export const themePresets: Record<ThemeKey, ThemePreset> = {
     }),
   },
 };
-
 export const themeOptions: ThemeOption[] = Object.entries(themePresets).map(
   ([key, config]) => ({
     key: key as ThemeKey,
@@ -231,10 +234,15 @@ export const applyThemePreset = (themeKey: ThemeKey) => {
     root.style.setProperty(token, value);
     body?.style.setProperty(token, value);
   });
-  const primary = preset.vars["--color-primary"] ?? preset.accent;
-  root.style.setProperty("--surface-glass", hexToRgba(primary, 0.12));
-  root.style.setProperty("--surface-border", hexToRgba(primary, 0.45));
-  root.style.setProperty("--surface-shadow", hexToRgba(primary, 0.25));
+  const card = preset.vars["--color-card"] ?? "#ffffff";
+  const muted = preset.vars["--color-muted"] ?? "#f8fafc";
+  const border = preset.vars["--color-border"] ?? "#cbd5e1";
+  // Keep menu/panel surfaces opaque to avoid glass look in RTL localized UI.
+  root.style.setProperty("--surface-glass", card);
+  root.style.setProperty("--surface-panel", card);
+  root.style.setProperty("--surface-panel-muted", muted);
+  root.style.setProperty("--surface-border", border);
+  root.style.setProperty("--surface-shadow", "rgba(15, 23, 42, 0.12)");
   root.dataset.kalkTheme = themeKey;
   if (body) body.dataset.kalkTheme = themeKey;
 };
@@ -245,3 +253,4 @@ export const initializeTheme = (fallback: ThemeKey = DEFAULT_THEME): ThemeKey =>
   applyThemePreset(nextTheme);
   return nextTheme;
 };
+

@@ -198,32 +198,30 @@ const onUnitClick = (unit: NUnit, event: MouseEvent) => {
 </script>
 
 <template>
-  <li :id="'ou-' + unit.id" class="relative text-gray-900 dark:text-gray-400 text-xs" dir="rtl">
+  <li :id="'ou-' + unit.id" class="text-foreground relative text-sm" dir="rtl">
     <div
       ref="itemRef"
-      class="group relative flex items-center justify-between border-r-2 py-0.5 pr-1 hover:bg-gray-200 sm:pr-0 dark:hover:bg-gray-700 rounded-lg"
+      class="group relative flex items-center justify-between border-r-2 py-1 pr-1 hover:bg-muted/50 sm:pr-0"
       @dblclick="isOpen = !isOpen"
       @click="onUnitClick(unit, $event)"
       :class="[
-        selectedUnitIds.has(unit.id) && selectedUnitIds.size > 1
-          ? 'bg-yellow-100 hover:bg-yellow-200'
-          : '',
-        isActiveParent ? 'border-red-800 bg-red-50' : 'border-transparent',
+        selectedUnitIds.has(unit.id) && selectedUnitIds.size > 1 ? 'bg-muted' : '',
+        isActiveParent ? 'border-border bg-muted/70' : 'border-transparent',
       ]"
     >
       <div class="flex items-center gap-1 flex-row-reverse">
         <div class="h-4 w-4">
           <button v-if="isParent" @click.stop="isOpen = !isOpen" class="">
             <ChevronRightIcon
-              class="h-4 w-4 transform text-gray-500 transition-transform group-hover:text-gray-900 dark:text-gray-400 dark:group-hover:text-gray-100"
+              class="text-muted-foreground group-hover:text-foreground h-5 w-5 transform transition-transform"
               :class="{
                 'rotate-90': isOpen,
-                'text-red-600': hasActiveChildren,
+                'text-primary': hasActiveChildren,
               }"
             />
           </button>
         </div>
-        <button class="flex items-center gap-1 text-[10px] flex-row-reverse">
+        <button class="flex items-center gap-1 text-[13px] flex-row-reverse">
           <div class="flex items-center gap-1 flex-row-reverse" :class="{ 'opacity-20': isDragged }">
             <div
               class="relative flex cursor-move justify-center"
@@ -237,7 +235,7 @@ const onUnitClick = (unit: NUnit, event: MouseEvent) => {
               />
               <span
                 v-if="unit.reinforcedStatus"
-                class="absolute -top-2 -left-2.5 text-[10px] font-medium"
+                class="absolute -top-2 -left-2.5 text-[11px] font-medium"
                 >{{
                   mapReinforcedStatus2Field(unit.reinforcedStatus, { compact: true })
                 }}</span
@@ -249,13 +247,13 @@ const onUnitClick = (unit: NUnit, event: MouseEvent) => {
                 'font-medium': isActiveUnit,
               }"
               >{{ unitLabel }}</span
-            ><span v-if="unit._state?.location" class="text-red-700">&deg;</span>
+            ><span v-if="unit._state?.location" class="text-destructive">&deg;</span>
           </div>
         </button>
       </div>
 
       <div class="flex items-center">
-        <IconLockOutline v-if="unit.locked" class="h-4 w-4 text-gray-400" />
+        <IconLockOutline v-if="unit.locked" class="text-muted-foreground h-4 w-4" />
         <DotsMenu
           class="shrink-0 opacity-0 group-focus-within:opacity-100 group-hover:opacity-100"
           :items="menuItems"

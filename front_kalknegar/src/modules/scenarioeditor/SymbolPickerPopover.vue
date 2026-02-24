@@ -65,14 +65,15 @@ function onAddUnit(sidc: string) {
       </Button>
     </PopoverTrigger>
     <PopoverContent
-      class="p-2 px-1"
+      class="symbol-picker-popover p-2 px-1"
       align="center"
       side="top"
       :sideOffset="10"
       @keydown.esc.stop="isOpen = false"
     >
-      <Tabs v-model="symbolPage" class="w-full">
-        <TabsList class="border-border flex h-10 w-full">
+      <div class="symbol-picker-header">
+        <Tabs v-model="symbolPage" class="symbol-picker-tabs-root w-full">
+        <TabsList class="symbol-picker-tabs border-border flex h-10 w-full">
           <TabsTrigger
             v-for="{ id, title, sidc } in symbolTabs"
             :key="id"
@@ -92,9 +93,11 @@ function onAddUnit(sidc: string) {
           </TabsTrigger>
           <DotsMenu :items="panelItems" class="" />
         </TabsList>
-      </Tabs>
+        </Tabs>
+      </div>
 
-      <div class="mt-3 grid h-20 grid-cols-5 place-items-center items-center gap-2">
+      <div class="symbol-picker-body">
+        <div class="symbol-picker-grid grid h-20 grid-cols-5 place-items-center items-center gap-2">
         <PanelSymbolButton
           class=""
           v-for="{ sidc, text } in iconItems"
@@ -120,7 +123,83 @@ function onAddUnit(sidc: string) {
         >
           <AddSymbolIcon class="size-5" />
         </Button>
+        </div>
       </div>
     </PopoverContent>
   </Popover>
 </template>
+<style scoped>
+.symbol-picker-popover {
+  background-color: #e6ebec !important;
+  background-image: none !important;
+  border: 1px solid #c1c9cb !important;
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.14) !important;
+  opacity: 1 !important;
+  filter: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+.symbol-picker-header {
+  background-color: #d7dddd !important;
+  background-image: none !important;
+  border: 1px solid #bcc4c6 !important;
+  border-radius: 17px;
+  padding: 2px 4px;
+  margin: 0;
+  opacity: 1 !important;
+  filter: none !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+.symbol-picker-tabs-root {
+  background-color: transparent !important;
+}
+
+.symbol-picker-tabs {
+  background-color: #d7dddd !important;
+  border: 0 !important;
+  border-radius: 14px !important;
+  opacity: 1 !important;
+  filter: none !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+.symbol-picker-body {
+  margin-top: 6px;
+  background-color: #e6ebec !important;
+  background-image: none !important;
+  opacity: 1 !important;
+}
+
+.symbol-picker-grid {
+  background-color: var(--surface-panel);
+  direction: ltr;
+}
+
+.symbol-picker-popover :deep([data-slot="tabs-list"]) {
+  background-color: #d7dddd !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  opacity: 1 !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+.symbol-picker-tabs :deep([data-slot="tabs-trigger"]) {
+  background-color: transparent !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+}
+
+.symbol-picker-tabs :deep([data-slot="tabs-trigger"][data-state="active"]) {
+  background-color: #e9eded !important;
+  border-color: #c1c9cb !important;
+  color: #1f2933 !important;
+  box-shadow: none !important;
+}
+</style>

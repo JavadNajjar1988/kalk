@@ -1,32 +1,32 @@
 <template>
   <aside
-    class="map-editor-panel pointer-events-auto absolute top-24 right-4 hidden max-h-[80vh] overflow-auto rounded-2xl md:block backdrop-blur-md backdrop-saturate-150 shadow-xl text-right"
+    class="bg-sidebar border-sidebar-border pointer-events-auto absolute top-24 right-4 hidden max-h-[82vh] min-w-[360px] max-w-[460px] overflow-auto rounded-md border shadow-sm md:block text-right"
     dir="rtl"
     :style="{ width: orbatPanelWidth + 'px' }"
   >
     <TabGroup
       as="div"
-      class="bg-transparent text-foreground flex h-full flex-auto flex-col"
+      class="bg-sidebar text-foreground flex h-full flex-auto flex-col"
       :class="{ hidden: !showBottomPanel }"
       :selected-index="activeTabIndex"
       @change="changeTab"
     >
       <TabList
-        class="map-editor-tab-list flex flex-0 w-full justify-between border-b rounded-t-2xl rtl:flex-row-reverse backdrop-blur-sm"
+        class="border-sidebar-border bg-sidebar sticky top-0 z-20 flex flex-0 w-full justify-between border-b rtl:flex-row-reverse"
       >
-        <div class="flex items-center gap-1 w-full">
+        <div class="flex w-full items-center gap-0">
           <Tab
             as="template"
-            v-for="tab in ['آرایش نبرد', 'رویدادها', 'لایه‌ها', 'فیلتر']"
+            v-for="tab in ['آرایش نبرد', 'رویدادها', 'لایه‌ها', 'تنظیمات', 'فیلتر']"
             :key="tab"
             v-slot="{ selected }"
           >
             <button
               :class="[
                 selected
-                  ? 'map-editor-tab-active backdrop-blur-sm'
-                  : 'map-editor-tab-inactive text-muted-foreground hover:text-foreground',
-                'flex-1 px-2 py-1.5 text-center text-xs font-medium rounded-t-lg transition-all duration-200',
+                  ? 'text-foreground border-foreground'
+                  : 'text-muted-foreground hover:text-foreground',
+                'border-b-2 border-transparent px-3 py-2.5 text-center text-sm font-medium transition-colors duration-150',
               ]"
             >
               {{ tab }}
@@ -35,7 +35,7 @@
         </div>
         <CloseButton @click="emit('close')" class="mt-1 mr-1" />
       </TabList>
-      <TabPanels class="flex-auto overflow-y-auto bg-transparent text-xs">
+      <TabPanels class="flex-auto overflow-y-auto bg-sidebar text-sm">
         <TabPanel :unmount="false" class="pb-10">
           <OrbatPanel />
         </TabPanel>
@@ -43,6 +43,7 @@
           <ScenarioEventsPanel @event-click="onEventClick" />
         </TabPanel>
         <TabPanel class="p-2 pb-6"><ScenarioLayersTabPanel /></TabPanel>
+        <TabPanel class="p-2 pb-6"><ScenarioSettingsPanel /></TabPanel>
         <TabPanel :unmount="false" class="p-2 pb-6"><ScenarioFiltersTabPanel /></TabPanel>
       </TabPanels>
     </TabGroup>
@@ -68,7 +69,7 @@ import { defineAsyncComponent, onMounted, onUnmounted } from "vue";
 import { type ScenarioEvent } from "@/types/scenarioModels";
 import { useSelectedItems } from "@/stores/selectedStore";
 import PanelResizeHandle from "@/components/PanelResizeHandle.vue";
-// Removed settings from left panel; settings moved to right drawer
+import ScenarioSettingsPanel from "@/modules/scenarioeditor/ScenarioSettingsPanel.vue";
 
 const ScenarioFiltersTabPanel = defineAsyncComponent(
   () => import("@/modules/scenarioeditor/ScenarioFiltersTabPanel.vue"),
@@ -92,7 +93,8 @@ function changeTab(index: number) {
 onMounted(() => {
   const padding = mapRef.value.getView().padding || [0, 0, 0, 0];
   const [top, right, bottom, left] = padding;
-  mapRef.value.getView().padding = [top, right, bottom, 400];
+  const panelPadding = Math.max(360, Number(orbatPanelWidth.value) || 360) + 20;
+  mapRef.value.getView().padding = [top, right, bottom, panelPadding];
 });
 
 onUnmounted(() => {
@@ -107,54 +109,4 @@ function onEventClick(scenarioEvent: ScenarioEvent) {
   activeScenarioEventId.value = scenarioEvent.id;
 }
 </script>
-<style scoped>
-.map-editor-panel {
-  background-color: color-mix(in srgb, var(--color-primary) 20%, transparent);
-  border: 1px solid color-mix(in srgb, var(--color-primary) 35%, transparent);
-}
 
-:global(.dark) .map-editor-panel {
-  background-color: color-mix(in srgb, var(--color-primary) 8%, transparent);
-  border-color: color-mix(in srgb, var(--color-primary) 15%, transparent);
-}
-
-@supports (backdrop-filter: blur(1px)) {
-  .map-editor-panel {
-    background-color: color-mix(in srgb, var(--color-primary) 15%, transparent);
-  }
-  
-  :global(.dark) .map-editor-panel {
-    background-color: color-mix(in srgb, var(--color-primary) 10%, transparent);
-  }
-}
-
-.map-editor-tab-list {
-  background-color: color-mix(in srgb, var(--color-primary) 18%, transparent);
-  border-color: color-mix(in srgb, var(--color-primary) 30%, transparent);
-}
-
-:global(.dark) .map-editor-tab-list {
-  background-color: color-mix(in srgb, var(--color-primary) 6%, transparent);
-  border-color: color-mix(in srgb, var(--color-primary) 15%, transparent);
-}
-
-.map-editor-tab-active {
-  color: color-mix(in srgb, var(--color-primary) 90%, black);
-  border-bottom: 2px solid color-mix(in srgb, var(--color-primary) 35%, transparent);
-  background-color: color-mix(in srgb, var(--color-primary) 18%, transparent);
-}
-
-:global(.dark) .map-editor-tab-active {
-  color: color-mix(in srgb, var(--color-primary) 100%, white);
-  border-bottom-color: color-mix(in srgb, var(--color-primary) 15%, transparent);
-  background-color: color-mix(in srgb, var(--color-primary) 6%, transparent);
-}
-
-.map-editor-tab-inactive:hover {
-  background-color: color-mix(in srgb, var(--color-primary) 12%, transparent);
-}
-
-:global(.dark) .map-editor-tab-inactive:hover {
-  background-color: color-mix(in srgb, var(--color-primary) 5%, transparent);
-}
-</style>
