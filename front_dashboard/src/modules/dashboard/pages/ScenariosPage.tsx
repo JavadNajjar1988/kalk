@@ -185,6 +185,17 @@ const DEMO_SCENARIOS: Scenario[] = [
   } as any,
 ];
 
+const BUILTIN_DEMO_SCENARIO_IDS = new Set(DEMO_SCENARIOS.map((s) => String((s as any)?.id)));
+
+const isBuiltinDemoScenario = (scenario?: Partial<Scenario> | null): boolean => {
+  if (!scenario) {
+    return false;
+  }
+
+  const scenarioId = String((scenario as any)?.id || '');
+  return BUILTIN_DEMO_SCENARIO_IDS.has(scenarioId);
+};
+
 const UNITY_HTTP_BRIDGE = (import.meta as any).env?.VITE_UNITY_LAUNCH_URL as string | undefined;
 const UNITY_PROTOCOL_BASE = (import.meta as any).env?.VITE_UNITY_PROTOCOL_BASE as string | undefined;
 
@@ -505,11 +516,9 @@ const ScenariosPage: React.FC = () => {
 
   const handleUpdateScenario = (scenarioData: Partial<Scenario>) => {
     if (scenarioData.id) {
-      const scenarioId = String(scenarioData.id);
-      const isDemoScenario =
-        scenarioId.startsWith('demo-') || Boolean((scenarioData as any)?.metadata?.demo);
+      const demoScenario = isBuiltinDemoScenario(scenarioData);
 
-      if (isDemoScenario) {
+      if (demoScenario) {
         const formData: any = {
           name: scenarioData.name || '',
           description: scenarioData.description || '',
@@ -549,6 +558,13 @@ const ScenariosPage: React.FC = () => {
 
   const handleDeleteScenario = () => {
     if (scenarioToDelete) {
+      if (isBuiltinDemoScenario(scenarioToDelete)) {
+        setDeleteConfirmOpen(false);
+        setScenarioToDelete(null);
+        dispatch(showErrorNotification(t('scenarios.notifications.deleteDemoNotAllowed')));
+        return;
+      }
+
       dispatch(deleteScenario(scenarioToDelete.id))
         .unwrap()
         .then(() => {
@@ -721,7 +737,7 @@ const ScenariosPage: React.FC = () => {
   const handleCopyScenario = async (scenario: Scenario) => {
     try {
       // اگر سناریوی demo باشد، از منبع demo در بک‌اند یک سناریوی کامل می‌سازیم
-      if ((scenario as any)?.metadata?.demo) {
+      if (isBuiltinDemoScenario(scenario)) {
         const rawId = String(scenario.id);
         const demoId = rawId.startsWith('demo-') ? rawId.replace(/^demo-/, '') : rawId;
         await scenarioApiService.duplicateDemoScenario(demoId, `${scenario.name} (کپی)`);
@@ -1451,6 +1467,7 @@ const ScenariosPage: React.FC = () => {
             }
             handleMenuClose();
           }}
+          disabled={Boolean(menuScenario && isBuiltinDemoScenario(menuScenario))}
           sx={{ color: 'error.main' }}
         >
           <Delete sx={{ mr: 1 }} />

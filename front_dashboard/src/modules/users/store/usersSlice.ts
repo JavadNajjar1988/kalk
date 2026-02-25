@@ -56,7 +56,7 @@ export const fetchUserById = createAsyncThunk<
 });
 
 export const createUser = createAsyncThunk<
-  User,
+  { user: User; temporaryPassword?: string },
   Omit<User, 'id' | 'createdAt' | 'updatedAt'> & { username?: string },
   { rejectValue: string }
 >('users/createUser', async (userData, { rejectWithValue }) => {
@@ -154,7 +154,7 @@ const usersSlice = createSlice({
       })
       .addCase(createUser.fulfilled, (state, action) => {
         state.isLoading = false;
-        state.users.unshift(action.payload);
+        state.users.unshift(action.payload.user);
         state.pagination.total += 1;
       })
       .addCase(createUser.rejected, (state, action) => {

@@ -32,7 +32,7 @@ function resolveApiBase(): string {
 }
 
 // تلاش برای استخراج مرکز سناریو از content (در صورت موجود بودن)
-function getScenarioCenter(s: BackendScenario, index: number, total: number): { lon: number; lat: number } {
+export function getScenarioCenter(s: BackendScenario, index: number, total: number): { lon: number; lat: number } {
   const c = s.content || {};
 
   // 1) اگر در metadata.mapCenter مختصات داشتیم
@@ -90,8 +90,8 @@ export async function fetchScenarios(): Promise<BackendScenario[]> {
     const scenarios = Array.isArray((json as ApiResponse<BackendScenario[]>).data)
       ? (json as ApiResponse<BackendScenario[]>).data
       : Array.isArray(json)
-      ? json
-      : [];
+        ? json
+        : [];
     if (scenarios.length === 0) {
       console.error('Invalid scenarios API response:', json);
       return [];
@@ -117,10 +117,23 @@ export async function fetchScenarioById(id: string): Promise<BackendScenario | n
     if (token) {
       headers['Authorization'] = `Bearer ${token}`;
     }
-    console.log('Fetching scenario for simulator:', url);
+
+    console.log('%c📡 Fetching specific scenario...', 'color: cyan; font-weight: bold;');
+    console.log('  URL:', url);
+    console.log('  Scenario ID:', id);
+    console.log('  Has token:', !!token);
+
     const res = await fetch(url, { headers });
+
+    console.log('  Response status:', res.status, res.statusText);
+
     if (!res.ok) {
-      console.error('Failed to fetch scenario:', res.status, res.statusText);
+      console.error('%c❌ Failed to fetch scenario:', 'color: red; font-weight: bold;', res.status, res.statusText);
+      if (res.status === 401) {
+        console.error('  → Authentication failed! Token might be expired. Please login again.');
+      } else if (res.status === 404) {
+        console.error('  → Scenario not found! ID:', id);
+      }
       return null;
     }
     const json = (await res.json()) as ApiResponse<BackendScenario> | BackendScenario;
@@ -129,9 +142,20 @@ export async function fetchScenarioById(id: string): Promise<BackendScenario | n
       console.error('Invalid scenario API response:', json);
       return null;
     }
+
+    console.log('%c✅ Scenario loaded successfully!', 'color: green; font-weight: bold;');
+    console.log('  Name:', scenario.name || 'N/A');
+    console.log('  ID:', scenario.id);
+    console.log('  Has content:', !!scenario.content);
+    if (scenario.content) {
+      console.log('  Content keys:', Object.keys(scenario.content));
+      console.log('  Number of sides:', scenario.content.sides?.length || 0);
+      console.log('  Number of layers:', scenario.content.layers?.length || 0);
+    }
+
     return scenario;
   } catch (error) {
-    console.error('Error while fetching scenario by id:', error);
+    console.error('%c💥 Exception while fetching scenario:', 'color: red; font-weight: bold;', error);
     return null;
   }
 }

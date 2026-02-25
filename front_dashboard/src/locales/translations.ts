@@ -406,7 +406,8 @@ export const translations = {
         updateSuccess: 'سناریو با موفقیت به‌روزرسانی شد',
         updateError: 'خطا در به‌روزرسانی سناریو',
         deleteSuccess: 'سناریو با موفقیت حذف شد',
-        deleteError: 'خطا در حذف سناریو'
+        deleteError: 'خطا در حذف سناریو',
+        deleteDemoNotAllowed: 'حذف سناریوهای نمونه امکان‌پذیر نیست'
       }
     },
     resources: {
@@ -986,6 +987,7 @@ export const translations = {
         updateError: 'Error updating scenario',
         deleteSuccess: 'Scenario deleted successfully',
         deleteError: 'Error deleting scenario',
+        deleteDemoNotAllowed: 'Demo scenarios cannot be deleted',
       }
     },
     resources: {
@@ -1342,6 +1344,7 @@ export const translations = {
         updateError: 'خطأ في تحديث السيناريو',
         deleteSuccess: 'تم حذف السيناريو بنجاح',
         deleteError: 'خطأ في حذف السيناريو',
+        deleteDemoNotAllowed: 'لا يمكن حذف السيناريوهات التجريبية',
       }
     },
     resources: {

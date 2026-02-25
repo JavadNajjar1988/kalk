@@ -3,13 +3,38 @@ import '@babylonjs/core/Helpers/sceneHelpers';
 import { CoordinateConverter } from './coordinateConverter';
 import * as Cesium from 'cesium';
 
-// Get scenario ID from URL parameters
+// Get scenario ID and token from URL parameters
 const urlParams = new URLSearchParams(window.location.search);
 const scenarioId = urlParams.get('scenarioId');
+const tokenFromUrl = urlParams.get('token');
+
+// اگر token در URL بود، آن را در localStorage ذخیره کن
+if (tokenFromUrl) {
+  console.log('%c🔐 Token received from Dashboard, storing in localStorage', 'color: #4CAF50; font-weight: bold;');
+  localStorage.setItem('access_token', tokenFromUrl);
+
+  // پاک کردن token از URL برای امنیت (تا در history باقی نماند)
+  const newUrl = new URL(window.location.href);
+  newUrl.searchParams.delete('token');
+  window.history.replaceState({}, '', newUrl.toString());
+  console.log('%c✅ Token stored and removed from URL', 'color: #4CAF50;');
+}
+
+// ========== DEBUG START ==========
+console.log('%c=== KALK SIMULATOR DEBUG INFO ===', 'background: #222; color: #bada55; font-size: 14px; font-weight: bold; padding: 10px;');
+console.log('%c1. Current URL:', 'color: #4CAF50; font-weight: bold;', window.location.href);
+console.log('%c2. Scenario ID from URL:', 'color: #2196F3; font-weight: bold;', scenarioId || '❌ NOT FOUND');
+console.log('%c3. Token from URL:', 'color: #9C27B0; font-weight: bold;', tokenFromUrl ? '✅ RECEIVED' : '❌ NOT PROVIDED');
+console.log('%c4. Has access token (localStorage):', 'color: #FF9800; font-weight: bold;', !!localStorage.getItem('access_token') ? '✅ YES' : '❌ NO');
+console.log('%c5. Access token value:', 'color: #9C27B0;', localStorage.getItem('access_token')?.substring(0, 50) + '...' || 'null');
+console.log('%c6. API Base URL (env):', 'color: #F44336; font-weight: bold;', (import.meta as any).env?.VITE_API_URL || '⚠️ Using default');
+console.log('%c================================', 'background: #222; color: #bada55; font-size: 14px; padding: 10px;');
+// ========== DEBUG END ==========
 
 if (scenarioId) {
-  console.log('Loading scenario:', scenarioId);
-  // TODO: Load scenario data from API or local storage
+  console.log('%c✅ Loading scenario:', 'color: green; font-weight: bold;', scenarioId);
+} else {
+  console.warn('%c⚠️ No scenarioId in URL! Will load all scenarios as fallback', 'color: orange; font-weight: bold;');
 }
 
 // Get the canvas element
@@ -40,10 +65,10 @@ const mainContainer = document.getElementById('mainContainer');
 function hideSplashScreen() {
   if (hideSplashScreen.called) return; // Prevent multiple calls
   hideSplashScreen.called = true;
-  
+
   // Mark splash as shown in localStorage
   localStorage.setItem(SPLASH_SHOWN_KEY, 'true');
-  
+
   if (splashScreen) {
     splashScreen.classList.add('hidden');
     setTimeout(() => {
@@ -82,7 +107,7 @@ function initializeMainScene() {
   // Scene is already set up, but we can add any post-splash initialization here
   // For example, start animations, enable interactions, etc.
   console.log('Main scene initialized');
-  
+
   // Example: Add rotation animation to objects
   scene.meshes.forEach(mesh => {
     if (mesh.name === 'box' || mesh.name === 'sphere' || mesh.name === 'cylinder' || mesh.name === 'torus') {
@@ -173,19 +198,19 @@ function checkReady() {
     initializeSplashTimer();
     // Continue checking even if timer wasn't initialized
   }
-  
+
   const elapsedTime = splashStartTime ? Date.now() - splashStartTime : 0;
   const minTimePassed = elapsedTime >= SPLASH_MIN_DURATION;
-  
+
   console.log(`checkReady called - sceneReady: ${sceneReady}, videoFinished: ${videoFinished}, elapsed: ${elapsedTime}ms, minPassed: ${minTimePassed}`);
-  
+
   // If minimum time has passed, hide splash regardless of scene/video status
   if (minTimePassed && (sceneReady || videoFinished)) {
     console.log(`Splash displayed for ${elapsedTime}ms (>= ${SPLASH_MIN_DURATION}ms), hiding now`);
     hideSplashScreen();
     return;
   }
-  
+
   if (sceneReady && videoFinished) {
     if (minTimePassed) {
       console.log(`Splash displayed for ${elapsedTime}ms (>= ${SPLASH_MIN_DURATION}ms), hiding now`);
@@ -229,19 +254,21 @@ if (backToDashboardButton) {
 // Initialize Cesium viewer and coordinate converter
 let cesiumViewer: any = null;
 let coordinateConverter: CoordinateConverter | null = null;
+let originLon = 0;
+let originLat = 0;
 
 async function initializeCesium() {
   try {
     const { createCesiumViewer } = await import('./cesiumViewer');
     cesiumViewer = createCesiumViewer('cesiumContainer');
     console.log('Cesium viewer initialized');
-    
+
     // پس از آماده شدن Cesium، پین‌ها و نمادهای سناریوها را اضافه کن
     try {
-      const { fetchScenarios, fetchScenarioById, addScenarioPins } = await import('./scenarioPins');
+      const { fetchScenarios, fetchScenarioById, addScenarioPins, getScenarioCenter } = await import('./scenarioPins');
       const scenarioId =
         typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('scenarioId') : null;
-      let scenarios = [];
+      let scenarios: any[] = [];
       if (scenarioId) {
         const scenario = await fetchScenarioById(scenarioId);
         scenarios = scenario ? [scenario] : [];
@@ -250,22 +277,32 @@ async function initializeCesium() {
         scenarios = await fetchScenarios();
       }
       await addScenarioPins(cesiumViewer as any, scenarios);
+
+      // Update origin based on the first scenario if available
+      if (scenarios.length > 0) {
+        const center = getScenarioCenter(scenarios[0], 0, 1);
+        originLon = center.lon;
+        originLat = center.lat;
+        console.log(`✅ Origin set to scenario center: ${originLon}, ${originLat}`);
+      }
+
       const { addScenarioSymbols } = await import('./scenarioSymbols');
       await addScenarioSymbols(cesiumViewer as any, scenarios);
     } catch (pinError) {
       console.error('Failed to add scenario pins/symbols:', pinError);
     }
-    
-    // Initialize coordinate converter with Tehran as origin
-    coordinateConverter = new CoordinateConverter(51.3890, 35.6892, 0);
-    
+
+    // Initialize coordinate converter
+    // If scenarios were loaded, we use the first one's center. Otherwise (0,0).
+    coordinateConverter = new CoordinateConverter(originLon, originLat, 0);
+
     // Export for potential use in other modules
     (window as any).cesiumViewer = cesiumViewer;
     (window as any).coordinateConverter = coordinateConverter;
-    
+
     // Sync Babylon.js camera with Cesium camera
     syncCameras();
-    
+
     // Mark scene as ready after Cesium is initialized
     if (!sceneReady) {
       sceneReady = true;
@@ -284,29 +321,29 @@ async function initializeCesium() {
 // Sync Babylon.js camera with Cesium camera
 function syncCameras() {
   if (!cesiumViewer || !coordinateConverter) return;
-  
+
   // Track Cesium camera changes and update Babylon.js camera
   cesiumViewer.camera.changed.addEventListener(() => {
     if (!cesiumViewer || !coordinateConverter) return;
-    
+
     const cesiumCamera = cesiumViewer.camera;
     const cartographic = cesiumCamera.positionCartographic;
-    
+
     // Convert Cesium camera position to local coordinates
     const localPos = coordinateConverter.geographicToLocal(
       Cesium.Math.toDegrees(cartographic.longitude),
       Cesium.Math.toDegrees(cartographic.latitude),
       cartographic.height
     );
-    
+
     // Update Babylon.js camera position
     camera.setTarget(localPos);
-    
+
     // Calculate camera distance based on Cesium camera height
     // For 2D mode, use a fixed height or scale the height appropriately
     const distance = Math.max(100, cartographic.height * 0.001); // Convert to reasonable scale
     camera.radius = distance;
-    
+
     // Sync camera angles
     // For 2D mode, camera is always looking straight down
     if (cesiumViewer.scene.mode === Cesium.SceneMode.SCENE2D) {
@@ -342,7 +379,7 @@ if (hasSplashBeenShown) {
 } else {
   // Initialize splash timer immediately when splash is shown
   initializeSplashTimer();
-  
+
   // Initialize Cesium after a short delay to allow splash to show
   setTimeout(() => {
     initializeCesium().catch(err => {
@@ -354,7 +391,7 @@ if (hasSplashBeenShown) {
       }
     });
   }, 1000);
-  
+
   // Mark scene as ready after first render
   scene.onReadyObservable.addOnce(() => {
     if (!sceneReady) {
@@ -363,7 +400,7 @@ if (hasSplashBeenShown) {
       checkReady();
     }
   });
-  
+
   // Also mark as ready immediately if scene is already ready
   if (scene.isReady()) {
     if (!sceneReady) {
@@ -379,7 +416,7 @@ if (hasSplashBeenShown) {
     splashVideo.play().catch(err => {
       console.warn('Video autoplay failed:', err);
     });
-    
+
     splashVideo.addEventListener('ended', () => {
       console.log('Video ended');
       videoFinished = true;

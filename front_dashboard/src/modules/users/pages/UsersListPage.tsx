@@ -64,6 +64,11 @@ const UsersListPage: React.FC = () => {
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [tempPasswordInfo, setTempPasswordInfo] = useState<{
+    username: string;
+    userCode: string;
+    temporaryPassword: string;
+  } | null>(null);
   const [newUserForm, setNewUserForm] = useState({
     fullName: '',
     nationalId: '',
@@ -171,14 +176,13 @@ const UsersListPage: React.FC = () => {
           accessLevel: newUserForm.accessLevel,
           permissions: ['مشاهده محدود'],
           loginCount: 0,
-          password: 'temp_password',
-          passwordLastChanged: new Date().toISOString()
         },
         isActive: true,
       };
 
       const resultAction = await dispatch(createUser(userData));
       if (createUser.fulfilled.match(resultAction)) {
+        const { user, temporaryPassword } = resultAction.payload;
         setShowAddModal(false);
         setNewUserForm({
           fullName: '',
@@ -190,10 +194,27 @@ const UsersListPage: React.FC = () => {
           accessLevel: 'سطح 4 - دسترسی مهمان',
           status: 'آزاد',
         });
+        if (temporaryPassword) {
+          setTempPasswordInfo({
+            username: user.username || user.userCode,
+            userCode: user.userCode,
+            temporaryPassword,
+          });
+        }
         dispatch(fetchUsers());
       }
     } catch (error) {
       console.error('Error in handleSaveUser:', error);
+    }
+  };
+
+  const handleCopyTempPassword = async () => {
+    if (!tempPasswordInfo) return;
+    try {
+      await navigator.clipboard.writeText(tempPasswordInfo.temporaryPassword);
+      // می‌توان در آینده نوتیفیکیشن موفقیت هم اضافه کرد
+    } catch (e) {
+      console.error('Clipboard copy failed', e);
     }
   };
 
@@ -228,10 +249,16 @@ const UsersListPage: React.FC = () => {
   };
 
   if (error) {
+    const isForbidden =
+      typeof error === 'string' &&
+      (error.toLowerCase().includes('permission') || error.toLowerCase().includes('insufficient'));
+    const message = isForbidden
+      ? 'دسترسی غیرمجاز. مشاهده لیست کاربران فقط برای مدیر سیستم و فرمانده امکان‌پذیر است.'
+      : error;
     return (
       <Box p={3}>
         <Alert severity="error" onClose={() => dispatch(clearError())}>
-          {error}
+          {message}
         </Alert>
       </Box>
     );
@@ -461,92 +488,262 @@ const UsersListPage: React.FC = () => {
       <Dialog
         open={showAddModal}
         onClose={() => setShowAddModal(false)}
-        maxWidth="sm"
+        maxWidth="md"
         fullWidth
       >
-        <DialogTitle>افزودن کاربر جدید</DialogTitle>
-        <DialogContent dividers>
-          <Grid container spacing={2} sx={{ mt: 0.5 }}>
+        <DialogTitle sx={{ pb: 1.5 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+              <Box
+                sx={{
+                  width: 32,
+                  height: 32,
+                  borderRadius: '999px',
+                  bgcolor: 'primary.main',
+                  color: 'primary.contrastText',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  boxShadow: 2,
+                  fontSize: 18,
+                }}
+              >
+                <PersonIcon fontSize="inherit" />
+              </Box>
+              <Box>
+                <Typography component="h2" variant="h6" fontWeight={600}>
+                  افزودن کاربر جدید
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  اطلاعات پایه، تماس و سطح دسترسی کاربر را تکمیل کنید.
+                </Typography>
+              </Box>
+            </Box>
+          </Box>
+        </DialogTitle>
+        <DialogContent dividers sx={{ pt: 2.5 }}>
+          <Grid container spacing={3}>
+            {/* اطلاعات شخصی */}
             <Grid item xs={12}>
-              <TextField
-                fullWidth
-                label="نام و نام خانوادگی"
-                value={newUserForm.fullName}
-                onChange={(e) => setNewUserForm((prev) => ({ ...prev, fullName: e.target.value }))}
-              />
+              <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 1 }}>
+                اطلاعات شخصی
+              </Typography>
+              <Grid container spacing={2}>
+                <Grid item xs={12} md={6}>
+                  <TextField
+                    fullWidth
+                    label="نام و نام خانوادگی"
+                    value={newUserForm.fullName}
+                    onChange={(e) => setNewUserForm((prev) => ({ ...prev, fullName: e.target.value }))}
+                  />
+                </Grid>
+                <Grid item xs={12} md={6}>
+                  <TextField
+                    fullWidth
+                    label="کد ملی"
+                    value={newUserForm.nationalId}
+                    onChange={(e) => setNewUserForm((prev) => ({ ...prev, nationalId: e.target.value }))}
+                  />
+                </Grid>
+                <Grid item xs={12} md={6}>
+                  <FormControl fullWidth>
+                    <InputLabel>جنسیت</InputLabel>
+                    <Select
+                      value={newUserForm.gender}
+                      label="جنسیت"
+                      onChange={(e) =>
+                        setNewUserForm((prev) => ({ ...prev, gender: e.target.value as 'مرد' | 'زن' }))
+                      }
+                    >
+                      <MenuItem value="مرد">مرد</MenuItem>
+                      <MenuItem value="زن">زن</MenuItem>
+                    </Select>
+                  </FormControl>
+                </Grid>
+                <Grid item xs={12} md={6}>
+                  <FormControl fullWidth>
+                    <InputLabel>تابعیت</InputLabel>
+                    <Select
+                      value={newUserForm.nationality}
+                      label="تابعیت"
+                      onChange={(e) =>
+                        setNewUserForm((prev) => ({
+                          ...prev,
+                          nationality: e.target.value as 'ایرانی' | 'غیرایرانی' | 'تبعه مضاعف',
+                        }))
+                      }
+                    >
+                      <MenuItem value="ایرانی">ایرانی</MenuItem>
+                      <MenuItem value="غیرایرانی">غیرایرانی</MenuItem>
+                      <MenuItem value="تبعه مضاعف">تبعه مضاعف</MenuItem>
+                    </Select>
+                  </FormControl>
+                </Grid>
+              </Grid>
             </Grid>
-            <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
-                label="کد ملی"
-                value={newUserForm.nationalId}
-                onChange={(e) => setNewUserForm((prev) => ({ ...prev, nationalId: e.target.value }))}
-              />
+
+            {/* اطلاعات تماس و حرفه‌ای */}
+            <Grid item xs={12} md={6}>
+              <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 1 }}>
+                اطلاعات تماس
+              </Typography>
+              <Grid container spacing={2}>
+                <Grid item xs={12}>
+                  <TextField
+                    fullWidth
+                    label="شماره موبایل"
+                    value={newUserForm.mobile}
+                    onChange={(e) => setNewUserForm((prev) => ({ ...prev, mobile: e.target.value }))}
+                  />
+                </Grid>
+              </Grid>
             </Grid>
-            <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
-                label="شماره موبایل"
-                value={newUserForm.mobile}
-                onChange={(e) => setNewUserForm((prev) => ({ ...prev, mobile: e.target.value }))}
-              />
+            <Grid item xs={12} md={6}>
+              <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 1 }}>
+                وضعیت حرفه‌ای
+              </Typography>
+              <Grid container spacing={2}>
+                <Grid item xs={12}>
+                  <FormControl fullWidth>
+                    <InputLabel>وضعیت حرفه‌ای</InputLabel>
+                    <Select
+                      value={newUserForm.status}
+                      label="وضعیت حرفه‌ای"
+                      onChange={(e) =>
+                        setNewUserForm((prev) => ({
+                          ...prev,
+                          status: e.target.value as 'آزاد' | 'نظامی' | 'غیرنظامی',
+                        }))
+                      }
+                    >
+                      <MenuItem value="آزاد">آزاد</MenuItem>
+                      <MenuItem value="نظامی">نظامی</MenuItem>
+                      <MenuItem value="غیرنظامی">غیرنظامی</MenuItem>
+                    </Select>
+                  </FormControl>
+                </Grid>
+              </Grid>
             </Grid>
-            <Grid item xs={12} sm={6}>
-              <FormControl fullWidth>
-                <InputLabel>جنسیت</InputLabel>
-                <Select
-                  value={newUserForm.gender}
-                  label="جنسیت"
-                  onChange={(e) => setNewUserForm((prev) => ({ ...prev, gender: e.target.value as 'مرد' | 'زن' }))}
-                >
-                  <MenuItem value="مرد">مرد</MenuItem>
-                  <MenuItem value="زن">زن</MenuItem>
-                </Select>
-              </FormControl>
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <FormControl fullWidth>
-                <InputLabel>تابعیت</InputLabel>
-                <Select
-                  value={newUserForm.nationality}
-                  label="تابعیت"
-                  onChange={(e) =>
-                    setNewUserForm((prev) => ({
-                      ...prev,
-                      nationality: e.target.value as 'ایرانی' | 'غیرایرانی' | 'تبعه مضاعف',
-                    }))
-                  }
-                >
-                  <MenuItem value="ایرانی">ایرانی</MenuItem>
-                  <MenuItem value="غیرایرانی">غیرایرانی</MenuItem>
-                  <MenuItem value="تبعه مضاعف">تبعه مضاعف</MenuItem>
-                </Select>
-              </FormControl>
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <FormControl fullWidth>
-                <InputLabel>وضعیت حرفه‌ای</InputLabel>
-                <Select
-                  value={newUserForm.status}
-                  label="وضعیت حرفه‌ای"
-                  onChange={(e) =>
-                    setNewUserForm((prev) => ({
-                      ...prev,
-                      status: e.target.value as 'آزاد' | 'نظامی' | 'غیرنظامی',
-                    }))
-                  }
-                >
-                  <MenuItem value="آزاد">آزاد</MenuItem>
-                  <MenuItem value="نظامی">نظامی</MenuItem>
-                  <MenuItem value="غیرنظامی">غیرنظامی</MenuItem>
-                </Select>
-              </FormControl>
+
+            {/* اطلاعات سیستمی */}
+            <Grid item xs={12}>
+              <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 1 }}>
+                اطلاعات سیستمی
+              </Typography>
+              <Grid container spacing={2}>
+                <Grid item xs={12} md={6}>
+                  <FormControl fullWidth>
+                    <InputLabel>نقش سیستمی</InputLabel>
+                    <Select
+                      value={newUserForm.role}
+                      label="نقش سیستمی"
+                      onChange={(e) =>
+                        setNewUserForm((prev) => ({
+                          ...prev,
+                          role: e.target.value as string,
+                        }))
+                      }
+                    >
+                      {roles.map((role) => (
+                        <MenuItem key={role.id} value={role.name}>
+                          {role.name}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                </Grid>
+                <Grid item xs={12} md={6}>
+                  <FormControl fullWidth>
+                    <InputLabel>سطح دسترسی</InputLabel>
+                    <Select
+                      value={newUserForm.accessLevel}
+                      label="سطح دسترسی"
+                      onChange={(e) =>
+                        setNewUserForm((prev) => ({
+                          ...prev,
+                          accessLevel: e.target.value as string,
+                        }))
+                      }
+                    >
+                      {accessLevels.map((level) => (
+                        <MenuItem key={level.id} value={level.name}>
+                          {level.name}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                </Grid>
+                <Grid item xs={12}>
+                  <Typography variant="caption" color="text.secondary">
+                    رمز عبور اولیه این کاربر به‌صورت خودکار توسط سامانه تنظیم می‌شود و در صورت نیاز می‌توانید بعداً از طریق «اقدامات سریع» آن را تغییر دهید.
+                  </Typography>
+                </Grid>
+              </Grid>
             </Grid>
           </Grid>
         </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setShowAddModal(false)}>انصراف</Button>
-          <Button variant="contained" onClick={handleSaveUser}>ذخیره</Button>
+        <DialogActions sx={{ px: 3, py: 2 }}>
+          <Button onClick={() => setShowAddModal(false)} variant="outlined" sx={{ minWidth: 120 }}>
+            انصراف
+          </Button>
+          <Button variant="contained" onClick={handleSaveUser} sx={{ minWidth: 140 }}>
+            ذخیره کاربر
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Temporary Password Modal */}
+      <Dialog
+        open={!!tempPasswordInfo}
+        onClose={() => setTempPasswordInfo(null)}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle>رمز عبور اولیه کاربر</DialogTitle>
+        <DialogContent dividers>
+          {tempPasswordInfo && (
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+              <Typography variant="body2" color="text.secondary">
+                این رمز فقط همین‌حال حاضر نمایش داده می‌شود. حتماً آن را در یک کانال امن به کاربر منتقل کنید.
+              </Typography>
+              <Box sx={{ p: 2, borderRadius: 2, bgcolor: 'grey.50', border: 1, borderColor: 'grey.200' }}>
+                <Typography variant="body2">
+                  <strong>نام کاربری:</strong> {tempPasswordInfo.username}
+                </Typography>
+                <Typography variant="body2" sx={{ mt: 0.5 }}>
+                  <strong>کد کاربری:</strong> {tempPasswordInfo.userCode}
+                </Typography>
+                <Typography variant="body2" sx={{ mt: 1.5 }}>
+                  <strong>رمز عبور اولیه:</strong>{' '}
+                  <Box
+                    component="span"
+                    sx={{
+                      fontFamily: 'monospace',
+                      px: 1,
+                      py: 0.5,
+                      borderRadius: 1,
+                      bgcolor: 'background.default',
+                      border: 1,
+                      borderColor: 'grey.300',
+                    }}
+                  >
+                    {tempPasswordInfo.temporaryPassword}
+                  </Box>
+                </Typography>
+              </Box>
+              <Typography variant="caption" color="text.secondary">
+                پس از اولین ورود، توصیه می‌شود کاربر رمز عبور خود را از طریق «تغییر رمز عبور» به‌روزرسانی کند.
+              </Typography>
+            </Box>
+          )}
+        </DialogContent>
+        <DialogActions sx={{ px: 3, py: 2 }}>
+          <Button onClick={handleCopyTempPassword} variant="outlined">
+            کپی رمز
+          </Button>
+          <Button onClick={() => setTempPasswordInfo(null)} variant="contained">
+            متوجه شدم
+          </Button>
         </DialogActions>
       </Dialog>
 

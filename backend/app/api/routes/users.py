@@ -23,11 +23,21 @@ from app.schemas.user import (
 )
 
 
-router = APIRouter(prefix="/users", tags=["users"], dependencies=[Depends(require_roles("SUPER_ADMIN"))])
+# دسترسی: لیست و مشاهده برای SUPER_ADMIN و COMMANDER؛ ایجاد/ویرایش/حذف فقط SUPER_ADMIN
+router = APIRouter(prefix="/users", tags=["users"])
 
 # Canonical UI roles for user management filters/forms.
 # Keep these visible even if no user currently has one of them.
 DEFAULT_SYSTEM_ROLES = ["مدیر سیستم", "فرمانده", "ناظر مهمان"]
+
+# Canonical access levels for user management.
+# These are always exposed to the UI even if no user currently has them.
+DEFAULT_ACCESS_LEVELS = [
+    "سطح 1 - دسترسی کامل",
+    "سطح 2 - دسترسی عملیاتی",
+    "سطح 3 - دسترسی محدود",
+    "سطح 4 - دسترسی مهمان",
+]
 
 
 def _slugify(value: str) -> str:
@@ -184,7 +194,7 @@ def _build_lookup(values: Iterable[str]) -> List[Dict[str, str]]:
     return unique
 
 
-@router.get("", response_model=dict)
+@router.get("", response_model=dict, dependencies=[Depends(require_roles("SUPER_ADMIN", "COMMANDER"))])
 async def list_users(
     db: DbSession,
     search: Optional[str] = Query(default=None, description="جستجو بر اساس نام، کد کاربری یا ایمیل"),
@@ -209,6 +219,7 @@ async def list_users(
     role_values = (await db.execute(roles_stmt)).scalars().all()
     role_values = [*DEFAULT_SYSTEM_ROLES, *[v for v in role_values if v and v not in DEFAULT_SYSTEM_ROLES]]
     access_values = (await db.execute(access_stmt)).scalars().all()
+    access_values = [*DEFAULT_ACCESS_LEVELS, *[v for v in access_values if v and v not in DEFAULT_ACCESS_LEVELS]]
 
     payload = {
         "items": [_serialize_user(user) for user in users],
@@ -219,7 +230,7 @@ async def list_users(
     return success(payload)
 
 
-@router.get("/{user_id}", response_model=dict)
+@router.get("/{user_id}", response_model=dict, dependencies=[Depends(require_roles("SUPER_ADMIN", "COMMANDER"))])
 async def get_user(user_id: str, db: DbSession) -> dict[str, Any]:
     user = await db.get(User, user_id)
     if not user:
@@ -227,7 +238,7 @@ async def get_user(user_id: str, db: DbSession) -> dict[str, Any]:
     return success(_serialize_user(user))
 
 
-@router.post("", status_code=status.HTTP_201_CREATED, response_model=dict)
+@router.post("", status_code=status.HTTP_201_CREATED, response_model=dict, dependencies=[Depends(require_roles("SUPER_ADMIN"))])
 async def create_user(payload: UserCreate, db: DbSession) -> dict[str, Any]:
     nested = _prepare_nested_payload(payload)
     username = payload.username or _generate_username(nested["personal_info"], payload.userCode)
@@ -262,10 +273,17 @@ async def create_user(payload: UserCreate, db: DbSession) -> dict[str, Any]:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="ثبت کاربران با شکست مواجه شد") from exc
 
     await db.refresh(user)
-    return success(_serialize_user(user))
+    # plain_password فقط در این پاسخ برگردانده می‌شود تا مدیر بتواند یک‌بار آن را به کاربر منتقل کند.
+    # در دیتابیس فقط هش رمز ذخیره شده است.
+    return success(
+        {
+            "user": _serialize_user(user),
+            "temporaryPassword": plain_password,
+        }
+    )
 
 
-@router.patch("/{user_id}", response_model=dict)
+@router.patch("/{user_id}", response_model=dict, dependencies=[Depends(require_roles("SUPER_ADMIN"))])
 async def update_user(user_id: str, payload: UserUpdate, db: DbSession) -> dict[str, Any]:
     user = await db.get(User, user_id)
     if not user:
@@ -309,7 +327,7 @@ async def update_user(user_id: str, payload: UserUpdate, db: DbSession) -> dict[
     return success(_serialize_user(user))
 
 
-@router.delete("/{user_id}", response_model=dict)
+@router.delete("/{user_id}", response_model=dict, dependencies=[Depends(require_roles("SUPER_ADMIN"))])
 async def delete_user(user_id: str, db: DbSession) -> dict[str, Any]:
     user = await db.get(User, user_id)
     if not user:
@@ -319,7 +337,7 @@ async def delete_user(user_id: str, db: DbSession) -> dict[str, Any]:
     return success({"id": user_id}, message="کاربر حذف شد")
 
 
-@router.post("/{user_id}/actions", response_model=dict)
+@router.post("/{user_id}/actions", response_model=dict, dependencies=[Depends(require_roles("SUPER_ADMIN"))])
 async def perform_quick_action(user_id: str, payload: QuickActionPayload, db: DbSession) -> dict[str, Any]:
     user = await db.get(User, user_id)
     if not user:

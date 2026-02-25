@@ -112,7 +112,7 @@ const UsersTableView: React.FC<UsersTableViewProps> = ({
           </TableRow>
         </TableHead>
         <TableBody>
-          {users.map((user, index) => (
+          {users.filter(Boolean).map((user, index) => (
             <TableRow 
               key={user.id}
               hover

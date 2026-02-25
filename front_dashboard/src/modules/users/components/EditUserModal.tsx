@@ -24,6 +24,7 @@ import {
   Cancel as CancelIcon,
 } from '@mui/icons-material';
 import { User } from '../types';
+import { useAppSelector } from '@/store';
 
 interface EditUserModalProps {
   user: User | null;
@@ -41,7 +42,25 @@ const EditUserModal: React.FC<EditUserModalProps> = ({
   isSaving = false,
 }) => {
   const theme = useTheme();
+  const { accessLevels } = useAppSelector((state) => state.users);
   const [formData, setFormData] = useState<Partial<User>>({});
+
+  const getAccessLevelDescription = (level: string): string => {
+    if (!level) return '';
+    if (level.includes('سطح 1')) {
+      return 'دسترسی کامل به تمام ماژول‌ها، مدیریت کاربران و تنظیمات سامانه.';
+    }
+    if (level.includes('سطح 2')) {
+      return 'دسترسی عملیاتی: مدیریت/اجرای سناریوها و مشاهده کاربران، بدون دسترسی به تنظیمات حساس سامانه.';
+    }
+    if (level.includes('سطح 3')) {
+      return 'دسترسی محدود: مشاهده داشبورد، نقشه و گزارش‌ها، بدون امکان ویرایش داده‌ها یا کاربران.';
+    }
+    if (level.includes('سطح 4')) {
+      return 'دسترسی مهمان: فقط مشاهده‌ی محدود برخی اطلاعات، بدون هیچ عملیات مدیریتی.';
+    }
+    return 'سطح دسترسی سفارشی؛ سیاست‌های دسترسی آن باید در سامانه تعریف شود.';
+  };
 
   useEffect(() => {
     if (user) {
@@ -301,12 +320,20 @@ const EditUserModal: React.FC<EditUserModalProps> = ({
                 onChange={(e) => handleChange('systemInfo.accessLevel', e.target.value)}
                 label="سطح دسترسی"
               >
-                <MenuItem value="سطح 1 - دسترسی کامل">سطح 1 - دسترسی کامل</MenuItem>
-                <MenuItem value="سطح 2 - دسترسی عملیاتی">سطح 2 - دسترسی عملیاتی</MenuItem>
-                <MenuItem value="سطح 3 - دسترسی محدود">سطح 3 - دسترسی محدود</MenuItem>
-                <MenuItem value="سطح 4 - دسترسی مهمان">سطح 4 - دسترسی مهمان</MenuItem>
+                {accessLevels.map((level) => (
+                  <MenuItem key={level.id} value={level.name}>
+                    {level.name}
+                  </MenuItem>
+                ))}
               </Select>
             </FormControl>
+          </Grid>
+          <Grid item xs={12}>
+            {formData.systemInfo?.accessLevel && (
+              <Box sx={{ mt: 1, fontSize: '0.85rem', color: 'text.secondary' }}>
+                <strong>توضیح سطح دسترسی:</strong> {getAccessLevelDescription(formData.systemInfo.accessLevel)}
+              </Box>
+            )}
           </Grid>
 
           <Grid item xs={12}>

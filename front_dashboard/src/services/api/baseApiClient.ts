@@ -91,12 +91,11 @@ export class BaseApiClient {
         if (response.status === 401 && !endpoint.startsWith('/auth/')) {
           this.handleUnauthorized();
         }
-        throw new ApiClientError(
-          data?.message || 'API request failed',
-          data?.code,
-          data?.details,
-          response.status
-        );
+        const msg =
+          (typeof data?.detail === 'string' ? data.detail : Array.isArray(data?.detail) ? data.detail?.[0] : null) ||
+          data?.message ||
+          'API request failed';
+        throw new ApiClientError(msg, data?.code, data?.details, response.status);
       }
 
       return data;
@@ -189,12 +188,11 @@ export class BaseApiClient {
         if (response.status === 401 && !endpoint.startsWith('/auth/')) {
           this.handleUnauthorized();
         }
-        throw new ApiClientError(
-          data?.message || 'API request failed',
-          data?.code,
-          data?.details,
-          response.status
-        );
+        const msg =
+          (typeof data?.detail === 'string' ? data.detail : Array.isArray(data?.detail) ? data.detail?.[0] : null) ||
+          data?.message ||
+          'API request failed';
+        throw new ApiClientError(msg, data?.code, data?.details, response.status);
       }
 
       return data;

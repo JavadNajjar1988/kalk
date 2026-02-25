@@ -88,8 +88,11 @@ export class UserApiService extends BaseApiClient {
     return handleApiResponse(response);
   }
 
-  async createUser(userData: Omit<User, 'id' | 'createdAt' | 'updatedAt'> & { username?: string }): Promise<User> {
-    const response = await this.post<User>('/users', userData);
+  async createUser(userData: Omit<User, 'id' | 'createdAt' | 'updatedAt'> & { username?: string }): Promise<{
+    user: User;
+    temporaryPassword?: string;
+  }> {
+    const response = await this.post<{ user: User; temporaryPassword?: string }>('/users', userData);
     return handleApiResponse(response);
   }
 

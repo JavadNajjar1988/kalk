@@ -1,4 +1,4 @@
-﻿import React, { useState } from 'react';
+import React, { useState } from 'react';
 import {
   Dialog,
   DialogTitle,
@@ -215,6 +215,23 @@ const QuickActionsModal: React.FC<QuickActionsModalProps> = ({
     newRole: user?.systemInfo.role || '',
     newPermissions: user?.systemInfo.permissions || [],
   });
+
+  const getAccessLevelDescription = (level: string): string => {
+    if (!level) return '';
+    if (level.includes('سطح 1')) {
+      return 'دسترسی کامل به تمام ماژول‌ها، مدیریت کاربران و تنظیمات سامانه.';
+    }
+    if (level.includes('سطح 2')) {
+      return 'دسترسی عملیاتی: مدیریت/اجرای سناریوها و مشاهده کاربران، بدون دسترسی به تنظیمات حساس سامانه.';
+    }
+    if (level.includes('سطح 3')) {
+      return 'دسترسی محدود: مشاهده داشبورد، نقشه و گزارش‌ها، بدون امکان ویرایش داده‌ها یا کاربران.';
+    }
+    if (level.includes('سطح 4')) {
+      return 'دسترسی مهمان: فقط مشاهده‌ی محدود برخی اطلاعات، بدون هیچ عملیات مدیریتی.';
+    }
+    return 'سطح دسترسی سفارشی؛ سیاست‌های دسترسی آن باید در سامانه تعریف شود.';
+  };
 
   const handleClose = () => {
     setSelectedAction(null);
@@ -585,6 +602,22 @@ const renderAccessLevelForm = () => (
         </Select>
 
       </FormControl>
+
+      {accessData.newAccessLevel && (
+        <Alert
+          severity="info"
+          sx={{
+            mt: 1,
+            backgroundColor: alpha(theme.palette.info.main, 0.06),
+            border: `1px solid ${alpha(theme.palette.info.main, 0.3)}`,
+            borderRadius: '10px',
+            color: theme.palette.info.dark,
+            fontSize: '0.85rem',
+          }}
+        >
+          <strong>توضیح این سطح:</strong> {getAccessLevelDescription(accessData.newAccessLevel)}
+        </Alert>
+      )}
 
 
 
