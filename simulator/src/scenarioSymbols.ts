@@ -235,17 +235,17 @@ function addBillboard(
     },
     label: options.label
       ? {
-          text: options.label,
-          font: '14px sans-serif',
-          fillColor: Cesium.Color.WHITE,
-          outlineColor: Cesium.Color.BLACK,
-          outlineWidth: 2,
-          style: Cesium.LabelStyle.FILL_AND_OUTLINE,
-          verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
-          pixelOffset: new Cesium.Cartesian2(0, -18),
-          heightReference,
-          disableDepthTestDistance: Number.POSITIVE_INFINITY,
-        }
+        text: options.label,
+        font: '14px sans-serif',
+        fillColor: Cesium.Color.WHITE,
+        outlineColor: Cesium.Color.BLACK,
+        outlineWidth: 2,
+        style: Cesium.LabelStyle.FILL_AND_OUTLINE,
+        verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
+        pixelOffset: new Cesium.Cartesian2(0, -18),
+        heightReference,
+        disableDepthTestDistance: Number.POSITIVE_INFINITY,
+      }
       : undefined,
   });
 }
@@ -393,14 +393,152 @@ function addTacticalGeometry(
   }
 }
 
+// ─── Metadata Tactical Symbols parser ───────────────────────────────────
+
+type TacticalTuple = [string, any];
+
+interface TacticalSymbolsSnapshot {
+  version: number;
+  tuples: TacticalTuple[];
+}
+
+/**
+ * Parse metadata.tacticalSymbols.tuples[] to extract renderable features/markers.
+ * Tuples use key prefixes:
+ *   "feature:<id>"  → GeoJSON-like object with geometry
+ *   "marker:<id>"   → Point marker with position
+ *   "style+feature:<id>" / "style+marker:<id>" → style overrides
+ */
+function parseTacticalSymbolsTuples(
+  snapshot: TacticalSymbolsSnapshot | undefined | null
+): ScenarioFeatureLike[] {
+  if (!snapshot || !Array.isArray(snapshot.tuples)) return [];
+
+  const featureMap = new Map<string, any>();
+  const styleMap = new Map<string, any>();
+
+  for (const [key, value] of snapshot.tuples) {
+    if (typeof key !== 'string' || value == null) continue;
+
+    if (key.startsWith('feature:')) {
+      featureMap.set(key, value);
+    } else if (key.startsWith('marker:')) {
+      featureMap.set(key, value);
+    } else if (key.startsWith('style+feature:') || key.startsWith('style+marker:')) {
+      // Extract original key: "style+feature:abc" → "feature:abc"
+      const originalKey = key.replace(/^style\+/, '');
+      styleMap.set(originalKey, value);
+    }
+  }
+
+  const features: ScenarioFeatureLike[] = [];
+  for (const [key, value] of featureMap.entries()) {
+    if (!value || typeof value !== 'object') continue;
+
+    const style = styleMap.get(key) || {};
+
+    // The value can be a full GeoJSON feature or a simplified object
+    let geometry: GeoJsonGeometryLike | null = null;
+    let properties: Record<string, any> = {};
+
+    if (value.geometry) {
+      // Full GeoJSON feature format
+      geometry = value.geometry;
+      properties = value.properties || {};
+    } else if (value.type && value.coordinates) {
+      // Direct geometry object
+      geometry = value as GeoJsonGeometryLike;
+    } else if (key.startsWith('marker:') && Array.isArray(value.position)) {
+      // Marker format: { position: [lon, lat], sidc?: string, name?: string }
+      geometry = {
+        type: 'Point',
+        coordinates: value.position,
+      };
+      properties = {
+        sidc: value.sidc || value['symbol-code'],
+        name: value.name || value.label,
+      };
+    } else if (key.startsWith('marker:') && value.lng != null && value.lat != null) {
+      // Marker with {lng, lat} format
+      geometry = {
+        type: 'Point',
+        coordinates: [value.lng, value.lat, value.altitude || 0],
+      };
+      properties = {
+        sidc: value.sidc || value['symbol-code'],
+        name: value.name || value.label,
+      };
+    }
+
+    if (!geometry) continue;
+
+    // Merge style into properties
+    const mergedProps = { ...properties };
+    if (style.stroke) mergedProps.stroke = style.stroke;
+    if (style.fill) mergedProps.fill = style.fill;
+    if (style.strokeWidth) mergedProps.strokeWidth = style.strokeWidth;
+    if (style.sidc) mergedProps.sidc = mergedProps.sidc || style.sidc;
+
+    features.push({
+      id: key,
+      geometry,
+      properties: mergedProps,
+      style: style,
+      meta: value.meta || {},
+    });
+  }
+
+  console.log(`%c📐 Parsed ${features.length} tactical features from metadata.tacticalSymbols`, 'color: #9C27B0; font-weight: bold;');
+  return features;
+}
+
+// ─── Bounding box helper ──────────────────────────────────────────────
+
+export interface ScenarioBounds {
+  west: number;
+  south: number;
+  east: number;
+  north: number;
+}
+
+function expandBounds(bounds: ScenarioBounds, lon: number, lat: number): void {
+  if (lon < bounds.west) bounds.west = lon;
+  if (lon > bounds.east) bounds.east = lon;
+  if (lat < bounds.south) bounds.south = lat;
+  if (lat > bounds.north) bounds.north = lat;
+}
+
+function createEmptyBounds(): ScenarioBounds {
+  return { west: 180, south: 90, east: -180, north: -90 };
+}
+
+function isBoundsValid(b: ScenarioBounds): boolean {
+  return b.west <= b.east && b.south <= b.north;
+}
+
+// ─── Main entry point ─────────────────────────────────────────────────
+
+export interface AddSymbolsResult {
+  unitCount: number;
+  layerFeatureCount: number;
+  tacticalFeatureCount: number;
+  bounds: ScenarioBounds | null;
+}
+
 export async function addScenarioSymbols(
   viewer: Cesium.Viewer,
   scenarios: BackendScenario[]
-): Promise<void> {
+): Promise<AddSymbolsResult> {
+  const bounds = createEmptyBounds();
+  let totalUnits = 0;
+  let totalLayerFeatures = 0;
+  let totalTacticalFeatures = 0;
+
   scenarios.forEach((scenario) => {
     const content = scenario.content as ScenarioContentLike | undefined;
     if (!content || typeof content !== 'object') return;
 
+    // ── 1. Military Units (ORBAT) ──────────────
     const units = getScenarioUnits(content);
     units.forEach((unit, index) => {
       const pos = getUnitPosition(unit);
@@ -413,8 +551,11 @@ export async function addScenarioSymbols(
         label: unit.name,
         clampToGround: false,
       });
+      expandBounds(bounds, pos.lon, pos.lat);
+      totalUnits++;
     });
 
+    // ── 2. Scenario Layers (GeoJSON features) ──────────────
     if (Array.isArray(content.layers)) {
       content.layers.forEach((layer, layerIndex) => {
         if (layer?.isHidden) return;
@@ -423,8 +564,49 @@ export async function addScenarioSymbols(
           const geometry = getFeatureGeometry(feature);
           if (!geometry) return;
           addTacticalGeometry(viewer, geometry, feature, scenario.id, layerIndex * 10000 + index);
+          totalLayerFeatures++;
+
+          // Expand bounds with feature coordinates
+          const pts = flattenCoordinates(geometry.coordinates);
+          pts.forEach((p) => expandBounds(bounds, p.lon, p.lat));
         });
       });
     }
+
+    // ── 3. Tactical Symbols from metadata ──────────────
+    const tacticalSnapshot = (content as any).metadata?.tacticalSymbols as TacticalSymbolsSnapshot | undefined;
+    // Also check top-level metadata (API may put content at scenario root)
+    const topLevelSnapshot = (scenario as any).metadata?.tacticalSymbols as TacticalSymbolsSnapshot | undefined;
+    const snapshot = tacticalSnapshot || topLevelSnapshot;
+
+    if (snapshot) {
+      const tacticalFeatures = parseTacticalSymbolsTuples(snapshot);
+      tacticalFeatures.forEach((feature, index) => {
+        const geometry = getFeatureGeometry(feature);
+        if (!geometry) return;
+        addTacticalGeometry(viewer, geometry, feature, `tactical-meta-${scenario.id}`, 90000 + index);
+        totalTacticalFeatures++;
+
+        const pts = flattenCoordinates(geometry.coordinates);
+        pts.forEach((p) => expandBounds(bounds, p.lon, p.lat));
+      });
+    }
   });
+
+  const validBounds = isBoundsValid(bounds) ? bounds : null;
+
+  console.log('%c=== Scenario Rendering Summary ===', 'background: #1c684e; color: white; font-size: 13px; padding: 4px 8px; border-radius: 4px;');
+  console.log(`  🪖 Military units:      ${totalUnits}`);
+  console.log(`  📐 Layer features:       ${totalLayerFeatures}`);
+  console.log(`  🔺 Tactical (metadata):  ${totalTacticalFeatures}`);
+  console.log(`  📍 Bounds:               ${validBounds ? `${validBounds.west.toFixed(4)},${validBounds.south.toFixed(4)} → ${validBounds.east.toFixed(4)},${validBounds.north.toFixed(4)}` : 'N/A'}`);
+  console.log('%c==================================', 'background: #1c684e; color: white; padding: 2px 8px; border-radius: 4px;');
+
+  return {
+    unitCount: totalUnits,
+    layerFeatureCount: totalLayerFeatures,
+    tacticalFeatureCount: totalTacticalFeatures,
+    bounds: validBounds,
+  };
 }
+

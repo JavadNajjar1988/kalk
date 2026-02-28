@@ -1,0 +1,24 @@
+export declare function initializeProjectServices(projectUUID: string): Promise<{
+    emitter: any;
+    projectStore: any;
+    preferencesStore: any;
+    sessionStore: any;
+    store: any;
+    tileLayerStore: any;
+    spatialIndex: any;
+    featureStore: any;
+    documentStore: any;
+    searchIndex: any;
+    coordinatesFormat: any;
+    optionStore: any;
+    undo: any;
+    selection: any;
+    osdDriver: any;
+    ipcRenderer: any;
+    clipboard: any;
+    jsonDB: any;
+    wkbDB: any;
+    replicationProvider: { disabled: boolean };
+    signals: Record<string, any>;
+    commandRegistry: any;
+}>;

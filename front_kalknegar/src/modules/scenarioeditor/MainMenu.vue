@@ -196,6 +196,9 @@ const goToDashboard = () => {
           <DropdownMenuItem @select="emit('action', 'browseSymbols')"
             >مرور نمادها
           </DropdownMenuItem>
+          <DropdownMenuItem @select="emit('action', 'processData')">
+            پردازش اطلاعات
+          </DropdownMenuItem>
         </DropdownMenuSubContent>
       </DropdownMenuSub>
      

@@ -1,22 +1,24 @@
-import { initializeProjectServices } from "@/modules/tactical-symbol-map/services/projectServices.js";
+import { initializeProjectServices } from "@/modules/tactical-symbol-map/services/projectServices";
 import {
   getTacticalSnapshotFromMetadata,
   importTacticalSnapshot,
   tacticalProjectUUIDForScenarioId,
 } from "@/modules/tactical-symbol-map/services/scenarioSnapshot";
 
+import type { Ref } from "vue";
+
 type ServicesStoreLike = {
-  projectUUID: string | null;
-  projectStore: any;
-  preferencesStore: any;
-  sessionStore: any;
-  emitter: any;
-  store: any;
-  featureStore: any;
-  searchIndex: any;
-  selection: any;
-  osdDriver: any;
-  ipcRenderer: any;
+  projectUUID: Ref<string | null> | string | null;
+  projectStore: Ref<any> | any;
+  preferencesStore: Ref<any> | any;
+  sessionStore: Ref<any> | any;
+  emitter: Ref<any> | any;
+  store: Ref<any> | any;
+  featureStore: Ref<any> | any;
+  searchIndex: Ref<any> | any;
+  selection: Ref<any> | any;
+  osdDriver: Ref<any> | any;
+  ipcRenderer: Ref<any> | any;
   getServices: () => any;
 };
 
@@ -29,13 +31,13 @@ interface EnsureScenarioServicesOptions {
 function hasReadyServices(services: any): boolean {
   return Boolean(
     services?.store &&
-      services?.featureStore &&
-      services?.searchIndex &&
-      services?.emitter &&
-      services?.sessionStore &&
-      services?.selection &&
-      services?.osdDriver &&
-      services?.ipcRenderer,
+    services?.featureStore &&
+    services?.searchIndex &&
+    services?.emitter &&
+    services?.sessionStore &&
+    services?.selection &&
+    services?.osdDriver &&
+    services?.ipcRenderer,
   );
 }
 

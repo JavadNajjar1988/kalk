@@ -71,6 +71,7 @@ export type ScenarioActions =
   | "increaseSpeed"
   | "decreaseSpeed"
   | "browseSymbols"
+  | "processData"
   | "undo"
   | "redo";
 

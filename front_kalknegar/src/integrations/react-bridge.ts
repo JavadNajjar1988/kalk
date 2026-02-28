@@ -43,7 +43,7 @@ class ReactBridge {
     if (this.isIntegrationMode) {
       console.log('[ReactBridge] Integration mode enabled');
       this.applyDashboardTheme();
-      
+
       // Check for token in URL parameter as fallback
       const tokenFromUrl = urlParams.get('token');
       if (tokenFromUrl) {
@@ -57,9 +57,9 @@ class ReactBridge {
           console.error('[ReactBridge] Failed to store token from URL', e);
         }
       }
-      
+
       this.setupMessageListener();
-      
+
       // Wait for DOM to be ready before notifying
       if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', () => {
@@ -89,7 +89,7 @@ class ReactBridge {
         }, 500);
       }
     }, 100);
-    
+
     // Timeout after 10 seconds
     setTimeout(() => {
       clearInterval(checkInterval);
@@ -110,8 +110,13 @@ class ReactBridge {
         return;
       }
 
+      // Ignore messages without a valid type (e.g. from browser extensions like React DevTools)
+      if (!message.type || typeof message.type !== 'string') {
+        return;
+      }
+
       console.log('[ReactBridge] Received message:', message);
-      
+
       // Handle different message types (auth bridge + data bridge)
       switch (message.type) {
         case 'AUTH_TOKEN':
@@ -153,11 +158,11 @@ class ReactBridge {
     };
 
     console.log('[ReactBridge] Sending ready message:', readyMessage);
-    
+
     try {
       window.parent.postMessage(readyMessage, this.parentOrigin);
       console.log('[ReactBridge] Ready message sent successfully to React parent');
-      
+
       // Send additional ready message with * origin as fallback
       setTimeout(() => {
         window.parent.postMessage(readyMessage, '*');
@@ -170,24 +175,24 @@ class ReactBridge {
 
   private handleCommand(message: OrbatMessage) {
     const { command, payload } = message;
-    
+
     console.log('[ReactBridge] Handling command:', command, payload);
-    
+
     // Send response back
-    this.sendResponse(message.id, true, { 
-      command, 
-      result: 'Command executed successfully' 
+    this.sendResponse(message.id, true, {
+      command,
+      result: 'Command executed successfully'
     });
   }
 
   private handleRequest(message: OrbatMessage) {
     const { dataType, params } = message;
-    
+
     console.log('[ReactBridge] Handling request:', dataType, params);
-    
+
     // Mock response - replace with actual data handling
     const mockData = this.getMockData(dataType);
-    
+
     this.sendResponse(message.id, true, mockData);
   }
 
@@ -216,7 +221,7 @@ class ReactBridge {
         console.log('[ReactBridge] Message sent:', message);
       } catch (error) {
         console.error('[ReactBridge] Failed to send message:', message, error);
-        
+
         // Try with wildcard origin as fallback
         try {
           window.parent.postMessage(message, '*');
@@ -250,7 +255,7 @@ class ReactBridge {
       // Notify local Vue app
       try {
         window.dispatchEvent(new CustomEvent('kalk-auth-applied', { detail: { token, exp } }));
-      } catch {}
+      } catch { }
     } catch (e) {
       console.error('[ReactBridge] Failed to store auth token', e);
     }
@@ -266,7 +271,7 @@ class ReactBridge {
       // Notify local Vue app
       try {
         window.dispatchEvent(new CustomEvent('kalk-auth-cleared'));
-      } catch {}
+      } catch { }
     } catch (e) {
       console.error('[ReactBridge] Failed to clear auth token', e);
     }

@@ -36,8 +36,7 @@ import {
   AccountBox,
   ExitToApp,
   Assignment,
-  
-  
+  SmartToy,
 } from '@mui/icons-material';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAppSelector, useAppDispatch } from '@/store';
@@ -183,6 +182,13 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
       label: 'مدیریت منابع', 
       icon: <AccountBox />, 
       path: '/dashboard/resources',
+      roles: ['admin', 'commander', 'operator', 'viewer']
+    },
+    { 
+      id: 'data-processing', 
+      label: 'پردازش اطلاعات', 
+      icon: <SmartToy />, 
+      path: '/dashboard/data-processing',
       roles: ['admin', 'commander', 'operator', 'viewer']
     },
 

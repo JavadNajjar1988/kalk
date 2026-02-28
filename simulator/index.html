@@ -3,48 +3,233 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Kalk Simulator - Babylon.js</title>
+    <meta name="description" content="شبیه‌ساز سه‌بعدی سیستم ساجد" />
+    <meta name="theme-color" content="#1c684e" />
+    <title>شبیه‌ساز ساجد</title>
+
+    <!-- Yekan Font (same as dashboard) -->
     <style>
-      * {
+      @font-face {
+        font-family: 'Yekan';
+        src: url('/fonts/Yekan.woff2') format('woff2'),
+             url('/fonts/Yekan.woff') format('woff');
+        font-weight: 400;
+        font-style: normal;
+        font-display: swap;
+      }
+      @font-face {
+        font-family: 'Yekan';
+        src: url('/fonts/Yekan-Bold.woff2') format('woff2'),
+             url('/fonts/Yekan-Bold.woff') format('woff');
+        font-weight: 700;
+        font-style: normal;
+        font-display: swap;
+      }
+    </style>
+
+    <!-- FontAwesome (same as dashboard) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+
+    <style>
+      /* ===== CSS Custom Properties (dashboard design tokens) ===== */
+      :root {
+        /* field-green + tactical-dark palette */
+        --color-primary:        #1c684e;
+        --color-primary-dark:   #0f4c3a;
+        --color-primary-light:  rgba(28, 104, 78, 0.15);
+        --color-accent:         #2e7d63;
+
+        --color-bg:             #23262d;
+        --color-surface-0:      #2a2e36;
+        --color-surface-1:      #313540;
+        --color-surface-2:      #383b43;
+
+        --color-text-primary:   #bac7e3;
+        --color-text-secondary: #9aa6c3;
+        --color-text-disabled:  #6c7a95;
+
+        --color-border-light:   rgba(56, 59, 67, 0.6);
+        --color-border-medium:  #3b475e;
+        --color-border-strong:  #4e5c77;
+
+        --header-height: 60px;
+        --border-radius: 12px;
+        --blur-amount:   20px;
+
+        --font-family: 'Yekan', 'Arial', 'Roboto', sans-serif;
+      }
+
+      /* ===== Reset ===== */
+      *, *::before, *::after {
         margin: 0;
         padding: 0;
         box-sizing: border-box;
       }
 
-      body {
-        width: 100%;
-        height: 100vh;
-        overflow: hidden;
-        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      }
-
-      #mainContainer {
+      html, body {
         width: 100%;
         height: 100%;
-        position: relative;
+        overflow: hidden;
+        direction: rtl;
+        font-family: var(--font-family);
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        background: var(--color-bg);
+        color: var(--color-text-primary);
+      }
+
+      /* ===== Custom Scrollbar (dashboard style) ===== */
+      ::-webkit-scrollbar { width: 8px; height: 8px; }
+      ::-webkit-scrollbar-track { background: var(--color-surface-1); border-radius: 4px; }
+      ::-webkit-scrollbar-thumb { background: var(--color-border-medium); border-radius: 4px; }
+      ::-webkit-scrollbar-thumb:hover { background: var(--color-border-strong); }
+
+      /* ===== Header ===== */
+      #header {
+        position: fixed;
+        top: 0;
+        right: 0;
+        left: 0;
+        height: var(--header-height);
+        background: linear-gradient(135deg,
+          rgba(35, 38, 45, 0.96) 0%,
+          rgba(42, 46, 54, 0.96) 100%
+        );
+        backdrop-filter: blur(var(--blur-amount));
+        -webkit-backdrop-filter: blur(var(--blur-amount));
+        border-bottom: 1px solid var(--color-border-light);
+        box-shadow: 0 2px 16px rgba(0, 0, 0, 0.4);
+        z-index: 9999;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 24px;
         opacity: 0;
         transition: opacity 0.5s ease-in-out;
       }
 
-      #mainContainer.visible {
-        opacity: 1;
+      #header.visible { opacity: 1; }
+
+      /* Logo */
+      #header .logo {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        color: var(--color-text-primary);
+        font-size: 17px;
+        font-weight: 700;
+        letter-spacing: 0.02em;
+        text-decoration: none;
+        user-select: none;
       }
 
-      #cesiumContainer {
+      #header .logo .logo-icon {
+        width: 36px;
+        height: 36px;
+        background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 100%);
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 16px;
+        color: #fff;
+        box-shadow: 0 2px 8px rgba(28, 104, 78, 0.4);
+        flex-shrink: 0;
+      }
+
+      #header .logo .logo-text {
+        display: flex;
+        flex-direction: column;
+        line-height: 1.2;
+      }
+
+      #header .logo .logo-text .brand { font-size: 15px; font-weight: 700; }
+      #header .logo .logo-text .sub   { font-size: 11px; color: var(--color-text-secondary); font-weight: 400; }
+
+      /* Header actions */
+      #header .header-actions {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      /* Status badge */
+      .status-badge {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        background: rgba(28, 104, 78, 0.15);
+        border: 1px solid rgba(28, 104, 78, 0.3);
+        border-radius: 20px;
+        padding: 4px 12px;
+        font-size: 12px;
+        color: #4caf82;
+        font-weight: 500;
+      }
+
+      .status-badge .dot {
+        width: 7px;
+        height: 7px;
+        background: #4caf82;
+        border-radius: 50%;
+        animation: pulse 2s infinite;
+      }
+
+      @keyframes pulse {
+        0%, 100% { opacity: 1; transform: scale(1); }
+        50%       { opacity: 0.6; transform: scale(0.85); }
+      }
+
+      /* Back button */
+      #backToDashboard {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        background: rgba(255, 255, 255, 0.06);
+        border: 1px solid var(--color-border-medium);
+        color: var(--color-text-primary);
+        padding: 7px 16px;
+        border-radius: var(--border-radius);
+        cursor: pointer;
+        font-size: 13px;
+        font-weight: 500;
+        font-family: var(--font-family);
+        text-decoration: none;
+        transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+        white-space: nowrap;
+      }
+
+      #backToDashboard:hover {
+        background: rgba(255, 255, 255, 0.12);
+        border-color: var(--color-border-strong);
+        transform: translateY(-1px);
+      }
+
+      #backToDashboard i { font-size: 12px; }
+
+      /* ===== Main Container ===== */
+      #mainContainer {
+        position: relative;
         width: 100%;
-        height: 100%;
+        height: calc(100vh - var(--header-height));
+        margin-top: var(--header-height);
+        opacity: 0;
+        transition: opacity 0.5s ease-in-out;
+      }
+
+      #mainContainer.visible { opacity: 1; }
+
+      /* ===== Cesium container ===== */
+      #cesiumContainer {
         position: absolute;
-        top: 0;
-        left: 0;
+        inset: 0;
         z-index: 1;
       }
 
+      /* ===== Babylon.js canvas overlay ===== */
       #babylonContainer {
-        width: 100%;
-        height: 100%;
         position: absolute;
-        top: 0;
-        left: 0;
+        inset: 0;
         z-index: 2;
         pointer-events: none;
       }
@@ -54,28 +239,22 @@
         height: 100%;
         display: block;
         touch-action: none;
-        pointer-events: none; /* Disable pointer events so Cesium can handle zoom/pan */
+        pointer-events: none;
         background: transparent;
       }
 
-      /* Cesium widget styles */
-      .cesium-widget {
-        width: 100% !important;
-        height: 100% !important;
-      }
-
+      /* ===== Cesium widget overrides ===== */
+      .cesium-widget,
       .cesium-widget canvas {
         width: 100% !important;
         height: 100% !important;
       }
 
+      /* ===== Splash Screen ===== */
       #splashScreen {
         position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: #000;
+        inset: 0;
+        background: var(--color-bg);
         z-index: 10000;
         display: flex;
         align-items: center;
@@ -99,102 +278,75 @@
         top: 50%;
         left: 50%;
         transform: translate(-50%, -50%);
-        color: white;
-        font-size: 24px;
-        z-index: 10001;
+        color: var(--color-text-secondary);
+        font-size: 18px;
+        font-family: var(--font-family);
         display: none;
       }
 
-      #header {
-        position: fixed;
-        top: 0;
-        left: 0;
-        right: 0;
-        height: 60px;
-        background: linear-gradient(135deg, rgba(20, 20, 30, 0.95) 0%, rgba(30, 30, 45, 0.95) 100%);
-        backdrop-filter: blur(10px);
-        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-        z-index: 9999;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        padding: 0 20px;
-        opacity: 0;
-        transition: opacity 0.5s ease-in-out;
-      }
-
-      #mainContainer {
-        margin-top: 60px;
-        height: calc(100vh - 60px);
-      }
-
-      #header.visible {
-        opacity: 1;
-      }
-
-      #header .logo {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        color: white;
-        font-size: 18px;
-        font-weight: 600;
-      }
-
-      #header .back-button {
-        background: rgba(255, 255, 255, 0.1);
-        border: 1px solid rgba(255, 255, 255, 0.2);
-        color: white;
-        padding: 8px 16px;
-        border-radius: 8px;
-        cursor: pointer;
-        font-size: 14px;
-        font-weight: 500;
-        transition: all 0.3s ease;
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        text-decoration: none;
-      }
-
-      #header .back-button:hover {
-        background: rgba(255, 255, 255, 0.2);
-        border-color: rgba(255, 255, 255, 0.3);
-        transform: translateY(-2px);
-      }
-
+      /* ===== Floating Action Buttons ===== */
       .floating-btn {
         position: fixed;
         left: 16px;
-        bottom: 16px;
         z-index: 12000;
-        background: #4caf50;
-        color: #fff;
-        border: none;
-        border-radius: 10px;
-        padding: 10px 14px;
-        font-size: 14px;
-        font-weight: 700;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        background: rgba(42, 46, 54, 0.88);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border: 1px solid var(--color-border-medium);
+        color: var(--color-text-primary);
+        border-radius: var(--border-radius);
+        padding: 9px 16px;
+        font-size: 13px;
+        font-weight: 600;
+        font-family: var(--font-family);
         cursor: pointer;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+        transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
       }
 
       .floating-btn:hover {
-        background: #43a047;
+        background: rgba(28, 104, 78, 0.25);
+        border-color: rgba(28, 104, 78, 0.5);
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5);
       }
+
+      .floating-btn i { font-size: 14px; color: #4caf82; }
+
+      #focusModelBtn        { bottom: 20px; }
+      #toggleAnimationBtn   { bottom: 70px; }
     </style>
   </head>
   <body>
+
+    <!-- ===== Header ===== -->
     <header id="header">
       <div class="logo">
-        <span>🎮</span>
-        <span>Kalk Simulator</span>
+        <div class="logo-icon">
+          <i class="fa-solid fa-globe"></i>
+        </div>
+        <div class="logo-text">
+          <span class="brand">شبیه‌ساز ساجد</span>
+          <span class="sub">نمایش سه‌بعدی سناریو</span>
+        </div>
       </div>
-      <a href="#" id="backToDashboard" class="back-button">
-        <span>←</span>
-        <span>بازگشت به داشبورد</span>
-      </a>
+
+      <div class="header-actions">
+        <div class="status-badge">
+          <span class="dot"></span>
+          <span>آنلاین</span>
+        </div>
+        <a href="#" id="backToDashboard">
+          <i class="fa-solid fa-arrow-right"></i>
+          <span>بازگشت به داشبورد</span>
+        </a>
+      </div>
     </header>
+
+    <!-- ===== Splash Screen ===== -->
     <div id="splashScreen">
       <video id="splashVideo" autoplay muted playsinline>
         <source src="/splash/splash.mp4" type="video/mp4" />
@@ -202,27 +354,40 @@
       </video>
       <div id="loading">در حال بارگذاری...</div>
     </div>
+
+    <!-- ===== Main Viewer ===== -->
     <div id="mainContainer">
       <div id="cesiumContainer"></div>
       <div id="babylonContainer">
         <canvas id="renderCanvas"></canvas>
       </div>
     </div>
-    <button id="focusModelBtn" class="floating-btn">رفتن به مدل</button>
-    <button id="toggleAnimationBtn" class="floating-btn" style="bottom: 60px;">پلی/توقف انیمیشن</button>
+
+    <!-- ===== Floating Buttons ===== -->
+    <button id="focusModelBtn" class="floating-btn">
+      <i class="fa-solid fa-location-crosshairs"></i>
+      <span>رفتن به مدل</span>
+    </button>
+    <button id="toggleAnimationBtn" class="floating-btn">
+      <i class="fa-solid fa-play"></i>
+      <span>پلی / توقف</span>
+    </button>
+
+    <!-- ===== Scripts ===== -->
     <script type="module" src="/src/main.ts"></script>
     <script>
-      // button to focus model pin (Cesium)
       document.getElementById('focusModelBtn')?.addEventListener('click', () => {
-        if (window.flyToModelPin) {
-          window.flyToModelPin();
-        }
+        if (window.flyToModelPin) window.flyToModelPin();
       });
-      
-      // button to toggle model animation
       document.getElementById('toggleAnimationBtn')?.addEventListener('click', () => {
+        const btn = document.getElementById('toggleAnimationBtn');
+        const icon = btn?.querySelector('i');
         if (window.toggleModelAnimation) {
           window.toggleModelAnimation();
+          if (icon) {
+            icon.classList.toggle('fa-play');
+            icon.classList.toggle('fa-pause');
+          }
         }
       });
     </script>

@@ -108,9 +108,9 @@ import SimpleSymbolMapSidebar from "@/modules/tactical-symbol-map/SimpleSymbolMa
 import { ensureScenarioTacticalServices } from "@/modules/tactical-symbol-map/services/scenarioProjectServices";
 import { injectStrict } from "@/utils";
 import { activeScenarioKey } from "@/components/injects";
-import { useServicesStore } from "@/modules/tactical-symbol-map/stores/services.js";
-import * as MILSTD from "@/modules/tactical-symbol-map/symbology/2525c.js";
-import { svg } from "@/modules/tactical-symbol-map/symbology/symbol.js";
+import { useServicesStore } from "@/modules/tactical-symbol-map/stores/services";
+import * as MILSTD from "@/modules/tactical-symbol-map/symbology/2525c";
+import { svg } from "@/modules/tactical-symbol-map/symbology/symbol";
 
 const props = defineProps<{
   open: boolean

@@ -1,4 +1,4 @@
-import { BaseApiClient, handleApiResponse } from './baseApiClient';
+import { ApiClientError, BaseApiClient, handleApiResponse } from './baseApiClient';
 import type { ApiResponse } from './types';
 import { mockApiServer } from './mockApiServer';
 import type { Scenario } from '@/types/scenarioModels';
@@ -15,7 +15,7 @@ export class ScenarioApiService extends BaseApiClient {
     // تعیین پایگاه URL - اولویت با متغیر محیطی، سپس origin والد
     const envBase = (import.meta as any).env?.VITE_API_URL as string | undefined;
     let base: string;
-    
+
     const isDev = import.meta.env.DEV;
 
     if (envBase && envBase.trim() !== '') {
@@ -68,23 +68,24 @@ export class ScenarioApiService extends BaseApiClient {
     const name = (scn as any)?.name || '';
     const description = (scn as any)?.description || '';
     const image = (scn as any)?.image;
+    console.log('[ScenarioApiService.buildPayload] metadata.tacticalSymbols tuples:', (scn as any)?.metadata?.tacticalSymbols?.tuples?.length ?? 'MISSING');
     return { name, description, image, content: scn } as any;
   }
 
   private mapOut(apiItem: any): Scenario {
     console.log('[ScenarioApiService.mapOut] Input:', apiItem);
-    
+
     // اگر apiItem خودش یک Scenario است (بدون wrapper)
     if (apiItem && typeof apiItem === 'object' && apiItem.type === 'ORBAT-mapper') {
       console.log('[ScenarioApiService.mapOut] Direct scenario object');
       return apiItem as Scenario;
     }
-    
+
     // اگر apiItem دارای content است
     if (apiItem && typeof apiItem === 'object' && 'content' in apiItem && apiItem.content) {
       const base = apiItem.content;
       console.log('[ScenarioApiService.mapOut] Extracting from content:', base);
-      
+
       // اگر content خودش یک Scenario است
       if (base && typeof base === 'object' && base.type === 'ORBAT-mapper') {
         const mapped = {
@@ -98,7 +99,7 @@ export class ScenarioApiService extends BaseApiClient {
         console.log('[ScenarioApiService.mapOut] Mapped scenario:', mapped);
         return mapped;
       }
-      
+
       // اگر content یک object است اما type ندارد، سعی می‌کنیم آن را به عنوان Scenario در نظر بگیریم
       console.warn('[ScenarioApiService.mapOut] Content does not have type, assuming ORBAT-mapper');
       const mapped = {
@@ -112,7 +113,7 @@ export class ScenarioApiService extends BaseApiClient {
       console.log('[ScenarioApiService.mapOut] Mapped scenario (with type added):', mapped);
       return mapped;
     }
-    
+
     console.warn('[ScenarioApiService.mapOut] No content found, returning as-is');
     return apiItem as Scenario;
   }
@@ -146,6 +147,7 @@ export class ScenarioApiService extends BaseApiClient {
     console.log('[ScenarioApiService] Parsed data:', data);
     const mapped = this.mapOut(data);
     console.log('[ScenarioApiService] Mapped scenario:', mapped);
+    console.log('[ScenarioApiService] metadata.tacticalSymbols tuples:', (mapped as any)?.metadata?.tacticalSymbols?.tuples?.length ?? 'MISSING');
     return mapped;
   }
 
@@ -161,11 +163,15 @@ export class ScenarioApiService extends BaseApiClient {
   }
 
   async save(scn: Scenario): Promise<Scenario> {
-    // Try update; if not found, create
+    // Try update first; only fall back to create on 404 (not found).
+    // Other errors (401, 500, etc.) are re-thrown immediately.
     try {
       return await this.update(scn.id, scn);
     } catch (e) {
-      return await this.create(scn);
+      if (e instanceof ApiClientError && e.status === 404) {
+        return await this.create(scn);
+      }
+      throw e;
     }
   }
 
