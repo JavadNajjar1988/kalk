@@ -68,6 +68,16 @@ export interface ChartSettings {
 export type ChartStandard = 'app6d' | 'milstd2525d' | 'milstd2525c';
 
 // تنظیمات هدر زیارتی داشبورد
+export interface HeaderEntry {
+  id: number;
+  quoteText: string;
+  personName: string;
+  personPosition: string;
+  personImage: string | null;
+  createdAt: number;
+  updatedAt: number;
+}
+
 export interface HeaderSettings {
   enabled: boolean;
   quoteMode: 'random' | 'fixed' | 'custom';
@@ -80,6 +90,8 @@ export interface HeaderSettings {
   customMartyrPosition: string | null;
   customMartyrDate: string | null;
   customMartyrImage: string | null;
+  entries: HeaderEntry[];
+  activeEntryId: number | null;
 }
 
 interface UIState {
@@ -204,6 +216,8 @@ const initialState: UIState = {
     customMartyrPosition: null,
     customMartyrDate: null,
     customMartyrImage: null,
+    entries: [],
+    activeEntryId: null,
   },
 };
 
