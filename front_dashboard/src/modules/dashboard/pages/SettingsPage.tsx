@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+﻿import React, { useEffect, useMemo, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import {
   Box,
@@ -18,13 +18,20 @@ import {
   Chip,
   Avatar,
   Tooltip,
+  Snackbar,
+  Alert,
+  CircularProgress,
   useTheme,
   alpha,
   TextField,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
+  LinearProgress,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Pagination,
 } from '@mui/material';
 import {
   Palette,
@@ -33,7 +40,6 @@ import {
   AutoMode,
   TextFields,
   Language,
-  PhoneAndroid,
   Refresh,
   Settings,
   Brightness6,
@@ -58,15 +64,30 @@ import {
   updateHeaderSettings,
   selectHeaderSettings,
   HeaderSettings,
+  HeaderEntry,
   showSuccessNotification,
+  showWarningNotification,
 } from '@/store/slices/uiSlice';
 import { RootState } from '@/store';
 import { PrimaryColor } from '@/store/slices/uiSlice';
-import TranslatedText from '@/components/common/TranslatedText';
 import { useTranslation } from '@/hooks/useTranslation';
-import { quotes } from '@/config/quotes';
-import { martyrs } from '@/config/martyrs';
 import { selectUser, updateUser } from '@/store/slices/authSlice';
+
+const HEADER_PAGE_SIZE = 10;
+
+type HeaderEditorFormState = {
+  quoteText: string;
+  personName: string;
+  personPosition: string;
+  personImage: string | null;
+};
+
+const createEmptyHeaderEditorForm = (): HeaderEditorFormState => ({
+  quoteText: '',
+  personName: '',
+  personPosition: '',
+  personImage: null,
+});
 
 const SettingsPage: React.FC = () => {
   const dispatch = useDispatch();
@@ -76,6 +97,8 @@ const SettingsPage: React.FC = () => {
   const { language } = useSelector((state: RootState) => state.ui);
   const headerSettings = useSelector(selectHeaderSettings) as HeaderSettings;
   const user = useSelector(selectUser);
+  const headerEntries = (headerSettings.entries || []) as HeaderEntry[];
+  const activeHeaderEntryId = headerSettings.activeEntryId ?? null;
   
   // استیت محلی پروفایل
   const [displayName, setDisplayName] = useState(user?.name || '');
@@ -87,6 +110,12 @@ const SettingsPage: React.FC = () => {
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [isSavingHeader, setIsSavingHeader] = useState(false);
+  const [headerSaveFeedbackOpen, setHeaderSaveFeedbackOpen] = useState(false);
+  const [headerEditorForm, setHeaderEditorForm] = useState<HeaderEditorFormState>(createEmptyHeaderEditorForm());
+  const [editingHeaderEntryId, setEditingHeaderEntryId] = useState<number | null>(null);
+  const [headerPage, setHeaderPage] = useState(0);
+  const [isHeaderPageLoading, setIsHeaderPageLoading] = useState(false);
 
   // استیت محلی نوع فونت (در حد UI)
   const [fontFamily, setFontFamily] = useState<'iransans' | 'vazir' | 'shabnam'>('iransans');
@@ -124,6 +153,134 @@ const SettingsPage: React.FC = () => {
 
   const handleHeaderSettingsChange = (changes: Partial<HeaderSettings>) => {
     dispatch(updateHeaderSettings(changes));
+  };
+
+  const totalHeaderPages = useMemo(
+    () => Math.max(1, Math.ceil(headerEntries.length / HEADER_PAGE_SIZE)),
+    [headerEntries.length]
+  );
+
+  const activeHeaderEntry = useMemo(
+    () => headerEntries.find(entry => entry.id === activeHeaderEntryId) || null,
+    [headerEntries, activeHeaderEntryId]
+  );
+  const pagedHeaderEntries = useMemo(() => {
+    const start = headerPage * HEADER_PAGE_SIZE;
+    return headerEntries.slice(start, start + HEADER_PAGE_SIZE);
+  }, [headerEntries, headerPage]);
+  useEffect(() => {
+    const maxPage = Math.max(0, totalHeaderPages - 1);
+    if (headerPage > maxPage) setHeaderPage(maxPage);
+  }, [headerPage, totalHeaderPages]);
+  const handleHeaderFormFieldChange = (
+    field: keyof HeaderEditorFormState,
+    value: string | null
+  ) => {
+    setHeaderEditorForm(prev => ({ ...prev, [field]: value }));
+  };
+  const handleHeaderImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = e => {
+      const result = e.target?.result;
+      if (typeof result === 'string') {
+        setHeaderEditorForm(prev => ({ ...prev, personImage: result }));
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+  const handleHeaderFormReset = () => {
+    setHeaderEditorForm(createEmptyHeaderEditorForm());
+    setEditingHeaderEntryId(null);
+  };
+  const handleHeaderRowSelect = (entry: HeaderEntry) => {
+    setEditingHeaderEntryId(entry.id);
+    setHeaderEditorForm({
+      quoteText: entry.quoteText,
+      personName: entry.personName,
+      personPosition: entry.personPosition,
+      personImage: entry.personImage,
+    });
+  };
+  const handleHeaderPageChange = (_event: React.ChangeEvent<unknown>, page: number) => {
+    const nextPage = page - 1;
+    if (nextPage === headerPage) return;
+    setIsHeaderPageLoading(true);
+    window.setTimeout(() => {
+      setHeaderPage(nextPage);
+      setIsHeaderPageLoading(false);
+    }, 220);
+  };
+  const resolveHeaderImageSrc = (image: string | null) => {
+    if (!image) return 'shahid.jpg';
+    const trimmed = image.trim();
+    return trimmed || 'shahid.jpg';
+  };
+
+  const handleHeaderSettingsSave = () => {
+    const quoteText = headerEditorForm.quoteText.trim();
+    const personName = headerEditorForm.personName.trim();
+    const personPosition = headerEditorForm.personPosition.trim();
+    if (!quoteText || !personName || !personPosition || !headerEditorForm.personImage) {
+      dispatch(showWarningNotification('لطفاً همه فیلدهای هدر را تکمیل کنید.'));
+      return;
+    }
+    setIsSavingHeader(true);
+    const now = Date.now();
+    let nextEntries: HeaderEntry[] = [];
+    let nextActiveEntryId = activeHeaderEntryId;
+    if (editingHeaderEntryId !== null) {
+      nextEntries = headerEntries.map(entry =>
+        entry.id === editingHeaderEntryId
+          ? {
+              ...entry,
+              quoteText,
+              personName,
+              personPosition,
+              personImage: headerEditorForm.personImage,
+              updatedAt: now,
+            }
+          : entry
+      );
+      nextActiveEntryId = editingHeaderEntryId;
+    } else {
+      const newEntry: HeaderEntry = {
+        id: now,
+        quoteText,
+        personName,
+        personPosition,
+        personImage: headerEditorForm.personImage,
+        createdAt: now,
+        updatedAt: now,
+      };
+      nextEntries = [newEntry, ...headerEntries];
+      nextActiveEntryId = newEntry.id;
+    }
+    dispatch(
+      updateHeaderSettings({
+        enabled: true,
+        quoteMode: 'custom',
+        fixedQuoteIndex: null,
+        martyrMode: 'custom',
+        fixedMartyrId: null,
+        customQuoteText: quoteText,
+        customQuoteAuthor: personName,
+        customMartyrName: personName,
+        customMartyrPosition: personPosition,
+        customMartyrDate: null,
+        customMartyrImage: headerEditorForm.personImage,
+        entries: nextEntries,
+        activeEntryId: nextActiveEntryId,
+      })
+    );
+    setHeaderPage(0);
+    handleHeaderFormReset();
+    setHeaderSaveFeedbackOpen(true);
+    dispatch(showSuccessNotification('مورد هدر با موفقیت ذخیره شد.'));
+    setTimeout(() => {
+      setIsSavingHeader(false);
+    }, 350);
   };
 
   useEffect(() => {
@@ -961,265 +1118,211 @@ const SettingsPage: React.FC = () => {
               </Box>
 
               <Grid container spacing={2}>
-                <Grid item xs={12} md={6}>
-                  <FormControl fullWidth size="small">
-                    <InputLabel id="header-quote-mode-label">حالت سخن</InputLabel>
-                    <Select
-                      labelId="header-quote-mode-label"
-                      label="حالت سخن"
-                      value={headerSettings.quoteMode}
-                      onChange={(e) =>
-                        handleHeaderSettingsChange({
-                          quoteMode: e.target.value as HeaderSettings['quoteMode'],
-                        })
-                      }
-                    >
-                      <MenuItem value="random">تصادفی</MenuItem>
-                      <MenuItem value="fixed">انتخاب دستی</MenuItem>
-                      <MenuItem value="custom">سفارشی</MenuItem>
-                    </Select>
-                  </FormControl>
-                </Grid>
-                <Grid item xs={12} md={6}>
-                  <FormControl
+                <Grid item xs={12}>
+                  <TextField
                     fullWidth
                     size="small"
-                    disabled={headerSettings.quoteMode !== 'fixed'}
-                  >
-                    <InputLabel id="header-quote-select-label">انتخاب سخن</InputLabel>
-                    <Select
-                      labelId="header-quote-select-label"
-                      label="انتخاب سخن"
-                      value={
-                        headerSettings.fixedQuoteIndex !== null
-                          ? headerSettings.fixedQuoteIndex
-                          : ''
-                      }
-                      onChange={(e) =>
-                        handleHeaderSettingsChange({
-                          fixedQuoteIndex:
-                            e.target.value === '' ? null : Number(e.target.value),
-                        })
-                      }
-                    >
-                      {quotes.map((q, index) => (
-                        <MenuItem key={index} value={index}>
-                          {q.text.slice(0, 40)}
-                          {q.text.length > 40 ? '…' : ''} — {q.author}
-                        </MenuItem>
-                      ))}
-                    </Select>
-                  </FormControl>
+                    label="متن سخن"
+                    multiline
+                    minRows={3}
+                    value={headerEditorForm.quoteText}
+                    onChange={(e) =>
+                      handleHeaderFormFieldChange('quoteText', e.target.value)
+                    }
+                  />
                 </Grid>
-                {/* فیلدهای سخن سفارشی */}
-                {headerSettings.quoteMode === 'custom' && (
-                  <Grid item xs={12}>
-                    <Grid container spacing={2}>
-                      <Grid item xs={12} md={8}>
-                        <TextField
-                          fullWidth
-                          size="small"
-                          label="متن سخن"
-                          value={headerSettings.customQuoteText || ''}
-                          onChange={(e) =>
-                            handleHeaderSettingsChange({
-                              customQuoteText: e.target.value,
-                            })
-                          }
-                          multiline
-                          minRows={2}
-                        />
-                      </Grid>
-                      <Grid item xs={12} md={4}>
-                        <TextField
-                          fullWidth
-                          size="small"
-                          label="گوینده"
-                          value={headerSettings.customQuoteAuthor || ''}
-                          onChange={(e) =>
-                            handleHeaderSettingsChange({
-                              customQuoteAuthor: e.target.value,
-                            })
-                          }
-                        />
-                      </Grid>
-                    </Grid>
-                  </Grid>
-                )}
-                <Grid item xs={12} md={6}>
-                  <FormControl fullWidth size="small">
-                    <InputLabel id="header-martyr-mode-label">حالت شهید</InputLabel>
-                    <Select
-                      labelId="header-martyr-mode-label"
-                      label="حالت شهید"
-                      value={headerSettings.martyrMode}
-                      onChange={(e) =>
-                        handleHeaderSettingsChange({
-                          martyrMode: e.target.value as HeaderSettings['martyrMode'],
-                        })
-                      }
-                    >
-                      <MenuItem value="random">تصادفی</MenuItem>
-                      <MenuItem value="fixed">انتخاب دستی</MenuItem>
-                      <MenuItem value="custom">سفارشی</MenuItem>
-                    </Select>
-                  </FormControl>
-                </Grid>
-                <Grid item xs={12} md={6}>
-                  <FormControl
+                <Grid item xs={12} md={4}>
+                  <TextField
                     fullWidth
                     size="small"
-                    disabled={headerSettings.martyrMode !== 'fixed'}
-                  >
-                    <InputLabel id="header-martyr-select-label">انتخاب شهید</InputLabel>
-                    <Select
-                      labelId="header-martyr-select-label"
-                      label="انتخاب شهید"
-                      value={
-                        headerSettings.fixedMartyrId !== null
-                          ? headerSettings.fixedMartyrId
-                          : ''
-                      }
-                      onChange={(e) =>
-                        handleHeaderSettingsChange({
-                          fixedMartyrId:
-                            e.target.value === '' ? null : Number(e.target.value),
-                        })
-                      }
-                    >
-                      {martyrs.map((m) => (
-                        <MenuItem key={m.id} value={m.id}>
-                          {m.name}
-                        </MenuItem>
-                      ))}
-                    </Select>
-                  </FormControl>
+                    label="نام شهید یا فرد"
+                    value={headerEditorForm.personName}
+                    onChange={(e) =>
+                      handleHeaderFormFieldChange('personName', e.target.value)
+                    }
+                  />
                 </Grid>
-                {/* فیلدهای شهید سفارشی */}
-                {headerSettings.martyrMode === 'custom' && (
-                  <Grid item xs={12}>
-                    <Grid container spacing={2}>
-                      <Grid item xs={12} md={4}>
-                        <TextField
-                          fullWidth
-                          size="small"
-                          label="نام شهید"
-                          value={headerSettings.customMartyrName || ''}
-                          onChange={(e) =>
-                            handleHeaderSettingsChange({
-                              customMartyrName: e.target.value,
-                            })
-                          }
-                        />
-                      </Grid>
-                      <Grid item xs={12} md={4}>
-                        <TextField
-                          fullWidth
-                          size="small"
-                          label="سمت / مسئولیت"
-                          value={headerSettings.customMartyrPosition || ''}
-                          onChange={(e) =>
-                            handleHeaderSettingsChange({
-                              customMartyrPosition: e.target.value,
-                            })
-                          }
-                        />
-                      </Grid>
-                      <Grid item xs={12} md={4}>
-                        <TextField
-                          fullWidth
-                          size="small"
-                          label="تاریخ شهادت"
-                          placeholder="مثلاً ۱۳ دی ۱۳۹۸"
-                          value={headerSettings.customMartyrDate || ''}
-                          onChange={(e) =>
-                            handleHeaderSettingsChange({
-                              customMartyrDate: e.target.value,
-                            })
-                          }
-                        />
-                      </Grid>
-                      <Grid item xs={12}>
-                        <Box
-                          sx={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: 2,
-                            flexWrap: 'wrap',
-                          }}
-                        >
-                          <Box>
-                            <Typography variant="body2" sx={{ mb: 1 }}>
-                              تصویر شهید (استاندارد ۸۰×۸۰، نسبت مربعی)
-                            </Typography>
-                            <input
-                              id="custom-martyr-image"
-                              type="file"
-                              accept="image/*"
-                              style={{ display: 'none' }}
-                              onChange={(e) => {
-                                const file = e.target.files?.[0];
-                                if (!file) return;
-                                const reader = new FileReader();
-                                reader.onload = evt => {
-                                  const result = evt.target?.result;
-                                  if (typeof result === 'string') {
-                                    handleHeaderSettingsChange({
-                                      customMartyrImage: result,
-                                    });
-                                  }
-                                };
-                                reader.readAsDataURL(file);
-                              }}
-                            />
-                            <label htmlFor="custom-martyr-image">
-                              <Button
-                                component="span"
-                                variant="outlined"
-                                size="small"
-                              >
-                                انتخاب تصویر
-                              </Button>
-                            </label>
-                            <Typography
-                              variant="caption"
-                              color="text.secondary"
-                              sx={{ display: 'block', mt: 0.5 }}
-                            >
-                              فرمت‌های مجاز: PNG / JPG – بهتر است تصویر با پس‌زمینه ساده و مربع باشد.
-                            </Typography>
-                          </Box>
-
-                          {headerSettings.customMartyrImage && (
-                            <Box
-                              sx={{
-                                width: 80,
-                                height: 80,
-                                borderRadius: 1,
-                                overflow: 'hidden',
-                                border: `1px solid ${alpha(
-                                  theme.palette.divider,
-                                  0.6
-                                )}`,
-                              }}
-                            >
-                              <img
-                                src={headerSettings.customMartyrImage}
-                                alt="پیش‌نمایش شهید"
-                                style={{
-                                  width: '100%',
-                                  height: '100%',
-                                  objectFit: 'cover',
-                                }}
-                              />
-                            </Box>
-                          )}
-                        </Box>
-                      </Grid>
-                    </Grid>
-                  </Grid>
-                )}
+                <Grid item xs={12} md={4}>
+                  <TextField
+                    fullWidth
+                    size="small"
+                    label="سمت یا مسئولیت"
+                    value={headerEditorForm.personPosition}
+                    onChange={(e) =>
+                      handleHeaderFormFieldChange('personPosition', e.target.value)
+                    }
+                  />
+                </Grid>
+                <Grid item xs={12} md={4}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, flexWrap: 'wrap' }}>
+                    <input
+                      id="header-entry-image"
+                      type="file"
+                      accept="image/*"
+                      style={{ display: 'none' }}
+                      onChange={handleHeaderImageChange}
+                    />
+                    <label htmlFor="header-entry-image">
+                      <Button component="span" variant="outlined" size="small">
+                        انتخاب تصویر
+                      </Button>
+                    </label>
+                    <Typography variant="caption" color="text.secondary">
+                      PNG / JPG - تصویر مربعی بهتر است.
+                    </Typography>
+                    {headerEditorForm.personImage && (
+                      <Avatar
+                        src={resolveHeaderImageSrc(headerEditorForm.personImage)}
+                        sx={{ width: 42, height: 42, border: `1px solid ${alpha(theme.palette.divider, 0.6)}` }}
+                      />
+                    )}
+                  </Box>
+                </Grid>
               </Grid>
+
+              <Box
+                sx={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  gap: 1,
+                  flexWrap: 'wrap',
+                  mt: 3,
+                  pt: 2,
+                  borderTop: `1px dashed ${alpha(theme.palette.success.main, 0.22)}`,
+                }}
+              >
+                <Chip
+                  size="small"
+                  color={activeHeaderEntry ? 'success' : 'default'}
+                  label={
+                    activeHeaderEntry
+                      ? `نمایش در هدر: ${activeHeaderEntry.personName}`
+                      : 'هنوز ردیفی فعال نشده است'
+                  }
+                />
+                <Box sx={{ display: 'flex', gap: 1 }}>
+                  {editingHeaderEntryId !== null && (
+                    <Button variant="outlined" color="inherit" onClick={handleHeaderFormReset}>
+                      انصراف از ویرایش
+                    </Button>
+                  )}
+                  <Button
+                    variant="contained"
+                    color="success"
+                    startIcon={
+                      isSavingHeader ? (
+                        <CircularProgress size={16} color="inherit" />
+                      ) : (
+                        <CheckCircle />
+                      )
+                    }
+                    onClick={handleHeaderSettingsSave}
+                    disabled={isSavingHeader}
+                  >
+                    {isSavingHeader
+                      ? 'در حال ذخیره...'
+                      : editingHeaderEntryId !== null
+                        ? 'به‌روزرسانی ردیف'
+                        : 'ثبت در جدول'}
+                  </Button>
+                </Box>
+              </Box>
+
+              <Divider sx={{ my: 2 }} />
+
+              <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 0.5 }}>
+                جدول اطلاعات هدر
+              </Typography>
+              <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1.5 }}>
+                با کلیک روی هر ردیف، اطلاعات همان ردیف برای ویرایش در فرم بالا بارگذاری می‌شود.
+              </Typography>
+
+              {isHeaderPageLoading && (
+                <LinearProgress sx={{ mb: 1.5, borderRadius: 1 }} />
+              )}
+
+              <TableContainer
+                component={Paper}
+                variant="outlined"
+                sx={{
+                  borderRadius: 2,
+                  borderColor: alpha(theme.palette.success.main, 0.25),
+                  maxHeight: 420,
+                }}
+              >
+                <Table size="small" stickyHeader>
+                  <TableHead>
+                    <TableRow>
+                      <TableCell sx={{ width: 56 }}>#</TableCell>
+                      <TableCell sx={{ width: 84 }}>تصویر</TableCell>
+                      <TableCell sx={{ width: 220 }}>نام</TableCell>
+                      <TableCell sx={{ width: 220 }}>سمت</TableCell>
+                      <TableCell>متن سخن</TableCell>
+                      <TableCell sx={{ width: 130 }}>وضعیت</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {pagedHeaderEntries.length === 0 && (
+                      <TableRow>
+                        <TableCell colSpan={6} align="center" sx={{ py: 4 }}>
+                          هنوز ردیفی ثبت نشده است.
+                        </TableCell>
+                      </TableRow>
+                    )}
+
+                    {pagedHeaderEntries.map((entry, index) => (
+                      <TableRow
+                        key={entry.id}
+                        hover
+                        selected={editingHeaderEntryId === entry.id}
+                        onClick={() => handleHeaderRowSelect(entry)}
+                        sx={{
+                          cursor: 'pointer',
+                          ...(entry.id === activeHeaderEntryId
+                            ? { bgcolor: alpha(theme.palette.success.main, 0.06) }
+                            : {}),
+                        }}
+                      >
+                        <TableCell>{headerPage * HEADER_PAGE_SIZE + index + 1}</TableCell>
+                        <TableCell>
+                          <Avatar
+                            src={resolveHeaderImageSrc(entry.personImage)}
+                            sx={{ width: 36, height: 36 }}
+                          />
+                        </TableCell>
+                        <TableCell>{entry.personName}</TableCell>
+                        <TableCell>{entry.personPosition}</TableCell>
+                        <TableCell>
+                          <Typography variant="body2" noWrap sx={{ maxWidth: { xs: 160, md: 360 } }}>
+                            {entry.quoteText}
+                          </Typography>
+                        </TableCell>
+                        <TableCell>
+                          <Chip
+                            size="small"
+                            color={entry.id === activeHeaderEntryId ? 'success' : 'default'}
+                            label={entry.id === activeHeaderEntryId ? 'فعال در هدر' : 'ذخیره شده'}
+                          />
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+
+              {totalHeaderPages > 1 && (
+                <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2 }}>
+                  <Pagination
+                    page={headerPage + 1}
+                    count={totalHeaderPages}
+                    onChange={handleHeaderPageChange}
+                    color="primary"
+                    shape="rounded"
+                    siblingCount={0}
+                  />
+                </Box>
+              )}
             </CardContent>
           </Card>
         </Grid>
@@ -1250,8 +1353,25 @@ const SettingsPage: React.FC = () => {
           </Paper>
         </Grid>
       </Grid>
+
+      <Snackbar
+        open={headerSaveFeedbackOpen}
+        autoHideDuration={2800}
+        onClose={() => setHeaderSaveFeedbackOpen(false)}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+      >
+        <Alert
+          onClose={() => setHeaderSaveFeedbackOpen(false)}
+          severity="success"
+          variant="filled"
+          sx={{ width: '100%' }}
+        >
+          تنظیمات هدر با موفقیت ذخیره شد.
+        </Alert>
+      </Snackbar>
     </Container>
   );
 };
 
 export default SettingsPage; 
+

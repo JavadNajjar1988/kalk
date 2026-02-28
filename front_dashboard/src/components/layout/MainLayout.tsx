@@ -23,6 +23,7 @@ import {
   Dialog,
   DialogTitle,
   DialogContent,
+  Button,
 } from '@mui/material';
 import {
   Menu as MenuIcon,
@@ -36,7 +37,9 @@ import {
   AccountBox,
   ExitToApp,
   Assignment,
-  SmartToy,
+  KeyboardBackspace,
+  
+  
 } from '@mui/icons-material';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAppSelector, useAppDispatch } from '@/store';
@@ -154,6 +157,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
   }, [layout.sidebarCollapsed]);
 
   const unreadCount = unreadNotifications.length;
+  const isDashboardHome = location.pathname === '/dashboard';
 
   const menuItems = [
     { 
@@ -259,6 +263,12 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
       setTimeout(() => {
         setSidebarElementsVisible({ labels: true, dateTime: true });
       }, 500);
+    }
+  };
+
+  const handleBackToDashboard = () => {
+    if (!isDashboardHome) {
+      navigate('/dashboard');
     }
   };
 
@@ -799,6 +809,31 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
           </Box>
         </Paper>
       </Box>
+
+      {!isDashboardHome && (
+        <Tooltip title="بازگشت به صفحه اصلی">
+          <Button
+            variant="contained"
+            startIcon={<KeyboardBackspace />}
+            onClick={handleBackToDashboard}
+            sx={{
+              position: 'fixed',
+              top: 104,
+              right: 32,
+              zIndex: theme.zIndex.drawer + 2,
+              borderRadius: '999px',
+              px: 2.25,
+              py: 1,
+              boxShadow: `0 8px 24px ${alpha(theme.palette.primary.main, 0.35)}`,
+              '&:hover': {
+                boxShadow: `0 10px 28px ${alpha(theme.palette.primary.main, 0.42)}`,
+              },
+            }}
+          >
+            بازگشت
+          </Button>
+        </Tooltip>
+      )}
     </Box>
   );
 };

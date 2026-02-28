@@ -1143,6 +1143,8 @@ const HomePage: React.FC = () => {
     customMartyrPosition: null,
     customMartyrDate: null,
     customMartyrImage: null,
+    entries: [],
+    activeEntryId: null,
   };
   const [quote, setQuote] = useState<Quote>(getRandomQuote('wisdom'));
   const [martyr, setMartyr] = useState<Martyr>(getRandomMartyr());
@@ -1155,6 +1157,22 @@ const HomePage: React.FC = () => {
   const [selectedActivities, setSelectedActivities] = useState<number[]>([]); // State جدید برای فعالیت‌های انتخاب شده
 
   // تعریف انیمیشن spin
+  const resolveMartyrImageSrc = (image?: string) => {
+    if (!image) return 'shahid.jpg';
+    const trimmed = image.trim();
+    if (!trimmed) return 'shahid.jpg';
+    if (trimmed.startsWith('data:image/')) return trimmed;
+    if (
+      trimmed.startsWith('http://') ||
+      trimmed.startsWith('https://') ||
+      trimmed.startsWith('blob:') ||
+      trimmed.startsWith('/')
+    ) {
+      return trimmed;
+    }
+    return trimmed;
+  };
+
   const spinKeyframes = `
     @keyframes spin {
       0% { transform: rotate(0deg); }
@@ -1414,9 +1432,31 @@ const HomePage: React.FC = () => {
       customMartyrPosition: null,
       customMartyrDate: null,
       customMartyrImage: null,
+      entries: [],
+      activeEntryId: null,
     };
 
     if (effectiveHeader.enabled) {
+      const activeEntry = (effectiveHeader.entries || []).find(
+        entry => entry.id === effectiveHeader.activeEntryId
+      );
+
+      if (activeEntry) {
+        setQuote({
+          text: activeEntry.quoteText,
+          author: activeEntry.personName,
+        });
+
+        setMartyr({
+          id: activeEntry.id,
+          name: activeEntry.personName,
+          position: activeEntry.personPosition || '',
+          martyrdomDate: '',
+          image: activeEntry.personImage || 'shahid.jpg',
+        });
+        return;
+      }
+
       // سخن
       if (
         effectiveHeader.quoteMode === 'fixed' &&
@@ -1757,8 +1797,13 @@ const HomePage: React.FC = () => {
                   mr: -2
                 }}>
                   <img 
-                    src="shahid.jpg" 
+                    src={resolveMartyrImageSrc(martyr.image)}
                     alt={martyr.name}
+                    onError={(e) => {
+                      const target = e.currentTarget;
+                      if (target.src.endsWith('/shahid.jpg') || target.src.endsWith('\\shahid.jpg')) return;
+                      target.src = 'shahid.jpg';
+                    }}
                     style={{ 
                       width: '100%', 
                       height: '100%', 
