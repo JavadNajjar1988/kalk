@@ -23,6 +23,7 @@ from app.api.routes import filesystem_tiles as filesystem_tiles_routes
 from app.api.routes import catalog as catalog_routes
 from app.api.routes import sdi as sdi_routes
 from app.api.routes import users as users_routes
+from app.api.routes import dashboard_header as dashboard_header_routes
 
 
 def create_app() -> FastAPI:
@@ -103,6 +104,7 @@ def create_app() -> FastAPI:
     api.include_router(catalog_routes.router)
     api.include_router(sdi_routes.router)
     api.include_router(users_routes.router)
+    api.include_router(dashboard_header_routes.router)
 
     return app
 

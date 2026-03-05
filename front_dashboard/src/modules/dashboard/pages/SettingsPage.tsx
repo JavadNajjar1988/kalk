@@ -50,6 +50,7 @@ import {
   Contrast,
   Lock,
   Edit,
+  ViewModule,
 } from '@mui/icons-material';
 import {
   setThemeMode,
@@ -65,6 +66,9 @@ import {
   selectHeaderSettings,
   HeaderSettings,
   HeaderEntry,
+  DashboardModulesSettings,
+  selectDashboardModules,
+  updateDashboardModules,
   showSuccessNotification,
   showWarningNotification,
 } from '@/store/slices/uiSlice';
@@ -96,6 +100,7 @@ const SettingsPage: React.FC = () => {
   const themeSettings = useSelector(selectTheme);
   const { language } = useSelector((state: RootState) => state.ui);
   const headerSettings = useSelector(selectHeaderSettings) as HeaderSettings;
+  const dashboardModules = useSelector(selectDashboardModules) as DashboardModulesSettings;
   const user = useSelector(selectUser);
   const headerEntries = (headerSettings.entries || []) as HeaderEntry[];
   const activeHeaderEntryId = headerSettings.activeEntryId ?? null;
@@ -154,6 +159,10 @@ const SettingsPage: React.FC = () => {
   const handleHeaderSettingsChange = (changes: Partial<HeaderSettings>) => {
     dispatch(updateHeaderSettings(changes));
   };
+  const handleDashboardModuleToggle =
+    (key: keyof DashboardModulesSettings) => (event: React.ChangeEvent<HTMLInputElement>) => {
+      dispatch(updateDashboardModules({ [key]: event.target.checked }));
+    };
 
   const totalHeaderPages = useMemo(
     () => Math.max(1, Math.ceil(headerEntries.length / HEADER_PAGE_SIZE)),
@@ -337,6 +346,19 @@ const SettingsPage: React.FC = () => {
         : '"Shabnam", sans-serif';
   };
 
+  const unifiedSectionColor = theme.palette.success.main;
+  const unifiedSectionCardSx = {
+    background: `linear-gradient(135deg, ${alpha(unifiedSectionColor, 0.07)}, ${alpha(unifiedSectionColor, 0.04)})`,
+    border: `1px solid ${alpha(unifiedSectionColor, 0.24)}`,
+    transition: 'all 0.3s ease',
+    '&:hover': {
+      transform: 'translateY(-3px)',
+      boxShadow: theme.shadows[6],
+    },
+  };
+  const unifiedSectionHeaderBorder = `2px solid ${alpha(unifiedSectionColor, 0.14)}`;
+  const unifiedSectionIconSx = { mr: 2, color: unifiedSectionColor, fontSize: '1.5rem' };
+  const unifiedSectionTitleSx = { fontWeight: 700, fontSize: '1.25rem', color: unifiedSectionColor };
 
 
 
@@ -372,17 +394,8 @@ const SettingsPage: React.FC = () => {
         <Grid item xs={12} md={12}>
           <Card
             sx={{
+              ...unifiedSectionCardSx,
               height: '100%',
-              background: `linear-gradient(135deg, ${alpha(
-                theme.palette.primary.main,
-                0.08
-              )}, ${alpha(theme.palette.error.light, 0.1)})`,
-              border: `1px solid ${alpha(theme.palette.primary.main, 0.25)}`,
-              transition: 'all 0.3s ease',
-              '&:hover': {
-                transform: 'translateY(-4px)',
-                boxShadow: theme.shadows[8],
-              },
             }}
           >
             <CardContent>
@@ -402,10 +415,7 @@ const SettingsPage: React.FC = () => {
                         alignItems: 'center',
                         mb: 3,
                         pb: 2,
-                        borderBottom: `2px solid ${alpha(
-                          theme.palette.primary.main,
-                          0.15
-                        )}`,
+                        borderBottom: unifiedSectionHeaderBorder,
                       }}
                     >
                       <Avatar
@@ -521,26 +531,16 @@ const SettingsPage: React.FC = () => {
                         alignItems: 'center',
                         mb: 3,
                         pb: 2,
-                        borderBottom: `2px solid ${alpha(
-                          theme.palette.error.main,
-                          0.12
-                        )}`,
+                        borderBottom: unifiedSectionHeaderBorder,
                       }}
                     >
                       <Lock
-                        sx={{
-                          mr: 2,
-                          color: theme.palette.error.main,
-                        }}
+                        sx={unifiedSectionIconSx}
                       />
                       <Box>
                         <Typography
                           variant="h6"
-                          sx={{
-                            fontWeight: 700,
-                            fontSize: '1.1rem',
-                            color: theme.palette.error.main,
-                          }}
+                          sx={{ fontWeight: 700, fontSize: '1.1rem', color: unifiedSectionColor }}
                         >
                           تغییر رمز عبور
                         </Typography>
@@ -596,7 +596,7 @@ const SettingsPage: React.FC = () => {
                     >
                       <Button
                         variant="contained"
-                        color="error"
+                        color="success"
                         onClick={handlePasswordChange}
                       >
                         ثبت تغییر رمز
@@ -613,17 +613,8 @@ const SettingsPage: React.FC = () => {
         <Grid item xs={12} md={12}>
           <Card
             sx={{
+              ...unifiedSectionCardSx,
               height: '100%',
-              background: `linear-gradient(135deg, ${alpha(
-                theme.palette.primary.main,
-                0.1
-              )}, ${alpha(theme.palette.secondary.main, 0.1)})`,
-              border: `1px solid ${alpha(theme.palette.primary.main, 0.2)}`,
-              transition: 'all 0.3s ease',
-              '&:hover': {
-                transform: 'translateY(-4px)',
-                boxShadow: theme.shadows[8],
-              },
             }}
           >
             <CardContent>
@@ -643,26 +634,15 @@ const SettingsPage: React.FC = () => {
                         alignItems: 'center',
                         mb: 4,
                         pb: 2,
-                        borderBottom: `2px solid ${alpha(
-                          theme.palette.primary.main,
-                          0.1
-                        )}`,
+                        borderBottom: unifiedSectionHeaderBorder,
                       }}
                     >
                       <Brightness6
-                        sx={{
-                          mr: 2,
-                          color: theme.palette.primary.main,
-                          fontSize: '1.5rem',
-                        }}
+                        sx={unifiedSectionIconSx}
                       />
                       <Typography
                         variant="h6"
-                        sx={{
-                          fontWeight: 700,
-                          fontSize: '1.25rem',
-                          color: theme.palette.primary.main,
-                        }}
+                        sx={unifiedSectionTitleSx}
                       >
                         {t('settings.themeMode')}
                       </Typography>
@@ -745,26 +725,15 @@ const SettingsPage: React.FC = () => {
                         alignItems: 'center',
                         mb: 4,
                         pb: 2,
-                        borderBottom: `2px solid ${alpha(
-                          theme.palette.secondary.main,
-                          0.1
-                        )}`,
+                        borderBottom: unifiedSectionHeaderBorder,
                       }}
                     >
                       <Palette
-                        sx={{
-                          mr: 2,
-                          color: theme.palette.secondary.main,
-                          fontSize: '1.5rem',
-                        }}
+                        sx={unifiedSectionIconSx}
                       />
                       <Typography
                         variant="h6"
-                        sx={{
-                          fontWeight: 700,
-                          fontSize: '1.25rem',
-                          color: theme.palette.secondary.main,
-                        }}
+                        sx={unifiedSectionTitleSx}
                       >
                         {t('settings.primaryColor')}
                       </Typography>
@@ -878,20 +847,11 @@ const SettingsPage: React.FC = () => {
 
         {/* اندازه و نوع فونت */}
         <Grid item xs={12} md={6}>
-          <Card sx={{ 
-            height: '100%',
-            background: `linear-gradient(135deg, ${alpha(theme.palette.info.main, 0.1)}, ${alpha(theme.palette.info.light, 0.1)})`,
-            border: `1px solid ${alpha(theme.palette.info.main, 0.2)}`,
-            transition: 'all 0.3s ease',
-            '&:hover': {
-              transform: 'translateY(-4px)',
-              boxShadow: theme.shadows[8],
-            }
-          }}>
+          <Card sx={{ ...unifiedSectionCardSx, height: '100%' }}>
             <CardContent>
-              <Box sx={{ display: 'flex', alignItems: 'center', mb: 4, pb: 2, borderBottom: `2px solid ${alpha(theme.palette.info.main, 0.1)}` }}>
-                <FormatSize sx={{ mr: 2, color: theme.palette.info.main, fontSize: '1.5rem' }} />
-                <Typography variant="h6" sx={{ fontWeight: 700, fontSize: '1.25rem', color: theme.palette.info.main }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', mb: 4, pb: 2, borderBottom: unifiedSectionHeaderBorder }}>
+                <FormatSize sx={unifiedSectionIconSx} />
+                <Typography variant="h6" sx={unifiedSectionTitleSx}>
                   تنظیمات متن و فونت
                 </Typography>
               </Box>
@@ -962,20 +922,11 @@ const SettingsPage: React.FC = () => {
 
         {/* انتخاب زبان */}
         <Grid item xs={12} md={6}>
-          <Card sx={{ 
-            height: '100%',
-            background: `linear-gradient(135deg, ${alpha(theme.palette.success.main, 0.1)}, ${alpha(theme.palette.success.light, 0.1)})`,
-            border: `1px solid ${alpha(theme.palette.success.main, 0.2)}`,
-            transition: 'all 0.3s ease',
-            '&:hover': {
-              transform: 'translateY(-4px)',
-              boxShadow: theme.shadows[8],
-            }
-          }}>
+          <Card sx={{ ...unifiedSectionCardSx, height: '100%' }}>
             <CardContent>
-              <Box sx={{ display: 'flex', alignItems: 'center', mb: 4, pb: 2, borderBottom: `2px solid ${alpha(theme.palette.success.main, 0.1)}` }}>
-                <Language sx={{ mr: 2, color: theme.palette.success.main, fontSize: '1.5rem' }} />
-                <Typography variant="h6" sx={{ fontWeight: 700, fontSize: '1.25rem', color: theme.palette.success.main }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', mb: 4, pb: 2, borderBottom: unifiedSectionHeaderBorder }}>
+                <Language sx={unifiedSectionIconSx} />
+                <Typography variant="h6" sx={unifiedSectionTitleSx}>
                   {t('settings.languageSelection')}
                 </Typography>
               </Box>
@@ -1018,19 +969,11 @@ const SettingsPage: React.FC = () => {
 
         {/* تنظیمات دسترسی */}
         <Grid item xs={12}>
-          <Card sx={{ 
-            background: `linear-gradient(135deg, ${alpha(theme.palette.warning.main, 0.1)}, ${alpha(theme.palette.warning.light, 0.1)})`,
-            border: `1px solid ${alpha(theme.palette.warning.main, 0.2)}`,
-            transition: 'all 0.3s ease',
-            '&:hover': {
-              transform: 'translateY(-2px)',
-              boxShadow: theme.shadows[6],
-            }
-          }}>
+          <Card sx={{ ...unifiedSectionCardSx }}>
             <CardContent>
-              <Box sx={{ display: 'flex', alignItems: 'center', mb: 4, pb: 2, borderBottom: `2px solid ${alpha(theme.palette.warning.main, 0.1)}` }}>
-                <Accessibility sx={{ mr: 2, color: theme.palette.warning.main, fontSize: '1.5rem' }} />
-                <Typography variant="h6" sx={{ fontWeight: 700, fontSize: '1.25rem', color: theme.palette.warning.main }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', mb: 4, pb: 2, borderBottom: unifiedSectionHeaderBorder }}>
+                <Accessibility sx={unifiedSectionIconSx} />
+                <Typography variant="h6" sx={unifiedSectionTitleSx}>
                   {t('settings.accessibility')}
                 </Typography>
               </Box>
@@ -1042,12 +985,12 @@ const SettingsPage: React.FC = () => {
                       <Switch 
                         checked={themeSettings.reducedMotion}
                         onChange={() => dispatch(toggleReducedMotion())}
-                        color="warning"
+                        color="success"
                       />
                     }
                     label={
                       <Box sx={{ display: 'flex', alignItems: 'center', fontSize: '0.95rem', fontWeight: 500 }}>
-                        <Speed sx={{ mr: 1.5, color: theme.palette.warning.main }} fontSize="small" />
+                        <Speed sx={{ mr: 1.5, color: unifiedSectionColor }} fontSize="small" />
                         {t('settings.reducedMotion')}
                       </Box>
                     }
@@ -1059,12 +1002,12 @@ const SettingsPage: React.FC = () => {
                       <Switch 
                         checked={themeSettings.highContrast}
                         onChange={() => dispatch(toggleHighContrast())}
-                        color="warning"
+                        color="success"
                       />
                     }
                     label={
                       <Box sx={{ display: 'flex', alignItems: 'center', fontSize: '0.95rem', fontWeight: 500 }}>
-                        <Contrast sx={{ mr: 1.5, color: theme.palette.warning.main }} fontSize="small" />
+                        <Contrast sx={{ mr: 1.5, color: unifiedSectionColor }} fontSize="small" />
                         {t('settings.highContrast')}
                       </Box>
                     }
@@ -1079,13 +1022,7 @@ const SettingsPage: React.FC = () => {
         <Grid item xs={12}>
           <Card
             sx={{
-              background: `linear-gradient(135deg, ${alpha(theme.palette.success.main, 0.06)}, ${alpha(theme.palette.info.main, 0.06)})`,
-              border: `1px solid ${alpha(theme.palette.success.main, 0.2)}`,
-              transition: 'all 0.3s ease',
-              '&:hover': {
-                transform: 'translateY(-2px)',
-                boxShadow: theme.shadows[6],
-              },
+              ...unifiedSectionCardSx,
             }}
           >
             <CardContent>
@@ -1096,11 +1033,11 @@ const SettingsPage: React.FC = () => {
                   justifyContent: 'space-between',
                   mb: 3,
                   pb: 2,
-                  borderBottom: `2px solid ${alpha(theme.palette.success.main, 0.12)}`,
+                  borderBottom: unifiedSectionHeaderBorder,
                 }}
               >
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                  <Palette sx={{ color: theme.palette.success.main }} />
+                  <Palette sx={{ color: unifiedSectionColor }} />
                   <Typography variant="h6" sx={{ fontWeight: 700, fontSize: '1.1rem' }}>
                     تنظیمات هدر زیارتی داشبورد
                   </Typography>
@@ -1327,7 +1264,89 @@ const SettingsPage: React.FC = () => {
           </Card>
         </Grid>
 
+        {/* ماژول‌های قابل نمایش در داشبورد */}
+        <Grid item xs={12}>
+          <Card
+            sx={{
+              ...unifiedSectionCardSx,
+            }}
+          >
+            <CardContent>
+              <Box
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 1.5,
+                  mb: 2,
+                  pb: 1.5,
+                  borderBottom: `1px solid ${alpha(unifiedSectionColor, 0.18)}`,
+                }}
+              >
+                <ViewModule sx={{ color: unifiedSectionColor }} />
+                <Typography variant="h6" sx={{ fontWeight: 700, fontSize: '1.05rem' }}>
+                  ماژول‌های قابل نمایش داشبورد
+                </Typography>
+              </Box>
 
+              <Grid container spacing={1}>
+                <Grid item xs={12} md={4}>
+                  <FormControlLabel
+                    control={<Switch color="success" checked={dashboardModules.showHeaderBanner} onChange={handleDashboardModuleToggle('showHeaderBanner')} />}
+                    label="نمایش ماژول هدر"
+                  />
+                </Grid>
+                <Grid item xs={12} md={4}>
+                  <FormControlLabel
+                    control={<Switch color="success" checked={dashboardModules.showStatArchivedScenarios} onChange={handleDashboardModuleToggle('showStatArchivedScenarios')} />}
+                    label="نمایش کارت سناریوهای آرشیو"
+                  />
+                </Grid>
+                <Grid item xs={12} md={4}>
+                  <FormControlLabel
+                    control={<Switch color="success" checked={dashboardModules.showStatAvailableForces} onChange={handleDashboardModuleToggle('showStatAvailableForces')} />}
+                    label="نمایش کارت نیروهای موجود"
+                  />
+                </Grid>
+                <Grid item xs={12} md={4}>
+                  <FormControlLabel
+                    control={<Switch color="success" checked={dashboardModules.showStatOngoingOperations} onChange={handleDashboardModuleToggle('showStatOngoingOperations')} />}
+                    label="نمایش کارت عملیات در حال اجرا"
+                  />
+                </Grid>
+                <Grid item xs={12} md={4}>
+                  <FormControlLabel
+                    control={<Switch color="success" checked={dashboardModules.showStatSecurityAlerts} onChange={handleDashboardModuleToggle('showStatSecurityAlerts')} />}
+                    label="نمایش کارت هشدارهای امنیتی"
+                  />
+                </Grid>
+                <Grid item xs={12} md={4}>
+                  <FormControlLabel
+                    control={<Switch color="success" checked={dashboardModules.showRecentActivities} onChange={handleDashboardModuleToggle('showRecentActivities')} />}
+                    label="نمایش فعالیت‌های اخیر"
+                  />
+                </Grid>
+                <Grid item xs={12} md={4}>
+                  <FormControlLabel
+                    control={<Switch color="success" checked={dashboardModules.showQuickAccess} onChange={handleDashboardModuleToggle('showQuickAccess')} />}
+                    label="نمایش دسترسی سریع"
+                  />
+                </Grid>
+                <Grid item xs={12} md={4}>
+                  <FormControlLabel
+                    control={<Switch color="success" checked={dashboardModules.showSystemStatus} onChange={handleDashboardModuleToggle('showSystemStatus')} />}
+                    label="نمایش وضعیت سیستم"
+                  />
+                </Grid>
+                <Grid item xs={12} md={4}>
+                  <FormControlLabel
+                    control={<Switch color="success" checked={dashboardModules.showImportantNotices} onChange={handleDashboardModuleToggle('showImportantNotices')} />}
+                    label="نمایش اطلاعیه‌های مهم"
+                  />
+                </Grid>
+              </Grid>
+            </CardContent>
+          </Card>
+        </Grid>
 
         {/* دکمه‌های عملکرد */}
         <Grid item xs={12}>

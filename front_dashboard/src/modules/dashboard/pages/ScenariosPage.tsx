@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import {
   Box,
   Card,
@@ -39,6 +39,7 @@ import {
   ToggleButton,
   useMediaQuery,
   Fade,
+  ThemeProvider,
 } from '@mui/material';
 import {
   Add,
@@ -63,7 +64,7 @@ import {
   ContentCopy,
   CloudUpload,
 } from '@mui/icons-material';
-import { alpha } from '@mui/material/styles';
+import { alpha, createTheme } from '@mui/material/styles';
 import { useAppDispatch, useAppSelector } from '@/store';
 import { 
   fetchScenarios, 
@@ -99,6 +100,8 @@ const getStatusOptions = (t: (key: string) => string): { value: ScenarioStatus; 
 const ScenarioStats: React.FC<{ scenarios: Scenario[] }> = ({ scenarios }) => {
   const theme = useTheme();
   const { t } = useTranslation();
+  const unifiedAccent = theme.palette.success.main;
+  const unifiedSurface = `linear-gradient(135deg, ${alpha(unifiedAccent, 0.07)}, ${alpha(unifiedAccent, 0.04)})`;
 
   const stats = {
     total: scenarios.length,
@@ -118,7 +121,13 @@ const ScenarioStats: React.FC<{ scenarios: Scenario[] }> = ({ scenarios }) => {
     <Grid container spacing={3} sx={{ mb: 3 }}>
       {statCards.map((stat, index) => (
         <Grid item xs={12} sm={6} md={3} key={index}>
-          <Card>
+          <Card
+            sx={{
+              background: unifiedSurface,
+              border: `1px solid ${alpha(unifiedAccent, 0.24)}`,
+              boxShadow: 'none',
+            }}
+          >
             <CardContent>
               <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <Box>
@@ -129,7 +138,7 @@ const ScenarioStats: React.FC<{ scenarios: Scenario[] }> = ({ scenarios }) => {
                     <TransformFarsiNumbers>{stat.value}</TransformFarsiNumbers>
                   </Typography>
                 </Box>
-                <Avatar sx={{ bgcolor: `${stat.color}.main`, width: 48, height: 48 }}>
+                <Avatar sx={{ bgcolor: alpha(unifiedAccent, 0.14), color: unifiedAccent, width: 48, height: 48 }}>
                   {stat.icon}
                 </Avatar>
               </Box>
@@ -392,6 +401,44 @@ const ScenarioDialog: React.FC<ScenarioDialogProps> = ({
 // کامپوننت اصلی صفحه سناریوها
 const ScenariosPage: React.FC = () => {
   const theme = useTheme();
+  const unifiedAccent = theme.palette.success.main;
+  const unifiedSurface = `linear-gradient(135deg, ${alpha(unifiedAccent, 0.07)}, ${alpha(unifiedAccent, 0.04)})`;
+  const unifiedPanelSx = {
+    background: unifiedSurface,
+    border: `1px solid ${alpha(unifiedAccent, 0.24)}`,
+    boxShadow: 'none',
+  };
+  const sectionTheme = useMemo(
+    () =>
+      createTheme(theme, {
+        components: {
+          MuiDialog: {
+            styleOverrides: {
+              paper: {
+                background: unifiedSurface,
+                border: `1px solid ${alpha(unifiedAccent, 0.24)}`,
+                borderRadius: 14,
+              },
+            },
+          },
+          MuiDialogTitle: {
+            styleOverrides: {
+              root: {
+                borderBottom: `1px solid ${alpha(unifiedAccent, 0.18)}`,
+              },
+            },
+          },
+          MuiDialogActions: {
+            styleOverrides: {
+              root: {
+                borderTop: `1px solid ${alpha(unifiedAccent, 0.18)}`,
+              },
+            },
+          },
+        },
+      }),
+    [theme, unifiedSurface, unifiedAccent]
+  );
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const dispatch = useAppDispatch();
   
@@ -873,10 +920,20 @@ const ScenariosPage: React.FC = () => {
   };
 
   return (
-    <Box sx={{ p: 4 }}>
+    <ThemeProvider theme={sectionTheme}>
+      <Box sx={{ p: 4 }}>
       {/* هدر صفحه */}
       <Box sx={{ mb: 4 }}>
-        <Typography variant="h4" sx={{ fontWeight: 700, mb: 1 }}>
+        <Typography
+          variant="h4"
+          sx={{
+            fontWeight: 700,
+            mb: 1,
+            background: `linear-gradient(135deg, ${alpha(unifiedAccent, 0.95)} 0%, ${alpha(unifiedAccent, 0.7)} 100%)`,
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+          }}
+        >
           {t('scenarios.pageTitle')}
         </Typography>
         <Typography variant="body1" color="text.secondary">
@@ -895,7 +952,7 @@ const ScenariosPage: React.FC = () => {
       <ScenarioStats scenarios={allScenarios} />
 
       {/* نوار ابزار */}
-      <Card sx={{ mb: 3 }}>
+      <Card sx={{ ...unifiedPanelSx, mb: 3 }}>
         <Toolbar>
           <TextField
             size="small"
@@ -987,10 +1044,15 @@ const ScenariosPage: React.FC = () => {
                       height: '100%',
                       display: 'flex',
                       flexDirection: 'column',
-                      border: `1px solid ${alpha(theme.palette.divider, 0.4)}`,
+                      border: `1px solid ${alpha(unifiedAccent, 0.24)}`,
                       transition: 'all 0.2s ease',
                       position: 'relative',
                       overflow: 'hidden',
+                      ...(scenarioImage
+                        ? {}
+                        : {
+                            background: unifiedSurface,
+                          }),
                       ...(scenarioImage ? {
                         backgroundImage: `url(${scenarioImage})`,
                         backgroundSize: 'cover',
@@ -1216,7 +1278,7 @@ const ScenariosPage: React.FC = () => {
           )}
         </Box>
       ) : (
-        <Card>
+        <Card sx={unifiedPanelSx}>
           {loading && <LinearProgress />}
           
           <TableContainer>
@@ -1856,7 +1918,8 @@ const ScenariosPage: React.FC = () => {
         error={unityLaunchError}
         fallbackLink={unityFallbackLink}
       />
-    </Box>
+      </Box>
+    </ThemeProvider>
   );
 };
 

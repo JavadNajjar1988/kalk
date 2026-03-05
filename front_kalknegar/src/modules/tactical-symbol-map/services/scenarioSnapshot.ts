@@ -1,4 +1,4 @@
-import * as L from "@/modules/tactical-symbol-map/shared/level/index";
+import * as L from "@/modules/tactical-symbol-map/shared/level/index.js";
 
 export const TACTICAL_METADATA_KEY = "tacticalSymbols";
 const TACTICAL_SNAPSHOT_VERSION = 1 as const;

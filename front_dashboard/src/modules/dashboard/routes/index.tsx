@@ -13,7 +13,6 @@ import SettingsPage from '../pages/SettingsPage';
 import ScenariosPage from '../pages/ScenariosPage';
 import ScenarioDetailPage from '../pages/ScenarioDetailPage';
 import ResourcesPage from '../pages/ResourcesPage';
-import DataProcessingPage from '../pages/DataProcessingPage';
 import UsersPage from '../pages/users';
 import UsersRoutes from '../../users/routes';
 import HierarchicalSelectorTest from '../../../components/test/HierarchicalSelectorTest';
@@ -54,7 +53,6 @@ const DashboardRoutes: React.FC = () => {
           <Route path=":id" element={<ScenarioDetailPage />} />
         </Route>
         <Route path="resources" element={<ResourcesPage />} />
-        <Route path="data-processing" element={<DataProcessingPage />} />
         
         <Route path="users/*" element={<UsersRoutes />} />
         

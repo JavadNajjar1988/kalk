@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   Box,
   Typography,
@@ -23,7 +23,10 @@ import {
   ToggleButtonGroup,
   Tooltip,
   Chip,
+  useTheme,
+  ThemeProvider,
 } from '@mui/material';
+import { alpha, createTheme } from '@mui/material/styles';
 import {
   Search as SearchIcon,
   Add as AddIcon,
@@ -42,6 +45,45 @@ import { UsersTableView, UsersCardView, QuickActionsModal, UserDetailsModal, Edi
 const UsersListPage: React.FC = () => {
   const dispatch = useAppDispatch();
   const { t } = useTranslation();
+  const theme = useTheme();
+  const unifiedAccent = theme.palette.success.main;
+  const unifiedSurface = `linear-gradient(135deg, ${alpha(unifiedAccent, 0.07)}, ${alpha(unifiedAccent, 0.04)})`;
+  const unifiedSurfaceSx = {
+    background: unifiedSurface,
+    border: `1px solid ${alpha(unifiedAccent, 0.24)}`,
+    boxShadow: 'none',
+  };
+  const sectionTheme = useMemo(
+    () =>
+      createTheme(theme, {
+        components: {
+          MuiDialog: {
+            styleOverrides: {
+              paper: {
+                background: unifiedSurface,
+                border: `1px solid ${alpha(unifiedAccent, 0.24)}`,
+                borderRadius: 14,
+              },
+            },
+          },
+          MuiDialogTitle: {
+            styleOverrides: {
+              root: {
+                borderBottom: `1px solid ${alpha(unifiedAccent, 0.18)}`,
+              },
+            },
+          },
+          MuiDialogActions: {
+            styleOverrides: {
+              root: {
+                borderTop: `1px solid ${alpha(unifiedAccent, 0.18)}`,
+              },
+            },
+          },
+        },
+      }),
+    [theme, unifiedSurface, unifiedAccent]
+  );
   
   const {
     users,
@@ -265,7 +307,18 @@ const UsersListPage: React.FC = () => {
   }
 
   return (
-    <Box sx={{ p: 3 }}>
+    <ThemeProvider theme={sectionTheme}>
+      <Box
+        sx={{
+          p: 3,
+          '& .MuiCard-root': {
+            ...unifiedSurfaceSx,
+          },
+          '& .MuiPaper-root': {
+            borderColor: alpha(unifiedAccent, 0.2),
+          },
+        }}
+      >
       {/* Header */}
       <Box sx={{ mb: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <Typography variant="h4" component="h1" fontWeight={600}>
@@ -781,7 +834,8 @@ const UsersListPage: React.FC = () => {
         onConfirm={handleConfirmDelete}
         isDeleting={isLoading}
       />
-    </Box>
+      </Box>
+    </ThemeProvider>
   );
 };
 

@@ -39,7 +39,7 @@ import { useScenarioEvents } from "@/modules/scenarioeditor/scenarioEvents";
 import { useSearchActions } from "@/composables/searchActions";
 import { useScenarioFeatureLayers } from "@/modules/scenarioeditor/scenarioFeatureLayers";
 import { useSelectedItems } from "@/stores/selectedStore";
-import { useServicesStore } from "@/modules/tactical-symbol-map/stores/services";
+import { useServicesStore } from "@/modules/tactical-symbol-map/stores/services.js";
 import tacticalInteractions from "@/modules/tactical-symbol-map/ol/interaction";
 import vectorSources from "@/modules/tactical-symbol-map/components/map/vectorSources";
 import createLayerStyles from "@/modules/tactical-symbol-map/components/map/layerStyles";
@@ -210,7 +210,6 @@ async function ensureTacticalServicesForScenario() {
 
   tacticalServicesInitInProgress.value = true;
   try {
-    console.log('[ScenarioMapLogic] ensureTacticalServices — metadata.tacticalSymbols tuples:', state.metadata?.tacticalSymbols?.tuples?.length ?? 'MISSING');
     await ensureScenarioTacticalServices({
       scenarioId: state.id,
       metadata: state.metadata,

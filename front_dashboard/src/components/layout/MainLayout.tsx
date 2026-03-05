@@ -188,13 +188,6 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
       path: '/dashboard/resources',
       roles: ['admin', 'commander', 'operator', 'viewer']
     },
-    { 
-      id: 'data-processing', 
-      label: 'پردازش اطلاعات', 
-      icon: <SmartToy />, 
-      path: '/dashboard/data-processing',
-      roles: ['admin', 'commander', 'operator', 'viewer']
-    },
 
   ];
 

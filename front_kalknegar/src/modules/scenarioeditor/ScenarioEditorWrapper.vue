@@ -137,13 +137,7 @@ useEventListener(window, "beforeunload", async () => {
 });
 
 async function saveScenarioIfNecessary({ saveDemo = false } = {}) {
-  // Check if main scenario has changes OR if tactical symbols may have been drawn
-  const { useServicesStore } = await import("@/modules/tactical-symbol-map/stores/services.js");
-  const servicesStore = useServicesStore();
-  const hasScenarioChanges = scenario.value?.store?.canUndo?.value;
-  const hasTacticalStore = !!servicesStore.store;
-
-  if (hasScenarioChanges || hasTacticalStore) {
+  if (scenario.value?.store?.canUndo?.value) {
     if (isDemoScenario(props.scenarioId)) {
       if (!saveDemo) {
         return;

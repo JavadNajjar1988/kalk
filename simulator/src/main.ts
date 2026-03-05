@@ -287,34 +287,7 @@ async function initializeCesium() {
       }
 
       const { addScenarioSymbols } = await import('./scenarioSymbols');
-      const symbolsResult = await addScenarioSymbols(cesiumViewer as any, scenarios);
-
-      // Fly camera to scenario bounds or center
-      if (symbolsResult.bounds) {
-        const b = symbolsResult.bounds;
-        // Add some padding (10% of extent)
-        const lonPad = Math.max((b.east - b.west) * 0.15, 0.01);
-        const latPad = Math.max((b.north - b.south) * 0.15, 0.01);
-        const rectangle = Cesium.Rectangle.fromDegrees(
-          b.west - lonPad,
-          b.south - latPad,
-          b.east + lonPad,
-          b.north + latPad
-        );
-        cesiumViewer.camera.flyTo({
-          destination: rectangle,
-          duration: 2.5,
-        });
-        console.log('%c✈️ Camera flying to scenario bounds', 'color: #4CAF50; font-weight: bold;');
-      } else if (scenarios.length > 0) {
-        const center = getScenarioCenter(scenarios[0], 0, 1);
-        cesiumViewer.camera.flyTo({
-          destination: Cesium.Cartesian3.fromDegrees(center.lon, center.lat, 500000),
-          duration: 2.5,
-        });
-        console.log('%c✈️ Camera flying to scenario center (no bounds)', 'color: #FF9800; font-weight: bold;');
-      }
-
+      await addScenarioSymbols(cesiumViewer as any, scenarios);
     } catch (pinError) {
       console.error('Failed to add scenario pins/symbols:', pinError);
     }

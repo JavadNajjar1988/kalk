@@ -94,6 +94,30 @@ export interface HeaderSettings {
   activeEntryId: number | null;
 }
 
+export interface DashboardModulesSettings {
+  showHeaderBanner: boolean;
+  showStatArchivedScenarios: boolean;
+  showStatAvailableForces: boolean;
+  showStatOngoingOperations: boolean;
+  showStatSecurityAlerts: boolean;
+  showRecentActivities: boolean;
+  showQuickAccess: boolean;
+  showSystemStatus: boolean;
+  showImportantNotices: boolean;
+}
+
+export const DEFAULT_DASHBOARD_MODULES: DashboardModulesSettings = {
+  showHeaderBanner: true,
+  showStatArchivedScenarios: true,
+  showStatAvailableForces: true,
+  showStatOngoingOperations: true,
+  showStatSecurityAlerts: true,
+  showRecentActivities: true,
+  showQuickAccess: true,
+  showSystemStatus: true,
+  showImportantNotices: true,
+};
+
 interface UIState {
   // Theme settings
   theme: {
@@ -148,6 +172,9 @@ interface UIState {
 
   // Header (زیارتی) settings
   header: HeaderSettings;
+
+  // Dashboard module visibility settings
+  dashboardModules: DashboardModulesSettings;
 }
 
 const initialState: UIState = {
@@ -219,6 +246,7 @@ const initialState: UIState = {
     entries: [],
     activeEntryId: null,
   },
+  dashboardModules: { ...DEFAULT_DASHBOARD_MODULES },
 };
 
 const uiSlice = createSlice({
@@ -262,6 +290,9 @@ const uiSlice = createSlice({
     // Header (زیارتی) settings
     updateHeaderSettings: (state, action: PayloadAction<Partial<HeaderSettings>>) => {
       state.header = { ...state.header, ...action.payload };
+    },
+    updateDashboardModules: (state, action: PayloadAction<Partial<DashboardModulesSettings>>) => {
+      state.dashboardModules = { ...state.dashboardModules, ...action.payload };
     },
 
     // Dark Mode specific actions
@@ -452,6 +483,7 @@ const uiSlice = createSlice({
       state.theme.reducedMotion = initialState.theme.reducedMotion;
       state.theme.darkModeSettings = { ...initialState.theme.darkModeSettings };
       state.header = { ...initialState.header };
+      state.dashboardModules = { ...initialState.dashboardModules };
       // حفظ زبان و جهت به حالت فعلی
     },
     
@@ -501,6 +533,7 @@ export const {
   toggleHighContrast,
   toggleReducedMotion,
   updateHeaderSettings,
+  updateDashboardModules,
   setDarkModeAccentColor,
   setDarkModeContrastLevel,
   toggleDarkModePureBlack,
@@ -603,6 +636,8 @@ export const selectLayout = (state: RootState) => state.ui.layout;
 export const selectSidePanel = (state: RootState) => state.ui.sidePanel;
 export const selectNotifications = (state: RootState) => state.ui.notifications;
 export const selectHeaderSettings = (state: RootState) => state.ui.header;
+export const selectDashboardModules = (state: RootState) =>
+  state.ui.dashboardModules || DEFAULT_DASHBOARD_MODULES;
 
 // استفاده از createSelector برای بهینه‌سازی سلکتور و جلوگیری از رندر مجدد غیرضروری
 export const selectUnreadNotifications = createSelector(

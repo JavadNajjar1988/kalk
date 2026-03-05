@@ -1,21 +1,19 @@
 import { until, useFetch, useLocalStorage } from "@vueuse/core";
-import {
-  type EquipmentData,
-  type PersonnelData,
-  type Scenario,
-  type ScenarioEvent,
-  type ScenarioInfo,
-  type Side,
-  type SideGroup,
-  type State,
-  type SupplyCategory,
-  type SupplyClass,
-  type SymbologyStandard,
-  type Unit,
-  type UnitOfMeasure,
-  type UnitStatus,
-  ScenarioStatus,
-  ExecutionStatus,
+import type {
+  EquipmentData,
+  PersonnelData,
+  Scenario,
+  ScenarioEvent,
+  ScenarioInfo,
+  Side,
+  SideGroup,
+  State,
+  SupplyCategory,
+  SupplyClass,
+  SymbologyStandard,
+  Unit,
+  UnitOfMeasure,
+  UnitStatus,
 } from "@/types/scenarioModels";
 import {
   type NewScenarioStore,
@@ -43,7 +41,7 @@ import { useIndexedDb } from "@/scenariostore/localdb";
 import { scenarioApiService } from "@/services/api/scenarioApiService";
 import { klona } from "klona";
 import { saveBlobToLocalFile } from "@/utils/files";
-import { useServicesStore } from "@/modules/tactical-symbol-map/stores/services";
+import { useServicesStore } from "@/modules/tactical-symbol-map/stores/services.js";
 import {
   exportTacticalSnapshot,
   withTacticalSnapshotInMetadata,
@@ -106,7 +104,7 @@ export function createEmptyScenario(options: CreateEmptyScenarioOptions = {}): S
 
     // فیلدهای جدید اضافه شده
     endTime: undefined,
-    status: ScenarioStatus.DRAFT,
+    status: "draft",
     objectives: [],
     phases: [],
     terrainAnalysis: undefined,
@@ -115,7 +113,7 @@ export function createEmptyScenario(options: CreateEmptyScenarioOptions = {}): S
     simulationSettings: undefined,
     currentTime: undefined,
     simulationSpeed: 1.0,
-    executionStatus: ExecutionStatus.NOT_STARTED,
+    executionStatus: "not_started",
     analysisResults: [],
     tags: [],
     metadata: {},
@@ -444,9 +442,7 @@ export function useScenarioIO(store: ShallowRef<NewScenarioStore>) {
   }
 
   function loadFromObject(data: Scenario) {
-    console.log('[loadFromObject] input metadata.tacticalSymbols tuples:', data.metadata?.tacticalSymbols?.tuples?.length ?? 'MISSING');
     store.value = useNewScenarioStore(data);
-    console.log('[loadFromObject] state.metadata.tacticalSymbols tuples:', store.value.state.metadata?.tacticalSymbols?.tuples?.length ?? 'MISSING');
     settingsStore.symbologyStandard = store.value.state.info.symbologyStandard || "2525";
   }
 

@@ -19,7 +19,7 @@ if backend_root not in sys.path:
     sys.path.insert(0, backend_root)
 
 from app.db.base import Base
-from app.models import scenario, user, map, sdi  # noqa: F401 ensure models imported
+from app.models import dashboard_header, scenario, user, map, sdi  # noqa: F401 ensure models imported
 from app.core.config import settings
 
 

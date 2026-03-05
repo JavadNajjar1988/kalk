@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import {
   Dialog,
   DialogTitle,
@@ -8,7 +8,9 @@ import {
   TextField,
   Grid,
   MenuItem,
+  useTheme,
 } from '@mui/material';
+import { alpha } from '@mui/material/styles';
 
 interface EquipmentModalProps {
   open: boolean;
@@ -18,6 +20,19 @@ interface EquipmentModalProps {
   categories?: Array<{ id: string; name: string }>;
 }
 
+const initialFormData = {
+  equipmentCode: '',
+  name: '',
+  type: 'سلاح',
+  model: '',
+  manufacturer: '',
+  serialNumber: '',
+  condition: 'good',
+  status: 'available',
+  location: '',
+  acquisitionDate: '',
+};
+
 const EquipmentModal: React.FC<EquipmentModalProps> = ({
   open,
   onClose,
@@ -25,35 +40,21 @@ const EquipmentModal: React.FC<EquipmentModalProps> = ({
   equipment,
   categories = [],
 }) => {
-  const [formData, setFormData] = useState<any>({
-    equipmentCode: '',
-    name: '',
-    type: 'سلاح',
-    model: '',
-    manufacturer: '',
-    serialNumber: '',
-    condition: 'good',
-    status: 'available',
-    location: '',
-    acquisitionDate: '',
-  });
+  const theme = useTheme();
+  const accent = theme.palette.success.main;
+  const dialogBackground = `linear-gradient(135deg, ${alpha(accent, 0.08)}, ${alpha(accent, 0.04)})`;
+  const inputSurface =
+    theme.palette.mode === 'dark'
+      ? alpha(theme.palette.background.default, 0.72)
+      : alpha(theme.palette.common.white, 0.92);
+
+  const [formData, setFormData] = useState<any>(initialFormData);
 
   useEffect(() => {
     if (equipment) {
-      setFormData({ ...formData, ...equipment });
+      setFormData({ ...initialFormData, ...equipment });
     } else {
-      setFormData({
-        equipmentCode: '',
-        name: '',
-        type: 'سلاح',
-        model: '',
-        manufacturer: '',
-        serialNumber: '',
-        condition: 'good',
-        status: 'available',
-        location: '',
-        acquisitionDate: '',
-      });
+      setFormData(initialFormData);
     }
   }, [equipment, open]);
 
@@ -77,18 +78,73 @@ const EquipmentModal: React.FC<EquipmentModalProps> = ({
       onClose={onClose}
       maxWidth="md"
       fullWidth
+      sx={{
+        '& .MuiDialog-paper': {
+          borderRadius: 3,
+          backgroundColor: theme.palette.background.paper,
+          backgroundImage: dialogBackground,
+          border: `1px solid ${alpha(accent, 0.24)}`,
+          boxShadow: `0 20px 60px ${alpha(accent, 0.18)}`,
+        },
+        '& .MuiOutlinedInput-root': {
+          backgroundColor: inputSurface,
+          '& fieldset': {
+            borderColor: alpha(accent, 0.28),
+          },
+          '&:hover fieldset': {
+            borderColor: alpha(accent, 0.45),
+          },
+          '&.Mui-focused fieldset': {
+            borderColor: accent,
+            boxShadow: `0 0 0 3px ${alpha(accent, 0.12)}`,
+          },
+        },
+        '& .MuiInputLabel-root.Mui-focused': {
+          color: accent,
+        },
+      }}
     >
-      <DialogTitle>{equipment ? 'ویرایش تجهیز' : 'افزودن تجهیز جدید'}</DialogTitle>
-      <DialogContent dividers>
+      <DialogTitle
+        sx={{
+          borderBottom: `1px solid ${alpha(accent, 0.2)}`,
+          backgroundColor: alpha(accent, 0.08),
+          fontWeight: 700,
+        }}
+      >
+        {equipment ? 'ویرایش تجهیز' : 'افزودن تجهیز جدید'}
+      </DialogTitle>
+      <DialogContent
+        dividers
+        sx={{
+          borderColor: alpha(accent, 0.16),
+          backgroundColor: 'transparent',
+        }}
+      >
         <Grid container spacing={2} sx={{ mt: 0.5 }}>
           <Grid item xs={12} sm={6}>
-            <TextField fullWidth label="کد تجهیز" value={formData.equipmentCode || ''} onChange={(e) => handleChange('equipmentCode', e.target.value)} />
+            <TextField
+              fullWidth
+              label="کد تجهیز"
+              value={formData.equipmentCode || ''}
+              onChange={(e) => handleChange('equipmentCode', e.target.value)}
+            />
           </Grid>
           <Grid item xs={12} sm={6}>
-            <TextField fullWidth label="نام تجهیز" value={formData.name || ''} onChange={(e) => handleChange('name', e.target.value)} />
+            <TextField
+              fullWidth
+              label="نام تجهیز"
+              value={formData.name || ''}
+              onChange={(e) => handleChange('name', e.target.value)}
+            />
           </Grid>
           <Grid item xs={12} sm={6}>
-            <TextField select fullWidth label="نوع" value={formData.type || 'سلاح'} onChange={(e) => handleChange('type', e.target.value)}>
+            <TextField
+              select
+              fullWidth
+              label="نوع"
+              value={formData.type || 'سلاح'}
+              onChange={(e) => handleChange('type', e.target.value)}
+            >
               <MenuItem value="سلاح">سلاح</MenuItem>
               <MenuItem value="وسیله نقلیه">وسیله نقلیه</MenuItem>
               <MenuItem value="ارتباطات">ارتباطات</MenuItem>
@@ -97,26 +153,60 @@ const EquipmentModal: React.FC<EquipmentModalProps> = ({
             </TextField>
           </Grid>
           <Grid item xs={12} sm={6}>
-            <TextField select fullWidth label="دسته‌بندی" value={formData.category || ''} onChange={(e) => handleChange('category', e.target.value)}>
+            <TextField
+              select
+              fullWidth
+              label="دسته‌بندی"
+              value={formData.category || ''}
+              onChange={(e) => handleChange('category', e.target.value)}
+            >
               {categories.map((cat) => (
-                <MenuItem key={cat.id} value={cat.id}>{cat.name}</MenuItem>
+                <MenuItem key={cat.id} value={cat.id}>
+                  {cat.name}
+                </MenuItem>
               ))}
             </TextField>
           </Grid>
           <Grid item xs={12} sm={6}>
-            <TextField fullWidth label="مدل" value={formData.model || ''} onChange={(e) => handleChange('model', e.target.value)} />
+            <TextField
+              fullWidth
+              label="مدل"
+              value={formData.model || ''}
+              onChange={(e) => handleChange('model', e.target.value)}
+            />
           </Grid>
           <Grid item xs={12} sm={6}>
-            <TextField fullWidth label="سازنده" value={formData.manufacturer || ''} onChange={(e) => handleChange('manufacturer', e.target.value)} />
+            <TextField
+              fullWidth
+              label="سازنده"
+              value={formData.manufacturer || ''}
+              onChange={(e) => handleChange('manufacturer', e.target.value)}
+            />
           </Grid>
           <Grid item xs={12} sm={6}>
-            <TextField fullWidth label="شماره سریال" value={formData.serialNumber || ''} onChange={(e) => handleChange('serialNumber', e.target.value)} />
+            <TextField
+              fullWidth
+              label="شماره سریال"
+              value={formData.serialNumber || ''}
+              onChange={(e) => handleChange('serialNumber', e.target.value)}
+            />
           </Grid>
           <Grid item xs={12} sm={6}>
-            <TextField fullWidth label="مکان" value={formData.location || ''} onChange={(e) => handleChange('location', e.target.value)} />
+            <TextField
+              fullWidth
+              label="مکان"
+              value={formData.location || ''}
+              onChange={(e) => handleChange('location', e.target.value)}
+            />
           </Grid>
           <Grid item xs={12} sm={6}>
-            <TextField select fullWidth label="وضعیت" value={formData.status || 'available'} onChange={(e) => handleChange('status', e.target.value)}>
+            <TextField
+              select
+              fullWidth
+              label="وضعیت"
+              value={formData.status || 'available'}
+              onChange={(e) => handleChange('status', e.target.value)}
+            >
               <MenuItem value="available">موجود</MenuItem>
               <MenuItem value="assigned">تخصیص‌یافته</MenuItem>
               <MenuItem value="maintenance">در تعمیر</MenuItem>
@@ -124,7 +214,13 @@ const EquipmentModal: React.FC<EquipmentModalProps> = ({
             </TextField>
           </Grid>
           <Grid item xs={12} sm={6}>
-            <TextField select fullWidth label="شرایط" value={formData.condition || 'good'} onChange={(e) => handleChange('condition', e.target.value)}>
+            <TextField
+              select
+              fullWidth
+              label="شرایط"
+              value={formData.condition || 'good'}
+              onChange={(e) => handleChange('condition', e.target.value)}
+            >
               <MenuItem value="excellent">عالی</MenuItem>
               <MenuItem value="good">خوب</MenuItem>
               <MenuItem value="fair">قابل قبول</MenuItem>
@@ -134,9 +230,29 @@ const EquipmentModal: React.FC<EquipmentModalProps> = ({
           </Grid>
         </Grid>
       </DialogContent>
-      <DialogActions>
-        <Button onClick={onClose}>انصراف</Button>
-        <Button variant="contained" onClick={handleSubmit}>ذخیره</Button>
+      <DialogActions
+        sx={{
+          borderTop: `1px solid ${alpha(accent, 0.2)}`,
+          backgroundColor: alpha(accent, 0.04),
+          px: 3,
+          py: 2,
+          gap: 1,
+        }}
+      >
+        <Button
+          onClick={onClose}
+          variant="outlined"
+          color="inherit"
+          sx={{
+            borderRadius: 2,
+            borderColor: alpha(accent, 0.35),
+          }}
+        >
+          انصراف
+        </Button>
+        <Button variant="contained" color="success" onClick={handleSubmit} sx={{ borderRadius: 2, px: 3 }}>
+          ذخیره
+        </Button>
       </DialogActions>
     </Dialog>
   );

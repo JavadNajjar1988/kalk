@@ -60,7 +60,13 @@ import { useNavigate } from 'react-router-dom';
 import { useAppSelector, useAppDispatch } from '@/store';
 import { selectUser } from '@/store/slices/authSlice';
 import { selectScenarios, fetchScenarios } from '@/store/slices/scenariosSlice';
-import { addNotification, selectHeaderSettings, HeaderSettings } from '@/store/slices/uiSlice';
+import {
+  addNotification,
+  selectDashboardModules,
+  selectHeaderSettings,
+  DashboardModulesSettings,
+  HeaderSettings,
+} from '@/store/slices/uiSlice';
 import { getRandomQuote, quotes, Quote } from '@/config/quotes';
 import { getRandomMartyr, martyrs } from '@/config/martyrs';
 import type { Martyr } from '@/config/martyrs';
@@ -81,12 +87,26 @@ interface StatItem {
 }
 
 // کامپوننت کارت‌های آماری
-const DashboardStats: React.FC = () => {
+interface DashboardStatsProps {
+  showStatArchivedScenarios: boolean;
+  showStatAvailableForces: boolean;
+  showStatOngoingOperations: boolean;
+  showStatSecurityAlerts: boolean;
+}
+
+const DashboardStats: React.FC<DashboardStatsProps> = ({
+  showStatArchivedScenarios,
+  showStatAvailableForces,
+  showStatOngoingOperations,
+  showStatSecurityAlerts,
+}) => {
   const [expandedCards, setExpandedCards] = useState<Record<string, boolean>>({});
   const user = useAppSelector(selectUser);
   const scenarios = useAppSelector(selectScenarios);
   const theme = useTheme();
   const { t } = useTranslation();
+  const unifiedAccent = theme.palette.success.main;
+  const unifiedCardSurface = `linear-gradient(135deg, ${alpha(unifiedAccent, 0.07)}, ${alpha(unifiedAccent, 0.04)})`;
 
   const handleCardExpand = (cardTitle: string) => {
     setExpandedCards(prev => ({
@@ -203,76 +223,85 @@ const DashboardStats: React.FC = () => {
     };
   }, [mockAlerts]);
 
-  const stats: StatItem[] = [
-    {
+  const stats: StatItem[] = [];
+
+  if (showStatArchivedScenarios) {
+    stats.push({
       title: t('dashboard.stats.activeScenarios'),
       value: scenarioStats.total,
       icon: <AssignmentIcon />,
       color: 'warning',
       gradient: 'linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%)',
-      subtitle: t('dashboard.stats.activeScenariosSubtitle', { 
-        activePercent: scenarioStats.activePercent.toLocaleString('fa-IR'), 
-        inactiveCount: scenarioStats.inactiveCount.toLocaleString('fa-IR') 
+      subtitle: t('dashboard.stats.activeScenariosSubtitle', {
+        activePercent: scenarioStats.activePercent.toLocaleString('fa-IR'),
+        inactiveCount: scenarioStats.inactiveCount.toLocaleString('fa-IR'),
       }),
-    },
-    {
+    });
+  }
+
+  if (showStatAvailableForces) {
+    stats.push({
       title: t('dashboard.stats.availableForces'),
       value: forceStats.total,
       icon: <PeopleIcon />,
       color: 'success',
       gradient: 'linear-gradient(135deg, #e8f5e8 0%, #c8e6c9 100%)',
-      subtitle: t('dashboard.stats.availableForcesSubtitle', { 
-        iranianPercent: forceStats.iranianPercent.toLocaleString('fa-IR'), 
-        foreignPercent: forceStats.foreignPercent.toLocaleString('fa-IR') 
+      subtitle: t('dashboard.stats.availableForcesSubtitle', {
+        iranianPercent: forceStats.iranianPercent.toLocaleString('fa-IR'),
+        foreignPercent: forceStats.foreignPercent.toLocaleString('fa-IR'),
       }),
-    },
-    {
+    });
+  }
+
+  if (showStatOngoingOperations) {
+    stats.push({
       title: t('dashboard.stats.ongoingOperations'),
       value: operationStats.total,
       icon: <MapIcon />,
       color: 'error',
       gradient: 'linear-gradient(135deg, #ffebee 0%, #ffcdd2 100%)',
-      subtitle: t('dashboard.stats.ongoingOperationsSubtitle', { 
-        commanderCount: operationStats.commanderCount.toLocaleString('fa-IR'), 
-        operatorCount: operationStats.operatorCount.toLocaleString('fa-IR'), 
-        viewerCount: operationStats.viewerCount.toLocaleString('fa-IR') 
+      subtitle: t('dashboard.stats.ongoingOperationsSubtitle', {
+        commanderCount: operationStats.commanderCount.toLocaleString('fa-IR'),
+        operatorCount: operationStats.operatorCount.toLocaleString('fa-IR'),
+        viewerCount: operationStats.viewerCount.toLocaleString('fa-IR'),
       }),
-    },
-    {
+    });
+  }
+
+  if (showStatSecurityAlerts) {
+    stats.push({
       title: t('dashboard.stats.securityAlerts'),
       value: alertStats.total,
       icon: <Security />,
       color: 'info',
       gradient: 'linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%)',
-      subtitle: t('dashboard.stats.securityAlertsSubtitle', { 
-        todayPercent: alertStats.todayPercent.toLocaleString('fa-IR'), 
-        weekCount: alertStats.weekCount.toLocaleString('fa-IR') 
+      subtitle: t('dashboard.stats.securityAlertsSubtitle', {
+        todayPercent: alertStats.todayPercent.toLocaleString('fa-IR'),
+        weekCount: alertStats.weekCount.toLocaleString('fa-IR'),
       }),
-    },
-  ];
+    });
+  }
+
+  if (stats.length === 0) {
+    return null;
+  }
+
+  const statGridMd = stats.length === 1 ? 12 : stats.length === 2 ? 6 : stats.length === 3 ? 4 : 3;
 
   return (
     <Grid container spacing={1.5} sx={{ mb: 2 }}>
       {stats.map((stat, index) => (
-        <Grid item xs={12} sm={6} md={3} key={index}>
+        <Grid item xs={12} sm={6} md={statGridMd} key={index}>
           <Card
             sx={{
-              background: theme.palette.mode === 'dark' 
-                ? `linear-gradient(135deg, ${alpha(theme.palette.background.paper, 0.93)}, ${alpha(theme.palette.background.paper, 0.8)})`
-                : 'linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)',
-              backdropFilter: 'blur(10px)',
+              background: unifiedCardSurface,
+              backdropFilter: 'blur(6px)',
               borderRadius: `${theme.shape.borderRadius * 1.2}px`,
-              boxShadow: theme.palette.mode === 'dark' 
-                ? `0 2px 10px 0 ${alpha(theme.palette.common.black, 0.18)}, 0 1px 4px 0 ${alpha(theme.palette.primary.dark, 0.06)}`
-                : '0 2px 10px 0 rgba(0,0,0,0.07), 0 1px 4px 0 rgba(25,118,210,0.04)',
-              border: theme.palette.mode === 'dark' 
-                ? `1px solid ${alpha(theme.palette.divider, 0.18)}`
-                : '1px solid #e3e8ef',
+              boxShadow: 'none',
+              border: `1px solid ${alpha(unifiedAccent, 0.24)}`,
               '&:hover': {
                 transform: 'translateY(-2px) scale(1.01)',
-                boxShadow: theme.palette.mode === 'dark' 
-                  ? `0 4px 18px 0 ${alpha(theme.palette.common.black, 0.22)}, 0 2px 8px 0 ${alpha(theme.palette.primary.dark, 0.09)}`
-                  : '0 4px 18px 0 rgba(0,0,0,0.10), 0 2px 8px 0 rgba(25,118,210,0.07)',
+                boxShadow: theme.shadows[5],
                 transition: 'all 0.28s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
               },
               transition: 'all 0.28s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
@@ -297,14 +326,11 @@ const DashboardStats: React.FC = () => {
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
                   <Avatar
                     sx={{
-                      bgcolor: stat.color === 'warning' && stat.title === t('dashboard.stats.activeScenarios') 
-                        ? '#ff9800' // رنگ زرد ثابت
-                        : `${stat.color}.main`,
+                      bgcolor: alpha(unifiedAccent, 0.14),
+                      color: unifiedAccent,
                       width: 36,
                       height: 36,
-                      boxShadow: stat.color === 'warning' && stat.title === t('dashboard.stats.activeScenarios')
-                        ? '0 4px 12px #ff980040' // سایه زرد ثابت
-                        : `0 4px 12px ${stat.color === 'primary' ? theme.palette.primary.main : stat.color === 'success' ? theme.palette.success.main : stat.color === 'error' ? theme.palette.error.main : theme.palette.info.main}40`,
+                      boxShadow: `0 4px 12px ${alpha(unifiedAccent, 0.28)}`,
                       '& svg': {
                         fontSize: '1.1rem',
                       },
@@ -1131,6 +1157,7 @@ const HomePage: React.FC = () => {
   const user = useAppSelector(selectUser);
   const scenarios = useAppSelector(selectScenarios);
   const rawHeaderSettings = useAppSelector(selectHeaderSettings) as HeaderSettings | undefined;
+  const rawDashboardModules = useAppSelector(selectDashboardModules) as DashboardModulesSettings | undefined;
   const headerSettings: HeaderSettings = rawHeaderSettings || {
     enabled: true,
     quoteMode: 'random',
@@ -1145,6 +1172,17 @@ const HomePage: React.FC = () => {
     customMartyrImage: null,
     entries: [],
     activeEntryId: null,
+  };
+  const dashboardModules: DashboardModulesSettings = rawDashboardModules || {
+    showHeaderBanner: true,
+    showStatArchivedScenarios: true,
+    showStatAvailableForces: true,
+    showStatOngoingOperations: true,
+    showStatSecurityAlerts: true,
+    showRecentActivities: true,
+    showQuickAccess: true,
+    showSystemStatus: true,
+    showImportantNotices: true,
   };
   const [quote, setQuote] = useState<Quote>(getRandomQuote('wisdom'));
   const [martyr, setMartyr] = useState<Martyr>(getRandomMartyr());
@@ -1644,21 +1682,39 @@ const HomePage: React.FC = () => {
     { name: t('dashboard.systemStatus.network'), value: 28, color: 'success' },
   ];
 
+  const showStatsSection =
+    dashboardModules.showStatArchivedScenarios ||
+    dashboardModules.showStatAvailableForces ||
+    dashboardModules.showStatOngoingOperations ||
+    dashboardModules.showStatSecurityAlerts;
+  const showQuickAccessSection = dashboardModules.showQuickAccess && quickActions.length > 0;
+  const showSystemStatusSection = dashboardModules.showSystemStatus && user?.role === 'admin';
+  const showImportantNoticesSection =
+    dashboardModules.showImportantNotices && (user?.role === 'admin' || user?.role === 'commander');
+  const showRightColumn = showQuickAccessSection || showSystemStatusSection || showImportantNoticesSection;
+  const unifiedAccent = theme.palette.success.main;
+  const unifiedPanelSurface = `linear-gradient(135deg, ${alpha(unifiedAccent, 0.07)}, ${alpha(unifiedAccent, 0.04)})`;
+  const unifiedPanelBorder = `1px solid ${alpha(unifiedAccent, 0.24)}`;
+  const unifiedPanelSx = {
+    borderRadius: 2,
+    overflow: 'hidden',
+    background: unifiedPanelSurface,
+    border: unifiedPanelBorder,
+    boxShadow: 'none',
+  };
+
   return (
     <Box sx={{ p: 4, minHeight: '100%' }}>
       
       {/* Header */}
-      {headerSettings.enabled && (
+      {dashboardModules.showHeaderBanner && headerSettings.enabled && (
       <Card 
         component={Paper}
         elevation={0}
         sx={{ 
+          ...unifiedPanelSx,
           mb: 4, 
           p: 3,
-          background: theme.palette.background.paper,
-          border: 'none',
-          boxShadow: '0 4px 24px 0 rgba(0,0,0,0.10) !important',
-          borderRadius: 2,
           position: 'relative',
           overflow: 'visible',
           transition: 'none',
@@ -1819,24 +1875,29 @@ const HomePage: React.FC = () => {
       )}
 
       {/* آمار */}
-      <DashboardStats />
+      {showStatsSection && (
+        <DashboardStats
+          showStatArchivedScenarios={dashboardModules.showStatArchivedScenarios}
+          showStatAvailableForces={dashboardModules.showStatAvailableForces}
+          showStatOngoingOperations={dashboardModules.showStatOngoingOperations}
+          showStatSecurityAlerts={dashboardModules.showStatSecurityAlerts}
+        />
+      )}
 
+      {(dashboardModules.showRecentActivities || showRightColumn) && (
       <Grid container spacing={3}>
         {/* فعالیت‌های اخیر */}
-        <Grid item xs={12} md={8}>
+        {dashboardModules.showRecentActivities && (
+        <Grid item xs={12} md={showRightColumn ? 8 : 12}>
           <Paper
             sx={{
-              borderRadius: 2,
-              overflow: 'hidden',
-              background: alpha(theme.palette.background.paper, 0.6),
-              backdropFilter: 'blur(10px)',
-              border: `1px solid ${alpha(theme.palette.divider, 0.1)}`,
+              ...unifiedPanelSx,
             }}
           >
             <Box
               sx={{
                 p: 2,
-                borderBottom: `1px solid ${theme.palette.divider}`,
+                borderBottom: `1px solid ${alpha(unifiedAccent, 0.2)}`,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'space-between',
@@ -1949,72 +2010,71 @@ const HomePage: React.FC = () => {
             </Box>
           </Paper>
         </Grid>
+        )}
 
         {/* دسترسی سریع و وضعیت سیستم */}
-        <Grid item xs={12} md={4}>
-          <Paper
-            sx={{
-              borderRadius: 2,
-              overflow: 'hidden',
-              background: alpha(theme.palette.background.paper, 0.6),
-              backdropFilter: 'blur(10px)',
-              border: `1px solid ${alpha(theme.palette.divider, 0.1)}`,
-              mb: 3,
-            }}
-          >
-            <Box sx={{ p: 2, borderBottom: `1px solid ${theme.palette.divider}` }}>
-              <FarsiTypography variant="h6" sx={{ fontWeight: 600 }}>
-                {t('dashboard.quickAccess')}
-              </FarsiTypography>
-            </Box>
-            <Box sx={{ p: 2 }}>
-              <Grid container spacing={1}>
-                {quickActions.map((action, index) => (
-                  <Grid item xs={6} key={index}>
-                    <Card
-                      sx={{
-                        cursor: 'pointer',
-                        textAlign: 'center',
-                        p: 2,
-                        transition: 'all 0.2s',
-                        border: `1px solid ${alpha(action.color, 0.12)}`,
-                        '&:hover': {
-                          bgcolor: alpha(action.color, 0.04),
-                          transform: 'scale(1.02)',
-                        },
-                      }}
-                      onClick={action.onClick}
-                    >
-                      <Avatar
-                        sx={{
-                          bgcolor: alpha(action.color, 0.1),
-                          color: action.color,
-                          mx: 'auto',
-                          mb: 1,
-                        }}
-                      >
-                        {action.icon}
-                      </Avatar>
-                      <FarsiTypography variant="caption" display="block">
-                        {action.title}
-                      </FarsiTypography>
-                    </Card>
-                  </Grid>
-                ))}
-              </Grid>
-            </Box>
-          </Paper>
-
-          {/* وضعیت سیستم - فقط برای مدیر */}
-          {user?.role === 'admin' && (
+        {showRightColumn && (
+        <Grid item xs={12} md={dashboardModules.showRecentActivities ? 4 : 12}>
+          {showQuickAccessSection && (
             <Paper
               sx={{
-                borderRadius: 2,
-                overflow: 'hidden',
-                border: `1px solid ${theme.palette.divider}`,
+                ...unifiedPanelSx,
+                mb: showSystemStatusSection || showImportantNoticesSection ? 3 : 0,
               }}
             >
-              <Box sx={{ p: 2, borderBottom: `1px solid ${theme.palette.divider}` }}>
+              <Box sx={{ p: 2, borderBottom: `1px solid ${alpha(unifiedAccent, 0.2)}` }}>
+                <FarsiTypography variant="h6" sx={{ fontWeight: 600 }}>
+                  {t('dashboard.quickAccess')}
+                </FarsiTypography>
+              </Box>
+              <Box sx={{ p: 2 }}>
+                <Grid container spacing={1}>
+                  {quickActions.map((action, index) => (
+                    <Grid item xs={6} key={index}>
+                      <Card
+                        sx={{
+                          cursor: 'pointer',
+                          textAlign: 'center',
+                          p: 2,
+                          transition: 'all 0.2s',
+                          border: `1px solid ${alpha(unifiedAccent, 0.18)}`,
+                          background: alpha(unifiedAccent, 0.03),
+                          '&:hover': {
+                            bgcolor: alpha(unifiedAccent, 0.07),
+                            transform: 'scale(1.02)',
+                          },
+                        }}
+                        onClick={action.onClick}
+                      >
+                        <Avatar
+                          sx={{
+                            bgcolor: alpha(unifiedAccent, 0.12),
+                            color: unifiedAccent,
+                            mx: 'auto',
+                            mb: 1,
+                          }}
+                        >
+                          {action.icon}
+                        </Avatar>
+                        <FarsiTypography variant="caption" display="block">
+                          {action.title}
+                        </FarsiTypography>
+                      </Card>
+                    </Grid>
+                  ))}
+                </Grid>
+              </Box>
+            </Paper>
+          )}
+
+          {/* وضعیت سیستم - فقط برای مدیر */}
+          {showSystemStatusSection && (
+            <Paper
+              sx={{
+                ...unifiedPanelSx,
+              }}
+            >
+              <Box sx={{ p: 2, borderBottom: `1px solid ${alpha(unifiedAccent, 0.2)}` }}>
                 <FarsiTypography variant="h6" sx={{ fontWeight: 600 }}>
                   {t('dashboard.systemStatus.title')}
                 </FarsiTypography>
@@ -2041,16 +2101,14 @@ const HomePage: React.FC = () => {
           )}
 
           {/* اطلاعیه‌های مهم - فقط برای فرمانده و مدیر */}
-          {(user?.role === 'admin' || user?.role === 'commander') && (
+          {showImportantNoticesSection && (
             <Paper
               sx={{
-                borderRadius: 2,
-                overflow: 'hidden',
-                border: `1px solid ${theme.palette.divider}`,
-                mt: 3,
+                ...unifiedPanelSx,
+                mt: showQuickAccessSection || showSystemStatusSection ? 3 : 0,
               }}
             >
-              <Box sx={{ p: 2, borderBottom: `1px solid ${theme.palette.divider}` }}>
+              <Box sx={{ p: 2, borderBottom: `1px solid ${alpha(unifiedAccent, 0.2)}` }}>
                 <FarsiTypography variant="h6" sx={{ fontWeight: 600 }}>
                   {t('dashboard.importantNotices')}
                 </FarsiTypography>
@@ -2069,7 +2127,9 @@ const HomePage: React.FC = () => {
             </Paper>
           )}
         </Grid>
+        )}
       </Grid>
+      )}
     </Box>
   );
 };

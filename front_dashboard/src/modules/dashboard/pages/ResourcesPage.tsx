@@ -1,11 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   Box,
   Tabs,
   Tab,
   Typography,
   Paper,
-  useTheme,
   alpha,
   Button,
   Card,
@@ -13,6 +12,7 @@ import {
   Grid,
   ThemeProvider,
 } from '@mui/material';
+import { createTheme } from '@mui/material/styles';
 import {
   Groups as GroupsIcon,
   Map as MapIcon,
@@ -77,10 +77,41 @@ const ResourcesPage: React.FC = () => {
   const muiTheme = createAppTheme(themeState.mode, themeState.backgroundTheme, themeState.primaryColor, themeState.fontSize, themeState.highContrast);
   const { t } = useTranslation();
   
-  // Use the theme from ThemeProvider context
-  const theme = useTheme();
   const location = useLocation();
   const navigate = useNavigate();
+  const unifiedAccent = muiTheme.palette.success.main;
+  const unifiedSurface = `linear-gradient(135deg, ${alpha(unifiedAccent, 0.07)}, ${alpha(unifiedAccent, 0.04)})`;
+  const sectionTheme = useMemo(
+    () =>
+      createTheme(muiTheme, {
+        components: {
+          MuiDialog: {
+            styleOverrides: {
+              paper: {
+                background: unifiedSurface,
+                border: `1px solid ${alpha(unifiedAccent, 0.24)}`,
+                borderRadius: 14,
+              },
+            },
+          },
+          MuiDialogTitle: {
+            styleOverrides: {
+              root: {
+                borderBottom: `1px solid ${alpha(unifiedAccent, 0.18)}`,
+              },
+            },
+          },
+          MuiDialogActions: {
+            styleOverrides: {
+              root: {
+                borderTop: `1px solid ${alpha(unifiedAccent, 0.18)}`,
+              },
+            },
+          },
+        },
+      }),
+    [muiTheme, unifiedSurface, unifiedAccent]
+  );
   
   // تبدیل URL query parameter به index تب
   const getTabFromURL = () => {
@@ -127,20 +158,28 @@ const ResourcesPage: React.FC = () => {
 
   // Wrap the content in its own ThemeProvider with the theme from Redux
   return (
-    <ThemeProvider theme={muiTheme}>
+    <ThemeProvider theme={sectionTheme}>
       <Box sx={{ 
         width: '100%', 
         height: '100%',
         display: 'flex',
         flexDirection: 'column',
         p: 3,
+        '& .MuiCard-root': {
+          background: unifiedSurface,
+          border: `1px solid ${alpha(unifiedAccent, 0.22)}`,
+          boxShadow: 'none',
+        },
+        '& .MuiPaper-root': {
+          borderColor: alpha(unifiedAccent, 0.22),
+        },
       }}>
         <Typography 
           variant="h4" 
           gutterBottom 
           sx={{ 
             fontWeight: 700,
-            background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.secondary.main} 100%)`,
+            background: `linear-gradient(135deg, ${alpha(unifiedAccent, 0.95)} 0%, ${alpha(unifiedAccent, 0.7)} 100%)`,
             WebkitBackgroundClip: 'text',
             WebkitTextFillColor: 'transparent',
             mb: 3,
@@ -155,16 +194,16 @@ const ResourcesPage: React.FC = () => {
             display: 'flex',
             flexDirection: 'column',
             borderRadius: 3,
-            background: alpha(theme.palette.background.paper, 0.7),
+            background: unifiedSurface,
             backdropFilter: 'blur(20px)',
-            border: `1px solid ${alpha(theme.palette.divider, 0.1)}`,
+            border: `1px solid ${alpha(unifiedAccent, 0.24)}`,
             overflow: 'hidden',
           }}
         >
           <Box sx={{ 
             borderBottom: 1, 
-            borderColor: 'divider',
-            background: alpha(theme.palette.background.paper, 0.5),
+            borderColor: alpha(unifiedAccent, 0.2),
+            background: alpha(unifiedAccent, 0.06),
           }}>
             <Tabs 
               value={value} 
@@ -174,6 +213,7 @@ const ResourcesPage: React.FC = () => {
                 '& .MuiTabs-indicator': {
                   height: 3,
                   borderRadius: '3px 3px 0 0',
+                  backgroundColor: unifiedAccent,
                 },
                 '& .MuiTab-root': {
                   minHeight: 64,
@@ -182,6 +222,7 @@ const ResourcesPage: React.FC = () => {
                   fontWeight: 500,
                   '&.Mui-selected': {
                     fontWeight: 700,
+                    color: unifiedAccent,
                   },
                 },
               }}
@@ -195,7 +236,7 @@ const ResourcesPage: React.FC = () => {
                   {...a11yProps(index)}
                   sx={{
                     '&:hover': {
-                      background: alpha(theme.palette.primary.main, 0.08),
+                      background: alpha(unifiedAccent, 0.08),
                     },
                   }}
                 />
