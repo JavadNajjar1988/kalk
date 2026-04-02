@@ -94,6 +94,16 @@ function getSymbolDataUri(sidc: string, size: number, options?: Record<string, a
   }
 }
 
+function getTacticalImageDataUri(sidc: string, size: number, options?: Record<string, any>): string | null {
+  // First try @syncpoint/signs (same approach you had for tactical)
+  const uri = getSymbolDataUri(sidc, size, { infoFields: true, ...(options || {}) });
+  if (uri) return uri;
+
+  // Fallback: try milsymbol (more permissive for some SIDC variants)
+  // NOTE: unitSymbolDataUri caches separately; that's fine.
+  return unitSymbolDataUri(sidc, size, options || {}, undefined);
+}
+
 function replaceAt(text: string, index: number, replace: string): string {
   return text.substring(0, index) + replace + text.substring(index + 1);
 }
@@ -237,19 +247,23 @@ function extractTacticalFeatures(
   tuples.forEach(([key, value]) => {
     if (!key.startsWith('feature:')) return;
     if (hiddenKeys.has(key)) return;
-    if (!value || typeof value !== 'object' || value.type !== 'Feature') return;
-    if (!value.geometry) return;
+    if (!value || typeof value !== 'object') return;
+
+    // Odin/Orbit ممکن است بعضی entryها را به شکل GeoJSON Feature واقعی یا یک ساختار مشابه بدهد.
+    // برای جلوگیری از حذف شدن نمادها، فقط وجود geometry را شرط می‌گذاریم.
+    const geom = (value as any).geometry ?? (value as any).geom;
+    if (!geom || typeof geom !== 'object') return;
 
     const featureId = key.split('/').pop() || key;
-    const convertedGeometry = convertGeometryCoords(value.geometry);
+    const convertedGeometry = convertGeometryCoords(geom as GeoJsonGeometryLike);
     const style = styleMap.get(key);
 
     features.push({
       id: featureId,
       geometry: convertedGeometry,
-      properties: value.properties || {},
+      properties: (value as any).properties || {},
       style: style || {},
-      meta: {},
+      meta: (value as any).meta || {},
     });
   });
 
@@ -377,7 +391,7 @@ function addBillboard(
     clampToGround: boolean;
   }
 ) {
-  const image = getSymbolDataUri(options.sidc, options.size, { infoFields: true });
+  const image = getTacticalImageDataUri(options.sidc, options.size, {});
   if (!image) return;
 
   const heightReference = options.clampToGround
@@ -392,6 +406,8 @@ function addBillboard(
       heightReference,
       verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
       scale: 0.6,
+      // برای اینکه هم‌راستا با `depthTestAgainstTerrain` رفتار کند،
+      // depth test را بی‌نهایت غیرفعال نکنیم.
       disableDepthTestDistance: Number.POSITIVE_INFINITY,
     },
     label: options.label
@@ -419,10 +435,27 @@ function addTacticalGeometry(
   index: number
 ) {
   const properties = getFeatureProperties(feature);
-  const sidc = properties?.sidc || properties?.['symbol-code'] || feature.meta?.sidc;
-  const name = properties?.name || feature.meta?.name || feature.meta?.description;
-
   const s: Record<string, any> = { ...(feature.style || {}), ...(properties || {}) };
+
+  // Odin ممکن است sidc را با کلیدهای متفاوتی ذخیره کند.
+  // اینجا چند نام رایج را پوشش می‌دهیم تا Featureها به خاطر sidcِ خالی حذف نشوند.
+  const sidc =
+    s?.sidc ??
+    s?.SIDC ??
+    s?.symbolCode ??
+    s?.symbol_code ??
+    s?.['symbol-code'] ??
+    s?.['symbolCode'] ??
+    feature.meta?.sidc ??
+    feature.meta?.SIDC;
+
+  const name =
+    properties?.name ??
+    properties?.Name ??
+    feature.meta?.name ??
+    feature.meta?.Name ??
+    feature.meta?.description;
+
   const strokeColor = parseColorWithOpacity(
     s.stroke || s['stroke-color'],
     s['stroke-opacity'],
@@ -439,9 +472,12 @@ function addTacticalGeometry(
   const addSymbolAt = (pos: { lon: number; lat: number; height: number }) => {
     if (!sidc) return;
     addBillboard(viewer, {
-      id: `tactical-${scenarioId}-${feature.id ?? index}`,
+      // همیشه index را در id بیاوریم تا collision و overwrite در GeometryCollection رخ ندهد.
+      id: `tactical-${scenarioId}-${feature.id ?? 'feature'}-${index}`,
       sidc,
-      position: { ...pos, height: 0 },
+      // اگر در مختصات مقدار height/z داشته باشیم، گم نشود.
+      // CLAMP_TO_GROUND در هر صورت روی زمین می‌چسباند؛ ولی این کار در حالت fallback کمک می‌کند.
+      position: { ...pos },
       size: DEFAULT_TACTICAL_SIZE,
       label: name,
       clampToGround: true,
@@ -459,9 +495,9 @@ function addTacticalGeometry(
       points.forEach((p, idx) => {
         if (!sidc) return;
         addBillboard(viewer, {
-          id: `tactical-${scenarioId}-${feature.id ?? index}-${idx}`,
+          id: `tactical-${scenarioId}-${feature.id ?? 'feature'}-${index}-${idx}`,
           sidc,
-          position: { ...p, height: 0 },
+          position: { ...p },
           size: DEFAULT_TACTICAL_SIZE,
           label: name,
           clampToGround: true,
@@ -473,7 +509,7 @@ function addTacticalGeometry(
       const points = flattenCoordinates(geometry.coordinates);
       if (points.length >= 2) {
         viewer.entities.add({
-          id: `tactical-line-${scenarioId}-${feature.id ?? index}`,
+          id: `tactical-line-${scenarioId}-${feature.id ?? 'feature'}-${index}`,
           polyline: {
             positions: points.map((p) => toCartesian(p.lon, p.lat, 0)),
             width: strokeWidth,
@@ -492,7 +528,7 @@ function addTacticalGeometry(
         const points = flattenCoordinates(segment);
         if (points.length >= 2) {
           viewer.entities.add({
-            id: `tactical-line-${scenarioId}-${feature.id ?? index}-${segIndex}`,
+            id: `tactical-line-${scenarioId}-${feature.id ?? 'feature'}-${index}-${segIndex}`,
             polyline: {
               positions: points.map((p) => toCartesian(p.lon, p.lat, 0)),
               width: strokeWidth,
@@ -512,7 +548,7 @@ function addTacticalGeometry(
       const points = flattenCoordinates(outerRing);
       if (points.length >= 3) {
         viewer.entities.add({
-          id: `tactical-polygon-${scenarioId}-${feature.id ?? index}`,
+          id: `tactical-polygon-${scenarioId}-${feature.id ?? 'feature'}-${index}`,
           polygon: {
             hierarchy: points.map((p) => toCartesian(p.lon, p.lat, 0)),
             material: fillColor,
@@ -534,7 +570,7 @@ function addTacticalGeometry(
         const points = flattenCoordinates(outerRing);
         if (points.length >= 3) {
           viewer.entities.add({
-            id: `tactical-polygon-${scenarioId}-${feature.id ?? index}-${polyIndex}`,
+            id: `tactical-polygon-${scenarioId}-${feature.id ?? 'feature'}-${index}-${polyIndex}`,
             polygon: {
               hierarchy: points.map((p) => toCartesian(p.lon, p.lat, 0)),
               material: fillColor,
@@ -555,7 +591,7 @@ function addTacticalGeometry(
       const radius = Number(feature.meta?.radius) || 500;
       if (circlePos) {
         viewer.entities.add({
-          id: `tactical-circle-${scenarioId}-${feature.id ?? index}`,
+          id: `tactical-circle-${scenarioId}-${feature.id ?? 'feature'}-${index}`,
           position: toCartesian(circlePos.lon, circlePos.lat, 0),
           ellipse: {
             semiMajorAxis: radius,
