@@ -14,6 +14,7 @@
     "@babylonjs/loaders": "^6.0.0",
     "@babylonjs/materials": "^6.0.0",
     "@syncpoint/signs": "^1.1.0",
+    "milsymbol": "^2.2.0",
     "cesium": "^1.136.0",
     "vite-plugin-cesium": "^1.2.23"
   },

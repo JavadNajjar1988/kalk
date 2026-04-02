@@ -284,6 +284,17 @@ async function initializeCesium() {
         originLon = center.lon;
         originLat = center.lat;
         console.log(`✅ Origin set to scenario center: ${originLon}, ${originLat}`);
+
+        // Fly camera to scenario center so user sees the scenario immediately
+        cesiumViewer.camera.flyTo({
+          destination: Cesium.Cartesian3.fromDegrees(center.lon, center.lat, 50000),
+          orientation: {
+            heading: 0,
+            pitch: Cesium.Math.toRadians(-45),
+            roll: 0,
+          },
+          duration: 2.0,
+        });
       }
 
       const { addScenarioSymbols } = await import('./scenarioSymbols');

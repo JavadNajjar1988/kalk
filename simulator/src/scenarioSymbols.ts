@@ -1,5 +1,6 @@
 import * as Cesium from 'cesium';
 import { Symbol as SignsSymbol } from '@syncpoint/signs';
+import ms from 'milsymbol';
 import type { BackendScenario } from './scenarioPins';
 
 type PositionLike = number[];
@@ -7,6 +8,13 @@ type PositionLike = number[];
 interface ScenarioContentLike {
   sides?: SideLike[];
   layers?: ScenarioLayerLike[];
+  metadata?: {
+    tacticalSymbols?: {
+      version: number;
+      tuples: Array<[string, any]>;
+    };
+    [key: string]: any;
+  };
 }
 
 interface SideLike {
@@ -23,9 +31,12 @@ interface UnitLike {
   id?: string;
   name?: string;
   sidc?: string;
+  shortName?: string;
   location?: PositionLike;
   state?: Array<{ location?: PositionLike }>;
   subUnits?: UnitLike[];
+  symbolOptions?: Record<string, any>;
+  textAmplifiers?: Record<string, string>;
 }
 
 interface ScenarioLayerLike {
@@ -51,7 +62,6 @@ interface GeoJsonGeometryLike {
 
 const DEFAULT_TACTICAL_SIZE = getEnvNumber('VITE_TACTICAL_SYMBOL_SIZE', 72);
 const DEFAULT_MILITARY_SIZE = getEnvNumber('VITE_MILITARY_SYMBOL_SIZE', 80);
-const MILITARY_SYMBOL_HEIGHT_METERS = getEnvNumber('VITE_MILITARY_SYMBOL_HEIGHT', 300);
 
 const symbolCache = new Map<string, string>();
 
@@ -82,6 +92,168 @@ function getSymbolDataUri(sidc: string, size: number, options?: Record<string, a
     console.warn('Failed to build symbol SVG:', normalizedSidc, err);
     return null;
   }
+}
+
+function replaceAt(text: string, index: number, replace: string): string {
+  return text.substring(0, index) + replace + text.substring(index + 1);
+}
+
+const unitSymbolCache = new Map<string, string>();
+
+function unitSymbolDataUri(sidc: string, size: number, symbolOptions?: Record<string, any>, textAmplifiers?: Record<string, string>): string | null {
+  const normalizedSidc = sidc?.trim();
+  if (!normalizedSidc) return null;
+  const cacheKey = `ms|${normalizedSidc}|${size}|${JSON.stringify(symbolOptions || {})}|${JSON.stringify(textAmplifiers || {})}`;
+  const cached = unitSymbolCache.get(cacheKey);
+  if (cached) return cached;
+
+  let adjustedSidc = normalizedSidc;
+  let opts: Record<string, any> = {
+    size,
+    outlineColor: 'white',
+    outlineWidth: 8,
+    infoFields: true,
+    ...(textAmplifiers || {}),
+    ...(symbolOptions || {}),
+  };
+
+  if (adjustedSidc[3] === '7') {
+    adjustedSidc = replaceAt(adjustedSidc, 3, '3');
+  } else if (adjustedSidc[3] === '8') {
+    adjustedSidc = replaceAt(adjustedSidc, 3, '3');
+  }
+
+  try {
+    const sym = new ms.Symbol(adjustedSidc, opts);
+    const svg = sym.asSVG();
+    const uri = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
+    unitSymbolCache.set(cacheKey, uri);
+    return uri;
+  } catch (err) {
+    console.warn('Failed to build milsymbol SVG:', normalizedSidc, err);
+    return null;
+  }
+}
+
+function parseColorWithOpacity(colorStr: any, opacity: any, defaultOpacity = 1.0): Cesium.Color {
+  if (typeof colorStr !== 'string' || !colorStr.trim()) {
+    return Cesium.Color.YELLOW.withAlpha(defaultOpacity);
+  }
+  try {
+    const color = Cesium.Color.fromCssColorString(colorStr.trim());
+    const alpha = Number.isFinite(Number(opacity)) ? Number(opacity) : defaultOpacity;
+    return color.withAlpha(alpha);
+  } catch {
+    return Cesium.Color.YELLOW.withAlpha(defaultOpacity);
+  }
+}
+
+function buildLineMaterial(
+  color: Cesium.Color,
+  strokeStyle: string,
+): Cesium.Color | Cesium.PolylineDashMaterialProperty {
+  if (strokeStyle === 'dashed') {
+    return new Cesium.PolylineDashMaterialProperty({ color, dashLength: 16 });
+  }
+  if (strokeStyle === 'dotted') {
+    return new Cesium.PolylineDashMaterialProperty({ color, dashLength: 4 });
+  }
+  return color;
+}
+
+// ---------------------------------------------------------------------------
+// EPSG:3857 (Web Mercator) → WGS84 (lon/lat degrees) conversion
+// ---------------------------------------------------------------------------
+
+const EARTH_RADIUS = 6378137;
+const RAD2DEG = 180 / Math.PI;
+
+function mercatorToWgs84(x: number, y: number): { lon: number; lat: number } {
+  const lon = (x / EARTH_RADIUS) * RAD2DEG;
+  const lat = (Math.atan(Math.exp(y / EARTH_RADIUS)) * 2 - Math.PI / 2) * RAD2DEG;
+  return { lon, lat };
+}
+
+function isWebMercator(coord: number[]): boolean {
+  if (!Array.isArray(coord) || coord.length < 2) return false;
+  return Math.abs(coord[0]) > 180 || Math.abs(coord[1]) > 90;
+}
+
+function convertCoordinate(coord: number[]): number[] {
+  if (!isWebMercator(coord)) return coord;
+  const { lon, lat } = mercatorToWgs84(coord[0], coord[1]);
+  return coord.length > 2 ? [lon, lat, coord[2]] : [lon, lat];
+}
+
+function convertCoordinatesArray(coords: any): any {
+  if (!Array.isArray(coords)) return coords;
+  if (coords.length >= 2 && typeof coords[0] === 'number' && typeof coords[1] === 'number') {
+    return convertCoordinate(coords);
+  }
+  return coords.map((c: any) => convertCoordinatesArray(c));
+}
+
+function convertGeometryCoords(geometry: GeoJsonGeometryLike): GeoJsonGeometryLike {
+  if (!geometry) return geometry;
+  if (geometry.type === 'GeometryCollection' && Array.isArray(geometry.geometries)) {
+    return {
+      ...geometry,
+      geometries: geometry.geometries.map(convertGeometryCoords),
+    };
+  }
+  if (geometry.coordinates !== undefined) {
+    return {
+      ...geometry,
+      coordinates: convertCoordinatesArray(geometry.coordinates),
+    };
+  }
+  return geometry;
+}
+
+// ---------------------------------------------------------------------------
+// Extract tactical features from metadata.tacticalSymbols.tuples
+// ---------------------------------------------------------------------------
+
+function extractTacticalFeatures(
+  tuples: Array<[string, any]>,
+): ScenarioFeatureLike[] {
+  const hiddenKeys = new Set<string>();
+  tuples.forEach(([key]) => {
+    if (key.startsWith('hidden+feature:')) {
+      const featureKey = 'feature:' + key.slice('hidden+feature:'.length);
+      hiddenKeys.add(featureKey);
+    }
+  });
+
+  const styleMap = new Map<string, Record<string, any>>();
+  tuples.forEach(([key, value]) => {
+    if (key.startsWith('style+feature:') && value && typeof value === 'object') {
+      const featureKey = 'feature:' + key.slice('style+feature:'.length);
+      styleMap.set(featureKey, value);
+    }
+  });
+
+  const features: ScenarioFeatureLike[] = [];
+  tuples.forEach(([key, value]) => {
+    if (!key.startsWith('feature:')) return;
+    if (hiddenKeys.has(key)) return;
+    if (!value || typeof value !== 'object' || value.type !== 'Feature') return;
+    if (!value.geometry) return;
+
+    const featureId = key.split('/').pop() || key;
+    const convertedGeometry = convertGeometryCoords(value.geometry);
+    const style = styleMap.get(key);
+
+    features.push({
+      id: featureId,
+      geometry: convertedGeometry,
+      properties: value.properties || {},
+      style: style || {},
+      meta: {},
+    });
+  });
+
+  return features;
 }
 
 function parsePosition(pos: PositionLike | undefined | null): { lon: number; lat: number; height: number } | null {
@@ -139,17 +311,6 @@ function getScenarioUnits(content: ScenarioContentLike): UnitLike[] {
   const all: UnitLike[] = [];
   collectUnitsRecursive(rootUnits, all);
   return all;
-}
-
-function parseColor(value: any, fallback: Cesium.Color): Cesium.Color {
-  if (typeof value !== 'string') return fallback;
-  const trimmed = value.trim();
-  if (!trimmed) return fallback;
-  try {
-    return Cesium.Color.fromCssColorString(trimmed);
-  } catch {
-    return fallback;
-  }
 }
 
 function getFeatureGeometry(feature: ScenarioFeatureLike): GeoJsonGeometryLike | null {
@@ -235,17 +396,17 @@ function addBillboard(
     },
     label: options.label
       ? {
-          text: options.label,
-          font: '14px sans-serif',
-          fillColor: Cesium.Color.WHITE,
-          outlineColor: Cesium.Color.BLACK,
-          outlineWidth: 2,
-          style: Cesium.LabelStyle.FILL_AND_OUTLINE,
-          verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
-          pixelOffset: new Cesium.Cartesian2(0, -18),
-          heightReference,
-          disableDepthTestDistance: Number.POSITIVE_INFINITY,
-        }
+        text: options.label,
+        font: '14px sans-serif',
+        fillColor: Cesium.Color.WHITE,
+        outlineColor: Cesium.Color.BLACK,
+        outlineWidth: 2,
+        style: Cesium.LabelStyle.FILL_AND_OUTLINE,
+        verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
+        pixelOffset: new Cesium.Cartesian2(0, -18),
+        heightReference,
+        disableDepthTestDistance: Number.POSITIVE_INFINITY,
+      }
       : undefined,
   });
 }
@@ -261,10 +422,19 @@ function addTacticalGeometry(
   const sidc = properties?.sidc || properties?.['symbol-code'] || feature.meta?.sidc;
   const name = properties?.name || feature.meta?.name || feature.meta?.description;
 
-  const strokeColor = parseColor(properties?.stroke || feature.style?.stroke, Cesium.Color.YELLOW);
-  const fillColor = parseColor(properties?.fill || feature.style?.fill, Cesium.Color.YELLOW.withAlpha(0.3));
-  const strokeWidthRaw = properties?.strokeWidth || feature.style?.strokeWidth;
-  const strokeWidth = Number.isFinite(Number(strokeWidthRaw)) ? Number(strokeWidthRaw) : 2;
+  const s: Record<string, any> = { ...(feature.style || {}), ...(properties || {}) };
+  const strokeColor = parseColorWithOpacity(
+    s.stroke || s['stroke-color'],
+    s['stroke-opacity'],
+  );
+  const fillColor = parseColorWithOpacity(
+    s.fill || s['fill-color'],
+    s['fill-opacity'],
+    0.3,
+  );
+  const strokeWidth = Number(s['stroke-width']) || Number(s.strokeWidth) || 2;
+  const strokeStyle: string = s['stroke-style'] || 'solid';
+  const lineMaterial = buildLineMaterial(strokeColor, strokeStyle);
 
   const addSymbolAt = (pos: { lon: number; lat: number; height: number }) => {
     if (!sidc) return;
@@ -308,7 +478,7 @@ function addTacticalGeometry(
             positions: points.map((p) => toCartesian(p.lon, p.lat, 0)),
             width: strokeWidth,
             clampToGround: true,
-            material: strokeColor,
+            material: lineMaterial,
           },
         });
       }
@@ -327,7 +497,7 @@ function addTacticalGeometry(
               positions: points.map((p) => toCartesian(p.lon, p.lat, 0)),
               width: strokeWidth,
               clampToGround: true,
-              material: strokeColor,
+              material: lineMaterial,
             },
           });
         }
@@ -348,6 +518,7 @@ function addTacticalGeometry(
             material: fillColor,
             outline: true,
             outlineColor: strokeColor,
+            perPositionHeight: false,
             heightReference: Cesium.HeightReference.CLAMP_TO_GROUND,
           },
         });
@@ -369,6 +540,7 @@ function addTacticalGeometry(
               material: fillColor,
               outline: true,
               outlineColor: strokeColor,
+              perPositionHeight: false,
               heightReference: Cesium.HeightReference.CLAMP_TO_GROUND,
             },
           });
@@ -376,6 +548,26 @@ function addTacticalGeometry(
         const center = getCentroid(points);
         if (center) addSymbolAt(center);
       });
+      break;
+    }
+    case 'Circle': {
+      const circlePos = parsePosition(geometry.coordinates);
+      const radius = Number(feature.meta?.radius) || 500;
+      if (circlePos) {
+        viewer.entities.add({
+          id: `tactical-circle-${scenarioId}-${feature.id ?? index}`,
+          position: toCartesian(circlePos.lon, circlePos.lat, 0),
+          ellipse: {
+            semiMajorAxis: radius,
+            semiMinorAxis: radius,
+            material: fillColor,
+            outline: true,
+            outlineColor: strokeColor,
+            heightReference: Cesium.HeightReference.CLAMP_TO_GROUND,
+          },
+        });
+        addSymbolAt(circlePos);
+      }
       break;
     }
     case 'GeometryCollection': {
@@ -405,16 +597,43 @@ export async function addScenarioSymbols(
     units.forEach((unit, index) => {
       const pos = getUnitPosition(unit);
       if (!pos || !unit.sidc) return;
-      addBillboard(viewer, {
+
+      const image = unitSymbolDataUri(
+        unit.sidc,
+        DEFAULT_MILITARY_SIZE,
+        unit.symbolOptions,
+        unit.textAmplifiers,
+      );
+      if (!image) return;
+
+      viewer.entities.add({
         id: `unit-${scenario.id}-${unit.id ?? index}`,
-        sidc: unit.sidc,
-        position: { lon: pos.lon, lat: pos.lat, height: MILITARY_SYMBOL_HEIGHT_METERS },
-        size: DEFAULT_MILITARY_SIZE,
-        label: unit.name,
-        clampToGround: false,
+        position: toCartesian(pos.lon, pos.lat, 0),
+        billboard: {
+          image,
+          heightReference: Cesium.HeightReference.CLAMP_TO_GROUND,
+          verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
+          scale: 0.6,
+          disableDepthTestDistance: Number.POSITIVE_INFINITY,
+        },
+        label: unit.name
+          ? {
+            text: unit.name,
+            font: '14px sans-serif',
+            fillColor: Cesium.Color.WHITE,
+            outlineColor: Cesium.Color.BLACK,
+            outlineWidth: 2,
+            style: Cesium.LabelStyle.FILL_AND_OUTLINE,
+            verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
+            pixelOffset: new Cesium.Cartesian2(0, -18),
+            heightReference: Cesium.HeightReference.CLAMP_TO_GROUND,
+            disableDepthTestDistance: Number.POSITIVE_INFINITY,
+          }
+          : undefined,
       });
     });
 
+    // --- Path 1: content.layers (standard ORBAT features) ---
     if (Array.isArray(content.layers)) {
       content.layers.forEach((layer, layerIndex) => {
         if (layer?.isHidden) return;
@@ -424,6 +643,18 @@ export async function addScenarioSymbols(
           if (!geometry) return;
           addTacticalGeometry(viewer, geometry, feature, scenario.id, layerIndex * 10000 + index);
         });
+      });
+    }
+
+    // --- Path 2: metadata.tacticalSymbols (Odin/Orbit tactical graphics) ---
+    const tuples = content.metadata?.tacticalSymbols?.tuples;
+    if (Array.isArray(tuples) && tuples.length > 0) {
+      const tacticalFeatures = extractTacticalFeatures(tuples);
+      console.log(`[scenarioSymbols] Rendering ${tacticalFeatures.length} tactical features from metadata.tacticalSymbols`);
+      tacticalFeatures.forEach((feature, index) => {
+        const geometry = getFeatureGeometry(feature);
+        if (!geometry) return;
+        addTacticalGeometry(viewer, geometry, feature, scenario.id, 90000 + index);
       });
     }
   });

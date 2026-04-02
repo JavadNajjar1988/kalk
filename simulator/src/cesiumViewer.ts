@@ -198,10 +198,52 @@ export function createCesiumViewer(containerId: string): Cesium.Viewer {
 
   // Sample entities removed - you can add your own entities here as needed
 
-  // Auto-rotation disabled for inspection/debug
-  console.log('Auto-rotation disabled for inspection/debug');
+  // Occlusion: units behind terrain are hidden realistically
+  viewer.scene.globe.depthTestAgainstTerrain = true;
+
+  // Allow drag-nd-drop of entities (Sandtable style planning)
+  setupDraggableEntities(viewer);
 
   return viewer;
+}
+
+/**
+ * Adds drag-and-drop interaction for any pickable entity on the globe.
+ */
+function setupDraggableEntities(viewer: Cesium.Viewer) {
+  const handler = new Cesium.ScreenSpaceEventHandler(viewer.scene.canvas);
+  let pickedEntity: Cesium.Entity | undefined = undefined;
+
+  // Select entity on left down
+  handler.setInputAction(function (click: any) {
+    const pickedObject = viewer.scene.pick(click.position);
+    if (Cesium.defined(pickedObject) && pickedObject.id instanceof Cesium.Entity) {
+      pickedEntity = pickedObject.id as Cesium.Entity;
+      viewer.scene.screenSpaceCameraController.enableInputs = false; // Disable camera to drag
+    }
+  }, Cesium.ScreenSpaceEventType.LEFT_DOWN);
+
+  // Move entity while mouse moves
+  handler.setInputAction(function (movement: any) {
+    if (pickedEntity) {
+      const ray = viewer.camera.getPickRay(movement.endPosition);
+      if (ray) {
+        // Pick against globe (terrain)
+        const cartesian = viewer.scene.globe.pick(ray, viewer.scene);
+        if (cartesian) {
+          pickedEntity.position = new Cesium.ConstantPositionProperty(cartesian) as any;
+        }
+      }
+    }
+  }, Cesium.ScreenSpaceEventType.MOUSE_MOVE);
+
+  // Release entity
+  handler.setInputAction(function () {
+    if (pickedEntity) {
+      pickedEntity = undefined;
+      viewer.scene.screenSpaceCameraController.enableInputs = true; // Re-enable camera
+    }
+  }, Cesium.ScreenSpaceEventType.LEFT_UP);
 }
 
 export type { Viewer as CesiumViewer } from 'cesium';
