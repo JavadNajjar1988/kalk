@@ -257,11 +257,156 @@ let coordinateConverter: CoordinateConverter | null = null;
 let originLon = 0;
 let originLat = 0;
 
+function resolveApiBase(): string {
+  const envUrl = (import.meta as any).env?.VITE_API_URL as string | undefined;
+  if (envUrl && envUrl.trim().length > 0) {
+    return envUrl.trim().replace(/\/+$/, '');
+  }
+  const { protocol, hostname } = window.location;
+  return `${protocol}//${hostname}:8000/api`;
+}
+
+/**
+ * Backend often returns url_template as a path like `/api/tile-cache/5/{z}/{x}/{y}`.
+ * The browser would otherwise resolve that against the simulator origin (e.g. :3001) and 404.
+ * Absolute URLs (TileServer, etc.) are left unchanged.
+ */
+function absolutizeTileUrlTemplate(template: string): string {
+  const t = template.trim();
+  if (!t) return t;
+  if (/^https?:\/\//i.test(t)) return t;
+  if (t.startsWith('/')) {
+    const apiBase = resolveApiBase();
+    const origin = new URL(apiBase, window.location.href).origin;
+    return new URL(t, origin).toString();
+  }
+  return t;
+}
+
+async function fetchOfflineMapUrlTemplateById(mapId: number): Promise<string | null> {
+  try {
+    const base = resolveApiBase();
+    const url = `${base}/maps/${encodeURIComponent(String(mapId))}`;
+    const headers: Record<string, string> = { Accept: 'application/json' };
+    const token = localStorage.getItem('access_token');
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+    const res = await fetch(url, { headers });
+    if (!res.ok) {
+      console.warn(`[Simulator] GET ${url} → ${res.status} (offline map template unavailable)`);
+      return null;
+    }
+    const json: any = await res.json();
+    const data = json?.data ?? json;
+    const template = data?.url_template;
+    if (typeof template !== 'string' || !template.trim()) return null;
+    const absolute = absolutizeTileUrlTemplate(template);
+    console.log('🗺️ Offline map template resolved:', mapId, '→', absolute);
+    return absolute;
+  } catch (e) {
+    console.warn('[Simulator] fetchOfflineMapUrlTemplateById failed', e);
+    return null;
+  }
+}
+
+function resolveWsBase(): string {
+  const apiBase = resolveApiBase(); // e.g. http://host:8000/api
+  const u = new URL(apiBase, window.location.href);
+  const wsProto = u.protocol === 'https:' ? 'wss:' : 'ws:';
+  return `${wsProto}//${u.host}${u.pathname.replace(/\/+$/, '')}`;
+}
+
+function subscribeScenarioRealtimeBasemap(scenarioId: string) {
+  try {
+    const wsBase = resolveWsBase(); // .../api
+    const wsUrl = `${wsBase}/ws/scenarios/${encodeURIComponent(scenarioId)}`;
+    const ws = new WebSocket(wsUrl);
+
+    let pingTimer: number | null = null;
+    ws.addEventListener('open', () => {
+      console.log('🔌 Realtime connected:', wsUrl);
+      // Keep the connection active; server loop waits for receive_text.
+      pingTimer = window.setInterval(() => {
+        try {
+          ws.send('ping');
+        } catch {}
+      }, 20000);
+    });
+
+    ws.addEventListener('message', async (evt) => {
+      try {
+        const msg = JSON.parse(String(evt.data || '{}'));
+        if (msg?.type !== 'basemap_changed') return;
+        const baseMapId = msg?.baseMapId as string | undefined;
+        if (!baseMapId || typeof baseMapId !== 'string') return;
+
+        let offlineUrlTemplate: string | undefined;
+        if (baseMapId.startsWith('offline-')) {
+          const rawId = Number(baseMapId.replace('offline-', '').trim());
+          if (Number.isFinite(rawId) && rawId > 0) {
+            const template = await fetchOfflineMapUrlTemplateById(rawId);
+            if (template) offlineUrlTemplate = template;
+          }
+        }
+
+        const { applyBasemapImagery } = await import('./cesiumViewer');
+        if (cesiumViewer) {
+          applyBasemapImagery(cesiumViewer as any, { baseMapId, offlineUrlTemplate });
+        }
+      } catch (e) {
+        console.warn('Realtime message parse/apply failed', e);
+      }
+    });
+
+    ws.addEventListener('close', () => {
+      console.warn('🔌 Realtime disconnected');
+      if (pingTimer) window.clearInterval(pingTimer);
+    });
+    ws.addEventListener('error', (e) => {
+      console.warn('Realtime websocket error', e);
+    });
+  } catch (e) {
+    console.warn('Failed to subscribe realtime basemap updates', e);
+  }
+}
+
 async function initializeCesium() {
   try {
     const { createCesiumViewer } = await import('./cesiumViewer');
-    cesiumViewer = createCesiumViewer('cesiumContainer');
+    // Determine basemap from scenario settings (KalkNegar), if scenarioId provided.
+    let baseMapId: string | undefined;
+    let offlineUrlTemplate: string | undefined;
+    try {
+      const scenarioId =
+        typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('scenarioId') : null;
+      if (scenarioId) {
+        const { fetchScenarioById } = await import('./scenarioPins');
+        const scenario = await fetchScenarioById(scenarioId);
+        baseMapId = scenario?.content?.settings?.map?.baseMapId ?? scenario?.content?.mapSettings?.baseMapId;
+        if (typeof baseMapId === 'string' && baseMapId.startsWith('offline-')) {
+          const rawId = Number(baseMapId.replace('offline-', '').trim());
+          if (Number.isFinite(rawId) && rawId > 0) {
+            const template = await fetchOfflineMapUrlTemplateById(rawId);
+            if (template) {
+              offlineUrlTemplate = template;
+            }
+          }
+        }
+        console.log('🗺️ Simulator basemap from scenario:', baseMapId ?? '(none)');
+      }
+    } catch (e) {
+      console.warn('Failed to resolve basemap from scenario; using default imagery.', e);
+    }
+
+    cesiumViewer = createCesiumViewer('cesiumContainer', {
+      baseMapId,
+      offlineUrlTemplate,
+    });
     console.log('Cesium viewer initialized');
+    if (scenarioId) {
+      subscribeScenarioRealtimeBasemap(scenarioId);
+    }
 
     // پس از آماده شدن Cesium، پین‌ها و نمادهای سناریوها را اضافه کن
     try {

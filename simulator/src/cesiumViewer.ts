@@ -36,24 +36,107 @@ function installViewerCleanup(viewer: Cesium.Viewer) {
   (viewer as any)._cleanupHookAttached = true;
 }
 
+export type BaseMapId =
+  | 'osm'
+  | 'osm-de'
+  | 'grayBasemap'
+  | 'openTopoMap'
+  | 'esriWorldImagery'
+  | 'kartverketTopo4'
+  | 'None'
+  | `offline-${number}`
+  | string;
 
+export interface CesiumBaseMapConfig {
+  /** Base map chosen in KalkNegar scenario settings. */
+  baseMapId?: BaseMapId;
+  /**
+   * Optional URL template to use when baseMapId is "offline-<id>".
+   * Commonly comes from backend `OfflineMap.url_template`.
+   */
+  offlineUrlTemplate?: string;
+}
 
-// Helper function to resolve tile server base URL (same as dashboard)
-const resolveTileServerBase = (): string => {
-  const raw = (import.meta as any).env?.VITE_TILESERVER_URL as string | undefined;
-  if (raw && raw.trim().length > 0) {
-    return raw.trim().replace(/\/+$/, '');
+/** Global OSM raster tiles (same layer name `osm` as in KalkNegar; mapConfig lists a local copy for offline editing only). */
+const PUBLIC_OSM_URL_TEMPLATE = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
+
+function normalizeCesiumUrlTemplate(template: string): string {
+  // OpenLayers uses {-y} for TMS; Cesium uses {reverseY}.
+  return template.replace(/\{\-y\}/g, '{reverseY}');
+}
+
+function resolveImageryUrlTemplate(
+  baseMapId?: BaseMapId,
+  offlineUrlTemplate?: string
+): string | null {
+  const id = String(baseMapId || 'osm');
+
+  if (id === 'None') return null;
+
+  // Offline maps registered via dashboard are named "offline-<id>" in KalkNegar.
+  if (id.startsWith('offline-')) {
+    if (offlineUrlTemplate && offlineUrlTemplate.trim().length > 0) {
+      return normalizeCesiumUrlTemplate(offlineUrlTemplate.trim());
+    }
+    console.warn(
+      '[Cesium] No url_template for',
+      id,
+      '— using public OSM until the offline map is available from the API.'
+    );
+    return PUBLIC_OSM_URL_TEMPLATE;
   }
-  if (typeof window !== 'undefined') {
-    const { protocol, hostname } = window.location;
-    return `${protocol}//${hostname}:8480`;
+
+  // Keep ids aligned with `front_kalknegar/public/config/mapConfig.json` (names / baseMapId).
+  // Use public OSM here so the simulator works without a local TileServer on :8480.
+  switch (id) {
+    case 'osm':
+      return PUBLIC_OSM_URL_TEMPLATE;
+    case 'osm-de':
+      return 'https://tile.openstreetmap.de/{z}/{x}/{y}.png';
+    case 'grayBasemap':
+      return 'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}';
+    case 'openTopoMap':
+      return 'https://a.tile.opentopomap.org/{z}/{x}/{y}.png';
+    case 'esriWorldImagery':
+      return 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}';
+    case 'kartverketTopo4':
+      return 'https://cache.kartverket.no/v1/wmts/1.0.0/topo/default/webmercator/{z}/{y}/{x}.png';
+    default:
+      return null;
   }
-  return 'http://127.0.0.1:8480';
-};
+}
+
+export function applyBasemapImagery(viewer: Cesium.Viewer, config: CesiumBaseMapConfig = {}): void {
+  const selectedUrl = resolveImageryUrlTemplate(config.baseMapId, config.offlineUrlTemplate);
+
+  // Clear imagery layers; keep terrain untouched.
+  try {
+    viewer.imageryLayers.removeAll();
+  } catch {}
+
+  if (!selectedUrl) {
+    console.log('🗺️ Basemap set to None (no imagery layers).');
+    return;
+  }
+
+  try {
+    const isOsmTemplate = selectedUrl.includes('{s}.tile.openstreetmap.org');
+    const imagery = new Cesium.UrlTemplateImageryProvider({
+      url: selectedUrl,
+      subdomains: isOsmTemplate ? ['a', 'b', 'c'] : undefined,
+      maximumLevel: 19,
+      credit: isOsmTemplate ? '© OpenStreetMap contributors' : 'Basemap'
+    });
+    viewer.imageryLayers.addImageryProvider(imagery);
+    console.log('✅ Basemap imagery applied (live):', config.baseMapId || 'default', '→', selectedUrl);
+  } catch (e) {
+    console.warn('⚠️ Failed to apply basemap imagery (live).', e);
+  }
+}
 
 
 
-export function createCesiumViewer(containerId: string): Cesium.Viewer {
+export function createCesiumViewer(containerId: string, config: CesiumBaseMapConfig = {}): Cesium.Viewer {
   const container = document.getElementById(containerId);
   if (!container) {
     throw new Error(`Container with id "${containerId}" not found`);
@@ -81,46 +164,32 @@ export function createCesiumViewer(containerId: string): Cesium.Viewer {
   // Remove default imagery layer (Bing Maps or other default)
   viewer.imageryLayers.removeAll();
 
-  // آدرس پایه tile server برای نقشه‌های آفلاین
-  const tileServerBase = resolveTileServerBase();
+  applyBasemapImagery(viewer, config);
 
-  // Add base imagery using Cesium Ion World Imagery (به‌جای OpenStreetMap)
-  Cesium.IonImageryProvider.fromAssetId(3)
-    .then((ionImagery) => {
-      viewer.imageryLayers.addImageryProvider(ionImagery);
-      console.log('✅ Cesium Ion World Imagery added as base layer');
-    })
-    .catch((ionError) => {
-      console.error('❌ Failed to add Cesium Ion imagery, falling back to OSM:', ionError);
+  // Fallback imagery using Cesium Ion World Imagery (only if we still have none)
+  if (viewer.imageryLayers.length === 0) {
+    Cesium.IonImageryProvider.fromAssetId(3)
+      .then((ionImagery) => {
+        viewer.imageryLayers.addImageryProvider(ionImagery);
+        console.log('✅ Cesium Ion World Imagery added as fallback base layer');
+      })
+      .catch((ionError) => {
+        console.error('❌ Failed to add Cesium Ion imagery, falling back to OSM:', ionError);
 
-      // Fallback: OpenStreetMap به‌صورت آنلاین
-      try {
-        const osmImagery = new Cesium.UrlTemplateImageryProvider({
-          url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
-          subdomains: ['a', 'b', 'c'],
-          maximumLevel: 19,
-          credit: '© OpenStreetMap contributors'
-        });
-        viewer.imageryLayers.addImageryProvider(osmImagery);
-        console.log('✅ OpenStreetMap imagery provider added successfully (fallback)');
-      } catch (osmError) {
-        console.error('❌ Failed to add OpenStreetMap imagery:', osmError);
-      }
-    });
-
-  // 2. افزودن لایه نقشه آفلاین (اگر tileserver در حال اجرا باشد)
-  try {
-    const offlineUrl = `${tileServerBase}/data/maps.mbtiles/{z}/{x}/{y}.png`;
-    const offlineImagery = new Cesium.UrlTemplateImageryProvider({
-      url: offlineUrl,
-      maximumLevel: 19,
-      credit: 'نقشه آفلاین'
-    });
-    // لایه آفلاین را به‌عنوان لایه بالایی اضافه می‌کنیم، بدون دست‌کاری لایه OSM
-    viewer.imageryLayers.addImageryProvider(offlineImagery);
-    console.log('✅ Offline imagery layer added on top of base map:', offlineUrl);
-  } catch (offlineError) {
-    console.warn('⚠️ Failed to add offline imagery layer, continuing with online maps:', offlineError);
+        // Fallback: OpenStreetMap به‌صورت آنلاین
+        try {
+          const osmImagery = new Cesium.UrlTemplateImageryProvider({
+            url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+            subdomains: ['a', 'b', 'c'],
+            maximumLevel: 19,
+            credit: '© OpenStreetMap contributors'
+          });
+          viewer.imageryLayers.addImageryProvider(osmImagery);
+          console.log('✅ OpenStreetMap imagery provider added successfully (fallback)');
+        } catch (osmError) {
+          console.error('❌ Failed to add OpenStreetMap imagery:', osmError);
+        }
+      });
   }
 
   // Set scene mode to 3D (globe)
