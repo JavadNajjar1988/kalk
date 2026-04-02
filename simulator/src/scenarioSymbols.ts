@@ -172,6 +172,30 @@ function buildLineMaterial(
 }
 
 // ---------------------------------------------------------------------------
+// SIDC-based tactical styling helpers
+// ---------------------------------------------------------------------------
+
+function getAffiliationColor(sidc: string | undefined | null): Cesium.Color {
+  if (!sidc || sidc.length < 2) return Cesium.Color.YELLOW;
+  switch (sidc[1].toUpperCase()) {
+    case 'F': case 'A': case 'M': case 'D':
+      return Cesium.Color.DODGERBLUE;
+    case 'H': case 'S': case 'J': case 'K':
+      return Cesium.Color.RED;
+    case 'N': case 'L':
+      return Cesium.Color.LIMEGREEN;
+    default:
+      return Cesium.Color.YELLOW;
+  }
+}
+
+function isOffensiveSymbol(sidc: string | undefined | null): boolean {
+  if (!sidc || sidc.length < 6 || sidc[0] !== 'G') return false;
+  const fn = sidc.substring(4).replace(/[-*]/g, '');
+  return /^(OA|OL|A[A-Z]|PA|SA)/.test(fn);
+}
+
+// ---------------------------------------------------------------------------
 // EPSG:3857 (Web Mercator) → WGS84 (lon/lat degrees) conversion
 // ---------------------------------------------------------------------------
 
@@ -437,46 +461,46 @@ function addTacticalGeometry(
   const properties = getFeatureProperties(feature);
   const s: Record<string, any> = { ...(feature.style || {}), ...(properties || {}) };
 
-  // Odin ممکن است sidc را با کلیدهای متفاوتی ذخیره کند.
-  // اینجا چند نام رایج را پوشش می‌دهیم تا Featureها به خاطر sidcِ خالی حذف نشوند.
   const sidc =
-    s?.sidc ??
-    s?.SIDC ??
-    s?.symbolCode ??
-    s?.symbol_code ??
-    s?.['symbol-code'] ??
-    s?.['symbolCode'] ??
-    feature.meta?.sidc ??
-    feature.meta?.SIDC;
+    s?.sidc ?? s?.SIDC ?? s?.symbolCode ?? s?.symbol_code ??
+    s?.['symbol-code'] ?? s?.['symbolCode'] ??
+    feature.meta?.sidc ?? feature.meta?.SIDC;
 
   const name =
-    properties?.name ??
-    properties?.Name ??
-    feature.meta?.name ??
-    feature.meta?.Name ??
-    feature.meta?.description;
+    properties?.name ?? properties?.Name ??
+    feature.meta?.name ?? feature.meta?.Name ?? feature.meta?.description;
 
-  const strokeColor = parseColorWithOpacity(
-    s.stroke || s['stroke-color'],
-    s['stroke-opacity'],
-  );
-  const fillColor = parseColorWithOpacity(
-    s.fill || s['fill-color'],
-    s['fill-opacity'],
-    0.3,
-  );
-  const strokeWidth = Number(s['stroke-width']) || Number(s.strokeWidth) || 2;
+  // ---- Explicit style vs SIDC-derived style ----
+  const hasExplicitStroke = !!(s.stroke || s['stroke-color']);
+  const hasExplicitFill = !!(s.fill || s['fill-color']);
+
+  const explicitStroke = hasExplicitStroke
+    ? parseColorWithOpacity(s.stroke || s['stroke-color'], s['stroke-opacity'])
+    : null;
+  const explicitFill = hasExplicitFill
+    ? parseColorWithOpacity(s.fill || s['fill-color'], s['fill-opacity'], 0.3)
+    : null;
+
+  const strokeWidth = Number(s['stroke-width']) || Number(s.strokeWidth) || 3;
   const strokeStyle: string = s['stroke-style'] || 'solid';
-  const lineMaterial = buildLineMaterial(strokeColor, strokeStyle);
 
+  const affiliationColor = getAffiliationColor(sidc);
+  const offensive = isOffensiveSymbol(sidc);
+
+  const effectiveStroke = explicitStroke ?? affiliationColor;
+  const effectiveFill = explicitFill ?? affiliationColor.withAlpha(0.25);
+  const effectiveWidth = Math.max(strokeWidth, 5);
+
+  const tacticalMaterial: any = offensive
+    ? new Cesium.PolylineArrowMaterialProperty(effectiveStroke)
+    : buildLineMaterial(effectiveStroke, strokeStyle);
+
+  // Billboard only for point-type geometries
   const addSymbolAt = (pos: { lon: number; lat: number; height: number }) => {
     if (!sidc) return;
     addBillboard(viewer, {
-      // همیشه index را در id بیاوریم تا collision و overwrite در GeometryCollection رخ ندهد.
       id: `tactical-${scenarioId}-${feature.id ?? 'feature'}-${index}`,
       sidc,
-      // اگر در مختصات مقدار height/z داشته باشیم، گم نشود.
-      // CLAMP_TO_GROUND در هر صورت روی زمین می‌چسباند؛ ولی این کار در حالت fallback کمک می‌کند.
       position: { ...pos },
       size: DEFAULT_TACTICAL_SIZE,
       label: name,
@@ -484,7 +508,28 @@ function addTacticalGeometry(
     });
   };
 
+  // Label-only for line/area geometries (no floating billboard)
+  const addCentroidLabel = (pos: { lon: number; lat: number; height: number }, suffix = '') => {
+    if (!name) return;
+    viewer.entities.add({
+      id: `tactical-label-${scenarioId}-${feature.id ?? 'feature'}-${index}${suffix}`,
+      position: toCartesian(pos.lon, pos.lat, 0),
+      label: {
+        text: name,
+        font: '13px sans-serif',
+        fillColor: Cesium.Color.WHITE,
+        outlineColor: Cesium.Color.BLACK,
+        outlineWidth: 2,
+        style: Cesium.LabelStyle.FILL_AND_OUTLINE,
+        verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
+        heightReference: Cesium.HeightReference.CLAMP_TO_GROUND,
+        disableDepthTestDistance: Number.POSITIVE_INFINITY,
+      },
+    });
+  };
+
   switch (geometry.type) {
+    // ---- Point: billboard (icon) on surface ----
     case 'Point': {
       const pos = parsePosition(geometry.coordinates);
       if (pos) addSymbolAt(pos);
@@ -505,6 +550,8 @@ function addTacticalGeometry(
       });
       break;
     }
+
+    // ---- Lines: polyline on surface, color/arrow from SIDC ----
     case 'LineString': {
       const points = flattenCoordinates(geometry.coordinates);
       if (points.length >= 2) {
@@ -512,14 +559,14 @@ function addTacticalGeometry(
           id: `tactical-line-${scenarioId}-${feature.id ?? 'feature'}-${index}`,
           polyline: {
             positions: points.map((p) => toCartesian(p.lon, p.lat, 0)),
-            width: strokeWidth,
+            width: effectiveWidth,
             clampToGround: true,
-            material: lineMaterial,
+            material: tacticalMaterial,
           },
         });
       }
       const center = getCentroid(points);
-      if (center) addSymbolAt(center);
+      if (center) addCentroidLabel(center);
       break;
     }
     case 'MultiLineString': {
@@ -531,17 +578,20 @@ function addTacticalGeometry(
             id: `tactical-line-${scenarioId}-${feature.id ?? 'feature'}-${index}-${segIndex}`,
             polyline: {
               positions: points.map((p) => toCartesian(p.lon, p.lat, 0)),
-              width: strokeWidth,
+              width: effectiveWidth,
               clampToGround: true,
-              material: lineMaterial,
+              material: tacticalMaterial,
             },
           });
         }
-        const center = getCentroid(points);
-        if (center) addSymbolAt(center);
       });
+      const allPts = segments.flatMap((seg: any) => flattenCoordinates(seg));
+      const center = getCentroid(allPts);
+      if (center) addCentroidLabel(center);
       break;
     }
+
+    // ---- Polygons: filled area on surface ----
     case 'Polygon': {
       const rings = Array.isArray(geometry.coordinates) ? geometry.coordinates : [];
       const outerRing = rings[0];
@@ -551,16 +601,16 @@ function addTacticalGeometry(
           id: `tactical-polygon-${scenarioId}-${feature.id ?? 'feature'}-${index}`,
           polygon: {
             hierarchy: points.map((p) => toCartesian(p.lon, p.lat, 0)),
-            material: fillColor,
+            material: effectiveFill,
             outline: true,
-            outlineColor: strokeColor,
+            outlineColor: effectiveStroke,
             perPositionHeight: false,
             heightReference: Cesium.HeightReference.CLAMP_TO_GROUND,
           },
         });
       }
       const center = getCentroid(points);
-      if (center) addSymbolAt(center);
+      if (center) addCentroidLabel(center);
       break;
     }
     case 'MultiPolygon': {
@@ -573,19 +623,25 @@ function addTacticalGeometry(
             id: `tactical-polygon-${scenarioId}-${feature.id ?? 'feature'}-${index}-${polyIndex}`,
             polygon: {
               hierarchy: points.map((p) => toCartesian(p.lon, p.lat, 0)),
-              material: fillColor,
+              material: effectiveFill,
               outline: true,
-              outlineColor: strokeColor,
+              outlineColor: effectiveStroke,
               perPositionHeight: false,
               heightReference: Cesium.HeightReference.CLAMP_TO_GROUND,
             },
           });
         }
-        const center = getCentroid(points);
-        if (center) addSymbolAt(center);
       });
+      const allPts = polygons.flatMap((poly: any) => {
+        const ring = Array.isArray(poly) ? poly[0] : [];
+        return flattenCoordinates(ring);
+      });
+      const center = getCentroid(allPts);
+      if (center) addCentroidLabel(center);
       break;
     }
+
+    // ---- Circle: ellipse on surface ----
     case 'Circle': {
       const circlePos = parsePosition(geometry.coordinates);
       const radius = Number(feature.meta?.radius) || 500;
@@ -596,16 +652,18 @@ function addTacticalGeometry(
           ellipse: {
             semiMajorAxis: radius,
             semiMinorAxis: radius,
-            material: fillColor,
+            material: effectiveFill,
             outline: true,
-            outlineColor: strokeColor,
+            outlineColor: effectiveStroke,
             heightReference: Cesium.HeightReference.CLAMP_TO_GROUND,
           },
         });
-        addSymbolAt(circlePos);
+        addCentroidLabel({ ...circlePos, height: 0 });
       }
       break;
     }
+
+    // ---- GeometryCollection: recurse ----
     case 'GeometryCollection': {
       const geometries = Array.isArray(geometry.geometries) ? geometry.geometries : [];
       geometries.forEach((g, gIndex) => {
@@ -613,6 +671,8 @@ function addTacticalGeometry(
       });
       break;
     }
+
+    // ---- Unknown: best-effort billboard at centroid ----
     default: {
       const points = flattenCoordinates(geometry.coordinates);
       const center = getCentroid(points);
