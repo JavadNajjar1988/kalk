@@ -2,6 +2,7 @@ import * as Cesium from 'cesium';
 import { Symbol as SignsSymbol } from '@syncpoint/signs';
 import ms from 'milsymbol';
 import type { BackendScenario } from './scenarioPins';
+import { renderTacticalFeature } from './tacticalRenderer';
 
 type PositionLike = number[];
 
@@ -458,6 +459,19 @@ function addTacticalGeometry(
   scenarioId: string,
   index: number
 ) {
+  // ---- Path A: Odin exact style (same computation as 2D map) ----
+  // Only for non-point geometries that have a dedicated SIDC style function.
+  const gType = geometry?.type ?? '';
+  if (gType !== 'Point' && gType !== 'MultiPoint') {
+    const rendered = renderTacticalFeature(
+      viewer,
+      { id: feature.id, geometry, properties: feature.properties, style: feature.style, meta: feature.meta },
+      scenarioId,
+      index,
+    );
+    if (rendered) return;
+    // If SIDC not found in Odin registry, fall through to Path B below.
+  }
   const properties = getFeatureProperties(feature);
   const s: Record<string, any> = { ...(feature.style || {}), ...(properties || {}) };
 
@@ -746,7 +760,6 @@ export async function addScenarioSymbols(
     const tuples = content.metadata?.tacticalSymbols?.tuples;
     if (Array.isArray(tuples) && tuples.length > 0) {
       const tacticalFeatures = extractTacticalFeatures(tuples);
-      console.log(`[scenarioSymbols] Rendering ${tacticalFeatures.length} tactical features from metadata.tacticalSymbols`);
       tacticalFeatures.forEach((feature, index) => {
         const geometry = getFeatureGeometry(feature);
         if (!geometry) return;
