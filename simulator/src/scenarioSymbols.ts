@@ -1,6 +1,6 @@
 import * as Cesium from 'cesium';
-import { Symbol as SignsSymbol } from '@syncpoint/signs';
 import ms from 'milsymbol';
+import { symbolGenerator } from './milsymbwrapper';
 import type { BackendScenario } from './scenarioPins';
 import { renderTacticalFeature } from './tacticalRenderer';
 
@@ -155,12 +155,10 @@ function getRenderedMilSymbol(
 }
 
 function getTacticalImageDataUri(sidc: string, size: number, options?: Record<string, any>): string | null {
-  // First try @syncpoint/signs (same approach you had for tactical)
-  const uri = getSymbolDataUri(sidc, size, { infoFields: true, ...(options || {}) });
-  if (uri) return uri;
+  const rendered = getRenderedMilSymbol(sidc, size, { infoFields: true, ...(options || {}) });
+  if (rendered) return rendered.image;
 
-  // Fallback: try milsymbol (more permissive for some SIDC variants)
-  // NOTE: unitSymbolDataUri caches separately; that's fine.
+  // Fallback: milsymbol without custom color-mode wrapping
   return unitSymbolDataUri(sidc, size, options || {}, undefined);
 }
 
@@ -772,7 +770,6 @@ function addBillboard(
     label?: string;
     clampToGround: boolean;
     symbolOptions?: Record<string, any>;
-    showPredicate?: (epochMs: number) => boolean;
   }
 ) {
   const image = getTacticalImageDataUri(options.sidc, options.size, {});
@@ -979,7 +976,6 @@ function addTacticalGeometry(
         outlineColor: 'white',
         outlineWidth: 8,
       },
-      showPredicate,
     });
   };
 
@@ -1021,7 +1017,6 @@ function addTacticalGeometry(
           size: DEFAULT_TACTICAL_SIZE,
           label: name,
           clampToGround: true,
-          showPredicate,
         });
       });
       break;
