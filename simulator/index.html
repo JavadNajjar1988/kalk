@@ -5,6 +5,26 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Kalk Simulator - Babylon.js</title>
     <style>
+      @font-face {
+        font-family: 'SimulatorUi';
+        src:
+          url('./fonts/Yekan.woff2') format('woff2'),
+          url('./fonts/Yekan.woff') format('woff');
+        font-weight: 400;
+        font-style: normal;
+        font-display: swap;
+      }
+
+      @font-face {
+        font-family: 'SimulatorUi';
+        src:
+          url('./fonts/Yekan-Bold.woff2') format('woff2'),
+          url('./fonts/Yekan-Bold.woff') format('woff');
+        font-weight: 700;
+        font-style: normal;
+        font-display: swap;
+      }
+
       * {
         margin: 0;
         padding: 0;
@@ -15,7 +35,7 @@
         width: 100%;
         height: 100vh;
         overflow: hidden;
-        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        font-family: 'SimulatorUi', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       }
 
       #mainContainer {
@@ -170,7 +190,7 @@
       #scenarioDebugPanel {
         position: fixed;
         left: 16px;
-        bottom: 16px;
+        bottom: 188px;
         z-index: 9998;
         min-width: 280px;
         max-width: 420px;
@@ -187,6 +207,257 @@
 
       #scenarioDebugPanel strong {
         color: #8fe7ff;
+      }
+
+      #timelinePanel {
+        position: fixed;
+        left: 50%;
+        bottom: 16px;
+        transform: translateX(-50%);
+        width: min(1120px, calc(100vw - 32px));
+        z-index: 9997;
+        padding: 14px 16px 16px;
+        border-radius: 18px;
+        background: rgba(8, 14, 22, 0.9);
+        color: #f5fbff;
+        border: 1px solid rgba(255, 255, 255, 0.14);
+        backdrop-filter: blur(14px);
+        box-shadow: 0 22px 48px rgba(0, 0, 0, 0.34);
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.35s ease;
+      }
+
+      #timelinePanel.visible {
+        opacity: 1;
+        pointer-events: auto;
+      }
+
+      .timeline-summary {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 16px;
+        margin-bottom: 14px;
+      }
+
+      .timeline-current-block {
+        min-width: 0;
+      }
+
+      .timeline-current-label {
+        color: #ffffff;
+        font-size: 18px;
+        font-weight: 700;
+        line-height: 1.5;
+      }
+
+      .timeline-current-sublabel {
+        color: rgba(230, 244, 255, 0.72);
+        font-size: 12px;
+        line-height: 1.7;
+      }
+
+      .timeline-controls {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex-wrap: wrap;
+      }
+
+      .timeline-control-button,
+      .timeline-speed-select {
+        border-radius: 10px;
+        border: 1px solid rgba(255, 255, 255, 0.18);
+        background: rgba(255, 255, 255, 0.08);
+        color: #f7fbff;
+        min-height: 40px;
+        font: inherit;
+      }
+
+      .timeline-control-button {
+        padding: 0 16px;
+        cursor: pointer;
+        transition:
+          background-color 0.2s ease,
+          border-color 0.2s ease,
+          transform 0.2s ease;
+      }
+
+      .timeline-control-button:hover,
+      .timeline-speed-select:hover {
+        background: rgba(255, 255, 255, 0.14);
+        border-color: rgba(255, 255, 255, 0.26);
+      }
+
+      .timeline-control-button:active {
+        transform: translateY(1px);
+      }
+
+      .timeline-control-button.primary {
+        background: linear-gradient(135deg, rgba(37, 99, 235, 0.9), rgba(14, 165, 233, 0.82));
+        border-color: rgba(143, 231, 255, 0.4);
+      }
+
+      .timeline-control-button.secondary {
+        background: rgba(255, 255, 255, 0.1);
+      }
+
+      .timeline-speed-group {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        color: rgba(230, 244, 255, 0.78);
+        font-size: 13px;
+      }
+
+      .timeline-speed-select {
+        padding: 0 12px;
+        cursor: pointer;
+      }
+
+      .timeline-track-shell {
+        direction: ltr;
+      }
+
+      .timeline-edge-labels,
+      .timeline-footer {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 18px;
+      }
+
+      .timeline-edge-labels {
+        margin-bottom: 10px;
+      }
+
+      .timeline-edge {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        min-width: 0;
+      }
+
+      .timeline-edge span,
+      .timeline-footer span {
+        color: rgba(230, 244, 255, 0.68);
+        font-size: 11px;
+      }
+
+      .timeline-edge strong {
+        color: #ffffff;
+        font-size: 13px;
+        font-weight: 700;
+      }
+
+      #timelineTicks {
+        position: relative;
+        height: 34px;
+        margin-bottom: 10px;
+      }
+
+      .timeline-tick {
+        position: absolute;
+        top: 0;
+        transform: translateX(-50%);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 4px;
+        color: rgba(230, 244, 255, 0.78);
+        font-size: 11px;
+        white-space: nowrap;
+      }
+
+      .timeline-tick::before {
+        content: "";
+        width: 1px;
+        height: 12px;
+        background: rgba(255, 255, 255, 0.26);
+      }
+
+      #timelineSlider {
+        --timeline-progress: 0%;
+        -webkit-appearance: none;
+        appearance: none;
+        width: 100%;
+        height: 8px;
+        border-radius: 999px;
+        outline: none;
+        background:
+          linear-gradient(
+            90deg,
+            rgba(79, 209, 255, 0.96) 0%,
+            rgba(79, 209, 255, 0.96) var(--timeline-progress),
+            rgba(255, 255, 255, 0.12) var(--timeline-progress),
+            rgba(255, 255, 255, 0.12) 100%
+          );
+      }
+
+      #timelineSlider::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        appearance: none;
+        width: 18px;
+        height: 18px;
+        border-radius: 50%;
+        background: #ffffff;
+        border: 3px solid #38bdf8;
+        box-shadow: 0 0 0 5px rgba(56, 189, 248, 0.14);
+        cursor: pointer;
+      }
+
+      #timelineSlider::-moz-range-thumb {
+        width: 18px;
+        height: 18px;
+        border-radius: 50%;
+        background: #ffffff;
+        border: 3px solid #38bdf8;
+        box-shadow: 0 0 0 5px rgba(56, 189, 248, 0.14);
+        cursor: pointer;
+      }
+
+      .timeline-footer {
+        margin-top: 10px;
+      }
+
+      #timelineProgressLabel {
+        color: #8fe7ff;
+        font-size: 12px;
+        font-weight: 700;
+      }
+
+      @media (max-width: 900px) {
+        #scenarioDebugPanel {
+          left: 12px;
+          right: 12px;
+          bottom: 238px;
+          max-width: none;
+          min-width: 0;
+        }
+
+        #timelinePanel {
+          width: calc(100vw - 24px);
+          bottom: 12px;
+          padding: 12px;
+        }
+
+        .timeline-summary {
+          flex-direction: column;
+          align-items: stretch;
+        }
+
+        .timeline-controls {
+          justify-content: space-between;
+        }
+
+        .timeline-current-label {
+          font-size: 16px;
+        }
+
+        .timeline-edge strong {
+          font-size: 12px;
+        }
       }
     </style>
   </head>
@@ -205,6 +476,47 @@
       </div>
     </header>
     <div id="scenarioDebugPanel">در حال آماده‌سازی شبیه‌ساز...</div>
+    <section id="timelinePanel" aria-label="نوار زمان سناریو">
+      <div class="timeline-summary">
+        <div class="timeline-current-block">
+          <div id="timelineCurrentLabel" class="timeline-current-label">در حال آماده‌سازی زمان سناریو...</div>
+          <div id="timelineCurrentSubLabel" class="timeline-current-sublabel">اطلاعات تاریخ و زمان سناریو پس از بارگذاری نمایش داده می‌شود.</div>
+        </div>
+        <div class="timeline-controls">
+          <button id="timelinePlayPauseButton" type="button" class="timeline-control-button primary">توقف</button>
+          <button id="timelineStopButton" type="button" class="timeline-control-button secondary">بازپخش</button>
+          <label class="timeline-speed-group" for="timelineSpeedSelect">
+            <span>سرعت</span>
+            <select id="timelineSpeedSelect" class="timeline-speed-select">
+              <option value="0.25">۰.۲۵×</option>
+              <option value="0.5">۰.۵×</option>
+              <option value="1" selected>۱×</option>
+              <option value="2">۲×</option>
+              <option value="4">۴×</option>
+              <option value="8">۸×</option>
+            </select>
+          </label>
+        </div>
+      </div>
+      <div class="timeline-track-shell">
+        <div class="timeline-edge-labels">
+          <div class="timeline-edge">
+            <span>آغاز</span>
+            <strong id="timelineStartLabel">-</strong>
+          </div>
+          <div class="timeline-edge">
+            <span>پایان</span>
+            <strong id="timelineEndLabel">-</strong>
+          </div>
+        </div>
+        <div id="timelineTicks"></div>
+        <input id="timelineSlider" type="range" min="0" max="1000" step="1" value="0" />
+        <div class="timeline-footer">
+          <span id="timelineProgressLabel">پیشرفت: ۰٪</span>
+          <span id="timelineTimezoneLabel">منطقه زمانی: -</span>
+        </div>
+      </div>
+    </section>
     <div id="splashScreen">
       <video id="splashVideo" autoplay muted playsinline>
         <source src="/splash/splash.mp4" type="video/mp4" />

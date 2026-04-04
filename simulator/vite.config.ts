@@ -8,6 +8,7 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': resolve(__dirname, './src'),
+      milsymbol: resolve(__dirname, './node_modules/milsymbol/index.js'),
     },
     dedupe: ['cesium'],
   },
@@ -29,6 +30,7 @@ export default defineConfig({
   optimizeDeps: {
     include: [
       'cesium',
+      'milsymbol',
       // jsts deep CJS imports — pre-bundle so Vite can serve them as ESM
       'jsts/org/locationtech/jts/algorithm/Angle.js',
       'jsts/org/locationtech/jts/algorithm/Centroid.js',

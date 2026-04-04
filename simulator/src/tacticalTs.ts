@@ -214,6 +214,7 @@ export const points = (geom: any): any[] => {
 /** The full TS object — passed as first argument to all Odin style functions */
 export const TS = {
   PI_OVER_2, PI_OVER_3, PI,
+  Angle,
   /** jsts Coordinate class — corridor-styles/commons.js uses `new TS.Coordinate(...)` */
   Coordinate,
   coordinate, coordinates, point, multiPoint,

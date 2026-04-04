@@ -1,5 +1,5 @@
 import * as R from 'ramda'
-import * as TS from '../../ts'
+import { TS } from '../../tacticalTs.ts'
 
 const lazy = function (fn) {
   let evaluated = false
