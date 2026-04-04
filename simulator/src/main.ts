@@ -57,6 +57,8 @@ const splashVideo = splashVideoElement instanceof HTMLVideoElement ? splashVideo
 // Get header element
 const header = document.getElementById('header');
 const backToDashboardButton = document.getElementById('backToDashboard');
+const focusScenarioButton = document.getElementById('focusScenarioButton');
+const scenarioDebugPanel = document.getElementById('scenarioDebugPanel');
 
 // Get main container
 const mainContainer = document.getElementById('mainContainer');
@@ -256,6 +258,73 @@ let cesiumViewer: any = null;
 let coordinateConverter: CoordinateConverter | null = null;
 let originLon = 0;
 let originLat = 0;
+let currentScenarioName = '';
+let currentScenarioRectangle: Cesium.Rectangle | null = null;
+
+function setDebugStatus(lines: string[]) {
+  if (!scenarioDebugPanel) return;
+  scenarioDebugPanel.innerHTML = lines.join('<br>');
+}
+
+function focusScenarioLocation(immediate = false) {
+  if (!cesiumViewer) {
+    console.warn('[Simulator] Cesium viewer is not ready yet.');
+    setDebugStatus([
+      '<strong>وضعیت:</strong> viewer هنوز آماده نیست',
+      `<strong>سناریو:</strong> ${currentScenarioName || scenarioId || 'نامشخص'}`,
+    ]);
+    return;
+  }
+
+  if (currentScenarioRectangle) {
+    if (immediate) {
+      cesiumViewer.camera.setView({
+        destination: currentScenarioRectangle,
+      });
+    } else {
+      cesiumViewer.camera.flyTo({
+        destination: currentScenarioRectangle,
+        duration: 2.2,
+      });
+    }
+  } else if (cesiumViewer.entities?.values?.length) {
+    cesiumViewer.zoomTo(cesiumViewer.entities).catch(() => {
+      cesiumViewer.camera.flyTo({
+        destination: Cesium.Cartesian3.fromDegrees(originLon, originLat, 120000),
+        duration: 1.8,
+        orientation: {
+          heading: 0,
+          pitch: Cesium.Math.toRadians(-55),
+          roll: 0,
+        },
+      });
+    });
+  } else {
+    cesiumViewer.camera.flyTo({
+      destination: Cesium.Cartesian3.fromDegrees(originLon, originLat, 120000),
+      duration: 1.8,
+      orientation: {
+        heading: 0,
+        pitch: Cesium.Math.toRadians(-55),
+        roll: 0,
+      },
+    });
+  }
+
+  console.log('[Simulator] Focusing scenario location:', {
+    scenario: currentScenarioName || scenarioId || 'unknown',
+    lon: originLon,
+    lat: originLat,
+    entities: cesiumViewer.entities?.values?.length ?? 0,
+    hasRectangle: !!currentScenarioRectangle,
+  });
+}
+
+if (focusScenarioButton) {
+  focusScenarioButton.addEventListener('click', () => {
+    focusScenarioLocation();
+  });
+}
 
 async function initializeCesium() {
   try {
@@ -265,7 +334,7 @@ async function initializeCesium() {
 
     // پس از آماده شدن Cesium، پین‌ها و نمادهای سناریوها را اضافه کن
     try {
-      const { fetchScenarios, fetchScenarioById, addScenarioPins, getScenarioCenter } = await import('./scenarioPins');
+      const { fetchScenarios, fetchScenarioById, addScenarioPins, getScenarioCenter, getScenarioRectangle } = await import('./scenarioPins');
       const scenarioId =
         typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('scenarioId') : null;
       let scenarios: any[] = [];
@@ -283,13 +352,62 @@ async function initializeCesium() {
         const center = getScenarioCenter(scenarios[0], 0, 1);
         originLon = center.lon;
         originLat = center.lat;
+        currentScenarioName = scenarios[0]?.name || '';
+        currentScenarioRectangle = getScenarioRectangle(scenarios[0]);
         console.log(`✅ Origin set to scenario center: ${originLon}, ${originLat}`);
       }
 
-      const { addScenarioSymbols } = await import('./scenarioSymbols');
-      await addScenarioSymbols(cesiumViewer as any, scenarios);
+      const scenarioSymbols = await import('./scenarioSymbols');
+
+      // Setup Cesium clock bounds so our time-dynamic entities (unit motion / visibility) update.
+      try {
+        const bounds = scenarioSymbols.getScenarioTimeBounds(scenarios);
+        if (bounds) {
+          const multiplierRaw = (import.meta as any).env?.VITE_SIM_CLOCK_MULTIPLIER;
+          const multiplier = Number.isFinite(Number(multiplierRaw)) ? Number(multiplierRaw) : 60; // seconds per real second
+
+          (cesiumViewer as any).clock.startTime = bounds.start;
+          (cesiumViewer as any).clock.stopTime = bounds.stop;
+          (cesiumViewer as any).clock.currentTime = bounds.start;
+          (cesiumViewer as any).clock.clockRange = Cesium.ClockRange.LOOP_STOP;
+          (cesiumViewer as any).clock.multiplier = multiplier;
+          (cesiumViewer as any).clock.shouldAnimate = true;
+
+          console.log('[Simulator] Cesium clock bounds set:', {
+            start: bounds.start.toString(),
+            stop: bounds.stop.toString(),
+            multiplier,
+          });
+        } else {
+          console.warn('[Simulator] Could not compute scenario time bounds; keeping default Cesium clock.');
+        }
+      } catch (e) {
+        console.warn('[Simulator] Failed to setup Cesium clock:', e);
+      }
+
+      await scenarioSymbols.addScenarioSymbols(cesiumViewer as any, scenarios);
+      const summary = scenarioSymbols.summarizeScenarioRender(scenarios);
+
+      setDebugStatus([
+        `<strong>سناریو:</strong> ${currentScenarioName || scenarioId || 'نامشخص'}`,
+        `<strong>مرکز:</strong> ${originLon.toFixed(4)}, ${originLat.toFixed(4)}`,
+        `<strong>واحدها:</strong> ${summary.visibleUnits} قابل‌نمایش از ${summary.totalUnits}`,
+        `<strong>مسیرها:</strong> ${summary.trackedUnits}`,
+        `<strong>فیچرها:</strong> ${summary.layerFeatures} | <strong>رویدادها:</strong> ${summary.events}`,
+        `<strong>entity:</strong> ${cesiumViewer.entities?.values?.length ?? 0}`,
+      ]);
+
+      if (scenarios.length > 0) {
+        window.setTimeout(() => {
+          focusScenarioLocation(true);
+        }, 350);
+      }
     } catch (pinError) {
       console.error('Failed to add scenario pins/symbols:', pinError);
+      setDebugStatus([
+        '<strong>خطا:</strong> بارگذاری سناریو یا نمادها شکست خورد',
+        `<strong>جزئیات:</strong> ${pinError instanceof Error ? pinError.message : String(pinError)}`,
+      ]);
     }
 
     // Initialize coordinate converter
@@ -299,6 +417,7 @@ async function initializeCesium() {
     // Export for potential use in other modules
     (window as any).cesiumViewer = cesiumViewer;
     (window as any).coordinateConverter = coordinateConverter;
+    (window as any).flyToScenarioLocation = focusScenarioLocation;
 
     // Sync Babylon.js camera with Cesium camera
     syncCameras();
@@ -310,6 +429,10 @@ async function initializeCesium() {
     }
   } catch (error) {
     console.error('Failed to initialize Cesium:', error);
+    setDebugStatus([
+      '<strong>خطا:</strong> راه‌اندازی Cesium شکست خورد',
+      `<strong>جزئیات:</strong> ${error instanceof Error ? error.message : String(error)}`,
+    ]);
     // Even if Cesium fails, mark as ready so splash can hide
     if (!sceneReady) {
       sceneReady = true;

@@ -24,6 +24,8 @@
         position: relative;
         opacity: 0;
         transition: opacity 0.5s ease-in-out;
+        margin-top: 60px;
+        height: calc(100vh - 60px);
       }
 
       #mainContainer.visible {
@@ -54,11 +56,10 @@
         height: 100%;
         display: block;
         touch-action: none;
-        pointer-events: none; /* Disable pointer events so Cesium can handle zoom/pan */
+        pointer-events: none;
         background: transparent;
       }
 
-      /* Cesium widget styles */
       .cesium-widget {
         width: 100% !important;
         height: 100% !important;
@@ -123,11 +124,6 @@
         transition: opacity 0.5s ease-in-out;
       }
 
-      #mainContainer {
-        margin-top: 60px;
-        height: calc(100vh - 60px);
-      }
-
       #header.visible {
         opacity: 1;
       }
@@ -141,46 +137,56 @@
         font-weight: 600;
       }
 
+      #header .controls {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      #header .action-button,
       #header .back-button {
         background: rgba(255, 255, 255, 0.1);
         border: 1px solid rgba(255, 255, 255, 0.2);
         color: white;
-        padding: 8px 16px;
+        padding: 8px 14px;
         border-radius: 8px;
         cursor: pointer;
         font-size: 14px;
         font-weight: 500;
         transition: all 0.3s ease;
-        display: flex;
+        display: inline-flex;
         align-items: center;
         gap: 8px;
         text-decoration: none;
       }
 
+      #header .action-button:hover,
       #header .back-button:hover {
         background: rgba(255, 255, 255, 0.2);
         border-color: rgba(255, 255, 255, 0.3);
         transform: translateY(-2px);
       }
 
-      .floating-btn {
+      #scenarioDebugPanel {
         position: fixed;
         left: 16px;
         bottom: 16px;
-        z-index: 12000;
-        background: #4caf50;
-        color: #fff;
-        border: none;
-        border-radius: 10px;
-        padding: 10px 14px;
-        font-size: 14px;
-        font-weight: 700;
-        cursor: pointer;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+        z-index: 9998;
+        min-width: 280px;
+        max-width: 420px;
+        padding: 12px 14px;
+        border-radius: 12px;
+        background: rgba(12, 18, 28, 0.86);
+        color: #f7fbff;
+        border: 1px solid rgba(255, 255, 255, 0.16);
+        backdrop-filter: blur(10px);
+        font-size: 13px;
+        line-height: 1.6;
+        box-shadow: 0 16px 40px rgba(0, 0, 0, 0.28);
       }
 
-      .floating-btn:hover {
-        background: #43a047;
+      #scenarioDebugPanel strong {
+        color: #8fe7ff;
       }
     </style>
   </head>
@@ -190,11 +196,15 @@
         <span>🎮</span>
         <span>Kalk Simulator</span>
       </div>
-      <a href="#" id="backToDashboard" class="back-button">
-        <span>←</span>
-        <span>بازگشت به داشبورد</span>
-      </a>
+      <div class="controls">
+        <button id="focusScenarioButton" class="action-button">رفتن به محل سناریو</button>
+        <a href="#" id="backToDashboard" class="back-button">
+          <span>←</span>
+          <span>بازگشت به داشبورد</span>
+        </a>
+      </div>
     </header>
+    <div id="scenarioDebugPanel">در حال آماده‌سازی شبیه‌ساز...</div>
     <div id="splashScreen">
       <video id="splashVideo" autoplay muted playsinline>
         <source src="/splash/splash.mp4" type="video/mp4" />
@@ -208,24 +218,6 @@
         <canvas id="renderCanvas"></canvas>
       </div>
     </div>
-    <button id="focusModelBtn" class="floating-btn">رفتن به مدل</button>
-    <button id="toggleAnimationBtn" class="floating-btn" style="bottom: 60px;">پلی/توقف انیمیشن</button>
     <script type="module" src="/src/main.ts"></script>
-    <script>
-      // button to focus model pin (Cesium)
-      document.getElementById('focusModelBtn')?.addEventListener('click', () => {
-        if (window.flyToModelPin) {
-          window.flyToModelPin();
-        }
-      });
-      
-      // button to toggle model animation
-      document.getElementById('toggleAnimationBtn')?.addEventListener('click', () => {
-        if (window.toggleModelAnimation) {
-          window.toggleModelAnimation();
-        }
-      });
-    </script>
   </body>
 </html>
-

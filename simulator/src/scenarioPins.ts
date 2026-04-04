@@ -15,6 +15,145 @@ export interface BackendScenario {
   content?: any;
 }
 
+type ScenarioPosition = { lon: number; lat: number };
+
+function parsePositionLike(value: any): ScenarioPosition | null {
+  if (Array.isArray(value) && value.length >= 2) {
+    const lon = Number(value[0]);
+    const lat = Number(value[1]);
+    if (Number.isFinite(lon) && Number.isFinite(lat)) {
+      return { lon, lat };
+    }
+  }
+
+  if (value && typeof value === 'object') {
+    const lon = Number(value.longitude ?? value.lon ?? value.lng);
+    const lat = Number(value.latitude ?? value.lat);
+    if (Number.isFinite(lon) && Number.isFinite(lat)) {
+      return { lon, lat };
+    }
+  }
+
+  return null;
+}
+
+function collectUnitPositions(unit: any, out: ScenarioPosition[]) {
+  const direct = parsePositionLike(unit?.position ?? unit?.location);
+  if (direct) out.push(direct);
+
+  if (Array.isArray(unit?.state)) {
+    unit.state.forEach((state: any) => {
+      const pos = parsePositionLike(state?.position ?? state?.location);
+      if (pos) out.push(pos);
+    });
+  }
+
+  if (Array.isArray(unit?.subUnits)) {
+    unit.subUnits.forEach((subUnit: any) => collectUnitPositions(subUnit, out));
+  }
+}
+
+function collectScenarioPositions(content: any): ScenarioPosition[] {
+  const positions: ScenarioPosition[] = [];
+
+  const metaCenter = content?.metadata?.mapCenter || content?.meta?.mapCenter || content?.settings?.map?.center;
+  const metaPos = parsePositionLike(metaCenter);
+  if (metaPos) positions.push(metaPos);
+
+  if (Array.isArray(content?.units)) {
+    content.units.forEach((unit: any) => collectUnitPositions(unit, positions));
+  }
+
+  if (Array.isArray(content?.sides)) {
+    content.sides.forEach((side: any) => {
+      if (Array.isArray(side?.units)) {
+        side.units.forEach((unit: any) => collectUnitPositions(unit, positions));
+      }
+      if (Array.isArray(side?.subUnits)) {
+        side.subUnits.forEach((unit: any) => collectUnitPositions(unit, positions));
+      }
+      if (Array.isArray(side?.groups)) {
+        side.groups.forEach((group: any) => {
+          if (Array.isArray(group?.subUnits)) {
+            group.subUnits.forEach((unit: any) => collectUnitPositions(unit, positions));
+          }
+        });
+      }
+    });
+  }
+
+  if (Array.isArray(content?.events)) {
+    content.events.forEach((event: any) => {
+      const geometry = event?.where?.geometry;
+      if (!geometry?.coordinates) return;
+
+      const stack = [geometry.coordinates];
+      while (stack.length > 0) {
+        const current = stack.pop();
+        if (!Array.isArray(current)) continue;
+
+        if (current.length >= 2 && typeof current[0] === 'number' && typeof current[1] === 'number') {
+          const pos = parsePositionLike(current);
+          if (pos) positions.push(pos);
+        } else {
+          current.forEach((item) => stack.push(item));
+        }
+      }
+    });
+  }
+
+  return positions;
+}
+
+function getCentroid(positions: ScenarioPosition[]): ScenarioPosition | null {
+  if (positions.length === 0) return null;
+
+  const sum = positions.reduce(
+    (acc, pos) => {
+      acc.lon += pos.lon;
+      acc.lat += pos.lat;
+      return acc;
+    },
+    { lon: 0, lat: 0 }
+  );
+
+  return {
+    lon: sum.lon / positions.length,
+    lat: sum.lat / positions.length,
+  };
+}
+
+export function getScenarioRectangle(s: BackendScenario): Cesium.Rectangle | null {
+  const positions = collectScenarioPositions(s.content || {});
+  if (positions.length === 0) return null;
+
+  let west = positions[0].lon;
+  let east = positions[0].lon;
+  let south = positions[0].lat;
+  let north = positions[0].lat;
+
+  positions.forEach((pos) => {
+    west = Math.min(west, pos.lon);
+    east = Math.max(east, pos.lon);
+    south = Math.min(south, pos.lat);
+    north = Math.max(north, pos.lat);
+  });
+
+  const minSpan = 0.12;
+  if (east - west < minSpan) {
+    const pad = (minSpan - (east - west)) / 2;
+    west -= pad;
+    east += pad;
+  }
+  if (north - south < minSpan) {
+    const pad = (minSpan - (north - south)) / 2;
+    south -= pad;
+    north += pad;
+  }
+
+  return Cesium.Rectangle.fromDegrees(west, south, east, north);
+}
+
 // تعیین آدرس پایه API مشابه داشبورد
 function resolveApiBase(): string {
   const envUrl = (import.meta as any).env?.VITE_API_URL as string | undefined;
@@ -31,6 +170,100 @@ function resolveApiBase(): string {
   return 'http://127.0.0.1:8000/api';
 }
 
+function resolveKalknegarBase(): string {
+  const raw = (import.meta as any).env?.VITE_KALKNEGAR_URL as string | undefined;
+  if (raw && raw.trim().length > 0) {
+    return raw.trim().replace(/\/+$/, '');
+  }
+
+  if (typeof window !== 'undefined') {
+    const { protocol, hostname } = window.location;
+    return `${protocol}//${hostname}:5180`;
+  }
+
+  return 'http://127.0.0.1:5180';
+}
+
+function buildDemoScenarioUrls(id: string): string[] {
+  const normalizedId = id.startsWith('demo-') ? id.slice(5) : id;
+  const encodedId = encodeURIComponent(normalizedId);
+  const kalknegarBase = resolveKalknegarBase().replace(/\/+$/, '');
+  const basePath = ((import.meta as any).env?.BASE_URL as string | undefined) || '/';
+  const normalizedBasePath = basePath.startsWith('/') ? basePath : `/${basePath}`;
+
+  const candidates = new Set<string>();
+
+  const pushCandidate = (base: string, path: string) => {
+    candidates.add(`${base.replace(/\/+$/, '')}${path}`);
+  };
+
+  pushCandidate(kalknegarBase, `/scenarios/${encodedId}.json`);
+
+  if (!/\/kalknegar$/i.test(kalknegarBase)) {
+    pushCandidate(kalknegarBase, `/kalknegar/scenarios/${encodedId}.json`);
+  }
+
+  if (typeof window !== 'undefined') {
+    const origin = window.location.origin.replace(/\/+$/, '');
+    pushCandidate(origin, `${normalizedBasePath.replace(/\/+$/, '/')}scenarios/${encodedId}.json`);
+    pushCandidate(origin, `/kalknegar/scenarios/${encodedId}.json`);
+    pushCandidate(origin, `/scenarios/${encodedId}.json`);
+  }
+
+  return Array.from(candidates);
+}
+
+async function fetchDemoScenarioById(id: string): Promise<BackendScenario | null> {
+  const normalizedId = id.startsWith('demo-') ? id.slice(5) : id;
+  const demoUrls = buildDemoScenarioUrls(id);
+
+  try {
+    console.log('%c[Simulator] Loading demo scenario from KalkNegar public JSON', 'color: #4CAF50; font-weight: bold;');
+    console.log('  Demo URL candidates:', demoUrls);
+
+    for (const demoUrl of demoUrls) {
+      try {
+        console.log('  Trying demo URL:', demoUrl);
+
+        const res = await fetch(demoUrl, {
+          headers: { Accept: 'application/json' },
+        });
+
+        if (!res.ok) {
+          console.warn('[Simulator] Demo scenario URL did not respond with success:', demoUrl, res.status, res.statusText);
+          continue;
+        }
+
+        const content = await res.json();
+        if (!content || typeof content !== 'object') {
+          console.warn('[Simulator] Demo scenario JSON is invalid for URL:', demoUrl, content);
+          continue;
+        }
+
+        const scenario: BackendScenario = {
+          id,
+          name: String((content as any).name || normalizedId),
+          description: (content as any).description ?? null,
+          image: (content as any).image ?? null,
+          content,
+        };
+
+        console.log('[Simulator] Demo scenario loaded successfully from:', demoUrl);
+        console.log('  Scenario name:', scenario.name);
+        return scenario;
+      } catch (error) {
+        console.warn('[Simulator] Exception while trying demo URL:', demoUrl, error);
+      }
+    }
+
+    console.error('[Simulator] All demo scenario URLs failed for:', id);
+    return null;
+  } catch (error) {
+    console.error('[Simulator] Exception while loading demo scenario JSON:', error);
+    return null;
+  }
+}
+
 // تلاش برای استخراج مرکز سناریو از content (در صورت موجود بودن)
 export function getScenarioCenter(s: BackendScenario, index: number, total: number): { lon: number; lat: number } {
   const c = s.content || {};
@@ -41,14 +274,11 @@ export function getScenarioCenter(s: BackendScenario, index: number, total: numb
     return { lon: metaCenter.longitude, lat: metaCenter.latitude };
   }
 
-  // 2) اگر در events یا واحدها مختصات داشتیم (حالت عمومی ORBAT)
-  const units = Array.isArray(c.units) ? c.units : Array.isArray(c?.sides?.[0]?.units) ? c.sides[0].units : [];
-  const firstUnit = units.find((u: any) => u?.position && typeof u.position.longitude === 'number' && typeof u.position.latitude === 'number');
-  if (firstUnit) {
-    return {
-      lon: firstUnit.position.longitude,
-      lat: firstUnit.position.latitude,
-    };
+  // 2) اگر در خود سناریو مختصات واحدها/رویدادها وجود داشت، مرکز واقعی را از آن‌ها حساب می‌کنیم
+  const positions = collectScenarioPositions(c);
+  const centroid = getCentroid(positions);
+  if (centroid) {
+    return centroid;
   }
 
   // 3) اگر هیچ مختصاتی نداریم، سناریوها را دور مرکز ایران پخش می‌کنیم تا حداقل دیده شوند
@@ -107,6 +337,14 @@ export async function fetchScenarios(): Promise<BackendScenario[]> {
 
 export async function fetchScenarioById(id: string): Promise<BackendScenario | null> {
   if (!id) return null;
+
+  if (id.startsWith('demo-')) {
+    const demoScenario = await fetchDemoScenarioById(id);
+    if (demoScenario) {
+      return demoScenario;
+    }
+  }
+
   try {
     const baseUrl = resolveApiBase();
     const url = `${baseUrl}/scenarios/${encodeURIComponent(id)}`;

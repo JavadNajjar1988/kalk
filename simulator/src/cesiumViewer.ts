@@ -134,7 +134,12 @@ export function createCesiumViewer(containerId: string): Cesium.Viewer {
   viewer.scene.globe.show = true;
 
   // Wait for imagery to load before setting view
+  let lastTileLoadState = -1;
   viewer.scene.globe.tileLoadProgressEvent.addEventListener((numberOfPendingLoads: number) => {
+    const nextState = numberOfPendingLoads > 0 ? 1 : 0;
+    if (nextState === lastTileLoadState) return;
+    lastTileLoadState = nextState;
+
     if (numberOfPendingLoads > 0) {
       console.log(`Cesium tiles loading... (${numberOfPendingLoads} pending)`);
     } else {

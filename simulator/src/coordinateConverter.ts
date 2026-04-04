@@ -5,15 +5,9 @@ import { Vector3 } from '@babylonjs/core';
  * تبدیل مختصات جغرافیایی (WGS84) به مختصات محلی Babylon.js
  */
 export class CoordinateConverter {
-  private originLongitude: number;
-  private originLatitude: number;
-  private originHeight: number;
   private originCartesian: Cesium.Cartesian3;
 
   constructor(originLongitude: number, originLatitude: number, originHeight: number = 0) {
-    this.originLongitude = originLongitude;
-    this.originLatitude = originLatitude;
-    this.originHeight = originHeight;
     this.originCartesian = Cesium.Cartesian3.fromDegrees(
       originLongitude,
       originLatitude,
