@@ -13,7 +13,7 @@ from app.db.base import Base
 class Scenario(Base):
     __tablename__ = "scenarios"
 
-    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    id: Mapped[str] = mapped_column(String(128), primary_key=True)
     name: Mapped[str] = mapped_column(String(200), nullable=False)
     description: Mapped[Optional[str]] = mapped_column(String(2000), nullable=True)
     image: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)

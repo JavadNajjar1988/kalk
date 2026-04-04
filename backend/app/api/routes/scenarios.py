@@ -17,6 +17,7 @@ from app.deps import DbSession
 from app.models.scenario import Scenario
 from app.schemas.scenario import ScenarioCreate, ScenarioOut, ScenarioUpdate
 from app.realtime.manager import manager
+from pydantic import BaseModel, Field
 
 
 router = APIRouter(prefix="/scenarios", tags=["scenarios"])
@@ -249,6 +250,32 @@ async def get_scenario(scenario_id: str, db: DbSession):
     if not obj:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Scenario not found")
     return success(ScenarioOut.model_validate(obj).model_dump())
+
+
+class ScenarioBasemapUpdate(BaseModel):
+    baseMapId: str = Field(min_length=1, max_length=200)
+
+
+@router.post("/{scenario_id}/basemap", response_model=dict)
+async def update_scenario_basemap(scenario_id: str, payload: ScenarioBasemapUpdate, db: DbSession):
+    """
+    Lightweight realtime-only update: broadcasts base map changes to websocket listeners.
+    This does NOT persist the scenario content; KalkNegar persists via regular save/update flows.
+    """
+    obj = await db.get(Scenario, scenario_id)
+    if not obj:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Scenario not found")
+
+    room = f"scenario:{scenario_id}"
+    await manager.broadcast(
+        room,
+        {
+            "type": "basemap_changed",
+            "scenarioId": scenario_id,
+            "baseMapId": payload.baseMapId,
+        },
+    )
+    return success({"scenarioId": scenario_id, "baseMapId": payload.baseMapId})
 
 
 @router.post("", status_code=status.HTTP_201_CREATED, response_model=dict, dependencies=[Depends(require_roles("SUPER_ADMIN", "COMMANDER"))])

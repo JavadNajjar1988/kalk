@@ -2,10 +2,10 @@
 import ScenarioEditor from "@/modules/scenarioeditor/ScenarioEditor.vue";
 import { useScenario } from "@/scenariostore";
 import { onBeforeRouteLeave } from "vue-router";
-import { ref, watch } from "vue";
+import { nextTick, onUnmounted, ref, watch } from "vue";
 import { useSelectedItems } from "@/stores/selectedStore";
 import { scenarioApiService } from "@/services/api/scenarioApiService";
-import { useEventListener } from "@vueuse/core";
+import { useDebounceFn, useEventListener } from "@vueuse/core";
 import ScenarioNotFoundPage from "@/modules/scenarioeditor/ScenarioNotFoundPage.vue";
 
 const props = defineProps<{ scenarioId: string }>();
@@ -17,9 +17,58 @@ const scenarioNotFound = ref(false);
 let currentDemo = "";
 const selectedItems = useSelectedItems();
 
+async function broadcastBasemapChange(baseMapId: string) {
+  try {
+    const token = localStorage.getItem('access_token');
+    const headers: Record<string, string> = { 'Content-Type': 'application/json', Accept: 'application/json' };
+    if (token) {
+      headers.Authorization = `Bearer ${token}`;
+    }
+    // Use the same base that ScenarioApiService resolved.
+    const base = (scenarioApiService as any)?.baseUrl || '/api';
+    const url = `${String(base).replace(/\/+$/, '')}/scenarios/${encodeURIComponent(props.scenarioId)}/basemap`;
+    const res = await fetch(url, { method: 'POST', headers, body: JSON.stringify({ baseMapId }) });
+    if (!res.ok) {
+      const detail = await res.text().catch(() => '');
+      console.warn(
+        '[ScenarioEditorWrapper] basemap broadcast rejected:',
+        res.status,
+        res.statusText,
+        detail || url,
+      );
+    }
+  } catch (e) {
+    console.warn('[ScenarioEditorWrapper] Failed to broadcast basemap change', e);
+  }
+}
+
+/** جلوگیری از اسپم به API هنگام کلیک سریع بین چند نقشه پایه (۳D زنده). */
+const debouncedBroadcastBasemap = useDebounceFn((baseMapId: string) => {
+  void broadcastBasemapChange(baseMapId);
+}, 250);
+
+/** بعد از لود سناریو، مقدار نقشه پایه را ثبت می‌کنیم تا همان لحظهٔ لود دوباره به شبیه‌ساز broadcast نشود. */
+const basemapBaseline = ref<{ scenarioId: string; baseMapId: string } | null>(null);
+
+function syncBasemapBaselineAfterLoad(expectedScenarioId: string) {
+  void nextTick(() => {
+    if (props.scenarioId !== expectedScenarioId) {
+      return;
+    }
+    const id = scenario.value?.store?.state?.mapSettings?.baseMapId;
+    if (typeof id === "string" && id.trim().length > 0) {
+      basemapBaseline.value = { scenarioId: expectedScenarioId, baseMapId: id.trim() };
+    } else {
+      basemapBaseline.value = null;
+    }
+  });
+}
+
 watch(
   () => props.scenarioId,
   async (newScenarioId) => {
+    basemapBaseline.value = null;
+    debouncedBroadcastBasemap.cancel?.();
     if (isDemoScenario(newScenarioId)) {
       const demoId = newScenarioId.replace("demo-", "");
       if (demoId !== currentDemo) {
@@ -28,6 +77,7 @@ watch(
         selectedItems.showScenarioInfo.value = true;
       }
       localReady.value = true;
+      syncBasemapBaselineAfterLoad(newScenarioId);
     } else {
       try {
         console.log('[ScenarioEditorWrapper] Loading scenario:', newScenarioId);
@@ -102,6 +152,7 @@ watch(
             scenario.value.io.loadFromObject(scn as any);
             selectedItems.clear();
             selectedItems.showScenarioInfo.value = true;
+            syncBasemapBaselineAfterLoad(newScenarioId);
           } else {
             console.error('[ScenarioEditorWrapper] Invalid scenario type:', scn.type);
             scenarioNotFound.value = true;
@@ -119,6 +170,30 @@ watch(
   },
   { immediate: true },
 );
+
+// Live basemap sync to simulator (realtime): when user changes basemap in KalkNegar, broadcast it.
+watch(
+  () => scenario.value?.store?.state?.mapSettings?.baseMapId,
+  (baseMapId) => {
+    if (typeof baseMapId !== "string" || !baseMapId.trim()) {
+      return;
+    }
+    const id = baseMapId.trim();
+    const b = basemapBaseline.value;
+    if (!b || b.scenarioId !== props.scenarioId) {
+      return;
+    }
+    if (id === b.baseMapId) {
+      return;
+    }
+    debouncedBroadcastBasemap(id);
+    basemapBaseline.value = { scenarioId: props.scenarioId, baseMapId: id };
+  },
+);
+
+onUnmounted(() => {
+  debouncedBroadcastBasemap.cancel?.();
+});
 
 function isDemoScenario(scenarioId: string) {
   return scenarioId.startsWith("demo-");

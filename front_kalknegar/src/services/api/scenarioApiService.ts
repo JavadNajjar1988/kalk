@@ -25,7 +25,9 @@ export class ScenarioApiService extends BaseApiClient {
       const apiPath = apiPathEnv && apiPathEnv.trim().length > 0 ? apiPathEnv.trim().replace(/^\/+/, '') : 'api';
       if (isDev) {
         const devHost = (import.meta as any).env?.VITE_API_DEV_HOST as string | undefined;
-        base = `${(devHost && devHost.trim()) || 'http://127.0.0.1:8000'}/${apiPath}`;
+        const defaultDevHost =
+          typeof window !== 'undefined' ? window.location.origin : 'http://127.0.0.1:5180';
+        base = `${(devHost && devHost.trim()) || defaultDevHost}/${apiPath}`;
       } else {
         const isIframe = window.parent !== window;
         if (isIframe) {
