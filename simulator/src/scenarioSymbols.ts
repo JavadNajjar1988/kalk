@@ -16,6 +16,7 @@ interface RangeRingLike {
 interface ScenarioContentLike {
   sides?: SideLike[];
   layers?: ScenarioLayerLike[];
+  events?: ScenarioEventLike[];
   metadata?: {
     tacticalSymbols?: {
       version: number;
@@ -475,6 +476,26 @@ function getScenarioUnits(content: ScenarioContentLike): UnitLike[] {
   return all;
 }
 
+/** شناسه پایدار برای موجودیت‌های فرزند (هم‌خوان با `unit-${scenarioId}-${unit.id ?? index}`). */
+function getUnitStableId(unit: UnitLike, unitIndex: number): string {
+  const cached = unitIdCache.get(unit);
+  if (cached) return cached;
+  const id =
+    unit.id != null && String(unit.id).trim() !== ''
+      ? String(unit.id)
+      : String(unitIndex);
+  unitIdCache.set(unit, id);
+  return id;
+}
+
+function buildUnitIndex(units: UnitLike[]): Map<string, UnitLike> {
+  const map = new Map<string, UnitLike>();
+  units.forEach((unit, index) => {
+    map.set(getUnitStableId(unit, index), unit);
+  });
+  return map;
+}
+
 function getFeatureGeometry(feature: ScenarioFeatureLike): GeoJsonGeometryLike | null {
   if (feature.geometry) return feature.geometry;
   if (Array.isArray(feature.state)) {
@@ -607,7 +628,7 @@ function addBillboard(
     id: options.id,
     position: toCartesian(options.position.lon, options.position.lat, options.position.height),
     billboard: {
-      image: renderedSymbol.image,
+      image,
       heightReference,
       verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
       scale: 0.6,
@@ -1124,9 +1145,11 @@ export async function addScenarioSymbols(
       tacticalFeatures.forEach((feature, index) => {
         const geometry = getFeatureGeometry(feature);
         if (!geometry) return;
-        addTacticalGeometry(viewer, geometry, feature, scenario.id, 90000 + index);
+        addTacticalGeometry(viewer, geometry, feature, undefined, scenario.id, 90000 + index);
       });
     }
+
+    addEventHighlights(viewer, scenario, content, unitIndex);
   });
 }
 

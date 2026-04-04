@@ -19,6 +19,8 @@ import ConvexHull from 'jsts/org/locationtech/jts/algorithm/ConvexHull.js';
 // @ts-expect-error no types
 import Coordinate from 'jsts/org/locationtech/jts/geom/Coordinate.js';
 // @ts-expect-error no types
+import Geometry from 'jsts/org/locationtech/jts/geom/Geometry.js';
+// @ts-expect-error no types
 import GeometryFactory from 'jsts/org/locationtech/jts/geom/GeometryFactory.js';
 // @ts-expect-error no types
 import LineSegment from 'jsts/org/locationtech/jts/geom/LineSegment.js';
@@ -46,6 +48,7 @@ export const PI = Math.PI;
 // ---- Coordinate helpers ----
 
 export const coordinate = (...args: any[]): any => {
+  if (args[0] instanceof Geometry) return args[0].getCoordinate();
   if (Array.isArray(args[0])) return new Coordinate(args[0][0], args[0][1]);
   if (args.length === 2 && typeof args[0] === 'number') return new Coordinate(args[0], args[1]);
   return args[0];
