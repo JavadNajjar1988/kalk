@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Dialog,
   DialogTitle,
@@ -15,10 +15,9 @@ import {
   FormHelperText,
   IconButton,
   useTheme,
-  useMediaQuery,
 } from '@mui/material';
 import { alpha } from '@mui/material/styles';
-import CloseIcon from '@mui/icons-material/Close';
+import CloseIcon from '@mui/icons-material';
 import { MasterDefinition, DefinitionCategory, DynamicHierarchyLevel } from '../../types';
 import { ExtendedHierarchyLevel, CategoryType } from '../../types';
 
@@ -37,7 +36,7 @@ interface AddDataModalProps {
 
 interface FormData {
   name: string;
-  level: number; // می‌تواند 0 باشد اگر هیچ سطحی موجود نیست
+  level: number;
   parentId: string;
   latitude?: string;
   longitude?: string;
@@ -46,7 +45,6 @@ interface FormData {
   icon?: string;
   natoEquivalent?: string;
   country?: string;
-  // فیلدهای کدگذاری برای درجات نظامی
   countryCode?: string;
   groupCode?: string;
   rankCode?: string;
@@ -63,7 +61,6 @@ interface FormErrors {
   icon?: string;
   natoEquivalent?: string;
   country?: string;
-  // خطاهای کدگذاری برای درجات نظامی
   countryCode?: string;
   groupCode?: string;
   rankCode?: string;
@@ -81,60 +78,42 @@ const AddDataModal: React.FC<AddDataModalProps> = ({
   categoryType,
 }) => {
   const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const accent = theme.palette.success.main;
+  const dialogBackground = `linear-gradient(135deg, ${alpha(accent, 0.08)}, ${alpha(accent, 0.04)})`;
+  const inputSurface =
+    theme.palette.mode === 'dark'
+      ? alpha(theme.palette.background.default, 0.72)
+      : alpha(theme.palette.common.white, 0.92);
 
-  const softSurface = useMemo(() => {
-    const primary = (theme.palette.primary.main || '#4a90e2').toLowerCase();
-    const hex = primary.replace('#', '');
-
-    if (hex.includes('10b981') || hex.includes('4caf50') || hex.includes('2e7d32')) return '#f0f4f3';
-    if (hex.includes('4a90e2') || hex.includes('1976d2') || hex.includes('2196f3')) return '#f0f4f8';
-    if (hex.includes('ef4444') || hex.includes('f44336') || hex.includes('d32f2f')) return '#fbf1f0';
-    if (hex.includes('6b21a8') || hex.includes('9c27b0') || hex.includes('673ab7')) return theme.palette.mode === 'dark' ? '#1f2330' : '#f3f0f9';
-    if (hex.includes('f59e0b') || hex.includes('ff9800') || hex.includes('fb8c00')) return '#fbf5ef';
-
-    const clamp = (n: number) => Math.max(0, Math.min(255, Math.round(n)));
-    const hexToRgb = (h: string) => {
-      const norm = h.length === 3 ? h.split('').map(c => c + c).join('') : h;
-      const r = parseInt(norm.slice(0, 2), 16);
-      const g = parseInt(norm.slice(2, 4), 16);
-      const b = parseInt(norm.slice(4, 6), 16);
-      return { r, g, b };
-    };
-    const rgbToHex = (r: number, g: number, b: number) =>
-      `#${clamp(r).toString(16).padStart(2, '0')}${clamp(g).toString(16).padStart(2, '0')}${clamp(b).toString(16).padStart(2, '0')}`;
-    const blendWithWhite = (h: string, primaryWeight = 0.1) => {
-      const { r, g, b } = hexToRgb(h);
-      const white = 255;
-      const weight = 1 - primaryWeight;
-      const br = white * weight + r * primaryWeight;
-      const bg = white * weight + g * primaryWeight;
-      const bb = white * weight + b * primaryWeight;
-      return rgbToHex(br, bg, bb);
-    };
-
-    if (/^[0-9a-f]{3,6}$/.test(hex)) {
-      return blendWithWhite(hex, 0.1);
-    }
-
-    try {
-      const fallback = (theme.palette.primary.light || '#90caf9').toLowerCase().replace('#', '');
-      return blendWithWhite(fallback, 0.08);
-    } catch {
-      return theme.palette.mode === 'dark' ? '#1f2430' : '#f5f7fa';
-    }
-  }, [theme]);
-
-  const sectionCardSx = useMemo(() => ({
-    borderRadius: '16px',
-    padding: { xs: 2, sm: 3 },
-    backgroundColor: theme.palette.mode === 'dark' ? alpha(theme.palette.background.paper, 0.72) : 'rgba(255, 255, 255, 0.95)',
-    border: `1px solid ${alpha(theme.palette.primary.main, 0.12)}`,
-    boxShadow: `0 16px 32px ${alpha(theme.palette.primary.main, 0.12)}`,
+  const sectionCardSx = {
+    borderRadius: 3,
+    padding: 3,
+    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+    border: `1px solid ${alpha(accent, 0.12)}`,
+    boxShadow: `0 16px 32px ${alpha(accent, 0.12)}`,
     display: 'flex',
     flexDirection: 'column',
     gap: 2,
-  }), [theme]);
+  };
+
+  const sectionTitleSx = {
+    mb: 2,
+    fontWeight: 600,
+    color: accent,
+  };
+
+  const inputBaseSx = {
+    '& .MuiOutlinedInput-root': {
+      borderRadius: 2,
+      backgroundColor: inputSurface,
+      '& fieldset': { borderColor: alpha(accent, 0.28) },
+      '&:hover fieldset': { borderColor: alpha(accent, 0.45) },
+      '&.Mui-focused fieldset': {
+        borderColor: accent,
+        boxShadow: `0 0 0 3px ${alpha(accent, 0.12)}`,
+      },
+    },
+  };
 
   const sectionTitleSx = useMemo(() => ({
     mb: 2,
@@ -472,33 +451,43 @@ const AddDataModal: React.FC<AddDataModalProps> = ({
       onClose={onClose}
       maxWidth="md"
       fullWidth
-      fullScreen={isMobile}
-      PaperProps={{
-        sx: {
-          borderRadius: isMobile ? 0 : '20px',
-          backgroundColor: alpha(theme.palette.primary.light, 0.1),
-          backdropFilter: 'blur(20px)',
-          border: (t) => `1px solid ${alpha(t.palette.primary.light, 0.2)}`,
-          boxShadow: (t) => `0 24px 60px ${alpha(t.palette.primary.light, 0.28)}, inset 0 1px 0 rgba(255, 255, 255, 0.75)`,
+      sx={{
+        '& .MuiDialog-paper': {
+          borderRadius: 3,
+          backgroundColor: theme.palette.background.paper,
+          backgroundImage: dialogBackground,
+          border: `1px solid ${alpha(accent, 0.24)}`,
+          boxShadow: `0 24px 60px ${alpha(accent, 0.28)}`,
           overflow: 'hidden',
           display: 'flex',
           flexDirection: 'column',
-          maxHeight: { xs: '100vh', md: '90vh' },
+        },
+        '& .MuiOutlinedInput-root': {
+          backgroundColor: inputSurface,
+          '& fieldset': { borderColor: alpha(accent, 0.28) },
+          '&:hover fieldset': { borderColor: alpha(accent, 0.45) },
+          '&.Mui-focused fieldset': {
+            borderColor: accent,
+            boxShadow: `0 0 0 3px ${alpha(accent, 0.12)}`,
+          },
+        },
+        '& .MuiInputLabel-root.Mui-focused': {
+          color: accent,
         },
       }}
     >
       <DialogTitle
         sx={{
-          backgroundColor: softSurface,
-          borderBottom: (t) => `1px solid ${alpha(t.palette.primary.light, 0.2)}`,
-          py: isMobile ? 2 : 3,
-          px: isMobile ? 2 : 3,
+          borderBottom: `1px solid ${alpha(accent, 0.2)}`,
+          backgroundColor: alpha(accent, 0.08),
+          py: 3,
+          px: 3,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
         }}
       >
-        <Typography variant={isMobile ? 'h6' : 'h5'} fontWeight={700} color="primary">
+        <Typography variant="h5" fontWeight={700} color="primary">
           {isEditing ? 'ویرایش داده' : 'افزودن داده جدید'}
         </Typography>
         <IconButton
@@ -506,13 +495,13 @@ const AddDataModal: React.FC<AddDataModalProps> = ({
           size="small"
           sx={{
             minWidth: 'auto',
-            color: theme.palette.primary.main,
-            backgroundColor: alpha(theme.palette.primary.main, 0.12),
-            border: `1px solid ${alpha(theme.palette.primary.main, 0.18)}`,
+            color: accent,
+            backgroundColor: alpha(accent, 0.12),
+            border: `1px solid ${alpha(accent, 0.18)}`,
             '&:hover': {
-              backgroundColor: alpha(theme.palette.primary.main, 0.2),
+              backgroundColor: alpha(accent, 0.2),
               transform: 'translateY(-1px)',
-              boxShadow: `0 6px 18px ${alpha(theme.palette.primary.main, 0.25)}`,
+              boxShadow: `0 6px 18px ${alpha(accent, 0.25)}`,
             },
           }}
         >
@@ -520,8 +509,8 @@ const AddDataModal: React.FC<AddDataModalProps> = ({
         </IconButton>
       </DialogTitle>
 
-      <DialogContent sx={{ p: 0, backgroundColor: softSurface }}>
-        <Box sx={{ p: { xs: 2.5, sm: 3.5 }, display: 'flex', flexDirection: 'column', gap: 3 }}>
+      <DialogContent dividers sx={{ borderColor: alpha(accent, 0.16), backgroundColor: 'transparent' }}>
+        <Box sx={{ p: 3, display: 'flex', flexDirection: 'column', gap: 3 }}>
           {/* اطلاعات اصلی */}
           <Box sx={{ ...sectionCardSx, mb: 3 }}>
           <Typography variant="h6" sx={sectionTitleSx}>
@@ -768,17 +757,34 @@ const AddDataModal: React.FC<AddDataModalProps> = ({
 
       <DialogActions
         sx={{
-          backgroundColor: softSurface,
-          borderTop: (t) => `1px solid ${alpha(t.palette.primary.light, 0.2)}`,
-          p: isMobile ? 2 : 3,
+          borderTop: `1px solid ${alpha(accent, 0.2)}`,
+          backgroundColor: alpha(accent, 0.04),
+          px: 3,
+          py: 2,
           justifyContent: 'flex-end',
           gap: 1.5,
         }}
       >
-        <Button onClick={onClose} variant="outlined" color="primary" sx={secondaryButtonSx}>
+        <Button 
+          onClick={onClose} 
+          variant="outlined" 
+          color="inherit"
+          sx={{
+            borderRadius: 2,
+            borderColor: alpha(accent, 0.35),
+          }}
+        >
           انصراف
         </Button>
-        <Button onClick={handleSubmit} variant="contained" color="primary" sx={primaryButtonSx}>
+        <Button 
+          onClick={handleSubmit} 
+          variant="contained" 
+          color="success"
+          sx={{
+            borderRadius: 2,
+            px: 3.5,
+          }}
+        >
           {isEditing ? 'ذخیره تغییرات' : 'افزودن'}
         </Button>
       </DialogActions>

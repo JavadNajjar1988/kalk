@@ -23,8 +23,10 @@ import {
   AccordionSummary,
   AccordionDetails,
   Slider,
-  Paper
+  Paper,
+  useTheme,
 } from '@mui/material';
+import { alpha } from '@mui/material/styles';
 import {
   Close as CloseIcon,
   Save as SaveIcon,
@@ -157,6 +159,9 @@ const ScenarioSettingsDialog: React.FC<ScenarioSettingsDialogProps> = ({
   onClose,
   onSave
 }) => {
+  const theme = useTheme();
+  const accent = theme.palette.success.main;
+  const dialogBackground = `linear-gradient(135deg, ${alpha(accent, 0.08)}, ${alpha(accent, 0.04)})`;
   const [settings, setSettings] = useState<ScenarioSettings>(DEFAULT_SETTINGS);
   const [tabValue, setTabValue] = useState(0);
   const [loading, setLoading] = useState(false);
@@ -242,12 +247,37 @@ const ScenarioSettingsDialog: React.FC<ScenarioSettingsDialogProps> = ({
   };
 
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="lg" fullWidth>
-      <DialogTitle>
+    <Dialog 
+      open={open} 
+      onClose={onClose} 
+      maxWidth="lg" 
+      fullWidth
+      sx={{
+        '& .MuiDialog-paper': {
+          borderRadius: 3,
+          backgroundColor: theme.palette.background.paper,
+          backgroundImage: dialogBackground,
+          border: `1px solid ${alpha(accent, 0.24)}`,
+          boxShadow: `0 20px 60px ${alpha(accent, 0.18)}`,
+        },
+        '& .MuiOutlinedInput-root': {
+          '& fieldset': { borderColor: alpha(accent, 0.28) },
+          '&:hover fieldset': { borderColor: alpha(accent, 0.45) },
+          '&.Mui-focused fieldset': {
+            borderColor: accent,
+            boxShadow: `0 0 0 3px ${alpha(accent, 0.12)}`,
+          },
+        },
+        '& .MuiInputLabel-root.Mui-focused': {
+          color: accent,
+        },
+      }}
+    >
+      <DialogTitle sx={{ borderBottom: `1px solid ${alpha(accent, 0.2)}`, backgroundColor: alpha(accent, 0.08) }}>
         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <SettingsIcon />
-            <Typography variant="h6">Scenario Settings</Typography>
+            <SettingsIcon sx={{ color: accent }} />
+            <Typography variant="h6">تنظیمات سناریو</Typography>
           </Box>
           <IconButton onClick={onClose}>
             <CloseIcon />
@@ -660,13 +690,33 @@ const ScenarioSettingsDialog: React.FC<ScenarioSettingsDialogProps> = ({
         </TabPanel>
       </DialogContent>
 
-      <DialogActions>
-        <Button onClick={handleReset} startIcon={<RestoreIcon />}>
-          Reset to Defaults
+      <DialogActions sx={{ borderTop: `1px solid ${alpha(accent, 0.2)}`, backgroundColor: alpha(accent, 0.04), px: 3, py: 2 }}>
+        <Button 
+          onClick={handleReset} 
+          startIcon={<RestoreIcon />}
+          variant="outlined"
+          color="inherit"
+          sx={{ borderRadius: 2, borderColor: alpha(accent, 0.35) }}
+        >
+          بازنشانی به پیش‌فرض
         </Button>
-        <Button onClick={onClose}>Cancel</Button>
-        <Button onClick={handleSave} variant="contained" startIcon={<SaveIcon />}>
-          Save Settings
+        <Box sx={{ flex: 1 }} />
+        <Button 
+          onClick={onClose}
+          variant="outlined"
+          color="inherit"
+          sx={{ borderRadius: 2, borderColor: alpha(accent, 0.35) }}
+        >
+          انصراف
+        </Button>
+        <Button 
+          onClick={handleSave} 
+          variant="contained" 
+          color="success"
+          startIcon={<SaveIcon />}
+          sx={{ borderRadius: 2 }}
+        >
+          ذخیره تنظیمات
         </Button>
       </DialogActions>
     </Dialog>

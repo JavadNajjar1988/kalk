@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Dialog,
   DialogTitle,
@@ -16,9 +16,8 @@ import {
   FormControlLabel,
   Typography,
   useTheme,
-  useMediaQuery,
-  alpha,
 } from '@mui/material';
+import { alpha } from '@mui/material/styles';
 
 // انواع و فهرست‌های کمکی
 const echelons = ["لشکر", "تیپ", "گردان", "گروهان", "دسته"] as const;
@@ -101,66 +100,28 @@ const defaultStatus: 'active' | 'historical' | 'deprecated' = 'active';
 
 const RanksModal: React.FC<RanksModalProps> = ({ open, onClose, onSave, rank }) => {
   const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const accent = theme.palette.success.main;
+  const dialogBackground = `linear-gradient(135deg, ${alpha(accent, 0.08)}, ${alpha(accent, 0.04)})`;
+  const inputSurface =
+    theme.palette.mode === 'dark'
+      ? alpha(theme.palette.background.default, 0.72)
+      : alpha(theme.palette.common.white, 0.92);
 
-  const softSurface = useMemo(() => {
-    const primary = (theme.palette.primary.main || '#4a90e2').toLowerCase();
-    const hex = primary.replace('#', '');
-    if (hex.includes('10b981') || hex.includes('4caf50') || hex.includes('2e7d32')) return '#f0f4f3';
-    if (hex.includes('4a90e2') || hex.includes('1976d2') || hex.includes('2196f3')) return '#f0f4f8';
-    if (hex.includes('ef4444') || hex.includes('f44336') || hex.includes('d32f2f')) return '#fbf1f0';
-    if (hex.includes('6b21a8') || hex.includes('9c27b0') || hex.includes('673ab7')) return '#22262d';
-    if (hex.includes('f59e0b') || hex.includes('ff9800') || hex.includes('fb8c00')) return '#fbf1f1';
-
-    const clamp = (n: number) => Math.max(0, Math.min(255, Math.round(n)));
-    const hexToRgb = (h: string) => {
-      const normalized = h.length === 3 ? h.split('').map(c => c + c).join('') : h;
-      const r = parseInt(normalized.substring(0, 2), 16);
-      const g = parseInt(normalized.substring(2, 4), 16);
-      const b = parseInt(normalized.substring(4, 6), 16);
-      return { r, g, b };
-    };
-    const rgbToHex = (r: number, g: number, b: number) =>
-      `#${clamp(r).toString(16).padStart(2, '0')}${clamp(g).toString(16).padStart(2, '0')}${clamp(b).toString(16).padStart(2, '0')}`;
-    const blendWithWhite = (h: string, primaryWeight = 0.1) => {
-      const { r, g, b } = hexToRgb(h);
-      const wr = 255, wg = 255, wb = 255;
-      const w = 1 - primaryWeight;
-      const br = wr * w + r * primaryWeight;
-      const bg = wg * w + g * primaryWeight;
-      const bb = wb * w + b * primaryWeight;
-      return rgbToHex(br, bg, bb);
-    };
-
-    if (/^[0-9a-f]{3,6}$/.test(hex)) {
-      return blendWithWhite(hex, 0.1);
-    }
-
-    try {
-      const fallback = (theme.palette.primary.light || '#90caf9').toLowerCase().replace('#', '');
-      return blendWithWhite(fallback, 0.08);
-    } catch {
-      return '#f5f7fa';
-    }
-  }, [theme.palette.primary.main, theme.palette.primary.light]);
-
-  const outlinedInputSx = useMemo(() => ({
-    backgroundColor: 'rgba(255, 255, 255, 0.92)',
-    backdropFilter: 'blur(8px)',
-    transition: 'border-color 0.2s ease, box-shadow 0.2s ease',
-    borderRadius: 8,
-    '& fieldset': {
-      borderColor: alpha(theme.palette.primary.main, 0.2),
+  const textFieldSx = {
+    '& .MuiOutlinedInput-root': {
+      backgroundColor: inputSurface,
+      '& fieldset': {
+        borderColor: alpha(accent, 0.28),
+      },
+      '&:hover fieldset': {
+        borderColor: alpha(accent, 0.45),
+      },
+      '&.Mui-focused fieldset': {
+        borderColor: accent,
+        boxShadow: `0 0 0 3px ${alpha(accent, 0.12)}`,
+      },
     },
-    '&:hover fieldset': {
-      borderColor: alpha(theme.palette.primary.main, 0.35),
-    },
-    '&.Mui-focused fieldset': {
-      borderWidth: 2,
-      borderColor: alpha(theme.palette.primary.main, 0.6),
-      boxShadow: `0 0 0 3px ${alpha(theme.palette.primary.main, 0.12)}`,
-    },
-  }), [theme.palette.primary.main]);
+  };
   const [form, setForm] = useState<MilitaryUnitForm>({
     unitName: "",
     unitAlias: "",
@@ -275,48 +236,46 @@ const RanksModal: React.FC<RanksModalProps> = ({ open, onClose, onSave, rank }) 
       onClose={onClose}
       maxWidth="md"
       fullWidth
-      fullScreen={isMobile}
       sx={{
         '& .MuiDialog-paper': {
-          borderRadius: isMobile ? 0 : '20px',
-          backgroundColor: (theme) => alpha(theme.palette.primary.light, 0.1),
-          backdropFilter: 'blur(20px)',
-          border: (theme) => `1px solid ${alpha(theme.palette.primary.light, 0.2)}`,
-          boxShadow: (theme) => `0 20px 60px ${alpha(theme.palette.primary.light, 0.3)}, inset 0 1px 0 rgba(255, 255, 255, 0.8)`,
-          overflow: 'hidden',
-          position: 'relative',
-          minHeight: isMobile ? '100vh' : 'auto',
-          '&::before': {
-            content: 'none',
+          borderRadius: 3,
+          backgroundColor: theme.palette.background.paper,
+          backgroundImage: dialogBackground,
+          border: `1px solid ${alpha(accent, 0.24)}`,
+          boxShadow: `0 20px 60px ${alpha(accent, 0.18)}`,
+        },
+        '& .MuiOutlinedInput-root': {
+          backgroundColor: inputSurface,
+          '& fieldset': {
+            borderColor: alpha(accent, 0.28),
+          },
+          '&:hover fieldset': {
+            borderColor: alpha(accent, 0.45),
+          },
+          '&.Mui-focused fieldset': {
+            borderColor: accent,
+            boxShadow: `0 0 0 3px ${alpha(accent, 0.12)}`,
           },
         },
-        '& .MuiBackdrop-root': {
-          backgroundColor: (theme) => `${alpha(theme.palette.primary.light, 0.08)}`,
-          backdropFilter: 'blur(4px)',
+        '& .MuiInputLabel-root.Mui-focused': {
+          color: accent,
         },
       }}
     >
       <DialogTitle
         sx={{
-          backgroundColor: softSurface,
-          borderBottom: (theme) => `1px solid ${alpha(theme.palette.primary.light, 0.2)}`,
-          textAlign: 'center',
-          py: isMobile ? 2 : 3,
-          px: isMobile ? 2 : 3,
+          borderBottom: `1px solid ${alpha(accent, 0.2)}`,
+          backgroundColor: alpha(accent, 0.08),
+          fontWeight: 700,
         }}
       >
-        <Typography
-          variant={isMobile ? "h6" : "h5"}
-          sx={{ fontWeight: 700, color: theme.palette.primary.main }}
-        >
-          {rank ? "ویرایش ساختار یگان" : "افزودن ساختار یگان"}
-        </Typography>
+        {rank ? "ویرایش ساختار یگان" : "افزودن ساختار یگان"}
       </DialogTitle>
       <DialogContent
+        dividers
         sx={{
-          backgroundColor: softSurface,
-          p: isMobile ? 2 : 3,
-          '& .MuiOutlinedInput-root': outlinedInputSx,
+          borderColor: alpha(accent, 0.16),
+          backgroundColor: 'transparent',
         }}
       >
         <Box sx={{ mt: 1 }}>
@@ -568,13 +527,12 @@ const RanksModal: React.FC<RanksModalProps> = ({ open, onClose, onSave, rank }) 
         sx={{
           display: "flex",
           justifyContent: "space-between",
-          px: (isMobile ? 2 : 3),
-          pb: (isMobile ? 2 : 3),
-          pt: (isMobile ? 1 : 2),
-          backgroundColor: softSurface,
-          borderTop: (theme) => `1px solid ${alpha(theme.palette.primary.light, 0.2)}`,
-          flexDirection: isMobile ? "column" : "row",
-          gap: isMobile ? 2 : 3,
+          px: 3,
+          pb: 3,
+          pt: 2,
+          borderTop: `1px solid ${alpha(accent, 0.2)}`,
+          backgroundColor: alpha(accent, 0.04),
+          gap: 1,
         }}
       >
         <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
@@ -582,27 +540,19 @@ const RanksModal: React.FC<RanksModalProps> = ({ open, onClose, onSave, rank }) 
             variant="outlined"
             onClick={fillExample}
             sx={{
-              borderRadius: "12px",
+              borderRadius: 2,
               minWidth: 140,
-              backgroundColor: alpha(theme.palette.primary.light, 0.1),
-              borderColor: alpha(theme.palette.primary.main, 0.3),
-              color: theme.palette.primary.main,
-              fontWeight: 600,
-              "&:hover": {
-                backgroundColor: alpha(theme.palette.primary.light, 0.18),
-                borderColor: alpha(theme.palette.primary.main, 0.4),
-                transform: "translateY(-2px)",
-                boxShadow: `0 4px 12px ${alpha(theme.palette.primary.main, 0.2)}`,
-              },
+              borderColor: alpha(accent, 0.35),
+              color: theme.palette.text.primary,
             }}
           >
-            U_O?UcO?O_U+ O"O U.O?OU, O?UOU_ U?U? OU.OU.?OO?OO
+            پر کردن نمونه
           </Button>
           <Button
             variant="text"
             onClick={onClose}
             sx={{
-              borderRadius: "12px",
+              borderRadius: 2,
               fontWeight: 600,
               color: "#64748B",
               "&:hover": {
@@ -610,35 +560,21 @@ const RanksModal: React.FC<RanksModalProps> = ({ open, onClose, onSave, rank }) 
               },
             }}
           >
-            OU+O?O?OU?
+            انصراف
           </Button>
         </Box>
         <Box>
           <Button
             variant="contained"
+            color="success"
             onClick={handleSubmit}
             disabled={Object.keys(errors).length > 0}
             sx={{
-              borderRadius: "12px",
+              borderRadius: 2,
               minWidth: 140,
-              backgroundColor: theme.palette.primary.main,
-              fontWeight: 600,
-              border: "2px solid rgba(255, 255, 255, 0.3)",
-              boxShadow: `0 4px 16px ${alpha(theme.palette.primary.main, 0.3)}`,
-              "&:hover": {
-                backgroundColor: theme.palette.primary.dark,
-                transform: "translateY(-2px)",
-                boxShadow: `0 8px 24px ${alpha(theme.palette.primary.main, 0.4)}`,
-              },
-              "&:disabled": {
-                backgroundColor: alpha(theme.palette.primary.main, 0.3),
-                color: "rgba(255,255,255,0.7)",
-                transform: "none",
-                boxShadow: "none",
-              },
             }}
           >
-            O?OrUOO?U?
+            ذخیره تغییرات
           </Button>
         </Box>
       </DialogActions>

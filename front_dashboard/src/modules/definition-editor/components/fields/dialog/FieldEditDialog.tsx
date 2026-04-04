@@ -10,9 +10,8 @@ import {
   Alert,
   Paper,
   useTheme,
-  useMediaQuery,
-  alpha,
 } from '@mui/material';
+import { alpha } from '@mui/material/styles';
 import { Cancel as CancelIcon, Save as SaveIcon } from '@mui/icons-material';
 import { FieldEditDialogProps } from '../types/FieldEditTypes';
 import { ExtendedCustomFieldDefinition } from '../types/FieldEditTypes';
@@ -33,50 +32,12 @@ const FieldEditDialog: React.FC<FieldEditDialogProps> = ({
   onSave,
 }) => {
   const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
-  
-  // Soft flat background based on primary palette (no glass/gradient)
-  const getSoftSurface = () => {
-    const primary = (theme.palette.primary.main || '#4a90e2').toLowerCase();
-    const hex = primary.replace('#', '');
-    // 1) Exact/brand buckets
-    if (hex.includes('10b981') || hex.includes('4caf50') || hex.includes('2e7d32')) return '#f0f4f3'; // green
-    if (hex.includes('4a90e2') || hex.includes('1976d2') || hex.includes('2196f3')) return '#f0f4f8'; // blue
-    if (hex.includes('ef4444') || hex.includes('f44336') || hex.includes('d32f2f')) return '#fbf1f0'; // red
-    if (hex.includes('6b21a8') || hex.includes('9c27b0') || hex.includes('673ab7')) return '#22262d'; // purple (dark)
-    if (hex.includes('f59e0b') || hex.includes('ff9800') || hex.includes('fb8c00')) return '#fbf1f1'; // orange
-
-    // 2) Generic: create a white-tinted version of primary (solid, 100% opacity)
-    const clamp = (n: number) => Math.max(0, Math.min(255, Math.round(n)));
-    const hexToRgb = (h: string) => {
-      const n = h.length === 3 ? h.split('').map(c => c + c).join('') : h;
-      const r = parseInt(n.substring(0, 2), 16);
-      const g = parseInt(n.substring(2, 4), 16);
-      const b = parseInt(n.substring(4, 6), 16);
-      return { r, g, b };
-    };
-    const rgbToHex = (r: number, g: number, b: number) =>
-      `#${clamp(r).toString(16).padStart(2, '0')}${clamp(g).toString(16).padStart(2, '0')}${clamp(b).toString(16).padStart(2, '0')}`;
-    const blendWithWhite = (h: string, primaryWeight = 0.10) => {
-      const { r, g, b } = hexToRgb(h);
-      const wr = 255, wg = 255, wb = 255; // white
-      const w = 1 - primaryWeight;
-      const br = wr * w + r * primaryWeight;
-      const bg = wg * w + g * primaryWeight;
-      const bb = wb * w + b * primaryWeight;
-      return rgbToHex(br, bg, bb);
-    };
-    if (/^[0-9a-f]{3,6}$/.test(hex)) {
-      return blendWithWhite(hex, 0.10); // 10% رنگ اصلی + 90% سفید (تخت، 100% opacity)
-    }
-    // Fallback neutral tinted from theme primary.light if available
-    try {
-      const fallback = (theme.palette.primary.light || '#90caf9').toLowerCase().replace('#', '');
-      return blendWithWhite(fallback, 0.08);
-    } catch {
-      return '#f5f7fa';
-    }
-  };
+  const accent = theme.palette.success.main;
+  const dialogBackground = `linear-gradient(135deg, ${alpha(accent, 0.08)}, ${alpha(accent, 0.04)})`;
+  const inputSurface =
+    theme.palette.mode === 'dark'
+      ? alpha(theme.palette.background.default, 0.72)
+      : alpha(theme.palette.common.white, 0.92);
   
   const [formData, setFormData] = useState<ExtendedCustomFieldDefinition | null>(null);
   const [currentPage, setCurrentPage] = useState<'selection' | 'create' | 'ready'>('selection');
@@ -208,28 +169,21 @@ const FieldEditDialog: React.FC<FieldEditDialogProps> = ({
     return (
       <Box
         sx={{
-          backgroundColor: getSoftSurface(),
-          backdropFilter: 'none',
-          borderRadius: '16px',
+          backgroundColor: 'rgba(255, 255, 255, 0.95)',
+          borderRadius: 3,
           overflow: 'hidden',
           position: 'relative',
-          '&::before': {
-            content: 'none',
-          }
         }}
         onKeyDown={handleKeyDown}
         role="region"
         aria-label="فرم ساخت فیلد جدید"
         tabIndex={-1}
       >
-        {/* Step Indicator - Hidden on mobile */}
-        {!isMobile && <StepIndicator steps={steps} currentStep={currentStep} />}
+        <StepIndicator steps={steps} currentStep={currentStep} />
 
-        {/* Step Content */}
         <Box sx={{ 
-          p: isMobile ? 2 : 4, 
-          minHeight: isMobile ? 300 : 400,
-          pt: isMobile ? 1 : undefined
+          p: 4, 
+          minHeight: 400,
         }}>
           {currentStep === 1 && (
             <FieldTypeSelection formData={formData} onChange={handleChange} />
@@ -252,30 +206,26 @@ const FieldEditDialog: React.FC<FieldEditDialogProps> = ({
           )}
         </Box>
 
-        {/* Navigation Buttons */}
         <Box
           sx={{
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
-            p: isMobile ? 2 : 3,
+            p: 3,
             backgroundColor: 'rgba(255, 255, 255, 0.8)',
-            backdropFilter: 'blur(10px)',
-            borderTop: (theme) => `1px solid ${alpha(theme.palette.primary.light, 0.2)}`,
+            borderTop: `1px solid ${alpha(accent, 0.2)}`,
           }}
         >
           <Button
             onClick={currentStep === 1 ? handleBackToSelection : handlePrevStep}
             sx={{
-              borderRadius: '12px',
-              px: isMobile ? 2 : 3,
-              py: isMobile ? 1 : 1.5,
+              borderRadius: 2,
+              px: 3,
+              py: 1.5,
               backgroundColor: 'rgba(148, 163, 184, 0.1)',
-              backdropFilter: 'blur(10px)',
               border: '1px solid rgba(148, 163, 184, 0.2)',
               color: '#64748B',
               fontWeight: 600,
-              fontSize: isMobile ? '0.8rem' : 'inherit',
               '&:hover': {
                 backgroundColor: 'rgba(148, 163, 184, 0.15)',
                 transform: 'translateY(-2px)',
@@ -287,28 +237,19 @@ const FieldEditDialog: React.FC<FieldEditDialogProps> = ({
             {currentStep === 1 ? 'بازگشت' : 'مرحله قبل'}
           </Button>
 
-          <Box sx={{ display: 'flex', gap: isMobile ? 1 : 2 }}>
+          <Box sx={{ display: 'flex', gap: 2 }}>
             {currentStep === 4 ? (
               <Button
                 onClick={handleSubmit}
                 startIcon={<SaveIcon />}
+                variant="contained"
+                color="success"
                 sx={{
-                  borderRadius: '12px',
-                  px: isMobile ? 2 : 4,
-                  py: isMobile ? 1 : 1.5,
-                  backgroundColor: (theme) => theme.palette.primary.main,
-                  color: 'white',
-                  fontWeight: 600,
-                  border: '2px solid rgba(255, 255, 255, 0.3)',
-                  boxShadow: (theme) => `0 4px 16px ${alpha(theme.palette.primary.main, 0.3)}`,
-                  fontSize: isMobile ? '0.8rem' : 'inherit',
-                  '&:hover': {
-                    backgroundColor: (theme) => theme.palette.primary.dark,
-                    transform: 'translateY(-2px)',
-                    boxShadow: (theme) => `0 8px 24px ${alpha(theme.palette.primary.main, 0.4)}`,
-                  },
+                  borderRadius: 2,
+                  px: 4,
+                  py: 1.5,
                   '&:disabled': {
-                    backgroundColor: 'rgba(148, 163, 184, 0.5)',
+                    backgroundColor: alpha(accent, 0.2),
                     color: 'rgba(255, 255, 255, 0.7)',
                     transform: 'none',
                     boxShadow: 'none',
@@ -317,30 +258,21 @@ const FieldEditDialog: React.FC<FieldEditDialogProps> = ({
                 disabled={!formData || !formData.name || !formData.englishName || !formData.name.trim() || !formData.englishName.trim()}
                 aria-label="ذخیره فیلد"
               >
-                {isMobile ? 'ذخیره' : 'ذخیره فیلد'}
+                ذخیره فیلد
               </Button>
             ) : (
               <Button
                 onClick={handleNextStep}
+                variant="contained"
+                color="success"
                 sx={{
-                  borderRadius: '12px',
-                  px: isMobile ? 2 : 4,
-                  py: isMobile ? 1 : 1.5,
-                  backgroundColor: (theme) => theme.palette.primary.main,
-                  color: 'white',
-                  fontWeight: 600,
-                  border: '2px solid rgba(255, 255, 255, 0.3)',
-                  boxShadow: (theme) => `0 4px 16px ${alpha(theme.palette.primary.main, 0.3)}`,
-                  fontSize: isMobile ? '0.8rem' : 'inherit',
-                  '&:hover': {
-                    backgroundColor: (theme) => theme.palette.primary.dark,
-                    transform: 'translateY(-2px)',
-                    boxShadow: (theme) => `0 8px 24px ${alpha(theme.palette.primary.main, 0.4)}`,
-                  },
+                  borderRadius: 2,
+                  px: 4,
+                  py: 1.5,
                 }}
                 aria-label="مرحله بعد"
               >
-                {isMobile ? 'بعدی' : 'مرحله بعد'}
+                مرحله بعد
               </Button>
             )}
           </Box>
@@ -350,13 +282,12 @@ const FieldEditDialog: React.FC<FieldEditDialogProps> = ({
   };
 
   const renderReadyFields = () => (
-    <Box sx={{ p: isMobile ? 2 : 4 }}>
+    <Box sx={{ p: 4 }}>
       <Paper
         sx={{
-          p: isMobile ? 2 : 4,
-          borderRadius: '16px',
+          p: 4,
+          borderRadius: 3,
           backgroundColor: 'rgba(248, 250, 252, 0.9)',
-          backdropFilter: 'blur(10px)',
           border: '1px solid rgba(203, 213, 225, 0.3)',
           textAlign: 'center',
         }}
@@ -368,34 +299,32 @@ const FieldEditDialog: React.FC<FieldEditDialogProps> = ({
           sx={{
             backgroundColor: 'rgba(148, 163, 184, 0.1)',
             border: '1px solid rgba(148, 163, 184, 0.2)',
-            borderRadius: '12px',
+            borderRadius: 2,
             '& .MuiAlert-icon': {
               color: '#64748B',
             },
           }}
         >
-          <Typography variant={isMobile ? "body1" : "h6"} sx={{ fontWeight: 600, color: '#64748B', mb: 1 }}>
+          <Typography variant="h6" sx={{ fontWeight: 600, color: '#64748B', mb: 1 }}>
             به زودی در دسترس!
           </Typography>
-          <Typography variant={isMobile ? "body2" : "body1"}>
+          <Typography variant="body1">
             فیلدهای از پیش تعریف شده و آماده در نسخه‌های آینده اضافه خواهد شد
           </Typography>
         </Alert>
       </Paper>
       
-      <Box sx={{ mt: isMobile ? 2 : 4 }}>
+      <Box sx={{ mt: 4 }}>
         <Button 
           onClick={handleBackToSelection}
           sx={{
-            borderRadius: '12px',
-            px: isMobile ? 2 : 4,
-            py: isMobile ? 1 : 1.5,
+            borderRadius: 2,
+            px: 4,
+            py: 1.5,
             background: 'linear-gradient(135deg, rgba(148, 163, 184, 0.1) 0%, rgba(203, 213, 225, 0.05) 100%)',
-            backdropFilter: 'blur(10px)',
             border: '1px solid rgba(148, 163, 184, 0.2)',
             color: '#64748B',
             fontWeight: 600,
-            fontSize: isMobile ? '0.8rem' : 'inherit',
             '&:hover': {
               background: 'linear-gradient(135deg, rgba(148, 163, 184, 0.15) 0%, rgba(203, 213, 225, 0.1) 100%)',
               transform: 'translateY(-2px)',
@@ -414,25 +343,29 @@ const FieldEditDialog: React.FC<FieldEditDialogProps> = ({
     <Dialog 
       open={open} 
       onClose={handleClose} 
-      maxWidth={isMobile ? "xs" : "lg"} 
+      maxWidth="lg"
       fullWidth
-      fullScreen={isMobile}
       sx={{
         '& .MuiDialog-paper': {
-          borderRadius: isMobile ? 0 : '20px',
-          backgroundColor: (theme) => alpha(theme.palette.primary.light, 0.10),
-          backdropFilter: 'blur(20px)',
-          border: (theme) => `1px solid ${alpha(theme.palette.primary.light, 0.2)}`,
-          boxShadow: (theme) => `0 20px 60px ${alpha(theme.palette.primary.light, 0.3)}, inset 0 1px 0 rgba(255, 255, 255, 0.8)`,
+          borderRadius: 3,
+          backgroundColor: theme.palette.background.paper,
+          backgroundImage: dialogBackground,
+          border: `1px solid ${alpha(accent, 0.24)}`,
+          boxShadow: `0 20px 60px ${alpha(accent, 0.3)}`,
           overflow: 'hidden',
           position: 'relative',
-          '&::before': {
-            content: 'none',
-          }
         },
-        '& .MuiBackdrop-root': {
-          backgroundColor: (theme) => `${alpha(theme.palette.primary.light, 0.08)}`,
-          backdropFilter: 'blur(4px)',
+        '& .MuiOutlinedInput-root': {
+          backgroundColor: inputSurface,
+          '& fieldset': { borderColor: alpha(accent, 0.28) },
+          '&:hover fieldset': { borderColor: alpha(accent, 0.45) },
+          '&.Mui-focused fieldset': {
+            borderColor: accent,
+            boxShadow: `0 0 0 3px ${alpha(accent, 0.12)}`,
+          },
+        },
+        '& .MuiInputLabel-root.Mui-focused': {
+          color: accent,
         },
       }}
       ref={dialogRef}
@@ -442,21 +375,20 @@ const FieldEditDialog: React.FC<FieldEditDialogProps> = ({
     >
       <DialogTitle
         sx={{
-          backgroundColor: getSoftSurface(),
-          backdropFilter: 'none',
-          borderBottom: (theme) => `1px solid ${alpha(theme.palette.primary.light, 0.2)}`,
+          borderBottom: `1px solid ${alpha(accent, 0.2)}`,
+          backgroundColor: alpha(accent, 0.08),
           textAlign: 'center',
-          py: isMobile ? 2 : 3,
-          px: isMobile ? 2 : 3,
+          py: 3,
+          px: 3,
         }}
         id="field-edit-dialog-title"
       >
-        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: isMobile ? 1 : 2 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 2 }}>
           <Typography 
-            variant={isMobile ? "h5" : "h4"}
+            variant="h4"
             sx={{
               fontWeight: 700,
-              color: (theme) => theme.palette.primary.main,
+              color: accent,
             }}
           >
             {currentPage === 'selection' && (isEditing ? 'ویرایش فیلد' : 'افزودن فیلد جدید')}
@@ -465,7 +397,7 @@ const FieldEditDialog: React.FC<FieldEditDialogProps> = ({
           </Typography>
         </Box>
       </DialogTitle>
-      <DialogContent sx={{ p: 0, backgroundColor: getSoftSurface() }} id="field-edit-dialog-description">
+      <DialogContent dividers sx={{ borderColor: alpha(accent, 0.16), backgroundColor: 'transparent' }} id="field-edit-dialog-description">
         {currentPage === 'selection' && (
           <FieldSelectionPage 
             onCreateField={handleCreateField}
@@ -478,35 +410,27 @@ const FieldEditDialog: React.FC<FieldEditDialogProps> = ({
       {currentPage === 'selection' && (
         <DialogActions
           sx={{
-            backgroundColor: getSoftSurface(),
-            backdropFilter: 'none',
-            borderTop: (theme) => `1px solid ${alpha(theme.palette.primary.light, 0.2)}`,
-            p: isMobile ? 2 : 3,
+            borderTop: `1px solid ${alpha(accent, 0.2)}`,
+            backgroundColor: alpha(accent, 0.04),
+            px: 3,
+            py: 2,
           }}
         >
           <Button 
             onClick={handleClose} 
             startIcon={<CancelIcon />}
+            variant="outlined"
+            color="inherit"
             sx={{
-              borderRadius: '12px',
-              px: isMobile ? 2 : 3,
-              py: isMobile ? 1 : 1.5,
-              backgroundColor: 'rgba(148, 163, 184, 0.1)',
-              backdropFilter: 'blur(10px)',
-              border: '1px solid rgba(148, 163, 184, 0.2)',
-              color: '#64748B',
-              fontWeight: 600,
-              fontSize: isMobile ? '0.8rem' : 'inherit',
-              '&:hover': {
-                backgroundColor: 'rgba(148, 163, 184, 0.15)',
-                transform: 'translateY(-2px)',
-                boxShadow: '0 4px 12px rgba(148, 163, 184, 0.2)',
-              },
+              borderRadius: 2,
+              px: 3,
+              py: 1.5,
+              borderColor: alpha(accent, 0.35),
             }}
             aria-label="انصراف و بستن"
             ref={firstFocusableRef}
           >
-            {isMobile ? 'انصراف' : 'انصراف'}
+            انصراف
           </Button>
         </DialogActions>
       )}

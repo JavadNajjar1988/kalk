@@ -789,6 +789,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
             background: alpha(theme.palette.background.paper, 0.7),
             backdropFilter: 'blur(20px)',
             border: `1px solid ${alpha(theme.palette.divider, 0.1)}`,
+            position: 'relative',
             height: 'calc(100vh - 128px)',
             overflow: 'auto',
             display: 'flex',
@@ -797,36 +798,42 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
             p: 0,
           }}
         >
+          {!isDashboardHome && (
+            <Box
+              sx={{
+                px: 3,
+                pt: 3,
+                pb: 0,
+                display: 'flex',
+                justifyContent: theme.direction === 'rtl' ? 'flex-start' : 'flex-end',
+              }}
+            >
+              <Tooltip title="بازگشت به صفحه اصلی">
+                <Button
+                  variant="contained"
+                  startIcon={<KeyboardBackspace />}
+                  onClick={handleBackToDashboard}
+                  sx={{
+                    borderRadius: '999px',
+                    px: 2.25,
+                    py: 0.6,
+                    minHeight: 34,
+                    boxShadow: `0 8px 24px ${alpha(theme.palette.primary.main, 0.35)}`,
+                    '&:hover': {
+                      boxShadow: `0 10px 28px ${alpha(theme.palette.primary.main, 0.42)}`,
+                    },
+                  }}
+                >
+                  بازگشت
+                </Button>
+              </Tooltip>
+            </Box>
+          )}
           <Box sx={{ p: 3, flexGrow: 1, overflowY: 'auto' }}>
             {children}
           </Box>
         </Paper>
       </Box>
-
-      {!isDashboardHome && (
-        <Tooltip title="بازگشت به صفحه اصلی">
-          <Button
-            variant="contained"
-            startIcon={<KeyboardBackspace />}
-            onClick={handleBackToDashboard}
-            sx={{
-              position: 'fixed',
-              top: 104,
-              right: 32,
-              zIndex: theme.zIndex.drawer + 2,
-              borderRadius: '999px',
-              px: 2.25,
-              py: 1,
-              boxShadow: `0 8px 24px ${alpha(theme.palette.primary.main, 0.35)}`,
-              '&:hover': {
-                boxShadow: `0 10px 28px ${alpha(theme.palette.primary.main, 0.42)}`,
-              },
-            }}
-          >
-            بازگشت
-          </Button>
-        </Tooltip>
-      )}
     </Box>
   );
 };

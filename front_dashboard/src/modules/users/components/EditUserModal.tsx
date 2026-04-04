@@ -18,6 +18,7 @@ import {
   Avatar,
   useTheme,
 } from '@mui/material';
+import { alpha } from '@mui/material/styles';
 import {
   Edit as EditIcon,
   Save as SaveIcon,
@@ -42,6 +43,12 @@ const EditUserModal: React.FC<EditUserModalProps> = ({
   isSaving = false,
 }) => {
   const theme = useTheme();
+  const accent = theme.palette.success.main;
+  const dialogBackground = `linear-gradient(135deg, ${alpha(accent, 0.08)}, ${alpha(accent, 0.04)})`;
+  const inputSurface =
+    theme.palette.mode === 'dark'
+      ? alpha(theme.palette.background.default, 0.72)
+      : alpha(theme.palette.common.white, 0.92);
   const { accessLevels } = useAppSelector((state) => state.users);
   const [formData, setFormData] = useState<Partial<User>>({});
 
@@ -125,14 +132,38 @@ const EditUserModal: React.FC<EditUserModalProps> = ({
       onClose={onClose}
       maxWidth="md"
       fullWidth
-      sx={{ '& .MuiDialog-paper': { borderRadius: 3 } }}
+      sx={{
+        '& .MuiDialog-paper': {
+          borderRadius: 3,
+          backgroundColor: theme.palette.background.paper,
+          backgroundImage: dialogBackground,
+          border: `1px solid ${alpha(accent, 0.24)}`,
+          boxShadow: `0 20px 60px ${alpha(accent, 0.18)}`,
+        },
+        '& .MuiOutlinedInput-root': {
+          backgroundColor: inputSurface,
+          '& fieldset': {
+            borderColor: alpha(accent, 0.28),
+          },
+          '&:hover fieldset': {
+            borderColor: alpha(accent, 0.45),
+          },
+          '&.Mui-focused fieldset': {
+            borderColor: accent,
+            boxShadow: `0 0 0 3px ${alpha(accent, 0.12)}`,
+          },
+        },
+        '& .MuiInputLabel-root.Mui-focused': {
+          color: accent,
+        },
+      }}
     >
-      <DialogTitle sx={{ pb: 1, display: 'flex', alignItems: 'center' }}>
-        <EditIcon sx={{ mr: 1, color: theme.palette.primary.main }} />
+      <DialogTitle sx={{ pb: 1, display: 'flex', alignItems: 'center', borderBottom: `1px solid ${alpha(accent, 0.2)}`, backgroundColor: alpha(accent, 0.08) }}>
+        <EditIcon sx={{ mr: 1, color: accent }} />
         <Typography component="div" variant="h6">ویرایش اطلاعات کاربر</Typography>
       </DialogTitle>
       
-      <DialogContent dividers>
+      <DialogContent dividers sx={{ borderColor: alpha(accent, 0.16), backgroundColor: 'transparent' }}>
         {/* Header با آواتار */}
         <Box sx={{ display: 'flex', alignItems: 'center', mb: 3, p: 2, bgcolor: theme.palette.grey[50], borderRadius: 2 }}>
           <Avatar
@@ -350,13 +381,14 @@ const EditUserModal: React.FC<EditUserModalProps> = ({
         </Grid>
       </DialogContent>
       
-      <DialogActions sx={{ p: 2, gap: 1 }}>
+      <DialogActions sx={{ px: 3, py: 2, gap: 1, borderTop: `1px solid ${alpha(accent, 0.2)}`, backgroundColor: alpha(accent, 0.04) }}>
         <Button
           onClick={onClose}
           variant="outlined"
+          color="inherit"
           startIcon={<CancelIcon />}
           disabled={isSaving}
-          sx={{ flex: 1 }}
+          sx={{ flex: 1, borderRadius: 2, borderColor: alpha(accent, 0.35) }}
         >
           انصراف
         </Button>
@@ -364,9 +396,10 @@ const EditUserModal: React.FC<EditUserModalProps> = ({
         <Button
           onClick={handleSave}
           variant="contained"
+          color="success"
           startIcon={<SaveIcon />}
           disabled={isSaving}
-          sx={{ flex: 1 }}
+          sx={{ flex: 1, borderRadius: 2 }}
         >
           {isSaving ? 'در حال ذخیره...' : 'ذخیره تغییرات'}
         </Button>

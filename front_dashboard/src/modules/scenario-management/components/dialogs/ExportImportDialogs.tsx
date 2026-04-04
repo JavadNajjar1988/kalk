@@ -24,8 +24,10 @@ import {
   ListItemIcon,
   IconButton,
   Alert,
-  Chip
+  Chip,
+  useTheme,
 } from '@mui/material';
+import { alpha } from '@mui/material/styles';
 import {
   Close as CloseIcon,
   Upload as UploadIcon,
@@ -101,6 +103,9 @@ const ExportImportDialogs: React.FC<ExportImportDialogsProps> = ({
   onClose,
   onComplete
 }) => {
+  const theme = useTheme();
+  const accent = theme.palette.success.main;
+  const dialogBackground = `linear-gradient(135deg, ${alpha(accent, 0.08)}, ${alpha(accent, 0.04)})`;
   const [tabValue, setTabValue] = useState(0);
   const [exportOptions, setExportOptions] = useState<ExportOptions>(DEFAULT_EXPORT_OPTIONS);
   const [importOptions, setImportOptions] = useState<ImportOptions>(DEFAULT_IMPORT_OPTIONS);
@@ -216,13 +221,38 @@ const ExportImportDialogs: React.FC<ExportImportDialogsProps> = ({
   };
 
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
-      <DialogTitle>
+    <Dialog 
+      open={open} 
+      onClose={onClose} 
+      maxWidth="md" 
+      fullWidth
+      sx={{
+        '& .MuiDialog-paper': {
+          borderRadius: 3,
+          backgroundColor: theme.palette.background.paper,
+          backgroundImage: dialogBackground,
+          border: `1px solid ${alpha(accent, 0.24)}`,
+          boxShadow: `0 20px 60px ${alpha(accent, 0.18)}`,
+        },
+        '& .MuiOutlinedInput-root': {
+          '& fieldset': { borderColor: alpha(accent, 0.28) },
+          '&:hover fieldset': { borderColor: alpha(accent, 0.45) },
+          '&.Mui-focused fieldset': {
+            borderColor: accent,
+            boxShadow: `0 0 0 3px ${alpha(accent, 0.12)}`,
+          },
+        },
+        '& .MuiInputLabel-root.Mui-focused': {
+          color: accent,
+        },
+      }}
+    >
+      <DialogTitle sx={{ borderBottom: `1px solid ${alpha(accent, 0.2)}`, backgroundColor: alpha(accent, 0.08) }}>
         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            {mode === 'export' ? <DownloadIcon /> : <UploadIcon />}
+            {mode === 'export' ? <DownloadIcon sx={{ color: accent }} /> : <UploadIcon sx={{ color: accent }} />}
             <Typography variant="h6">
-              {mode === 'export' ? 'Export Scenario' : 'Import Scenario'}
+              {mode === 'export' ? 'صدور سناریو' : 'وارد کردن سناریو'}
             </Typography>
           </Box>
           <IconButton onClick={onClose}>
@@ -460,25 +490,36 @@ const ExportImportDialogs: React.FC<ExportImportDialogsProps> = ({
         )}
       </DialogContent>
 
-      <DialogActions>
-        <Button onClick={onClose}>Cancel</Button>
+      <DialogActions sx={{ borderTop: `1px solid ${alpha(accent, 0.2)}`, backgroundColor: alpha(accent, 0.04), px: 3, py: 2 }}>
+        <Button 
+          onClick={onClose}
+          variant="outlined"
+          color="inherit"
+          sx={{ borderRadius: 2, borderColor: alpha(accent, 0.35) }}
+        >
+          انصراف
+        </Button>
         {mode === 'export' ? (
           <Button
             onClick={handleExport}
             variant="contained"
+            color="success"
             startIcon={<GetAppIcon />}
             disabled={loading || !scenarioId}
+            sx={{ borderRadius: 2 }}
           >
-            Export Data
+            صدور داده‌ها
           </Button>
         ) : (
           <Button
             onClick={handleImport}
             variant="contained"
+            color="success"
             startIcon={<CloudUploadIcon />}
             disabled={loading || selectedFiles.length === 0}
+            sx={{ borderRadius: 2 }}
           >
-            Import Data
+            وارد کردن داده‌ها
           </Button>
         )}
       </DialogActions>
