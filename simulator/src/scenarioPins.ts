@@ -274,11 +274,93 @@ export function getScenarioCenter(s: BackendScenario, index: number, total: numb
     return { lon: metaCenter.longitude, lat: metaCenter.latitude };
   }
 
-  // 2) اگر در خود سناریو مختصات واحدها/رویدادها وجود داشت، مرکز واقعی را از آن‌ها حساب می‌کنیم
-  const positions = collectScenarioPositions(c);
-  const centroid = getCentroid(positions);
-  if (centroid) {
-    return centroid;
+  // 2) اگر tacticalSymbols داشتیم (Odin/Orbit: EPSG:3857) - مرکز تقریبی حساب کن
+  // این مسیر وقتی مهم می‌شود که `content.layers` و `content.units` خالی باشند.
+  try {
+    const tuples = c?.metadata?.tacticalSymbols?.tuples;
+    if (Array.isArray(tuples) && tuples.length > 0) {
+      const EARTH_RADIUS = 6378137;
+      const RAD2DEG = 180 / Math.PI;
+
+      const mercatorToWgs84 = (x: number, y: number) => {
+        const lon = (x / EARTH_RADIUS) * RAD2DEG;
+        const lat = (Math.atan(Math.exp(y / EARTH_RADIUS)) * 2 - Math.PI / 2) * RAD2DEG;
+        return { lon, lat };
+      };
+
+      const isWebMercatorPair = (pair: any): pair is number[] => {
+        if (!Array.isArray(pair) || pair.length < 2) return false;
+        const x = Number(pair[0]);
+        const y = Number(pair[1]);
+        return Number.isFinite(x) && Number.isFinite(y) && (Math.abs(x) > 180 || Math.abs(y) > 90);
+      };
+
+      const findFirstCoordPair = (obj: any): number[] | null => {
+        if (!obj) return null;
+        if (obj.type === 'Point' && Array.isArray(obj.coordinates)) {
+          return obj.coordinates as number[];
+        }
+        if (Array.isArray(obj.geometries)) {
+          for (const g of obj.geometries) {
+            const hit = findFirstCoordPair(g);
+            if (hit) return hit;
+          }
+        }
+        if (Array.isArray(obj.coordinates)) {
+          const stack = [...obj.coordinates];
+          while (stack.length) {
+            const cur = stack.shift();
+            if (isWebMercatorPair(cur)) return [Number(cur[0]), Number(cur[1])];
+            if (Array.isArray(cur)) stack.push(...cur);
+          }
+        }
+        return null;
+      };
+
+      const lonLats: Array<{ lon: number; lat: number }> = [];
+      for (const tuple of tuples) {
+        if (!Array.isArray(tuple)) continue;
+        const [key, val] = tuple as [string, any];
+        if (!key.startsWith('feature:')) continue;
+        if (!val || typeof val !== 'object') continue;
+        if (val.type !== 'Feature') continue;
+        const geom = val.geometry;
+        const pair = findFirstCoordPair(geom);
+        if (!pair) continue;
+        const { lon, lat } = mercatorToWgs84(pair[0], pair[1]);
+        if (Number.isFinite(lon) && Number.isFinite(lat)) {
+          lonLats.push({ lon, lat });
+        }
+      }
+
+      if (lonLats.length > 0) {
+        const sum = lonLats.reduce(
+          (acc, p) => {
+            acc.lon += p.lon;
+            acc.lat += p.lat;
+            return acc;
+          },
+          { lon: 0, lat: 0 },
+        );
+        return { lon: sum.lon / lonLats.length, lat: sum.lat / lonLats.length };
+      }
+    }
+  } catch {
+    // ignore - fallback to unit/iran center
+  }
+
+  // 2) اگر در events یا واحدها مختصات داشتیم (حالت عمومی ORBAT)
+  const units = Array.isArray(c.units)
+    ? c.units
+    : Array.isArray(c?.sides?.[0]?.units)
+      ? c.sides[0].units
+      : [];
+  const firstUnit = units.find((u: any) => u?.position && typeof u.position.longitude === 'number' && typeof u.position.latitude === 'number');
+  if (firstUnit) {
+    return {
+      lon: firstUnit.position.longitude,
+      lat: firstUnit.position.latitude,
+    };
   }
 
   // 3) اگر هیچ مختصاتی نداریم، سناریوها را دور مرکز ایران پخش می‌کنیم تا حداقل دیده شوند

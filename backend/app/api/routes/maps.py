@@ -381,3 +381,13 @@ async def get_active_maps(session: DbSession = None):
         maps=[_map_to_response(item) for item in items],
         total=len(items),
     )
+
+
+@router.get("/{map_id}", response_model=OfflineMapResponse)
+async def get_offline_map_by_id(map_id: int, session: DbSession = None):
+    """جزئیات یک نقشهٔ آفلاین (برای شبیه‌ساز / Cesium — url_template)."""
+    res = await session.execute(select(OfflineMap).where(OfflineMap.id == map_id))
+    item = res.scalar_one_or_none()
+    if not item:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="نقشه یافت نشد")
+    return _map_to_response(item)

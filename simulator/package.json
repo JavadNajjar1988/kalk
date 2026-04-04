@@ -15,7 +15,9 @@
     "@babylonjs/materials": "^6.0.0",
     "@syncpoint/signs": "^1.1.0",
     "cesium": "^1.136.0",
-    "milsymbol": "^3.0.3",
+    "jsts": "^2.12.1",
+    "milsymbol": "^2.2.0",
+    "ramda": "^0.32.0",
     "vite-plugin-cesium": "^1.2.23"
   },
   "devDependencies": {

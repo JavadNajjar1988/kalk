@@ -11,6 +11,7 @@ param(
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
+$apiHostPort = 8002
 
 Push-Location $PSScriptRoot
 try {
@@ -196,10 +197,10 @@ try {
     if (-not $healthy) {
         $ok = $false
         for ($i = 0; $i -lt $PortWaitSeconds; $i++) {
-            $listening = Get-NetTCPConnection -LocalPort 8000 -State Listen -ErrorAction SilentlyContinue
+            $listening = Get-NetTCPConnection -LocalPort $apiHostPort -State Listen -ErrorAction SilentlyContinue
             if ($listening) {
                 $ok = $true
-                Write-Host "  OK: API port 8000 is listening" -ForegroundColor Green
+                Write-Host "  OK: API port $apiHostPort is listening" -ForegroundColor Green
                 break
             }
             Start-Sleep -Seconds 1
@@ -244,8 +245,8 @@ try {
     Write-Host "========================================" -ForegroundColor Cyan
     Write-Host ""
     Write-Host "URLs:" -ForegroundColor Yellow
-    Write-Host "  API:           http://localhost:8000" -ForegroundColor White
-    Write-Host "  API Docs:      http://localhost:8000/api/docs" -ForegroundColor White
+    Write-Host "  API:           http://localhost:$apiHostPort" -ForegroundColor White
+    Write-Host "  API Docs:      http://localhost:$apiHostPort/api/docs" -ForegroundColor White
     Write-Host "  Dashboard:     http://127.0.0.1:3000/" -ForegroundColor White
     Write-Host "  KalkNegar:     http://127.0.0.1:3000/kalknegar" -ForegroundColor White
     Write-Host "  KalkNegar (Direct): http://127.0.0.1:5180/kalknegar/" -ForegroundColor White

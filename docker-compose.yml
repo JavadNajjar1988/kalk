@@ -34,7 +34,7 @@ services:
     environment:
       # Prefer loading from .env via --env-file; fallback to default if not provided
       DB_URL: ${DB_URL:-postgresql+asyncpg://postgres:postgres@db:5432/kalk}
-      CORS_ORIGINS: '["http://localhost:5173","http://localhost:5174","http://localhost:3000","http://127.0.0.1:5173","http://127.0.0.1:3000"]'
+      CORS_ORIGINS: '["http://localhost:5173","http://localhost:5174","http://localhost:3000","http://localhost:3001","http://127.0.0.1:5173","http://127.0.0.1:3000","http://127.0.0.1:3001"]'
       DISABLE_AUTH: ${DISABLE_AUTH:-false}
       JWT_SECRET: ${JWT_SECRET:-kalk-dev-local-jwt-secret}
       JWT_ALG: ${JWT_ALG:-HS256}
@@ -45,7 +45,7 @@ services:
       # در غیر این صورت از backend/static/maps (مسیر محلی) استفاده می‌شود
       FILESYSTEM_TILE_ROOT: ${FILESYSTEM_TILE_ROOT:-/mnt/external-maps}
     ports:
-      - "8000:8000"
+      - "8002:8000"
     depends_on:
       db:
         condition: service_healthy

@@ -41,7 +41,8 @@
 </template>
 
 <script setup lang="ts">
-import { computed, markRaw, ref, shallowRef, watch } from "vue";
+import { computed, inject, markRaw, ref, shallowRef, watch } from "vue";
+import { activeScenarioKey } from "@/components/injects";
 import { useGeoStore } from "@/stores/geoStore";
 import BaseLayer from "ol/layer/Base";
 import TileLayer from "ol/layer/Tile";
@@ -73,6 +74,8 @@ export interface LayerInfo<T extends BaseLayer = BaseLayer> {
 
 const geoStore = useGeoStore();
 const mapSettings = useMapSettingsStore();
+/** در ادیتور سناریو، تغییر لایهٔ پایه باید در state سناریو هم بنشیند تا سینک زنده با شبیه‌ساز (Cesium) کار کند. */
+const activeScenario = inject(activeScenarioKey, null);
 let tileLayers = ref<LayerInfo<TileLayer<TileSource>>[]>([]);
 let vectorLayers = ref<LayerInfo<AnyVectorLayer>[]>([]);
 let activeBaseLayer = shallowRef<LayerInfo<TileLayer<TileSource>>>();
@@ -105,6 +108,11 @@ watch(
 watch(activeBaseLayer, (layerInfo) => {
   if (!layerInfo) return;
   mapSettings.baseLayerName = layerInfo.layer?.get("name") || "هیچکدام";
+  const rawName = layerInfo.layer?.get("name") as string | undefined;
+  const baseMapId = rawName && rawName !== "هیچکدام" ? rawName : "None";
+  activeScenario?.store?.update((s) => {
+    s.mapSettings.baseMapId = baseMapId;
+  });
   baseLayers.value.forEach((l) => {
     const isVisible = l.name === layerInfo.name;
     //l.layer.setOpacity(layerInfo.opacity);
