@@ -18,6 +18,13 @@ import {
   Cancel as CancelIcon,
 } from '@mui/icons-material';
 import { User } from '../types';
+import {
+  buildResourcesFormDialogSx,
+  getResourcesDialogAccent,
+  resourcesDialogContentDividersSx,
+  resourcesDialogActionsSx,
+  resourcesOutlinedCancelButtonSx,
+} from '@/modules/dashboard/pages/resources/resourcesDialogStyles';
 
 interface DeleteConfirmationModalProps {
   user: User | null;
@@ -35,8 +42,7 @@ const DeleteConfirmationModal: React.FC<DeleteConfirmationModalProps> = ({
   isDeleting = false,
 }) => {
   const theme = useTheme();
-  const accent = theme.palette.success.main;
-  const dialogBackground = `linear-gradient(135deg, ${alpha(accent, 0.08)}, ${alpha(accent, 0.04)})`;
+  const accent = getResourcesDialogAccent(theme);
 
   if (!user) return null;
 
@@ -62,7 +68,7 @@ const DeleteConfirmationModal: React.FC<DeleteConfirmationModalProps> = ({
       case 'اپراتور': return theme.palette.info.main;
       case 'تحلیلگر': return theme.palette.success.main;
       case 'مهمان': return theme.palette.grey[500];
-      default: return accent;
+      default: return theme.palette.primary.main;
     }
   };
 
@@ -72,15 +78,7 @@ const DeleteConfirmationModal: React.FC<DeleteConfirmationModalProps> = ({
       onClose={onClose}
       fullWidth
       maxWidth="sm"
-      sx={{
-        '& .MuiDialog-paper': {
-          borderRadius: 3,
-          backgroundColor: theme.palette.background.paper,
-          backgroundImage: dialogBackground,
-          border: `1px solid ${alpha(accent, 0.24)}`,
-          boxShadow: `0 20px 60px ${alpha(accent, 0.18)}`,
-        },
-      }}
+      sx={buildResourcesFormDialogSx(theme)}
       aria-labelledby="user-delete-dialog-title"
       aria-describedby="user-delete-dialog-description"
     >
@@ -102,7 +100,7 @@ const DeleteConfirmationModal: React.FC<DeleteConfirmationModalProps> = ({
         </Box>
       </DialogTitle>
 
-      <DialogContent dividers id="user-delete-dialog-description" sx={{ borderColor: alpha(accent, 0.16), backgroundColor: 'transparent' }}>
+      <DialogContent dividers id="user-delete-dialog-description" sx={resourcesDialogContentDividersSx(theme)}>
         <Box sx={{ p: 3 }}>
           <Alert severity="error" sx={{ mb: 3 }}>
             <Typography variant="body1" fontWeight={600}>
@@ -179,13 +177,7 @@ const DeleteConfirmationModal: React.FC<DeleteConfirmationModalProps> = ({
         </Box>
       </DialogContent>
 
-      <DialogActions sx={{
-        borderTop: `1px solid ${alpha(accent, 0.2)}`,
-        backgroundColor: alpha(accent, 0.04),
-        px: 3,
-        py: 2,
-        gap: 1.5,
-      }}>
+      <DialogActions sx={{ ...resourcesDialogActionsSx(theme), gap: 1.5 }}>
         <Button
           onClick={onClose}
           variant="outlined"
@@ -193,10 +185,9 @@ const DeleteConfirmationModal: React.FC<DeleteConfirmationModalProps> = ({
           startIcon={<CancelIcon />}
           disabled={isDeleting}
           sx={{
-            borderRadius: 2,
+            ...resourcesOutlinedCancelButtonSx(theme),
             px: 3,
             py: 1.5,
-            borderColor: alpha(accent, 0.35),
             flex: 1,
           }}
         >

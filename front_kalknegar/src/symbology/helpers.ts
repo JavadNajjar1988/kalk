@@ -1,5 +1,15 @@
+import { setCharAt } from "@/components/helpers";
+import { SID_INDEX } from "@/symbology/sidc";
 import { echelonValues, type SidValue, standardIdentityValues } from "@/symbology/values";
 import type { SymbolItem } from "@/types/constants";
+
+/** Set standard identity (affiliation) on a SIDC for projected hierarchy. */
+export function setSid(sidc: string, sidValue: string): string {
+  if (sidc[SID_INDEX] !== sidValue) {
+    return setCharAt(sidc, SID_INDEX, sidValue);
+  }
+  return sidc;
+}
 
 export const sidItems = standardIdentityValues.map(({ code, text }): SymbolItem => {
   return {

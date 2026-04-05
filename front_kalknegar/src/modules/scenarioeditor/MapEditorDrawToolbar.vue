@@ -43,9 +43,9 @@
         <EditIcon class="size-5" />
       </MainToolbarButton>
       <MainToolbarButton
-        title="ویرایش تاریخچه ویژگی"
-        @click="toggleModifyHistory()"
-        :active="modifyHistory"
+        title="ثبت هندسهٔ ویژگی در خط زمان (ضبط)"
+        @click="toggleRecordingGeometry()"
+        :active="isRecordingGeometry"
       >
         <IconClockEdit class="size-5" />
       </MainToolbarButton>
@@ -94,6 +94,7 @@ import { onKeyStroke, useToggle } from "@vueuse/core";
 import { useFeatureLayerUtils } from "@/modules/scenarioeditor/featureLayerUtils";
 import { useEditingInteraction } from "@/composables/geoEditing";
 import { useMapSelectStore } from "@/stores/mapSelectStore";
+import { useRecordingStore } from "@/stores/recordingStore";
 import { ref, watch } from "vue";
 import { storeToRefs } from "pinia";
 import { useSelectedItems } from "@/stores/selectedStore";
@@ -114,9 +115,11 @@ const { getOlLayerById } = useFeatureLayerUtils(mapRef.value);
 const { selectedFeatureIds, activeFeatureId } = useSelectedItems();
 
 const { addMultiple, currentDrawStyle } = storeToRefs(useMainToolbarStore());
+const recordStore = useRecordingStore();
+const { isRecordingGeometry } = storeToRefs(recordStore);
+const { toggleRecordingGeometry } = recordStore;
 const [snap, toggleSnap] = useToggle(true);
 const [translate, toggleTranslate] = useToggle(false);
-const [modifyHistory, toggleModifyHistory] = useToggle(false);
 
 let layer = ref<any>();
 
@@ -183,7 +186,7 @@ const { startDrawing, currentDrawType, startModify, isModifying, cancel, isDrawi
     },
     modifyHandler: (olFeatures) => {
       olFeatures.forEach((f) =>
-        updateFeatureGeometryFromOlFeature(f, modifyHistory.value),
+        updateFeatureGeometryFromOlFeature(f, isRecordingGeometry.value),
       );
     },
     snap,

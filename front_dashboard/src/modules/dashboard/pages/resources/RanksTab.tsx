@@ -131,7 +131,7 @@ const RanksTab: React.FC = () => {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'active': return 'success';
+      case 'active': return 'primary';
       case 'historical': return 'info';
       case 'deprecated': return 'error';
       default: return 'default';
@@ -144,7 +144,7 @@ const RanksTab: React.FC = () => {
     if (category === 'پیاده') return 'primary';
     if (category === 'توپخانه') return 'secondary';
     if (category === 'پدافند هوایی') return 'info';
-    if (category === 'هوابرد') return 'success';
+    if (category === 'هوابرد') return 'primary';
     return 'default';
   };
 

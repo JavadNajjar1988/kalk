@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   Dialog,
   DialogTitle,
@@ -18,6 +18,13 @@ import {
   useTheme,
 } from '@mui/material';
 import { alpha } from '@mui/material/styles';
+import {
+  buildResourcesFormDialogSx,
+  getResourcesDialogAccent,
+  resourcesDialogTitleSx,
+  resourcesDialogContentDividersSx,
+  resourcesDialogActionsSx,
+} from '../resourcesDialogStyles';
 
 // انواع و فهرست‌های کمکی
 const echelons = ["لشکر", "تیپ", "گردان", "گروهان", "دسته"] as const;
@@ -100,28 +107,7 @@ const defaultStatus: 'active' | 'historical' | 'deprecated' = 'active';
 
 const RanksModal: React.FC<RanksModalProps> = ({ open, onClose, onSave, rank }) => {
   const theme = useTheme();
-  const accent = theme.palette.success.main;
-  const dialogBackground = `linear-gradient(135deg, ${alpha(accent, 0.08)}, ${alpha(accent, 0.04)})`;
-  const inputSurface =
-    theme.palette.mode === 'dark'
-      ? alpha(theme.palette.background.default, 0.72)
-      : alpha(theme.palette.common.white, 0.92);
-
-  const textFieldSx = {
-    '& .MuiOutlinedInput-root': {
-      backgroundColor: inputSurface,
-      '& fieldset': {
-        borderColor: alpha(accent, 0.28),
-      },
-      '&:hover fieldset': {
-        borderColor: alpha(accent, 0.45),
-      },
-      '&.Mui-focused fieldset': {
-        borderColor: accent,
-        boxShadow: `0 0 0 3px ${alpha(accent, 0.12)}`,
-      },
-    },
-  };
+  const accent = getResourcesDialogAccent(theme);
   const [form, setForm] = useState<MilitaryUnitForm>({
     unitName: "",
     unitAlias: "",
@@ -236,48 +222,12 @@ const RanksModal: React.FC<RanksModalProps> = ({ open, onClose, onSave, rank }) 
       onClose={onClose}
       maxWidth="md"
       fullWidth
-      sx={{
-        '& .MuiDialog-paper': {
-          borderRadius: 3,
-          backgroundColor: theme.palette.background.paper,
-          backgroundImage: dialogBackground,
-          border: `1px solid ${alpha(accent, 0.24)}`,
-          boxShadow: `0 20px 60px ${alpha(accent, 0.18)}`,
-        },
-        '& .MuiOutlinedInput-root': {
-          backgroundColor: inputSurface,
-          '& fieldset': {
-            borderColor: alpha(accent, 0.28),
-          },
-          '&:hover fieldset': {
-            borderColor: alpha(accent, 0.45),
-          },
-          '&.Mui-focused fieldset': {
-            borderColor: accent,
-            boxShadow: `0 0 0 3px ${alpha(accent, 0.12)}`,
-          },
-        },
-        '& .MuiInputLabel-root.Mui-focused': {
-          color: accent,
-        },
-      }}
+      sx={buildResourcesFormDialogSx(theme)}
     >
-      <DialogTitle
-        sx={{
-          borderBottom: `1px solid ${alpha(accent, 0.2)}`,
-          backgroundColor: alpha(accent, 0.08),
-          fontWeight: 700,
-        }}
-      >
+      <DialogTitle sx={resourcesDialogTitleSx(theme)}>
         {rank ? "ویرایش ساختار یگان" : "افزودن ساختار یگان"}
       </DialogTitle>
-      <DialogContent
-        dividers
-        sx={{
-          borderColor: alpha(accent, 0.16),
-          backgroundColor: 'transparent',
-        }}
-      >
+      <DialogContent dividers sx={resourcesDialogContentDividersSx(theme)}>
         <Box sx={{ mt: 1 }}>
           <Grid container spacing={2}>
             <Grid item xs={12} md={6}>
@@ -525,14 +475,10 @@ const RanksModal: React.FC<RanksModalProps> = ({ open, onClose, onSave, rank }) 
       </DialogContent>
       <DialogActions
         sx={{
-          display: "flex",
-          justifyContent: "space-between",
-          px: 3,
+          ...resourcesDialogActionsSx(theme),
+          display: 'flex',
+          justifyContent: 'space-between',
           pb: 3,
-          pt: 2,
-          borderTop: `1px solid ${alpha(accent, 0.2)}`,
-          backgroundColor: alpha(accent, 0.04),
-          gap: 1,
         }}
       >
         <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
@@ -566,7 +512,7 @@ const RanksModal: React.FC<RanksModalProps> = ({ open, onClose, onSave, rank }) 
         <Box>
           <Button
             variant="contained"
-            color="success"
+            color="primary"
             onClick={handleSubmit}
             disabled={Object.keys(errors).length > 0}
             sx={{

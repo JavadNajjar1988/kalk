@@ -1,142 +1,123 @@
 <template>
   <div class="relative flex min-h-0 flex-auto flex-col">
-    <div class="relative flex flex-auto flex-col">
-      <NewScenarioMap class="flex-auto" @mapReady="onMapReady" />
-      <main
-        v-if="mapRef"
-        class="pointer-events-none absolute inset-0 flex flex-col justify-between"
-      >
-        <header class="flex flex-none items-center justify-between px-4 pt-4">
-          <div class="flex items-center space-x-2 space-x-reverse">
-            <MapTimeController
-              class="pointer-events-auto"
-              :show-controls="isMobile ? ui.mobilePanelOpen : false"
-              @open-time-modal="openTimeDialog()"
-              @show-settings="emit('show-settings')"
-              @inc-day="onIncDay()"
-              @dec-day="onDecDay()"
-              @next-event="goToNextScenarioEvent()"
-              @prev-event="goToPrevScenarioEvent()"
+    <div class="relative flex min-h-0 flex-1 flex-row" dir="ltr">
+      <MapEditorDesktopPanel
+        v-if="!isMobile && !rtlPanels && showLeftPanel"
+        :after-map="false"
+        @close="toggleLeftPanel()"
+      />
+      <div class="relative flex min-h-0 min-w-0 flex-1 flex-col">
+        <NewScenarioMap class="flex-auto" @mapReady="onMapReady" />
+        <main
+          v-if="mapRef"
+          class="pointer-events-none absolute inset-0 flex flex-col justify-between"
+        >
+          <header class="flex flex-none items-center justify-between px-4 pt-4">
+            <div class="flex items-center space-x-2 space-x-reverse">
+              <MapTimeController
+                class="pointer-events-auto"
+                :show-controls="isMobile ? ui.mobilePanelOpen : false"
+                @open-time-modal="openTimeDialog()"
+                @show-settings="emit('show-settings')"
+                @inc-day="onIncDay()"
+                @dec-day="onDecDay()"
+                @next-event="goToNextScenarioEvent()"
+                @prev-event="goToPrevScenarioEvent()"
+              />
+            </div>
+          </header>
+          <MapEditorDetailsPanel
+            v-if="!isMobile && showDetailsPanel"
+            :side="rtlPanels ? 'left' : 'right'"
+            @close="onCloseDetailsPanel()"
+          >
+            <ScenarioFeatureDetails
+              v-if="activeDetailsPanel === 'feature'"
+              :selected-ids="selectedFeatureIds"
             />
-          </div>
-          
-        </header>
-        <section v-if="!isMobile" class="flex flex-auto justify-between p-2" style="direction: ltr;">
-          <template v-if="rtlPanels">
-            <!-- Left side: details panel in RTL layout -->
-            <MapEditorDetailsPanel v-if="showDetailsPanel" @close="onCloseDetailsPanel()">
-              <ScenarioFeatureDetails
-                v-if="activeDetailsPanel === 'feature'"
-                :selected-ids="selectedFeatureIds"
-              />
-              <UnitDetails
-                v-else-if="activeDetailsPanel === 'unit'"
-                :unit-id="activeUnitId || [...selectedUnitIds][0]"
-              />
-              <ScenarioEventDetails
-                v-else-if="activeDetailsPanel === 'event'"
-                :event-id="activeScenarioEventId!"
-              />
-              <ScenarioMapLayerDetails
-                v-else-if="activeDetailsPanel === 'mapLayer'"
-                :layer-id="activeMapLayerId!"
-              />
-              <ScenarioInfoPanel v-else-if="activeDetailsPanel === 'scenario'" />
-            </MapEditorDetailsPanel>
-            <div v-else>
-              <button
-                type="button"
-                @click="onOpenDetailsPanel()"
-                title="نمایش پنل"
-                class="panel-toggle-button pointer-events-auto absolute top-24 left-4"
-              >
-                <ShowPanelIcon class="h-6 w-6" />
-              </button>
-            </div>
-
-            <!-- Right side: orbat panel in RTL layout -->
-            <MapEditorDesktopPanel v-if="showLeftPanel" @close="toggleLeftPanel()" />
-            <div v-else>
-              <button
-                type="button"
-                @click="toggleLeftPanel()"
-                title="نمایش پنل آرایش نبرد"
-                class="panel-toggle-button pointer-events-auto absolute top-24 right-4"
-              >
-                <ShowPanelIcon class="h-6 w-6 rotate-180" />
-              </button>
-            </div>
+            <UnitDetails
+              v-else-if="activeDetailsPanel === 'unit'"
+              :unit-id="activeUnitId || [...selectedUnitIds][0]"
+            />
+            <ScenarioEventDetails
+              v-else-if="activeDetailsPanel === 'event'"
+              :event-id="activeScenarioEventId!"
+            />
+            <ScenarioMapLayerDetails
+              v-else-if="activeDetailsPanel === 'mapLayer'"
+              :layer-id="activeMapLayerId!"
+            />
+            <ScenarioInfoPanel v-else-if="activeDetailsPanel === 'scenario'" />
+          </MapEditorDetailsPanel>
+          <template v-if="!isMobile">
+            <button
+              v-if="rtlPanels && !showDetailsPanel"
+              type="button"
+              @click="onOpenDetailsPanel()"
+              title="نمایش پنل"
+              class="panel-toggle-edge pointer-events-auto absolute top-[45%] left-0 h-11 w-5 -translate-y-1/2 rounded-l-none rounded-r-md border border-l-0 px-0"
+            >
+              <ShowPanelIcon class="h-6 w-6" />
+            </button>
+            <button
+              v-if="rtlPanels && !showLeftPanel"
+              type="button"
+              @click="toggleLeftPanel()"
+              title="نمایش پنل آرایش نبرد"
+              class="panel-toggle-edge pointer-events-auto absolute top-[45%] right-0 h-11 w-5 -translate-y-1/2 rounded-l-md rounded-r-none border border-r-0 px-0"
+            >
+              <ShowPanelIcon class="h-6 w-6 rotate-180" />
+            </button>
+            <button
+              v-if="!rtlPanels && !showLeftPanel"
+              type="button"
+              @click="toggleLeftPanel()"
+              title="نمایش پنل"
+              class="panel-toggle-edge pointer-events-auto absolute top-[45%] left-0 h-11 w-5 -translate-y-1/2 rounded-l-none rounded-r-md border border-l-0 px-0"
+            >
+              <ShowPanelIcon class="h-6 w-6" />
+            </button>
+            <button
+              v-if="!rtlPanels && !showDetailsPanel"
+              type="button"
+              @click="onOpenDetailsPanel()"
+              title="نمایش پنل"
+              class="panel-toggle-edge pointer-events-auto absolute top-[45%] right-0 h-11 w-5 -translate-y-1/2 rounded-l-md rounded-r-none border border-r-0 px-0"
+            >
+              <ShowPanelIcon class="h-6 w-6 rotate-180" />
+            </button>
           </template>
-          <template v-else>
-            <!-- Original LTR layout: left = orbat panel, right = details -->
-            <MapEditorDesktopPanel v-if="showLeftPanel" @close="toggleLeftPanel()" />
-            <div v-else>
-              <button
-                type="button"
-                @click="toggleLeftPanel()"
-                title="نمایش پنل"
-                class="panel-toggle-button pointer-events-auto absolute top-6 left-4"
-              >
-                <ShowPanelIcon class="h-6 w-6" />
-              </button>
-            </div>
-            <MapEditorDetailsPanel v-if="showDetailsPanel" @close="onCloseDetailsPanel()">
-              <ScenarioFeatureDetails
-                v-if="activeDetailsPanel === 'feature'"
-                :selected-ids="selectedFeatureIds"
-              />
-              <UnitDetails
-                v-else-if="activeDetailsPanel === 'unit'"
-                :unit-id="activeUnitId || [...selectedUnitIds][0]"
-              />
-              <ScenarioEventDetails
-                v-else-if="activeDetailsPanel === 'event'"
-                :event-id="activeScenarioEventId!"
-              />
-              <ScenarioMapLayerDetails
-                v-else-if="activeDetailsPanel === 'mapLayer'"
-                :layer-id="activeMapLayerId!"
-              />
-              <ScenarioInfoPanel v-else-if="activeDetailsPanel === 'scenario'" />
-            </MapEditorDetailsPanel>
-            <div v-else>
-              <button
-                type="button"
-                @click="onOpenDetailsPanel()"
-                title="نمایش پنل"
-                class="panel-toggle-button pointer-events-auto absolute top-6 right-4"
-              >
-                <ShowPanelIcon class="h-6 w-6 rotate-180" />
-              </button>
-            </div>
-          </template>
-        </section>
-      </main>
-      <footer
-        v-if="mapRef && ui.showToolbar"
-        class="pointer-events-none flex justify-center sm:absolute sm:bottom-2 sm:w-full sm:p-2 z-50"
-      >
-        <MapEditorMainToolbar
-          @open-time-modal="openTimeDialog()"
-          @inc-day="onIncDay()"
-          @dec-day="onDecDay()"
-          @next-event="goToNextScenarioEvent()"
-          @prev-event="goToPrevScenarioEvent()"
-          @show-settings="emit('show-settings')"
-        />
-        <MapEditorMeasurementToolbar
-          class="absolute bottom-14 sm:bottom-16"
-          v-if="toolbarStore.currentToolbar === 'measurements'"
-        />
-        <MapEditorDrawToolbar
-          class="absolute bottom-14 sm:bottom-16"
-          v-if="toolbarStore.currentToolbar === 'draw'"
-        />
-        <MapEditorUnitTrackToolbar
-          class="absolute bottom-14 sm:bottom-16"
-          v-if="toolbarStore.currentToolbar === 'track'"
-        />
-      </footer>
+        </main>
+        <footer
+          v-if="mapRef && ui.showToolbar"
+          class="pointer-events-none z-50 flex justify-center sm:absolute sm:bottom-2 sm:w-full sm:p-2"
+        >
+          <MapEditorMainToolbar
+            @open-time-modal="openTimeDialog()"
+            @inc-day="onIncDay()"
+            @dec-day="onDecDay()"
+            @next-event="goToNextScenarioEvent()"
+            @prev-event="goToPrevScenarioEvent()"
+            @show-settings="emit('show-settings')"
+          />
+          <MapEditorMeasurementToolbar
+            class="absolute bottom-14 sm:bottom-16"
+            v-if="toolbarStore.currentToolbar === 'measurements'"
+          />
+          <MapEditorDrawToolbar
+            class="absolute bottom-14 sm:bottom-16"
+            v-if="toolbarStore.currentToolbar === 'draw'"
+          />
+          <MapEditorUnitTrackToolbar
+            class="absolute bottom-14 sm:bottom-16"
+            v-if="toolbarStore.currentToolbar === 'track'"
+          />
+        </footer>
+      </div>
+      <MapEditorDesktopPanel
+        v-if="!isMobile && rtlPanels && showLeftPanel"
+        @close="toggleLeftPanel()"
+      />
     </div>
     <template v-if="isMobile">
       <UnitBreadcrumbs v-if="ui.showOrbatBreadcrumbs" />
@@ -159,13 +140,13 @@
     />
     <UnitBreadcrumbs v-if="ui.showOrbatBreadcrumbs && !isMobile" />
     <ScenarioTimeline v-if="ui.showTimeline" />
-
   </div>
 </template>
 
 <script setup lang="ts">
 import {
   computed,
+  nextTick,
   onActivated,
   onUnmounted,
   provide,
@@ -196,7 +177,7 @@ import ScenarioFeatureDetails from "@/modules/scenarioeditor/ScenarioFeatureDeta
 import MapEditorMobilePanel from "@/modules/scenarioeditor/MapEditorMobilePanel.vue";
 import MapEditorDesktopPanel from "@/modules/scenarioeditor/MapEditorDesktopPanel.vue";
 import MapEditorDetailsPanel from "@/modules/scenarioeditor/MapEditorDetailsPanel.vue";
-import { useUiStore } from "@/stores/uiStore";
+import { useUiStore, useWidthStore } from "@/stores/uiStore";
 import { inputEventFilter } from "@/components/helpers";
 import { GlobalEvents } from "vue-global-events";
 import SearchScenarioActions from "@/modules/scenarioeditor/SearchScenarioActions.vue";
@@ -261,6 +242,7 @@ const {
 } = useSelectedItems();
 
 const { showLeftPanel } = storeToRefs(ui);
+const { orbatPanelWidth, detailsWidth } = storeToRefs(useWidthStore());
 const toggleLeftPanel = useToggle(showLeftPanel);
 
 const showDetailsPanel = computed(() => {
@@ -276,6 +258,15 @@ const showDetailsPanel = computed(() => {
 function onOpenDetailsPanel() {
   showScenarioInfo.value = true;
 }
+
+watch(
+  [showLeftPanel, orbatPanelWidth, showDetailsPanel, detailsWidth, isMobile],
+  () => {
+    nextTick(() => {
+      mapRef.value?.updateSize();
+    });
+  },
+);
 
 onUnmounted(() => {
   activeUnitStore.clearActiveUnit();
@@ -336,33 +327,31 @@ watch(
       pause();
     }
   },
-  { immediate: true   },
+  { immediate: true },
 );
 </script>
 <style scoped>
-.panel-toggle-button {
-  border-radius: 10px;
-  border: 1px solid var(--surface-border);
+.panel-toggle-edge {
+  border-color: var(--surface-border);
   background-color: var(--surface-panel);
   color: hsl(var(--foreground));
-  padding: 0.5rem;
-  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.16);
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.12);
   transition:
     background-color 0.2s ease,
     box-shadow 0.2s ease,
     transform 0.2s ease;
 }
 
-.panel-toggle-button:hover {
+.panel-toggle-edge:hover {
   background-color: var(--surface-panel-muted);
-  box-shadow: 0 10px 22px rgba(15, 23, 42, 0.2);
+  box-shadow: 0 6px 16px rgba(15, 23, 42, 0.16);
 }
 
-:global(.dark) .panel-toggle-button {
-  box-shadow: 0 8px 18px rgba(2, 6, 23, 0.45);
+:global(.dark) .panel-toggle-edge {
+  box-shadow: 0 4px 12px rgba(2, 6, 23, 0.35);
 }
 
-.panel-toggle-button:active {
-  transform: translateY(1px);
+.panel-toggle-edge:active {
+  transform: translateY(-50%) translateX(1px);
 }
 </style>

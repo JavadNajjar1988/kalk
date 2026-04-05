@@ -75,7 +75,7 @@ export const getRoleIcon = (role: UserRole) => {
 export const getRoleColor = (role: UserRole) => {
   switch (role) {
     case 'super_admin': return 'error';
-    case 'commander': return 'success';
+    case 'commander': return 'secondary';
     case 'viewer': return 'info';
     default: return 'default';
   }

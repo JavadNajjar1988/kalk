@@ -101,6 +101,14 @@ import {
 import type { MapLayer } from '@/types/orbat';
 import { useTranslation } from '@/hooks/useTranslation';
 import MapsDeleteConfirmModal from '@/modules/dashboard/pages/resources/MapsDeleteConfirmModal';
+import {
+  buildResourcesFormDialogSx,
+  buildResourcesLayerDialogSx,
+  resourcesDialogTitleSx,
+  resourcesDialogContentDividersSx,
+  resourcesDialogActionsSx,
+  resourcesOutlinedCancelButtonSx,
+} from '@/modules/dashboard/pages/resources/resourcesDialogStyles';
 
 const resolveApiBase = () => {
   const raw = (import.meta.env.VITE_API_URL as string | undefined) ?? '';
@@ -196,6 +204,8 @@ function TabPanel(props: TabPanelProps) {
 const MapsTab: React.FC = () => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const resourcesFormDialogSx = buildResourcesFormDialogSx(theme);
+  const resourcesLayerDialogSx = buildResourcesLayerDialogSx(theme, isMobile);
   const dispatch = useAppDispatch();
   const { t } = useTranslation();
   const apiBase = useMemo(resolveApiBase, []);
@@ -1076,44 +1086,6 @@ const MapsTab: React.FC = () => {
     }
   };
 
-  // Soft background surface similar to FieldEditDialog
-  const getSoftSurface = () => {
-    const primary = (theme.palette.primary.main || '#4a90e2').toLowerCase();
-    const hex = primary.replace('#', '');
-    if (hex.includes('10b981') || hex.includes('4caf50') || hex.includes('2e7d32')) return '#f0f4f3';
-    if (hex.includes('4a90e2') || hex.includes('1976d2') || hex.includes('2196f3')) return '#f0f4f8';
-    if (hex.includes('ef4444') || hex.includes('f44336') || hex.includes('d32f2f')) return '#fbf1f0';
-    if (hex.includes('6b21a8') || hex.includes('9c27b0') || hex.includes('673ab7')) return '#22262d';
-    if (hex.includes('f59e0b') || hex.includes('ff9800') || hex.includes('fb8c00')) return '#fbf1f1';
-    const clamp = (n: number) => Math.max(0, Math.min(255, Math.round(n)));
-    const hexToRgb = (h: string) => {
-      const n = h.length === 3 ? h.split('').map(c => c + c).join('') : h;
-      const r = parseInt(n.substring(0, 2), 16);
-      const g = parseInt(n.substring(2, 4), 16);
-      const b = parseInt(n.substring(4, 6), 16);
-      return { r, g, b };
-    };
-    const rgbToHex = (r: number, g: number, b: number) => `#${clamp(r).toString(16).padStart(2, '0')}${clamp(g).toString(16).padStart(2, '0')}${clamp(b).toString(16).padStart(2, '0')}`;
-    const blendWithWhite = (h: string, primaryWeight = 0.10) => {
-      const { r, g, b } = hexToRgb(h);
-      const wr = 255, wg = 255, wb = 255;
-      const w = 1 - primaryWeight;
-      const br = wr * w + r * primaryWeight;
-      const bg = wg * w + g * primaryWeight;
-      const bb = wb * w + b * primaryWeight;
-      return rgbToHex(br, bg, bb);
-    };
-    if (/^[0-9a-f]{3,6}$/.test(hex)) {
-      return blendWithWhite(hex, 0.10);
-    }
-    try {
-      const fallback = (theme.palette.primary.light || '#90caf9').toLowerCase().replace('#', '');
-      return blendWithWhite(fallback, 0.08);
-    } catch {
-      return '#f5f7fa';
-    }
-  };
-
   const handleDelete = (id: string) => {
     if (window.confirm(t('resources.maps.deleteConfirm'))) {
       dispatch(deleteMapLayer(id));
@@ -1151,11 +1123,11 @@ const MapsTab: React.FC = () => {
               <StepLabel
                 optional={
                   index === 0 && offlineMaps.length > 0 ? (
-                    <Typography variant="caption" color="success.main">✓ منابع اضافه شد</Typography>
+                    <Typography variant="caption" color="primary.main">✓ منابع اضافه شد</Typography>
                   ) : index === 1 && lastHarvestTime ? (
-                    <Typography variant="caption" color="success.main">✓ همگام‌سازی انجام شد</Typography>
+                    <Typography variant="caption" color="primary.main">✓ همگام‌سازی انجام شد</Typography>
                   ) : index === 2 && catalogLayers.filter(l => l.status === 'published').length > 0 ? (
-                    <Typography variant="caption" color="success.main">✓ منتشر شد</Typography>
+                    <Typography variant="caption" color="primary.main">✓ منتشر شد</Typography>
                   ) : null
                 }
               >
@@ -1221,7 +1193,7 @@ const MapsTab: React.FC = () => {
             <CardContent sx={{ pt: 1.5 }}>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
                 <Chip label={`تعداد: ${offlineMaps.length}`} size="small" />
-                <Chip label={`فعال: ${offlineMaps.filter(m=>m.is_active).length}`} color="success" size="small" />
+                <Chip label={`فعال: ${offlineMaps.filter(m=>m.is_active).length}`} color="primary" size="small" />
               </Box>
               <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
                 می‌توانید فایل‌های .mbtiles را آپلود کنید یا پوشه‌های موجود با ساختار z/x/y را ثبت کنید. لیست کامل در جدول پایین نمایش داده می‌شود.
@@ -1501,7 +1473,7 @@ const MapsTab: React.FC = () => {
                           <Chip
                             label={server.status === 'active' ? 'فعال' : 'غیرفعال'}
                             size="small"
-                            color={server.status === 'active' ? 'success' : 'default'}
+                            color={server.status === 'active' ? 'primary' : 'default'}
                           />
                         </TableCell>
                         <TableCell align="center">
@@ -1629,12 +1601,12 @@ const MapsTab: React.FC = () => {
                           <TableCell align="center">{map.file_size ? `${Math.round(map.file_size / 1024 / 1024)} مگابایت` : '-'}</TableCell>
                           <TableCell align="center">
                             <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 0.5 }}>
-                              {map.is_active ? <Chip label="فعال" color="success" size="small" /> : <Chip label="غیرفعال" size="small" />}
+                              {map.is_active ? <Chip label="فعال" color="primary" size="small" /> : <Chip label="غیرفعال" size="small" />}
                               {offlineSdiStatus[map.id]?.status && (
                                 <Chip 
                                   label={`SDI: ${offlineSdiStatus[map.id]?.status}`}
                                   size="small"
-                                  color={offlineSdiStatus[map.id]?.status === 'published' ? 'success' : offlineSdiStatus[map.id]?.status === 'draft' ? 'warning' : 'default'}
+                                  color={offlineSdiStatus[map.id]?.status === 'published' ? 'primary' : offlineSdiStatus[map.id]?.status === 'draft' ? 'warning' : 'default'}
                                   variant="outlined"
                                 />
                               )}
@@ -1671,7 +1643,7 @@ const MapsTab: React.FC = () => {
                               <Tooltip title={map.is_active ? 'غیرفعال کردن' : 'فعال کردن'}>
                                 <IconButton 
                                   size="small" 
-                                  color={map.is_active ? "warning" : "success"}
+                                  color={map.is_active ? "warning" : "primary"}
                                   onClick={() => toggleOfflineMap(map)}
                                   aria-label={map.is_active ? 'غیرفعال کردن نقشه' : 'فعال کردن نقشه'}
                                 >
@@ -1730,7 +1702,7 @@ const MapsTab: React.FC = () => {
               </Grid>
               <Grid item xs={12} sm={4}>
                 <Box sx={{ textAlign: 'center' }}>
-                  <Typography variant="h3" color="success.main">
+                  <Typography variant="h3" color="primary.main">
                     {mapLayers.filter(l => l.visible).length}
                   </Typography>
                   <Typography variant="body2" color="text.secondary">
@@ -1890,7 +1862,7 @@ const MapsTab: React.FC = () => {
                         <Chip 
                           label={layer.status === 'published' ? 'Published' : layer.status === 'draft' ? 'Draft' : 'Retired'}
                           size="small"
-                          color={layer.status === 'published' ? 'success' : layer.status === 'draft' ? 'warning' : 'default'}
+                          color={layer.status === 'published' ? 'primary' : layer.status === 'draft' ? 'warning' : 'default'}
                         />
                       </TableCell>
                       <TableCell align="center">
@@ -1917,7 +1889,7 @@ const MapsTab: React.FC = () => {
                             <Tooltip title="Publish">
                               <IconButton 
                                 size="small" 
-                                color="success" 
+                                color="primary" 
                                 onClick={() => publishCatalog([layer.id])}
                                 aria-label={`انتشار لایه ${layer.title}`}
                               >
@@ -2011,7 +1983,7 @@ const MapsTab: React.FC = () => {
                         <Chip 
                           label={job.type === 'harvest' ? 'Harvest' : job.type === 'publish' ? 'Publish' : 'Rollback'}
                           size="small"
-                          color={job.type === 'harvest' ? 'primary' : job.type === 'publish' ? 'success' : 'warning'}
+                          color={job.type === 'harvest' ? 'primary' : job.type === 'publish' ? 'primary' : 'warning'}
                           variant="outlined"
                         />
                       </TableCell>
@@ -2026,7 +1998,7 @@ const MapsTab: React.FC = () => {
                             job.status === 'success' ? 'موفق' : 'ناموفق'
                           }
                           size="small"
-                          color={job.status === 'running' ? 'info' : job.status === 'success' ? 'success' : 'error'}
+                          color={job.status === 'running' ? 'info' : job.status === 'success' ? 'primary' : 'error'}
                         />
                       </TableCell>
                       <TableCell>{new Date(job.startTime).toLocaleString('fa-IR')}</TableCell>
@@ -2197,16 +2169,19 @@ const MapsTab: React.FC = () => {
         open={serverDialogOpen}
         onClose={closeServerDialog}
         fullWidth
-        maxWidth="sm"
+        maxWidth="md"
+        sx={resourcesFormDialogSx}
       >
-        <DialogTitle>ثبت سرور SDI جدید</DialogTitle>
-        <DialogContent dividers>
+        <DialogTitle sx={resourcesDialogTitleSx(theme)}>
+          ثبت سرور SDI جدید
+        </DialogTitle>
+        <DialogContent dividers sx={resourcesDialogContentDividersSx(theme)}>
           {serverError && (
             <Alert severity="error" sx={{ mb: 2 }}>
               {serverError}
             </Alert>
           )}
-          <Grid container spacing={2}>
+          <Grid container spacing={2} sx={{ mt: 0.5 }}>
             <Grid item xs={12}>
               <TextField
                 label="نام سرور"
@@ -2299,15 +2274,23 @@ const MapsTab: React.FC = () => {
             )}
           </Grid>
         </DialogContent>
-        <DialogActions sx={{ px: 3, pb: 2 }}>
-          <Button onClick={closeServerDialog} disabled={serverSubmitting}>
+        <DialogActions sx={resourcesDialogActionsSx(theme)}>
+          <Button
+            onClick={closeServerDialog}
+            disabled={serverSubmitting}
+            variant="outlined"
+            color="inherit"
+            sx={resourcesOutlinedCancelButtonSx(theme)}
+          >
             انصراف
           </Button>
           <Button
             variant="contained"
+            color="primary"
             onClick={submitServerForm}
             disabled={serverSubmitting}
-            startIcon={serverSubmitting ? <CircularProgress size={18} /> : null}
+            startIcon={serverSubmitting ? <CircularProgress size={18} color="inherit" /> : null}
+            sx={{ borderRadius: 2, px: 3 }}
           >
             ثبت سرور
           </Button>
@@ -2315,53 +2298,28 @@ const MapsTab: React.FC = () => {
       </Dialog>
 
       {/* دیالوگ افزودن لایه */}
-      <Dialog 
-        open={openDialog} 
-        onClose={handleCloseDialog} 
-        maxWidth={isMobile ? 'xs' : 'sm'} 
+      <Dialog
+        open={openDialog}
+        onClose={handleCloseDialog}
+        maxWidth="md"
         fullWidth
         fullScreen={isMobile}
-        sx={{
-          '& .MuiDialog-paper': {
-            borderRadius: isMobile ? 0 : '20px',
-            backgroundColor: (theme) => alpha(theme.palette.primary.light, 0.10),
-            backdropFilter: 'blur(20px)',
-            border: (theme) => `1px solid ${alpha(theme.palette.primary.light, 0.2)}`,
-            boxShadow: (theme) => `0 20px 60px ${alpha(theme.palette.primary.light, 0.3)}, inset 0 1px 0 rgba(255, 255, 255, 0.8)`,
-            overflow: 'hidden',
-            position: 'relative',
-          },
-          '& .MuiBackdrop-root': {
-            backgroundColor: (theme) => `${alpha(theme.palette.primary.light, 0.08)}`,
-            backdropFilter: 'blur(4px)',
-          },
-        }}
+        sx={resourcesLayerDialogSx}
       >
-        <DialogTitle
-          sx={{
-            backgroundColor: getSoftSurface(),
-            borderBottom: (theme) => `1px solid ${alpha(theme.palette.primary.light, 0.2)}`,
-            textAlign: 'center',
-            py: isMobile ? 2 : 3,
-            px: isMobile ? 2 : 3,
-            fontWeight: 700,
-            color: (theme) => theme.palette.primary.main,
-          }}
-        >
+        <DialogTitle sx={resourcesDialogTitleSx(theme)}>
           {dialogMode === 'offline' ? 'آپلود نقشه آفلاین' : 
            dialogMode === 'filesystem' ? 'ثبت نقشه پوشه‌ای' :
            dialogMode === 'serverLayer' ? t('resources.maps.dialog.addFromServerTitle') : 
            t('resources.maps.dialog.uploadFileTitle')}
         </DialogTitle>
-        <DialogContent sx={{ p: 0, backgroundColor: getSoftSurface() }}>
-          <Box sx={{ p: isMobile ? 2 : 4 }}>
+        <DialogContent dividers sx={resourcesDialogContentDividersSx(theme)}>
           {uploadError && (
             <Alert severity="error" sx={{ mb: 2 }}>
               {uploadError}
             </Alert>
           )}
-          
-          <Grid container spacing={2} sx={{ mt: 1 }}>
+
+          <Grid container spacing={2} sx={{ mt: 0.5 }}>
             {dialogMode === 'offline' ? (
               <>
                 <Grid item xs={12}>
@@ -2389,19 +2347,7 @@ const MapsTab: React.FC = () => {
                     component="label"
                     startIcon={<CloudUpload />}
                     fullWidth
-                    sx={{
-                      borderRadius: '12px',
-                      backgroundColor: alpha(theme.palette.primary.light, 0.12),
-                      borderColor: alpha(theme.palette.primary.main, 0.3),
-                      color: theme.palette.primary.main,
-                      fontWeight: 600,
-                      '&:hover': {
-                        backgroundColor: alpha(theme.palette.primary.light, 0.18),
-                        borderColor: alpha(theme.palette.primary.main, 0.45),
-                        transform: 'translateY(-2px)',
-                        boxShadow: `0 4px 12px ${alpha(theme.palette.primary.main, 0.2)}`,
-                      },
-                    }}
+                    sx={resourcesOutlinedCancelButtonSx(theme)}
                   >
                     انتخاب فایل نقشه
                     <input
@@ -2615,6 +2561,7 @@ const MapsTab: React.FC = () => {
                         component="label"
                         startIcon={<CloudUpload />}
                         fullWidth
+                        sx={resourcesOutlinedCancelButtonSx(theme)}
                       >
                         {t('resources.maps.dialog.selectFileButton')}
                         <input
@@ -2642,37 +2589,20 @@ const MapsTab: React.FC = () => {
               </>
             )}
           </Grid>
-          </Box>
         </DialogContent>
-        <DialogActions
-          sx={{
-            backgroundColor: getSoftSurface(),
-            borderTop: (theme) => `1px solid ${alpha(theme.palette.primary.light, 0.2)}`,
-            p: isMobile ? 2 : 3,
-          }}
-        >
-          <Button 
+        <DialogActions sx={resourcesDialogActionsSx(theme)}>
+          <Button
             onClick={handleCloseDialog}
-            sx={{
-              borderRadius: '12px',
-              px: isMobile ? 2 : 3,
-              py: isMobile ? 1 : 1.5,
-              backgroundColor: 'rgba(148, 163, 184, 0.1)',
-              border: '1px solid rgba(148, 163, 184, 0.2)',
-              color: '#64748B',
-              fontWeight: 600,
-              '&:hover': {
-                backgroundColor: 'rgba(148, 163, 184, 0.15)',
-                transform: 'translateY(-2px)',
-                boxShadow: '0 4px 12px rgba(148, 163, 184, 0.2)',
-              },
-            }}
+            variant="outlined"
+            color="inherit"
+            sx={resourcesOutlinedCancelButtonSx(theme)}
           >
-            لغو
+            انصراف
           </Button>
-          <Button 
-            onClick={handleSave} 
-            variant="contained" 
+          <Button
+            onClick={handleSave}
+            variant="contained"
+            color="primary"
             disabled={
               dialogMode === 'offline' 
                 ? !offlineFormData.name || !offlineFormData.file 
@@ -2680,21 +2610,7 @@ const MapsTab: React.FC = () => {
                   ? !filesystemFormData.name || !filesystemFormData.folder
                   : !formData.name
             }
-            sx={{
-              borderRadius: '12px',
-              px: isMobile ? 2 : 4,
-              py: isMobile ? 1 : 1.5,
-              backgroundColor: (theme) => theme.palette.primary.main,
-              color: 'white',
-              fontWeight: 600,
-              border: '2px solid rgba(255, 255, 255, 0.3)',
-              boxShadow: (theme) => `0 4px 16px ${alpha(theme.palette.primary.main, 0.3)}`,
-              '&:hover': {
-                backgroundColor: (theme) => theme.palette.primary.dark,
-                transform: 'translateY(-2px)',
-                boxShadow: (theme) => `0 8px 24px ${alpha(theme.palette.primary.main, 0.4)}`,
-              },
-            }}
+            sx={{ borderRadius: 2, px: 3 }}
           >
             {dialogMode === 'offline' ? 'آپلود نقشه' :
              dialogMode === 'filesystem' ? 'ثبت نقشه' :
@@ -2802,25 +2718,25 @@ const MapsTab: React.FC = () => {
 
                 <Box sx={{ mb: 3 }}>
                   <Typography variant="subtitle2" fontWeight={600} gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <CheckCircleIcon sx={{ fontSize: 18, color: 'success.main' }} />
+                    <CheckCircleIcon sx={{ fontSize: 18, color: 'primary.main' }} />
                     مزایا:
                   </Typography>
                   <List dense>
                     <ListItem sx={{ py: 0.5 }}>
                       <ListItemIcon sx={{ minWidth: 32 }}>
-                        <CheckCircleOutline sx={{ fontSize: 16, color: 'success.main' }} />
+                        <CheckCircleOutline sx={{ fontSize: 16, color: 'primary.main' }} />
                       </ListItemIcon>
                       <ListItemText primary="ساده و سریع برای راه‌اندازی" />
                     </ListItem>
                     <ListItem sx={{ py: 0.5 }}>
                       <ListItemIcon sx={{ minWidth: 32 }}>
-                        <CheckCircleOutline sx={{ fontSize: 16, color: 'success.main' }} />
+                        <CheckCircleOutline sx={{ fontSize: 16, color: 'primary.main' }} />
                       </ListItemIcon>
                       <ListItemText primary="بدون نیاز به سرور جداگانه" />
                     </ListItem>
                     <ListItem sx={{ py: 0.5 }}>
                       <ListItemIcon sx={{ minWidth: 32 }}>
-                        <CheckCircleOutline sx={{ fontSize: 16, color: 'success.main' }} />
+                        <CheckCircleOutline sx={{ fontSize: 16, color: 'primary.main' }} />
                       </ListItemIcon>
                       <ListItemText primary="مناسب برای حجم متوسط (کمتر از 1TB)" />
                     </ListItem>
@@ -2872,18 +2788,18 @@ const MapsTab: React.FC = () => {
                   p: 3,
                   height: '100%',
                   borderRadius: '16px',
-                  border: (theme) => `2px solid ${alpha(theme.palette.success.main, 0.3)}`,
-                  backgroundColor: alpha(theme.palette.success.light, 0.05),
+                  border: (theme) => `2px solid ${alpha(theme.palette.primary.main, 0.3)}`,
+                  backgroundColor: alpha(theme.palette.primary.light, 0.05),
                   transition: 'transform 0.2s, box-shadow 0.2s',
                   '&:hover': {
                     transform: 'translateY(-4px)',
-                    boxShadow: (theme) => `0 8px 24px ${alpha(theme.palette.success.main, 0.2)}`,
+                    boxShadow: (theme) => `0 8px 24px ${alpha(theme.palette.primary.main, 0.2)}`,
                   },
                 }}
               >
                 <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                  <CloudQueue sx={{ fontSize: 32, color: 'success.main', mr: 1 }} />
-                  <Typography variant="h6" fontWeight={700} sx={{ color: 'success.main' }}>
+                  <CloudQueue sx={{ fontSize: 32, color: 'primary.main', mr: 1 }} />
+                  <Typography variant="h6" fontWeight={700} sx={{ color: 'primary.main' }}>
                     روش 2: سرور نقشه جداگانه (توصیه برای 10TB+)
                   </Typography>
                 </Box>
@@ -2893,31 +2809,31 @@ const MapsTab: React.FC = () => {
 
                 <Box sx={{ mb: 3 }}>
                   <Typography variant="subtitle2" fontWeight={600} gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <CheckCircleIcon sx={{ fontSize: 18, color: 'success.main' }} />
+                    <CheckCircleIcon sx={{ fontSize: 18, color: 'primary.main' }} />
                     مزایا:
                   </Typography>
                   <List dense>
                     <ListItem sx={{ py: 0.5 }}>
                       <ListItemIcon sx={{ minWidth: 32 }}>
-                        <CheckCircleOutline sx={{ fontSize: 16, color: 'success.main' }} />
+                        <CheckCircleOutline sx={{ fontSize: 16, color: 'primary.main' }} />
                       </ListItemIcon>
                       <ListItemText primary="جداسازی کامل از سیستم اصلی" />
                     </ListItem>
                     <ListItem sx={{ py: 0.5 }}>
                       <ListItemIcon sx={{ minWidth: 32 }}>
-                        <CheckCircleOutline sx={{ fontSize: 16, color: 'success.main' }} />
+                        <CheckCircleOutline sx={{ fontSize: 16, color: 'primary.main' }} />
                       </ListItemIcon>
                       <ListItemText primary="عملکرد بهتر برای حجم بالا" />
                     </ListItem>
                     <ListItem sx={{ py: 0.5 }}>
                       <ListItemIcon sx={{ minWidth: 32 }}>
-                        <CheckCircleOutline sx={{ fontSize: 16, color: 'success.main' }} />
+                        <CheckCircleOutline sx={{ fontSize: 16, color: 'primary.main' }} />
                       </ListItemIcon>
                       <ListItemText primary="مقیاس‌پذیری و انعطاف بیشتر" />
                     </ListItem>
                     <ListItem sx={{ py: 0.5 }}>
                       <ListItemIcon sx={{ minWidth: 32 }}>
-                        <CheckCircleOutline sx={{ fontSize: 16, color: 'success.main' }} />
+                        <CheckCircleOutline sx={{ fontSize: 16, color: 'primary.main' }} />
                       </ListItemIcon>
                       <ListItemText primary="مناسب برای 10TB+ داده" />
                     </ListItem>
@@ -2945,7 +2861,7 @@ const MapsTab: React.FC = () => {
                   </List>
                 </Box>
 
-                <Paper sx={{ p: 2, backgroundColor: alpha(theme.palette.success.main, 0.1), borderRadius: '8px' }}>
+                <Paper sx={{ p: 2, backgroundColor: alpha(theme.palette.primary.main, 0.1), borderRadius: '8px' }}>
                   <Typography variant="caption" fontWeight={600} display="block" gutterBottom>
                     نحوه استفاده:
                   </Typography>
@@ -2980,7 +2896,7 @@ const MapsTab: React.FC = () => {
                   <TableRow>
                     <TableCell>سادگی راه‌اندازی</TableCell>
                     <TableCell align="center">
-                      <Chip label="⭐⭐⭐⭐⭐" size="small" color="success" />
+                      <Chip label="⭐⭐⭐⭐⭐" size="small" color="primary" />
                     </TableCell>
                     <TableCell align="center">
                       <Chip label="⭐⭐⭐" size="small" color="info" />
@@ -2992,7 +2908,7 @@ const MapsTab: React.FC = () => {
                       <Chip label="⭐⭐⭐" size="small" color="warning" />
                     </TableCell>
                     <TableCell align="center">
-                      <Chip label="⭐⭐⭐⭐⭐" size="small" color="success" />
+                      <Chip label="⭐⭐⭐⭐⭐" size="small" color="primary" />
                     </TableCell>
                   </TableRow>
                   <TableRow>
@@ -3001,7 +2917,7 @@ const MapsTab: React.FC = () => {
                       <Chip label="⭐⭐" size="small" color="warning" />
                     </TableCell>
                     <TableCell align="center">
-                      <Chip label="⭐⭐⭐⭐⭐" size="small" color="success" />
+                      <Chip label="⭐⭐⭐⭐⭐" size="small" color="primary" />
                     </TableCell>
                   </TableRow>
                   <TableRow>
@@ -3010,7 +2926,7 @@ const MapsTab: React.FC = () => {
                       <Chip label="⭐⭐" size="small" color="warning" />
                     </TableCell>
                     <TableCell align="center">
-                      <Chip label="⭐⭐⭐⭐⭐" size="small" color="success" />
+                      <Chip label="⭐⭐⭐⭐⭐" size="small" color="primary" />
                     </TableCell>
                   </TableRow>
                   <TableRow>
@@ -3019,7 +2935,7 @@ const MapsTab: React.FC = () => {
                       <Typography variant="body2">کمتر از 1TB</Typography>
                     </TableCell>
                     <TableCell align="center">
-                      <Typography variant="body2" sx={{ fontWeight: 600, color: 'success.main' }}>
+                      <Typography variant="body2" sx={{ fontWeight: 600, color: 'primary.main' }}>
                         1TB+ (10TB+ توصیه می‌شود)
                       </Typography>
                     </TableCell>

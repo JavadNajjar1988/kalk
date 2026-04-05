@@ -148,7 +148,7 @@ const LogisticsTab: React.FC = () => {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'available': return 'success';
+      case 'available': return 'primary';
       case 'low-stock': return 'warning';
       case 'out-of-stock': return 'error';
       case 'ordered': return 'info';

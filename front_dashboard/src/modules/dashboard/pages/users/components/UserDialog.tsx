@@ -62,6 +62,13 @@ import { convertToEnglishNumbers, convertToFarsiNumbers } from '../utils/formatt
 import { validateIranianNationalId, validatePasswordStrength, validateUserForm, generateUsernameFromEnglishName, generateStrongPassword } from '../utils/validators';
 import { COUNTRY_CODES, MILITARY_AVATARS, getCountries, getStates, getCities } from '../utils/geo-data';
 import { getAccessLevelsByRole } from '../utils/access-controls';
+import {
+  buildResourcesFormDialogSx,
+  resourcesDialogTitleSx,
+  resourcesDialogContentDividersSx,
+  resourcesDialogActionsSx,
+  resourcesOutlinedCancelButtonSx,
+} from '@/modules/dashboard/pages/resources/resourcesDialogStyles';
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -343,20 +350,11 @@ export const UserDialog: React.FC<UserDialogProps> = ({
       onClose={onClose} 
       maxWidth="md" 
       fullWidth
-      PaperProps={{
-        sx: {
-          borderRadius: 3,
-          boxShadow: '0 8px 32px rgba(0, 0, 0, 0.12)',
-          border: '3px solid',
-          borderColor: theme.palette.primary.main,
-        }
-      }}
+      sx={buildResourcesFormDialogSx(theme)}
     >
       <DialogTitle sx={{ 
+        ...resourcesDialogTitleSx(theme),
         fontSize: '1.5rem', 
-        fontWeight: 'bold', 
-        borderBottom: '2px solid',
-        borderColor: theme.palette.primary.main,
         pb: 2,
         display: 'flex',
         justifyContent: 'space-between',
@@ -373,7 +371,7 @@ export const UserDialog: React.FC<UserDialogProps> = ({
         </IconButton>
       </DialogTitle>
       
-      <DialogContent sx={{ backgroundColor: theme.palette.mode === 'dark' ? 'grey.900' : 'grey.50', py: 3 }}>
+      <DialogContent dividers sx={{ ...resourcesDialogContentDividersSx(theme), py: 3 }}>
         <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
           <Tabs 
             value={tabValue} 
@@ -984,7 +982,7 @@ export const UserDialog: React.FC<UserDialogProps> = ({
                         borderColor: theme.palette.divider,
                         borderRadius: 2,
                         backgroundColor: address.isDefault 
-                          ? alpha(theme.palette.success.light, 0.1) 
+                          ? alpha(theme.palette.primary.light, 0.1) 
                           : 'background.paper',
                         boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
                         position: 'relative'
@@ -996,8 +994,8 @@ export const UserDialog: React.FC<UserDialogProps> = ({
                             position: 'absolute',
                             top: 8,
                             right: 8,
-                            bgcolor: 'success.main',
-                            color: 'white',
+                            bgcolor: 'primary.main',
+                            color: 'primary.contrastText',
                             fontSize: '0.7rem',
                             py: 0.2,
                             px: 1,
@@ -1076,7 +1074,7 @@ export const UserDialog: React.FC<UserDialogProps> = ({
                         {!address.isDefault && (
                           <Button 
                             size="small"
-                            color="success"
+                            color="primary"
                             onClick={() => {
                               const updatedAddresses = addresses.map(a => ({
                                 ...a,
@@ -1460,7 +1458,7 @@ export const UserDialog: React.FC<UserDialogProps> = ({
                   </MenuItem>
                   <MenuItem value="commander">
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                      <Security fontSize="small" color="success" />
+                      <Security fontSize="small" color="secondary" />
                       <span>فرمانده</span>
                     </Box>
                   </MenuItem>
@@ -1722,11 +1720,13 @@ export const UserDialog: React.FC<UserDialogProps> = ({
           </Grid>
         </TabPanel>
       </DialogContent>
-      <DialogActions sx={{ px: 3, py: 2 }}>
+      <DialogActions sx={resourcesDialogActionsSx(theme)}>
         <Button 
           onClick={onClose}
           variant="outlined"
+          color="inherit"
           startIcon={<Close />}
+          sx={resourcesOutlinedCancelButtonSx(theme)}
         >
           انصراف
         </Button>
@@ -1736,6 +1736,7 @@ export const UserDialog: React.FC<UserDialogProps> = ({
           color="primary"
           disabled={!isFormValid}
           startIcon={<Save />}
+          sx={{ borderRadius: 2, px: 3 }}
         >
           ذخیره
         </Button>

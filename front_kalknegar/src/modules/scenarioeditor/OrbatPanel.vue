@@ -18,6 +18,12 @@
   >
     <p>حالت کپی کشیدن <span v-if="isCopyingState">(شامل وضعیت)</span></p>
   </div>
+  <div
+    v-if="showHierarchyDragStatus"
+    class="fixed top-4 right-1/2 z-50 translate-x-1/2 rounded-xl border border-red-300 bg-red-50 p-3 text-center text-sm text-red-900 shadow-lg dark:border-red-700 dark:bg-red-950/80 dark:text-red-100"
+  >
+    <p>ضبط سلسله‌مراتب فعال است؛ رها کردن واحد، جابجایی زمانی در آرایش نبرد ثبت می‌شود.</p>
+  </div>
 </template>
 
 <script setup lang="ts">
@@ -43,6 +49,7 @@ import {
 import { type EntityId } from "@/types/base";
 import { monitorForElements } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
 import { isSideDragItem, isSideGroupDragItem, isUnitDragItem } from "@/types/draggables";
+import { useRecordingStore } from "@/stores/recordingStore";
 
 import {
   extractInstruction,
@@ -59,11 +66,16 @@ const { store, unitActions, io, time } = activeScenario;
 const activeParentId = injectStrict(activeParentKey);
 
 const isDragging = ref(false);
+const isDraggingUnit = ref(false);
 const isCopying = ref(false);
 const isCopyingState = ref(false);
 
 const { state, groupUpdate } = store;
 const { changeUnitParent, addSide } = unitActions;
+const recordStore = useRecordingStore();
+const showHierarchyDragStatus = computed(
+  () => isDraggingUnit.value && recordStore.isRecordingHierarchy,
+);
 const bus = useEventBus(orbatUnitClick);
 
 useEventListener(document, "paste", onPaste);
@@ -82,14 +94,16 @@ onMounted(() => {
       isUnitDragItem(source.data) ||
       isSideGroupDragItem(source.data) ||
       isSideDragItem(source.data),
-    onDragStart: ({ location }) => {
+    onDragStart: ({ location, source }) => {
       isDragging.value = true;
       isCopying.value = location.initial.input.ctrlKey || location.initial.input.metaKey;
       isCopyingState.value = isCopying.value && location.initial.input.altKey;
+      isDraggingUnit.value = isUnitDragItem(source.data);
     },
 
     onDrop: ({ source, location }) => {
       isDragging.value = false;
+      isDraggingUnit.value = false;
       const destination = location.current.dropTargets[0];
       if (!destination) {
         return;
@@ -101,7 +115,7 @@ onMounted(() => {
       const isDuplicateAction =
         location.initial.input.ctrlKey || location.initial.input.metaKey;
       const isDuplicateState = isDuplicateAction && location.initial.input.altKey;
-      if (isUnitDragItem(sourceData) && !isSideDragItem(destinationData)) {
+      if (isUnitDragItem(sourceData)) {
         const target = mapInstructionToTarget(instruction);
         if (isUnitDragItem(destinationData)) {
           onUnitDrop(sourceData.unit, destinationData.unit, target, {
@@ -113,6 +127,11 @@ onMounted(() => {
           }
         } else if (isSideGroupDragItem(destinationData)) {
           onUnitDrop(sourceData.unit, destinationData.sideGroup, target, {
+            isDuplicateAction,
+            isDuplicateState,
+          });
+        } else if (isSideDragItem(destinationData)) {
+          onUnitDrop(sourceData.unit, destinationData.side, "on", {
             isDuplicateAction,
             isDuplicateState,
           });
@@ -204,21 +223,31 @@ function mapInstructionToTarget(instruction: Instruction): DropTarget {
 
 function onUnitDrop(
   unit: NUnit,
-  destinationUnit: NUnit | NSideGroup,
+  destinationUnit: NUnit | NSideGroup | NSide,
   target: DropTarget,
   options: { isDuplicateAction?: boolean; isDuplicateState?: boolean } = {},
 ) {
   const isDuplicateAction = options.isDuplicateAction ?? false;
   const isDuplicateState = options.isDuplicateState ?? false;
   groupUpdate(() => {
-    let unitId = unit.id;
-    if (isDuplicateAction) {
-      unitId = unitActions.cloneUnit(unit.id, {
-        includeSubordinates: true,
-        includeState: isDuplicateState,
-      })!;
+    const selUnits = selectedUnitIds.value.has(unit.id)
+      ? new Set([...selectedUnitIds.value])
+      : new Set([unit.id]);
+    selUnits.delete(destinationUnit.id);
+    for (const id of selUnits) {
+      let unitId = id;
+      if (isDuplicateAction) {
+        unitId = unitActions.cloneUnit(id, {
+          includeSubordinates: true,
+          includeState: isDuplicateState,
+        })!;
+      }
+      if (recordStore.isRecordingHierarchy) {
+        unitActions.recordUnitHierarchyMove(unitId, destinationUnit.id, target);
+      } else {
+        changeUnitParent(unitId, destinationUnit.id, target);
+      }
     }
-    changeUnitParent(unitId, destinationUnit.id, target);
   });
   if (isDuplicateState) {
     time.setCurrentTime(state.currentTime);

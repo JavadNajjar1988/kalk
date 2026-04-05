@@ -17,6 +17,7 @@ import { createEventHook } from "@vueuse/core";
 import { invalidateUnitStyle } from "@/geo/unitStyles";
 import type { CurrentScenarioFeatureState } from "@/types/scenarioGeoModels";
 import { nanoid } from "@/utils";
+import { syncTimedHierarchyProjection } from "@/scenariostore/hierarchy";
 
 export type GoToScenarioEventOptions = {
   silent?: boolean;
@@ -45,7 +46,11 @@ export function createInitialState(unit: NUnit): CurrentState | null {
   return null;
 }
 
-export function updateCurrentUnitState(unit: NUnit, timestamp: number) {
+export function updateCurrentUnitState(
+  unit: NUnit,
+  timestamp: number,
+  options: { markMapStylesDirty?: () => void } = {},
+) {
   if (!unit.state || !unit.state.length) {
     unit._state = createInitialState(unit);
     return;
@@ -156,8 +161,17 @@ export function updateCurrentUnitState(unit: NUnit, timestamp: number) {
       break;
     }
   }
-  if (currentState?.sidc !== unit._state?.sidc) {
+  if (
+    currentState?.sidc !== unit._state?.sidc ||
+    currentState?.symbolRotation !== unit._state?.symbolRotation ||
+    currentState?.reinforcedStatus !== unit._state?.reinforcedStatus
+  ) {
+    if (unit._ikey) {
+      invalidateUnitStyle(unit._ikey);
+    }
+    unit._ikey = undefined;
     invalidateUnitStyle(unit.id);
+    options.markMapStylesDirty?.();
   }
   unit._state = currentState;
 }
@@ -178,8 +192,13 @@ export function useScenarioTime(store: NewScenarioStore) {
 
   function setCurrentTime(timestamp: number) {
     Object.values(state.unitMap).forEach((unit) =>
-      updateCurrentUnitState(unit, timestamp),
+      updateCurrentUnitState(unit, timestamp, {
+        markMapStylesDirty: () => {
+          state.isMapStylesDirty = true;
+        },
+      }),
     );
+    syncTimedHierarchyProjection(state, timestamp);
     Object.values(state.layerMap).forEach((layer) => {
       const visibleFromT = layer.visibleFromT || Number.MIN_SAFE_INTEGER;
       const visibleUntilT = layer.visibleUntilT || Number.MAX_SAFE_INTEGER;

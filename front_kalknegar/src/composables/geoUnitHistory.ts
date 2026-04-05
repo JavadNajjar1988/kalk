@@ -19,7 +19,7 @@ import { ref, watch } from "vue";
 import { useSelectedItems } from "@/stores/selectedStore";
 import { altKeyOnly, click, singleClick } from "ol/events/condition";
 import Select, { SelectEvent } from "ol/interaction/Select";
-import { useOlEvent } from "@/composables/openlayersHelpers";
+import { suspendDragPanDuringModify, useOlEvent } from "@/composables/openlayersHelpers";
 import type { FeatureLike } from "ol/Feature";
 import { useSelectedWaypoints } from "@/stores/selectedWaypoints";
 import OLMap from "ol/Map";
@@ -140,6 +140,7 @@ export function useUnitHistory(
   });
 
   const historyModify = new Modify({ source: legLayer.getSource()!, deleteCondition });
+  useOlEvent(suspendDragPanDuringModify(olMap, historyModify));
   watch(
     () => [...selectedWaypointIds.value],
     (v) => redrawSelectedLayer(v),
@@ -222,6 +223,7 @@ export function useUnitHistory(
 
   historyModify.on(["modifystart", "modifyend"], (evt) => {
     const f = (evt as ModifyEvent).features.item(0) as Feature<LineString | Point>;
+    const unitId = f.get("unitId");
     const geometryType = f.getGeometry()?.getType();
     if (geometryType === "Point") {
     } else {
@@ -240,7 +242,7 @@ export function useUnitHistory(
         }
 
         handleHistoryFeatureChange(
-          f.get("unitId"),
+          unitId,
           action,
           elementIndex,
           isVia,
@@ -253,7 +255,6 @@ export function useUnitHistory(
           .map((e) => [e[0], e[1], e[2] === 0 ? VIA_TIME : e[2]]);
         if (updatedGeometry) f.getGeometry()?.setCoordinates(updatedGeometry, "XYM");
       } else if (geometryType === "Point") {
-        const unitId = f.get("unitId");
         const unit = unitActions.getUnitById(unitId);
         if (!unit) return;
         const action = deleteCondition((<ModifyEvent>evt).mapBrowserEvent)
@@ -270,6 +271,7 @@ export function useUnitHistory(
           postCoords,
         );
       }
+      unitActions.updateUnitState(unitId);
       drawHistory();
     }
   });
@@ -343,7 +345,7 @@ export function useUnitHistory(
     if (!showHistoryRef.value) return;
     selectedUnitIds.value.forEach((unitId) => {
       const unit = getUnitById(unitId);
-      if (!unit) return;
+      if (!unit?._state?.location) return;
 
       const { legFeatures, waypointFeatures, viaPointFeatures, arcFeatures } =
         createUnitPathFeatures(unit, {

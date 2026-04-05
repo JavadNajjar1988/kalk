@@ -21,7 +21,15 @@ import {
   IconButton,
   Chip,
   Grid,
+  useTheme,
 } from '@mui/material';
+import {
+  buildResourcesFormDialogSx,
+  resourcesDialogTitleSx,
+  resourcesDialogContentDividersSx,
+  resourcesDialogActionsSx,
+  resourcesOutlinedCancelButtonSx,
+} from './resourcesDialogStyles';
 import {
   Add as AddIcon,
   Edit as EditIcon,
@@ -48,6 +56,7 @@ import {
 import PersonnelDeleteConfirmModal from './PersonnelDeleteConfirmModal';
 
 const PersonnelTab: React.FC = () => {
+  const theme = useTheme();
   const { t } = useTranslation();
   const dispatch = useAppDispatch();
   
@@ -189,7 +198,7 @@ const PersonnelTab: React.FC = () => {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'active': return 'success';
+      case 'active': return 'primary';
       case 'inactive': return 'default';
       case 'leave': return 'warning';
       case 'mission': return 'info';
@@ -432,9 +441,12 @@ const PersonnelTab: React.FC = () => {
         onClose={handleCloseModal}
         maxWidth="md"
         fullWidth
+        sx={buildResourcesFormDialogSx(theme)}
       >
-        <DialogTitle>{selectedPersonnel ? "ویرایش شخص" : "افزودن شخص جدید"}</DialogTitle>
-        <DialogContent dividers>
+        <DialogTitle sx={resourcesDialogTitleSx(theme)}>
+          {selectedPersonnel ? 'ویرایش شخص' : 'افزودن شخص جدید'}
+        </DialogTitle>
+        <DialogContent dividers sx={resourcesDialogContentDividersSx(theme)}>
           <Grid container spacing={2} sx={{ mt: 0.5 }}>
             <Grid item xs={12} sm={6}>
               <TextField fullWidth label="کد پرسنلی" value={personnelForm.personalCode} onChange={(e) => setPersonnelForm((p) => ({ ...p, personalCode: e.target.value }))} />
@@ -479,9 +491,18 @@ const PersonnelTab: React.FC = () => {
             </Grid>
           </Grid>
         </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCloseModal}>انصراف</Button>
-          <Button variant="contained" onClick={handleSave}>ذخیره</Button>
+        <DialogActions sx={resourcesDialogActionsSx(theme)}>
+          <Button
+            onClick={handleCloseModal}
+            variant="outlined"
+            color="inherit"
+            sx={resourcesOutlinedCancelButtonSx(theme)}
+          >
+            انصراف
+          </Button>
+          <Button variant="contained" color="primary" onClick={handleSave} sx={{ borderRadius: 2, px: 3 }}>
+            ذخیره
+          </Button>
         </DialogActions>
       </Dialog>
 

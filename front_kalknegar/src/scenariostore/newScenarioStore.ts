@@ -77,6 +77,11 @@ export interface ScenarioState {
   unitStatusMap: Record<string, NUnitStatus>;
   supplyClassMap: Record<string, NSupplyClass>;
   supplyUomMap: Record<string, NSupplyUoM>;
+  hierarchyChangeTimestamps: number[];
+  hierarchyStateVersion: number;
+  hierarchyProjectionVersion: number;
+  hierarchyProjectionBucket: number;
+  isMapStylesDirty: boolean;
   unitStateCounter: number;
   featureStateCounter: number;
   settingsStateCounter: number; // used to force reactivity
@@ -126,9 +131,14 @@ export function prepareScenario(newScenario: Scenario): ScenarioState {
     baseMapId: DEFAULT_BASEMAP_ID,
   };
 
-  let unitStateCounter = 0;
-  let featureStateCounter = 0;
-  let settingsStateCounter = 0;
+  const unitStateCounter = 0;
+  const featureStateCounter = 0;
+  const settingsStateCounter = 0;
+  const hierarchyChangeTimestamps: number[] = [];
+  const hierarchyStateVersion = 0;
+  const hierarchyProjectionVersion = -1;
+  const hierarchyProjectionBucket = -1;
+  const isMapStylesDirty = false;
 
   scenario.events.forEach((e) => {
     const nEvent: NScenarioEvent = {
@@ -165,8 +175,8 @@ export function prepareScenario(newScenario: Scenario): ScenarioState {
   function prepareUnit(
     unit1: Unit,
     level: number,
-    parent: Unit | SideGroup,
-    sideGroup: SideGroup,
+    parent: Unit | SideGroup | Side,
+    sideGroup: SideGroup | null | undefined,
     side: Side,
   ) {
     const unit = klona(unit1);
@@ -177,7 +187,7 @@ export function prepareScenario(newScenario: Scenario): ScenarioState {
 
     unit._pid = parent.id;
     unit._isOpen = false;
-    unit._gid = sideGroup.id;
+    unit._gid = sideGroup?.id;
     unit._sid = side.id;
     const equipment: NUnitEquipment[] = [];
     const personnel: NUnitPersonnel[] = [];
@@ -266,14 +276,22 @@ export function prepareScenario(newScenario: Scenario): ScenarioState {
       return { ...rest, update: newUpdate, diff: newDiff };
     });
 
+    newState.forEach((stateEntry) => {
+      if (stateEntry.hierarchy) {
+        hierarchyChangeTimestamps.push(stateEntry.t);
+      }
+    });
+
     unitMap[unit1.id] = {
       ...unit,
       subUnits: unit.subUnits?.map((u) => u.id) || [],
+      _baseSubUnits: unit.subUnits?.map((u) => u.id) || [],
       equipment,
       personnel,
       supplies,
       rangeRings,
       state: newState,
+      _basePid: parent.id,
     } as NUnit;
   }
 
@@ -353,13 +371,21 @@ export function prepareScenario(newScenario: Scenario): ScenarioState {
   }
 
   scenario.sides.forEach((side) => {
-    sideMap[side.id] = { ...side, groups: side.groups.map((group) => group.id) };
+    sideMap[side.id] = {
+      ...side,
+      groups: side.groups.map((group) => group.id),
+      subUnits: side.subUnits?.map((unit) => unit.id) ?? [],
+      _baseSubUnits: side.subUnits?.map((unit) => unit.id) ?? [],
+      _isOpen: side.initiallyOpen !== false,
+    };
     sides.push(side.id);
     side.groups.forEach((group) => {
       sideGroupMap[group.id] = {
         ...group,
         _pid: side.id,
         subUnits: group.subUnits.map((unit) => unit.id),
+        _baseSubUnits: group.subUnits.map((unit) => unit.id),
+        _isOpen: group.initiallyOpen !== false,
       };
     });
     walkSide(side, prepareUnit);
@@ -447,6 +473,11 @@ export function prepareScenario(newScenario: Scenario): ScenarioState {
     supplyClassMap,
     supplyUomMap: supplyUoMMap,
     rangeRingGroupMap,
+    hierarchyChangeTimestamps: hierarchyChangeTimestamps.sort((a, b) => a - b),
+    hierarchyStateVersion,
+    hierarchyProjectionVersion,
+    hierarchyProjectionBucket,
+    isMapStylesDirty,
     unitStateCounter,
     featureStateCounter,
     settingsStateCounter,
@@ -488,7 +519,10 @@ export function useNewScenarioStore(data: Scenario) {
   const inputState = prepareScenario(data);
   const store = useImmerStore<ScenarioState, ActionLabel>(inputState);
 
-  const { state } = store;
-  useScenarioTime(store).setCurrentTime(state.currentTime);
+  const scenarioTime = useScenarioTime(store);
+  scenarioTime.setCurrentTime(store.state.currentTime);
+  store.onUndoRedo(() => {
+    scenarioTime.setCurrentTime(store.state.currentTime);
+  });
   return store;
 }

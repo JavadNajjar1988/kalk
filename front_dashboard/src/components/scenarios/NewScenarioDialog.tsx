@@ -45,6 +45,13 @@ import {
 import { useTranslation } from '@/hooks/useTranslation';
 import type { Scenario, ScenarioStatus } from '@/types';
 import MilitarySymbolPreview from '@/modules/scenario-management/components/MilitarySymbolPreview';
+import {
+  buildResourcesFormDialogSx,
+  resourcesDialogTitleSx,
+  resourcesDialogContentDividersSx,
+  resourcesDialogActionsSx,
+  resourcesOutlinedCancelButtonSx,
+} from '@/modules/dashboard/pages/resources/resourcesDialogStyles';
 import { 
   LAND_UNIT_ICONS, 
   getEchelonOptions
@@ -1587,13 +1594,16 @@ const NewScenarioDialog: React.FC<NewScenarioDialogProps> = ({
       onClose={onClose}
       maxWidth="lg"
       fullWidth
-      PaperProps={{
-        sx: {
-          maxHeight: '90vh',
+      sx={[
+        buildResourcesFormDialogSx(theme),
+        {
+          '& .MuiDialog-paper': {
+            maxHeight: '90vh',
+          },
         },
-      }}
+      ]}
     >
-      <DialogTitle>
+      <DialogTitle sx={{ ...resourcesDialogTitleSx(theme), pt: 2, pb: 1.5 }}>
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <Typography variant="h6">
             {scenario ? 'ویرایش سناریو' : 'ایجاد سناریوی جدید'}
@@ -1604,8 +1614,8 @@ const NewScenarioDialog: React.FC<NewScenarioDialogProps> = ({
         </Box>
       </DialogTitle>
       
-      <DialogContent>
-        <Stepper activeStep={activeStep} sx={{ mb: 4, mt: 2 }}>
+      <DialogContent dividers sx={resourcesDialogContentDividersSx(theme)}>
+        <Stepper activeStep={activeStep} sx={{ mb: 4, mt: 1 }}>
           {steps.map((label) => (
             <Step key={label}>
               <StepLabel>{label}</StepLabel>
@@ -1616,27 +1626,38 @@ const NewScenarioDialog: React.FC<NewScenarioDialogProps> = ({
         {renderStepContent()}
       </DialogContent>
 
-      <DialogActions sx={{ px: 3, pb: 2 }}>
-        <Button onClick={onClose}>لغو</Button>
+      <DialogActions sx={{ ...resourcesDialogActionsSx(theme), flexWrap: 'wrap' }}>
+        <Button
+          onClick={onClose}
+          variant="outlined"
+          color="inherit"
+          sx={resourcesOutlinedCancelButtonSx(theme)}
+        >
+          انصراف
+        </Button>
         <Box sx={{ flex: 1 }} />
         {activeStep > 0 && (
-          <Button onClick={handleBack} startIcon={<ArrowBack />}>
+          <Button onClick={handleBack} startIcon={<ArrowBack />} variant="outlined" color="inherit" sx={resourcesOutlinedCancelButtonSx(theme)}>
             مرحله قبل
           </Button>
         )}
         {activeStep < steps.length - 1 ? (
           <Button
             variant="contained"
+            color="primary"
             onClick={handleNext}
             endIcon={<ArrowForward />}
+            sx={{ borderRadius: 2, px: 3 }}
           >
             مرحله بعد
           </Button>
         ) : (
           <Button
             variant="contained"
+            color="primary"
             onClick={handleSubmit}
             disabled={!formData.name.trim()}
+            sx={{ borderRadius: 2, px: 3 }}
           >
             {scenario ? 'اعمال تغییرات' : 'ایجاد سناریو'}
           </Button>

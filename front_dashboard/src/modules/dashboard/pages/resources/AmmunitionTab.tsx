@@ -151,7 +151,7 @@ const AmmunitionTab: React.FC = () => {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'available': return 'success';
+      case 'available': return 'primary';
       case 'allocated': return 'info';
       case 'used': return 'default';
       case 'expired': return 'warning';
@@ -177,8 +177,8 @@ const AmmunitionTab: React.FC = () => {
       case '1.2': return 'error';
       case '1.3': return 'warning';
       case '1.4': return 'info';
-      case '1.5': return 'success';
-      case '1.6': return 'success';
+      case '1.5': return 'primary';
+      case '1.6': return 'primary';
       default: return 'default';
     }
   };

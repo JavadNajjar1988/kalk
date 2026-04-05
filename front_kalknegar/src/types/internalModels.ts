@@ -44,12 +44,14 @@ export interface NUnit
     | "supplies"
   > {
   subUnits: EntityId[];
+  _baseSubUnits?: EntityId[];
   equipment?: NUnitEquipment[];
   personnel?: NUnitPersonnel[];
   supplies?: NUnitSupply[];
   state?: NState[];
   _pid: EntityId;
-  _gid: EntityId;
+  _basePid?: EntityId;
+  _gid?: EntityId;
   _sid: EntityId;
 }
 
@@ -108,8 +110,10 @@ export interface OlUnitProps
   stateType: CurrentStateType;
 }
 
-export interface NSide extends Omit<Side, "groups"> {
+export interface NSide extends Omit<Side, "groups" | "subUnits"> {
   groups: EntityId[];
+  subUnits: EntityId[];
+  _baseSubUnits?: EntityId[];
   _isOpen?: boolean;
 }
 
@@ -117,6 +121,7 @@ export interface SideUpdate extends Omit<NSide, "id" | "groups"> {}
 
 export interface NSideGroup extends Omit<SideGroup, "subUnits" | "_pid"> {
   subUnits: EntityId[];
+  _baseSubUnits?: EntityId[];
   _isOpen?: boolean;
   _pid: EntityId;
 }

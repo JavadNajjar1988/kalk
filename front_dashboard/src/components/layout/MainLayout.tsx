@@ -56,6 +56,12 @@ import SidePanel from './SidePanel';
 import PersianDateTime from '@/components/common/PersianDateTime';
 import { useTranslation } from '@/hooks/useTranslation';
 import SearchBar from '@/components/common/SearchBar';
+import {
+  resourcesMenuPaperSx,
+  resourcesDialogTitleSx,
+  resourcesDialogActionsSx,
+  getResourcesDialogAccent,
+} from '@/modules/dashboard/pages/resources/resourcesDialogStyles';
 
 const DRAWER_WIDTH = 180; // further narrow sidebar width for more main content space
 const DRAWER_WIDTH_COLLAPSED = 60;
@@ -86,42 +92,6 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
     labels: !layout.sidebarCollapsed,
     dateTime: !layout.sidebarCollapsed
   });
-
-  // Soft background surface like 4-step modal
-  const getSoftSurface = () => {
-    const primary = (theme.palette.primary.main || '#4a90e2').toLowerCase();
-    const hex = primary.replace('#', '');
-    if (hex.includes('10b981') || hex.includes('4caf50') || hex.includes('2e7d32')) return '#f0f4f3';
-    if (hex.includes('4a90e2') || hex.includes('1976d2') || hex.includes('2196f3')) return '#f0f4f8';
-    if (hex.includes('ef4444') || hex.includes('f44336') || hex.includes('d32f2f')) return '#fbf1f0';
-    if (hex.includes('6b21a8') || hex.includes('9c27b0') || hex.includes('673ab7')) return '#22262d';
-    if (hex.includes('f59e0b') || hex.includes('ff9800') || hex.includes('fb8c00')) return '#fbf1f1';
-    const clamp = (n: number) => Math.max(0, Math.min(255, Math.round(n)));
-    const hexToRgb = (h: string) => {
-      const n = h.length === 3 ? h.split('').map(c => c + c).join('') : h;
-      const r = parseInt(n.substring(0, 2), 16);
-      const g = parseInt(n.substring(2, 4), 16);
-      const b = parseInt(n.substring(4, 6), 16);
-      return { r, g, b };
-    };
-    const rgbToHex = (r: number, g: number, b: number) => `#${clamp(r).toString(16).padStart(2, '0')}${clamp(g).toString(16).padStart(2, '0')}${clamp(b).toString(16).padStart(2, '0')}`;
-    const blendWithWhite = (h: string, primaryWeight = 0.10) => {
-      const { r, g, b } = hexToRgb(h);
-      const wr = 255, wg = 255, wb = 255;
-      const w = 1 - primaryWeight;
-      const br = wr * w + r * primaryWeight;
-      const bg = wg * w + g * primaryWeight;
-      const bb = wb * w + b * primaryWeight;
-      return rgbToHex(br, bg, bb);
-    };
-    if (/^[0-9a-f]{3,6}$/.test(hex)) return blendWithWhite(hex, 0.10);
-    try {
-      const fallback = (theme.palette.primary.light || '#90caf9').toLowerCase().replace('#', '');
-      return blendWithWhite(fallback, 0.08);
-    } catch {
-      return '#f5f7fa';
-    }
-  };
 
   useEffect(() => {
     setSidebarElementsVisible({
@@ -424,7 +394,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
                   sx={{
                     width: 36,
                     height: 36,
-                    bgcolor: '#1976d2', // رنگ ثابت آبی
+                    bgcolor: 'primary.main',
                     fontSize: '14px',
                     fontWeight: 600,
                   }}
@@ -443,16 +413,10 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
         open={Boolean(notificationsMenuAnchor)}
         onClose={handleNotificationsMenuClose}
         PaperProps={{
-          sx: {
+          sx: resourcesMenuPaperSx(theme, {
             width: 380,
             maxHeight: 520,
-            overflow: 'hidden',
             mt: 1.5,
-            borderRadius: '20px',
-            backgroundColor: (theme) => alpha(theme.palette.primary.light, 0.10),
-            backdropFilter: 'blur(20px)',
-            border: (theme) => `1px solid ${alpha(theme.palette.primary.light, 0.2)}`,
-            boxShadow: (theme) => `0 20px 60px ${alpha(theme.palette.primary.light, 0.25)}, inset 0 1px 0 rgba(255, 255, 255, 0.75)`,
             '&:before': {
               content: '""',
               display: 'block',
@@ -461,31 +425,33 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
               right: 18,
               width: 12,
               height: 12,
-              bgcolor: getSoftSurface(),
-              borderTop: (theme) => `1px solid ${alpha(theme.palette.primary.light, 0.2)}`,
-              borderLeft: (theme) => `1px solid ${alpha(theme.palette.primary.light, 0.2)}`,
+              bgcolor: alpha(getResourcesDialogAccent(theme), 0.08),
+              borderTop: `1px solid ${alpha(getResourcesDialogAccent(theme), 0.2)}`,
+              borderLeft: `1px solid ${alpha(getResourcesDialogAccent(theme), 0.2)}`,
               transform: 'translateY(-50%) rotate(45deg)',
               zIndex: 0,
             },
-          }
+          }),
         }}
         transformOrigin={{ horizontal: 'right', vertical: 'top' }}
         anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
       >
-        <Box sx={{ p: 2.5, borderBottom: (theme) => `1px solid ${alpha(theme.palette.primary.light, 0.2)}`, backgroundColor: getSoftSurface() }}>
+        <Box sx={{ p: 2.5, ...resourcesDialogTitleSx(theme) }}>
           <Typography variant="h6" sx={{ fontWeight: 700, color: 'primary.main' }}>
             {t('layout.notificationsTitle')}
           </Typography>
         </Box>
         {notifications.length === 0 ? (
-          <Box sx={{ p: 3, textAlign: 'center', backgroundColor: getSoftSurface() }}>
+          <Box sx={{ p: 3, textAlign: 'center', bgcolor: 'transparent' }}>
             <NotificationsIcon sx={{ fontSize: 48, color: 'text.secondary', mb: 1 }} />
             <Typography variant="body2" color="text.secondary">
               {t('layout.noNewNotifications')}
             </Typography>
           </Box>
         ) : (
-          notifications.slice(0, 3).map((notification) => (
+          notifications.slice(0, 3).map((notification) => {
+            const accent = getResourcesDialogAccent(theme);
+            return (
             <MenuItem
               key={notification.id}
               onClick={() => {
@@ -498,14 +464,14 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
                 py: 0.5,
                 px: 1.5,
                 borderRadius: 2,
-                boxShadow: '0 1px 4px rgba(25, 118, 210, 0.05)',
+                boxShadow: `0 1px 4px ${alpha(accent, 0.05)}`,
                 mb: 0.5,
                 minHeight: 36,
-                bgcolor: notification.read ? alpha(theme.palette.background.paper, 0.7) : alpha(theme.palette.primary.light, 0.10),
+                bgcolor: notification.read ? alpha(theme.palette.background.paper, 0.7) : alpha(accent, 0.1),
                 transition: 'all 0.15s',
                 '&:hover': {
-                  bgcolor: alpha(theme.palette.primary.main, 0.07),
-                  boxShadow: '0 2px 8px rgba(25, 118, 210, 0.10)',
+                  bgcolor: alpha(accent, 0.07),
+                  boxShadow: `0 2px 8px ${alpha(accent, 0.1)}`,
                   transform: 'scale(1.01)',
                 },
                 display: 'flex',
@@ -514,7 +480,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
               }}
             >
               <Avatar sx={{ bgcolor: 'background.paper', color: 'primary.main', mr: 1, width: 28, height: 28, boxShadow: 2, fontSize: 18 }}>
-                {notification.type === 'success' ? <CheckCircle sx={{ color: 'success.main', fontSize: 20 }} /> :
+                {notification.type === 'success' ? <CheckCircle sx={{ color: 'primary.main', fontSize: 20 }} /> :
                  notification.type === 'warning' ? <WarningIcon sx={{ color: 'warning.main', fontSize: 20 }} /> :
                  notification.type === 'error' ? <WarningIcon sx={{ color: 'error.main', fontSize: 20 }} /> :
                  <NotificationsIcon sx={{ color: 'info.main', fontSize: 20 }} />}
@@ -531,7 +497,8 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
                 {notification.timestamp}
               </Typography>
             </MenuItem>
-          ))
+            );
+          })
         )}
       </Menu>
 
@@ -541,34 +508,24 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
         open={Boolean(profileMenuAnchor)}
         onClose={handleProfileMenuClose}
         PaperProps={{
-          sx: {
+          sx: resourcesMenuPaperSx(theme, {
             mt: 1.5,
             minWidth: 300,
             maxWidth: 340,
-            borderRadius: '20px',
-            overflow: 'hidden',
-            backgroundColor: (theme) => alpha(theme.palette.primary.light, 0.10),
-            backdropFilter: 'blur(20px)',
-            border: (theme) => `1px solid ${alpha(theme.palette.primary.light, 0.2)}`,
-            boxShadow: (theme) => `0 20px 60px ${alpha(theme.palette.primary.light, 0.25)}, inset 0 1px 0 rgba(255, 255, 255, 0.75)`,
             '& .MuiMenuItem-root': {
               px: 2,
               py: 1.5,
               borderRadius: 1,
               mx: 1,
               my: 0.5,
-            }
-          }
+            },
+          }),
         }}
         transformOrigin={{ horizontal: 'right', vertical: 'top' }}
         anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
       >
         {/* Header با اطلاعات کاربر */}
-        <Box sx={{ 
-          p: 2.5, 
-          borderBottom: (theme) => `1px solid ${alpha(theme.palette.primary.light, 0.2)}`,
-          bgcolor: getSoftSurface()
-        }}>
+        <Box sx={{ p: 2.5, ...resourcesDialogTitleSx(theme) }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
             <Avatar
               src={user?.avatar}
@@ -598,7 +555,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
 
         {/* منوی عملیات - حذف شده طبق درخواست */}
 
-        <Box sx={{ borderTop: (theme) => `1px solid ${alpha(theme.palette.primary.light, 0.2)}`, mt: 1, pt: 1, bgcolor: getSoftSurface() }}>
+        <Box sx={{ ...resourcesDialogActionsSx(theme), mt: 1, py: 1, px: 0, gap: 0 }}>
           <MenuItem 
             onClick={handleLogout}
             sx={{ 
@@ -623,7 +580,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
         </DialogTitle>
         <DialogContent sx={{ textAlign: 'center', pt: 0 }}>
           <Avatar sx={{ bgcolor: 'background.paper', color: 'primary.main', mx: 'auto', my: 1, width: 48, height: 48, boxShadow: 2 }}>
-            {notifDialogData?.type === 'success' ? <CheckCircle sx={{ color: 'success.main' }} /> :
+            {notifDialogData?.type === 'success' ? <CheckCircle sx={{ color: 'primary.main' }} /> :
              notifDialogData?.type === 'warning' ? <WarningIcon sx={{ color: 'warning.main' }} /> :
              notifDialogData?.type === 'error' ? <WarningIcon sx={{ color: 'error.main' }} /> :
              <NotificationsIcon sx={{ color: 'info.main' }} />}

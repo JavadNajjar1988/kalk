@@ -41,12 +41,19 @@ import { fetchUsers, setFilters, clearFilters, setPagination, clearError, create
 import type { User, UserFilters, QuickActionPayload } from '../types';
 import { useTranslation } from '@/hooks/useTranslation';
 import { UsersTableView, UsersCardView, QuickActionsModal, UserDetailsModal, EditUserModal, DeleteConfirmationModal } from '../components';
+import {
+  buildResourcesFormDialogSx,
+  resourcesDialogTitleSx,
+  resourcesDialogContentDividersSx,
+  resourcesDialogActionsSx,
+  resourcesOutlinedCancelButtonSx,
+} from '@/modules/dashboard/pages/resources/resourcesDialogStyles';
 
 const UsersListPage: React.FC = () => {
   const dispatch = useAppDispatch();
   const { t } = useTranslation();
   const theme = useTheme();
-  const unifiedAccent = theme.palette.success.main;
+  const unifiedAccent = theme.palette.primary.main;
   const unifiedSurface = `linear-gradient(135deg, ${alpha(unifiedAccent, 0.07)}, ${alpha(unifiedAccent, 0.04)})`;
   const unifiedSurfaceSx = {
     background: unifiedSurface,
@@ -543,8 +550,9 @@ const UsersListPage: React.FC = () => {
         onClose={() => setShowAddModal(false)}
         maxWidth="md"
         fullWidth
+        sx={buildResourcesFormDialogSx(theme)}
       >
-        <DialogTitle sx={{ pb: 1.5 }}>
+        <DialogTitle sx={{ ...resourcesDialogTitleSx(theme), pb: 1.5 }}>
           <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
               <Box
@@ -574,7 +582,7 @@ const UsersListPage: React.FC = () => {
             </Box>
           </Box>
         </DialogTitle>
-        <DialogContent dividers sx={{ pt: 2.5 }}>
+        <DialogContent dividers sx={{ ...resourcesDialogContentDividersSx(theme), pt: 2.5 }}>
           <Grid container spacing={3}>
             {/* اطلاعات شخصی */}
             <Grid item xs={12}>
@@ -735,11 +743,16 @@ const UsersListPage: React.FC = () => {
             </Grid>
           </Grid>
         </DialogContent>
-        <DialogActions sx={{ px: 3, py: 2 }}>
-          <Button onClick={() => setShowAddModal(false)} variant="outlined" sx={{ minWidth: 120 }}>
+        <DialogActions sx={resourcesDialogActionsSx(theme)}>
+          <Button
+            onClick={() => setShowAddModal(false)}
+            variant="outlined"
+            color="inherit"
+            sx={{ ...resourcesOutlinedCancelButtonSx(theme), minWidth: 120 }}
+          >
             انصراف
           </Button>
-          <Button variant="contained" onClick={handleSaveUser} sx={{ minWidth: 140 }}>
+          <Button variant="contained" color="primary" onClick={handleSaveUser} sx={{ borderRadius: 2, minWidth: 140, px: 3 }}>
             ذخیره کاربر
           </Button>
         </DialogActions>
@@ -751,9 +764,10 @@ const UsersListPage: React.FC = () => {
         onClose={() => setTempPasswordInfo(null)}
         maxWidth="sm"
         fullWidth
+        sx={buildResourcesFormDialogSx(theme)}
       >
-        <DialogTitle>رمز عبور اولیه کاربر</DialogTitle>
-        <DialogContent dividers>
+        <DialogTitle sx={resourcesDialogTitleSx(theme)}>رمز عبور اولیه کاربر</DialogTitle>
+        <DialogContent dividers sx={resourcesDialogContentDividersSx(theme)}>
           {tempPasswordInfo && (
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
               <Typography variant="body2" color="text.secondary">
@@ -790,11 +804,16 @@ const UsersListPage: React.FC = () => {
             </Box>
           )}
         </DialogContent>
-        <DialogActions sx={{ px: 3, py: 2 }}>
-          <Button onClick={handleCopyTempPassword} variant="outlined">
+        <DialogActions sx={resourcesDialogActionsSx(theme)}>
+          <Button
+            onClick={handleCopyTempPassword}
+            variant="outlined"
+            color="inherit"
+            sx={resourcesOutlinedCancelButtonSx(theme)}
+          >
             کپی رمز
           </Button>
-          <Button onClick={() => setTempPasswordInfo(null)} variant="contained">
+          <Button onClick={() => setTempPasswordInfo(null)} variant="contained" color="primary" sx={{ borderRadius: 2, px: 3 }}>
             متوجه شدم
           </Button>
         </DialogActions>

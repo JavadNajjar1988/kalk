@@ -12,7 +12,15 @@ import {
   Typography,
   useTheme,
 } from '@mui/material';
-import { alpha } from '@mui/material/styles';
+import {
+  buildResourcesFormDialogSx,
+  buildResourcesTextFieldOutlineSx,
+  getResourcesDialogAccent,
+  resourcesDialogTitleSx,
+  resourcesDialogContentDividersSx,
+  resourcesDialogActionsSx,
+  resourcesOutlinedCancelButtonSx,
+} from '../resourcesDialogStyles';
 import { MapItem } from '@/store/slices/tabularResourcesSlice';
 
 interface MapsModalProps {
@@ -31,28 +39,8 @@ const MapsModal: React.FC<MapsModalProps> = ({
   map,
 }) => {
   const theme = useTheme();
-  const accent = theme.palette.success.main;
-  const dialogBackground = `linear-gradient(135deg, ${alpha(accent, 0.08)}, ${alpha(accent, 0.04)})`;
-  const inputSurface =
-    theme.palette.mode === 'dark'
-      ? alpha(theme.palette.background.default, 0.72)
-      : alpha(theme.palette.common.white, 0.92);
-
-  const textFieldSx = {
-    '& .MuiOutlinedInput-root': {
-      backgroundColor: inputSurface,
-      '& fieldset': {
-        borderColor: alpha(accent, 0.28),
-      },
-      '&:hover fieldset': {
-        borderColor: alpha(accent, 0.45),
-      },
-      '&.Mui-focused fieldset': {
-        borderColor: accent,
-        boxShadow: `0 0 0 3px ${alpha(accent, 0.12)}`,
-      },
-    },
-  };
+  const accent = getResourcesDialogAccent(theme);
+  const textFieldSx = buildResourcesTextFieldOutlineSx(theme);
 
   const [formData, setFormData] = useState<Partial<MapItem>>({
     mapCode: '',
@@ -169,49 +157,13 @@ const MapsModal: React.FC<MapsModalProps> = ({
       onClose={onClose}
       maxWidth="md"
       fullWidth
-      sx={{
-        '& .MuiDialog-paper': {
-          borderRadius: 3,
-          backgroundColor: theme.palette.background.paper,
-          backgroundImage: dialogBackground,
-          border: `1px solid ${alpha(accent, 0.24)}`,
-          boxShadow: `0 20px 60px ${alpha(accent, 0.18)}`,
-        },
-        '& .MuiOutlinedInput-root': {
-          backgroundColor: inputSurface,
-          '& fieldset': {
-            borderColor: alpha(accent, 0.28),
-          },
-          '&:hover fieldset': {
-            borderColor: alpha(accent, 0.45),
-          },
-          '&.Mui-focused fieldset': {
-            borderColor: accent,
-            boxShadow: `0 0 0 3px ${alpha(accent, 0.12)}`,
-          },
-        },
-        '& .MuiInputLabel-root.Mui-focused': {
-          color: accent,
-        },
-      }}
+      sx={buildResourcesFormDialogSx(theme)}
     >
-      <DialogTitle
-        sx={{
-          borderBottom: `1px solid ${alpha(accent, 0.2)}`,
-          backgroundColor: alpha(accent, 0.08),
-          fontWeight: 700,
-        }}
-      >
+      <DialogTitle sx={resourcesDialogTitleSx(theme)}>
         {map ? 'ویرایش نقشه' : 'افزودن نقشه جدید'}
       </DialogTitle>
 
-      <DialogContent
-        dividers
-        sx={{
-          borderColor: alpha(accent, 0.16),
-          backgroundColor: 'transparent',
-        }}
-      >
+      <DialogContent dividers sx={resourcesDialogContentDividersSx(theme)}>
         <Grid container spacing={2}>
           <Grid item xs={12} md={6}>
             <TextField
@@ -425,11 +377,7 @@ const MapsModal: React.FC<MapsModalProps> = ({
 
       <DialogActions
         sx={{
-          borderTop: `1px solid ${alpha(accent, 0.2)}`,
-          backgroundColor: alpha(accent, 0.04),
-          px: 3,
-          py: 2,
-          gap: 1,
+          ...resourcesDialogActionsSx(theme),
           justifyContent: 'flex-end',
         }}
       >
@@ -437,17 +385,14 @@ const MapsModal: React.FC<MapsModalProps> = ({
           onClick={onClose}
           variant="outlined"
           color="inherit"
-          sx={{
-            borderRadius: 2,
-            borderColor: alpha(accent, 0.35),
-          }}
+          sx={resourcesOutlinedCancelButtonSx(theme)}
         >
           انصراف
         </Button>
         <Button
           onClick={handleSubmit}
           variant="contained"
-          color="success"
+          color="primary"
           sx={{
             borderRadius: 2,
             px: 3,

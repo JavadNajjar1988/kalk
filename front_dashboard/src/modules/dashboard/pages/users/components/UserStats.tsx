@@ -51,7 +51,7 @@ export const UserStats: React.FC<{ users: UserProfile[] }> = ({ users }) => {
       title: 'توزیع جغرافیایی',
       value: users.filter(u => u.nationality === 'iranian').length,
       icon: <Public />,
-      color: 'success',
+      color: 'primary',
       gradient: 'linear-gradient(135deg, #e8f5e8 0%, #c8e6c9 100%)',
       subtitle: (() => {
         const iranianCount = users.filter(u => u.nationality === 'iranian').length;
@@ -141,7 +141,7 @@ export const UserStats: React.FC<{ users: UserProfile[] }> = ({ users }) => {
                       height: 36,
                       boxShadow: stat.color === 'warning' && stat.title === 'کل کاربران'
                         ? '0 4px 12px #ff980040' // سایه زرد ثابت
-                        : `0 4px 12px ${stat.color === 'primary' ? theme.palette.primary.main : stat.color === 'success' ? theme.palette.success.main : stat.color === 'error' ? theme.palette.error.main : theme.palette.info.main}40`,
+                        : `0 4px 12px ${stat.color === 'primary' ? theme.palette.primary.main : stat.color === 'error' ? theme.palette.error.main : theme.palette.info.main}40`,
                       '& svg': {
                         fontSize: '1.1rem',
                       },
@@ -318,7 +318,7 @@ export const UserStats: React.FC<{ users: UserProfile[] }> = ({ users }) => {
                           </Grid>
                           <Grid item xs={4}>
                             <Box sx={{ textAlign: 'center' }}>
-                              <Typography variant="h6" sx={{ fontWeight: 700, color: 'success.main' }}>
+                              <Typography variant="h6" sx={{ fontWeight: 700, color: 'primary.main' }}>
                                 {convertToFarsiNumbers(users.filter(u => u.isActive).length)}
                               </Typography>
                               <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '0.65rem' }}>
@@ -348,7 +348,7 @@ export const UserStats: React.FC<{ users: UserProfile[] }> = ({ users }) => {
                     <Box sx={{ 
                       height: 8, 
                       borderRadius: 4, 
-                      backgroundColor: alpha(theme.palette.success.main, 0.1),
+                      backgroundColor: alpha(theme.palette.primary.main, 0.1),
                       overflow: 'hidden',
                       position: 'relative',
                       mb: 1,
@@ -357,7 +357,7 @@ export const UserStats: React.FC<{ users: UserProfile[] }> = ({ users }) => {
                         sx={{
                           height: '100%',
                           width: `${users.length > 0 ? (users.filter(u => u.nationality === 'iranian').length / users.length) * 100 : 0}%`,
-                          background: `linear-gradient(90deg, ${alpha(theme.palette.success.main, 0.8)}, ${theme.palette.success.main}, ${theme.palette.success.dark})`,
+                          background: `linear-gradient(90deg, ${alpha(theme.palette.primary.main, 0.8)}, ${theme.palette.primary.main}, ${theme.palette.primary.dark})`,
                           borderRadius: 4,
                           position: 'relative',
                           '&::after': {
@@ -380,7 +380,7 @@ export const UserStats: React.FC<{ users: UserProfile[] }> = ({ users }) => {
                         sx={{ 
                           fontWeight: 600,
                           fontSize: '0.7rem',
-                          color: 'success.main',
+                          color: 'primary.main',
                           display: 'flex',
                           alignItems: 'center',
                           gap: 0.5
@@ -443,7 +443,7 @@ export const UserStats: React.FC<{ users: UserProfile[] }> = ({ users }) => {
                             return countriesWithUsers.map(([country, count], index) => (
                               <Grid item xs={6} key={index}>
                                 <Box sx={{ textAlign: 'center' }}>
-                                  <Typography variant="h6" sx={{ fontWeight: 700, color: 'success.main' }}>
+                                  <Typography variant="h6" sx={{ fontWeight: 700, color: 'primary.main' }}>
                                     {count.toLocaleString('fa-IR')}
                                   </Typography>
                                   <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '0.65rem' }}>
@@ -464,7 +464,7 @@ export const UserStats: React.FC<{ users: UserProfile[] }> = ({ users }) => {
                   <Box>
                     <Box sx={{ display: 'flex', gap: 1, alignItems: 'end', height: 40, mb: 1 }}>
                       {[
-                        { role: 'commander', color: theme.palette.success.main, gradient: `linear-gradient(180deg, ${theme.palette.success.light}, ${theme.palette.success.main})`, label: 'فرمانده' },
+                        { role: 'commander', color: theme.palette.secondary.main, gradient: `linear-gradient(180deg, ${theme.palette.secondary.light}, ${theme.palette.secondary.main})`, label: 'فرمانده' },
                         { role: 'operator', color: theme.palette.primary.main, gradient: `linear-gradient(180deg, ${theme.palette.primary.light}, ${theme.palette.primary.main})`, label: 'اپراتور' },
                         { role: 'viewer', color: theme.palette.warning.main, gradient: `linear-gradient(180deg, ${theme.palette.warning.light}, ${theme.palette.warning.main})`, label: 'بیننده' },
                       ].map((item) => {
@@ -529,7 +529,7 @@ export const UserStats: React.FC<{ users: UserProfile[] }> = ({ users }) => {
                         <Grid container spacing={2}>
                           <Grid item xs={4}>
                             <Box sx={{ textAlign: 'center' }}>
-                              <Typography variant="h6" sx={{ fontWeight: 700, color: 'success.main' }}>
+                              <Typography variant="h6" sx={{ fontWeight: 700, color: 'secondary.main' }}>
                                 {convertToFarsiNumbers(users.filter(u => u.role === 'commander').length)}
                               </Typography>
                               <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '0.65rem' }}>

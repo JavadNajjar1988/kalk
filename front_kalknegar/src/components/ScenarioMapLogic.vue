@@ -28,6 +28,7 @@ import { useMapSelectStore } from "@/stores/mapSelectStore";
 import { useMapHover } from "@/composables/geoHover";
 import { saveMapAsPng, useOlEvent } from "@/composables/openlayersHelpers";
 import { useMapSettingsStore } from "@/stores/mapSettingsStore";
+import { useRecordingStore } from "@/stores/recordingStore";
 import { useShowLocationControl } from "@/composables/geoShowLocation";
 import { useShowScaleLine } from "@/composables/geoScaleLine";
 import { ObjectEvent } from "ol/Object";
@@ -72,6 +73,7 @@ const unitSettingsStore = useUnitSettingsStore();
 const geoStore = useGeoStore();
 const settingsStore = useSettingsStore();
 const symbolSettings = useSymbolSettingsStore();
+const recordingStore = useRecordingStore();
 const { moveUnitEnabled } = storeToRefs(useUnitSettingsStore());
 const { measurementUnit } = storeToRefs(useMeasurementsStore());
 const { unitLayer, drawUnits } = useUnitLayer();
@@ -198,10 +200,31 @@ if (extent && !unitLayer.getSource()?.isEmpty())
 
 function toggleMoveUnitInteraction(event: ObjectEvent) {
   const isUnitLayerVisible = !event.oldValue;
-  moveUnitInteraction.setActive(isUnitLayerVisible && moveUnitEnabled.value);
+  moveUnitInteraction.setActive(
+    isUnitLayerVisible &&
+      moveUnitEnabled.value &&
+      recordingStore.isRecordingLocation,
+  );
 }
 
 emit("map-ready", { olMap, featureSelectInteraction, unitSelectInteraction });
+
+watch(
+  () => recordingStore.isRecordingLocation,
+  (enabled) => {
+    if (!enabled && moveUnitEnabled.value) {
+      moveUnitEnabled.value = false;
+    }
+    const isUnitLayerVisible =
+      typeof unitLayerGroup.getVisible === "function"
+        ? unitLayerGroup.getVisible()
+        : true;
+    moveUnitInteraction.setActive(
+      isUnitLayerVisible && moveUnitEnabled.value && enabled,
+    );
+  },
+  { immediate: true },
+);
 
 async function ensureTacticalServicesForScenario() {
   if (tacticalServicesInitInProgress.value) {

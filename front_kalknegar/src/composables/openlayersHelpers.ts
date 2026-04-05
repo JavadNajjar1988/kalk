@@ -2,6 +2,8 @@ import type { EventsKey } from "ol/events";
 import { unByKey } from "ol/Observable";
 import Feature from "ol/Feature";
 import type OLMap from "ol/Map";
+import type Modify from "ol/interaction/Modify";
+import DragPan from "ol/interaction/DragPan";
 import VectorLayer from "ol/layer/Vector";
 import { Collection } from "ol";
 import type { FeatureId } from "@/types/scenarioGeoModels";
@@ -10,6 +12,39 @@ import { Vector as VectorSource } from "ol/source";
 import { GeoJSON as GeoJSONFormat } from "ol/format";
 import type { GeoJSON } from "geojson";
 import { saveBlobToLocalFile } from "@/utils/files";
+
+/**
+ * While {@link Modify} is active (vertex drag), disable every {@link DragPan} on the map
+ * so the view does not pan. OpenLayers runs interactions in reverse add-order; DragPan is
+ * often handled before Modify, so panning would otherwise occur together with edits.
+ */
+export function suspendDragPanDuringModify(map: OLMap, modify: Modify): EventsKey[] {
+  let depth = 0;
+  const saved: { interaction: DragPan; wasActive: boolean }[] = [];
+
+  const onModifyStart = () => {
+    if (depth === 0) {
+      saved.length = 0;
+      map.getInteractions().forEach((interaction) => {
+        if (interaction instanceof DragPan) {
+          saved.push({ interaction, wasActive: interaction.getActive() });
+          interaction.setActive(false);
+        }
+      });
+    }
+    depth++;
+  };
+
+  const onModifyEnd = () => {
+    depth = Math.max(0, depth - 1);
+    if (depth === 0) {
+      saved.forEach(({ interaction, wasActive }) => interaction.setActive(wasActive));
+      saved.length = 0;
+    }
+  };
+
+  return [modify.on("modifystart", onModifyStart), modify.on("modifyend", onModifyEnd)];
+}
 
 /**
  * Unregister open layers event automatically on unmount

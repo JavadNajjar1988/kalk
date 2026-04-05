@@ -105,7 +105,7 @@ const DashboardStats: React.FC<DashboardStatsProps> = ({
   const scenarios = useAppSelector(selectScenarios);
   const theme = useTheme();
   const { t } = useTranslation();
-  const unifiedAccent = theme.palette.success.main;
+  const unifiedAccent = theme.palette.primary.main;
   const unifiedCardSurface = `linear-gradient(135deg, ${alpha(unifiedAccent, 0.07)}, ${alpha(unifiedAccent, 0.04)})`;
 
   const handleCardExpand = (cardTitle: string) => {
@@ -244,7 +244,7 @@ const DashboardStats: React.FC<DashboardStatsProps> = ({
       title: t('dashboard.stats.availableForces'),
       value: forceStats.total,
       icon: <PeopleIcon />,
-      color: 'success',
+      color: 'primary',
       gradient: 'linear-gradient(135deg, #e8f5e8 0%, #c8e6c9 100%)',
       subtitle: t('dashboard.stats.availableForcesSubtitle', {
         iranianPercent: forceStats.iranianPercent.toLocaleString('fa-IR'),
@@ -498,7 +498,7 @@ const DashboardStats: React.FC<DashboardStatsProps> = ({
                               <FarsiNumber sx={{ 
                                 fontWeight: 700, 
                                 fontSize: '1.1rem', 
-                                color: 'success.main',
+                                color: 'primary.main',
                                 minWidth: '20px',
                                 textAlign: 'center'
                               }}>
@@ -521,7 +521,7 @@ const DashboardStats: React.FC<DashboardStatsProps> = ({
                               <FarsiNumber sx={{ 
                                 fontWeight: 700, 
                                 fontSize: '1.1rem', 
-                                color: 'success.main',
+                                color: 'primary.main',
                                 minWidth: '20px',
                                 textAlign: 'center'
                               }}>
@@ -573,7 +573,7 @@ const DashboardStats: React.FC<DashboardStatsProps> = ({
                     <Box sx={{ 
                       height: 8, 
                       borderRadius: 4, 
-                      backgroundColor: alpha(theme.palette.success.main, 0.1),
+                      backgroundColor: alpha(theme.palette.primary.main, 0.1),
                       overflow: 'hidden',
                       position: 'relative',
                       mb: 1.5
@@ -582,7 +582,7 @@ const DashboardStats: React.FC<DashboardStatsProps> = ({
                         sx={{
                           height: '100%',
                           width: `${forceStats.iranianPercent}%`,
-                          background: `linear-gradient(90deg, ${alpha(theme.palette.success.main, 0.8)}, ${theme.palette.success.main}, ${theme.palette.success.dark})`,
+                          background: `linear-gradient(90deg, ${alpha(theme.palette.primary.main, 0.8)}, ${theme.palette.primary.main}, ${theme.palette.primary.dark})`,
                           borderRadius: 4,
                           position: 'relative',
                           '&::after': {
@@ -616,7 +616,7 @@ const DashboardStats: React.FC<DashboardStatsProps> = ({
                         <FarsiNumber sx={{ 
                           fontWeight: 700, 
                           fontSize: '1rem', 
-                          color: 'success.main',
+                          color: 'primary.main',
                           minWidth: '20px',
                           textAlign: 'center'
                         }}>
@@ -625,7 +625,7 @@ const DashboardStats: React.FC<DashboardStatsProps> = ({
                         <Typography variant="caption" sx={{ 
                           fontWeight: 600, 
                           fontSize: '0.85rem', 
-                          color: 'success.main',
+                          color: 'primary.main',
                           lineHeight: 1.2
                         }}>
                           % {t('dashboard.stats.iranian')}
@@ -685,7 +685,7 @@ const DashboardStats: React.FC<DashboardStatsProps> = ({
                               <FarsiNumber sx={{ 
                                 fontWeight: 700, 
                                 fontSize: '1.1rem', 
-                                color: 'success.main',
+                                color: 'primary.main',
                                 minWidth: '20px',
                                 textAlign: 'center'
                               }}>
@@ -708,7 +708,7 @@ const DashboardStats: React.FC<DashboardStatsProps> = ({
                               <FarsiNumber sx={{ 
                                 fontWeight: 700, 
                                 fontSize: '1.1rem', 
-                                color: 'success.main',
+                                color: 'primary.main',
                                 minWidth: '20px',
                                 textAlign: 'center'
                               }}>
@@ -739,7 +739,7 @@ const DashboardStats: React.FC<DashboardStatsProps> = ({
                       gap: 1
                     }}>
                       {[
-                        { role: 'commander', color: theme.palette.success.main, label: t('dashboard.stats.commander'), count: operationStats.commanderCount },
+                        { role: 'commander', color: theme.palette.primary.main, label: t('dashboard.stats.commander'), count: operationStats.commanderCount },
                         { role: 'operator', color: '#2196f3', label: t('dashboard.stats.operator'), count: operationStats.operatorCount },
                         { role: 'viewer', color: theme.palette.warning.main, label: t('dashboard.stats.viewer'), count: operationStats.viewerCount },
                       ].map(item => {
@@ -804,7 +804,7 @@ const DashboardStats: React.FC<DashboardStatsProps> = ({
                         <FarsiNumber sx={{ 
                           fontWeight: 700, 
                           fontSize: '1rem', 
-                          color: 'success.main',
+                          color: 'primary.main',
                           minWidth: '20px',
                           textAlign: 'center'
                         }}>
@@ -813,7 +813,7 @@ const DashboardStats: React.FC<DashboardStatsProps> = ({
                         <Typography variant="caption" sx={{ 
                           fontWeight: 600, 
                           fontSize: '0.85rem', 
-                          color: 'success.main',
+                          color: 'primary.main',
                           lineHeight: 1.2
                         }}>
                           {t('dashboard.stats.commander')}
@@ -898,7 +898,7 @@ const DashboardStats: React.FC<DashboardStatsProps> = ({
                               <FarsiNumber sx={{ 
                                 fontWeight: 700, 
                                 fontSize: '1.1rem',
-                                color: 'success.main',
+                                color: 'primary.main',
                                 minWidth: '20px',
                                 textAlign: 'center'
                               }}>
@@ -1676,10 +1676,10 @@ const HomePage: React.FC = () => {
 
   // اطلاعات وضعیت سیستم (فقط برای مدیر)
   const systemStatus = [
-    { name: 'CPU', value: 35, color: 'success' },
+    { name: 'CPU', value: 35, color: 'primary' },
     { name: 'RAM', value: 65, color: 'warning' },
     { name: t('dashboard.systemStatus.disk'), value: 42, color: 'info' },
-    { name: t('dashboard.systemStatus.network'), value: 28, color: 'success' },
+    { name: t('dashboard.systemStatus.network'), value: 28, color: 'primary' },
   ];
 
   const showStatsSection =
@@ -1692,7 +1692,7 @@ const HomePage: React.FC = () => {
   const showImportantNoticesSection =
     dashboardModules.showImportantNotices && (user?.role === 'admin' || user?.role === 'commander');
   const showRightColumn = showQuickAccessSection || showSystemStatusSection || showImportantNoticesSection;
-  const unifiedAccent = theme.palette.success.main;
+  const unifiedAccent = theme.palette.primary.main;
   const unifiedPanelSurface = `linear-gradient(135deg, ${alpha(unifiedAccent, 0.07)}, ${alpha(unifiedAccent, 0.04)})`;
   const unifiedPanelBorder = `1px solid ${alpha(unifiedAccent, 0.24)}`;
   const unifiedPanelSx = {
