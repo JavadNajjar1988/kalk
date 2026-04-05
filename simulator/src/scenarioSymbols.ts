@@ -112,6 +112,8 @@ const symbolCache = new Map<
   }
 >();
 const labelImageCache = new Map<string, string>();
+const simpleMarkerImageCache = new Map<string, string>();
+const featureLabelImageCache = new Map<string, string>();
 const unitStateSampleCache = new WeakMap<
   UnitLike,
   {
@@ -320,6 +322,163 @@ function getUnitLabelImageDataUri(text: string): string | null {
 
   const uri = canvas.toDataURL('image/png');
   labelImageCache.set(normalized, uri);
+  return uri;
+}
+
+function buildRegularMarkerPath(
+  ctx: CanvasRenderingContext2D,
+  points: number,
+  radius: number,
+  radius2: number | null,
+  angle: number,
+) {
+  const totalPoints = Number.isFinite(radius2 as number) && (radius2 as number) > 0 ? points * 2 : points;
+  for (let i = 0; i < totalPoints; i++) {
+    const currentRadius =
+      Number.isFinite(radius2 as number) && (radius2 as number) > 0 && i % 2 === 1
+        ? (radius2 as number)
+        : radius;
+    const currentAngle = angle + (Math.PI * 2 * i) / totalPoints - Math.PI / 2;
+    const x = Math.cos(currentAngle) * currentRadius;
+    const y = Math.sin(currentAngle) * currentRadius;
+    if (i === 0) {
+      ctx.moveTo(x, y);
+    } else {
+      ctx.lineTo(x, y);
+    }
+  }
+  ctx.closePath();
+}
+
+function getSimpleMarkerImageDataUri(style: Record<string, any>): string | null {
+  if (typeof document === 'undefined') return null;
+
+  const markerSymbol = String(style['marker-symbol'] || 'circle').toLowerCase();
+  const markerSize = String(style['marker-size'] || 'medium').toLowerCase();
+  const markerColor = String(style['marker-color'] || style.fill || '#7e7e7e');
+  const cacheKey = `${markerSymbol}|${markerSize}|${markerColor}`;
+  const cached = simpleMarkerImageCache.get(cacheKey);
+  if (cached) return cached;
+
+  const scaleMap: Record<string, number> = { small: 0.75, medium: 1, large: 1.5 };
+  const sizeScale = scaleMap[markerSize] ?? 1;
+  const canvas = document.createElement('canvas');
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return null;
+
+  const dpr = Math.max(1, Math.ceil(window.devicePixelRatio || 1));
+  const size = Math.ceil(36 * sizeScale);
+  const center = size / 2;
+  canvas.width = size * dpr;
+  canvas.height = size * dpr;
+  canvas.style.width = `${size}px`;
+  canvas.style.height = `${size}px`;
+
+  ctx.scale(dpr, dpr);
+  ctx.translate(center, center);
+  ctx.lineWidth = 2;
+  ctx.lineJoin = 'round';
+  ctx.lineCap = 'round';
+
+  const fillColor = markerColor;
+  const strokeColor = ['cross', 'x'].includes(markerSymbol) ? markerColor : '#fafafa';
+  const radius = 10 * sizeScale;
+
+  if (markerSymbol === 'circle') {
+    ctx.beginPath();
+    ctx.arc(0, 0, 5 * sizeScale, 0, Math.PI * 2);
+    ctx.fillStyle = fillColor;
+    ctx.fill();
+    ctx.strokeStyle = strokeColor;
+    ctx.stroke();
+  } else if (markerSymbol === 'cross' || markerSymbol === 'x') {
+    const angle = markerSymbol === 'x' ? Math.PI / 4 : 0;
+    ctx.rotate(angle);
+    ctx.strokeStyle = strokeColor;
+    ctx.beginPath();
+    ctx.moveTo(-radius, 0);
+    ctx.lineTo(radius, 0);
+    ctx.moveTo(0, -radius);
+    ctx.lineTo(0, radius);
+    ctx.stroke();
+  } else {
+    ctx.beginPath();
+    switch (markerSymbol) {
+      case 'square':
+        buildRegularMarkerPath(ctx, 4, radius, null, Math.PI / 4);
+        break;
+      case 'triangle':
+        buildRegularMarkerPath(ctx, 3, radius, null, 0);
+        break;
+      case 'star':
+        buildRegularMarkerPath(ctx, 5, radius, 4 * sizeScale, 0);
+        break;
+      case 'hexagon':
+        buildRegularMarkerPath(ctx, 6, radius, null, Math.PI / 2);
+        break;
+      case 'pentagon':
+        buildRegularMarkerPath(ctx, 5, radius, null, 0);
+        break;
+      default:
+        ctx.arc(0, 0, 5 * sizeScale, 0, Math.PI * 2);
+        break;
+    }
+    ctx.fillStyle = fillColor;
+    ctx.fill();
+    ctx.strokeStyle = strokeColor;
+    ctx.stroke();
+  }
+
+  const uri = canvas.toDataURL('image/png');
+  simpleMarkerImageCache.set(cacheKey, uri);
+  return uri;
+}
+
+function getFeatureLabelImageDataUri(text: string): string | null {
+  const normalized = text?.trim();
+  if (!normalized) return null;
+
+  const cached = featureLabelImageCache.get(normalized);
+  if (cached) return cached;
+
+  if (typeof document === 'undefined') return null;
+  const canvas = document.createElement('canvas');
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return null;
+
+  const dpr = Math.max(1, Math.ceil(window.devicePixelRatio || 1));
+  const fontSize = 16;
+  const paddingX = 8;
+  const paddingY = 6;
+  const fontSpec = `700 ${fontSize}px SimulatorLabel, IranSans, Tahoma, sans-serif`;
+
+  ctx.font = fontSpec;
+  const metrics = ctx.measureText(normalized);
+  const width = Math.ceil(metrics.width + paddingX * 2);
+  const height = Math.ceil(fontSize * 1.6 + paddingY * 2);
+
+  canvas.width = width * dpr;
+  canvas.height = height * dpr;
+  canvas.style.width = `${width}px`;
+  canvas.style.height = `${height}px`;
+
+  ctx.scale(dpr, dpr);
+  ctx.font = fontSpec;
+  ctx.textBaseline = 'middle';
+  ctx.textAlign = 'right';
+  try {
+    ctx.direction = 'rtl';
+  } catch {}
+
+  ctx.lineJoin = 'round';
+  ctx.lineWidth = 4;
+  ctx.strokeStyle = 'rgba(251, 252, 251, 0.96)';
+  ctx.strokeText(normalized, width - paddingX, height / 2);
+  ctx.fillStyle = '#333333';
+  ctx.fillText(normalized, width - paddingX, height / 2);
+
+  const uri = canvas.toDataURL('image/png');
+  featureLabelImageCache.set(normalized, uri);
   return uri;
 }
 
@@ -810,6 +969,63 @@ function addBillboard(
   return entity;
 }
 
+function addSimpleFeaturePoint(
+  viewer: Cesium.Viewer,
+  options: {
+    id: string;
+    position: { lon: number; lat: number; height: number };
+    style: Record<string, any>;
+    label?: string;
+    clampToGround?: boolean;
+  },
+) {
+  const image = getSimpleMarkerImageDataUri(options.style);
+  if (!image) return;
+
+  const heightReference = options.clampToGround === false
+    ? Cesium.HeightReference.RELATIVE_TO_GROUND
+    : Cesium.HeightReference.CLAMP_TO_GROUND;
+
+  viewer.entities.add({
+    id: options.id,
+    position: toCartesian(options.position.lon, options.position.lat, options.position.height),
+    billboard: {
+      image,
+      heightReference,
+      horizontalOrigin: Cesium.HorizontalOrigin.CENTER,
+      verticalOrigin: Cesium.VerticalOrigin.CENTER,
+      disableDepthTestDistance: Number.POSITIVE_INFINITY,
+    },
+  });
+
+  if (options.label) {
+    addSimpleFeaturePointLabel(viewer, `${options.id}-label`, options.position, options.label);
+  }
+}
+
+function addSimpleFeaturePointLabel(
+  viewer: Cesium.Viewer,
+  id: string,
+  position: { lon: number; lat: number; height: number },
+  label: string,
+) {
+  const labelImage = getFeatureLabelImageDataUri(label);
+  if (!labelImage) return;
+
+  viewer.entities.add({
+    id,
+    position: toCartesian(position.lon, position.lat, position.height + 18),
+    billboard: {
+      image: labelImage,
+      heightReference: Cesium.HeightReference.RELATIVE_TO_GROUND,
+      horizontalOrigin: Cesium.HorizontalOrigin.LEFT,
+      verticalOrigin: Cesium.VerticalOrigin.CENTER,
+      pixelOffset: new Cesium.Cartesian2(14, 0),
+      disableDepthTestDistance: Number.POSITIVE_INFINITY,
+    },
+  });
+}
+
 function addRangeRings(
   viewer: Cesium.Viewer,
   scenarioId: string,
@@ -924,6 +1140,7 @@ function addTacticalGeometry(
   const name =
     properties?.name ?? properties?.Name ??
     feature.meta?.name ?? feature.meta?.Name ?? feature.meta?.description;
+  const simplePointLabel = s?.showLabel ? name : undefined;
 
   // ---- Path A: exact tactical renderer (same family search as KalkNegar) ----
   // Try this for every non-plain-point tactical geometry before any billboard fallback.
@@ -1021,16 +1238,47 @@ function addTacticalGeometry(
     // ---- Point: billboard (icon) on surface ----
     case 'Point': {
       const pos = parsePosition(geometry.coordinates);
-      if (pos) addSymbolAt(pos);
+      if (pos) {
+        if (sidc) {
+          addSymbolAt(pos);
+        } else {
+          addSimpleFeaturePoint(viewer, {
+            id: `feature-point-${scenarioId}-${feature.id ?? 'feature'}-${index}`,
+            position: pos,
+            style: s,
+            label: simplePointLabel,
+          });
+        }
+      }
       break;
     }
     case 'MultiPoint': {
       const points = flattenCoordinates(geometry.coordinates);
       points.forEach((p, idx) => {
-        addGenericPointAt(p, `-${idx}`);
+        if (sidc) {
+          addGenericPointAt(p, `-${idx}`);
+        } else {
+          addSimpleFeaturePoint(viewer, {
+            id: `feature-multipoint-${scenarioId}-${feature.id ?? 'feature'}-${index}-${idx}`,
+            position: p,
+            style: s,
+            label: undefined,
+          });
+        }
       });
       const center = getCentroid(points);
-      if (center) addCentroidLabel(center);
+      if (center) {
+        if (sidc) {
+          addCentroidLabel(center);
+        } else if (simplePointLabel) {
+          addSimpleFeaturePointLabel(
+            viewer,
+            `feature-multipoint-label-${scenarioId}-${feature.id ?? 'feature'}-${index}`,
+            center,
+            simplePointLabel,
+          );
+        }
+      }
       break;
     }
 
