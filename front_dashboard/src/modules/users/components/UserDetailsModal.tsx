@@ -16,6 +16,13 @@ import {
 } from '@mui/material';
 import { alpha } from '@mui/material/styles';
 import {
+  buildResourcesFormDialogSx,
+  getResourcesDialogAccent,
+  resourcesDialogContentDividersSx,
+  resourcesDialogActionsSx,
+  resourcesOutlinedCancelButtonSx,
+} from '@/modules/dashboard/pages/resources/resourcesDialogStyles';
+import {
   Person as PersonIcon,
   Email as EmailIcon,
   Phone as PhoneIcon,
@@ -41,8 +48,7 @@ const UserDetailsModal: React.FC<UserDetailsModalProps> = ({
   onClose,
 }) => {
   const theme = useTheme();
-  const accent = theme.palette.success.main;
-  const dialogBackground = `linear-gradient(135deg, ${alpha(accent, 0.08)}, ${alpha(accent, 0.04)})`;
+  const accent = getResourcesDialogAccent(theme);
 
   const cardSurfaceSx = {
     borderRadius: 3,
@@ -104,35 +110,13 @@ const UserDetailsModal: React.FC<UserDetailsModalProps> = ({
       onClose={onClose}
       maxWidth="md"
       fullWidth
-      sx={{
-        '& .MuiDialog-paper': {
-          borderRadius: 3,
-          backgroundColor: theme.palette.background.paper,
-          backgroundImage: dialogBackground,
-          border: `1px solid ${alpha(accent, 0.24)}`,
-          boxShadow: `0 24px 60px ${alpha(accent, 0.28)}`,
-        },
-        '& .MuiOutlinedInput-root': {
-          '& fieldset': {
-            borderColor: alpha(accent, 0.28),
-          },
-          '&:hover fieldset': {
-            borderColor: alpha(accent, 0.45),
-          },
-          '&.Mui-focused fieldset': {
-            borderColor: accent,
-            boxShadow: `0 0 0 3px ${alpha(accent, 0.12)}`,
-          },
-        },
-        '& .MuiInputLabel-root.Mui-focused': {
-          color: accent,
-        },
-      }}
+      sx={buildResourcesFormDialogSx(theme)}
     >
       <DialogTitle
         sx={{
           borderBottom: `1px solid ${alpha(accent, 0.2)}`,
           backgroundColor: alpha(accent, 0.08),
+          fontWeight: 700,
           py: 3,
           px: 3,
           display: 'flex',
@@ -175,7 +159,7 @@ const UserDetailsModal: React.FC<UserDetailsModalProps> = ({
           </IconButton>
         </Box>
       </DialogTitle>
-      <DialogContent dividers sx={{ borderColor: alpha(accent, 0.16), backgroundColor: 'transparent' }}>
+      <DialogContent dividers sx={resourcesDialogContentDividersSx(theme)}>
         <Box sx={{ p: 3, display: 'flex', flexDirection: 'column', gap: 3 }}>
           {/* Header با آواتار */}
           <Box
@@ -493,10 +477,7 @@ const UserDetailsModal: React.FC<UserDetailsModalProps> = ({
       </DialogContent>
       <DialogActions
         sx={{
-          borderTop: `1px solid ${alpha(accent, 0.2)}`,
-          backgroundColor: alpha(accent, 0.04),
-          px: 3,
-          py: 2,
+          ...resourcesDialogActionsSx(theme),
           justifyContent: 'flex-end',
         }}
       >
@@ -505,10 +486,7 @@ const UserDetailsModal: React.FC<UserDetailsModalProps> = ({
           variant="outlined" 
           color="inherit"
           startIcon={<CloseIcon />} 
-          sx={{
-            borderRadius: 2,
-            borderColor: alpha(accent, 0.35),
-          }}
+          sx={resourcesOutlinedCancelButtonSx(theme)}
         >
           بستن
         </Button>

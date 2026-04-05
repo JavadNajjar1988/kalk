@@ -11,8 +11,16 @@ import {
   InputLabel,
   Select,
   MenuItem,
+  useTheme,
 } from '@mui/material';
 import type { Scenario, ScenarioStatus } from '@/types';
+import {
+  buildResourcesFormDialogSx,
+  resourcesDialogTitleSx,
+  resourcesDialogContentDividersSx,
+  resourcesDialogActionsSx,
+  resourcesOutlinedCancelButtonSx,
+} from '@/modules/dashboard/pages/resources/resourcesDialogStyles';
 
 const statusOptions: { value: ScenarioStatus; label: string }[] = [
   { value: 'draft', label: 'پیش‌نویس' },
@@ -29,6 +37,7 @@ interface ScenarioDialogProps {
 }
 
 const ScenarioDialog: React.FC<ScenarioDialogProps> = ({ open, onClose, scenario, onSave }) => {
+  const theme = useTheme();
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -74,10 +83,10 @@ const ScenarioDialog: React.FC<ScenarioDialogProps> = ({ open, onClose, scenario
   };
 
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
-      <DialogTitle>{scenario ? 'ویرایش سناریو' : 'ایجاد سناریو جدید'}</DialogTitle>
-      <DialogContent>
-        <Grid container spacing={3} sx={{ mt: 1 }}>
+    <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth sx={buildResourcesFormDialogSx(theme)}>
+      <DialogTitle sx={resourcesDialogTitleSx(theme)}>{scenario ? 'ویرایش سناریو' : 'ایجاد سناریو جدید'}</DialogTitle>
+      <DialogContent dividers sx={resourcesDialogContentDividersSx(theme)}>
+        <Grid container spacing={3} sx={{ mt: 0.5 }}>
           <Grid item xs={12} md={8}>
             <TextField
               fullWidth
@@ -145,9 +154,22 @@ const ScenarioDialog: React.FC<ScenarioDialogProps> = ({ open, onClose, scenario
           </Grid>
         </Grid>
       </DialogContent>
-      <DialogActions>
-        <Button onClick={onClose}>انصراف</Button>
-        <Button onClick={handleSubmit} variant="contained" disabled={!formData.name.trim()}>
+      <DialogActions sx={resourcesDialogActionsSx(theme)}>
+        <Button
+          onClick={onClose}
+          variant="outlined"
+          color="inherit"
+          sx={resourcesOutlinedCancelButtonSx(theme)}
+        >
+          انصراف
+        </Button>
+        <Button
+          onClick={handleSubmit}
+          variant="contained"
+          color="primary"
+          disabled={!formData.name.trim()}
+          sx={{ borderRadius: 2, px: 3 }}
+        >
           {scenario ? 'ذخیره تغییرات' : 'ایجاد سناریو'}
         </Button>
       </DialogActions>

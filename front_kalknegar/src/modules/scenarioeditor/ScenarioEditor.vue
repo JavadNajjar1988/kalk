@@ -23,6 +23,9 @@
           <SearchIcon class="block h-5 w-5 transition-all duration-300" />
         
         </button>
+        <div class="flex min-w-0 items-center gap-0.5 sm:gap-1">
+          <RecordingState />
+        </div>
         <div class="header-mode-switcher flex items-center gap-1">
           <router-link
             :to="{ name: MAP_EDIT_MODE_ROUTE }"
@@ -267,6 +270,7 @@ import CommandPalette from "@/components/CommandPalette.vue";
 import type { PhotonSearchResult } from "@/composables/geosearching";
 import { useSelectedItems } from "@/stores/selectedStore";
 import MainMenu from "@/modules/scenarioeditor/MainMenu.vue";
+import RecordingState from "@/components/RecordingState.vue";
 import { useMapSettingsStore } from "@/stores/mapSettingsStore";
 import { useTimeFormatterProvider } from "@/stores/timeFormatStore";
 

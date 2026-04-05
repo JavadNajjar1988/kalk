@@ -79,7 +79,7 @@ const ResourcesPage: React.FC = () => {
   
   const location = useLocation();
   const navigate = useNavigate();
-  const unifiedAccent = muiTheme.palette.success.main;
+  const unifiedAccent = muiTheme.palette.primary.main;
   const unifiedSurface = `linear-gradient(135deg, ${alpha(unifiedAccent, 0.07)}, ${alpha(unifiedAccent, 0.04)})`;
   const sectionTheme = useMemo(
     () =>

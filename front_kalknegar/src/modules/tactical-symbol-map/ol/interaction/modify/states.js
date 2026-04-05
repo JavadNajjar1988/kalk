@@ -89,6 +89,7 @@ export const selected = (handleClick = false) => ({
 const drag = (feature, update) => ({
 
   pointerdrag: pointer => {
+    pointer.stopPropagation()
     const [coordinates, coordinate] = update(pointer.coordinate, pointer.condition)
 
     // Side-effect: Update feature coordinates and thus geometry.
@@ -111,6 +112,7 @@ const insert = pick => {
 
   return {
     pointerdrag: pointer => {
+      pointer.stopPropagation()
       const distance = pointer.pixelDistance(segment.vertices)
 
       if (pointer.withinTolerance(distance)) {

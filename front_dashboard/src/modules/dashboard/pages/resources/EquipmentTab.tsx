@@ -149,7 +149,7 @@ const EquipmentTab: React.FC = () => {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'available': return 'success';
+      case 'available': return 'primary';
       case 'assigned': return 'info';
       case 'maintenance': return 'warning';
       case 'retired': return 'default';
@@ -169,7 +169,7 @@ const EquipmentTab: React.FC = () => {
 
   const getConditionColor = (condition: string) => {
     switch (condition) {
-      case 'excellent': return 'success';
+      case 'excellent': return 'primary';
       case 'good': return 'info';
       case 'fair': return 'warning';
       case 'poor': return 'error';

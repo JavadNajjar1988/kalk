@@ -169,7 +169,7 @@ const SearchPage: React.FC = () => {
             {results.scenarios.map((s: any) => (
               <ListItem key={s.id}>
                 <ListItemText primary={s.name} secondary={`وضعیت: ${s.status}`} />
-                <Chip label="سناریو" color="success" size="small" />
+                <Chip label="سناریو" color="primary" size="small" />
               </ListItem>
             ))}
           </List>

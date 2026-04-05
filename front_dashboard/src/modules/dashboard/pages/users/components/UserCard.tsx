@@ -74,7 +74,7 @@ export const UserCard: React.FC<UserCardProps> = ({
       case 'admin':
         return `linear-gradient(135deg, ${alpha(theme.palette.error.main, 0.08)} 0%, ${alpha(primaryColor, 0.05)} 50%, ${alpha(theme.palette.error.main, 0.03)} 100%)`;
       case 'commander':
-        return `linear-gradient(135deg, ${alpha(theme.palette.success.main, 0.08)} 0%, ${alpha(primaryColor, 0.05)} 50%, ${alpha(theme.palette.success.main, 0.03)} 100%)`;
+        return `linear-gradient(135deg, ${alpha(theme.palette.secondary.main, 0.12)} 0%, ${alpha(primaryColor, 0.05)} 50%, ${alpha(theme.palette.secondary.main, 0.04)} 100%)`;
       case 'operator':
         return `linear-gradient(135deg, ${alpha(theme.palette.info.main, 0.08)} 0%, ${alpha(primaryColor, 0.05)} 50%, ${alpha(theme.palette.info.main, 0.03)} 100%)`;
       case 'viewer':
@@ -167,7 +167,7 @@ export const UserCard: React.FC<UserCardProps> = ({
               badgeContent={
                 user.isActive ? (
                   <CheckCircle sx={{ 
-                    color: 'success.main', 
+                    color: 'primary.main', 
                     fontSize: 18,
                     backgroundColor: 'background.paper',
                     borderRadius: '50%',
@@ -368,7 +368,7 @@ export const UserCard: React.FC<UserCardProps> = ({
         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
           <Chip
             label={user.isActive ? 'فعال' : 'غیرفعال'}
-            color={user.isActive ? 'success' : 'error'}
+            color={user.isActive ? 'primary' : 'error'}
             size="small"
             variant="filled"
             sx={{

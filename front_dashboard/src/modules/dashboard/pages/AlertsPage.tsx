@@ -37,7 +37,7 @@ const getSeverityChipColor = (severity: AlertType['severity']) => {
     case 'medium':
       return 'info';
     case 'low':
-      return 'success';
+      return 'primary';
     default:
       return 'default';
   }

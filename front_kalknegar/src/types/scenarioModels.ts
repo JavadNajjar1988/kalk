@@ -5,7 +5,7 @@ import type {
   ScenarioLayer,
   ScenarioMapLayer,
 } from "./scenarioGeoModels";
-import type { EntityId, ScenarioTime } from "./base";
+import type { DropTarget, EntityId, ScenarioTime } from "./base";
 import type { SidValue } from "@/symbology/values";
 import { type SymbolOptions } from "milsymbol";
 import type { TextAmpValue } from "@/symbology/milsymbwrapper";
@@ -46,6 +46,7 @@ export interface State extends Partial<ScenarioEventDescription> {
     personnel?: UpdateUnitPersonnel[];
     supplies?: UpdateUnitSupplies[];
   };
+  hierarchy?: TimedHierarchyMove;
 }
 
 export interface StateAdd extends Omit<NState, "id"> {
@@ -63,6 +64,12 @@ export interface CurrentState extends Omit<NState, "id"> {
 
 export interface LocationState extends State {
   location: Position;
+}
+
+export interface TimedHierarchyMove {
+  targetId: EntityId;
+  placement: DropTarget;
+  parentId?: EntityId;
 }
 
 export interface UnitSymbolOptions extends SymbolOptions {
@@ -175,6 +182,7 @@ export interface SideGroup {
   symbolOptions?: UnitSymbolOptions;
   isHidden?: boolean;
   locked?: boolean;
+  initiallyOpen?: boolean;
   _pid?: EntityId;
   _isNew?: boolean;
 }
@@ -184,6 +192,8 @@ export interface Side extends SideData {
   groups: SideGroup[];
   isHidden?: boolean;
   locked?: boolean;
+  initiallyOpen?: boolean;
+  subUnits?: Unit[];
   _isNew?: boolean;
 }
 

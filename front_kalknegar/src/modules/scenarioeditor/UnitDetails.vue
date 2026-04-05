@@ -82,9 +82,9 @@
           </IconButton>
 
           <IconButton
-            @click="startGetLocation()"
+            @click="isRecordingLocation && startGetLocation()"
             title="تنظیم موقعیت واحد"
-            :disabled="isMultiMode || isLocked"
+            :disabled="isMultiMode || isLocked || !isRecordingLocation"
           >
             <IconCrosshairsGps class="size-5" aria-hidden="true" />
           </IconButton>
@@ -244,6 +244,7 @@ import ItemMedia from "@/modules/scenarioeditor/ItemMedia.vue";
 import UnitDetailsProperties from "@/modules/scenarioeditor/UnitDetailsProperties.vue";
 import UnitDetailsSymbol from "@/modules/scenarioeditor/UnitDetailsSymbol.vue";
 import { Button } from "@/components/ui/button";
+import { useRecordingStore } from "@/stores/recordingStore";
 
 const FeatureTransformations = defineAsyncComponent(
   () => import("@/modules/scenarioeditor/FeatureTransformations.vue"),
@@ -311,6 +312,8 @@ const isLocked = computed(() => isUnitLocked(props.unitId));
 
 const geoStore = useGeoStore();
 const unitSettings = useUnitSettingsStore();
+const recordingStore = useRecordingStore();
+const { isRecordingLocation } = storeToRefs(recordingStore);
 const { getModalSidc } = injectStrict(sidcModalKey);
 
 const unitMenuItems = computed((): MenuItemData[] => [

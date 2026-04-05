@@ -11,13 +11,18 @@
         <IconLockOutline v-if="addMultiple" class="size-5 transition-all duration-300" />
         <IconLockOpenVariantOutline v-else class="size-6 transition-all duration-300" />
       </MainToolbarButton>
-      <MainToolbarButton @click="toggleMoveUnit(false)" :active="!moveUnitEnabled" class="toolbar-icon-button select-button">
+      <MainToolbarButton @click="setSelectMode()" :active="!moveUnitEnabled" class="toolbar-icon-button select-button">
         <SelectIcon class="size-6 transition-all duration-300" />
       </MainToolbarButton>
       <MainToolbarButton
         :active="moveUnitEnabled"
-        @click="toggleMoveUnit(true)"
-        title="جابجایی واحد"
+        @click="setMoveMode()"
+        :title="
+          recordingStore.isRecordingLocation
+            ? 'جابجایی واحد'
+            : 'جابجایی واحد غیرفعال است؛ ابتدا «موقعیت واحد» را در منوی ضبط فعال کنید.'
+        "
+        :disabled="!recordingStore.isRecordingLocation"
         class="toolbar-icon-button move-button"
       >
         <MoveIcon class="size-6 transition-all duration-300" />
@@ -267,6 +272,7 @@ import { activeMapKey, activeScenarioKey } from "@/components/injects";
 import { storeToRefs } from "pinia";
 import { useUnitSettingsStore } from "@/stores/geoStore";
 import { useEventBus, useToggle } from "@vueuse/core";
+import { useRecordingStore } from "@/stores/recordingStore";
 import PanelSymbolButton from "@/components/PanelSymbolButton.vue";
 import FloatingPanel from "@/components/FloatingPanel.vue";
 import { computed, onMounted, ref, type Ref, watch } from "vue";
@@ -316,6 +322,7 @@ const mapRef = injectStrict(activeMapKey);
 const store = useMainToolbarStore();
 const { addMultiple } = storeToRefs(store);
 const { moveUnitEnabled } = storeToRefs(useUnitSettingsStore());
+const recordingStore = useRecordingStore();
 const playback = usePlaybackStore();
 const tm = useTimeFormatStore();
 const selectStore = useMapSelectStore();
@@ -334,7 +341,14 @@ const computedSidc = computed(() => {
   return parsedSidc.toString();
 });
 
-const toggleMoveUnit = useToggle(moveUnitEnabled);
+function setSelectMode() {
+  moveUnitEnabled.value = false;
+}
+
+function setMoveMode() {
+  if (!recordingStore.isRecordingLocation) return;
+  moveUnitEnabled.value = true;
+}
 
 const symbolOptions = computed(() =>
   activeParent.value

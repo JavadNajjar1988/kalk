@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import {
   Box,
@@ -346,7 +346,7 @@ const SettingsPage: React.FC = () => {
         : '"Shabnam", sans-serif';
   };
 
-  const unifiedSectionColor = theme.palette.success.main;
+  const unifiedSectionColor = theme.palette.primary.main;
   const unifiedSectionCardSx = {
     background: `linear-gradient(135deg, ${alpha(unifiedSectionColor, 0.07)}, ${alpha(unifiedSectionColor, 0.04)})`,
     border: `1px solid ${alpha(unifiedSectionColor, 0.24)}`,
@@ -596,7 +596,7 @@ const SettingsPage: React.FC = () => {
                     >
                       <Button
                         variant="contained"
-                        color="success"
+                        color="primary"
                         onClick={handlePasswordChange}
                       >
                         ثبت تغییر رمز
@@ -958,7 +958,7 @@ const SettingsPage: React.FC = () => {
               <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 <Chip 
                   label={t(`settings.${language === 'fa' ? 'persian' : language === 'en' ? 'english' : 'arabic'}`)}
-                  color="success"
+                  color="primary"
                   size="small"
                   icon={<CheckCircle />}
                 />
@@ -985,7 +985,7 @@ const SettingsPage: React.FC = () => {
                       <Switch 
                         checked={themeSettings.reducedMotion}
                         onChange={() => dispatch(toggleReducedMotion())}
-                        color="success"
+                        color="primary"
                       />
                     }
                     label={
@@ -1002,7 +1002,7 @@ const SettingsPage: React.FC = () => {
                       <Switch 
                         checked={themeSettings.highContrast}
                         onChange={() => dispatch(toggleHighContrast())}
-                        color="success"
+                        color="primary"
                       />
                     }
                     label={
@@ -1047,7 +1047,7 @@ const SettingsPage: React.FC = () => {
                     <Switch
                       checked={headerSettings.enabled}
                       onChange={(e) => handleHeaderSettingsChange({ enabled: e.target.checked })}
-                      color="success"
+                      color="primary"
                     />
                   }
                   label="نمایش هدر"
@@ -1126,12 +1126,12 @@ const SettingsPage: React.FC = () => {
                   flexWrap: 'wrap',
                   mt: 3,
                   pt: 2,
-                  borderTop: `1px dashed ${alpha(theme.palette.success.main, 0.22)}`,
+                  borderTop: `1px dashed ${alpha(theme.palette.primary.main, 0.22)}`,
                 }}
               >
                 <Chip
                   size="small"
-                  color={activeHeaderEntry ? 'success' : 'default'}
+                  color={activeHeaderEntry ? 'primary' : 'default'}
                   label={
                     activeHeaderEntry
                       ? `نمایش در هدر: ${activeHeaderEntry.personName}`
@@ -1146,7 +1146,7 @@ const SettingsPage: React.FC = () => {
                   )}
                   <Button
                     variant="contained"
-                    color="success"
+                    color="primary"
                     startIcon={
                       isSavingHeader ? (
                         <CircularProgress size={16} color="inherit" />
@@ -1184,7 +1184,7 @@ const SettingsPage: React.FC = () => {
                 variant="outlined"
                 sx={{
                   borderRadius: 2,
-                  borderColor: alpha(theme.palette.success.main, 0.25),
+                  borderColor: alpha(theme.palette.primary.main, 0.25),
                   maxHeight: 420,
                 }}
               >
@@ -1217,7 +1217,7 @@ const SettingsPage: React.FC = () => {
                         sx={{
                           cursor: 'pointer',
                           ...(entry.id === activeHeaderEntryId
-                            ? { bgcolor: alpha(theme.palette.success.main, 0.06) }
+                            ? { bgcolor: alpha(theme.palette.primary.main, 0.06) }
                             : {}),
                         }}
                       >
@@ -1238,7 +1238,7 @@ const SettingsPage: React.FC = () => {
                         <TableCell>
                           <Chip
                             size="small"
-                            color={entry.id === activeHeaderEntryId ? 'success' : 'default'}
+                            color={entry.id === activeHeaderEntryId ? 'primary' : 'default'}
                             label={entry.id === activeHeaderEntryId ? 'فعال در هدر' : 'ذخیره شده'}
                           />
                         </TableCell>
@@ -1291,55 +1291,55 @@ const SettingsPage: React.FC = () => {
               <Grid container spacing={1}>
                 <Grid item xs={12} md={4}>
                   <FormControlLabel
-                    control={<Switch color="success" checked={dashboardModules.showHeaderBanner} onChange={handleDashboardModuleToggle('showHeaderBanner')} />}
+                    control={<Switch color="primary" checked={dashboardModules.showHeaderBanner} onChange={handleDashboardModuleToggle('showHeaderBanner')} />}
                     label="نمایش ماژول هدر"
                   />
                 </Grid>
                 <Grid item xs={12} md={4}>
                   <FormControlLabel
-                    control={<Switch color="success" checked={dashboardModules.showStatArchivedScenarios} onChange={handleDashboardModuleToggle('showStatArchivedScenarios')} />}
+                    control={<Switch color="primary" checked={dashboardModules.showStatArchivedScenarios} onChange={handleDashboardModuleToggle('showStatArchivedScenarios')} />}
                     label="نمایش کارت سناریوهای آرشیو"
                   />
                 </Grid>
                 <Grid item xs={12} md={4}>
                   <FormControlLabel
-                    control={<Switch color="success" checked={dashboardModules.showStatAvailableForces} onChange={handleDashboardModuleToggle('showStatAvailableForces')} />}
+                    control={<Switch color="primary" checked={dashboardModules.showStatAvailableForces} onChange={handleDashboardModuleToggle('showStatAvailableForces')} />}
                     label="نمایش کارت نیروهای موجود"
                   />
                 </Grid>
                 <Grid item xs={12} md={4}>
                   <FormControlLabel
-                    control={<Switch color="success" checked={dashboardModules.showStatOngoingOperations} onChange={handleDashboardModuleToggle('showStatOngoingOperations')} />}
+                    control={<Switch color="primary" checked={dashboardModules.showStatOngoingOperations} onChange={handleDashboardModuleToggle('showStatOngoingOperations')} />}
                     label="نمایش کارت عملیات در حال اجرا"
                   />
                 </Grid>
                 <Grid item xs={12} md={4}>
                   <FormControlLabel
-                    control={<Switch color="success" checked={dashboardModules.showStatSecurityAlerts} onChange={handleDashboardModuleToggle('showStatSecurityAlerts')} />}
+                    control={<Switch color="primary" checked={dashboardModules.showStatSecurityAlerts} onChange={handleDashboardModuleToggle('showStatSecurityAlerts')} />}
                     label="نمایش کارت هشدارهای امنیتی"
                   />
                 </Grid>
                 <Grid item xs={12} md={4}>
                   <FormControlLabel
-                    control={<Switch color="success" checked={dashboardModules.showRecentActivities} onChange={handleDashboardModuleToggle('showRecentActivities')} />}
+                    control={<Switch color="primary" checked={dashboardModules.showRecentActivities} onChange={handleDashboardModuleToggle('showRecentActivities')} />}
                     label="نمایش فعالیت‌های اخیر"
                   />
                 </Grid>
                 <Grid item xs={12} md={4}>
                   <FormControlLabel
-                    control={<Switch color="success" checked={dashboardModules.showQuickAccess} onChange={handleDashboardModuleToggle('showQuickAccess')} />}
+                    control={<Switch color="primary" checked={dashboardModules.showQuickAccess} onChange={handleDashboardModuleToggle('showQuickAccess')} />}
                     label="نمایش دسترسی سریع"
                   />
                 </Grid>
                 <Grid item xs={12} md={4}>
                   <FormControlLabel
-                    control={<Switch color="success" checked={dashboardModules.showSystemStatus} onChange={handleDashboardModuleToggle('showSystemStatus')} />}
+                    control={<Switch color="primary" checked={dashboardModules.showSystemStatus} onChange={handleDashboardModuleToggle('showSystemStatus')} />}
                     label="نمایش وضعیت سیستم"
                   />
                 </Grid>
                 <Grid item xs={12} md={4}>
                   <FormControlLabel
-                    control={<Switch color="success" checked={dashboardModules.showImportantNotices} onChange={handleDashboardModuleToggle('showImportantNotices')} />}
+                    control={<Switch color="primary" checked={dashboardModules.showImportantNotices} onChange={handleDashboardModuleToggle('showImportantNotices')} />}
                     label="نمایش اطلاعیه‌های مهم"
                   />
                 </Grid>

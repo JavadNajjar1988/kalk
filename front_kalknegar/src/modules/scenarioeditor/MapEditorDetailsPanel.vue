@@ -1,44 +1,78 @@
 <template>
-  <div class="" dir="rtl">
+  <div
+    class="pointer-events-auto absolute z-20 max-h-[82vh]"
+    :class="side === 'left' ? 'left-4 top-24' : 'right-4 top-24'"
+    dir="rtl"
+  >
     <aside
-      class="bg-sidebar border-sidebar-border pointer-events-auto relative mt-4 flex max-h-[70vh] flex-col overflow-clip rounded-md border shadow-sm text-right"
+      class="bg-sidebar border-sidebar-border relative flex max-h-[70vh] flex-col overflow-clip rounded-md border text-right shadow-sm"
       :style="{ width: widthStore.detailsWidth + 'px' }"
     >
-      <CloseButton class="absolute top-1 right-1 z-99" @click="emit('close')" />
+      <CloseButton class="absolute right-1 top-1 z-[99]" @click="emit('close')" />
       <div class="flex-auto overflow-auto p-4 text-sm leading-6 text-foreground">
         <slot />
       </div>
       <PanelResizeHandle
         :width="widthStore.detailsWidth"
+        :left="side === 'right'"
         @update="widthStore.detailsWidth = $event"
         @reset="widthStore.resetDetailsWidth()"
-        :left="false"
       />
     </aside>
   </div>
 </template>
 <script setup lang="ts">
 import CloseButton from "@/components/CloseButton.vue";
-import { onMounted, onUnmounted } from "vue";
+import { onMounted, onUnmounted, watch } from "vue";
 import { injectStrict } from "@/utils";
 import { activeMapKey } from "@/components/injects";
 import { useWidthStore } from "@/stores/uiStore";
 import PanelResizeHandle from "@/components/PanelResizeHandle.vue";
+
+const props = withDefaults(
+  defineProps<{
+    /** لبهٔ افقی پنل نسبت به نقشه */
+    side?: "left" | "right";
+  }>(),
+  { side: "left" },
+);
+
 const emit = defineEmits(["close"]);
 const mapRef = injectStrict(activeMapKey);
 const widthStore = useWidthStore();
-onMounted(() => {
+
+function applyPadding() {
   const padding = mapRef.value.getView().padding || [0, 0, 0, 0];
   const [top, right, bottom, left] = padding;
   const panelPadding = Math.max(360, Number(widthStore.detailsWidth) || 360) + 20;
-  mapRef.value.getView().padding = [top, panelPadding, bottom, left];
+  if (props.side === "left") {
+    mapRef.value.getView().padding = [top, panelPadding, bottom, left];
+  } else {
+    mapRef.value.getView().padding = [top, right, bottom, panelPadding];
+  }
+}
+
+onMounted(() => {
+  applyPadding();
 });
+
+watch(
+  () => widthStore.detailsWidth,
+  () => {
+    applyPadding();
+    mapRef.value?.updateSize();
+  },
+);
 
 onUnmounted(() => {
   const padding = mapRef.value.getView().padding;
   if (padding) {
     const [top, right, bottom, left] = padding;
-    mapRef.value.getView().padding = [top, 0, bottom, left];
+    if (props.side === "left") {
+      mapRef.value.getView().padding = [top, 0, bottom, left];
+    } else {
+      mapRef.value.getView().padding = [top, right, bottom, 0];
+    }
   }
 });
 </script>

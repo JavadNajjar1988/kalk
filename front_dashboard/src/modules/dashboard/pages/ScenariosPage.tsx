@@ -87,11 +87,18 @@ import KalknegarLaunchDialog from '@/components/common/KalknegarLaunchDialog';
 import KalknegarLoadingDialog from '@/components/common/KalknegarLoadingDialog';
 import UnityLaunchDialog from '@/components/common/UnityLaunchDialog';
 import TransformFarsiNumbers from '@/components/common/TransformFarsiNumbers';
+import {
+  buildResourcesFormDialogSx,
+  resourcesDialogTitleSx,
+  resourcesDialogContentDividersSx,
+  resourcesDialogActionsSx,
+  resourcesOutlinedCancelButtonSx,
+} from '@/modules/dashboard/pages/resources/resourcesDialogStyles';
 
 // انواع وضعیت سناریو
 const getStatusOptions = (t: (key: string) => string): { value: ScenarioStatus; label: string; color: 'default' | 'primary' | 'secondary' | 'error' | 'info' | 'success' | 'warning' }[] => [
   { value: ScenarioStatus.DRAFT, label: t('scenarios.status.draft'), color: 'default' },
-  { value: ScenarioStatus.ACTIVE, label: t('scenarios.status.active'), color: 'success' },
+  { value: ScenarioStatus.ACTIVE, label: t('scenarios.status.active'), color: 'primary' },
   { value: ScenarioStatus.PAUSED, label: t('scenarios.status.paused'), color: 'warning' },
   { value: ScenarioStatus.COMPLETED, label: t('scenarios.status.completed'), color: 'info' },
 ];
@@ -100,7 +107,7 @@ const getStatusOptions = (t: (key: string) => string): { value: ScenarioStatus; 
 const ScenarioStats: React.FC<{ scenarios: Scenario[] }> = ({ scenarios }) => {
   const theme = useTheme();
   const { t } = useTranslation();
-  const unifiedAccent = theme.palette.success.main;
+  const unifiedAccent = theme.palette.primary.main;
   const unifiedSurface = `linear-gradient(135deg, ${alpha(unifiedAccent, 0.07)}, ${alpha(unifiedAccent, 0.04)})`;
 
   const stats = {
@@ -112,7 +119,7 @@ const ScenarioStats: React.FC<{ scenarios: Scenario[] }> = ({ scenarios }) => {
 
   const statCards = [
     { title: t('scenarios.stats.total'), value: stats.total, icon: <Assignment />, color: 'primary' },
-    { title: t('scenarios.stats.active'), value: stats.active, icon: <PlayArrow />, color: 'success' },
+    { title: t('scenarios.stats.active'), value: stats.active, icon: <PlayArrow />, color: 'primary' },
     { title: t('scenarios.stats.completed'), value: stats.completed, icon: <CheckCircle />, color: 'info' },
     { title: t('scenarios.stats.draft'), value: stats.draft, icon: <Schedule />, color: 'warning' },
   ];
@@ -250,6 +257,7 @@ const ScenarioDialog: React.FC<ScenarioDialogProps> = ({
   scenario, 
   onSave 
 }) => {
+  const theme = useTheme();
   const { t } = useTranslation();
   const statusOptions = getStatusOptions(t);
   const [formData, setFormData] = useState({
@@ -301,12 +309,12 @@ const ScenarioDialog: React.FC<ScenarioDialogProps> = ({
   };
 
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
-      <DialogTitle>
+    <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth sx={buildResourcesFormDialogSx(theme)}>
+      <DialogTitle sx={resourcesDialogTitleSx(theme)}>
         {scenario ? t('scenarios.dialog.editTitle') : t('scenarios.dialog.createTitle')}
       </DialogTitle>
-      <DialogContent>
-        <Grid container spacing={3} sx={{ mt: 1 }}>
+      <DialogContent dividers sx={resourcesDialogContentDividersSx(theme)}>
+        <Grid container spacing={3} sx={{ mt: 0.5 }}>
           <Grid item xs={12} md={8}>
             <TextField
               fullWidth
@@ -384,12 +392,21 @@ const ScenarioDialog: React.FC<ScenarioDialogProps> = ({
         </Grid>
       </DialogContent>
       
-      <DialogActions>
-        <Button onClick={onClose}>{t('scenarios.dialog.cancelButton')}</Button>
+      <DialogActions sx={resourcesDialogActionsSx(theme)}>
+        <Button
+          onClick={onClose}
+          variant="outlined"
+          color="inherit"
+          sx={resourcesOutlinedCancelButtonSx(theme)}
+        >
+          {t('scenarios.dialog.cancelButton')}
+        </Button>
         <Button 
           onClick={handleSubmit} 
           variant="contained"
+          color="primary"
           disabled={!formData.name.trim()}
+          sx={{ borderRadius: 2, px: 3 }}
         >
           {scenario ? t('scenarios.dialog.saveButton') : t('scenarios.dialog.createButton')}
         </Button>
@@ -401,7 +418,7 @@ const ScenarioDialog: React.FC<ScenarioDialogProps> = ({
 // کامپوننت اصلی صفحه سناریوها
 const ScenariosPage: React.FC = () => {
   const theme = useTheme();
-  const unifiedAccent = theme.palette.success.main;
+  const unifiedAccent = theme.palette.primary.main;
   const unifiedSurface = `linear-gradient(135deg, ${alpha(unifiedAccent, 0.07)}, ${alpha(unifiedAccent, 0.04)})`;
   const unifiedPanelSx = {
     background: unifiedSurface,
@@ -1016,7 +1033,7 @@ const ScenariosPage: React.FC = () => {
               </Button>
               <Button
                 variant="outlined"
-                color="success"
+                color="primary"
                 startIcon={<CloudUpload />}
                 onClick={handleOpenImportDialog}
               >
@@ -1383,9 +1400,10 @@ const ScenariosPage: React.FC = () => {
         onClose={handleCloseImportDialog}
         maxWidth="sm"
         fullWidth
+        sx={buildResourcesFormDialogSx(theme)}
       >
-        <DialogTitle>بارگذاری سناریو</DialogTitle>
-        <DialogContent>
+        <DialogTitle sx={resourcesDialogTitleSx(theme)}>بارگذاری سناریو</DialogTitle>
+        <DialogContent dividers sx={resourcesDialogContentDividersSx(theme)}>
           <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
             فایل سناریو ذخیره‌شده از کالک نگار را بارگذاری کنید. می‌توانید فایل را بکشید و رها کنید یا از طریق دکمه زیر انتخاب نمایید.
           </Typography>
@@ -1433,8 +1451,8 @@ const ScenariosPage: React.FC = () => {
                   textAlign: 'left',
                   borderRadius: 2,
                   p: 2,
-                  bgcolor: alpha(theme.palette.success.light, 0.15),
-                  border: `1px solid ${alpha(theme.palette.success.main, 0.2)}`
+                  bgcolor: alpha(theme.palette.primary.light, 0.15),
+                  border: `1px solid ${alpha(theme.palette.primary.main, 0.2)}`
                 }}
               >
                 <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
@@ -1463,14 +1481,22 @@ const ScenariosPage: React.FC = () => {
             </Alert>
           )}
         </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCloseImportDialog} disabled={importing}>
+        <DialogActions sx={resourcesDialogActionsSx(theme)}>
+          <Button
+            onClick={handleCloseImportDialog}
+            disabled={importing}
+            variant="outlined"
+            color="inherit"
+            sx={resourcesOutlinedCancelButtonSx(theme)}
+          >
             انصراف
           </Button>
           <Button
             variant="contained"
+            color="primary"
             onClick={handleImportScenarioFile}
             disabled={!selectedFile || importing}
+            sx={{ borderRadius: 2, px: 3 }}
           >
             {importing ? 'در حال بارگذاری...' : 'بارگذاری سناریو'}
           </Button>
@@ -1813,21 +1839,22 @@ const ScenariosPage: React.FC = () => {
         maxWidth="sm"
         fullWidth
         aria-labelledby="simulator-warning-dialog-title"
+        sx={buildResourcesFormDialogSx(theme)}
       >
         <DialogTitle
           id="simulator-warning-dialog-title"
           sx={{
+            ...resourcesDialogTitleSx(theme),
             display: 'flex',
             alignItems: 'center',
             gap: 2,
-            borderBottom: (theme) => `1px solid ${alpha(theme.palette.divider, 0.4)}`,
           }}
         >
           <Box
             sx={{
               width: 48,
               height: 48,
-              borderRadius: '14px',
+              borderRadius: 2,
               backgroundColor: alpha(theme.palette.warning.main, 0.15),
               display: 'flex',
               alignItems: 'center',
@@ -1842,7 +1869,7 @@ const ScenariosPage: React.FC = () => {
             </Typography>
           </Box>
         </DialogTitle>
-        <DialogContent sx={{ pt: 3 }}>
+        <DialogContent dividers sx={{ ...resourcesDialogContentDividersSx(theme), pt: 3 }}>
           <Alert severity="warning" sx={{ mb: 2 }}>
             شما در حال ورود به محیط شبیه‌ساز سه‌بعدی هستید.
           </Alert>
@@ -1857,11 +1884,12 @@ const ScenariosPage: React.FC = () => {
             • می‌توانید از طریق دکمه "بازگشت به داشبورد" در شبیه‌ساز به این صفحه برگردید
           </Typography>
         </DialogContent>
-        <DialogActions sx={{ px: 3, pb: 2, gap: 1 }}>
+        <DialogActions sx={resourcesDialogActionsSx(theme)}>
           <Button
             onClick={handleCancelSimulatorLaunch}
             variant="outlined"
             color="inherit"
+            sx={resourcesOutlinedCancelButtonSx(theme)}
           >
             انصراف
           </Button>
@@ -1870,9 +1898,7 @@ const ScenariosPage: React.FC = () => {
             variant="contained"
             color="primary"
             startIcon={<PlayArrow />}
-            sx={{
-              px: 3,
-            }}
+            sx={{ borderRadius: 2, px: 3 }}
           >
             ورود به شبیه ساز
           </Button>

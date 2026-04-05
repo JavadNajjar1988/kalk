@@ -252,7 +252,7 @@ const ScenarioPhasesManager: React.FC<{ scenario: EnhancedScenario }> = ({ scena
       case PhaseStatus.IN_PROGRESS:
         return 'primary';
       case PhaseStatus.COMPLETED:
-        return 'success';
+        return 'primary';
       case PhaseStatus.FAILED:
         return 'error';
       case PhaseStatus.CANCELLED:
@@ -541,7 +541,7 @@ const ScenarioDetailPage: React.FC = () => {
             <Chip 
               label={t(`scenarios.status.${scenario.status}`)}
               color={
-                scenario.status === 'active' ? 'success' :
+                scenario.status === 'active' ? 'primary' :
                 scenario.status === 'paused' ? 'warning' :
                 scenario.status === 'completed' ? 'info' : 'default'
               }

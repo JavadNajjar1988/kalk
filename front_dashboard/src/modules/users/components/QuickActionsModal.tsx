@@ -24,6 +24,13 @@ import {
 } from '@mui/material';
 import { alpha } from '@mui/material/styles';
 import {
+  buildResourcesLayerDialogSx,
+  resourcesDialogTitleSx,
+  resourcesDialogContentDividersSx,
+  resourcesDialogActionsSx,
+  resourcesOutlinedCancelButtonSx,
+} from '@/modules/dashboard/pages/resources/resourcesDialogStyles';
+import {
   Lock as PasswordIcon,
   Security as AccessIcon,
   PersonOff as DeactivateIcon,
@@ -58,51 +65,8 @@ const QuickActionsModal: React.FC<QuickActionsModalProps> = ({
     (user?.personalInfo?.fullName || user?.personalInfo?.fullNameEn || user?.username || user?.userCode || 'کاربر').trim();
   const permissions = Array.isArray(user?.systemInfo?.permissions) ? user.systemInfo.permissions : [];
 
-  const getSoftSurface = () => {
-    const primary = (theme.palette.primary.main || '#4a90e2').toLowerCase();
-    const hex = primary.replace('#', '');
-
-    if (hex.includes('10b981') || hex.includes('4caf50') || hex.includes('2e7d32')) return '#f0f4f3';
-    if (hex.includes('4a90e2') || hex.includes('1976d2') || hex.includes('2196f3')) return '#f0f4f8';
-    if (hex.includes('ef4444') || hex.includes('f44336') || hex.includes('d32f2f')) return '#fbf1f0';
-    if (hex.includes('6b21a8') || hex.includes('9c27b0') || hex.includes('673ab7')) return theme.palette.mode === 'dark' ? '#1f2330' : '#f3f0f9';
-    if (hex.includes('f59e0b') || hex.includes('ff9800') || hex.includes('fb8c00')) return '#fbf5ef';
-
-    const clamp = (n: number) => Math.max(0, Math.min(255, Math.round(n)));
-    const hexToRgb = (h: string) => {
-      const normalised = h.length === 3 ? h.split('').map(c => c + c).join('') : h;
-      const r = parseInt(normalised.slice(0, 2), 16);
-      const g = parseInt(normalised.slice(2, 4), 16);
-      const b = parseInt(normalised.slice(4, 6), 16);
-      return { r, g, b };
-    };
-    const rgbToHex = (r: number, g: number, b: number) =>
-      `#${clamp(r).toString(16).padStart(2, '0')}${clamp(g).toString(16).padStart(2, '0')}${clamp(b).toString(16).padStart(2, '0')}`;
-    const blendWithWhite = (h: string, primaryWeight = 0.1) => {
-      const { r, g, b } = hexToRgb(h);
-      const white = 255;
-      const weight = 1 - primaryWeight;
-      const br = white * weight + r * primaryWeight;
-      const bg = white * weight + g * primaryWeight;
-      const bb = white * weight + b * primaryWeight;
-      return rgbToHex(br, bg, bb);
-    };
-
-    if (/^[0-9a-f]{3,6}$/.test(hex)) {
-      return blendWithWhite(hex, 0.1);
-    }
-
-    try {
-      const fallback = (theme.palette.primary.light || '#90caf9').toLowerCase().replace('#', '');
-      return blendWithWhite(fallback, 0.08);
-    } catch {
-      return theme.palette.mode === 'dark' ? '#1f2430' : '#f5f7fa';
-    }
-  };
-
   const [selectedAction, setSelectedAction] = useState<ActionType>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const softSurface = getSoftSurface();
   const cardBaseSx = {
     borderRadius: '16px',
     padding: { xs: 2, sm: 3 },
@@ -117,54 +81,6 @@ const QuickActionsModal: React.FC<QuickActionsModalProps> = ({
     flexDirection: 'column',
     gap: 2,
   } as const;
-  const secondaryButtonSx = {
-    borderRadius: '12px',
-    px: { xs: 2, sm: 3 },
-    py: 1.2,
-    backgroundColor: 'rgba(148, 163, 184, 0.12)',
-    color: '#475569',
-    border: '1px solid rgba(148, 163, 184, 0.25)',
-    backdropFilter: 'blur(10px)',
-    fontWeight: 600,
-    transition: 'transform 0.2s ease, box-shadow 0.2s ease',
-    '&:hover': {
-      backgroundColor: 'rgba(148, 163, 184, 0.16)',
-      transform: 'translateY(-2px)',
-      boxShadow: '0 8px 22px rgba(148, 163, 184, 0.24)',
-    },
-    '&:disabled': {
-      opacity: 0.6,
-      transform: 'none',
-      boxShadow: 'none',
-    },
-  } as const;
-  const getPrimaryButtonSx = (variant: 'default' | 'destructive' = 'default') => {
-    const mainColor = variant === 'destructive' ? theme.palette.error.main : theme.palette.primary.main;
-    const darkColor = variant === 'destructive' ? theme.palette.error.dark : theme.palette.primary.dark;
-    return {
-      borderRadius: '12px',
-      px: { xs: 2.2, sm: 3.5 },
-      py: 1.2,
-      background: `linear-gradient(135deg, ${mainColor} 0%, ${darkColor} 100%)`,
-      color: '#ffffff',
-      border: '2px solid rgba(255, 255, 255, 0.4)',
-      boxShadow: `0 12px 32px ${alpha(mainColor, 0.32)}`,
-      fontWeight: 700,
-      transition: 'transform 0.2s ease, box-shadow 0.2s ease',
-      '&:hover': {
-        transform: 'translateY(-2px)',
-        boxShadow: `0 16px 44px ${alpha(darkColor, 0.4)}`,
-        background: `linear-gradient(135deg, ${darkColor} 0%, ${mainColor} 100%)`,
-      },
-      '&:disabled': {
-        background: 'rgba(148, 163, 184, 0.4)',
-        borderColor: 'rgba(255, 255, 255, 0.2)',
-        color: 'rgba(255, 255, 255, 0.85)',
-        transform: 'none',
-        boxShadow: 'none',
-      },
-    };
-  };
   const actionItemSx = {
     borderRadius: '12px',
     border: `1px solid ${alpha(theme.palette.primary.main, 0.15)}`,
@@ -806,28 +722,21 @@ const renderContent = () => {
       maxWidth="sm"
       fullWidth
       fullScreen={isMobile}
-      sx={{
-        '& .MuiDialog-paper': {
-          borderRadius: isMobile ? 0 : '20px',
-          backgroundColor: (theme) => alpha(theme.palette.primary.light, 0.1),
-          backdropFilter: 'blur(20px)',
-          border: (theme) => `1px solid ${alpha(theme.palette.primary.light, 0.2)}`,
-          boxShadow: (theme) => `0 20px 60px ${alpha(theme.palette.primary.light, 0.3)}, inset 0 1px 0 rgba(255, 255, 255, 0.75)`,
-          overflow: 'hidden',
-          display: 'flex',
-          flexDirection: 'column',
-          maxHeight: { xs: '100vh', sm: '90vh' },
+      sx={[
+        buildResourcesLayerDialogSx(theme, isMobile),
+        {
+          '& .MuiDialog-paper': {
+            display: 'flex',
+            flexDirection: 'column',
+            maxHeight: { xs: '100vh', sm: '90vh' },
+            overflow: 'hidden',
+          },
         },
-        '& .MuiBackdrop-root': {
-          backgroundColor: (theme) => alpha(theme.palette.primary.light, 0.08),
-          backdropFilter: 'blur(4px)',
-        },
-      }}
+      ]}
     >
       <DialogTitle
         sx={{
-          backgroundColor: softSurface,
-          borderBottom: (theme) => `1px solid ${alpha(theme.palette.primary.light, 0.2)}`,
+          ...resourcesDialogTitleSx(theme),
           py: isMobile ? 2 : 3,
           px: isMobile ? 2 : 3,
           display: 'flex',
@@ -864,7 +773,7 @@ const renderContent = () => {
         </IconButton>
       </DialogTitle>
 
-      <DialogContent sx={{ p: 0, backgroundColor: softSurface }}>
+      <DialogContent dividers sx={{ ...resourcesDialogContentDividersSx(theme), p: 0 }}>
         <Box sx={{ p: { xs: 2.5, sm: 3.5 }, display: 'flex', flexDirection: 'column', gap: 3 }}>
           {renderContent()}
         </Box>
@@ -872,18 +781,17 @@ const renderContent = () => {
 
       <DialogActions
         sx={{
-          backgroundColor: softSurface,
-          borderTop: (theme) => `1px solid ${alpha(theme.palette.primary.light, 0.2)}`,
-          p: isMobile ? 2 : 3,
+          ...resourcesDialogActionsSx(theme),
           justifyContent: 'flex-end',
-          gap: 1.5,
         }}
       >
         {selectedAction && (
           <Button
             onClick={() => setSelectedAction(null)}
             disabled={isLoading}
-            sx={secondaryButtonSx}
+            variant="outlined"
+            color="inherit"
+            sx={resourcesOutlinedCancelButtonSx(theme)}
           >
             بازگشت
           </Button>
@@ -892,7 +800,9 @@ const renderContent = () => {
         <Button
           onClick={handleClose}
           disabled={isLoading}
-          sx={secondaryButtonSx}
+          variant="outlined"
+          color="inherit"
+          sx={resourcesOutlinedCancelButtonSx(theme)}
         >
           انصراف
         </Button>
@@ -900,9 +810,10 @@ const renderContent = () => {
         {selectedAction && (
           <Button
             variant="contained"
+            color={isDestructiveAction ? 'error' : 'primary'}
             onClick={handleAction}
             disabled={!isFormValid() || isLoading}
-            sx={getPrimaryButtonSx(isDestructiveAction ? 'destructive' : 'default')}
+            sx={{ borderRadius: 2, px: 3 }}
           >
             {isLoading ? 'در حال انجام...' : 'تأیید'}
           </Button>

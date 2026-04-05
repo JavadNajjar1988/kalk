@@ -21,7 +21,7 @@ import {
   platformModifierKeyOnly,
 } from "ol/events/condition";
 import { SelectEvent } from "ol/interaction/Select";
-import { useOlEvent } from "./openlayersHelpers";
+import { suspendDragPanDuringModify, useOlEvent } from "./openlayersHelpers";
 import { injectStrict } from "@/utils";
 import { activeScenarioKey } from "@/components/injects";
 import type { EntityId } from "@/types/base";
@@ -40,6 +40,9 @@ import { centroid } from "@turf/centroid";
 
 import { klona } from "klona";
 import View from "ol/View";
+import { useRecordingStore } from "@/stores/recordingStore";
+import { useNotifications } from "@/composables/notifications";
+import { storeToRefs } from "pinia";
 
 let zoomResolutions: number[] = [];
 
@@ -119,11 +122,20 @@ export function useMapDrop(
   mapRef: MaybeRef<OLMap | null | undefined>,
   unitLayer: MaybeRef<VectorLayer<any>>,
 ) {
-  const { geo } = injectStrict(activeScenarioKey);
+  const {
+    geo,
+    store: { groupUpdate },
+    helpers: { getUnitById },
+  } = injectStrict(activeScenarioKey);
+  const recordingStore = useRecordingStore();
+  const { isRecordingLocation } = storeToRefs(recordingStore);
+  const { selectedUnitIds } = useSelectedItems();
+  const { send } = useNotifications();
   const mStore = useMapSettingsStore();
   let dndCleanup = () => {};
   const isDragging = ref(false);
   const dropPosition = ref<Position>([0, 0]);
+  const blockedLocationHintShown = ref(false);
 
   const formattedPosition = computed(() =>
     isDragging.value
@@ -140,30 +152,52 @@ export function useMapDrop(
       getData: ({ input }) => {
         return { position: toLonLat(olMap.getEventCoordinate(input as MouseEvent)) };
       },
-      onDragEnter: () => {
+      onDragEnter: ({ source }) => {
+        if (isUnitDragItem(source.data)) {
+          if (!isRecordingLocation.value) {
+            if (!blockedLocationHintShown.value) {
+              send({
+                message:
+                  "برای ثبت موقعیت روی نقشه، گزینهٔ «موقعیت واحد» را در منوی ضبط فعال کنید.",
+              });
+              blockedLocationHintShown.value = true;
+            }
+            return;
+          }
+        }
         isDragging.value = true;
       },
       onDragLeave: () => {
         isDragging.value = false;
+        blockedLocationHintShown.value = false;
       },
-      onDrag: ({ self }) => {
+      onDrag: ({ self, source }) => {
+        if (isUnitDragItem(source.data) && !isRecordingLocation.value) return;
         dropPosition.value = self.data.position as Coordinate;
       },
       onDrop: ({ source, self }) => {
         const dragData = source.data;
         isDragging.value = false;
+        blockedLocationHintShown.value = false;
 
         const dropPosition = self.data.position as Coordinate;
         if (isUnitDragItem(dragData)) {
+          if (!isRecordingLocation.value) return;
           const unitSource = unref(unitLayer).getSource();
-          const existingUnitFeature = unitSource?.getFeatureById(dragData.unit.id);
-
-          geo.addUnitPosition(dragData.unit.id, dropPosition);
-
-          if (existingUnitFeature) {
-            existingUnitFeature.setGeometry(new Point(fromLonLat(dropPosition)));
-          } else {
-            unitSource?.addFeature(createUnitFeatureAt(dropPosition, dragData.unit));
+          const unitIds = new Set<EntityId>([...selectedUnitIds.value, dragData.unit.id]);
+          groupUpdate(() => {
+            for (const unitId of unitIds) {
+              geo.addUnitPosition(unitId, dropPosition);
+            }
+          });
+          for (const unitId of unitIds) {
+            const existingUnitFeature = unitSource?.getFeatureById(unitId);
+            if (existingUnitFeature) {
+              existingUnitFeature.setGeometry(new Point(fromLonLat(dropPosition)));
+            } else {
+              const u = getUnitById(unitId);
+              if (u) unitSource?.addFeature(createUnitFeatureAt(dropPosition, u));
+            }
           }
         } else if (isScenarioFeatureDragItem(dragData)) {
           const geometryCenter = centroid(dragData.feature).geometry.coordinates;
@@ -194,12 +228,14 @@ export function useMoveInteraction(
   const {
     geo,
     unitActions: { isUnitLocked },
-    store: { state },
   } = injectStrict(activeScenarioKey);
+  const recordingStore = useRecordingStore();
   const modifyInteraction = new Modify({
     hitDetection: unitLayer,
     source: unitLayer.getSource()!,
   });
+
+  useOlEvent(suspendDragPanDuringModify(mapRef, modifyInteraction));
 
   modifyInteraction.on(["modifystart", "modifyend"], (evt) => {
     mapRef.getTargetElement().style.cursor =
@@ -224,6 +260,7 @@ export function useMoveInteraction(
           unitFeature.set("_geometry", undefined, true);
           return;
         }
+        if (!recordingStore.isRecordingLocation) return;
         const newCoordinate = unitFeature.getGeometry()?.getCoordinates();
         if (newCoordinate) geo.addUnitPosition(movedUnitId, toLonLat(newCoordinate));
       }

@@ -60,7 +60,7 @@ import {
 const getNotificationIcon = (type: string) => {
   switch (type) {
     case 'success':
-      return <CheckCircle sx={{ color: 'success.main' }} />;
+      return <CheckCircle sx={{ color: 'primary.main' }} />;
     case 'warning':
       return <Warning sx={{ color: 'warning.main' }} />;
     case 'error':
@@ -74,7 +74,7 @@ const getNotificationIcon = (type: string) => {
 const getNotificationColor = (type: string) => {
   switch (type) {
     case 'success':
-      return 'success.light';
+      return 'primary.light';
     case 'warning':
       return 'warning.light';
     case 'error':
@@ -336,11 +336,11 @@ const NotificationsPage: React.FC = () => {
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
             <Chip label={`کل: ${stats.total}`} size="small" color="default" />
             <Chip label={`خوانده‌نشده: ${stats.unread}`} size="small" color="primary" />
-            <Chip label={`خوانده‌شده: ${stats.read}`} size="small" color="success" />
+            <Chip label={`خوانده‌شده: ${stats.read}`} size="small" color="primary" />
             <Chip label={`ستاره‌دار: ${stats.starred}`} size="small" color="warning" />
             <Chip label={`انتخاب شده: ${checked.length}`} size="small" color="info" />
             <Chip label={`آرشیو شده: ${stats.archived}`} size="small" color="secondary" />
-            <Chip label={`فعال: ${stats.active}`} size="small" color="success" />
+            <Chip label={`فعال: ${stats.active}`} size="small" color="primary" />
           </Box>
           
         </Box>
@@ -468,10 +468,10 @@ const NotificationsPage: React.FC = () => {
                     onClick={e => { e.stopPropagation(); handleMarkReadSingle(notif.id); }}
                     size="small"
                     sx={{ 
-                      color: notif.read ? 'success.main' : 'grey.400', 
+                      color: notif.read ? 'primary.main' : 'grey.400', 
                       mr: 0.5, 
                       transition: 'color 0.2s', 
-                      '&:hover': { color: 'success.dark' } 
+                      '&:hover': { color: 'primary.dark' } 
                     }}
                   >
                     <CheckCircle />
@@ -625,9 +625,9 @@ const NotificationsPage: React.FC = () => {
                    size="small" 
                    onClick={handleMarkReadAll}
                    sx={{ 
-                     color: 'success.main',
+                     color: 'primary.main',
                      '&:hover': { 
-                       color: 'success.dark' 
+                       color: 'primary.dark' 
                      }
                    }}
                  >

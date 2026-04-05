@@ -50,6 +50,7 @@ import type { NScenarioFeature, NUnit } from "@/types/internalModels";
 import { useSelectedItems } from "@/stores/selectedStore";
 import MilitarySymbol from "@/components/MilitarySymbol.vue";
 import { usePlaybackStore } from "@/stores/playbackStore";
+import { useRecordingStore } from "@/stores/recordingStore";
 import { useTimeFormatStore } from "@/stores/timeFormatStore";
 import type { Position } from "geojson";
 import { useActiveSidc } from "@/composables/mainToolbarData";
@@ -87,6 +88,8 @@ const { activeUnitId, activeFeatureId, selectedUnitIds, selectedFeatureIds } =
   useSelectedItems();
 const { activeParent } = useActiveUnitStore();
 const playback = usePlaybackStore();
+const recordingStore = useRecordingStore();
+const { isRecordingLocation } = storeToRefs(recordingStore);
 const { sidc, symbolOptions } = useActiveSidc();
 const dropPosition = ref<Position>([0, 0]);
 const pixelPosition = ref<number[] | null>(null);
@@ -197,6 +200,7 @@ function onContextMenuUpdate(open: boolean) {
 }
 
 function onAddUnit() {
+  if (!isRecordingLocation.value) return;
   store.groupUpdate(() => {
     if (!activeParent.value || unitActions.isUnitLocked(activeParent.value.id)) return;
 
@@ -308,7 +312,7 @@ function onAddPoint() {
       <ContextMenuSub>
         <ContextMenuSubTrigger inset><span>افزودن</span></ContextMenuSubTrigger>
         <ContextMenuSubContent>
-          <ContextMenuItem @select="onAddUnit"
+          <ContextMenuItem @select="onAddUnit" :disabled="!isRecordingLocation"
             ><MilitarySymbol
               :sidc="sidc"
               :options="symbolOptions"
