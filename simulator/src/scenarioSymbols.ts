@@ -912,19 +912,7 @@ function addTacticalGeometry(
   scenarioId: string,
   index: number
 ) {
-  // ---- Path A: Odin exact style (same computation as 2D map) ----
-  // Only for non-point geometries that have a dedicated SIDC style function.
   const gType = geometry?.type ?? '';
-  if (gType !== 'Point' && gType !== 'MultiPoint') {
-    const rendered = renderTacticalFeature(
-      viewer,
-      { id: feature.id, geometry, properties: feature.properties, style: feature.style, meta: feature.meta },
-      scenarioId,
-      index,
-    );
-    if (rendered) return;
-    // If SIDC not found in Odin registry, fall through to Path B below.
-  }
   const properties = getFeatureProperties(feature);
   const s: Record<string, any> = { ...(feature.style || {}), ...(properties || {}) };
 
@@ -936,6 +924,18 @@ function addTacticalGeometry(
   const name =
     properties?.name ?? properties?.Name ??
     feature.meta?.name ?? feature.meta?.Name ?? feature.meta?.description;
+
+  // ---- Path A: exact tactical renderer (same family search as KalkNegar) ----
+  // Try this for every non-plain-point tactical geometry before any billboard fallback.
+  if (sidc && gType !== 'Point') {
+    const rendered = renderTacticalFeature(
+      viewer,
+      { id: feature.id, geometry, properties: feature.properties, style: feature.style, meta: feature.meta },
+      scenarioId,
+      index,
+    );
+    if (rendered) return;
+  }
 
   // ---- Explicit style vs SIDC-derived style ----
   const hasExplicitStroke = !!(s.stroke || s['stroke-color']);
@@ -979,6 +979,24 @@ function addTacticalGeometry(
     });
   };
 
+  const addGenericPointAt = (
+    pos: { lon: number; lat: number; height: number },
+    suffix = '',
+  ) => {
+    viewer.entities.add({
+      id: `tactical-point-${scenarioId}-${feature.id ?? 'feature'}-${index}${suffix}`,
+      position: toCartesian(pos.lon, pos.lat, pos.height),
+      point: {
+        pixelSize: 10,
+        color: effectiveStroke,
+        outlineColor: Cesium.Color.BLACK,
+        outlineWidth: 2,
+        heightReference: Cesium.HeightReference.CLAMP_TO_GROUND,
+        disableDepthTestDistance: Number.POSITIVE_INFINITY,
+      },
+    });
+  };
+
   // Label-only for line/area geometries (no floating billboard)
   const addCentroidLabel = (pos: { lon: number; lat: number; height: number }, suffix = '') => {
     if (!name) return;
@@ -1009,16 +1027,10 @@ function addTacticalGeometry(
     case 'MultiPoint': {
       const points = flattenCoordinates(geometry.coordinates);
       points.forEach((p, idx) => {
-        if (!sidc) return;
-        addBillboard(viewer, {
-          id: `tactical-${scenarioId}-${feature.id ?? 'feature'}-${index}-${idx}`,
-          sidc,
-          position: { ...p },
-          size: DEFAULT_TACTICAL_SIZE,
-          label: name,
-          clampToGround: true,
-        });
+        addGenericPointAt(p, `-${idx}`);
       });
+      const center = getCentroid(points);
+      if (center) addCentroidLabel(center);
       break;
     }
 
@@ -1147,7 +1159,7 @@ function addTacticalGeometry(
     default: {
       const points = flattenCoordinates(geometry.coordinates);
       const center = getCentroid(points);
-      if (center) addSymbolAt(center);
+      if (center) addGenericPointAt(center, '-fallback');
     }
   }
 }

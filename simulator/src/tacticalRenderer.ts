@@ -435,6 +435,15 @@ function renderJtsGeometry(
       });
       break;
     }
+    case 'MultiPoint': {
+      const points = typeof jtsGeom.getNumGeometries === 'function'
+        ? Array.from({ length: jtsGeom.getNumGeometries() }, (_, idx) => jtsGeom.getGeometryN(idx))
+        : [];
+      points.forEach((pointGeom: any, idx: number) => {
+        renderJtsGeometry(viewer, pointGeom, visual, `${id}-${idx}`);
+      });
+      break;
+    }
     case 'LineString':
     case 'LinearRing': {
       const positions = jtsGeometryToWgs84Positions(jtsGeom);

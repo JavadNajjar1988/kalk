@@ -162,12 +162,15 @@ function resolveApiBase(): string {
   }
 
   if (typeof window !== 'undefined') {
-    const { protocol, hostname } = window.location;
-    // پیش‌فرض بک‌اند روی پورت 8000
-    return `${protocol}//${hostname}:8000/api`;
+    const { protocol, hostname, origin } = window.location;
+    const isLocalHost = hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '::1';
+    if (isLocalHost) {
+      return `${protocol}//${hostname}:8002/api`;
+    }
+    return `${origin.replace(/\/+$/, '')}/api`;
   }
 
-  return 'http://127.0.0.1:8000/api';
+  return 'http://127.0.0.1:8002/api';
 }
 
 function resolveKalknegarBase(): string {

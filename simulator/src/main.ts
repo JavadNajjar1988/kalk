@@ -27,7 +27,7 @@ console.log('%c2. Scenario ID from URL:', 'color: #2196F3; font-weight: bold;', 
 console.log('%c3. Token from URL:', 'color: #9C27B0; font-weight: bold;', tokenFromUrl ? '✅ RECEIVED' : '❌ NOT PROVIDED');
 console.log('%c4. Has access token (localStorage):', 'color: #FF9800; font-weight: bold;', !!localStorage.getItem('access_token') ? '✅ YES' : '❌ NO');
 console.log('%c5. Access token value:', 'color: #9C27B0;', localStorage.getItem('access_token')?.substring(0, 50) + '...' || 'null');
-console.log('%c6. API Base URL (env):', 'color: #F44336; font-weight: bold;', (import.meta as any).env?.VITE_API_URL || '⚠️ Using default');
+console.log('%c6. API Base URL (resolved):', 'color: #F44336; font-weight: bold;', resolveApiBase());
 console.log('%c================================', 'background: #222; color: #bada55; font-size: 14px; padding: 10px;');
 // ========== DEBUG END ==========
 
@@ -779,8 +779,12 @@ function resolveApiBase(): string {
   if (envUrl && envUrl.trim().length > 0) {
     return envUrl.trim().replace(/\/+$/, '');
   }
-  const { protocol, hostname } = window.location;
-  return `${protocol}//${hostname}:8000/api`;
+  const { protocol, hostname, origin } = window.location;
+  const isLocalHost = hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '::1';
+  if (isLocalHost) {
+    return `${protocol}//${hostname}:8002/api`;
+  }
+  return `${origin.replace(/\/+$/, '')}/api`;
 }
 
 /**
