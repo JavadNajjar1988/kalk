@@ -1,6 +1,6 @@
 import * as Cesium from 'cesium';
-import { Symbol as SignsSymbol } from '@syncpoint/signs';
 import ms from 'milsymbol';
+import { symbolGenerator } from './milsymbwrapper';
 import type { BackendScenario } from './scenarioPins';
 import { renderTacticalFeature } from './tacticalRenderer';
 
@@ -41,15 +41,12 @@ interface UnitLike {
   name?: string;
   shortName?: string;
   sidc?: string;
-  shortName?: string;
   location?: PositionLike;
-  state?: Array<{ t?: any; location?: PositionLike }>;
+  state?: Array<{ t?: any; location?: PositionLike; via?: PositionLike[] }>;
   symbolOptions?: Record<string, any>;
   textAmplifiers?: Record<string, string>;
   rangeRings?: RangeRingLike[];
   subUnits?: UnitLike[];
-  symbolOptions?: Record<string, any>;
-  textAmplifiers?: Record<string, string>;
 }
 
 interface ScenarioLayerLike {
@@ -114,6 +111,7 @@ const symbolCache = new Map<
     image: string;
   }
 >();
+const labelImageCache = new Map<string, string>();
 const unitStateSampleCache = new WeakMap<
   UnitLike,
   {
@@ -122,6 +120,7 @@ const unitStateSampleCache = new WeakMap<
   }
 >();
 const unitIdCache = new WeakMap<UnitLike, string>();
+let persianFontReadyPromise: Promise<void> | null = null;
 
 function getEnvNumber(name: string, fallback: number): number {
   const raw = (import.meta as any).env?.[name];
@@ -156,12 +155,10 @@ function getRenderedMilSymbol(
 }
 
 function getTacticalImageDataUri(sidc: string, size: number, options?: Record<string, any>): string | null {
-  // First try @syncpoint/signs (same approach you had for tactical)
-  const uri = getSymbolDataUri(sidc, size, { infoFields: true, ...(options || {}) });
-  if (uri) return uri;
+  const rendered = getRenderedMilSymbol(sidc, size, { infoFields: true, ...(options || {}) });
+  if (rendered) return rendered.image;
 
-  // Fallback: try milsymbol (more permissive for some SIDC variants)
-  // NOTE: unitSymbolDataUri caches separately; that's fine.
+  // Fallback: milsymbol without custom color-mode wrapping
   return unitSymbolDataUri(sidc, size, options || {}, undefined);
 }
 
@@ -204,6 +201,126 @@ function unitSymbolDataUri(sidc: string, size: number, symbolOptions?: Record<st
     console.warn('Failed to build milsymbol SVG:', normalizedSidc, err);
     return null;
   }
+}
+
+async function ensurePersianLabelFont(): Promise<void> {
+  if (persianFontReadyPromise) return persianFontReadyPromise;
+
+  persianFontReadyPromise = (async () => {
+    if (typeof document === 'undefined' || typeof FontFace === 'undefined') return;
+
+    const fontsToLoad = [
+      new FontFace('SimulatorLabel', 'url(/simulator/fonts/Yekan.woff2)', {
+        style: 'normal',
+        weight: '400',
+      }),
+      new FontFace('SimulatorLabel', 'url(/simulator/fonts/Yekan-Bold.woff2)', {
+        style: 'normal',
+        weight: '700',
+      }),
+    ];
+
+    await Promise.all(
+      fontsToLoad.map(async (font) => {
+        try {
+          const loaded = await font.load();
+          document.fonts.add(loaded);
+        } catch (err) {
+          console.warn('Failed to load simulator label font:', err);
+        }
+      }),
+    );
+
+    try {
+      await Promise.all([
+        document.fonts.load('400 16px SimulatorLabel'),
+        document.fonts.load('700 16px SimulatorLabel'),
+      ]);
+    } catch (err) {
+      console.warn('Failed to warm up simulator label font:', err);
+    }
+  })();
+
+  return persianFontReadyPromise;
+}
+
+function roundRect(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  width: number,
+  height: number,
+  radius: number,
+) {
+  const r = Math.min(radius, width / 2, height / 2);
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + width - r, y);
+  ctx.quadraticCurveTo(x + width, y, x + width, y + r);
+  ctx.lineTo(x + width, y + height - r);
+  ctx.quadraticCurveTo(x + width, y + height, x + width - r, y + height);
+  ctx.lineTo(x + r, y + height);
+  ctx.quadraticCurveTo(x, y + height, x, y + height - r);
+  ctx.lineTo(x, y + r);
+  ctx.quadraticCurveTo(x, y, x + r, y);
+  ctx.closePath();
+}
+
+function getUnitLabelImageDataUri(text: string): string | null {
+  const normalized = text?.trim();
+  if (!normalized) return null;
+
+  const cached = labelImageCache.get(normalized);
+  if (cached) return cached;
+
+  if (typeof document === 'undefined') return null;
+  const canvas = document.createElement('canvas');
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return null;
+
+  const dpr = Math.max(1, Math.ceil(window.devicePixelRatio || 1));
+  const fontSize = 18;
+  const paddingX = 16;
+  const paddingY = 10;
+  const fontSpec = `700 ${fontSize}px SimulatorLabel, IranSans, Tahoma, sans-serif`;
+
+  ctx.font = fontSpec;
+  const metrics = ctx.measureText(normalized);
+  const textWidth = Math.ceil(metrics.width);
+  const textHeight = Math.ceil(fontSize * 1.5);
+  const width = textWidth + paddingX * 2;
+  const height = textHeight + paddingY * 2;
+
+  canvas.width = width * dpr;
+  canvas.height = height * dpr;
+  canvas.style.width = `${width}px`;
+  canvas.style.height = `${height}px`;
+
+  ctx.scale(dpr, dpr);
+  ctx.font = fontSpec;
+  ctx.textBaseline = 'middle';
+  ctx.textAlign = 'right';
+  try {
+    ctx.direction = 'rtl';
+  } catch {}
+
+  roundRect(ctx, 0.5, 0.5, width - 1, height - 1, 12);
+  ctx.fillStyle = 'rgba(10, 12, 18, 0.78)';
+  ctx.fill();
+  ctx.strokeStyle = 'rgba(255, 255, 255, 0.14)';
+  ctx.lineWidth = 1;
+  ctx.stroke();
+
+  ctx.lineWidth = 4;
+  ctx.strokeStyle = 'rgba(0, 0, 0, 0.82)';
+  ctx.strokeText(normalized, width - paddingX, height / 2 + 1);
+
+  ctx.fillStyle = '#ffffff';
+  ctx.fillText(normalized, width - paddingX, height / 2 + 1);
+
+  const uri = canvas.toDataURL('image/png');
+  labelImageCache.set(normalized, uri);
+  return uri;
 }
 
 function parseColorWithOpacity(colorStr: any, opacity: any, defaultOpacity = 1.0): Cesium.Color {
@@ -394,28 +511,67 @@ function getCurrentEpochMs(time: Cesium.JulianDate): number {
   return Cesium.JulianDate.toDate(time).getTime();
 }
 
+function getExpandedUnitSamples(unit: UnitLike): Array<{ tMs: number; pos: { lon: number; lat: number; height: number } }> {
+  const cached = unitStateSampleCache.get(unit);
+  if (cached) return cached.samples;
+
+  const samples: Array<{ tMs: number; pos: { lon: number; lat: number; height: number } }> = [];
+  if (Array.isArray(unit.state) && unit.state.length > 0) {
+    const rawSamples = unit.state
+      .map((s) => {
+        const tMs = parseScenarioTimeToEpochMs(s?.t);
+        const pos = parsePosition(s?.location as any);
+        const via = Array.isArray(s?.via)
+          ? s.via
+              .map((entry) => parsePosition(entry))
+              .filter((entry): entry is { lon: number; lat: number; height: number } => !!entry)
+          : [];
+        return tMs !== null && pos ? { tMs, pos, via } : null;
+      })
+      .filter(
+        (
+          entry,
+        ): entry is {
+          tMs: number;
+          pos: { lon: number; lat: number; height: number };
+          via: Array<{ lon: number; lat: number; height: number }>;
+        } => !!entry,
+      )
+      .sort((a, b) => a.tMs - b.tMs);
+
+    if (rawSamples.length > 0) {
+      samples.push({ tMs: rawSamples[0].tMs, pos: rawSamples[0].pos });
+      for (let i = 1; i < rawSamples.length; i++) {
+        const previous = rawSamples[i - 1];
+        const current = rawSamples[i];
+        const span = current.tMs - previous.tMs;
+        const viaPoints = current.via;
+
+        if (span > 0 && viaPoints.length > 0) {
+          viaPoints.forEach((viaPoint, viaIndex) => {
+            const interpolatedTime = previous.tMs + Math.round((span * (viaIndex + 1)) / (viaPoints.length + 1));
+            samples.push({ tMs: interpolatedTime, pos: viaPoint });
+          });
+        }
+
+        samples.push({ tMs: current.tMs, pos: current.pos });
+      }
+    }
+  }
+
+  unitStateSampleCache.set(unit, {
+    samples,
+    staticPos: getUnitPosition(unit),
+  });
+  return samples;
+}
+
 function getUnitPositionAtTime(
   unit: UnitLike,
   epochMs: number,
 ): { lon: number; lat: number; height: number } | null {
-  const cached = unitStateSampleCache.get(unit);
-  if (!cached) {
-    const samples: Array<{ tMs: number; pos: { lon: number; lat: number; height: number } }> = [];
-    if (Array.isArray(unit.state) && unit.state.length > 0) {
-      for (const s of unit.state) {
-        const tMs = parseScenarioTimeToEpochMs(s?.t);
-        const pos = parsePosition(s?.location as any);
-        if (tMs !== null && pos) samples.push({ tMs, pos });
-      }
-      samples.sort((a, b) => a.tMs - b.tMs);
-    }
-    unitStateSampleCache.set(unit, {
-      samples,
-      staticPos: getUnitPosition(unit),
-    });
-  }
-
-  const { samples, staticPos } = unitStateSampleCache.get(unit)!;
+  const samples = getExpandedUnitSamples(unit);
+  const staticPos = unitStateSampleCache.get(unit)?.staticPos ?? getUnitPosition(unit);
 
   if (samples.length === 0) return staticPos;
 
@@ -614,7 +770,6 @@ function addBillboard(
     label?: string;
     clampToGround: boolean;
     symbolOptions?: Record<string, any>;
-    showPredicate?: (epochMs: number) => boolean;
   }
 ) {
   const image = getTacticalImageDataUri(options.sidc, options.size, {});
@@ -721,11 +876,7 @@ function addUnitTrack(
   unit: UnitLike,
   unitIndex: number,
 ) {
-  if (!Array.isArray(unit.state) || unit.state.length < 2) return;
-
-  const points = unit.state
-    .map((s) => parsePosition(s?.location))
-    .filter((pos): pos is { lon: number; lat: number; height: number } => !!pos);
+  const points = getExpandedUnitSamples(unit).map((sample) => sample.pos);
 
   if (points.length < 2) return;
 
@@ -740,6 +891,19 @@ function addUnitTrack(
   });
 }
 
+function createUnitPositionCallback(
+  viewer: Cesium.Viewer,
+  unit: UnitLike,
+  height = 0,
+): Cesium.CallbackPositionProperty {
+  return new Cesium.CallbackPositionProperty(() => {
+    const epochMs = getCurrentEpochMs(viewer.clock.currentTime);
+    const pos = getUnitPositionAtTime(unit, epochMs);
+    if (!pos) return undefined;
+    return toCartesian(pos.lon, pos.lat, height);
+  }, false);
+}
+
 function addTacticalGeometry(
   viewer: Cesium.Viewer,
   geometry: GeoJsonGeometryLike,
@@ -748,19 +912,7 @@ function addTacticalGeometry(
   scenarioId: string,
   index: number
 ) {
-  // ---- Path A: Odin exact style (same computation as 2D map) ----
-  // Only for non-point geometries that have a dedicated SIDC style function.
   const gType = geometry?.type ?? '';
-  if (gType !== 'Point' && gType !== 'MultiPoint') {
-    const rendered = renderTacticalFeature(
-      viewer,
-      { id: feature.id, geometry, properties: feature.properties, style: feature.style, meta: feature.meta },
-      scenarioId,
-      index,
-    );
-    if (rendered) return;
-    // If SIDC not found in Odin registry, fall through to Path B below.
-  }
   const properties = getFeatureProperties(feature);
   const s: Record<string, any> = { ...(feature.style || {}), ...(properties || {}) };
 
@@ -772,6 +924,18 @@ function addTacticalGeometry(
   const name =
     properties?.name ?? properties?.Name ??
     feature.meta?.name ?? feature.meta?.Name ?? feature.meta?.description;
+
+  // ---- Path A: exact tactical renderer (same family search as KalkNegar) ----
+  // Try this for every non-plain-point tactical geometry before any billboard fallback.
+  if (sidc && gType !== 'Point') {
+    const rendered = renderTacticalFeature(
+      viewer,
+      { id: feature.id, geometry, properties: feature.properties, style: feature.style, meta: feature.meta },
+      scenarioId,
+      index,
+    );
+    if (rendered) return;
+  }
 
   // ---- Explicit style vs SIDC-derived style ----
   const hasExplicitStroke = !!(s.stroke || s['stroke-color']);
@@ -812,7 +976,24 @@ function addTacticalGeometry(
         outlineColor: 'white',
         outlineWidth: 8,
       },
-      showPredicate,
+    });
+  };
+
+  const addGenericPointAt = (
+    pos: { lon: number; lat: number; height: number },
+    suffix = '',
+  ) => {
+    viewer.entities.add({
+      id: `tactical-point-${scenarioId}-${feature.id ?? 'feature'}-${index}${suffix}`,
+      position: toCartesian(pos.lon, pos.lat, pos.height),
+      point: {
+        pixelSize: 10,
+        color: effectiveStroke,
+        outlineColor: Cesium.Color.BLACK,
+        outlineWidth: 2,
+        heightReference: Cesium.HeightReference.CLAMP_TO_GROUND,
+        disableDepthTestDistance: Number.POSITIVE_INFINITY,
+      },
     });
   };
 
@@ -846,17 +1027,10 @@ function addTacticalGeometry(
     case 'MultiPoint': {
       const points = flattenCoordinates(geometry.coordinates);
       points.forEach((p, idx) => {
-        if (!sidc) return;
-        addBillboard(viewer, {
-          id: `tactical-${scenarioId}-${feature.id ?? 'feature'}-${index}-${idx}`,
-          sidc,
-          position: { ...p },
-          size: DEFAULT_TACTICAL_SIZE,
-          label: name,
-          clampToGround: true,
-          showPredicate,
-        });
+        addGenericPointAt(p, `-${idx}`);
       });
+      const center = getCentroid(points);
+      if (center) addCentroidLabel(center);
       break;
     }
 
@@ -985,7 +1159,7 @@ function addTacticalGeometry(
     default: {
       const points = flattenCoordinates(geometry.coordinates);
       const center = getCentroid(points);
-      if (center) addSymbolAt(center);
+      if (center) addGenericPointAt(center, '-fallback');
     }
   }
 }
@@ -1077,6 +1251,8 @@ export async function addScenarioSymbols(
   viewer: Cesium.Viewer,
   scenarios: BackendScenario[]
 ): Promise<void> {
+  await ensurePersianLabelFont();
+
   scenarios.forEach((scenario) => {
     const content = scenario.content as ScenarioContentLike | undefined;
     if (!content || typeof content !== 'object') return;
@@ -1084,8 +1260,7 @@ export async function addScenarioSymbols(
     const units = getScenarioUnits(content);
     const unitIndex = buildUnitIndex(units);
     units.forEach((unit, index) => {
-      const pos = getUnitPosition(unit);
-      if (!pos || !unit.sidc) return;
+      if (!unit.sidc) return;
 
       const image = unitSymbolDataUri(
         unit.sidc,
@@ -1095,9 +1270,14 @@ export async function addScenarioSymbols(
       );
       if (!image) return;
 
+      const unitEntityId = `unit-${scenario.id}-${unit.id ?? index}`;
+      const unitPosition = createUnitPositionCallback(viewer, unit);
+      const labelText = unit.shortName || unit.name || '';
+      const labelImage = labelText ? getUnitLabelImageDataUri(labelText) : null;
+
       viewer.entities.add({
-        id: `unit-${scenario.id}-${unit.id ?? index}`,
-        position: toCartesian(pos.lon, pos.lat, 0),
+        id: unitEntityId,
+        position: unitPosition,
         billboard: {
           image,
           heightReference: Cesium.HeightReference.CLAMP_TO_GROUND,
@@ -1105,21 +1285,23 @@ export async function addScenarioSymbols(
           scale: 0.6,
           disableDepthTestDistance: Number.POSITIVE_INFINITY,
         },
-        label: unit.name
-          ? {
-            text: unit.name,
-            font: '14px sans-serif',
-            fillColor: Cesium.Color.WHITE,
-            outlineColor: Cesium.Color.BLACK,
-            outlineWidth: 2,
-            style: Cesium.LabelStyle.FILL_AND_OUTLINE,
-            verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
-            pixelOffset: new Cesium.Cartesian2(0, -18),
-            heightReference: Cesium.HeightReference.CLAMP_TO_GROUND,
-            disableDepthTestDistance: Number.POSITIVE_INFINITY,
-          }
-          : undefined,
       });
+
+      if (labelImage) {
+        viewer.entities.add({
+          id: `${unitEntityId}-label`,
+          position: createUnitPositionCallback(viewer, unit, 24),
+          billboard: {
+            image: labelImage,
+            horizontalOrigin: Cesium.HorizontalOrigin.RIGHT,
+            verticalOrigin: Cesium.VerticalOrigin.CENTER,
+            pixelOffset: new Cesium.Cartesian2(-72, -30),
+            heightReference: Cesium.HeightReference.RELATIVE_TO_GROUND,
+            disableDepthTestDistance: Number.POSITIVE_INFINITY,
+            scale: 1,
+          },
+        });
+      }
 
       addUnitTrack(viewer, scenario.id, unit, index);
       addRangeRings(viewer, scenario.id, unit, index);

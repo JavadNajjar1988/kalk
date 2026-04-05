@@ -27,7 +27,7 @@ console.log('%c2. Scenario ID from URL:', 'color: #2196F3; font-weight: bold;', 
 console.log('%c3. Token from URL:', 'color: #9C27B0; font-weight: bold;', tokenFromUrl ? '✅ RECEIVED' : '❌ NOT PROVIDED');
 console.log('%c4. Has access token (localStorage):', 'color: #FF9800; font-weight: bold;', !!localStorage.getItem('access_token') ? '✅ YES' : '❌ NO');
 console.log('%c5. Access token value:', 'color: #9C27B0;', localStorage.getItem('access_token')?.substring(0, 50) + '...' || 'null');
-console.log('%c6. API Base URL (env):', 'color: #F44336; font-weight: bold;', (import.meta as any).env?.VITE_API_URL || '⚠️ Using default');
+console.log('%c6. API Base URL (resolved):', 'color: #F44336; font-weight: bold;', resolveApiBase());
 console.log('%c================================', 'background: #222; color: #bada55; font-size: 14px; padding: 10px;');
 // ========== DEBUG END ==========
 
@@ -59,6 +59,26 @@ const header = document.getElementById('header');
 const backToDashboardButton = document.getElementById('backToDashboard');
 const focusScenarioButton = document.getElementById('focusScenarioButton');
 const scenarioDebugPanel = document.getElementById('scenarioDebugPanel');
+const timelinePanel = document.getElementById('timelinePanel');
+const timelineCurrentLabel = document.getElementById('timelineCurrentLabel');
+const timelineCurrentSubLabel = document.getElementById('timelineCurrentSubLabel');
+const timelineStartLabel = document.getElementById('timelineStartLabel');
+const timelineEndLabel = document.getElementById('timelineEndLabel');
+const timelineTicks = document.getElementById('timelineTicks');
+const timelineProgressLabel = document.getElementById('timelineProgressLabel');
+const timelineTimezoneLabel = document.getElementById('timelineTimezoneLabel');
+const timelineSliderElement = document.getElementById('timelineSlider');
+const timelinePlayPauseButtonElement = document.getElementById('timelinePlayPauseButton');
+const timelineStopButtonElement = document.getElementById('timelineStopButton');
+const timelineSpeedSelectElement = document.getElementById('timelineSpeedSelect');
+
+const timelineSlider = timelineSliderElement instanceof HTMLInputElement ? timelineSliderElement : null;
+const timelinePlayPauseButton =
+  timelinePlayPauseButtonElement instanceof HTMLButtonElement ? timelinePlayPauseButtonElement : null;
+const timelineStopButton =
+  timelineStopButtonElement instanceof HTMLButtonElement ? timelineStopButtonElement : null;
+const timelineSpeedSelect =
+  timelineSpeedSelectElement instanceof HTMLSelectElement ? timelineSpeedSelectElement : null;
 
 // Get main container
 const mainContainer = document.getElementById('mainContainer');
@@ -260,10 +280,436 @@ let originLon = 0;
 let originLat = 0;
 let currentScenarioName = '';
 let currentScenarioRectangle: Cesium.Rectangle | null = null;
+let currentCountryOverviewName = '';
+let currentScenarioTimeZone = 'UTC';
+let currentTimelineBounds: { startMs: number; stopMs: number } | null = null;
+let currentTimelineBaseMultiplier = 1;
+let currentTimelineSpeedFactor = 1;
+let currentTimelinePlaying = true;
+let isTimelineScrubbing = false;
+let resumeTimelinePlaybackAfterScrub = false;
+let hasTimelineControlsBound = false;
+let hasTimelineClockListener = false;
+let lastTimelineUiRefresh = 0;
+
+const TIMELINE_SLIDER_MAX = 1000;
+const timelineFormatterCache = new Map<string, Intl.DateTimeFormat>();
 
 function setDebugStatus(lines: string[]) {
   if (!scenarioDebugPanel) return;
   scenarioDebugPanel.innerHTML = lines.join('<br>');
+}
+
+function getRecommendedClockMultiplier(_bounds: { start: Cesium.JulianDate; stop: Cesium.JulianDate }): number {
+  const envMultiplierRaw = (import.meta as any).env?.VITE_SIM_CLOCK_MULTIPLIER;
+  const envMultiplier = Number(envMultiplierRaw);
+  if (Number.isFinite(envMultiplier) && envMultiplier > 0) {
+    return envMultiplier;
+  }
+
+  // KalkNegar default: 30 minutes of scenario time per RAF frame at 60 FPS.
+  return ((1000 * 60 * 30) / 1000) * 60;
+}
+
+function formatPersianNumber(value: number, maximumFractionDigits = 0): string {
+  return value.toLocaleString('fa-IR', {
+    maximumFractionDigits,
+    minimumFractionDigits: maximumFractionDigits,
+  });
+}
+
+function getTimelineFormatter(
+  key: string,
+  timeZone: string,
+  options: Intl.DateTimeFormatOptions,
+): Intl.DateTimeFormat {
+  const cacheKey = `${key}|${timeZone}|${JSON.stringify(options)}`;
+  const cached = timelineFormatterCache.get(cacheKey);
+  if (cached) return cached;
+
+  let formatter: Intl.DateTimeFormat;
+  try {
+    formatter = new Intl.DateTimeFormat('fa-IR-u-ca-persian', {
+      timeZone,
+      ...options,
+    });
+  } catch {
+    formatter = new Intl.DateTimeFormat('fa-IR', {
+      timeZone,
+      ...options,
+    });
+  }
+
+  timelineFormatterCache.set(cacheKey, formatter);
+  return formatter;
+}
+
+function formatTimelineDateTime(ms: number, timeZone: string): string {
+  return getTimelineFormatter('full', timeZone, {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  }).format(new Date(ms));
+}
+
+function formatTimelineEdge(ms: number, timeZone: string): string {
+  return getTimelineFormatter('edge', timeZone, {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  }).format(new Date(ms));
+}
+
+function formatTimelineTick(ms: number, timeZone: string, spanMs: number): string {
+  if (spanMs <= 1000 * 60 * 60 * 24) {
+    return getTimelineFormatter('tick-hour', timeZone, {
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false,
+    }).format(new Date(ms));
+  }
+
+  if (spanMs <= 1000 * 60 * 60 * 24 * 5) {
+    return getTimelineFormatter('tick-short', timeZone, {
+      month: 'short',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false,
+    }).format(new Date(ms));
+  }
+
+  return getTimelineFormatter('tick-date', timeZone, {
+    month: 'long',
+    day: '2-digit',
+  }).format(new Date(ms));
+}
+
+function formatTimelineDuration(spanMs: number): string {
+  const totalMinutes = Math.max(0, Math.round(spanMs / 60000));
+  const days = Math.floor(totalMinutes / (60 * 24));
+  const hours = Math.floor((totalMinutes % (60 * 24)) / 60);
+  const minutes = totalMinutes % 60;
+  const parts: string[] = [];
+
+  if (days > 0) parts.push(`${formatPersianNumber(days)} روز`);
+  if (hours > 0) parts.push(`${formatPersianNumber(hours)} ساعت`);
+  if (parts.length === 0 || (parts.length < 2 && minutes > 0)) {
+    parts.push(`${formatPersianNumber(minutes)} دقیقه`);
+  }
+
+  return parts.slice(0, 2).join(' و ');
+}
+
+function clampTimelineMs(value: number): number {
+  if (!currentTimelineBounds) return value;
+  return Math.min(currentTimelineBounds.stopMs, Math.max(currentTimelineBounds.startMs, value));
+}
+
+function getCurrentClockMs(): number | null {
+  if (!cesiumViewer?.clock?.currentTime) return null;
+  return Cesium.JulianDate.toDate(cesiumViewer.clock.currentTime).getTime();
+}
+
+function getTimelinePercentForMs(ms: number): number {
+  if (!currentTimelineBounds) return 0;
+  const span = Math.max(1, currentTimelineBounds.stopMs - currentTimelineBounds.startMs);
+  const clamped = clampTimelineMs(ms);
+  return ((clamped - currentTimelineBounds.startMs) / span) * 100;
+}
+
+function getTimelineMsFromSliderValue(value: number): number {
+  if (!currentTimelineBounds) return 0;
+  const normalized = Math.max(0, Math.min(TIMELINE_SLIDER_MAX, value)) / TIMELINE_SLIDER_MAX;
+  return Math.round(
+    currentTimelineBounds.startMs +
+      normalized * (currentTimelineBounds.stopMs - currentTimelineBounds.startMs),
+  );
+}
+
+function setTimelineSliderProgress(percent: number) {
+  if (!timelineSlider) return;
+  timelineSlider.style.setProperty('--timeline-progress', `${Math.max(0, Math.min(100, percent))}%`);
+}
+
+function setTimelinePanelVisible(visible: boolean) {
+  if (!timelinePanel) return;
+  timelinePanel.classList.toggle('visible', visible);
+}
+
+function renderTimelineTicks() {
+  if (!timelineTicks || !currentTimelineBounds) return;
+  timelineTicks.innerHTML = '';
+
+  const span = currentTimelineBounds.stopMs - currentTimelineBounds.startMs;
+  const width = timelineTicks.clientWidth || 900;
+  const tickSegments = width > 960 ? 6 : width > 760 ? 5 : width > 560 ? 4 : 3;
+
+  for (let index = 0; index <= tickSegments; index += 1) {
+    const ratio = index / tickSegments;
+    const timestamp = Math.round(currentTimelineBounds.startMs + span * ratio);
+    const tick = document.createElement('div');
+    tick.className = 'timeline-tick';
+    tick.style.left = `${ratio * 100}%`;
+    tick.textContent = formatTimelineTick(timestamp, currentScenarioTimeZone, span);
+    timelineTicks.appendChild(tick);
+  }
+}
+
+function updateTimelineButtons() {
+  if (!timelinePlayPauseButton) return;
+  timelinePlayPauseButton.textContent = currentTimelinePlaying ? 'توقف' : 'پخش';
+  timelinePlayPauseButton.setAttribute('aria-pressed', String(currentTimelinePlaying));
+}
+
+function setTimelineClockTime(ms: number) {
+  if (!cesiumViewer?.clock) return;
+  const clamped = clampTimelineMs(ms);
+  cesiumViewer.clock.currentTime = Cesium.JulianDate.fromDate(new Date(clamped));
+  cesiumViewer.scene?.requestRender?.();
+}
+
+function applyTimelineSpeedFactor(factor: number) {
+  currentTimelineSpeedFactor = factor;
+  if (cesiumViewer?.clock) {
+    cesiumViewer.clock.multiplier = currentTimelineBaseMultiplier * currentTimelineSpeedFactor;
+  }
+}
+
+function setTimelinePlaybackState(playing: boolean) {
+  if (playing && currentTimelineBounds) {
+    const currentMs = getCurrentClockMs() ?? currentTimelineBounds.startMs;
+    if (currentMs >= currentTimelineBounds.stopMs - 500) {
+      setTimelineClockTime(currentTimelineBounds.startMs);
+    }
+  }
+
+  currentTimelinePlaying = playing;
+  if (cesiumViewer?.clock) {
+    cesiumViewer.clock.canAnimate = true;
+    cesiumViewer.clock.shouldAnimate = playing;
+  }
+  updateTimelineButtons();
+}
+
+function stopTimelinePlayback() {
+  setTimelinePlaybackState(false);
+  if (currentTimelineBounds) {
+    setTimelineClockTime(currentTimelineBounds.startMs);
+  }
+  refreshTimelineUi(true);
+}
+
+function refreshTimelineUi(force = false) {
+  if (!currentTimelineBounds) return;
+
+  const now = performance.now();
+  if (!force && now - lastTimelineUiRefresh < 80) return;
+  lastTimelineUiRefresh = now;
+
+  const currentMs = clampTimelineMs(getCurrentClockMs() ?? currentTimelineBounds.startMs);
+  const percent = getTimelinePercentForMs(currentMs);
+  const span = currentTimelineBounds.stopMs - currentTimelineBounds.startMs;
+
+  if (!isTimelineScrubbing && timelineSlider) {
+    timelineSlider.value = String(Math.round((percent / 100) * TIMELINE_SLIDER_MAX));
+  }
+  setTimelineSliderProgress(percent);
+
+  if (timelineCurrentLabel) {
+    timelineCurrentLabel.textContent = formatTimelineDateTime(currentMs, currentScenarioTimeZone);
+  }
+  if (timelineCurrentSubLabel) {
+    timelineCurrentSubLabel.textContent =
+      `سناریو: ${currentScenarioName || 'نامشخص'} | منطقه زمانی: ${currentScenarioTimeZone} | سرعت: ${formatPersianNumber(currentTimelineSpeedFactor, currentTimelineSpeedFactor % 1 === 0 ? 0 : 2)}×`;
+  }
+  if (timelineStartLabel) {
+    timelineStartLabel.textContent = formatTimelineEdge(currentTimelineBounds.startMs, currentScenarioTimeZone);
+  }
+  if (timelineEndLabel) {
+    timelineEndLabel.textContent = formatTimelineEdge(currentTimelineBounds.stopMs, currentScenarioTimeZone);
+  }
+  if (timelineProgressLabel) {
+    timelineProgressLabel.textContent =
+      `پیشرفت: ${formatPersianNumber(percent)}٪ • بازه: ${formatTimelineDuration(span)}`;
+  }
+  if (timelineTimezoneLabel) {
+    timelineTimezoneLabel.textContent = `منطقه زمانی: ${currentScenarioTimeZone}`;
+  }
+
+  updateTimelineButtons();
+}
+
+function handleTimelineClockTick() {
+  if (!currentTimelineBounds) return;
+
+  const currentMs = getCurrentClockMs();
+  if (currentMs === null) return;
+
+  if (currentTimelinePlaying && currentMs >= currentTimelineBounds.stopMs - 250) {
+    setTimelineClockTime(currentTimelineBounds.stopMs);
+    setTimelinePlaybackState(false);
+    refreshTimelineUi(true);
+    return;
+  }
+
+  refreshTimelineUi();
+}
+
+function bindTimelineControls() {
+  if (hasTimelineControlsBound) return;
+  hasTimelineControlsBound = true;
+
+  timelinePlayPauseButton?.addEventListener('click', () => {
+    setTimelinePlaybackState(!currentTimelinePlaying);
+    refreshTimelineUi(true);
+  });
+
+  timelineStopButton?.addEventListener('click', () => {
+    stopTimelinePlayback();
+  });
+
+  timelineSpeedSelect?.addEventListener('change', () => {
+    const value = Number(timelineSpeedSelect.value);
+    applyTimelineSpeedFactor(Number.isFinite(value) && value > 0 ? value : 1);
+    refreshTimelineUi(true);
+  });
+
+  timelineSlider?.addEventListener('pointerdown', () => {
+    resumeTimelinePlaybackAfterScrub = currentTimelinePlaying;
+    isTimelineScrubbing = true;
+    setTimelinePlaybackState(false);
+  });
+
+  timelineSlider?.addEventListener('input', () => {
+    const value = Number(timelineSlider.value);
+    setTimelineClockTime(getTimelineMsFromSliderValue(value));
+    refreshTimelineUi(true);
+  });
+
+  const finishScrub = () => {
+    if (!isTimelineScrubbing) return;
+    isTimelineScrubbing = false;
+    if (resumeTimelinePlaybackAfterScrub) {
+      setTimelinePlaybackState(true);
+    }
+    refreshTimelineUi(true);
+  };
+
+  timelineSlider?.addEventListener('change', finishScrub);
+  timelineSlider?.addEventListener('pointerup', finishScrub);
+  timelineSlider?.addEventListener('keyup', (event) => {
+    if (event.key === 'Enter' || event.key === ' ') {
+      finishScrub();
+    }
+  });
+
+  window.addEventListener('resize', () => {
+    if (currentTimelineBounds) {
+      renderTimelineTicks();
+      refreshTimelineUi(true);
+    }
+  });
+}
+
+function configureTimeline(
+  scenarios: any[],
+  bounds: { start: Cesium.JulianDate; stop: Cesium.JulianDate },
+  baseMultiplier: number,
+) {
+  const firstScenario = scenarios[0];
+  currentScenarioTimeZone = firstScenario?.content?.timeZone || firstScenario?.timeZone || 'UTC';
+  currentTimelineBounds = {
+    startMs: Cesium.JulianDate.toDate(bounds.start).getTime(),
+    stopMs: Cesium.JulianDate.toDate(bounds.stop).getTime(),
+  };
+  currentTimelineBaseMultiplier = baseMultiplier;
+  currentTimelineSpeedFactor = 1;
+
+  if (timelineSpeedSelect) {
+    timelineSpeedSelect.value = '1';
+  }
+
+  renderTimelineTicks();
+  setTimelinePanelVisible(true);
+  applyTimelineSpeedFactor(currentTimelineSpeedFactor);
+  setTimelinePlaybackState(true);
+  refreshTimelineUi(true);
+}
+
+function makeRectangle(west: number, south: number, east: number, north: number): Cesium.Rectangle {
+  return Cesium.Rectangle.fromDegrees(west, south, east, north);
+}
+
+function rectangleContains(rectangle: Cesium.Rectangle, lon: number, lat: number): boolean {
+  const west = Cesium.Math.toDegrees(rectangle.west);
+  const east = Cesium.Math.toDegrees(rectangle.east);
+  const south = Cesium.Math.toDegrees(rectangle.south);
+  const north = Cesium.Math.toDegrees(rectangle.north);
+  return lon >= west && lon <= east && lat >= south && lat <= north;
+}
+
+function buildExpandedRectangle(
+  lon: number,
+  lat: number,
+  spanLon = 10,
+  spanLat = 7,
+): Cesium.Rectangle {
+  const halfLon = spanLon / 2;
+  const halfLat = spanLat / 2;
+  return makeRectangle(lon - halfLon, lat - halfLat, lon + halfLon, lat + halfLat);
+}
+
+function getCountryOverview(
+  lon: number,
+  lat: number,
+): { name: string; rectangle: Cesium.Rectangle } {
+  const candidates = [
+    { name: 'ایران', rectangle: makeRectangle(44.0, 24.0, 64.5, 40.8) },
+    { name: 'عراق', rectangle: makeRectangle(38.5, 28.0, 49.0, 37.8) },
+    { name: 'سوریه', rectangle: makeRectangle(35.5, 32.0, 42.7, 37.5) },
+    { name: 'ترکیه', rectangle: makeRectangle(25.5, 35.0, 45.5, 42.8) },
+    { name: 'افغانستان', rectangle: makeRectangle(60.0, 29.0, 75.5, 38.8) },
+    { name: 'پاکستان', rectangle: makeRectangle(60.5, 23.0, 77.6, 37.2) },
+    { name: 'عربستان', rectangle: makeRectangle(34.0, 15.5, 56.5, 33.8) },
+    { name: 'لبنان', rectangle: makeRectangle(35.0, 33.0, 36.8, 34.9) },
+    { name: 'اسرائیل/فلسطین', rectangle: makeRectangle(34.0, 29.2, 35.9, 33.6) },
+    { name: 'اردن', rectangle: makeRectangle(34.8, 29.0, 39.6, 33.5) },
+  ];
+
+  const match = candidates.find((candidate) => rectangleContains(candidate.rectangle, lon, lat));
+  if (match) return match;
+
+  return {
+    name: 'نمای منطقه‌ای',
+    rectangle: buildExpandedRectangle(lon, lat),
+  };
+}
+
+function showCountryOverview(
+  overview: { name: string; rectangle: Cesium.Rectangle } | null,
+  immediate = true,
+) {
+  if (!cesiumViewer || !overview) return;
+
+  if (immediate) {
+    cesiumViewer.camera.setView({
+      destination: overview.rectangle,
+    });
+    return;
+  }
+
+  cesiumViewer.camera.flyTo({
+    destination: overview.rectangle,
+    duration: 1.8,
+  });
 }
 
 function focusScenarioLocation(immediate = false) {
@@ -326,13 +772,19 @@ if (focusScenarioButton) {
   });
 }
 
+bindTimelineControls();
+
 function resolveApiBase(): string {
   const envUrl = (import.meta as any).env?.VITE_API_URL as string | undefined;
   if (envUrl && envUrl.trim().length > 0) {
     return envUrl.trim().replace(/\/+$/, '');
   }
-  const { protocol, hostname } = window.location;
-  return `${protocol}//${hostname}:8000/api`;
+  const { protocol, hostname, origin } = window.location;
+  const isLocalHost = hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '::1';
+  if (isLocalHost) {
+    return `${protocol}//${hostname}:8002/api`;
+  }
+  return `${origin.replace(/\/+$/, '')}/api`;
 }
 
 /**
@@ -479,7 +931,7 @@ async function initializeCesium() {
 
     // پس از آماده شدن Cesium، پین‌ها و نمادهای سناریوها را اضافه کن
     try {
-      const { fetchScenarios, fetchScenarioById, addScenarioPins, getScenarioCenter, getScenarioRectangle } = await import('./scenarioPins');
+      const { fetchScenarios, fetchScenarioById, getScenarioCenter, getScenarioRectangle } = await import('./scenarioPins');
       const scenarioId =
         typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('scenarioId') : null;
       let scenarios: any[] = [];
@@ -490,7 +942,6 @@ async function initializeCesium() {
       if (!scenarios.length) {
         scenarios = await fetchScenarios();
       }
-      await addScenarioPins(cesiumViewer as any, scenarios);
 
       // Update origin based on the first scenario if available
       if (scenarios.length > 0) {
@@ -499,18 +950,10 @@ async function initializeCesium() {
         originLat = center.lat;
         currentScenarioName = scenarios[0]?.name || '';
         currentScenarioRectangle = getScenarioRectangle(scenarios[0]);
+        const countryOverview = getCountryOverview(center.lon, center.lat);
+        currentCountryOverviewName = countryOverview.name;
         console.log(`✅ Origin set to scenario center: ${originLon}, ${originLat}`);
-
-        // Fly camera to scenario center so user sees the scenario immediately
-        cesiumViewer.camera.flyTo({
-          destination: Cesium.Cartesian3.fromDegrees(center.lon, center.lat, 50000),
-          orientation: {
-            heading: 0,
-            pitch: Cesium.Math.toRadians(-45),
-            roll: 0,
-          },
-          duration: 2.0,
-        });
+        showCountryOverview(countryOverview, true);
       }
 
       const scenarioSymbols = await import('./scenarioSymbols');
@@ -519,15 +962,22 @@ async function initializeCesium() {
       try {
         const bounds = scenarioSymbols.getScenarioTimeBounds(scenarios);
         if (bounds) {
-          const multiplierRaw = (import.meta as any).env?.VITE_SIM_CLOCK_MULTIPLIER;
-          const multiplier = Number.isFinite(Number(multiplierRaw)) ? Number(multiplierRaw) : 60; // seconds per real second
+          const multiplier = getRecommendedClockMultiplier(bounds);
 
           (cesiumViewer as any).clock.startTime = bounds.start;
           (cesiumViewer as any).clock.stopTime = bounds.stop;
           (cesiumViewer as any).clock.currentTime = bounds.start;
-          (cesiumViewer as any).clock.clockRange = Cesium.ClockRange.LOOP_STOP;
+          (cesiumViewer as any).clock.clockRange = Cesium.ClockRange.CLAMPED;
           (cesiumViewer as any).clock.multiplier = multiplier;
+          (cesiumViewer as any).clock.canAnimate = true;
           (cesiumViewer as any).clock.shouldAnimate = true;
+
+          if (!hasTimelineClockListener) {
+            (cesiumViewer as any).clock.onTick.addEventListener(handleTimelineClockTick);
+            hasTimelineClockListener = true;
+          }
+
+          configureTimeline(scenarios, bounds, multiplier);
 
           console.log('[Simulator] Cesium clock bounds set:', {
             start: bounds.start.toString(),
@@ -536,9 +986,11 @@ async function initializeCesium() {
           });
         } else {
           console.warn('[Simulator] Could not compute scenario time bounds; keeping default Cesium clock.');
+          setTimelinePanelVisible(false);
         }
       } catch (e) {
         console.warn('[Simulator] Failed to setup Cesium clock:', e);
+        setTimelinePanelVisible(false);
       }
 
       await scenarioSymbols.addScenarioSymbols(cesiumViewer as any, scenarios);
@@ -546,17 +998,19 @@ async function initializeCesium() {
 
       setDebugStatus([
         `<strong>سناریو:</strong> ${currentScenarioName || scenarioId || 'نامشخص'}`,
+        `<strong>نمای آغاز:</strong> ${currentCountryOverviewName || 'منطقه سناریو'}`,
         `<strong>مرکز:</strong> ${originLon.toFixed(4)}, ${originLat.toFixed(4)}`,
         `<strong>واحدها:</strong> ${summary.visibleUnits} قابل‌نمایش از ${summary.totalUnits}`,
         `<strong>مسیرها:</strong> ${summary.trackedUnits}`,
         `<strong>فیچرها:</strong> ${summary.layerFeatures} | <strong>رویدادها:</strong> ${summary.events}`,
+        `<strong>پخش زمان:</strong> x${Math.round((cesiumViewer as any).clock.multiplier ?? 1)}`,
         `<strong>entity:</strong> ${cesiumViewer.entities?.values?.length ?? 0}`,
       ]);
 
       if (scenarios.length > 0) {
         window.setTimeout(() => {
-          focusScenarioLocation(true);
-        }, 350);
+          focusScenarioLocation(false);
+        }, 1800);
       }
     } catch (pinError) {
       console.error('Failed to add scenario pins/symbols:', pinError);

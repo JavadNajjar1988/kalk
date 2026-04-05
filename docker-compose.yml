@@ -143,6 +143,9 @@ services:
       context: ./simulator
       dockerfile: Dockerfile
     restart: unless-stopped
+    environment:
+      VITE_API_URL: ${VITE_API_URL:-http://localhost:8002/api}
+      VITE_CESIUM_ION_TOKEN: ${VITE_CESIUM_ION_TOKEN:-}
     ports:
       - "3001:3001"
     volumes:

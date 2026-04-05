@@ -13,7 +13,7 @@
 
 import * as Cesium from 'cesium';
 import { TS } from './tacticalTs';
-import { parameterizeSidc, computeStyleDescriptors } from './tacticalStyles';
+import { parameterizeSidc, computeTacticalDescriptors } from './tacticalStyles';
 
 // ---------------------------------------------------------------------------
 // Coordinate projection: WGS84 (lon°, lat°) ↔ EPSG:3857 (meters)
@@ -114,6 +114,9 @@ interface TacticalVisual {
   hatched: boolean;
 }
 
+const tacticalTextCache = new Map<string, string>();
+const tacticalShapeCache = new Map<string, string>();
+
 function getAffiliationColor(sidc: string): Cesium.Color {
   if (!sidc || sidc.length < 2) return Cesium.Color.YELLOW;
   switch (sidc[1].toUpperCase()) {
@@ -135,10 +138,275 @@ function descriptorIdToVisual(id: string, sidc: string): TacticalVisual {
   };
 
   if (id.includes('hatch-fill'))    return { ...base, hatched: true, fillColor: aff.withAlpha(0.15) };
+  if (id.includes('dashed-stroke')) return { ...base, dashed: true };
+  if (id.includes('solid-fill'))    return { ...base, fillColor: aff.withAlpha(0.18) };
+  if (id.includes('fence-stroke'))  return { ...base, strokeColor: Cesium.Color.BLACK, strokeWidth: 2 };
   if (id.includes('wasp-stroke'))   return { ...base, strokeColor: Cesium.Color.ORANGE, dashed: true };
   if (id.includes('solid-stroke'))  return { ...base };
   if (id.includes('default-stroke')) return { ...base };
   return base;
+}
+
+function parseColor(value: any, fallback: Cesium.Color): Cesium.Color {
+  if (typeof value !== 'string' || !value.trim()) return fallback;
+  try {
+    return Cesium.Color.fromCssColorString(value.trim());
+  } catch {
+    return fallback;
+  }
+}
+
+function extractFontSize(font: unknown, fallback = 15): number {
+  if (typeof font !== 'string') return fallback;
+  const match = font.match(/(\d+(?:\.\d+)?)px/);
+  if (!match) return fallback;
+  const parsed = Number(match[1]);
+  return Number.isFinite(parsed) ? parsed : fallback;
+}
+
+function measureTextWidth(ctx: CanvasRenderingContext2D, lines: string[]): number {
+  return lines.reduce((max, line) => Math.max(max, ctx.measureText(line).width), 0);
+}
+
+function getTextBillboardDataUri(
+  text: string,
+  options: {
+    fillColor: Cesium.Color;
+    haloColor: Cesium.Color;
+    haloWidth: number;
+    fontSize: number;
+  },
+): string | null {
+  const normalized = text?.trim();
+  if (!normalized || typeof document === 'undefined') return null;
+
+  const cacheKey = `${normalized}|${options.fillColor.toCssColorString()}|${options.haloColor.toCssColorString()}|${options.haloWidth}|${options.fontSize}`;
+  const cached = tacticalTextCache.get(cacheKey);
+  if (cached) return cached;
+
+  const lines = normalized.split('\n');
+  const canvas = document.createElement('canvas');
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return null;
+
+  const dpr = Math.max(1, Math.ceil(window.devicePixelRatio || 1));
+  const fontSpec = `700 ${options.fontSize}px Tahoma, Arial, sans-serif`;
+  ctx.font = fontSpec;
+  const lineHeight = Math.ceil(options.fontSize * 1.3);
+  const paddingX = 8;
+  const paddingY = 6;
+  const width = Math.ceil(measureTextWidth(ctx, lines) + paddingX * 2);
+  const height = Math.ceil(lineHeight * lines.length + paddingY * 2);
+
+  canvas.width = width * dpr;
+  canvas.height = height * dpr;
+  canvas.style.width = `${width}px`;
+  canvas.style.height = `${height}px`;
+
+  ctx.scale(dpr, dpr);
+  ctx.font = fontSpec;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.lineJoin = 'round';
+
+  const centerX = width / 2;
+  lines.forEach((line, index) => {
+    const y = paddingY + lineHeight * index + lineHeight / 2;
+    ctx.lineWidth = Math.max(2, options.haloWidth * 2);
+    ctx.strokeStyle = options.haloColor.toCssColorString();
+    ctx.strokeText(line, centerX, y);
+    ctx.fillStyle = options.fillColor.toCssColorString();
+    ctx.fillText(line, centerX, y);
+  });
+
+  const uri = canvas.toDataURL('image/png');
+  tacticalTextCache.set(cacheKey, uri);
+  return uri;
+}
+
+function getRegularShapeDataUri(
+  descriptor: Record<string, any>,
+  visual: TacticalVisual,
+): string | null {
+  const points = Number(descriptor['shape-points']);
+  if (!Number.isFinite(points) || points < 3 || typeof document === 'undefined') return null;
+
+  const cacheKey = JSON.stringify({
+    points,
+    radius: descriptor['shape-radius'],
+    radius2: descriptor['shape-radius-2'],
+    angle: descriptor['shape-angle'],
+    scale: descriptor['shape-scale'],
+    stroke: descriptor['shape-line-color'],
+    strokeWidth: descriptor['shape-line-width'],
+    fill: descriptor['shape-fill-color'],
+    visualStroke: visual.strokeColor.toCssColorString(),
+  });
+  const cached = tacticalShapeCache.get(cacheKey);
+  if (cached) return cached;
+
+  const radius = Number(descriptor['shape-radius']) || 8;
+  const radius2 = Number(descriptor['shape-radius-2']);
+  const rotation = Number(descriptor['shape-angle']) || 0;
+  const scaleValue = Array.isArray(descriptor['shape-scale']) ? descriptor['shape-scale'] : [1, 1];
+  const scaleX = Number(scaleValue[0]) || 1;
+  const scaleY = Number(scaleValue[1]) || scaleX;
+  const strokeWidth = Number(descriptor['shape-line-width']) || Math.max(1, visual.strokeWidth / 2);
+  const strokeColor = parseColor(descriptor['shape-line-color'], visual.strokeColor);
+  const fillColor = parseColor(descriptor['shape-fill-color'], Cesium.Color.TRANSPARENT);
+
+  const maxRadius = Math.max(radius, Number.isFinite(radius2) ? radius2 : radius);
+  const size = Math.ceil(maxRadius * 6);
+  const canvas = document.createElement('canvas');
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return null;
+
+  const dpr = Math.max(1, Math.ceil(window.devicePixelRatio || 1));
+  canvas.width = size * dpr;
+  canvas.height = size * dpr;
+  canvas.style.width = `${size}px`;
+  canvas.style.height = `${size}px`;
+
+  ctx.scale(dpr, dpr);
+  ctx.translate(size / 2, size / 2);
+  ctx.scale(scaleX, scaleY);
+  ctx.rotate(rotation);
+  ctx.beginPath();
+  for (let i = 0; i < points; i++) {
+    const angle = -Math.PI / 2 + (Math.PI * 2 * i) / points;
+    const currentRadius = Number.isFinite(radius2) && radius2 > 0 && i % 2 === 1 ? radius2 : radius;
+    const x = Math.cos(angle) * currentRadius;
+    const y = Math.sin(angle) * currentRadius;
+    if (i === 0) ctx.moveTo(x, y);
+    else ctx.lineTo(x, y);
+  }
+  ctx.closePath();
+  if (fillColor.alpha > 0) {
+    ctx.fillStyle = fillColor.toCssColorString();
+    ctx.fill();
+  }
+  ctx.lineWidth = strokeWidth;
+  ctx.strokeStyle = strokeColor.toCssColorString();
+  ctx.stroke();
+
+  const uri = canvas.toDataURL('image/png');
+  tacticalShapeCache.set(cacheKey, uri);
+  return uri;
+}
+
+function getTextOrigins(anchor: unknown): {
+  horizontalOrigin: Cesium.HorizontalOrigin;
+  verticalOrigin: Cesium.VerticalOrigin;
+} {
+  if (typeof anchor === 'string') {
+    if (anchor.includes('left')) {
+      return {
+        horizontalOrigin: Cesium.HorizontalOrigin.RIGHT,
+        verticalOrigin: Cesium.VerticalOrigin.CENTER,
+      };
+    }
+    if (anchor.includes('right')) {
+      return {
+        horizontalOrigin: Cesium.HorizontalOrigin.LEFT,
+        verticalOrigin: Cesium.VerticalOrigin.CENTER,
+      };
+    }
+    if (anchor.includes('top')) {
+      return {
+        horizontalOrigin: Cesium.HorizontalOrigin.CENTER,
+        verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
+      };
+    }
+    if (anchor.includes('bottom')) {
+      return {
+        horizontalOrigin: Cesium.HorizontalOrigin.CENTER,
+        verticalOrigin: Cesium.VerticalOrigin.TOP,
+      };
+    }
+  }
+
+  return {
+    horizontalOrigin: Cesium.HorizontalOrigin.CENTER,
+    verticalOrigin: Cesium.VerticalOrigin.CENTER,
+  };
+}
+
+function renderTextDescriptor(
+  viewer: Cesium.Viewer,
+  descriptor: Record<string, any>,
+  id: string,
+): boolean {
+  if (!descriptor?.geometry || !descriptor['text-field']) return false;
+  if (descriptor.geometry.getGeometryType?.() !== 'Point') return false;
+
+  const text = String(descriptor['text-field']).trim();
+  if (!text) return false;
+
+  const [lon, lat] = jtsCoordToWgs84(descriptor.geometry.getCoordinate());
+  const fillColor = parseColor(descriptor['text-color'], Cesium.Color.BLACK);
+  const haloColor = parseColor(descriptor['text-halo-color'], Cesium.Color.WHITE);
+  const fontSize = extractFontSize(descriptor['text-font'], 15);
+  const haloWidth = Number(descriptor['text-halo-width']) || 3;
+  const image = getTextBillboardDataUri(text, {
+    fillColor,
+    haloColor,
+    haloWidth,
+    fontSize,
+  });
+  if (!image) return false;
+
+  const offset = Array.isArray(descriptor['text-offset']) ? descriptor['text-offset'] : [0, 0];
+  const rotation = Number(descriptor['text-rotate']);
+  const origins = getTextOrigins(descriptor['text-anchor']);
+
+  viewer.entities.add({
+    id,
+    position: Cesium.Cartesian3.fromDegrees(lon, lat, 0),
+    billboard: {
+      image,
+      heightReference: Cesium.HeightReference.CLAMP_TO_GROUND,
+      horizontalOrigin: origins.horizontalOrigin,
+      verticalOrigin: origins.verticalOrigin,
+      pixelOffset: new Cesium.Cartesian2(Number(offset[0]) || 0, Number(offset[1]) || 0),
+      disableDepthTestDistance: Number.POSITIVE_INFINITY,
+      ...(Number.isFinite(rotation) ? { rotation } : {}),
+    },
+  });
+
+  return true;
+}
+
+function renderShapeDescriptor(
+  viewer: Cesium.Viewer,
+  descriptor: Record<string, any>,
+  visual: TacticalVisual,
+  id: string,
+): boolean {
+  if (!descriptor?.geometry || descriptor.geometry.getGeometryType?.() !== 'Point') return false;
+  if (!descriptor['shape-points']) return false;
+
+  const image = getRegularShapeDataUri(descriptor, visual);
+  if (!image) return false;
+
+  const [lon, lat] = jtsCoordToWgs84(descriptor.geometry.getCoordinate());
+  const offset = Array.isArray(descriptor['shape-offset']) ? descriptor['shape-offset'] : [0, 0];
+  const rotation = Number(descriptor['shape-rotate']);
+
+  viewer.entities.add({
+    id,
+    position: Cesium.Cartesian3.fromDegrees(lon, lat, 0),
+    billboard: {
+      image,
+      heightReference: Cesium.HeightReference.CLAMP_TO_GROUND,
+      horizontalOrigin: Cesium.HorizontalOrigin.CENTER,
+      verticalOrigin: Cesium.VerticalOrigin.CENTER,
+      pixelOffset: new Cesium.Cartesian2(Number(offset[0]) || 0, Number(offset[1]) || 0),
+      disableDepthTestDistance: Number.POSITIVE_INFINITY,
+      ...(Number.isFinite(rotation) ? { rotation } : {}),
+    },
+  });
+
+  return true;
 }
 
 // ---------------------------------------------------------------------------
@@ -164,6 +432,15 @@ function renderJtsGeometry(
           color: visual.strokeColor,
           heightReference: Cesium.HeightReference.CLAMP_TO_GROUND,
         },
+      });
+      break;
+    }
+    case 'MultiPoint': {
+      const points = typeof jtsGeom.getNumGeometries === 'function'
+        ? Array.from({ length: jtsGeom.getNumGeometries() }, (_, idx) => jtsGeom.getGeometryN(idx))
+        : [];
+      points.forEach((pointGeom: any, idx: number) => {
+        renderJtsGeometry(viewer, pointGeom, visual, `${id}-${idx}`);
       });
       break;
     }
@@ -285,37 +562,28 @@ export function renderTacticalFeature(
   const jtsGeom = geojsonToJts(feature.geometry);
   if (!jtsGeom) return false;
 
-  const descriptors = computeStyleDescriptors(paramSidc, jtsGeom, resolution);
+  const descriptors = computeTacticalDescriptors(paramSidc, sidc, jtsGeom, resolution, {
+    ...feature.meta,
+    ...(feature.style ?? {}),
+    ...props,
+    modifiers: {
+      ...(feature.meta?.modifiers ?? {}),
+      ...(((feature.style ?? {}) as Record<string, any>).modifiers ?? {}),
+      ...((props as Record<string, any>).modifiers ?? {}),
+      ...feature.meta,
+      ...(feature.style ?? {}),
+      ...props,
+    },
+  });
   if (!descriptors || descriptors.length === 0) return false;
 
-  const visual = descriptorIdToVisual(descriptors[0]?.id ?? '', sidc);
   const baseId = `odin-tactical-${scenarioId}-${feature.id ?? 'f'}-${index}`;
 
   descriptors.forEach((desc, di) => {
     if (!desc?.geometry) return;
-    const textField = desc['text-field'] as string | undefined;
-    const geomType = desc.geometry.getGeometryType?.();
-    if (textField && geomType === 'Point') {
-      const raw = String(textField).replace(/^["']|["']$/g, '');
-      const rotation = Number(desc['text-rotate']);
-      const [lon, lat] = jtsCoordToWgs84(desc.geometry.getCoordinate());
-      viewer.entities.add({
-        id: `${baseId}-txt-${di}`,
-        position: Cesium.Cartesian3.fromDegrees(lon, lat, 0),
-        label: {
-          text: raw,
-          font: 'bold 14px sans-serif',
-          fillColor: visual.strokeColor,
-          outlineColor: Cesium.Color.BLACK,
-          outlineWidth: 2,
-          style: Cesium.LabelStyle.FILL_AND_OUTLINE,
-          heightReference: Cesium.HeightReference.CLAMP_TO_GROUND,
-          disableDepthTestDistance: Number.POSITIVE_INFINITY,
-          ...(Number.isFinite(rotation) ? { rotation } : {}),
-        } as Cesium.LabelGraphics.ConstructorOptions,
-      });
-      return;
-    }
+    const visual = descriptorIdToVisual(desc.id ?? '', sidc);
+    if (renderTextDescriptor(viewer, desc, `${baseId}-txt-${di}`)) return;
+    if (renderShapeDescriptor(viewer, desc, visual, `${baseId}-shape-${di}`)) return;
     renderJtsGeometry(viewer, desc.geometry, visual, `${baseId}-${di}`);
   });
 

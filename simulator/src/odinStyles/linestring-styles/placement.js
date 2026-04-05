@@ -1,5 +1,5 @@
 import * as R from 'ramda'
-import * as TS from '../../ts'
+import { TS } from '../../tacticalTs.ts'
 
 /**
  * placement :: jts/geom/Geometry => Style => Style

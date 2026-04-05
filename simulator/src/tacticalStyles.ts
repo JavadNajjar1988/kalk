@@ -53,6 +53,8 @@ import G_S_LCM   from './odinStyles/linestring-styles/G_S_LCM.js';
 import G_T_A     from './odinStyles/linestring-styles/G_T_A.js';
 import G_T_AS    from './odinStyles/linestring-styles/G_T_AS.js';
 import G_T_F     from './odinStyles/linestring-styles/G_T_F.js';
+import lineLabelRegistry from './odinStyles/linestring-styles/labels.js';
+import linePlacement from './odinStyles/linestring-styles/placement.js';
 
 // Polygon styles
 import G_G_GAF   from './odinStyles/polygon-styles/G_G_GAF.js';
@@ -203,11 +205,349 @@ const STYLE_REGISTRY: Record<string, StyleFn> = {
   'G*F*AKPC--': FILLED_CIRCLE,
 };
 
+type StyleSource = 'corridor' | 'line' | 'polygon' | 'multipoint' | 'merged';
+
+const LINE_STYLE_KEYS = new Set<string>([
+  'G*F*LT----',
+  'G*F*LTF---',
+  'G*F*LTS---',
+  'G*G*GLC---',
+  'G*G*GLF---',
+  'G*G*OLKA--',
+  'G*G*OLKGM-',
+  'G*G*OLKGS-',
+  'G*G*PF----',
+  'G*M*BCF---',
+  'G*M*BCL---',
+  'G*M*BCR---',
+  'G*M*OADC--',
+  'G*M*OADU--',
+  'G*M*OAR---',
+  'G*M*OAW---',
+  'G*M*OEF---',
+  'G*M*OGL---',
+  'G*M*OMC---',
+  'G*M*OS----',
+  'G*M*OWA---',
+  'G*M*OWCD--',
+  'G*M*OWCS--',
+  'G*M*OWCT--',
+  'G*M*OWD---',
+  'G*M*OWH---',
+  'G*M*OWL---',
+  'G*M*OWS---',
+  'G*M*OWU---',
+  'G*M*SL----',
+  'G*M*SW----',
+  'G*O*HN----',
+  'G*S*LCH---',
+  'G*S*LCM---',
+  'G*T*A-----',
+  'G*T*AS----',
+  'G*T*F-----',
+]);
+
+const POLYGON_STYLE_KEYS = new Set<string>([
+  'G*G*GAF---',
+  'G*G*PY----',
+  'G*G*SAE---',
+  'G*M*OGB---',
+  'G*M*OGF---',
+  'G*M*OGR---',
+  'G*M*OGZ---',
+  'G*M*SP----',
+  'G*F*ACNI--',
+  'G*F*ACNR--',
+  'G*F*AKBI--',
+  'G*F*AKBR--',
+  'G*F*AKPI--',
+  'G*F*AKPR--',
+  'G*G*AAW---',
+  'G*G*GAY---',
+  'G*M*NB----',
+  'G*M*NC----',
+  'G*M*NR----',
+]);
+
+const MULTIPOINT_STYLE_KEYS = new Set<string>([
+  'G*F*AXC---',
+  'G*G*DLP---',
+  'G*G*OAS---',
+  'G*M*NM----',
+  'G*T*E-----',
+  'G*T*O-----',
+  'G*T*Q-----',
+  'G*T*S-----',
+  'G*T*US----',
+  'G*T*UG----',
+  'G*T*UC----',
+  'G*G*GAS---',
+  'G*F*ATC---',
+  'G*F*ACSC--',
+  'G*F*ACAC--',
+  'G*F*ACFC--',
+  'G*F*ACNC--',
+  'G*F*ACRC--',
+  'G*F*ACPC--',
+  'G*F*ACEC--',
+  'G*F*ACDC--',
+  'G*F*ACZC--',
+  'G*F*ACBC--',
+  'G*F*ACVC--',
+  'G*F*AKBC--',
+  'G*F*AKPC--',
+]);
+
+function buildSidcLookupCandidates(paramSidc: string): string[] {
+  if (!paramSidc) return [];
+
+  const candidates: string[] = [];
+  const push = (value: string | null | undefined) => {
+    if (!value || candidates.includes(value)) return;
+    candidates.push(value);
+  };
+
+  push(paramSidc);
+
+  for (let i = paramSidc.length - 1; i >= 4; i -= 1) {
+    const char = paramSidc[i];
+    if (char === '*' || char === '-') continue;
+    push(`${paramSidc.slice(0, i)}${'-'.repeat(paramSidc.length - i)}`);
+  }
+
+  return candidates;
+}
+
+function getPreferredStyleSources(jtsGeom: any): StyleSource[] {
+  const geometryType = jtsGeom?.getGeometryType?.();
+  switch (geometryType) {
+    case 'GeometryCollection':
+      return ['corridor', 'multipoint', 'line', 'polygon', 'merged'];
+    case 'MultiPoint':
+      return ['multipoint', 'corridor', 'merged'];
+    case 'Point':
+      return ['multipoint', 'merged'];
+    case 'LineString':
+    case 'LinearRing':
+    case 'MultiLineString':
+      return ['line', 'corridor', 'merged'];
+    case 'Polygon':
+    case 'MultiPolygon':
+      return ['polygon', 'multipoint', 'merged'];
+    default:
+      return ['corridor', 'line', 'polygon', 'multipoint', 'merged'];
+  }
+}
+
+function getStyleFnFromSource(source: StyleSource, key: string): StyleFn | null {
+  switch (source) {
+    case 'corridor':
+      return (CORRIDOR_REGISTRY as Record<string, StyleFn>)[key] ?? null;
+    case 'line':
+      return LINE_STYLE_KEYS.has(key) ? STYLE_REGISTRY[key] : null;
+    case 'polygon':
+      return POLYGON_STYLE_KEYS.has(key) ? STYLE_REGISTRY[key] : null;
+    case 'multipoint':
+      return MULTIPOINT_STYLE_KEYS.has(key) ? STYLE_REGISTRY[key] : null;
+    case 'merged':
+      return STYLE_REGISTRY[key] ?? null;
+    default:
+      return null;
+  }
+}
+
+function normalizeCorridorGeometry(jtsGeom: any, resolution: number): any {
+  if (!jtsGeom?.getGeometryType) return jtsGeom;
+
+  const type = jtsGeom.getGeometryType();
+  let lineString: any | null = null;
+  let point: any | null = null;
+
+  if (type === 'GeometryCollection') {
+    const parts = TS.geometries(jtsGeom);
+    lineString = parts.find((geom: any) => geom?.getGeometryType?.() === 'LineString') ?? null;
+    point = parts.find((geom: any) => geom?.getGeometryType?.() === 'Point') ?? null;
+  } else if (type === 'LineString') {
+    lineString = jtsGeom;
+  } else {
+    return jtsGeom;
+  }
+
+  if (lineString && point) {
+    return TS.collect([lineString, point]);
+  }
+
+  if (!lineString) return jtsGeom;
+
+  const segments = TS.segments(lineString);
+  if (!segments.length) return jtsGeom;
+
+  const minLength = Math.min(...segments.map((segment: any) => segment.getLength()));
+  const width = Math.min(minLength / 2, resolution * 50);
+  const start = TS.coordinate(TS.startPoint(lineString));
+  const angle = segments[0].angle() - TS.PI_OVER_2;
+  const pointCoord = TS.projectCoordinate(start)([angle, width / 2]);
+  const generatedPoint = TS.point(pointCoord);
+
+  return TS.collect([lineString, generatedPoint]);
+}
+
+function prepareGeometryForSource(source: StyleSource, jtsGeom: any, resolution: number): any {
+  if (source === 'corridor') {
+    return normalizeCorridorGeometry(jtsGeom, resolution);
+  }
+  return jtsGeom;
+}
+
 export type StyleDescriptor = {
   id: string;
   geometry: any;      // jsts Geometry
   [key: string]: any; // extra style props (text, shape, etc.)
 };
+
+type LabelSpec = Record<string, any>;
+
+const ECHELON_TEXT: Record<string, string> = {
+  A: '(+)',
+  B: 'o',
+  C: 'oo',
+  D: 'ooo',
+  E: '|',
+  F: '||',
+  G: '|||',
+  H: 'X',
+  I: 'XX',
+  J: 'XXX',
+  K: 'XXXX',
+  L: 'XXXXX',
+  M: 'XXXXXX',
+  N: '++',
+};
+
+function flattenSpecs(input: any): LabelSpec[] {
+  if (!Array.isArray(input)) return input && typeof input === 'object' ? [input] : [];
+  return input.flatMap((entry) => flattenSpecs(entry));
+}
+
+function getEchelonText(sidc: string): string {
+  if (!sidc || sidc.length < 12) return '';
+  return ECHELON_TEXT[sidc[11]] ?? '';
+}
+
+function normalizeModifierContext(input: Record<string, any> = {}): Record<string, any> {
+  const modifiers =
+    input.modifiers && typeof input.modifiers === 'object'
+      ? (input.modifiers as Record<string, any>)
+      : {};
+
+  return {
+    ...input,
+    ...modifiers,
+  };
+}
+
+function stringifyLabelValue(value: unknown): string | null {
+  if (value === null || value === undefined || value === false) return null;
+  const text = String(value).trim();
+  return text ? text : null;
+}
+
+function evaluateTextField(
+  textField: unknown,
+  context: { modifiers: Record<string, any>; echelon: string },
+): string | null {
+  if (Array.isArray(textField)) {
+    const lines = textField
+      .map((entry) => evaluateTextField(entry, context))
+      .filter((entry): entry is string => !!entry);
+    return lines.length > 0 ? lines.join('\n') : null;
+  }
+
+  if (typeof textField !== 'string') {
+    return stringifyLabelValue(textField);
+  }
+
+  const expression = textField.trim();
+  if (!expression) return null;
+
+  if (/^[A-Za-z_$][A-Za-z0-9_$]*$/.test(expression)) {
+    if (expression === 'echelon') return stringifyLabelValue(context.echelon);
+    return stringifyLabelValue(context.modifiers[expression]);
+  }
+
+  try {
+    const evaluator = new Function(
+      'modifiers',
+      'echelon',
+      `return (${expression});`,
+    ) as (modifiers: Record<string, any>, echelon: string) => unknown;
+    return stringifyLabelValue(evaluator(context.modifiers, context.echelon));
+  } catch {
+    const fallbackKey = expression.replace(/^modifiers\./, '');
+    return stringifyLabelValue(context.modifiers[fallbackKey]);
+  }
+}
+
+function evaluateLabelSpecs(
+  specs: LabelSpec[],
+  context: { modifiers: Record<string, any>; echelon: string },
+): StyleDescriptor[] {
+  return specs.reduce<StyleDescriptor[]>((acc, spec) => {
+    if (!spec || typeof spec !== 'object') return acc;
+    if (!Object.prototype.hasOwnProperty.call(spec, 'text-field')) {
+      acc.push(spec as StyleDescriptor);
+      return acc;
+    }
+
+    const resolvedText = evaluateTextField(spec['text-field'], context);
+    if (!resolvedText) return acc;
+
+    acc.push({
+      ...(spec as StyleDescriptor),
+      'text-field': resolvedText,
+    });
+    return acc;
+  }, []);
+}
+
+function getLinePlacementGeometry(jtsGeom: any): any {
+  const geometryType = jtsGeom?.getGeometryType?.();
+  if (geometryType !== 'MultiLineString') return jtsGeom;
+  if (typeof jtsGeom.getNumGeometries !== 'function' || jtsGeom.getNumGeometries() === 0) {
+    return jtsGeom;
+  }
+
+  let longest = jtsGeom.getGeometryN(0);
+  for (let i = 1; i < jtsGeom.getNumGeometries(); i++) {
+    const candidate = jtsGeom.getGeometryN(i);
+    if ((candidate?.getLength?.() ?? 0) > (longest?.getLength?.() ?? 0)) {
+      longest = candidate;
+    }
+  }
+  return longest;
+}
+
+function computeLineLabelDescriptors(
+  paramSidc: string,
+  sidc: string,
+  jtsGeom: any,
+  contextInput: Record<string, any>,
+): StyleDescriptor[] {
+  const rawSpecs = flattenSpecs((lineLabelRegistry as Record<string, any>)[paramSidc] ?? []);
+  if (rawSpecs.length === 0) return [];
+
+  try {
+    const placementGeometry = getLinePlacementGeometry(jtsGeom);
+    const placedSpecs = flattenSpecs(linePlacement(placementGeometry)(rawSpecs));
+    return evaluateLabelSpecs(placedSpecs, {
+      modifiers: normalizeModifierContext(contextInput),
+      echelon: getEchelonText(sidc),
+    });
+  } catch (err) {
+    console.warn(`[tacticalStyles] line label placement failed for ${paramSidc}:`, err);
+    return [];
+  }
+}
 
 /**
  * Look up and call the Odin style function for a given parameterized SIDC.
@@ -218,29 +558,82 @@ export type StyleDescriptor = {
  */
 const DEFAULT_STYLE: StyleFn = ({ geometry }) => [{ id: 'style:2525c/default-stroke', geometry }];
 
+type ResolvedStyleDescriptors = {
+  descriptors: StyleDescriptor[];
+  source: StyleSource;
+  matchedKey: string;
+  geometry: any;
+};
+
 export function computeStyleDescriptors(
   paramSidc: string,
   jtsGeom: any,
   resolution = 30,
-): StyleDescriptor[] | null {
-  const fn = STYLE_REGISTRY[paramSidc] ?? DEFAULT_STYLE;
+): ResolvedStyleDescriptors | null {
+  const candidates = buildSidcLookupCandidates(paramSidc);
+  const sources = getPreferredStyleSources(jtsGeom);
+
+  for (const candidate of candidates) {
+    for (const source of sources) {
+      const fn = getStyleFnFromSource(source, candidate);
+      if (!fn) continue;
+
+      const preparedGeometry = prepareGeometryForSource(source, jtsGeom, resolution);
+
+      try {
+        const ctx = {
+          TS,
+          geometry: preparedGeometry,
+          resolution,
+          PI: Math.PI,
+          PI_OVER_2: Math.PI / 2,
+          PI_OVER_3: Math.PI / 3,
+          DEG2RAD: Math.PI / 180,
+          read: (g: any) => g,
+        };
+
+        return {
+          descriptors: fn(ctx) as StyleDescriptor[],
+          source,
+          matchedKey: candidate,
+          geometry: preparedGeometry,
+        };
+      } catch (err) {
+        console.warn(`[tacticalStyles] style function failed for ${candidate} via ${source}:`, err);
+      }
+    }
+  }
 
   try {
-    const ctx = {
-      TS,
+    return {
+      descriptors: DEFAULT_STYLE({ geometry: jtsGeom }),
+      source: 'merged',
+      matchedKey: paramSidc,
       geometry: jtsGeom,
-      resolution,
-      PI: Math.PI,
-      PI_OVER_2: Math.PI / 2,
-      PI_OVER_3: Math.PI / 3,
-      // Odin passes a `read` function that converts internal geometry to jts.
-      // Since we already supply a jts geometry, `read` is identity.
-      read: (g: any) => g,
     };
-    return fn(ctx) as StyleDescriptor[];
-  } catch (err) {
-    console.warn(`[tacticalStyles] style function failed for ${paramSidc}:`, err);
-    // Last resort fallback: render geometry as-is
-    return [{ id: 'style:2525c/default-stroke', geometry: jtsGeom }];
+  } catch {
+    return null;
   }
+}
+
+export function computeTacticalDescriptors(
+  paramSidc: string,
+  sidc: string,
+  jtsGeom: any,
+  resolution = 30,
+  contextInput: Record<string, any> = {},
+): StyleDescriptor[] | null {
+  const resolved = computeStyleDescriptors(paramSidc, jtsGeom, resolution);
+  if (!resolved || resolved.descriptors.length === 0) return resolved?.descriptors ?? null;
+
+  const geometryType = resolved.geometry?.getGeometryType?.();
+  if (
+    resolved.source !== 'line' ||
+    (geometryType !== 'LineString' && geometryType !== 'LinearRing' && geometryType !== 'MultiLineString')
+  ) {
+    return resolved.descriptors;
+  }
+
+  const labelDescriptors = computeLineLabelDescriptors(resolved.matchedKey, sidc, resolved.geometry, contextInput);
+  return [...resolved.descriptors, ...labelDescriptors];
 }
