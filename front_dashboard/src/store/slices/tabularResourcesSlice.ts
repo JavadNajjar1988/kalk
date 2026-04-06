@@ -414,6 +414,28 @@ export const updateTabItem = createAsyncThunk(
   }
 );
 
+/** ادغام ردیف‌های برگشتی از ایمپورت اکسل با دادهٔ موجود در localStorage */
+export const mergeImportedResources = createAsyncThunk(
+  'tabularResources/mergeImported',
+  async ({
+    personnel,
+    equipment,
+  }: {
+    personnel: PersonnelItem[];
+    equipment: EquipmentItem[];
+  }) => {
+    if (personnel.length) {
+      const existing = loadFromStorage('personnel') as PersonnelItem[];
+      saveToStorage('personnel', [...personnel, ...existing]);
+    }
+    if (equipment.length) {
+      const existing = loadFromStorage('equipment') as EquipmentItem[];
+      saveToStorage('equipment', [...equipment, ...existing]);
+    }
+    return { personnelCount: personnel.length, equipmentCount: equipment.length };
+  }
+);
+
 export const deleteTabItem = createAsyncThunk(
   'tabularResources/deleteTabItem',
   async ({ tabType, itemId }: { tabType: ResourceType; itemId: string }) => {
@@ -511,6 +533,20 @@ const tabularResourcesSlice = createSlice({
         const { tabType, itemId } = action.payload;
         (state[tabType] as any).items = (state[tabType] as any).items.filter((i: any) => i.id !== itemId);
         state[tabType].pagination.total -= 1;
+      })
+      .addCase(mergeImportedResources.pending, (state) => {
+        state.personnel.loading = true;
+        state.equipment.loading = true;
+        state.personnel.error = null;
+        state.equipment.error = null;
+      })
+      .addCase(mergeImportedResources.fulfilled, (state) => {
+        state.personnel.loading = false;
+        state.equipment.loading = false;
+      })
+      .addCase(mergeImportedResources.rejected, (state, action) => {
+        state.personnel.error = action.error.message || 'خطا در ایمپورت';
+        state.equipment.error = action.error.message || 'خطا در ایمپورت';
       });
   },
 });
