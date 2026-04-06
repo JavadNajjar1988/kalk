@@ -40,6 +40,10 @@ services:
       JWT_ALG: ${JWT_ALG:-HS256}
       ACCESS_TOKEN_EXPIRE_MINUTES: ${ACCESS_TOKEN_EXPIRE_MINUTES:-60}
       ADMIN_BOOTSTRAP_PASSWORD: ${ADMIN_BOOTSTRAP_PASSWORD:-admin123}
+      # Optional: LLM service for Excel mapping (OpenAI-compatible)
+      INTERNAL_LLM_BASE_URL: ${INTERNAL_LLM_BASE_URL:-}
+      INTERNAL_LLM_API_KEY: ${INTERNAL_LLM_API_KEY:-}
+      INTERNAL_LLM_MODEL: ${INTERNAL_LLM_MODEL:-gpt-4o-mini}
       # استفاده از مسیر خارجی یا مسیر محلی
       # اگر EXTERNAL_MAPS_PATH در .env تنظیم شده باشد، از /mnt/external-maps استفاده می‌شود
       # در غیر این صورت از backend/static/maps (مسیر محلی) استفاده می‌شود
