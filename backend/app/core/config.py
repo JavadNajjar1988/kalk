@@ -45,6 +45,11 @@ class Settings(BaseSettings):
     CATALOG_TMP_PATH: str = "backend/static/maps/layers.tmp.json"
     DEFAULT_ROLES: list[str] = ["user"]
 
+    # اختیاری: API سازگار با OpenAI برای نگاشت ستون‌ها (فاز AI)
+    INTERNAL_LLM_BASE_URL: str = ""
+    INTERNAL_LLM_API_KEY: str = ""
+    INTERNAL_LLM_MODEL: str = "gpt-4o-mini"
+
     @field_validator("DISABLE_AUTH", mode="before")
     def _coerce_bool(cls, v):  # type: ignore[no-redef]
         if isinstance(v, str):

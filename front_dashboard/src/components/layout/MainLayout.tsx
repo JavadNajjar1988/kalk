@@ -38,8 +38,7 @@ import {
   ExitToApp,
   Assignment,
   KeyboardBackspace,
-  
-  
+  UploadFile,
 } from '@mui/icons-material';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAppSelector, useAppDispatch } from '@/store';
@@ -158,7 +157,13 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
       path: '/dashboard/resources',
       roles: ['admin', 'commander', 'operator', 'viewer']
     },
-
+    {
+      id: 'data-management',
+      label: 'مدیریت داده',
+      icon: <UploadFile />,
+      path: '/dashboard/data-management',
+      roles: ['admin', 'commander'],
+    },
   ];
 
   const currentRole = user?.role || 'operator';
