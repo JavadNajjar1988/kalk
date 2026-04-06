@@ -21,6 +21,7 @@ import {
   TableChart as TableChartIcon,
 } from '@mui/icons-material';
 import { useAppDispatch } from '@/store';
+import { useNavigate } from 'react-router-dom';
 import { fetchScenarios } from '@/store/slices/scenariosSlice';
 import {
   fetchTabItems,
@@ -44,6 +45,7 @@ function TabPanel({ children, value, index }: { children: React.ReactNode; value
 
 const DataManagementPage: React.FC = () => {
   const dispatch = useAppDispatch();
+  const navigate = useNavigate();
   const [tab, setTab] = useState(0);
   const [loading, setLoading] = useState(false);
   const [aiEnabled, setAiEnabled] = useState(false);
@@ -109,6 +111,7 @@ const DataManagementPage: React.FC = () => {
       setScenarioFile(null);
       setScenarioPreview(null);
       if (scenarioInputRef.current) scenarioInputRef.current.value = '';
+      navigate('/dashboard/scenarios');
     } catch (e) {
       const msg =
         e instanceof ApiClientError
