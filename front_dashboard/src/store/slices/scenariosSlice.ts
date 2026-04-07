@@ -115,6 +115,58 @@ export const deleteScenario = createAsyncThunk(
   }
 );
 
+export const archiveScenario = createAsyncThunk(
+  'scenarios/archiveScenario',
+  async (id: string, { rejectWithValue }) => {
+    try {
+      const result = await scenarioApiService.archiveScenario(id);
+      return { id, scenario: result };
+    } catch (error: any) {
+      const message = error instanceof ApiClientError ? error.message : 'خطا در آرشیو سناریو';
+      return rejectWithValue(message);
+    }
+  }
+);
+
+export const restoreScenario = createAsyncThunk(
+  'scenarios/restoreScenario',
+  async (id: string, { rejectWithValue }) => {
+    try {
+      const result = await scenarioApiService.restoreScenario(id);
+      return { id, scenario: result };
+    } catch (error: any) {
+      const message = error instanceof ApiClientError ? error.message : 'خطا در بازیابی سناریو';
+      return rejectWithValue(message);
+    }
+  }
+);
+
+export const duplicateScenario = createAsyncThunk(
+  'scenarios/duplicateScenario',
+  async ({ id, newName }: { id: string; newName?: string }, { rejectWithValue }) => {
+    try {
+      const result = await scenarioApiService.duplicateScenario(id, newName);
+      return result;
+    } catch (error: any) {
+      const message = error instanceof ApiClientError ? error.message : 'خطا در کپی سناریو';
+      return rejectWithValue(message);
+    }
+  }
+);
+
+export const exportScenarioJson = createAsyncThunk(
+  'scenarios/exportScenarioJson',
+  async (id: string, { rejectWithValue }) => {
+    try {
+      await scenarioApiService.downloadScenarioAsJson(id);
+      return id;
+    } catch (error: any) {
+      const message = error instanceof ApiClientError ? error.message : 'خطا در خروجی سناریو';
+      return rejectWithValue(message);
+    }
+  }
+);
+
 // اسلایس جدید برای اجرای شبیه‌سازی سناریو
 export const startScenarioExecution = createAsyncThunk(
   'scenarios/startExecution',
@@ -405,6 +457,27 @@ const scenariosSlice = createSlice({
       }
     });
     
+    // آرشیو سناریو
+    builder.addCase(archiveScenario.fulfilled, (state, action) => {
+      const { id, scenario } = action.payload;
+      const idx = state.scenarios.findIndex(s => s.id === id);
+      if (idx !== -1) state.scenarios[idx] = scenario;
+      if (state.currentScenario?.id === id) state.currentScenario = scenario;
+    });
+
+    // بازیابی سناریو
+    builder.addCase(restoreScenario.fulfilled, (state, action) => {
+      const { id, scenario } = action.payload;
+      const idx = state.scenarios.findIndex(s => s.id === id);
+      if (idx !== -1) state.scenarios[idx] = scenario;
+      if (state.currentScenario?.id === id) state.currentScenario = scenario;
+    });
+
+    // کپی سناریو
+    builder.addCase(duplicateScenario.fulfilled, (state, action) => {
+      state.scenarios.push(action.payload);
+    });
+
     // تحلیل سناریو
     builder.addCase(analyzeScenario.fulfilled, (state, action) => {
       const { id, result } = action.payload;

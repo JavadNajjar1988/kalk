@@ -8,6 +8,15 @@ export interface ScenarioImageUploadResponse {
   url: string;
 }
 
+/** پاسخ API وضعیت اینترو سناریو (کالک‌نگار) */
+export interface ScenarioIntroStatus {
+  should_show_intro: boolean;
+  intro_replay_available: boolean;
+  intro_video_url: string | null;
+  intro_title: string | null;
+  intro_summary: string | null;
+}
+
 export class ScenarioApiService extends BaseApiClient {
   private useMockApi = (import.meta as any).env?.VITE_USE_MOCK === 'true';
 
@@ -196,6 +205,33 @@ export class ScenarioApiService extends BaseApiClient {
     formData.append('file', file);
     const res = await this.postForm<ScenarioImageUploadResponse>('/scenarios/images', formData);
     return handleApiResponse(res);
+  }
+
+  async getIntroStatus(scenarioId: string): Promise<ScenarioIntroStatus> {
+    if (this.useMockApi) {
+      return {
+        should_show_intro: false,
+        intro_replay_available: false,
+        intro_video_url: null,
+        intro_title: null,
+        intro_summary: null,
+      };
+    }
+    const res = await this.get<ScenarioIntroStatus>(
+      `/scenarios/${encodeURIComponent(scenarioId)}/intro-status`,
+    );
+    return handleApiResponse(res);
+  }
+
+  async recordIntroView(scenarioId: string, neverShowAgain: boolean): Promise<void> {
+    if (this.useMockApi) {
+      return;
+    }
+    const res = await this.post<{ recorded?: boolean }>(
+      `/scenarios/${encodeURIComponent(scenarioId)}/intro-view`,
+      { never_show_again: neverShowAgain },
+    );
+    handleApiResponse(res);
   }
 }
 

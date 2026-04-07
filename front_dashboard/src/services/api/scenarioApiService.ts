@@ -147,7 +147,18 @@ export class ScenarioApiService extends BaseApiClient {
     const description = (data as any)?.description || '';
     // دریافت تصویر از image یا metadata.image
     const image = (data as any)?.image || (data as any)?.metadata?.image;
-    return { name, description, image, content: data } as any;
+    const intro_video_url = (data as any)?.intro_video_url ?? undefined;
+    const intro_title = (data as any)?.intro_title ?? undefined;
+    const intro_summary = (data as any)?.intro_summary ?? undefined;
+    return {
+      name,
+      description,
+      image,
+      intro_video_url,
+      intro_title,
+      intro_summary,
+      content: data,
+    } as any;
   }
 
   private mapScenarioOutToEnhanced(apiItem: any): EnhancedScenario {
@@ -160,6 +171,10 @@ export class ScenarioApiService extends BaseApiClient {
         description: apiItem.description ?? base.description,
         // اضافه کردن image از apiItem یا base
         image: apiItem.image ?? base.image,
+        intro_video_url: apiItem.intro_video_url ?? (base as any).intro_video_url,
+        intro_title: apiItem.intro_title ?? (base as any).intro_title,
+        intro_summary: apiItem.intro_summary ?? (base as any).intro_summary,
+        archived_at: apiItem.archived_at ?? null,
         // اگر image در metadata نباشد، آن را اضافه می‌کنیم
         metadata: {
           ...(base.metadata || {}),
@@ -317,6 +332,20 @@ export class ScenarioApiService extends BaseApiClient {
     }
   }
 
+  /** ویدئوی اینترو کالک‌نگار (mp4 / webm) */
+  async uploadScenarioIntroVideo(file: File): Promise<{ filename: string; url: string }> {
+    try {
+      const response = await this.uploadFile<{ filename: string; url: string }>(
+        '/scenarios/intro-videos',
+        file,
+      );
+      return handleApiResponse(response);
+    } catch (error) {
+      console.error('Failed to upload scenario intro video:', error);
+      throw error;
+    }
+  }
+
   // GET /api/scenarios/:id/export
   async exportScenario(id: string, options?: ExportOptions): Promise<{ url: string; filename: string }> {
     try {
@@ -381,25 +410,51 @@ export class ScenarioApiService extends BaseApiClient {
     }
   }
 
-  // Duplicate scenario
+  // Duplicate scenario (uses backend endpoint)
   async duplicateScenario(id: string, newName?: string): Promise<EnhancedScenario> {
     try {
-      const originalScenario = await this.getScenarioById(id);
-      const { id: _, createdAt, updatedAt, ...scenarioData } = originalScenario;
-      
-      // ساخت سناریوی کپی شده با تمام محتوا (بدون id, createdAt, updatedAt)
-      const duplicatedScenario = {
-        ...scenarioData,
-        name: newName || `${originalScenario.name} (Copy)`,
-      } as Omit<EnhancedScenario, 'id' | 'createdAt' | 'updatedAt'>;
-
-      // استفاده مستقیم از buildScenarioPayload برای حفظ تمام محتوا
-      const payload = this.buildScenarioPayload(duplicatedScenario as any);
-      const response = await this.post<any>('/scenarios', payload);
+      const body: Record<string, any> = {};
+      if (newName) body.new_name = newName;
+      const response = await this.post<any>(`/scenarios/${id}/duplicate`, body);
       const data = handleApiResponse(response);
       return this.mapScenarioOutToEnhanced(data);
     } catch (error) {
       console.error(`Failed to duplicate scenario ${id}:`, error);
+      throw error;
+    }
+  }
+
+  // Archive scenario
+  async archiveScenario(id: string): Promise<EnhancedScenario> {
+    try {
+      const response = await this.post<any>(`/scenarios/${id}/archive`, {});
+      const data = handleApiResponse(response);
+      return this.mapScenarioOutToEnhanced(data);
+    } catch (error) {
+      console.error(`Failed to archive scenario ${id}:`, error);
+      throw error;
+    }
+  }
+
+  // Restore scenario
+  async restoreScenario(id: string): Promise<EnhancedScenario> {
+    try {
+      const response = await this.post<any>(`/scenarios/${id}/restore`, {});
+      const data = handleApiResponse(response);
+      return this.mapScenarioOutToEnhanced(data);
+    } catch (error) {
+      console.error(`Failed to restore scenario ${id}:`, error);
+      throw error;
+    }
+  }
+
+  // Get audit history
+  async getScenarioHistory(id: string, limit = 50, offset = 0): Promise<any[]> {
+    try {
+      const response = await this.get<any[]>(`/scenarios/${id}/history`, { limit, offset });
+      return handleApiResponse(response) || [];
+    } catch (error) {
+      console.error(`Failed to fetch scenario history ${id}:`, error);
       throw error;
     }
   }

@@ -9,15 +9,34 @@ from pathlib import Path
 from fastapi import APIRouter, Depends, File, HTTPException, Request, UploadFile, status
 from fastapi.responses import FileResponse
 from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
 from app.core.response import success
-from app.core.security import require_roles
+from app.core.security import get_current_user, require_roles
 from app.deps import DbSession
 from app.models.scenario import Scenario
+from app.models.scenario_audit_log import ScenarioAuditLog
+from app.models.scenario_intro_view import ScenarioIntroView
+from app.models.user import User
 from app.schemas.scenario import ScenarioCreate, ScenarioOut, ScenarioUpdate
 from app.realtime.manager import manager
 from pydantic import BaseModel, Field
+import logging
+
+logger = logging.getLogger(__name__)
+
+
+async def _audit(db: AsyncSession, scenario_id: str, actor: dict, action: str, diff: dict | None = None):
+    user_id: str | None = actor.get("user_id") or None
+    db.add(
+        ScenarioAuditLog(
+            scenario_id=scenario_id,
+            actor_user_id=user_id,
+            action=action,
+            payload_diff=diff,
+        )
+    )
 
 
 router = APIRouter(prefix="/scenarios", tags=["scenarios"])
@@ -27,14 +46,50 @@ if not SCENARIO_IMAGE_DIR.is_absolute():
     SCENARIO_IMAGE_DIR = Path.cwd() / SCENARIO_IMAGE_DIR
 SCENARIO_IMAGE_DIR.mkdir(parents=True, exist_ok=True)
 
+SCENARIO_INTRO_VIDEO_DIR = Path(settings.SCENARIO_INTRO_VIDEO_DIR)
+if not SCENARIO_INTRO_VIDEO_DIR.is_absolute():
+    SCENARIO_INTRO_VIDEO_DIR = Path.cwd() / SCENARIO_INTRO_VIDEO_DIR
+SCENARIO_INTRO_VIDEO_DIR.mkdir(parents=True, exist_ok=True)
+
 ALLOWED_IMAGE_EXTENSIONS = {".jpg", ".jpeg", ".png", ".webp", ".gif"}
+ALLOWED_INTRO_VIDEO_EXTENSIONS = {".mp4", ".webm"}
 MAX_IMAGE_SIZE_BYTES = 5 * 1024 * 1024
+MAX_INTRO_VIDEO_SIZE_BYTES = 50 * 1024 * 1024  # 50 MB
 MAX_SCENARIO_FILE_SIZE_BYTES = 25 * 1024 * 1024  # 25 MB
 
 
+async def _resolve_user_id(db: AsyncSession, user: dict) -> str:
+    uid = user.get("user_id")
+    if uid:
+        return str(uid)
+    if settings.DISABLE_AUTH:
+        r = await db.execute(select(User).where(User.username == "admin").limit(1))
+        u = r.scalar_one_or_none()
+        if u:
+            return u.id
+    username = user.get("username")
+    if not username:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid authentication",
+        )
+    r = await db.execute(select(User.id).where(User.username == username))
+    row = r.scalar_one_or_none()
+    if not row:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="User not found",
+        )
+    return row
+
+
 @router.get("", response_model=dict)
-async def list_scenarios(db: DbSession):
-    result = await db.execute(select(Scenario).order_by(Scenario.modified.desc()))
+async def list_scenarios(db: DbSession, include_archived: bool = False):
+    stmt = select(Scenario)
+    if not include_archived:
+        stmt = stmt.where(Scenario.archived_at.is_(None))
+    stmt = stmt.order_by(Scenario.modified.desc())
+    result = await db.execute(stmt)
     items = result.scalars().all()
     return success([ScenarioOut.model_validate(i).model_dump() for i in items])
 
@@ -244,6 +299,167 @@ async def import_scenario(db: DbSession, file: UploadFile = File(...)):
     return success(ScenarioOut.model_validate(obj).model_dump())
 
 
+@router.post(
+    "/intro-videos",
+    response_model=dict,
+    dependencies=[Depends(require_roles("SUPER_ADMIN", "COMMANDER"))],
+)
+async def upload_scenario_intro_video(request: Request, file: UploadFile = File(...)):
+    if not file.filename:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Video file is required"
+        )
+    ext = Path(file.filename).suffix.lower()
+    if ext not in ALLOWED_INTRO_VIDEO_EXTENSIONS:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Unsupported video type (use mp4 or webm)",
+        )
+    unique_filename = f"{uuid.uuid4().hex}{ext}"
+    target_path = SCENARIO_INTRO_VIDEO_DIR / unique_filename
+    file_size: int | None = None
+    try:
+        file.file.seek(0, 2)
+        file_size = file.file.tell()
+        file.file.seek(0)
+    except Exception:
+        file_size = None
+    if file_size is not None and file_size > MAX_INTRO_VIDEO_SIZE_BYTES:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Video file too large (max 50 MB)",
+        )
+    try:
+        file.file.seek(0)
+        with target_path.open("wb") as buffer:
+            shutil.copyfileobj(file.file, buffer)
+    except Exception as exc:
+        if target_path.exists():
+            try:
+                target_path.unlink()
+            except Exception:
+                pass
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to save video: {exc}",
+        ) from exc
+    finally:
+        await file.close()
+    video_url = request.url_for("get_scenario_intro_video", filename=unique_filename)
+    return success({"filename": unique_filename, "url": str(video_url)})
+
+
+@router.get("/intro-videos/{filename}", response_class=FileResponse)
+async def get_scenario_intro_video(filename: str):
+    if not filename:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Video name is required"
+        )
+    safe_name = Path(filename).name
+    if safe_name != filename:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid video name"
+        )
+    video_path = SCENARIO_INTRO_VIDEO_DIR / safe_name
+    if not video_path.exists():
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Video not found")
+    return FileResponse(
+        video_path,
+        media_type="video/mp4" if safe_name.lower().endswith(".mp4") else "video/webm",
+    )
+
+
+class ScenarioIntroStatusOut(BaseModel):
+    should_show_intro: bool
+    intro_replay_available: bool
+    intro_video_url: str | None = None
+    intro_title: str | None = None
+    intro_summary: str | None = None
+
+
+@router.get("/{scenario_id}/intro-status", response_model=dict)
+async def get_scenario_intro_status(
+    scenario_id: str,
+    db: DbSession,
+    user: dict = Depends(get_current_user),
+):
+    obj = await db.get(Scenario, scenario_id)
+    if not obj:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Scenario not found")
+    video = (obj.intro_video_url or "").strip()
+    if not video:
+        return success(
+            ScenarioIntroStatusOut(
+                should_show_intro=False,
+                intro_replay_available=False,
+                intro_video_url=None,
+                intro_title=obj.intro_title,
+                intro_summary=obj.intro_summary,
+            ).model_dump()
+        )
+    user_id = await _resolve_user_id(db, user)
+    r = await db.execute(
+        select(ScenarioIntroView).where(
+            ScenarioIntroView.user_id == user_id,
+            ScenarioIntroView.scenario_id == scenario_id,
+        )
+    )
+    view = r.scalar_one_or_none()
+    has_seen = view is not None
+    never = bool(view and view.never_show_again)
+    should_show = not has_seen
+    replay = has_seen and not never
+    return success(
+        ScenarioIntroStatusOut(
+            should_show_intro=should_show,
+            intro_replay_available=replay,
+            intro_video_url=obj.intro_video_url,
+            intro_title=obj.intro_title,
+            intro_summary=obj.intro_summary,
+        ).model_dump()
+    )
+
+
+class ScenarioIntroViewIn(BaseModel):
+    never_show_again: bool = False
+
+
+@router.post("/{scenario_id}/intro-view", response_model=dict)
+async def record_scenario_intro_view(
+    scenario_id: str,
+    payload: ScenarioIntroViewIn,
+    db: DbSession,
+    user: dict = Depends(get_current_user),
+):
+    obj = await db.get(Scenario, scenario_id)
+    if not obj:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Scenario not found")
+    user_id = await _resolve_user_id(db, user)
+    now = datetime.now(timezone.utc)
+    r = await db.execute(
+        select(ScenarioIntroView).where(
+            ScenarioIntroView.user_id == user_id,
+            ScenarioIntroView.scenario_id == scenario_id,
+        )
+    )
+    existing = r.scalar_one_or_none()
+    if existing:
+        existing.seen_at = now
+        if payload.never_show_again:
+            existing.never_show_again = True
+    else:
+        db.add(
+            ScenarioIntroView(
+                user_id=user_id,
+                scenario_id=scenario_id,
+                seen_at=now,
+                never_show_again=payload.never_show_again,
+            )
+        )
+    await db.commit()
+    return success({"scenario_id": scenario_id, "recorded": True})
+
+
 @router.get("/{scenario_id}", response_model=dict)
 async def get_scenario(scenario_id: str, db: DbSession):
     obj = await db.get(Scenario, scenario_id)
@@ -279,7 +495,11 @@ async def update_scenario_basemap(scenario_id: str, payload: ScenarioBasemapUpda
 
 
 @router.post("", status_code=status.HTTP_201_CREATED, response_model=dict, dependencies=[Depends(require_roles("SUPER_ADMIN", "COMMANDER"))])
-async def create_scenario(payload: ScenarioCreate, db: DbSession):
+async def create_scenario(
+    payload: ScenarioCreate,
+    db: DbSession,
+    user: dict = Depends(get_current_user),
+):
     now = datetime.now(timezone.utc)
     obj = Scenario(
         id=str(uuid.uuid4()),
@@ -291,6 +511,7 @@ async def create_scenario(payload: ScenarioCreate, db: DbSession):
         modified=now,
     )
     db.add(obj)
+    await _audit(db, obj.id, user, "create", {"name": obj.name})
     await db.commit()
     await db.refresh(obj)
     await manager.broadcast("scenarios", {"type": "scenario_created", "data": ScenarioOut.model_validate(obj).model_dump()})
@@ -298,14 +519,22 @@ async def create_scenario(payload: ScenarioCreate, db: DbSession):
 
 
 @router.put("/{scenario_id}", response_model=dict, dependencies=[Depends(require_roles("SUPER_ADMIN", "COMMANDER"))])
-async def update_scenario(scenario_id: str, payload: ScenarioUpdate, db: DbSession):
+async def update_scenario(
+    scenario_id: str,
+    payload: ScenarioUpdate,
+    db: DbSession,
+    user: dict = Depends(get_current_user),
+):
     obj = await db.get(Scenario, scenario_id)
     if not obj:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Scenario not found")
     data = payload.model_dump(exclude_unset=True)
+    changed_keys = {k for k, v in data.items() if getattr(obj, k, None) != v}
     for k, v in data.items():
         setattr(obj, k, v)
     obj.modified = datetime.now(timezone.utc)
+    if changed_keys:
+        await _audit(db, scenario_id, user, "update", {"fields": list(changed_keys)})
     await db.commit()
     await db.refresh(obj)
     await manager.broadcast("scenarios", {"type": "scenario_updated", "data": ScenarioOut.model_validate(obj).model_dump()})
@@ -313,13 +542,165 @@ async def update_scenario(scenario_id: str, payload: ScenarioUpdate, db: DbSessi
 
 
 @router.delete("/{scenario_id}", status_code=status.HTTP_200_OK, dependencies=[Depends(require_roles("SUPER_ADMIN"))])
-async def delete_scenario(scenario_id: str, db: DbSession):
+async def delete_scenario(
+    scenario_id: str,
+    db: DbSession,
+    user: dict = Depends(get_current_user),
+):
     obj = await db.get(Scenario, scenario_id)
     if not obj:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Scenario not found")
+    await _audit(db, scenario_id, user, "delete", {"name": obj.name})
     await db.delete(obj)
     await db.commit()
     await manager.broadcast("scenarios", {"type": "scenario_deleted", "data": {"id": scenario_id}})
     return success({"id": scenario_id}, message="Deleted")
+
+
+# --------------- Archive / Restore ---------------
+
+@router.post(
+    "/{scenario_id}/archive",
+    response_model=dict,
+    dependencies=[Depends(require_roles("SUPER_ADMIN", "COMMANDER"))],
+)
+async def archive_scenario(
+    scenario_id: str,
+    db: DbSession,
+    user: dict = Depends(get_current_user),
+):
+    obj = await db.get(Scenario, scenario_id)
+    if not obj:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Scenario not found")
+    if obj.archived_at is not None:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Already archived")
+    obj.archived_at = datetime.now(timezone.utc)
+    obj.modified = obj.archived_at
+    await _audit(db, scenario_id, user, "archive")
+    await db.commit()
+    await db.refresh(obj)
+    await manager.broadcast("scenarios", {"type": "scenario_archived", "data": ScenarioOut.model_validate(obj).model_dump()})
+    return success(ScenarioOut.model_validate(obj).model_dump())
+
+
+@router.post(
+    "/{scenario_id}/restore",
+    response_model=dict,
+    dependencies=[Depends(require_roles("SUPER_ADMIN", "COMMANDER"))],
+)
+async def restore_scenario(
+    scenario_id: str,
+    db: DbSession,
+    user: dict = Depends(get_current_user),
+):
+    obj = await db.get(Scenario, scenario_id)
+    if not obj:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Scenario not found")
+    if obj.archived_at is None:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Scenario is not archived")
+    obj.archived_at = None
+    obj.modified = datetime.now(timezone.utc)
+    await _audit(db, scenario_id, user, "restore")
+    await db.commit()
+    await db.refresh(obj)
+    await manager.broadcast("scenarios", {"type": "scenario_restored", "data": ScenarioOut.model_validate(obj).model_dump()})
+    return success(ScenarioOut.model_validate(obj).model_dump())
+
+
+# --------------- Duplicate ---------------
+
+class ScenarioDuplicateIn(BaseModel):
+    new_name: str | None = None
+
+
+@router.post(
+    "/{scenario_id}/duplicate",
+    status_code=status.HTTP_201_CREATED,
+    response_model=dict,
+    dependencies=[Depends(require_roles("SUPER_ADMIN", "COMMANDER"))],
+)
+async def duplicate_scenario(
+    scenario_id: str,
+    db: DbSession,
+    user: dict = Depends(get_current_user),
+    payload: ScenarioDuplicateIn | None = None,
+):
+    obj = await db.get(Scenario, scenario_id)
+    if not obj:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Scenario not found")
+    now = datetime.now(timezone.utc)
+    new_name = (payload.new_name if payload and payload.new_name else f"{obj.name} (Copy)")[:200]
+    clone = Scenario(
+        id=str(uuid.uuid4()),
+        name=new_name,
+        description=obj.description,
+        image=obj.image,
+        intro_video_url=obj.intro_video_url,
+        intro_title=obj.intro_title,
+        intro_summary=obj.intro_summary,
+        content=obj.content,
+        created=now,
+        modified=now,
+    )
+    db.add(clone)
+    await _audit(db, clone.id, user, "duplicate", {"source_id": scenario_id})
+    await db.commit()
+    await db.refresh(clone)
+    await manager.broadcast("scenarios", {"type": "scenario_created", "data": ScenarioOut.model_validate(clone).model_dump()})
+    return success(ScenarioOut.model_validate(clone).model_dump())
+
+
+# --------------- Export (JSON) ---------------
+
+@router.get(
+    "/{scenario_id}/export",
+    response_model=dict,
+)
+async def export_scenario(scenario_id: str, db: DbSession):
+    obj = await db.get(Scenario, scenario_id)
+    if not obj:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Scenario not found")
+    payload = ScenarioOut.model_validate(obj).model_dump()
+    payload["content"] = obj.content
+    for k, v in payload.items():
+        if isinstance(v, datetime):
+            payload[k] = v.isoformat()
+    return success(payload)
+
+
+# --------------- Audit History ---------------
+
+class AuditLogOut(BaseModel):
+    id: str
+    scenario_id: str
+    actor_user_id: str | None = None
+    action: str
+    payload_diff: dict | None = None
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+@router.get("/{scenario_id}/history", response_model=dict)
+async def get_scenario_history(
+    scenario_id: str,
+    db: DbSession,
+    limit: int = 50,
+    offset: int = 0,
+):
+    obj = await db.get(Scenario, scenario_id)
+    if not obj:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Scenario not found")
+    stmt = (
+        select(ScenarioAuditLog)
+        .where(ScenarioAuditLog.scenario_id == scenario_id)
+        .order_by(ScenarioAuditLog.created_at.desc())
+        .offset(offset)
+        .limit(min(limit, 200))
+    )
+    result = await db.execute(stmt)
+    items = result.scalars().all()
+    return success([AuditLogOut.model_validate(i).model_dump() for i in items])
 
 

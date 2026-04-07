@@ -40,6 +40,7 @@ class Settings(BaseSettings):
     TILESERVER_URL: str = "http://127.0.0.1:8480"
     FILESYSTEM_TILE_ROOT: str = "sat"
     SCENARIO_IMAGE_DIR: str = "backend/static/scenarios/images"
+    SCENARIO_INTRO_VIDEO_DIR: str = "backend/static/scenarios/intro-videos"
     # SDI catalog
     CATALOG_PATH: str = "backend/static/maps/layers.json"
     CATALOG_TMP_PATH: str = "backend/static/maps/layers.tmp.json"

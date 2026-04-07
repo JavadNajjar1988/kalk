@@ -228,7 +228,29 @@ export const translations = {
         phases: 'فازها',
         environment: 'شرایط محیطی',
         analysis: 'تحلیل',
-        settings: 'تنظیمات'
+        intro: 'اینترو کالک‌نگار',
+        settings: 'تنظیمات',
+        history: 'تاریخچه',
+      },
+
+      intro: {
+        title: 'اینترو سناریو (کالک‌نگار)',
+        description:
+          'ویدئوی معرفی و متن خلاصه هنگام ورود کاربر به سناریو در کالک‌نگار به‌صورت پاپ‌آپ نمایش داده می‌شود (بار اول؛ با امکان رد کردن و عدم نمایش مجدد).',
+        hint: 'فرمت‌های مجاز: MP4 یا WebM. حداکثر حجم در سرور ۵۰ مگابایت. طول پیشنهادی ۶۰–۹۰ ثانیه.',
+        uploadButton: 'انتخاب و آپلود ویدئو',
+        videoUrlLabel: 'آدرس ویدئو',
+        videoUrlHelper: 'پس از آپلود به‌صورت خودکار پر می‌شود؛ در صورت نیاز می‌توانید URL دیگری قرار دهید.',
+        introTitleLabel: 'عنوان اینترو',
+        summaryLabel: 'خلاصه (هر خط یک نکته)',
+        summaryHelper: 'چند خط کوتاه؛ در پاپ‌آپ به‌صورت فهرست نمایش داده می‌شود.',
+        saveButton: 'ذخیره اینترو',
+        uploadSuccess: 'ویدئو با موفقیت آپلود شد',
+        uploadError: 'خطا در آپلود ویدئو',
+        saveSuccess: 'تنظیمات اینترو ذخیره شد',
+        saveError: 'خطا در ذخیره اینترو',
+        videoTypeError: 'فقط فایل mp4 یا webm مجاز است',
+        videoSizeError: 'حجم فایل بیش از ۵۰ مگابایت است',
       },
 
       // صفحه جزئیات سناریو
@@ -334,8 +356,22 @@ export const translations = {
       // اکشن‌ها
       actions: {
         save: 'ذخیره تغییرات',
-        export: 'خروجی گرفتن',
-        import: 'وارد کردن'
+        export: 'خروجی JSON',
+        import: 'وارد کردن',
+        archive: 'آرشیو',
+        restore: 'بازیابی',
+        duplicate: 'کپی سناریو',
+        launch: 'باز کردن در کالک‌نگار',
+        archiveSuccess: 'سناریو آرشیو شد',
+        archiveError: 'خطا در آرشیو سناریو',
+        restoreSuccess: 'سناریو بازیابی شد',
+        restoreError: 'خطا در بازیابی سناریو',
+        duplicateSuccess: 'سناریو کپی شد',
+        duplicateError: 'خطا در کپی سناریو',
+        exportSuccess: 'خروجی JSON دانلود شد',
+        exportError: 'خطا در خروجی سناریو',
+        deleteSuccess: 'سناریو حذف شد',
+        deleteError: 'خطا در حذف سناریو',
       },
 
       // نوار ابزار
@@ -388,7 +424,37 @@ export const translations = {
         message: 'آیا از حذف سناریوی "{name}" اطمینان دارید؟',
         warning: 'این عملیات غیرقابل بازگشت است',
         cancelButton: 'انصراف',
-        confirmButton: 'حذف'
+        confirmButton: 'حذف',
+        typeToConfirm: 'برای تأیید نام سناریو را تایپ کنید',
+      },
+
+      archiveDialog: {
+        title: 'آرشیو سناریو',
+        message: 'سناریوی "{name}" آرشیو می‌شود و از لیست اصلی مخفی می‌شود. بعداً می‌توانید بازیابی کنید.',
+        confirmButton: 'آرشیو',
+      },
+
+      history: {
+        title: 'تاریخچه تغییرات',
+        noHistory: 'هیچ تاریخچه‌ای ثبت نشده است',
+        action: 'عملیات',
+        actor: 'کاربر',
+        date: 'تاریخ',
+        details: 'جزئیات',
+        actions: {
+          create: 'ایجاد',
+          update: 'ویرایش',
+          delete: 'حذف',
+          archive: 'آرشیو',
+          restore: 'بازیابی',
+          duplicate: 'کپی',
+        },
+      },
+
+      managedInKalknegar: {
+        title: 'این بخش در کالک‌نگار مدیریت می‌شود',
+        description: 'برای ویرایش این بخش، سناریو را در کالک‌نگار باز کنید.',
+        launchButton: 'باز کردن در کالک‌نگار',
       },
 
       // آمار
@@ -979,6 +1045,33 @@ export const translations = {
         warning: 'This action is irreversible.',
         cancelButton: 'Cancel',
         confirmButton: 'Delete',
+        typeToConfirm: 'Type scenario name to confirm',
+      },
+      archiveDialog: {
+        title: 'Archive Scenario',
+        message: 'Scenario "{name}" will be archived and hidden from the main list. You can restore it later.',
+        confirmButton: 'Archive',
+      },
+      history: {
+        title: 'Change History',
+        noHistory: 'No history recorded yet',
+        action: 'Action',
+        actor: 'User',
+        date: 'Date',
+        details: 'Details',
+        actions: {
+          create: 'Create',
+          update: 'Update',
+          delete: 'Delete',
+          archive: 'Archive',
+          restore: 'Restore',
+          duplicate: 'Duplicate',
+        },
+      },
+      managedInKalknegar: {
+        title: 'This section is managed in KalkNegar',
+        description: 'To edit this section, open the scenario in KalkNegar.',
+        launchButton: 'Open in KalkNegar',
       },
       notifications: {
         createSuccess: 'Scenario created successfully',
@@ -988,7 +1081,37 @@ export const translations = {
         deleteSuccess: 'Scenario deleted successfully',
         deleteError: 'Error deleting scenario',
         deleteDemoNotAllowed: 'Demo scenarios cannot be deleted',
-      }
+      },
+      tabs: {
+        timeline: 'Timeline',
+        map: 'Map',
+        units: 'Units',
+        phases: 'Phases',
+        environment: 'Environment',
+        analysis: 'Analysis',
+        intro: 'KalkNegar intro',
+        settings: 'Settings',
+        history: 'History',
+      },
+      intro: {
+        title: 'Scenario intro (KalkNegar)',
+        description:
+          'Intro video and summary shown when a user opens the scenario in KalkNegar (first visit; skippable; optional “do not show again”).',
+        hint: 'Allowed: MP4 or WebM. Max upload size on server: 50 MB. Recommended length: 60–90 seconds.',
+        uploadButton: 'Select and upload video',
+        videoUrlLabel: 'Video URL',
+        videoUrlHelper: 'Filled automatically after upload; you may paste another URL if needed.',
+        introTitleLabel: 'Intro title',
+        summaryLabel: 'Summary (one bullet per line)',
+        summaryHelper: 'Short lines; shown as a list in the popup.',
+        saveButton: 'Save intro',
+        uploadSuccess: 'Video uploaded',
+        uploadError: 'Video upload failed',
+        saveSuccess: 'Intro settings saved',
+        saveError: 'Failed to save intro',
+        videoTypeError: 'Only mp4 or webm files are allowed',
+        videoSizeError: 'File exceeds 50 MB',
+      },
     },
     resources: {
       pageTitle: 'Resource Management',
