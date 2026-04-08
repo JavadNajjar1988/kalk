@@ -9,6 +9,10 @@ import { setCoordinates } from '../geometry'
 import keyequals from '../../ol/style/keyequals'
 import isEqual from 'react-fast-compare'
 
+const scenarioTimeKey = 'scenario:time'
+const isTimedFeatureKey = key => typeof key === 'string' && key.startsWith('timed+feature:')
+const featureIdFromTimedKey = key => key.replace(/^timed\+feature:/, '')
+
 /**
  * Read features from GeoJSON to ol/Feature and
  * create input signals for style calculation.
@@ -23,6 +27,7 @@ const readFeature = R.curry((state, source) => {
   const featureId = feature.getId()
   const layerId = ID.layerId(featureId)
   const { geometry, ...properties } = feature.getProperties()
+  const baseGeometry = source?.geometry
 
   feature.$ = {
 
@@ -35,6 +40,9 @@ const readFeature = R.curry((state, source) => {
     //
     properties: Signal.of(properties, { equals: isEqual }),
     geometry: Signal.of(geometry, { equals: keyequals() }),
+    // baseGeometry must remain GeoJSON (not ol/geom/*).
+    // It's used as the non-time-varying fallback for playback.
+    baseGeometry: Signal.of(baseGeometry, { equals: isEqual }),
     globalStyle: Signal.of(state.styles[ID.defaultStyleId]),
     layerStyle: Signal.of(state.styles[ID.styleId(layerId)] ?? {}),
     featureStyle: Signal.of(state.styles[ID.styleId(featureId)] ?? {}),
@@ -71,6 +79,30 @@ const readFeature = R.curry((state, source) => {
   return feature
 })
 
+function pickTimedGeometry (timedStates, t) {
+  if (!Array.isArray(timedStates) || timedStates.length === 0) return null
+  let best = null
+  for (const s of timedStates) {
+    if (!s || typeof s.t !== 'number') continue
+    if (s.t <= t && s.geometry) best = s.geometry
+    if (s.t > t) break
+  }
+  return best
+}
+
+function applyEffectiveGeometry (state, feature) {
+  const id = feature.getId()
+  const t = typeof state.scenarioTime === 'number' ? state.scenarioTime : Number.MIN_SAFE_INTEGER
+  const timedStates = state.timedFeatures?.[id]
+  const effective = pickTimedGeometry(timedStates, t) ?? feature.$.baseGeometry()
+  if (!effective || !effective.type) return
+  const next = format.readGeometry(effective)
+  if (!next) return
+  feature.internalChange(true)
+  feature.setGeometry(next)
+  feature.internalChange(false)
+}
+
 // Batch operations order:
 //   0 - (del, style+)
 //   1 - (del, feature)
@@ -97,7 +129,9 @@ const selectEvent = select([
   R.propEq(ID.defaultStyleId, 'key'),
   R.compose(ID.isLayerStyleId, R.prop('key')),
   R.compose(ID.isFeatureStyleId, R.prop('key')),
-  R.compose(isCandidateId, R.prop('key'))
+  R.compose(isCandidateId, R.prop('key')),
+  R.propEq(scenarioTimeKey, 'key'),
+  R.compose(isTimedFeatureKey, R.prop('key'))
 ])
 
 /**
@@ -125,6 +159,8 @@ export const featureSource = services => {
   // Load styles and features.
   ;(async () => {
     state.styles = await store.dictionary('style+')
+    state.timedFeatures = await store.dictionary('timed+feature:', featureIdFromTimedKey)
+    state.scenarioTime = await store.value(scenarioTimeKey, Number.MIN_SAFE_INTEGER)
     const tuples = [
       ...await store.tuples(ID.FEATURE_SCOPE),
       ...await store.tuples(ID.MARKER_SCOPE),
@@ -136,6 +172,7 @@ export const featureSource = services => {
       .map(readFeature(state))
       .filter(Boolean)
     source.addFeatures(features)
+    source.getFeatures().forEach(f => applyEffectiveGeometry(state, f))
   })()
 
   // ==> batch event handling
@@ -170,11 +207,35 @@ export const featureSource = services => {
       // It is possible that only properties have changed.
       // Don't set null/undefined geometry!
       const geometry = format.readGeometry(value.geometry)
-      if (geometry) feature.setGeometry(geometry)
+      if (geometry) {
+        feature.$.baseGeometry(value.geometry)
+        applyEffectiveGeometry(state, feature)
+      }
     } else {
       feature = readFeature(state, { id: key, ...value })
       source.addFeature(feature)
+      applyEffectiveGeometry(state, feature)
     }
+  })
+
+  // scenario time + timed geometry updates
+  const [scenarioTimeUpdates, timedFeatureUpdates] = select([
+    R.propEq(scenarioTimeKey, 'key'),
+    R.compose(isTimedFeatureKey, R.prop('key'))
+  ])(events)
+
+  scenarioTimeUpdates.on(({ value }) => {
+    state.scenarioTime = value
+    source.getFeatures().forEach(f => applyEffectiveGeometry(state, f))
+  })
+
+  timedFeatureUpdates.on(({ type, key, value }) => {
+    const featureId = featureIdFromTimedKey(key)
+    if (!state.timedFeatures) state.timedFeatures = {}
+    if (type === 'del') delete state.timedFeatures[featureId]
+    else state.timedFeatures[featureId] = value
+    const f = getFeatureById(featureId)
+    if (f) applyEffectiveGeometry(state, f)
   })
 
   // <== batch event handling

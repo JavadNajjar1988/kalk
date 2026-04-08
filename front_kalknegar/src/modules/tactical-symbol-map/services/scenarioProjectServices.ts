@@ -47,7 +47,14 @@ export async function ensureScenarioTacticalServices({
   const projectUUID = tacticalProjectUUIDForScenarioId(scenarioId);
   const currentServices = servicesStore.getServices();
 
-  if (servicesStore.projectUUID === projectUUID && hasReadyServices(currentServices)) {
+  // Pinia setup-stores expose refs for state fields. Support both "ref" and "plain value" stores.
+  const readMaybeRef = (v: any) => (v && typeof v === "object" && "value" in v ? v.value : v);
+  const writeMaybeRef = (target: any, value: any) => {
+    if (target && typeof target === "object" && "value" in target) target.value = value;
+    else return value;
+  };
+
+  if (readMaybeRef((servicesStore as any).projectUUID) === projectUUID && hasReadyServices(currentServices)) {
     return currentServices;
   }
 
@@ -57,17 +64,18 @@ export async function ensureScenarioTacticalServices({
     await importTacticalSnapshot(projectServices.store, snapshot);
   }
 
-  servicesStore.projectUUID = projectUUID;
-  servicesStore.projectStore = projectServices.projectStore;
-  servicesStore.preferencesStore = projectServices.preferencesStore;
-  servicesStore.sessionStore = projectServices.sessionStore;
-  servicesStore.emitter = projectServices.emitter;
-  servicesStore.store = projectServices.store;
-  servicesStore.featureStore = projectServices.featureStore;
-  servicesStore.searchIndex = projectServices.searchIndex;
-  servicesStore.selection = projectServices.selection;
-  servicesStore.osdDriver = projectServices.osdDriver;
-  servicesStore.ipcRenderer = projectServices.ipcRenderer;
+  // Write into servicesStore so map-layer bootstrapping can observe readiness.
+  (servicesStore as any).projectUUID = writeMaybeRef((servicesStore as any).projectUUID, projectUUID) ?? (servicesStore as any).projectUUID;
+  (servicesStore as any).projectStore = writeMaybeRef((servicesStore as any).projectStore, projectServices.projectStore) ?? (servicesStore as any).projectStore;
+  (servicesStore as any).preferencesStore = writeMaybeRef((servicesStore as any).preferencesStore, projectServices.preferencesStore) ?? (servicesStore as any).preferencesStore;
+  (servicesStore as any).sessionStore = writeMaybeRef((servicesStore as any).sessionStore, projectServices.sessionStore) ?? (servicesStore as any).sessionStore;
+  (servicesStore as any).emitter = writeMaybeRef((servicesStore as any).emitter, projectServices.emitter) ?? (servicesStore as any).emitter;
+  (servicesStore as any).store = writeMaybeRef((servicesStore as any).store, projectServices.store) ?? (servicesStore as any).store;
+  (servicesStore as any).featureStore = writeMaybeRef((servicesStore as any).featureStore, projectServices.featureStore) ?? (servicesStore as any).featureStore;
+  (servicesStore as any).searchIndex = writeMaybeRef((servicesStore as any).searchIndex, projectServices.searchIndex) ?? (servicesStore as any).searchIndex;
+  (servicesStore as any).selection = writeMaybeRef((servicesStore as any).selection, projectServices.selection) ?? (servicesStore as any).selection;
+  (servicesStore as any).osdDriver = writeMaybeRef((servicesStore as any).osdDriver, projectServices.osdDriver) ?? (servicesStore as any).osdDriver;
+  (servicesStore as any).ipcRenderer = writeMaybeRef((servicesStore as any).ipcRenderer, projectServices.ipcRenderer) ?? (servicesStore as any).ipcRenderer;
 
   return projectServices;
 }

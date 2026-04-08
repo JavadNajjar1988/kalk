@@ -133,6 +133,7 @@ const servicesStore = useServicesStore();
 const tacticalInteractionReady = shallowRef(false);
 const tacticalLayersReady = shallowRef(false);
 const tacticalServicesInitInProgress = shallowRef(false);
+const tacticalTimeSyncReady = shallowRef(false);
 
 // Order of select interactions is important. The interaction that is added last
 // will be the one that receives the select event first and can stop the propagation.
@@ -284,6 +285,8 @@ watch(
           services,
           sources,
           styles,
+          recordingStore,
+          getScenarioTime: () => state.currentTime,
         });
         tacticalInteractionReady.value = true;
         olMap.getInteractions().on("add", ({ element }) => {
@@ -299,6 +302,24 @@ watch(
       }
       tacticalLayersReady.value = true;
     }
+
+    // Mark time-sync ready once tactical store exists.
+    if (!tacticalTimeSyncReady.value && services?.store) {
+      tacticalTimeSyncReady.value = true;
+    }
+  },
+  { immediate: true },
+);
+
+watch(
+  () => state.currentTime,
+  (t) => {
+    if (!tacticalTimeSyncReady.value) return;
+    const services = servicesStore.getServices();
+    const tacticalStore = services?.store;
+    if (!tacticalStore) return;
+    // Direct update without undo history.
+    tacticalStore.update(["scenario:time"], [t]);
   },
   { immediate: true },
 );

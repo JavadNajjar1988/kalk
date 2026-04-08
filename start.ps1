@@ -45,6 +45,18 @@ try {
         }
     }
 
+    # Simulator env file is referenced by docker-compose.yml (simulator service).
+    # If it's missing, docker compose will fail early.
+    if (-not (Test-Path ".\simulator\.env")) {
+        if (Test-Path ".\simulator\.env.example") {
+            Write-Host "Creating simulator/.env from simulator/.env.example..." -ForegroundColor Yellow
+            Copy-Item ".\simulator\.env.example" ".\simulator\.env"
+            Write-Host "Created simulator/.env. Review and adjust it if needed." -ForegroundColor Green
+        } else {
+            Write-Warning "simulator/.env.example not found. Create simulator/.env manually if you need the simulator service."
+        }
+    }
+
     Write-Host "`nStarting Docker services..." -ForegroundColor Cyan
 
     if ($Purge) {

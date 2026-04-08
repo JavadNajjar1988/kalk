@@ -54,6 +54,8 @@ export default options => {
     (geometry.complete || (() => {}))(map, feature)
     const geoJSON = writeFeatureObject(feature)
     store.insertGeoJSON([geoJSON])
+    // Notify UI that draw has completed (e.g. close "placement" hints/panels).
+    try { emitter.emit('ui/tactical/draw-complete') } catch {}
     cancel()
   }
 

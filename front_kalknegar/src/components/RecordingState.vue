@@ -27,7 +27,11 @@ const lastRecordingMix = ref<RecordingMix>({ ...DEFAULT_RECORDING_MIX });
 
 const isAnyRecording = computed(
   () =>
-    store.isRecordingHierarchy || store.isRecordingGeometry || store.isRecordingLocation,
+    store.isRecordingHierarchy ||
+    store.isRecordingGeometry ||
+    store.isRecordingLocation ||
+    store.isRecordingTacticalLocation ||
+    store.isRecordingTacticalGeometry,
 );
 
 const activeRecordingLabels = computed(() => {
@@ -35,6 +39,8 @@ const activeRecordingLabels = computed(() => {
   if (store.isRecordingHierarchy) labels.push("سلسلهٔ واحدها");
   if (store.isRecordingLocation) labels.push("موقعیت واحد");
   if (store.isRecordingGeometry) labels.push("هندسهٔ فیچر");
+  if (store.isRecordingTacticalLocation) labels.push("موقعیت نماد تاکتیکی");
+  if (store.isRecordingTacticalGeometry) labels.push("هندسهٔ نماد تاکتیکی");
   return labels;
 });
 
@@ -159,6 +165,29 @@ const toggleRecordingPrefix = () => {
           <span class="flex items-center gap-2">
             <SplinePointer class="h-4 w-4" />
             <span>هندسهٔ فیچر</span>
+          </span>
+        </DropdownMenuCheckboxItem>
+
+        <DropdownMenuSeparator />
+        <DropdownMenuLabel class="text-muted-foreground text-xs">نمادهای تاکتیکی</DropdownMenuLabel>
+
+        <DropdownMenuCheckboxItem
+          v-model="store.isRecordingTacticalLocation"
+          @select.prevent
+        >
+          <span class="flex items-center gap-2">
+            <MapPinned class="h-4 w-4" />
+            <span>موقعیت نماد</span>
+          </span>
+        </DropdownMenuCheckboxItem>
+
+        <DropdownMenuCheckboxItem
+          v-model="store.isRecordingTacticalGeometry"
+          @select.prevent
+        >
+          <span class="flex items-center gap-2">
+            <SplinePointer class="h-4 w-4" />
+            <span>هندسهٔ نماد</span>
           </span>
         </DropdownMenuCheckboxItem>
       </DropdownMenuContent>

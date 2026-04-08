@@ -6,6 +6,7 @@ const TACTICAL_SNAPSHOT_VERSION = 1 as const;
 const SNAPSHOT_PREFIXES = [
   "layer:",
   "feature:",
+  "timed+feature:",
   "marker:",
   "measure:",
   "style+layer:",
