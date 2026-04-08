@@ -390,6 +390,225 @@ def build_template_workbook() -> Workbook:
     return wb
 
 
+# ---------------------------------------------------------------------------
+# Standard sheet definitions (used by transform + export)
+# ---------------------------------------------------------------------------
+
+_STANDARD_SHEETS: dict[str, list[str]] = {
+    "scenario": ["name", "description", "start_time", "time_zone", "symbology_standard"],
+    "events": ["id", "title", "subtitle", "start_time", "lon", "lat"],
+    "units": ["id", "name", "parent_id", "side", "unit_type", "time", "lon", "lat"],
+    "equipment": ["id", "name", "type", "quantity", "unit_id"],
+    "personnel": ["id", "first_name", "last_name", "rank", "specialty", "national_id", "unit_id"],
+}
+
+# Maps AI targetSheet names (lowercase) to canonical Persian sheet names
+_TARGET_TO_SHEET_TITLE: dict[str, str] = {
+    "scenario": "سناریو",
+    "events": "حوادث",
+    "units": "یگان‌ها",
+    "equipment": "تجهیزات",
+    "personnel": "پرسنل",
+}
+
+
+def transform_workbook_with_mapping(wb, mapping: dict[str, Any]) -> Workbook:
+    """
+    Given an arbitrary workbook and an AI mapping dict (sheetMappings + columnMaps),
+    produce a new standard-format workbook that parse_excel_workbook() can consume.
+
+    mapping shape:
+      {
+        "sheetMappings": [{"sourceSheet": "...", "targetSheet": "scenario|events|units|equipment|personnel", "confidence": 0-1}],
+        "columnMaps": [{"targetSheet": "...", "mappings": [{"fromHeader": "...", "toField": "..."}]}]
+      }
+    """
+    sheet_mappings: list[dict[str, Any]] = mapping.get("sheetMappings") or []
+    column_maps: list[dict[str, Any]] = mapping.get("columnMaps") or []
+
+    # Build lookup: targetSheet (lower) -> sourceSheetName
+    source_for_target: dict[str, str] = {}
+    for sm in sheet_mappings:
+        t = _norm_key(sm.get("targetSheet") or "")
+        s = _norm(sm.get("sourceSheet") or "")
+        if t and s:
+            source_for_target[t] = s
+
+    # Build lookup: targetSheet -> {toField (lower) -> fromHeader (original)}
+    col_map_for_target: dict[str, dict[str, str]] = {}
+    for cm in column_maps:
+        t = _norm_key(cm.get("targetSheet") or "")
+        if not t:
+            continue
+        field_map: dict[str, str] = {}
+        for m in cm.get("mappings") or []:
+            to = _norm_key(m.get("toField") or "")
+            frm = _norm(m.get("fromHeader") or "")
+            if to and frm:
+                field_map[to] = frm
+        col_map_for_target[t] = field_map
+
+    new_wb = Workbook()
+    first = True
+
+    for target_key, std_headers in _STANDARD_SHEETS.items():
+        sheet_title = _TARGET_TO_SHEET_TITLE[target_key]
+        if first:
+            ws_new = new_wb.active
+            ws_new.title = sheet_title
+            first = False
+        else:
+            ws_new = new_wb.create_sheet(sheet_title)
+
+        ws_new.append(std_headers)
+
+        source_name = source_for_target.get(target_key)
+        if not source_name:
+            continue
+
+        # Find source worksheet by name (case-insensitive)
+        source_ws = None
+        for sn in wb.sheetnames:
+            if _norm(sn).lower() == _norm(source_name).lower():
+                source_ws = wb[sn]
+                break
+        if source_ws is None:
+            continue
+
+        # Read source headers
+        src_headers: dict[str, int] = {}
+        for col in range(1, source_ws.max_column + 1):
+            val = source_ws.cell(row=1, column=col).value
+            key = _norm_key(str(val) if val is not None else "")
+            if key:
+                src_headers[key] = col
+
+        field_map = col_map_for_target.get(target_key) or {}
+
+        # For each source data row, build a standard row
+        for row_cells in source_ws.iter_rows(min_row=2, values_only=True):
+            if all(x is None or str(x).strip() == "" for x in row_cells):
+                continue
+            row_list = list(row_cells)
+
+            std_row: list[Any] = []
+            for field in std_headers:
+                field_key = _norm_key(field)
+                # Look up the original header that maps to this standard field
+                from_header = field_map.get(field_key)
+                value = None
+                if from_header:
+                    from_key = _norm_key(from_header)
+                    if from_key in src_headers:
+                        col_idx = src_headers[from_key] - 1
+                        value = row_list[col_idx] if col_idx < len(row_list) else None
+                std_row.append(value)
+
+            ws_new.append(std_row)
+
+    return new_wb
+
+
+def export_content_to_workbook(content: dict[str, Any]) -> Workbook:
+    """
+    Convert a parsed scenario content dict back into a standard Excel workbook.
+    Useful for downloading the standardized version after AI import.
+    """
+    wb = Workbook()
+
+    # --- سناریو ---
+    ws0 = wb.active
+    ws0.title = "سناریو"
+    ws0.append(["name", "description", "start_time", "time_zone", "symbology_standard"])
+    ws0.append([
+        content.get("name") or "",
+        content.get("description") or "",
+        content.get("startTime") or "",
+        content.get("timeZone") or "UTC",
+        content.get("symbologyStandard") or "app6",
+    ])
+
+    # --- حوادث ---
+    ws1 = wb.create_sheet("حوادث")
+    ws1.append(["id", "title", "subtitle", "start_time", "lon", "lat"])
+    for ev in content.get("events") or []:
+        geo = ev.get("where", {})
+        coords = geo.get("geometry", {}).get("coordinates") if isinstance(geo, dict) else None
+        lon = coords[0] if coords and len(coords) >= 2 else ""
+        lat = coords[1] if coords and len(coords) >= 2 else ""
+        ws1.append([
+            ev.get("id") or "",
+            ev.get("title") or "",
+            ev.get("subTitle") or "",
+            ev.get("startTime") or "",
+            lon,
+            lat,
+        ])
+
+    # --- یگان‌ها ---
+    ws2 = wb.create_sheet("یگان‌ها")
+    ws2.append(["id", "name", "parent_id", "side", "unit_type", "time", "lon", "lat"])
+    _side_std_to_label = {"3": "friend", "6": "hostile", "4": "neutral", "0": "unknown"}
+
+    def _flatten_units(units: list, parent_id: str = "") -> None:
+        for u in units or []:
+            std_id = u.get("standard_identity") or u.get("standardIdentity") or "3"
+            side_label = _side_std_to_label.get(std_id, "friend")
+            # Find unit_type from sidc (best-effort reverse)
+            sidc = u.get("sidc") or ""
+            unit_type = next(
+                (k for k, v in UNIT_TYPE_SIDC.items() if v == sidc and not k.startswith("ز") and not k.startswith("د") and not k.startswith("پ") and not k.startswith("ه")),
+                "infantry",
+            )
+            state0 = u.get("state", [{}])[0] if u.get("state") else {}
+            loc = state0.get("location") or []
+            lon = loc[0] if len(loc) >= 2 else ""
+            lat = loc[1] if len(loc) >= 2 else ""
+            ws2.append([
+                u.get("id") or "",
+                u.get("name") or "",
+                parent_id,
+                side_label,
+                unit_type,
+                state0.get("t") or "",
+                lon,
+                lat,
+            ])
+            _flatten_units(u.get("subUnits") or [], u.get("id") or "")
+
+    for side in content.get("sides") or []:
+        for group in side.get("groups") or []:
+            _flatten_units(group.get("subUnits") or [])
+
+    # --- تجهیزات ---
+    ws3 = wb.create_sheet("تجهیزات")
+    ws3.append(["id", "name", "type", "quantity", "unit_id"])
+    for eq in content.get("equipment") or []:
+        ws3.append([
+            eq.get("id") or "",
+            eq.get("name") or "",
+            eq.get("type") or "",
+            eq.get("quantity") or 1,
+            eq.get("unitId") or "",
+        ])
+
+    # --- پرسنل ---
+    ws4 = wb.create_sheet("پرسنل")
+    ws4.append(["id", "first_name", "last_name", "rank", "specialty", "national_id", "unit_id"])
+    for p in content.get("personnel") or []:
+        ws4.append([
+            p.get("id") or "",
+            p.get("firstName") or "",
+            p.get("lastName") or "",
+            p.get("rank") or "",
+            p.get("specialty") or "",
+            p.get("nationalId") or "",
+            p.get("unitId") or "",
+        ])
+
+    return wb
+
+
 def parse_resources_workbook(wb) -> tuple[list[dict[str, Any]], list[dict[str, Any]], list[dict[str, Any]]]:
     """
     فقط شیت‌های تجهیزات و پرسنل؛ خروجی برای ادغام در داشبورد (ساختار نزدیک به JSON محلی).

@@ -284,6 +284,12 @@ export type Alert = {
 
 // تایپ‌های گسترش یافته برای سناریو
 export interface EnhancedScenario extends Scenario {
+  /** ویدئوی اینترو کالک‌نگار (URL از API) */
+  intro_video_url?: string | null;
+  intro_title?: string | null;
+  intro_summary?: string | null;
+  /** آرشیو شده */
+  archived_at?: string | null;
   // مراحل سناریو
   phases: ScenarioPhase[];
   // شرایط محیطی

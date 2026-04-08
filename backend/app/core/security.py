@@ -37,7 +37,11 @@ def decode_access_token(token: str) -> dict[str, Any]:
 async def get_current_user(token: str = Depends(oauth2_scheme)) -> dict[str, Any]:
     # در حالت غیرفعال بودن احراز هویت، کاربر فرضی admin با تمام نقش‌ها برمی‌گردد.
     if settings.DISABLE_AUTH:
-        return {"username": "dev", "roles": ["SUPER_ADMIN", "COMMANDER", "VIEWER"]}
+        return {
+            "username": "dev",
+            "roles": ["SUPER_ADMIN", "COMMANDER", "VIEWER"],
+            "user_id": None,
+        }
     
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
@@ -64,7 +68,8 @@ async def get_current_user(token: str = Depends(oauth2_scheme)) -> dict[str, Any
             raise credentials_exception
         # Logging برای debugging
         logger.info(f"JWT decoded - User: {username}, Roles from token (raw): {roles_raw}, Parsed: {roles}")
-        return {"username": username, "roles": roles}
+        user_id = payload.get("uid")
+        return {"username": username, "roles": roles, "user_id": user_id}
     except JWTError:
         raise credentials_exception
 

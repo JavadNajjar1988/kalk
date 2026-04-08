@@ -1,10 +1,14 @@
 <script setup lang="ts">
 import ScenarioEditor from "@/modules/scenarioeditor/ScenarioEditor.vue";
+import ScenarioIntroModal from "@/modules/scenarioeditor/ScenarioIntroModal.vue";
 import { useScenario } from "@/scenariostore";
 import { onBeforeRouteLeave } from "vue-router";
 import { nextTick, onUnmounted, ref, watch } from "vue";
 import { useSelectedItems } from "@/stores/selectedStore";
-import { scenarioApiService } from "@/services/api/scenarioApiService";
+import {
+  scenarioApiService,
+  type ScenarioIntroStatus,
+} from "@/services/api/scenarioApiService";
 import { useDebounceFn, useEventListener } from "@vueuse/core";
 import ScenarioNotFoundPage from "@/modules/scenarioeditor/ScenarioNotFoundPage.vue";
 
@@ -13,6 +17,49 @@ const props = defineProps<{ scenarioId: string }>();
 const { scenario, isReady } = useScenario();
 const localReady = ref(false);
 const scenarioNotFound = ref(false);
+
+const introModalOpen = ref(false);
+const introStatus = ref<ScenarioIntroStatus | null>(null);
+
+function resolveIntroVideoUrl(url: string | null | undefined): string {
+  if (!url?.trim()) return "";
+  const u = url.trim();
+  if (/^https?:\/\//i.test(u)) return u;
+  const rawBase = String((scenarioApiService as any).baseUrl || "/api").replace(/\/+$/, "");
+  try {
+    if (rawBase.startsWith("http")) {
+      return new URL(u.startsWith("/") ? u : `/${u}`, `${rawBase}/`).href;
+    }
+    if (typeof window !== "undefined") {
+      return new URL(u.startsWith("/") ? u : `/${u}`, `${window.location.origin}${rawBase.startsWith("/") ? "" : "/"}${rawBase}/`).href;
+    }
+  } catch {
+    /* ignore */
+  }
+  return u;
+}
+
+async function refreshIntroStatus(scenarioId: string) {
+  try {
+    const st = await scenarioApiService.getIntroStatus(scenarioId);
+    introStatus.value = st;
+    return st;
+  } catch (e) {
+    console.warn("[ScenarioEditorWrapper] intro-status failed:", e);
+    introStatus.value = null;
+    return null;
+  }
+}
+
+async function onIntroComplete(neverShowAgain: boolean) {
+  if (isDemoScenario(props.scenarioId)) return;
+  try {
+    await scenarioApiService.recordIntroView(props.scenarioId, neverShowAgain);
+    await refreshIntroStatus(props.scenarioId);
+  } catch (e) {
+    console.warn("[ScenarioEditorWrapper] intro-view record failed:", e);
+  }
+}
 
 let currentDemo = "";
 const selectedItems = useSelectedItems();
@@ -69,7 +116,11 @@ watch(
   async (newScenarioId) => {
     basemapBaseline.value = null;
     debouncedBroadcastBasemap.cancel?.();
+    introModalOpen.value = false;
+    introStatus.value = null;
     if (isDemoScenario(newScenarioId)) {
+      introModalOpen.value = false;
+      introStatus.value = null;
       const demoId = newScenarioId.replace("demo-", "");
       if (demoId !== currentDemo) {
         await scenario.value.io.loadDemoScenario(demoId);
@@ -153,6 +204,10 @@ watch(
             selectedItems.clear();
             selectedItems.showScenarioInfo.value = true;
             syncBasemapBaselineAfterLoad(newScenarioId);
+            const st = await refreshIntroStatus(newScenarioId);
+            if (st?.should_show_intro && st.intro_video_url) {
+              introModalOpen.value = true;
+            }
           } else {
             console.error('[ScenarioEditorWrapper] Invalid scenario type:', scn.type);
             scenarioNotFound.value = true;
@@ -237,4 +292,22 @@ async function saveScenarioIfNecessary({ saveDemo = false } = {}) {
     :active-scenario="scenario"
   />
   <ScenarioNotFoundPage v-else-if="scenarioNotFound" />
+
+  <ScenarioIntroModal
+    v-if="introStatus?.intro_video_url"
+    v-model:open="introModalOpen"
+    :title="introStatus?.intro_title"
+    :summary="introStatus?.intro_summary"
+    :video-url="resolveIntroVideoUrl(introStatus?.intro_video_url)"
+    @complete="onIntroComplete"
+  />
+
+  <button
+    v-if="localReady && isReady && !isDemoScenario(scenarioId) && introStatus?.intro_replay_available"
+    type="button"
+    class="fixed bottom-6 left-6 z-[100] rounded-full border border-border bg-card px-4 py-2 text-sm font-medium text-foreground shadow-lg hover:bg-muted"
+    @click="introModalOpen = true"
+  >
+    اینترو سناریو
+  </button>
 </template>

@@ -104,6 +104,9 @@ export interface ScenarioRenderSummary {
 
 const DEFAULT_TACTICAL_SIZE = getEnvNumber('VITE_TACTICAL_SYMBOL_SIZE', 72);
 const DEFAULT_MILITARY_SIZE = getEnvNumber('VITE_MILITARY_SYMBOL_SIZE', 80);
+const PUBLIC_BASE_URL = normalizePublicBaseUrl(((import.meta as any).env?.BASE_URL as string | undefined) || '/');
+const FRIENDLY_FIXED_WING_MODEL_PATH = 'Model/aircraft/friendly/scene.glb';
+const HOSTILE_FIXED_WING_MODEL_PATH = 'Model/aircraft/hostile/scene.glb';
 
 const symbolCache = new Map<
   string,
@@ -124,11 +127,77 @@ const unitStateSampleCache = new WeakMap<
 const unitIdCache = new WeakMap<UnitLike, string>();
 let persianFontReadyPromise: Promise<void> | null = null;
 
+interface UnitModelConfig {
+  uri: string;
+  height: number;
+  symbolHeight: number;
+  labelHeight: number;
+  scale: number;
+  minimumPixelSize: number;
+  maximumScale: number;
+  symbolScale: number;
+  labelOffset: Cesium.Cartesian2;
+}
+
 function getEnvNumber(name: string, fallback: number): number {
   const raw = (import.meta as any).env?.[name];
   if (raw === undefined || raw === null) return fallback;
   const parsed = Number(raw);
   return Number.isFinite(parsed) ? parsed : fallback;
+}
+
+function normalizePublicBaseUrl(basePath: string): string {
+  const trimmed = (basePath || '/').trim();
+  if (!trimmed) return '/';
+  const withLeadingSlash = trimmed.startsWith('/') ? trimmed : `/${trimmed}`;
+  return withLeadingSlash.endsWith('/') ? withLeadingSlash : `${withLeadingSlash}/`;
+}
+
+function buildPublicAssetUrl(relativePath: string): string {
+  const normalizedPath = relativePath.replace(/^\/+/, '');
+  return `${PUBLIC_BASE_URL}${normalizedPath}`;
+}
+
+function getNumericSidcPart(
+  sidc: string | undefined | null,
+  start: number,
+  end: number,
+): string {
+  const normalized = sidc?.trim() ?? '';
+  if (!/^\d{20}$/.test(normalized)) return '';
+  return normalized.substring(start, end);
+}
+
+function isHostileNumericSidc(sidc: string | undefined | null): boolean {
+  const standardIdentity = getNumericSidcPart(sidc, 3, 4);
+  return standardIdentity === '5' || standardIdentity === '6';
+}
+
+function getUnitModelConfig(unit: UnitLike): UnitModelConfig | null {
+  const sidc = unit.sidc?.trim();
+  if (!sidc) return null;
+
+  const symbolSet = getNumericSidcPart(sidc, 4, 6);
+  if (symbolSet !== '01') return null;
+
+  const mainIcon = getNumericSidcPart(sidc, 10, 16);
+  if (!mainIcon.startsWith('1101')) return null;
+
+  const uri = buildPublicAssetUrl(
+    isHostileNumericSidc(sidc) ? HOSTILE_FIXED_WING_MODEL_PATH : FRIENDLY_FIXED_WING_MODEL_PATH,
+  );
+
+  return {
+    uri,
+    height: 120,
+    symbolHeight: 210,
+    labelHeight: 250,
+    scale: 1,
+    minimumPixelSize: 72,
+    maximumScale: 240,
+    symbolScale: 0.56,
+    labelOffset: new Cesium.Cartesian2(-76, -6),
+  };
 }
 
 function getRenderedMilSymbol(
@@ -1164,6 +1233,29 @@ function createUnitPositionCallback(
   }, false);
 }
 
+function createUnitSampledPositionProperty(
+  unit: UnitLike,
+  height = 0,
+): Cesium.SampledPositionProperty | null {
+  const samples = getExpandedUnitSamples(unit);
+  if (samples.length < 2) return null;
+
+  const property = new Cesium.SampledPositionProperty();
+  samples.forEach((sample) => {
+    property.addSample(
+      Cesium.JulianDate.fromDate(new Date(sample.tMs)),
+      toCartesian(sample.pos.lon, sample.pos.lat, height),
+    );
+  });
+  property.setInterpolationOptions({
+    interpolationDegree: 1,
+    interpolationAlgorithm: Cesium.LinearApproximation,
+  });
+  property.forwardExtrapolationType = Cesium.ExtrapolationType.HOLD;
+  property.backwardExtrapolationType = Cesium.ExtrapolationType.HOLD;
+  return property;
+}
+
 function addTacticalGeometry(
   viewer: Cesium.Viewer,
   geometry: GeoJsonGeometryLike,
@@ -1554,40 +1646,77 @@ export async function addScenarioSymbols(
     units.forEach((unit, index) => {
       if (!unit.sidc) return;
 
+      const modelConfig = getUnitModelConfig(unit);
       const image = unitSymbolDataUri(
         unit.sidc,
         DEFAULT_MILITARY_SIZE,
         unit.symbolOptions,
         unit.textAmplifiers,
       );
-      if (!image) return;
 
       const unitEntityId = `unit-${scenario.id}-${unit.id ?? index}`;
-      const unitPosition = createUnitPositionCallback(viewer, unit);
       const labelText = unit.shortName || unit.name || '';
       const labelImage = labelText ? getUnitLabelImageDataUri(labelText) : null;
+      const modelPosition = modelConfig
+        ? createUnitSampledPositionProperty(unit, modelConfig.height) ??
+          createUnitPositionCallback(viewer, unit, modelConfig.height)
+        : null;
 
-      viewer.entities.add({
-        id: unitEntityId,
-        position: unitPosition,
-        billboard: {
-          image,
-          heightReference: Cesium.HeightReference.CLAMP_TO_GROUND,
-          verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
-          scale: 0.6,
-          disableDepthTestDistance: Number.POSITIVE_INFINITY,
-        },
-      });
+      if (modelConfig) {
+        viewer.entities.add({
+          id: unitEntityId,
+          position: modelPosition!,
+          orientation:
+            modelPosition instanceof Cesium.SampledPositionProperty
+              ? new Cesium.VelocityOrientationProperty(modelPosition)
+              : undefined,
+          model: {
+            uri: modelConfig.uri,
+            scale: modelConfig.scale,
+            minimumPixelSize: modelConfig.minimumPixelSize,
+            maximumScale: modelConfig.maximumScale,
+            heightReference: Cesium.HeightReference.RELATIVE_TO_GROUND,
+            runAnimations: true,
+            incrementallyLoadTextures: true,
+          },
+        });
+      }
+
+      if (image) {
+        viewer.entities.add({
+          id: modelConfig ? `${unitEntityId}-symbol` : unitEntityId,
+          position: createUnitPositionCallback(
+            viewer,
+            unit,
+            modelConfig?.symbolHeight ?? 0,
+          ),
+          billboard: {
+            image,
+            heightReference: modelConfig
+              ? Cesium.HeightReference.RELATIVE_TO_GROUND
+              : Cesium.HeightReference.CLAMP_TO_GROUND,
+            verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
+            scale: modelConfig?.symbolScale ?? 0.6,
+            disableDepthTestDistance: Number.POSITIVE_INFINITY,
+          },
+        });
+      } else if (!modelConfig) {
+        return;
+      }
 
       if (labelImage) {
         viewer.entities.add({
           id: `${unitEntityId}-label`,
-          position: createUnitPositionCallback(viewer, unit, 24),
+          position: createUnitPositionCallback(
+            viewer,
+            unit,
+            modelConfig?.labelHeight ?? 24,
+          ),
           billboard: {
             image: labelImage,
             horizontalOrigin: Cesium.HorizontalOrigin.RIGHT,
             verticalOrigin: Cesium.VerticalOrigin.CENTER,
-            pixelOffset: new Cesium.Cartesian2(-72, -30),
+            pixelOffset: modelConfig?.labelOffset ?? new Cesium.Cartesian2(-72, -30),
             heightReference: Cesium.HeightReference.RELATIVE_TO_GROUND,
             disableDepthTestDistance: Number.POSITIVE_INFINITY,
             scale: 1,
