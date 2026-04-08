@@ -654,14 +654,58 @@ function getUnitPosition(unit: UnitLike): { lon: number; lat: number; height: nu
 
 function parseScenarioTimeToEpochMs(t: any): number | null {
   if (t === undefined || t === null) return null;
+  if (t instanceof Date) {
+    const ms = t.getTime();
+    return Number.isFinite(ms) ? ms : null;
+  }
   if (typeof t === 'number') {
     // Heuristic: assume seconds if it's small; otherwise milliseconds.
     return t < 1e12 ? Math.floor(t * 1000) : Math.floor(t);
   }
   if (typeof t === 'string') {
+    // numeric strings
+    const numeric = Number(t);
+    if (Number.isFinite(numeric)) {
+      return numeric < 1e12 ? Math.floor(numeric * 1000) : Math.floor(numeric);
+    }
     const d = new Date(t);
     const ms = d.getTime();
     return Number.isFinite(ms) ? ms : null;
+  }
+  if (typeof t === 'object') {
+    // Common shapes seen in scenario JSON exports
+    const epochMs =
+      (typeof (t as any).epochMs === 'number' && (t as any).epochMs) ||
+      (typeof (t as any).ms === 'number' && (t as any).ms) ||
+      (typeof (t as any).timeMs === 'number' && (t as any).timeMs) ||
+      (typeof (t as any).timestampMs === 'number' && (t as any).timestampMs) ||
+      null;
+    if (epochMs !== null) {
+      return epochMs < 1e12 ? Math.floor(epochMs * 1000) : Math.floor(epochMs);
+    }
+
+    // Firestore-like timestamp: { seconds, nanoseconds } or { seconds, nanos }
+    const seconds =
+      typeof (t as any).seconds === 'number'
+        ? (t as any).seconds
+        : typeof (t as any).sec === 'number'
+          ? (t as any).sec
+          : null;
+    const nanos =
+      typeof (t as any).nanoseconds === 'number'
+        ? (t as any).nanoseconds
+        : typeof (t as any).nanos === 'number'
+          ? (t as any).nanos
+          : 0;
+    if (seconds !== null) {
+      return Math.floor(seconds * 1000 + nanos / 1e6);
+    }
+
+    // Nested string/number
+    const inner = (t as any).value ?? (t as any).time ?? (t as any).timestamp;
+    if (inner !== undefined) {
+      return parseScenarioTimeToEpochMs(inner);
+    }
   }
   return null;
 }
@@ -1630,7 +1674,16 @@ export function getScenarioTimeBounds(
     const content = scenario.content as any;
     if (!content || typeof content !== 'object') return;
 
-    consider(parseScenarioTimeToEpochMs(content?.startTime ?? content?.meta?.startTime));
+    consider(
+      parseScenarioTimeToEpochMs(
+        content?.startTime ?? content?.meta?.startTime ?? content?.scenarioStartTime,
+      ),
+    );
+    consider(
+      parseScenarioTimeToEpochMs(
+        content?.endTime ?? content?.meta?.endTime ?? content?.stopTime ?? content?.scenarioEndTime,
+      ),
+    );
     if (Array.isArray(content?.events)) {
       content.events.forEach((event: ScenarioEventLike) => consider(parseScenarioTimeToEpochMs(event?.startTime)));
     }
@@ -1641,6 +1694,27 @@ export function getScenarioTimeBounds(
         unit.state.forEach((s) => consider(parseScenarioTimeToEpochMs((s as any)?.t)));
       }
     });
+
+    // بعضی APIها واحدها را در ریشهٔ content.units می‌فرستند (بدون sides)
+    if (Array.isArray(content.units)) {
+      content.units.forEach((unit: any) => {
+        if (Array.isArray(unit?.state)) {
+          unit.state.forEach((s: any) => consider(parseScenarioTimeToEpochMs(s?.t)));
+        }
+      });
+    }
+
+    // زمان فیچرهای لایهٔ تاکتیکی (مسیر/نقشه) در state[].t
+    if (Array.isArray(content.layers)) {
+      content.layers.forEach((layer: ScenarioLayerLike) => {
+        const features = Array.isArray(layer?.features) ? layer.features : [];
+        features.forEach((feature) => {
+          if (Array.isArray(feature?.state)) {
+            feature.state.forEach((s) => consider(parseScenarioTimeToEpochMs((s as any)?.t)));
+          }
+        });
+      });
+    }
   });
 
   if (minMs === null || maxMs === null) return null;

@@ -3,6 +3,11 @@ import '@babylonjs/core/Helpers/sceneHelpers';
 import { CoordinateConverter } from './coordinateConverter';
 import * as Cesium from 'cesium';
 
+// Timeline debug build tag (helps confirm newest bundle is loaded)
+console.warn('[Timeline] debug build loaded', { tag: 'timeline-hour-ticks-2026-04-08-2' });
+
+let hasLoggedHourTicks = false;
+
 // Get scenario ID and token from URL parameters
 const urlParams = new URLSearchParams(window.location.search);
 const scenarioId = urlParams.get('scenarioId');
@@ -59,26 +64,45 @@ const header = document.getElementById('header');
 const backToDashboardButton = document.getElementById('backToDashboard');
 const focusScenarioButton = document.getElementById('focusScenarioButton');
 const scenarioDebugPanel = document.getElementById('scenarioDebugPanel');
+const scenarioTitleElement = document.getElementById('scenarioTitle');
+const timelineHeaderPanel = document.getElementById('timelineHeaderPanel');
+const timelineClockPanel = document.getElementById('timelineClockPanel');
 const timelinePanel = document.getElementById('timelinePanel');
-const timelineCurrentLabel = document.getElementById('timelineCurrentLabel');
-const timelineCurrentSubLabel = document.getElementById('timelineCurrentSubLabel');
 const timelineStartLabel = document.getElementById('timelineStartLabel');
 const timelineEndLabel = document.getElementById('timelineEndLabel');
 const timelineTicks = document.getElementById('timelineTicks');
-const timelineProgressLabel = document.getElementById('timelineProgressLabel');
 const timelineTimezoneLabel = document.getElementById('timelineTimezoneLabel');
-const timelineSliderElement = document.getElementById('timelineSlider');
+const timelineScrubberElement = document.getElementById('timelineScrubber');
+const timelineScrubberHandleElement = document.getElementById('timelineScrubberHandle');
+const timelineScrollBarElement = document.getElementById('timelineScrollBar');
+const timelineScrollThumbElement = document.getElementById('timelineScrollThumb');
 const timelinePlayPauseButtonElement = document.getElementById('timelinePlayPauseButton');
 const timelineStopButtonElement = document.getElementById('timelineStopButton');
 const timelineSpeedSelectElement = document.getElementById('timelineSpeedSelect');
+const timelinePlayPauseIconElement = document.getElementById('timelinePlayPauseIcon');
+const timelineZoomInButtonElement = document.getElementById('timelineZoomInButton');
+const timelineZoomOutButtonElement = document.getElementById('timelineZoomOutButton');
 
-const timelineSlider = timelineSliderElement instanceof HTMLInputElement ? timelineSliderElement : null;
+const timelineScrubber =
+  timelineScrubberElement instanceof HTMLDivElement ? timelineScrubberElement : null;
+const timelineScrubberHandle =
+  timelineScrubberHandleElement instanceof HTMLDivElement ? timelineScrubberHandleElement : null;
+const timelineScrollBar =
+  timelineScrollBarElement instanceof HTMLDivElement ? timelineScrollBarElement : null;
+const timelineScrollThumb =
+  timelineScrollThumbElement instanceof HTMLDivElement ? timelineScrollThumbElement : null;
 const timelinePlayPauseButton =
   timelinePlayPauseButtonElement instanceof HTMLButtonElement ? timelinePlayPauseButtonElement : null;
 const timelineStopButton =
   timelineStopButtonElement instanceof HTMLButtonElement ? timelineStopButtonElement : null;
 const timelineSpeedSelect =
   timelineSpeedSelectElement instanceof HTMLSelectElement ? timelineSpeedSelectElement : null;
+const timelinePlayPauseIcon =
+  timelinePlayPauseIconElement instanceof SVGElement ? timelinePlayPauseIconElement : null;
+const timelineZoomInButton =
+  timelineZoomInButtonElement instanceof HTMLButtonElement ? timelineZoomInButtonElement : null;
+const timelineZoomOutButton =
+  timelineZoomOutButtonElement instanceof HTMLButtonElement ? timelineZoomOutButtonElement : null;
 
 // Get main container
 const mainContainer = document.getElementById('mainContainer');
@@ -283,6 +307,7 @@ let currentScenarioRectangle: Cesium.Rectangle | null = null;
 let currentCountryOverviewName = '';
 let currentScenarioTimeZone = 'UTC';
 let currentTimelineBounds: { startMs: number; stopMs: number } | null = null;
+let currentTimelineViewport: { startMs: number; stopMs: number } | null = null;
 let currentTimelineBaseMultiplier = 1;
 let currentTimelineSpeedFactor = 1;
 let currentTimelinePlaying = true;
@@ -291,13 +316,211 @@ let resumeTimelinePlaybackAfterScrub = false;
 let hasTimelineControlsBound = false;
 let hasTimelineClockListener = false;
 let lastTimelineUiRefresh = 0;
+let lastUserTimelineInteractionAt = 0;
+let timelineNowLabelIntervalId: number | null = null;
+let hasAutoStartedScenarioPlayback = false;
 
-const TIMELINE_SLIDER_MAX = 1000;
+const MIN_VIEWPORT_SPAN_MS = 5 * 60 * 1000; // 5 minutes
+const MAX_VIEWPORT_SPAN_RATIO = 1; // up to full span
+const ZOOM_STEP = 1.6;
+const AUTO_FOLLOW_DELAY_MS = 2500;
+const AUTO_FOLLOW_AHEAD_RATIO = 0.7;
 const timelineFormatterCache = new Map<string, Intl.DateTimeFormat>();
 
 function setDebugStatus(lines: string[]) {
   if (!scenarioDebugPanel) return;
   scenarioDebugPanel.innerHTML = lines.join('<br>');
+}
+
+function setScenarioTitle(name: string) {
+  if (!scenarioTitleElement) return;
+  const trimmed = (name || '').trim();
+  const value = trimmed ? trimmed : '—';
+  scenarioTitleElement.textContent = value;
+  scenarioTitleElement.dataset.value = value;
+  scenarioTitleElement.style.opacity = trimmed ? '1' : '0.7';
+  console.log('[Simulator] scenario title set:', value);
+}
+
+function getTimelineViewport(): { startMs: number; stopMs: number } | null {
+  if (!currentTimelineBounds) return null;
+  if (!currentTimelineViewport) {
+    return { ...currentTimelineBounds };
+  }
+  return { ...currentTimelineViewport };
+}
+
+function setTimelineViewport(startMs: number, stopMs: number, refresh = true) {
+  if (!currentTimelineBounds) return;
+  const totalStart = currentTimelineBounds.startMs;
+  const totalStop = currentTimelineBounds.stopMs;
+  const totalSpan = Math.max(1, totalStop - totalStart);
+
+  let s = Math.min(startMs, stopMs);
+  let e = Math.max(startMs, stopMs);
+  let span = Math.max(e - s, MIN_VIEWPORT_SPAN_MS);
+  span = Math.min(span, totalSpan * MAX_VIEWPORT_SPAN_RATIO);
+
+  if (e - s !== span) {
+    // Re-center around midpoint if we adjusted span
+    const mid = (s + e) / 2;
+    s = mid - span / 2;
+    e = mid + span / 2;
+  }
+
+  if (s < totalStart) {
+    e += totalStart - s;
+    s = totalStart;
+  }
+  if (e > totalStop) {
+    const diff = e - totalStop;
+    s -= diff;
+    e = totalStop;
+    if (s < totalStart) s = totalStart;
+  }
+
+  currentTimelineViewport = { startMs: s, stopMs: e };
+  renderTimelineTicks();
+  updateTimelineScrollBar();
+  // Re-lock panel height after any viewport change (zoom/pan) to avoid layout jumps.
+  lockTimelinePanelHeight();
+  if (refresh) {
+    refreshTimelineUi(true);
+  }
+}
+
+function zoomTimeline(centerMs: number, factor: number) {
+  if (!currentTimelineBounds || factor <= 0) return;
+  const viewport = getTimelineViewport();
+  if (!viewport) return;
+
+  const span = viewport.stopMs - viewport.startMs;
+  const newSpan = span / factor;
+  console.warn('[Timeline] zoomTimeline()', { centerMs, factor, span, newSpan });
+  setTimelineViewport(centerMs - newSpan / 2, centerMs + newSpan / 2);
+}
+
+function panTimeline(deltaMs: number) {
+  if (!currentTimelineBounds) return;
+  const viewport = getTimelineViewport();
+  if (!viewport) return;
+  console.warn('[Timeline] panTimeline()', { deltaMs, span: viewport.stopMs - viewport.startMs });
+  setTimelineViewport(viewport.startMs + deltaMs, viewport.stopMs + deltaMs);
+}
+
+function noteUserTimelineInteraction() {
+  lastUserTimelineInteractionAt = Date.now();
+}
+
+function shouldAutoFollow(): boolean {
+  if (!currentTimelinePlaying) return false;
+  if (isTimelineScrubbing) return false;
+  return Date.now() - lastUserTimelineInteractionAt > AUTO_FOLLOW_DELAY_MS;
+}
+
+function autoFollowTimelineIfNeeded(currentMs: number) {
+  if (!currentTimelineBounds) return;
+  const viewport = getTimelineViewport();
+  if (!viewport) return;
+  const totalSpan = currentTimelineBounds.stopMs - currentTimelineBounds.startMs;
+  const viewportSpan = viewport.stopMs - viewport.startMs;
+
+  // If not zoomed (full span), nothing to follow.
+  if (viewportSpan >= totalSpan * 0.999) return;
+  if (!shouldAutoFollow()) return;
+
+  const safeStart = viewport.startMs + viewportSpan * 0.15;
+  const safeEnd = viewport.startMs + viewportSpan * 0.85;
+
+  // If within the safe window, keep viewport stable.
+  if (currentMs >= safeStart && currentMs <= safeEnd) return;
+
+  // Recenter so currentMs lands around AUTO_FOLLOW_AHEAD_RATIO of the viewport span.
+  const desiredStart = currentMs - viewportSpan * AUTO_FOLLOW_AHEAD_RATIO;
+  setTimelineViewport(desiredStart, desiredStart + viewportSpan, false);
+}
+
+function updateTimelineScrollBar() {
+  if (!timelineScrollBar || !timelineScrollThumb || !currentTimelineBounds) {
+    if (!timelineScrollBar) console.warn('[Timeline] #timelineScrollBar missing');
+    if (!timelineScrollThumb) console.warn('[Timeline] #timelineScrollThumb missing');
+    if (!currentTimelineBounds) console.warn('[Timeline] bounds missing');
+    return;
+  }
+  // Ensure it always occupies layout space (older sessions may have inline display:none).
+  timelineScrollBar.style.display = '';
+  const viewport = getTimelineViewport();
+  if (!viewport) {
+    timelineScrollBar.classList.remove('is-visible');
+    timelineScrollBar.style.setProperty('opacity', '0', 'important');
+    timelineScrollBar.style.setProperty('pointer-events', 'none', 'important');
+    return;
+  }
+
+  const totalSpan = Math.max(1, currentTimelineBounds.stopMs - currentTimelineBounds.startMs);
+  const viewportSpan = Math.max(1, viewport.stopMs - viewport.startMs);
+
+  // Show whenever viewport is smaller than total (i.e. zoomed), regardless of rounding/centering.
+  const shouldShow = viewportSpan < totalSpan - 1;
+
+  // Diagnostic (throttled): log even when hidden.
+  const now = performance.now();
+  if ((updateTimelineScrollBar as any)._lastLog == null) (updateTimelineScrollBar as any)._lastLog = 0;
+  if (now - (updateTimelineScrollBar as any)._lastLog > 600) {
+    (updateTimelineScrollBar as any)._lastLog = now;
+    console.log('[Timeline] scrollbar state', {
+      shouldShow,
+      hasViewportOverride: currentTimelineViewport !== null,
+      viewportSpan,
+      totalSpan,
+      viewportStartDelta: Math.round(viewport.startMs - currentTimelineBounds.startMs),
+      viewportStopDelta: Math.round(viewport.stopMs - currentTimelineBounds.stopMs),
+    });
+  }
+
+  if (!shouldShow) {
+    timelineScrollBar.classList.remove('is-visible');
+    timelineScrollBar.style.setProperty('opacity', '0', 'important');
+    timelineScrollBar.style.setProperty('pointer-events', 'none', 'important');
+    return;
+  }
+
+  timelineScrollBar.classList.add('is-visible');
+  timelineScrollBar.style.setProperty('opacity', '1', 'important');
+  timelineScrollBar.style.setProperty('pointer-events', 'auto', 'important');
+
+  const widthPercent = Math.max(4, (viewportSpan / totalSpan) * 100);
+  const centerMs = (viewport.startMs + viewport.stopMs) / 2;
+  const centerRatio = (centerMs - currentTimelineBounds.startMs) / totalSpan;
+  const leftPercent = centerRatio * 100;
+
+  timelineScrollThumb.style.width = `${widthPercent}%`;
+  timelineScrollThumb.style.left = `${leftPercent}%`;
+}
+
+// Quick runtime sanity check (remove once confirmed)
+if (!scenarioTitleElement) {
+  console.warn('[Simulator] #scenarioTitle not found in DOM.');
+} else {
+  scenarioTitleElement.textContent = 'در حال بارگذاری سناریو...';
+}
+
+function resolveScenarioDisplayName(scenario: any): string {
+  if (!scenario) return '';
+  const candidates = [
+    scenario?.content?.name,
+    scenario?.content?.title,
+    scenario?.content?.metadata?.title,
+    scenario?.content?.metadata?.name,
+    scenario?.name,
+    scenario?.title,
+    scenario?.scenarioTitle,
+    scenario?.displayName,
+  ];
+  for (const c of candidates) {
+    if (typeof c === 'string' && c.trim()) return c.trim();
+  }
+  return '';
 }
 
 function getRecommendedClockMultiplier(_bounds: { start: Cesium.JulianDate; stop: Cesium.JulianDate }): number {
@@ -356,6 +579,21 @@ function formatTimelineDateTime(ms: number, timeZone: string): string {
   }).format(new Date(ms));
 }
 
+/** همیشه نود فعلی در سند؛ مرجع کش‌شدهٔ بار اول می‌تواند به نود جدا (مثلاً HMR) اشاره کند و متن به المنت روی صفحه نرسد. */
+function getLiveTimelineNowLabel(): HTMLElement | null {
+  const el = document.getElementById('timelineNowLabel');
+  return el instanceof HTMLElement ? el : null;
+}
+
+function safeFormatTimelineDateTime(ms: number, timeZone: string): string {
+  try {
+    return formatTimelineDateTime(ms, timeZone);
+  } catch (e) {
+    console.warn('[Timeline] safeFormatTimelineDateTime', e);
+    return new Date(ms).toISOString();
+  }
+}
+
 function formatTimelineEdge(ms: number, timeZone: string): string {
   return getTimelineFormatter('edge', timeZone, {
     year: 'numeric',
@@ -367,46 +605,25 @@ function formatTimelineEdge(ms: number, timeZone: string): string {
   }).format(new Date(ms));
 }
 
-function formatTimelineTick(ms: number, timeZone: string, spanMs: number): string {
-  if (spanMs <= 1000 * 60 * 60 * 24) {
-    return getTimelineFormatter('tick-hour', timeZone, {
-      hour: '2-digit',
-      minute: '2-digit',
-      hour12: false,
-    }).format(new Date(ms));
-  }
+// formatTimelineTick removed: timeline marks rely on day labels/separators only.
 
-  if (spanMs <= 1000 * 60 * 60 * 24 * 5) {
-    return getTimelineFormatter('tick-short', timeZone, {
-      month: 'short',
+function formatTimelineDayLabel(ms: number, timeZone: string, variant: 'narrow' | 'wide'): string {
+  if (variant === 'narrow') {
+    // Numeric only (no year): e.g. ۰۲/۱۲
+    return getTimelineFormatter('day-label-narrow', timeZone, {
+      month: '2-digit',
       day: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit',
-      hour12: false,
     }).format(new Date(ms));
   }
 
-  return getTimelineFormatter('tick-date', timeZone, {
+  // Month name + numeric day (no year): e.g. اسفند ۰۲
+  return getTimelineFormatter('day-label-wide', timeZone, {
     month: 'long',
     day: '2-digit',
   }).format(new Date(ms));
 }
 
-function formatTimelineDuration(spanMs: number): string {
-  const totalMinutes = Math.max(0, Math.round(spanMs / 60000));
-  const days = Math.floor(totalMinutes / (60 * 24));
-  const hours = Math.floor((totalMinutes % (60 * 24)) / 60);
-  const minutes = totalMinutes % 60;
-  const parts: string[] = [];
-
-  if (days > 0) parts.push(`${formatPersianNumber(days)} روز`);
-  if (hours > 0) parts.push(`${formatPersianNumber(hours)} ساعت`);
-  if (parts.length === 0 || (parts.length < 2 && minutes > 0)) {
-    parts.push(`${formatPersianNumber(minutes)} دقیقه`);
-  }
-
-  return parts.slice(0, 2).join(' و ');
-}
+// formatTimelineDuration removed: progress label is hidden in the UI.
 
 function clampTimelineMs(value: number): number {
   if (!currentTimelineBounds) return value;
@@ -419,53 +636,222 @@ function getCurrentClockMs(): number | null {
 }
 
 function getTimelinePercentForMs(ms: number): number {
-  if (!currentTimelineBounds) return 0;
-  const span = Math.max(1, currentTimelineBounds.stopMs - currentTimelineBounds.startMs);
-  const clamped = clampTimelineMs(ms);
-  return ((clamped - currentTimelineBounds.startMs) / span) * 100;
+  const viewport = getTimelineViewport();
+  if (!viewport) return 0;
+  const span = Math.max(1, viewport.stopMs - viewport.startMs);
+  const clamped = Math.min(viewport.stopMs, Math.max(viewport.startMs, ms));
+  return ((clamped - viewport.startMs) / span) * 100;
 }
 
-function getTimelineMsFromSliderValue(value: number): number {
-  if (!currentTimelineBounds) return 0;
-  const normalized = Math.max(0, Math.min(TIMELINE_SLIDER_MAX, value)) / TIMELINE_SLIDER_MAX;
-  return Math.round(
-    currentTimelineBounds.startMs +
-      normalized * (currentTimelineBounds.stopMs - currentTimelineBounds.startMs),
-  );
+function getViewportMsFromScrubberX(clientX: number): number | null {
+  if (!timelineScrubber) return null;
+  const viewport = getTimelineViewport();
+  if (!viewport) return null;
+  const rect = timelineScrubber.getBoundingClientRect();
+  if (!rect.width) return null;
+
+  const x = Math.min(Math.max(clientX, rect.left), rect.right);
+  const ratio = (x - rect.left) / rect.width;
+  const ms = viewport.startMs + ratio * (viewport.stopMs - viewport.startMs);
+  return Math.round(ms);
 }
 
 function setTimelineSliderProgress(percent: number) {
-  if (!timelineSlider) return;
-  timelineSlider.style.setProperty('--timeline-progress', `${Math.max(0, Math.min(100, percent))}%`);
+  if (!timelineScrubber || !timelineScrubberHandle) return;
+  const clamped = Math.max(0, Math.min(100, percent));
+  const rect = timelineScrubber.getBoundingClientRect();
+  if (!rect.width) return;
+  const x = rect.left + (clamped / 100) * rect.width;
+  const relative = ((x - rect.left) / rect.width) * 100;
+  timelineScrubberHandle.style.left = `${relative}%`;
 }
 
 function setTimelinePanelVisible(visible: boolean) {
   if (!timelinePanel) return;
   timelinePanel.classList.toggle('visible', visible);
+  timelineHeaderPanel?.classList.toggle('visible', visible);
+  timelineClockPanel?.classList.toggle('visible', visible);
+  if (visible) {
+    startTimelineNowLabelTicker();
+    requestAnimationFrame(() => {
+      updateTimelineScrollBar();
+      positionTimelineStack();
+      lockTimelinePanelHeight();
+      requestAnimationFrame(() => positionTimelineStack());
+    });
+  } else {
+    stopTimelineNowLabelTicker();
+  }
+}
+
+/** پنل ردیف پایین: نوار زمان ← شمارشگر ← کنترل‌ها (از پایین صفحه به بالا) */
+function positionTimelineStack() {
+  if (!timelinePanel || !timelinePanel.classList.contains('visible')) return;
+
+  // Currently, layout positioning is handled purely via CSS.
+  // This function is kept for potential future layout-related side effects
+  // (like scroll bar updates), but does not adjust element positions directly.
+}
+
+function lockTimelinePanelHeight() {
+  if (!timelinePanel) return;
+  if (!timelinePanel.classList.contains('visible')) return;
+  // Lock height to prevent jumps when UI sub-elements toggle visibility.
+  // Height is re-locked on window resize.
+  const rect = timelinePanel.getBoundingClientRect();
+  if (!rect.height) return;
+  timelinePanel.style.height = `${Math.round(rect.height)}px`;
 }
 
 function renderTimelineTicks() {
   if (!timelineTicks || !currentTimelineBounds) return;
   timelineTicks.innerHTML = '';
 
-  const span = currentTimelineBounds.stopMs - currentTimelineBounds.startMs;
-  const width = timelineTicks.clientWidth || 900;
-  const tickSegments = width > 960 ? 6 : width > 760 ? 5 : width > 560 ? 4 : 3;
+  const viewport = getTimelineViewport();
+  if (!viewport) return;
 
-  for (let index = 0; index <= tickSegments; index += 1) {
-    const ratio = index / tickSegments;
-    const timestamp = Math.round(currentTimelineBounds.startMs + span * ratio);
-    const tick = document.createElement('div');
-    tick.className = 'timeline-tick';
-    tick.style.left = `${ratio * 100}%`;
-    tick.textContent = formatTimelineTick(timestamp, currentScenarioTimeZone, span);
-    timelineTicks.appendChild(tick);
+  const span = viewport.stopMs - viewport.startMs;
+  const width = timelineTicks.getBoundingClientRect().width || timelineTicks.clientWidth || 900;
+  const DAY_LABEL_WIDE_MIN_PX = 120;
+
+  // 24-hour separators + per-day labels (relative to scenario start, not timezone-midnight)
+  try {
+    let hourTickCount = 0;
+    const hourMs = 60 * 60 * 1000;
+    const minuteMs = 60 * 1000;
+    const dayMs = 24 * 60 * 60 * 1000;
+    const origin = currentTimelineBounds.startMs;
+    const boundaries: number[] = [];
+
+    // Dynamic hour tick density based on current zoom.
+    // Lower zoom -> fewer labels (6/12/18); higher zoom -> more (3h, 1h, 30m).
+    const spanHours = Math.max(0.001, span / hourMs);
+    const pxPerHour = width / spanHours;
+    const stepMinutes = pxPerHour < 18 ? 360 : pxPerHour < 32 ? 180 : pxPerHour < 60 ? 60 : 30;
+
+    const fmt2 = new Intl.NumberFormat('fa-IR', { minimumIntegerDigits: 2, useGrouping: false });
+
+    function formatHourLabelFromOffsetMinutes(offsetMinutes: number): string {
+      const h = Math.floor(offsetMinutes / 60) % 24;
+      const m = Math.floor(offsetMinutes % 60);
+      if (m === 0) return formatPersianNumber(h, 0);
+      return `${formatPersianNumber(h, 0)}:${fmt2.format(m)}`;
+    }
+
+    // Build day boundaries (aligned to origin), spanning the viewport.
+    // Important: this ensures "each day" segments are truly between day separators,
+    // instead of starting at viewport.startMs (which can suppress hour ticks).
+    const firstBoundary = origin + Math.floor((viewport.startMs - origin) / dayMs) * dayMs;
+    for (let t = firstBoundary; t <= viewport.stopMs + 1; t += dayMs) {
+      boundaries.push(t);
+    }
+    // Ensure final stop boundary exists
+    if (boundaries.length === 0 || boundaries[boundaries.length - 1] < viewport.stopMs) {
+      boundaries.push(viewport.stopMs);
+    }
+
+    // Day separators at internal boundaries (only those inside viewport)
+    for (let i = 0; i < boundaries.length; i += 1) {
+      const t = boundaries[i];
+      if (t <= viewport.startMs || t >= viewport.stopMs) continue;
+      const ratio = (t - viewport.startMs) / Math.max(1, span);
+      const sep = document.createElement('div');
+      sep.className = 'timeline-day-separator';
+      sep.style.left = `${ratio * 100}%`;
+      timelineTicks.appendChild(sep);
+    }
+
+    // Labels + hour ticks for each day segment visible in viewport
+    for (let i = 0; i < boundaries.length - 1; i += 1) {
+      const dayStart = boundaries[i];
+      const dayStop = boundaries[i + 1];
+      const segStart = Math.max(dayStart, viewport.startMs);
+      const segStop = Math.min(dayStop, viewport.stopMs);
+      if (segStop - segStart < minuteMs) continue;
+
+      const segSpan = Math.max(1, segStop - segStart);
+      const leftRatio = (segStart - viewport.startMs) / Math.max(1, span);
+      const widthRatio = segSpan / Math.max(1, span);
+      const centerMs = segStart + segSpan / 2;
+      const segmentPx = width * widthRatio;
+      const variant: 'narrow' | 'wide' = segmentPx >= DAY_LABEL_WIDE_MIN_PX ? 'wide' : 'narrow';
+
+      const label = document.createElement('div');
+      label.className = 'timeline-day-label';
+      label.style.left = `${leftRatio * 100}%`;
+      label.style.width = `${widthRatio * 100}%`;
+      label.textContent = formatTimelineDayLabel(centerMs, currentScenarioTimeZone, variant);
+      timelineTicks.appendChild(label);
+
+      // Hour ticks inside this day segment (relative to true dayStart boundary).
+      const viewportStartMs = segStart;
+      const viewportStopMs = segStop;
+
+      const addHourTick = (t: number, offsetMinutes: number) => {
+        // Allow a tick exactly at viewport start; just avoid those outside.
+        if (t < viewport.startMs || t > viewport.stopMs) return;
+        const ratio = (t - viewport.startMs) / Math.max(1, span);
+        const tick = document.createElement('div');
+        tick.className = 'timeline-hour-tick';
+        tick.style.left = `${ratio * 100}%`;
+
+        // Avoid clutter: for 30m ticks, show labels for every tick; for 1h/3h also.
+        // When step is 6h, labels are exactly 6/12/18.
+        const text = document.createElement('span');
+        text.className = 'timeline-hour-label';
+        text.textContent = formatHourLabelFromOffsetMinutes(offsetMinutes);
+        tick.appendChild(text);
+        timelineTicks.appendChild(tick);
+        hourTickCount += 1;
+      };
+
+      const startOffsetMinutes =
+        Math.ceil(Math.max(0, (viewportStartMs - dayStart) / minuteMs) / stepMinutes) * stepMinutes;
+      for (let off = startOffsetMinutes; off <= 24 * 60; off += stepMinutes) {
+        const t = dayStart + off * minuteMs;
+        if (t > viewportStopMs) break;
+        if (t < viewportStartMs) continue;
+
+        // For the 6-hour mode, avoid showing "0" to reduce clutter; keep 6/12/18 when they fall into view.
+        if (stepMinutes === 360 && off === 0) continue;
+        addHourTick(t, off);
+      }
+    }
+
+    if (!hasLoggedHourTicks) {
+      hasLoggedHourTicks = true;
+      console.warn('[Timeline] hour ticks rendered', {
+        hourTickCount,
+        stepMinutes,
+        pxPerHour: Math.round(pxPerHour * 10) / 10,
+        viewportSpanHours: Math.round((span / hourMs) * 10) / 10,
+      });
+    }
+    if (hourTickCount === 0) {
+      console.warn('[Timeline] hour ticks rendered ZERO', {
+        stepMinutes,
+        pxPerHour: Math.round(pxPerHour * 10) / 10,
+        viewportStartMs: viewport.startMs,
+        viewportStopMs: viewport.stopMs,
+        boundariesCount: boundaries.length,
+      });
+    }
+  } catch (e) {
+    console.warn('[Timeline] renderTimelineTicks failed', e);
   }
+
+  // Intentionally no extra tick labels; day labels/separators cover the timeline markings.
 }
 
 function updateTimelineButtons() {
   if (!timelinePlayPauseButton) return;
-  timelinePlayPauseButton.textContent = currentTimelinePlaying ? 'توقف' : 'پخش';
+  if (timelinePlayPauseIcon) {
+    timelinePlayPauseIcon.innerHTML = currentTimelinePlaying
+      ? '<rect x="7.4" y="7" width="2.1" height="10" rx="0.6" fill="currentColor" /><rect x="14.5" y="7" width="2.1" height="10" rx="0.6" fill="currentColor" />'
+      : '<path d="M9.5 7.8c0-1.02 1.13-1.64 2-.99l6.2 4.7c.72.55.72 1.63 0 2.18l-6.2 4.7c-.87.65-2-.03-2-1.04V7.8Z" fill="currentColor" />';
+  }
+  timelinePlayPauseButton.setAttribute('aria-label', currentTimelinePlaying ? 'توقف' : 'پخش');
+  timelinePlayPauseButton.title = currentTimelinePlaying ? 'توقف' : 'پخش';
   timelinePlayPauseButton.setAttribute('aria-pressed', String(currentTimelinePlaying));
 }
 
@@ -516,19 +902,12 @@ function refreshTimelineUi(force = false) {
 
   const currentMs = clampTimelineMs(getCurrentClockMs() ?? currentTimelineBounds.startMs);
   const percent = getTimelinePercentForMs(currentMs);
-  const span = currentTimelineBounds.stopMs - currentTimelineBounds.startMs;
 
-  if (!isTimelineScrubbing && timelineSlider) {
-    timelineSlider.value = String(Math.round((percent / 100) * TIMELINE_SLIDER_MAX));
-  }
   setTimelineSliderProgress(percent);
 
-  if (timelineCurrentLabel) {
-    timelineCurrentLabel.textContent = formatTimelineDateTime(currentMs, currentScenarioTimeZone);
-  }
-  if (timelineCurrentSubLabel) {
-    timelineCurrentSubLabel.textContent =
-      `سناریو: ${currentScenarioName || 'نامشخص'} | منطقه زمانی: ${currentScenarioTimeZone} | سرعت: ${formatPersianNumber(currentTimelineSpeedFactor, currentTimelineSpeedFactor % 1 === 0 ? 0 : 2)}×`;
+  const nowLabel = getLiveTimelineNowLabel();
+  if (nowLabel) {
+    nowLabel.textContent = safeFormatTimelineDateTime(currentMs, currentScenarioTimeZone);
   }
   if (timelineStartLabel) {
     timelineStartLabel.textContent = formatTimelineEdge(currentTimelineBounds.startMs, currentScenarioTimeZone);
@@ -536,15 +915,29 @@ function refreshTimelineUi(force = false) {
   if (timelineEndLabel) {
     timelineEndLabel.textContent = formatTimelineEdge(currentTimelineBounds.stopMs, currentScenarioTimeZone);
   }
-  if (timelineProgressLabel) {
-    timelineProgressLabel.textContent =
-      `پیشرفت: ${formatPersianNumber(percent)}٪ • بازه: ${formatTimelineDuration(span)}`;
-  }
+  // Progress label intentionally hidden in UI.
   if (timelineTimezoneLabel) {
     timelineTimezoneLabel.textContent = `منطقه زمانی: ${currentScenarioTimeZone}`;
   }
 
   updateTimelineButtons();
+}
+
+function startTimelineNowLabelTicker() {
+  if (timelineNowLabelIntervalId !== null) return;
+  timelineNowLabelIntervalId = window.setInterval(() => {
+    if (!currentTimelineBounds) return;
+    const nowLabel = getLiveTimelineNowLabel();
+    if (!nowLabel) return;
+    const currentMs = clampTimelineMs(getCurrentClockMs() ?? currentTimelineBounds.startMs);
+    nowLabel.textContent = safeFormatTimelineDateTime(currentMs, currentScenarioTimeZone);
+  }, 200);
+}
+
+function stopTimelineNowLabelTicker() {
+  if (timelineNowLabelIntervalId === null) return;
+  window.clearInterval(timelineNowLabelIntervalId);
+  timelineNowLabelIntervalId = null;
 }
 
 function handleTimelineClockTick() {
@@ -560,12 +953,14 @@ function handleTimelineClockTick() {
     return;
   }
 
+  autoFollowTimelineIfNeeded(currentMs);
   refreshTimelineUi();
 }
 
 function bindTimelineControls() {
   if (hasTimelineControlsBound) return;
   hasTimelineControlsBound = true;
+  console.warn('[Timeline] bindTimelineControls() bound');
 
   timelinePlayPauseButton?.addEventListener('click', () => {
     setTimelinePlaybackState(!currentTimelinePlaying);
@@ -582,38 +977,167 @@ function bindTimelineControls() {
     refreshTimelineUi(true);
   });
 
-  timelineSlider?.addEventListener('pointerdown', () => {
-    resumeTimelinePlaybackAfterScrub = currentTimelinePlaying;
-    isTimelineScrubbing = true;
-    setTimelinePlaybackState(false);
+  // Optional zoom buttons (in addition to Ctrl+wheel)
+  timelineZoomInButton?.addEventListener('click', () => {
+    if (!currentTimelineBounds) return;
+    noteUserTimelineInteraction();
+    const center = getCurrentClockMs() ?? currentTimelineBounds.startMs;
+    console.warn('[Timeline] zoom in click', { center });
+    zoomTimeline(center, ZOOM_STEP);
   });
 
-  timelineSlider?.addEventListener('input', () => {
-    const value = Number(timelineSlider.value);
-    setTimelineClockTime(getTimelineMsFromSliderValue(value));
-    refreshTimelineUi(true);
+  timelineZoomOutButton?.addEventListener('click', () => {
+    if (!currentTimelineBounds) return;
+    noteUserTimelineInteraction();
+    const center = getCurrentClockMs() ?? currentTimelineBounds.startMs;
+    console.warn('[Timeline] zoom out click', { center });
+    zoomTimeline(center, 1 / ZOOM_STEP);
   });
 
-  const finishScrub = () => {
-    if (!isTimelineScrubbing) return;
-    isTimelineScrubbing = false;
-    if (resumeTimelinePlaybackAfterScrub) {
-      setTimelinePlaybackState(true);
-    }
-    refreshTimelineUi(true);
-  };
+  if (timelineScrubber && timelineScrubberHandle) {
+    let isScrubbingPointer = false;
+    let activePointerId: number | null = null;
 
-  timelineSlider?.addEventListener('change', finishScrub);
-  timelineSlider?.addEventListener('pointerup', finishScrub);
-  timelineSlider?.addEventListener('keyup', (event) => {
-    if (event.key === 'Enter' || event.key === ' ') {
-      finishScrub();
-    }
-  });
+    const updateFromPointer = (event: PointerEvent) => {
+      const ms = getViewportMsFromScrubberX(event.clientX);
+      if (ms === null) return;
+      setTimelineClockTime(ms);
+      refreshTimelineUi(true);
+    };
+
+    timelineScrubber.addEventListener('pointerdown', (event) => {
+      resumeTimelinePlaybackAfterScrub = currentTimelinePlaying;
+      isScrubbingPointer = true;
+      isTimelineScrubbing = true;
+      noteUserTimelineInteraction();
+      activePointerId = event.pointerId;
+      timelineScrubber.setPointerCapture(event.pointerId);
+      setTimelinePlaybackState(false);
+      updateFromPointer(event);
+    });
+
+    timelineScrubber.addEventListener('pointermove', (event) => {
+      if (!isScrubbingPointer || activePointerId !== event.pointerId) return;
+      noteUserTimelineInteraction();
+      updateFromPointer(event);
+    });
+
+    const finishScrubPointer = (event: PointerEvent) => {
+      if (!isScrubbingPointer || activePointerId !== event.pointerId) return;
+      isScrubbingPointer = false;
+      isTimelineScrubbing = false;
+      try {
+        timelineScrubber.releasePointerCapture(event.pointerId);
+      } catch {}
+      if (resumeTimelinePlaybackAfterScrub) {
+        setTimelinePlaybackState(true);
+      }
+      refreshTimelineUi(true);
+    };
+
+    timelineScrubber.addEventListener('pointerup', finishScrubPointer);
+    timelineScrubber.addEventListener('pointercancel', finishScrubPointer);
+
+  }
+
+  // Wheel: zoom with Ctrl, pan without (when pointer is over the whole timeline box)
+  if (timelinePanel) {
+    const getWheelRect = () => {
+      const track = timelinePanel.querySelector('.timeline-track-shell') as HTMLElement | null;
+      return (track ?? timelinePanel).getBoundingClientRect();
+    };
+
+    timelinePanel.addEventListener(
+      'wheel',
+      (event) => {
+        if (!currentTimelineBounds) return;
+        const viewport = getTimelineViewport();
+        if (!viewport) return;
+
+        // Avoid hijacking scrolling when user is interacting with dropdowns etc.
+        const target = event.target as HTMLElement | null;
+        if (target && (target.tagName === 'SELECT' || target.tagName === 'OPTION')) return;
+
+        const rect = getWheelRect();
+        if (!rect.width) return;
+
+        event.preventDefault();
+
+        const x = Math.min(Math.max(event.clientX, rect.left), rect.right);
+        const ratio = (x - rect.left) / rect.width;
+        const centerMs = viewport.startMs + ratio * (viewport.stopMs - viewport.startMs);
+
+        if (event.ctrlKey) {
+          noteUserTimelineInteraction();
+          const factor = event.deltaY < 0 ? ZOOM_STEP : 1 / ZOOM_STEP;
+          zoomTimeline(centerMs, factor);
+          updateTimelineScrollBar();
+        } else {
+          noteUserTimelineInteraction();
+          const span = viewport.stopMs - viewport.startMs;
+          const direction = event.deltaY > 0 ? 1 : -1;
+          const deltaMs = direction * span * 0.2;
+          panTimeline(deltaMs);
+        }
+      },
+      { passive: false },
+    );
+  }
+
+  // Scroll bar drag for panning viewport
+  if (timelineScrollBar && timelineScrollThumb) {
+    let isDraggingScroll = false;
+    let activeScrollPointerId: number | null = null;
+
+    const applyScrollFromPointer = (event: PointerEvent) => {
+      if (!timelineScrollBar || !currentTimelineBounds) return;
+      const rect = timelineScrollBar.getBoundingClientRect();
+      if (!rect.width) return;
+      const x = Math.min(Math.max(event.clientX, rect.left), rect.right);
+      const ratio = (x - rect.left) / rect.width;
+      const centerMs =
+        currentTimelineBounds.startMs +
+        ratio * (currentTimelineBounds.stopMs - currentTimelineBounds.startMs);
+      const viewport = getTimelineViewport();
+      if (!viewport) return;
+      const span = viewport.stopMs - viewport.startMs;
+      setTimelineViewport(centerMs - span / 2, centerMs + span / 2);
+    };
+
+    timelineScrollThumb.addEventListener('pointerdown', (event) => {
+      isDraggingScroll = true;
+      activeScrollPointerId = event.pointerId;
+      timelineScrollThumb.setPointerCapture(event.pointerId);
+      noteUserTimelineInteraction();
+      applyScrollFromPointer(event);
+    });
+
+    timelineScrollThumb.addEventListener('pointermove', (event) => {
+      if (!isDraggingScroll || activeScrollPointerId !== event.pointerId) return;
+      noteUserTimelineInteraction();
+      applyScrollFromPointer(event);
+    });
+
+    const finishScrollDrag = (event: PointerEvent) => {
+      if (!isDraggingScroll || activeScrollPointerId !== event.pointerId) return;
+      isDraggingScroll = false;
+      try {
+        timelineScrollThumb.releasePointerCapture(event.pointerId);
+      } catch {}
+    };
+
+    timelineScrollThumb.addEventListener('pointerup', finishScrollDrag);
+    timelineScrollThumb.addEventListener('pointercancel', finishScrollDrag);
+  }
 
   window.addEventListener('resize', () => {
     if (currentTimelineBounds) {
+      // Let the panel reflow for the new viewport, then lock again.
+      if (timelinePanel) timelinePanel.style.height = '';
       renderTimelineTicks();
+      updateTimelineScrollBar();
+      positionTimelineStack();
+      lockTimelinePanelHeight();
       refreshTimelineUi(true);
     }
   });
@@ -623,6 +1147,7 @@ function configureTimeline(
   scenarios: any[],
   bounds: { start: Cesium.JulianDate; stop: Cesium.JulianDate },
   baseMultiplier: number,
+  autoPlay = true,
 ) {
   const firstScenario = scenarios[0];
   currentScenarioTimeZone = firstScenario?.content?.timeZone || firstScenario?.timeZone || 'UTC';
@@ -630,6 +1155,9 @@ function configureTimeline(
     startMs: Cesium.JulianDate.toDate(bounds.start).getTime(),
     stopMs: Cesium.JulianDate.toDate(bounds.stop).getTime(),
   };
+  // Reset viewport so initial load shows full timeline (no zoom).
+  currentTimelineViewport = null;
+  lastUserTimelineInteractionAt = Date.now();
   currentTimelineBaseMultiplier = baseMultiplier;
   currentTimelineSpeedFactor = 1;
 
@@ -639,9 +1167,11 @@ function configureTimeline(
 
   renderTimelineTicks();
   setTimelinePanelVisible(true);
+  updateTimelineScrollBar();
   applyTimelineSpeedFactor(currentTimelineSpeedFactor);
-  setTimelinePlaybackState(true);
+  setTimelinePlaybackState(autoPlay);
   refreshTimelineUi(true);
+  startTimelineNowLabelTicker();
 }
 
 function makeRectangle(west: number, south: number, east: number, north: number): Cesium.Rectangle {
@@ -763,6 +1293,85 @@ function focusScenarioLocation(immediate = false) {
     lat: originLat,
     entities: cesiumViewer.entities?.values?.length ?? 0,
     hasRectangle: !!currentScenarioRectangle,
+  });
+}
+
+function focusScenarioLocationAsync(immediate = false): Promise<void> {
+  if (!cesiumViewer) return Promise.resolve();
+
+  if (currentScenarioRectangle) {
+    if (immediate) {
+      cesiumViewer.camera.setView({ destination: currentScenarioRectangle });
+      return Promise.resolve();
+    }
+    return new Promise((resolve) => {
+      try {
+        cesiumViewer.camera.flyTo({
+          destination: currentScenarioRectangle,
+          duration: 2.2,
+          complete: () => resolve(),
+          cancel: () => resolve(),
+        });
+      } catch {
+        resolve();
+      }
+    });
+  }
+
+  if (cesiumViewer.entities?.values?.length) {
+    return Promise.resolve()
+      .then(() => cesiumViewer.zoomTo(cesiumViewer.entities))
+      .then(() => undefined)
+      .catch(() => {
+        return new Promise((resolve) => {
+          try {
+            cesiumViewer.camera.flyTo({
+              destination: Cesium.Cartesian3.fromDegrees(originLon, originLat, 120000),
+              duration: 1.8,
+              orientation: {
+                heading: 0,
+                pitch: Cesium.Math.toRadians(-55),
+                roll: 0,
+              },
+              complete: () => resolve(),
+              cancel: () => resolve(),
+            });
+          } catch {
+            resolve();
+          }
+        });
+      });
+  }
+
+  return new Promise((resolve) => {
+    try {
+      cesiumViewer.camera.flyTo({
+        destination: Cesium.Cartesian3.fromDegrees(originLon, originLat, 120000),
+        duration: 1.8,
+        orientation: {
+          heading: 0,
+          pitch: Cesium.Math.toRadians(-55),
+          roll: 0,
+        },
+        complete: () => resolve(),
+        cancel: () => resolve(),
+      });
+    } catch {
+      resolve();
+    }
+  });
+}
+
+function autoStartScenarioPlaybackAfterInitialZoom() {
+  if (hasAutoStartedScenarioPlayback) return;
+  if (!cesiumViewer || !currentTimelineBounds) return;
+  hasAutoStartedScenarioPlayback = true;
+
+  focusScenarioLocationAsync(false).finally(() => {
+    // اگر کاربر خودش پلی کرده باشد، دوباره دست نزنیم.
+    if (currentTimelinePlaying) return;
+    setTimelinePlaybackState(true);
+    refreshTimelineUi(true);
   });
 }
 
@@ -948,7 +1557,8 @@ async function initializeCesium() {
         const center = getScenarioCenter(scenarios[0], 0, 1);
         originLon = center.lon;
         originLat = center.lat;
-        currentScenarioName = scenarios[0]?.name || '';
+        currentScenarioName = resolveScenarioDisplayName(scenarios[0]) || '';
+        setScenarioTitle(currentScenarioName || scenarioId || '');
         currentScenarioRectangle = getScenarioRectangle(scenarios[0]);
         const countryOverview = getCountryOverview(center.lon, center.lat);
         currentCountryOverviewName = countryOverview.name;
@@ -970,14 +1580,14 @@ async function initializeCesium() {
           (cesiumViewer as any).clock.clockRange = Cesium.ClockRange.CLAMPED;
           (cesiumViewer as any).clock.multiplier = multiplier;
           (cesiumViewer as any).clock.canAnimate = true;
-          (cesiumViewer as any).clock.shouldAnimate = true;
+          (cesiumViewer as any).clock.shouldAnimate = false;
 
           if (!hasTimelineClockListener) {
             (cesiumViewer as any).clock.onTick.addEventListener(handleTimelineClockTick);
             hasTimelineClockListener = true;
           }
 
-          configureTimeline(scenarios, bounds, multiplier);
+          configureTimeline(scenarios, bounds, multiplier, false);
 
           console.log('[Simulator] Cesium clock bounds set:', {
             start: bounds.start.toString(),
@@ -1006,10 +1616,11 @@ async function initializeCesium() {
         `<strong>پخش زمان:</strong> x${Math.round((cesiumViewer as any).clock.multiplier ?? 1)}`,
         `<strong>entity:</strong> ${cesiumViewer.entities?.values?.length ?? 0}`,
       ]);
+      setScenarioTitle(currentScenarioName || scenarioId || '');
 
       if (scenarios.length > 0) {
         window.setTimeout(() => {
-          focusScenarioLocation(false);
+          autoStartScenarioPlaybackAfterInitialZoom();
         }, 1800);
       }
     } catch (pinError) {

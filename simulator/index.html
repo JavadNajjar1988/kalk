@@ -5,21 +5,72 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Kalk Simulator - Babylon.js</title>
     <style>
+      :root {
+        color-scheme: dark;
+        --font-ui: 'IRANSans', 'Iran Sans', 'IRANSansX', 'Vazirmatn', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+
+        --bg0: #02081a;
+        --bg1: #05102b;
+        --surface: rgba(7, 19, 48, 0.62);
+        --surface-strong: rgba(7, 19, 48, 0.72);
+        --border: rgba(165, 214, 255, 0.18);
+        --border-strong: rgba(165, 214, 255, 0.28);
+        --text: rgba(232, 246, 255, 0.96);
+        --muted: rgba(201, 231, 255, 0.74);
+        --muted2: rgba(201, 231, 255, 0.62);
+
+        --accent: #38bdf8;
+        --accent2: #2563eb;
+
+        --shadow-lg: 0 22px 48px rgba(0, 0, 0, 0.34);
+        --shadow-md: 0 16px 40px rgba(0, 0, 0, 0.28);
+
+        --radius-sm: 10px;
+        --radius-md: 12px;
+        --radius-lg: 18px;
+
+        --glass-blur: 16px;
+        --glass-sat: 160%;
+        --glass-highlight: rgba(255, 255, 255, 0.08);
+        --glass-highlight-2: rgba(255, 255, 255, 0.05);
+      }
+
+      html[data-theme='light'] {
+        color-scheme: light;
+        --bg0: #e7f4ff;
+        --bg1: #cfeaff;
+        --surface: rgba(225, 244, 255, 0.62);
+        --surface-strong: rgba(225, 244, 255, 0.72);
+        --border: rgba(3, 19, 48, 0.14);
+        --border-strong: rgba(3, 19, 48, 0.22);
+        --text: rgba(3, 19, 48, 0.94);
+        --muted: rgba(3, 19, 48, 0.72);
+        --muted2: rgba(3, 19, 48, 0.62);
+        --shadow-lg: 0 22px 48px rgba(2, 6, 23, 0.14);
+        --shadow-md: 0 16px 40px rgba(2, 6, 23, 0.12);
+      }
+
       @font-face {
-        font-family: 'SimulatorUi';
+        font-family: 'IRANSans';
         src:
-          url('./fonts/Yekan.woff2') format('woff2'),
-          url('./fonts/Yekan.woff') format('woff');
+          local('IRANSans'),
+          local('Iran Sans'),
+          local('IRANSansX'),
+          url('./fonts/IRANSans.woff2') format('woff2'),
+          url('./fonts/IRANSans.woff') format('woff');
         font-weight: 400;
         font-style: normal;
         font-display: swap;
       }
 
       @font-face {
-        font-family: 'SimulatorUi';
+        font-family: 'IRANSans';
         src:
-          url('./fonts/Yekan-Bold.woff2') format('woff2'),
-          url('./fonts/Yekan-Bold.woff') format('woff');
+          local('IRANSans Bold'),
+          local('Iran Sans Bold'),
+          local('IRANSansX Bold'),
+          url('./fonts/IRANSans-Bold.woff2') format('woff2'),
+          url('./fonts/IRANSans-Bold.woff') format('woff');
         font-weight: 700;
         font-style: normal;
         font-display: swap;
@@ -35,7 +86,12 @@
         width: 100%;
         height: 100vh;
         overflow: hidden;
-        font-family: 'SimulatorUi', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        font-family: var(--font-ui);
+        background:
+          radial-gradient(1200px 900px at 15% -10%, rgba(56, 189, 248, 0.22), transparent 60%),
+          radial-gradient(900px 700px at 90% 0%, rgba(37, 99, 235, 0.22), transparent 55%),
+          linear-gradient(180deg, var(--bg0), var(--bg1));
+        color: var(--text);
       }
 
       #mainContainer {
@@ -96,7 +152,7 @@
         left: 0;
         width: 100%;
         height: 100%;
-        background: #000;
+        background: linear-gradient(180deg, var(--bg0), var(--bg1));
         z-index: 10000;
         display: flex;
         align-items: center;
@@ -120,7 +176,7 @@
         top: 50%;
         left: 50%;
         transform: translate(-50%, -50%);
-        color: white;
+        color: var(--text);
         font-size: 24px;
         z-index: 10001;
         display: none;
@@ -132,9 +188,10 @@
         left: 0;
         right: 0;
         height: 60px;
-        background: linear-gradient(135deg, rgba(20, 20, 30, 0.95) 0%, rgba(30, 30, 45, 0.95) 100%);
-        backdrop-filter: blur(10px);
-        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        background: linear-gradient(135deg, var(--surface-strong) 0%, var(--surface) 100%);
+        backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
+        border-bottom: 1px solid var(--border);
+        box-shadow: 0 14px 34px rgba(0, 0, 0, 0.18);
         z-index: 9999;
         display: flex;
         align-items: center;
@@ -142,6 +199,22 @@
         padding: 0 20px;
         opacity: 0;
         transition: opacity 0.5s ease-in-out;
+      }
+
+      #header::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        background:
+          radial-gradient(900px 120px at 20% 0%, rgba(56, 189, 248, 0.18), transparent 60%),
+          linear-gradient(180deg, var(--glass-highlight), transparent 55%);
+        opacity: 0.9;
+      }
+
+      #header > * {
+        position: relative;
+        z-index: 1;
       }
 
       #header.visible {
@@ -152,80 +225,328 @@
         display: flex;
         align-items: center;
         gap: 12px;
-        color: white;
+        color: var(--text);
         font-size: 18px;
         font-weight: 600;
+      }
+
+      #header .logo-title {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      #header .logo-title-text {
+        line-height: 1;
+      }
+
+      #header .logo-toggle {
+        width: 34px;
+        height: 34px;
+        border-radius: 12px;
+        font-size: 16px;
       }
 
       #header .controls {
         display: flex;
         align-items: center;
-        gap: 10px;
+        gap: 8px;
       }
 
-      #header .action-button,
-      #header .back-button {
-        background: rgba(255, 255, 255, 0.1);
-        border: 1px solid rgba(255, 255, 255, 0.2);
-        color: white;
-        padding: 8px 14px;
-        border-radius: 8px;
-        cursor: pointer;
+      #header .scenario-title {
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%, -50%);
+        max-width: clamp(220px, calc(100vw - 280px), 720px);
+        min-width: 220px;
+        height: 38px;
+        z-index: 9999;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0 12px;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.06);
+        border: 1px solid rgba(165, 214, 255, 0.22);
+        backdrop-filter: blur(calc(var(--glass-blur) - 2px)) saturate(var(--glass-sat));
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.14);
+        color: var(--text);
         font-size: 14px;
-        font-weight: 500;
+        font-weight: 700;
+        text-align: center;
+        line-height: 1.2;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        pointer-events: none;
+      }
+
+      @media (max-width: 900px) {
+        #header .scenario-title {
+          max-width: min(520px, calc(100vw - 240px));
+          font-size: 12px;
+          height: 34px;
+        }
+      }
+
+      @media (max-width: 560px) {
+        #header .scenario-title {
+          max-width: min(340px, calc(100vw - 180px));
+        }
+      }
+
+      #header .icon-button {
+        background: rgba(255, 255, 255, 0.08);
+        border: 1px solid var(--border-strong);
+        color: var(--text);
+        width: 38px;
+        height: 38px;
+        padding: 0;
+        border-radius: 12px;
+        cursor: pointer;
+        font-size: 18px;
+        font-weight: 600;
         transition: all 0.3s ease;
         display: inline-flex;
         align-items: center;
-        gap: 8px;
+        justify-content: center;
         text-decoration: none;
+        user-select: none;
+        -webkit-tap-highlight-color: transparent;
       }
 
-      #header .action-button:hover,
-      #header .back-button:hover {
-        background: rgba(255, 255, 255, 0.2);
-        border-color: rgba(255, 255, 255, 0.3);
+      #header .icon-button:hover {
+        background: rgba(255, 255, 255, 0.14);
+        border-color: rgba(255, 255, 255, 0.26);
         transform: translateY(-2px);
+      }
+
+      #header .icon-button:active {
+        transform: translateY(0);
+      }
+
+      #header .icon-button:focus-visible,
+      .timeline-control-button:focus-visible,
+      .timeline-speed-select:focus-visible,
+      #timelineSlider:focus-visible {
+        outline: 3px solid rgba(56, 189, 248, 0.35);
+        outline-offset: 2px;
+      }
+
+      #header .icon-button svg {
+        width: 18px;
+        height: 18px;
+        display: block;
+      }
+
+      #header .icon-button .emoji-icon {
+        line-height: 1;
+        transform: translateY(1px);
       }
 
       #scenarioDebugPanel {
         position: fixed;
-        left: 16px;
-        bottom: 188px;
+        left: var(--debug-panel-left, 16px);
+        top: var(--debug-panel-top, 76px);
         z-index: 9998;
         min-width: 280px;
         max-width: 420px;
+        max-height: min(60vh, 520px);
+        overflow: auto;
         padding: 12px 14px;
         border-radius: 12px;
-        background: rgba(12, 18, 28, 0.86);
-        color: #f7fbff;
-        border: 1px solid rgba(255, 255, 255, 0.16);
-        backdrop-filter: blur(10px);
+        background: var(--surface);
+        color: var(--text);
+        border: 1px solid var(--border);
+        backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
         font-size: 13px;
         line-height: 1.6;
-        box-shadow: 0 16px 40px rgba(0, 0, 0, 0.28);
+        box-shadow: var(--shadow-md);
+        opacity: 0;
+        transform: translateY(8px);
+        pointer-events: none;
+        transition:
+          opacity 0.22s ease,
+          transform 0.22s ease;
+      }
+
+      #scenarioDebugPanel.open {
+        opacity: 1;
+        transform: translateY(0);
+        pointer-events: auto;
+      }
+
+      #scenarioDebugPanel::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        border-radius: inherit;
+        pointer-events: none;
+        background:
+          radial-gradient(700px 220px at 10% 0%, rgba(56, 189, 248, 0.14), transparent 55%),
+          linear-gradient(180deg, var(--glass-highlight-2), transparent 60%);
+        opacity: 0.95;
+      }
+
+      #scenarioDebugPanel > * {
+        position: relative;
+        z-index: 1;
+      }
+
+      #scenarioDebugPanel::-webkit-scrollbar {
+        width: 10px;
+      }
+
+      #scenarioDebugPanel::-webkit-scrollbar-thumb {
+        background: color-mix(in srgb, var(--border-strong) 55%, transparent);
+        border-radius: 999px;
+        border: 2px solid transparent;
+        background-clip: padding-box;
       }
 
       #scenarioDebugPanel strong {
-        color: #8fe7ff;
+        color: color-mix(in srgb, var(--accent) 70%, var(--text));
       }
 
       #timelinePanel {
         position: fixed;
-        left: 50%;
-        bottom: 16px;
-        transform: translateX(-50%);
-        width: min(1120px, calc(100vw - 32px));
-        z-index: 9997;
-        padding: 14px 16px 16px;
-        border-radius: 18px;
-        background: rgba(8, 14, 22, 0.9);
-        color: #f5fbff;
-        border: 1px solid rgba(255, 255, 255, 0.14);
-        backdrop-filter: blur(14px);
-        box-shadow: 0 22px 48px rgba(0, 0, 0, 0.34);
+        left: 0;
+        right: 0;
+        bottom: 0;
+        transform: none;
+        width: 100%;
+        z-index: 10040;
+        padding: 10px 20px 12px;
+        /* Keep panel height stable (reserve scrollbar space). */
+        height: var(--timeline-panel-height, 200px) !important;
+        overflow: hidden;
+        border-radius: 18px 18px 0 0;
+        background: var(--surface-strong);
+        color: var(--text);
+        border: 1px solid var(--border);
+        backdrop-filter: blur(calc(var(--glass-blur) + 2px)) saturate(var(--glass-sat));
+        box-shadow: var(--shadow-lg);
         opacity: 0;
         pointer-events: none;
         transition: opacity 0.35s ease;
+      }
+
+      /* باکس شمارشگر: بالای نوار تایم‌لاین، گوشهٔ راست؛ z-index بالاتر از هدر کنترل‌ها تا پوشانده نشود */
+      #timelineClockPanel {
+        position: fixed;
+        left: auto;
+        right: 20px;
+        bottom: 220px;
+        width: max-content;
+        min-width: 280px;
+        max-width: min(560px, calc(100vw - 40px));
+        z-index: 10060;
+        padding: 0;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.2s ease;
+        /* در صفحهٔ RTL، «راست» همان لبهٔ فیزیکی راست بماند */
+        direction: ltr;
+      }
+
+      #timelineClockPanel.visible {
+        opacity: 1;
+        pointer-events: auto;
+      }
+
+      .timeline-clock-shell {
+        width: auto;
+        min-width: 260px;
+        max-width: min(560px, calc(100vw - 40px));
+        margin: 0;
+        padding: 12px 18px;
+        border-radius: 14px;
+        border: 1px solid color-mix(in srgb, var(--accent) 45%, var(--border-strong));
+        background: #0a1020;
+        box-shadow:
+          0 0 0 1px rgba(56, 189, 248, 0.2),
+          0 18px 40px rgba(0, 0, 0, 0.55);
+        box-sizing: border-box;
+      }
+
+      .timeline-now-label--standalone {
+        width: 100%;
+        max-width: none;
+        min-width: 0;
+        min-height: 44px;
+        margin: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        font-size: 15px;
+        line-height: 1.35;
+        white-space: normal;
+        overflow: visible;
+        text-overflow: unset;
+        border-width: 2px;
+        color: var(--text);
+        box-sizing: border-box;
+      }
+
+      /* استفادهٔ inline از شمارشگر داخل باکس کنترل‌های تایم‌لاین */
+      .timeline-now-label--inline {
+        flex: 1 1 auto;
+        max-width: none;
+        min-width: 16rem;
+        height: auto !important;
+        padding: 0 !important;
+        display: inline-flex;
+        align-items: center;
+        border-radius: 0 !important;
+        border: 0 !important;
+        background: transparent !important;
+        color: var(--text);
+        font-size: 20px !important;
+        font-weight: 900;
+        white-space: normal;
+        overflow: visible;
+        text-overflow: unset;
+        line-height: 1.2;
+        direction: rtl;
+        justify-content: flex-start;
+        text-align: right;
+      }
+
+      #timelineHeaderPanel {
+        position: fixed;
+        left: 0;
+        right: 0;
+        bottom: 210px;
+        /* بالاتر از هدر اپ و ابزارک Cesium تا باکس زمان همیشه قابل مشاهده باشد */
+        z-index: 10050;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.2s ease;
+      }
+
+      #timelineHeaderPanel.visible {
+        opacity: 1;
+        pointer-events: auto;
+      }
+
+      #timelinePanel::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        border-radius: inherit;
+        pointer-events: none;
+        background:
+          radial-gradient(900px 340px at 30% 0%, rgba(56, 189, 248, 0.12), transparent 62%),
+          radial-gradient(900px 340px at 85% 0%, rgba(37, 99, 235, 0.1), transparent 65%),
+          linear-gradient(180deg, var(--glass-highlight), transparent 58%);
+        opacity: 0.9;
+      }
+
+      #timelinePanel > * {
+        position: relative;
+        z-index: 1;
       }
 
       #timelinePanel.visible {
@@ -233,55 +554,145 @@
         pointer-events: auto;
       }
 
-      .timeline-summary {
+      .timeline-summary-shell {
+        width: 100%;
         display: flex;
-        align-items: flex-start;
+        justify-content: center;
+      }
+
+      .timeline-summary {
+        position: relative;
+        width: min(1120px, calc(100vw - 80px));
+        display: flex;
+        align-items: center;
         justify-content: space-between;
         gap: 16px;
-        margin-bottom: 14px;
+        padding: 10px 14px;
+        border-radius: 14px;
+        border: 1px solid var(--border);
+        background: var(--surface-strong);
+        color: var(--text);
+        backdrop-filter: blur(calc(var(--glass-blur) + 2px)) saturate(var(--glass-sat));
+        box-shadow: var(--shadow-lg);
+        pointer-events: auto;
       }
 
-      .timeline-current-block {
-        min-width: 0;
+      .timeline-summary::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        border-radius: inherit;
+        pointer-events: none;
+        background:
+          radial-gradient(900px 240px at 30% 0%, rgba(56, 189, 248, 0.12), transparent 62%),
+          radial-gradient(900px 240px at 85% 0%, rgba(37, 99, 235, 0.1), transparent 65%),
+          linear-gradient(180deg, var(--glass-highlight), transparent 58%);
+        opacity: 0.9;
       }
 
-      .timeline-current-label {
-        color: #ffffff;
-        font-size: 18px;
-        font-weight: 700;
-        line-height: 1.5;
-      }
-
-      .timeline-current-sublabel {
-        color: rgba(230, 244, 255, 0.72);
-        font-size: 12px;
-        line-height: 1.7;
+      .timeline-summary > * {
+        position: relative;
+        z-index: 1;
       }
 
       .timeline-controls {
         display: flex;
         align-items: center;
-        gap: 10px;
+        gap: 8px;
         flex-wrap: wrap;
+        flex-shrink: 0;
+      }
+
+      .timeline-inline-now-label {
+        flex: 1 1 280px;
+        min-width: 12rem;
+        height: 40px;
+        padding: 0 12px;
+        display: inline-flex;
+        align-items: center;
+        border-radius: 12px;
+        border: 1px solid var(--border-strong);
+        background: rgba(255, 255, 255, 0.06);
+        color: var(--text);
+        font-size: 14px;
+        font-weight: 800;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        direction: ltr;
+        justify-content: flex-end;
+      }
+
+      .timeline-now-label {
+        max-width: 330px;
+        min-width: 11rem;
+        flex-shrink: 0;
+        padding: 0 10px;
+        height: 40px;
+        display: inline-flex;
+        align-items: center;
+        border-radius: 12px;
+        border: 1px solid var(--border-strong);
+        background: rgba(255, 255, 255, 0.06);
+        color: var(--text);
+        font-size: 13px;
+        font-weight: 700;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        direction: rtl;
+      }
+
+      /* اولویت بالاتر برای inline (چون .timeline-now-label پایین‌تر تعریف شده) */
+      .timeline-now-label.timeline-now-label--inline {
+        font-size: 20px !important;
+        border: 0 !important;
+        background: transparent !important;
+        padding: 0 !important;
+        height: auto !important;
+        direction: rtl;
+        justify-content: flex-start;
+        text-align: right;
+        max-width: none;
+        overflow: visible;
+        white-space: normal;
       }
 
       .timeline-control-button,
       .timeline-speed-select {
         border-radius: 10px;
-        border: 1px solid rgba(255, 255, 255, 0.18);
+        border: 1px solid var(--border-strong);
         background: rgba(255, 255, 255, 0.08);
-        color: #f7fbff;
+        color: var(--text);
         min-height: 40px;
         font: inherit;
       }
 
       .timeline-control-button {
-        padding: 0 16px;
+        width: 40px;
+        min-width: 40px;
+        padding: 0;
         cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
         transition:
           background-color 0.2s ease,
           border-color 0.2s ease,
           transform 0.2s ease;
+      }
+
+      .timeline-control-button svg {
+        width: 18px;
+        height: 18px;
+        display: block;
+      }
+
+      /* Bigger icons for play/pause + stop (keep zoom icons unchanged) */
+      #timelinePlayPauseButton svg,
+      #timelineStopButton svg {
+        width: 22px;
+        height: 22px;
       }
 
       .timeline-control-button:hover,
@@ -295,8 +706,12 @@
       }
 
       .timeline-control-button.primary {
-        background: linear-gradient(135deg, rgba(37, 99, 235, 0.9), rgba(14, 165, 233, 0.82));
-        border-color: rgba(143, 231, 255, 0.4);
+        background: linear-gradient(
+          135deg,
+          color-mix(in srgb, var(--accent2) 92%, #000 8%),
+          color-mix(in srgb, var(--accent) 86%, #000 14%)
+        );
+        border-color: color-mix(in srgb, var(--accent) 55%, transparent);
       }
 
       .timeline-control-button.secondary {
@@ -307,17 +722,63 @@
         display: inline-flex;
         align-items: center;
         gap: 8px;
-        color: rgba(230, 244, 255, 0.78);
+        color: var(--muted);
         font-size: 13px;
       }
 
+      .timeline-zoom-buttons {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+      }
+
+      /* zoom controls are wheel-only; no buttons */
+
+      /* Ensure + / − glyphs are visually centered in their buttons */
+      .timeline-zoom-buttons .timeline-control-button {
+        font-size: 20px;
+        line-height: 1;
+        padding: 0;
+        text-align: center;
+      }
+
+      .timeline-zoom-buttons .timeline-control-button > * {
+        display: block;
+        line-height: 1;
+      }
+
       .timeline-speed-select {
-        padding: 0 12px;
+        width: 74px;
+        min-width: 74px;
+        padding: 0 6px;
         cursor: pointer;
+        text-align: center;
+        background: var(--surface);
+        color: var(--text);
+        border-radius: 12px;
+        border: 1px solid var(--border-strong);
+        appearance: none;
+        -webkit-appearance: none;
+        -moz-appearance: none;
+      }
+
+      .timeline-speed-select option {
+        background: var(--surface-strong);
+        color: var(--text);
       }
 
       .timeline-track-shell {
         direction: ltr;
+        margin-top: 18px;
+        width: min(1820px, calc(100vw - 10px));
+        margin-left: auto;
+        margin-right: auto;
+        display: grid;
+        grid-template-columns: 1fr;
+        /* Fixed rows to prevent pushing when scrollbar becomes visible */
+        /* Order: edge labels, ticks (day + hours), scrubber (timeline line), scrollbar, footer */
+        grid-template-rows: auto 46px 26px 10px auto;
+        row-gap: 10px;
       }
 
       .timeline-edge-labels,
@@ -329,7 +790,7 @@
       }
 
       .timeline-edge-labels {
-        margin-bottom: 10px;
+        margin-bottom: 0;
       }
 
       .timeline-edge {
@@ -341,20 +802,105 @@
 
       .timeline-edge span,
       .timeline-footer span {
-        color: rgba(230, 244, 255, 0.68);
+        color: var(--muted2);
         font-size: 11px;
       }
 
       .timeline-edge strong {
-        color: #ffffff;
+        color: var(--text);
         font-size: 13px;
         font-weight: 700;
       }
 
       #timelineTicks {
         position: relative;
-        height: 34px;
-        margin-bottom: 10px;
+        height: 46px;
+        margin-bottom: 0;
+        overflow: visible;
+      }
+
+      #timelineScrollBar {
+        grid-row: 4;
+        position: relative;
+        width: 100%;
+        height: 10px;
+        margin-top: 0;
+        margin-bottom: 0;
+        cursor: pointer;
+        transition: opacity 0.15s ease;
+        /* Reserve space always; just fade by default */
+        display: block !important;
+        opacity: 0;
+        pointer-events: none;
+      }
+
+      #timelineScrollBar.is-visible {
+        opacity: 1;
+        pointer-events: auto;
+      }
+
+      /* Safety: never show debug outlines on timeline UI */
+      #timelineTicks,
+      #timelineScrollBar,
+      #timelineScrollThumb,
+      #timelineScrubber,
+      #timelineScrubberHandle {
+        outline: none !important;
+      }
+
+      .timeline-scroll-track {
+        position: absolute;
+        left: 0;
+        right: 0;
+        top: 50%;
+        height: 4px;
+        transform: translateY(-50%);
+        border-radius: 999px;
+        /* Fallback first (for browsers without color-mix) */
+        background: rgba(165, 214, 255, 0.22);
+        background: color-mix(in srgb, var(--border-strong) 55%, transparent);
+        overflow: hidden;
+      }
+
+      .timeline-scroll-thumb {
+        position: absolute;
+        top: 1px;
+        bottom: 1px;
+        min-width: 4%;
+        border-radius: 999px;
+        transform: translateX(-50%);
+        /* Fallback first (for browsers without color-mix) */
+        background: rgba(56, 189, 248, 0.92);
+        background: color-mix(in srgb, var(--accent) 92%, transparent);
+      }
+
+      #timelineScrubber {
+        grid-row: 3;
+        position: relative;
+        width: 100%;
+        height: 26px;
+        cursor: pointer;
+      }
+
+      .timeline-scrubber-track {
+        position: absolute;
+        left: 0;
+        right: 0;
+        top: 50%;
+        height: 4px;
+        transform: translateY(-50%);
+        border-radius: 999px;
+        background: color-mix(in srgb, var(--border-strong) 40%, transparent);
+        overflow: hidden;
+      }
+
+      .timeline-scrubber-handle {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        width: 2px;
+        transform: translateX(-50%);
+        background: var(--accent);
       }
 
       .timeline-tick {
@@ -365,7 +911,7 @@
         flex-direction: column;
         align-items: center;
         gap: 4px;
-        color: rgba(230, 244, 255, 0.78);
+        color: var(--muted);
         font-size: 11px;
         white-space: nowrap;
       }
@@ -374,7 +920,66 @@
         content: "";
         width: 1px;
         height: 12px;
-        background: rgba(255, 255, 255, 0.26);
+        background: color-mix(in srgb, var(--border-strong) 70%, transparent);
+      }
+
+      .timeline-day-separator {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        width: 1px;
+        background: color-mix(in srgb, var(--accent) 40%, transparent);
+        opacity: 0.55;
+        pointer-events: none;
+      }
+
+      .timeline-day-label {
+        position: absolute;
+        top: 0;
+        height: 18px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0 6px;
+        border-radius: 999px;
+        font-size: 11px;
+        font-weight: 700;
+        color: var(--text);
+        background: color-mix(in srgb, var(--surface-strong) 60%, transparent);
+        border: 1px solid color-mix(in srgb, var(--border) 60%, transparent);
+        overflow: hidden;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+        pointer-events: none;
+      }
+
+      .timeline-hour-tick {
+        position: absolute;
+        top: 20px;
+        transform: translateX(-50%);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 2px;
+        pointer-events: none;
+        color: var(--text);
+        font-size: 12px;
+        white-space: nowrap;
+        z-index: 2;
+      }
+
+      .timeline-hour-tick::before {
+        content: "";
+        width: 2px;
+        height: 8px;
+        background: color-mix(in srgb, var(--accent) 70%, transparent);
+        border-radius: 999px;
+      }
+
+      .timeline-hour-label {
+        line-height: 1;
+        opacity: 0.95;
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
       }
 
       #timelineSlider {
@@ -388,10 +993,10 @@
         background:
           linear-gradient(
             90deg,
-            rgba(79, 209, 255, 0.96) 0%,
-            rgba(79, 209, 255, 0.96) var(--timeline-progress),
-            rgba(255, 255, 255, 0.12) var(--timeline-progress),
-            rgba(255, 255, 255, 0.12) 100%
+            color-mix(in srgb, var(--accent) 90%, var(--text) 10%) 0%,
+            color-mix(in srgb, var(--accent) 90%, var(--text) 10%) var(--timeline-progress),
+            color-mix(in srgb, var(--border-strong) 40%, transparent) var(--timeline-progress),
+            color-mix(in srgb, var(--border-strong) 40%, transparent) 100%
           );
       }
 
@@ -401,8 +1006,8 @@
         width: 18px;
         height: 18px;
         border-radius: 50%;
-        background: #ffffff;
-        border: 3px solid #38bdf8;
+        background: var(--text);
+        border: 3px solid var(--accent);
         box-shadow: 0 0 0 5px rgba(56, 189, 248, 0.14);
         cursor: pointer;
       }
@@ -411,20 +1016,29 @@
         width: 18px;
         height: 18px;
         border-radius: 50%;
-        background: #ffffff;
-        border: 3px solid #38bdf8;
+        background: var(--text);
+        border: 3px solid var(--accent);
         box-shadow: 0 0 0 5px rgba(56, 189, 248, 0.14);
         cursor: pointer;
       }
 
       .timeline-footer {
-        margin-top: 10px;
+        margin-top: 0;
       }
 
       #timelineProgressLabel {
-        color: #8fe7ff;
+        color: color-mix(in srgb, var(--accent) 70%, var(--text));
         font-size: 12px;
         font-weight: 700;
+        display: none;
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        * {
+          transition: none !important;
+          animation: none !important;
+          scroll-behavior: auto !important;
+        }
       }
 
       @media (max-width: 900px) {
@@ -440,6 +1054,18 @@
           width: calc(100vw - 24px);
           bottom: 12px;
           padding: 12px;
+          height: 220px !important;
+        }
+
+        #timelineClockPanel {
+          right: 12px;
+          left: auto;
+          max-width: calc(100vw - 24px);
+          bottom: 210px;
+        }
+
+        .timeline-clock-shell {
+          max-width: min(560px, calc(100vw - 24px));
         }
 
         .timeline-summary {
@@ -451,8 +1077,13 @@
           justify-content: space-between;
         }
 
-        .timeline-current-label {
-          font-size: 16px;
+        .timeline-inline-now-label {
+          font-size: 13px;
+        }
+
+        .timeline-now-label--inline,
+        .timeline-now-label.timeline-now-label--inline {
+          font-size: 17px !important;
         }
 
         .timeline-edge strong {
@@ -464,40 +1095,101 @@
   <body>
     <header id="header">
       <div class="logo">
-        <span>🎮</span>
-        <span>Kalk Simulator</span>
+        <div class="logo-title">
+          <button
+            id="debugPanelToggle"
+            class="icon-button logo-toggle"
+            type="button"
+            aria-label="نمایش توضیحات"
+            aria-controls="scenarioDebugPanel"
+            aria-expanded="false"
+            title="توضیحات"
+          >
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M4 7h16" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+              <path d="M4 12h16" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+              <path d="M4 17h16" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+            </svg>
+          </button>
+          <span class="logo-title-text">شبیه‌ساز سناریو</span>
+        </div>
       </div>
+      <div id="scenarioTitle" class="scenario-title" aria-hidden="true"></div>
       <div class="controls">
-        <button id="focusScenarioButton" class="action-button">رفتن به محل سناریو</button>
-        <a href="#" id="backToDashboard" class="back-button">
-          <span>←</span>
-          <span>بازگشت به داشبورد</span>
+        <button id="themeToggle" class="icon-button" type="button" aria-label="تغییر تم" title="تغییر تم">
+          <span id="themeToggleIcon" class="emoji-icon" aria-hidden="true">🌙</span>
+        </button>
+        <button id="focusScenarioButton" class="icon-button" type="button" aria-label="رفتن به محل سناریو" title="رفتن به محل سناریو">
+          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M12 2v3M12 19v3M2 12h3M19 12h3" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+            <path d="M12 7a5 5 0 1 1 0 10a5 5 0 0 1 0-10Z" stroke="currentColor" stroke-width="2" />
+            <path d="M12 10.2a1.8 1.8 0 1 1 0 3.6a1.8 1.8 0 0 1 0-3.6Z" fill="currentColor" opacity="0.9" />
+          </svg>
+        </button>
+        <a href="#" id="backToDashboard" class="icon-button" aria-label="بازگشت به داشبورد" title="بازگشت به داشبورد">
+          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M10 7l-5 5l5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+            <path d="M5 12h14" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+          </svg>
         </a>
       </div>
     </header>
     <div id="scenarioDebugPanel">در حال آماده‌سازی شبیه‌ساز...</div>
-    <section id="timelinePanel" aria-label="نوار زمان سناریو">
-      <div class="timeline-summary">
-        <div class="timeline-current-block">
-          <div id="timelineCurrentLabel" class="timeline-current-label">در حال آماده‌سازی زمان سناریو...</div>
-          <div id="timelineCurrentSubLabel" class="timeline-current-sublabel">اطلاعات تاریخ و زمان سناریو پس از بارگذاری نمایش داده می‌شود.</div>
-        </div>
-        <div class="timeline-controls">
-          <button id="timelinePlayPauseButton" type="button" class="timeline-control-button primary">توقف</button>
-          <button id="timelineStopButton" type="button" class="timeline-control-button secondary">بازپخش</button>
-          <label class="timeline-speed-group" for="timelineSpeedSelect">
-            <span>سرعت</span>
-            <select id="timelineSpeedSelect" class="timeline-speed-select">
-              <option value="0.25">۰.۲۵×</option>
-              <option value="0.5">۰.۵×</option>
-              <option value="1" selected>۱×</option>
-              <option value="2">۲×</option>
-              <option value="4">۴×</option>
-              <option value="8">۸×</option>
-            </select>
-          </label>
+    <section id="timelineHeaderPanel" aria-label="کنترل‌های نوار زمان سناریو">
+      <div class="timeline-summary-shell">
+        <div class="timeline-summary">
+          <div id="timelineNowLabel" class="timeline-now-label timeline-now-label--inline" aria-live="polite">—</div>
+          <div class="timeline-controls">
+            <button
+              id="timelinePlayPauseButton"
+              type="button"
+              class="timeline-control-button primary"
+              aria-label="توقف"
+              title="توقف"
+            >
+              <svg id="timelinePlayPauseIcon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <rect x="7.4" y="7" width="2.1" height="10" rx="0.6" fill="currentColor" />
+                <rect x="14.5" y="7" width="2.1" height="10" rx="0.6" fill="currentColor" />
+              </svg>
+            </button>
+            <button id="timelineStopButton" type="button" class="timeline-control-button secondary" aria-label="استپ" title="استپ">
+              <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <rect x="7" y="7" width="10" height="10" rx="1.5" fill="currentColor" />
+              </svg>
+            </button>
+            <label class="timeline-speed-group" for="timelineSpeedSelect">
+              <span>سرعت</span>
+              <select id="timelineSpeedSelect" class="timeline-speed-select">
+                <option value="0.25">۰.۲۵×</option>
+                <option value="0.5">۰.۵×</option>
+                <option value="1" selected>۱×</option>
+                <option value="2">۲×</option>
+                <option value="4">۴×</option>
+                <option value="8">۸×</option>
+              </select>
+            </label>
+            <div class="timeline-zoom-buttons" aria-label="زوم تایم‌لاین">
+              <button type="button" id="timelineZoomOutButton" class="timeline-control-button secondary" aria-label="زوم بک" title="زوم بک">
+                <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <circle cx="11" cy="11" r="6.5" stroke="currentColor" stroke-width="2" />
+                  <path d="M16.2 16.2L21 21" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+                  <path d="M8.5 11h5" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+                </svg>
+              </button>
+              <button type="button" id="timelineZoomInButton" class="timeline-control-button secondary" aria-label="زوم" title="زوم">
+                <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <circle cx="11" cy="11" r="6.5" stroke="currentColor" stroke-width="2" />
+                  <path d="M16.2 16.2L21 21" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+                  <path d="M11 8.5v5" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+                  <path d="M8.5 11h5" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+                </svg>
+              </button>
+            </div>
+          </div>
         </div>
       </div>
+    </section>
+    <section id="timelinePanel" aria-label="نوار زمان سناریو">
       <div class="timeline-track-shell">
         <div class="timeline-edge-labels">
           <div class="timeline-edge">
@@ -510,7 +1202,14 @@
           </div>
         </div>
         <div id="timelineTicks"></div>
-        <input id="timelineSlider" type="range" min="0" max="1000" step="1" value="0" />
+        <div id="timelineScrollBar">
+          <div class="timeline-scroll-track"></div>
+          <div id="timelineScrollThumb" class="timeline-scroll-thumb"></div>
+        </div>
+        <div id="timelineScrubber">
+          <div class="timeline-scrubber-track"></div>
+          <div id="timelineScrubberHandle" class="timeline-scrubber-handle"></div>
+        </div>
         <div class="timeline-footer">
           <span id="timelineProgressLabel">پیشرفت: ۰٪</span>
           <span id="timelineTimezoneLabel">منطقه زمانی: -</span>
@@ -530,6 +1229,131 @@
         <canvas id="renderCanvas"></canvas>
       </div>
     </div>
+    <script>
+      (function () {
+        const storageKey = 'kalk:simulator:theme';
+        const html = document.documentElement;
+        const btn = document.getElementById('themeToggle');
+        const icon = document.getElementById('themeToggleIcon');
+        const debugToggle = document.getElementById('debugPanelToggle');
+        const debugPanel = document.getElementById('scenarioDebugPanel');
+
+        function systemPrefersLight() {
+          return window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches;
+        }
+
+        function getInitialTheme() {
+          const saved = localStorage.getItem(storageKey);
+          if (saved === 'light' || saved === 'dark') return saved;
+          return systemPrefersLight() ? 'light' : 'dark';
+        }
+
+        function applyTheme(theme) {
+          html.dataset.theme = theme;
+          if (theme === 'light') {
+            icon.textContent = '☀️';
+            btn.title = 'تغییر به تم تیره';
+            btn.setAttribute('aria-label', 'تم روشن (تغییر به تیره)');
+          } else {
+            icon.textContent = '🌙';
+            btn.title = 'تغییر به تم روشن';
+            btn.setAttribute('aria-label', 'تم تیره (تغییر به روشن)');
+          }
+        }
+
+        function toggleTheme() {
+          const next = (html.dataset.theme || 'dark') === 'dark' ? 'light' : 'dark';
+          localStorage.setItem(storageKey, next);
+          applyTheme(next);
+        }
+
+        applyTheme(getInitialTheme());
+        btn.addEventListener('click', toggleTheme);
+
+        function setDebugOpen(isOpen) {
+          debugPanel.classList.toggle('open', isOpen);
+          debugToggle.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+          debugToggle.setAttribute('aria-label', isOpen ? 'بستن توضیحات' : 'نمایش توضیحات');
+          debugToggle.title = isOpen ? 'بستن توضیحات' : 'توضیحات';
+        }
+
+        function clamp(value, min, max) {
+          return Math.min(Math.max(value, min), max);
+        }
+
+        function positionDebugPanel() {
+          const header = document.getElementById('header');
+          const headerRect = header.getBoundingClientRect();
+          const toggleRect = debugToggle.getBoundingClientRect();
+          const viewportW = window.innerWidth;
+          const viewportH = window.innerHeight;
+          const gap = 10;
+
+          // Ensure it's measurable
+          debugPanel.style.visibility = 'hidden';
+          debugPanel.classList.add('open');
+          const panelRect = debugPanel.getBoundingClientRect();
+          debugPanel.classList.remove('open');
+          debugPanel.style.visibility = '';
+
+          const top = Math.round(Math.max(headerRect.bottom + gap, toggleRect.bottom + gap));
+
+          // RTL friendly: anchor to the toggle's left edge (visual "under it")
+          let left = Math.round(toggleRect.left);
+          left = clamp(left, 12, Math.max(12, viewportW - panelRect.width - 12));
+
+          // If it would overflow bottom, try to raise max-height instead (CSS handles)
+          const maxTop = viewportH - 80;
+          html.style.setProperty('--debug-panel-top', `${clamp(top, headerRect.bottom + gap, maxTop)}px`);
+          html.style.setProperty('--debug-panel-left', `${left}px`);
+        }
+
+        function openDebugPanel() {
+          positionDebugPanel();
+          setDebugOpen(true);
+        }
+
+        function closeDebugPanel() {
+          setDebugOpen(false);
+        }
+
+        function toggleDebugPanel() {
+          const isOpen = debugPanel.classList.contains('open');
+          if (isOpen) closeDebugPanel();
+          else openDebugPanel();
+        }
+
+        setDebugOpen(false);
+
+        debugToggle.addEventListener('click', function (e) {
+          e.preventDefault();
+          toggleDebugPanel();
+        });
+
+        window.addEventListener('resize', function () {
+          if (debugPanel.classList.contains('open')) positionDebugPanel();
+        });
+
+        window.addEventListener(
+          'scroll',
+          function () {
+            if (debugPanel.classList.contains('open')) positionDebugPanel();
+          },
+          { passive: true }
+        );
+
+        document.addEventListener('keydown', function (e) {
+          if (e.key === 'Escape') closeDebugPanel();
+        });
+
+        document.addEventListener('pointerdown', function (e) {
+          if (!debugPanel.classList.contains('open')) return;
+          const target = e.target;
+          if (debugPanel.contains(target) || debugToggle.contains(target)) return;
+          closeDebugPanel();
+        });
+      })();
+    </script>
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>
