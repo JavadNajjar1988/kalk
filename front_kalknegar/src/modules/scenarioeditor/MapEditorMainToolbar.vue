@@ -1,8 +1,8 @@
 <template>
   <nav
-    class="map-editor-main-toolbar pointer-events-auto flex w-auto items-center justify-between rounded-xl border p-2 text-sm text-foreground sm:p-3"
+    class="map-editor-main-toolbar pointer-events-auto flex w-auto flex-row-reverse items-center justify-between rounded-xl border p-2 text-sm text-foreground sm:p-3"
   >
-    <section class="flex items-center justify-between">
+    <section class="flex flex-row-reverse items-center justify-between">
       <MainToolbarButton
         title="ابزار انتخاب شده را پس از کشیدن فعال نگه دار"
         @click="toggleAddMultiple()"
@@ -34,7 +34,7 @@
       >
         <SettingsIcon class="size-6 transition-all duration-300" />
       </MainToolbarButton>
-      <div class="border-slate-200 dark:border-slate-600 h-7 border-l-2 sm:mx-1" />
+      <div class="border-slate-200 dark:border-slate-600 h-7 border-r-2 sm:mx-1" />
       <MainToolbarButton
         :active="store.currentToolbar === 'measurements'"
         @click="store.toggleToolbar('measurements')"
@@ -59,8 +59,8 @@
       >
         <IconMapMarkerPath class="size-6 transition-all duration-300" />
       </MainToolbarButton>
-      <div class="border-slate-200 dark:border-slate-600 h-7 border-l-2 sm:mx-1" />
-      <div class="ml-2 flex items-center">
+      <div class="border-slate-200 dark:border-slate-600 h-7 border-r-2 sm:mx-1" />
+      <div class="mr-2 flex items-center">
         <EchelonPickerPopover
           :symbol-options="symbolOptions"
           :select-echelon="selectEchelon"
@@ -68,21 +68,21 @@
         <PanelSymbolButton
           :size="22"
           :sidc="computedSidc"
-          class="group relative ml-2 sm:ml-5"
+          class="group relative mr-2 sm:mr-5"
           :symbol-options="symbolOptions"
           @click="addUnit(activeSidc)"
           title="افزودن واحد"
           :disabled="!activeParentId || unitActions.isUnitLocked(activeParentId)"
         >
           <AddSymbolIcon
-            class="bg-opacity-70 absolute -right-2 bottom-0 h-4 w-4 rounded-full bg-white text-gray-600 group-hover:text-gray-900 transition-all duration-300"
+            class="bg-opacity-70 absolute -left-2 bottom-0 h-4 w-4 rounded-full bg-white text-gray-600 group-hover:text-gray-900 transition-all duration-300"
           />
         </PanelSymbolButton>
         <SymbolPickerPopover :symbol-options="symbolOptions" :add-unit="addUnit" />
       </div>
     </section>
-    <section class="flex items-center">
-      <div class="border-slate-200 dark:border-slate-600 -mx-1 h-8 border-l-2 sm:mx-2" />
+    <section class="flex flex-row-reverse items-center">
+      <div class="border-slate-200 dark:border-slate-600 -mx-1 h-8 border-r-2 sm:mx-2" />
       <!-- Playback controls -->
       <MainToolbarButton
         title="اجرا / توقف سناریو"
@@ -156,7 +156,7 @@
           >
         </DropdownMenuContent>
       </DropdownMenu>
-      <div class="border-slate-200 dark:border-slate-600 mx-2 hidden h-8 border-l-2 sm:block" />
+      <div class="border-slate-200 dark:border-slate-600 mx-2 hidden h-8 border-r-2 sm:block" />
       <MainToolbarButton
         title="انتخاب زمان و تاریخ"
         class="toolbar-icon-button calendar-button hidden sm:flex"

@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Box,
   Typography,
@@ -15,6 +15,7 @@ import {
   Chip,
   Stack,
   alpha,
+  ThemeProvider,
 } from '@mui/material';
 import {
   CloudUpload as CloudUploadIcon,
@@ -25,7 +26,8 @@ import {
   CheckCircle as CheckCircleIcon,
   Warning as WarningIcon,
 } from '@mui/icons-material';
-import { useAppDispatch } from '@/store';
+import { createTheme } from '@mui/material/styles';
+import { useAppDispatch, useAppSelector } from '@/store';
 import { useNavigate } from 'react-router-dom';
 import { fetchScenarios } from '@/store/slices/scenariosSlice';
 import {
@@ -34,7 +36,8 @@ import {
   PersonnelItem,
   EquipmentItem,
 } from '@/store/slices/tabularResourcesSlice';
-import { showSuccessNotification, showErrorNotification } from '@/store/slices/uiSlice';
+import { selectTheme, showSuccessNotification, showErrorNotification } from '@/store/slices/uiSlice';
+import { createAppTheme } from '@/theme';
 import dataImportApiService, {
   ScenarioExcelPreviewData,
   AiAutoImportResult,
@@ -43,8 +46,8 @@ import { ApiClientError } from '@/services/api/baseApiClient';
 
 function TabPanel({ children, value, index }: { children: React.ReactNode; value: number; index: number }) {
   return (
-    <div role="tabpanel" hidden={value !== index} style={{ marginTop: 16 }}>
-      {value === index ? children : null}
+    <div role="tabpanel" hidden={value !== index}>
+      {value === index ? <Box sx={{ p: 3 }}>{children}</Box> : null}
     </div>
   );
 }
@@ -52,6 +55,48 @@ function TabPanel({ children, value, index }: { children: React.ReactNode; value
 const DataManagementPage: React.FC = () => {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
+  const themeState = useAppSelector(selectTheme);
+  const muiTheme = createAppTheme(
+    themeState.mode,
+    themeState.backgroundTheme,
+    themeState.primaryColor,
+    themeState.fontSize,
+    themeState.highContrast
+  );
+  const unifiedAccent = muiTheme.palette.primary.main;
+  const unifiedSurface = `linear-gradient(135deg, ${alpha(unifiedAccent, 0.07)}, ${alpha(unifiedAccent, 0.04)})`;
+  const sectionTheme = useMemo(
+    () =>
+      createTheme(muiTheme, {
+        components: {
+          MuiDialog: {
+            styleOverrides: {
+              paper: {
+                background: unifiedSurface,
+                border: `1px solid ${alpha(unifiedAccent, 0.24)}`,
+                borderRadius: 14,
+              },
+            },
+          },
+          MuiDialogTitle: {
+            styleOverrides: {
+              root: {
+                borderBottom: `1px solid ${alpha(unifiedAccent, 0.18)}`,
+              },
+            },
+          },
+          MuiDialogActions: {
+            styleOverrides: {
+              root: {
+                borderTop: `1px solid ${alpha(unifiedAccent, 0.18)}`,
+              },
+            },
+          },
+        },
+      }),
+    [muiTheme, unifiedSurface, unifiedAccent]
+  );
+
   const [tab, setTab] = useState(0);
   const [loading, setLoading] = useState(false);
   const [aiEnabled, setAiEnabled] = useState(false);
@@ -225,27 +270,119 @@ const DataManagementPage: React.FC = () => {
   );
 
   return (
-    <Box sx={{ p: 3, maxWidth: 960, mx: 'auto' }}>
-      <Typography variant="h4" gutterBottom fontWeight={700}>
-        مدیریت داده
-      </Typography>
-      <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-        ایمپورت سناریو و منابع از اکسل؛ پیش‌نمایش قبل از ذخیره؛ یا بارگذاری هر اکسل ناهمگون و استانداردسازی
-        خودکار با کمک AI.
-      </Typography>
+    <ThemeProvider theme={sectionTheme}>
+      <Box
+        sx={{
+          width: '100%',
+          height: '100%',
+          display: 'flex',
+          flexDirection: 'column',
+          p: 3,
+          '& .MuiCard-root': {
+            background: unifiedSurface,
+            border: `1px solid ${alpha(unifiedAccent, 0.22)}`,
+            boxShadow: 'none',
+          },
+          '& .MuiPaper-root': {
+            borderColor: alpha(unifiedAccent, 0.22),
+          },
+        }}
+      >
+        <Typography
+          variant="h4"
+          gutterBottom
+          sx={{
+            fontWeight: 700,
+            background: `linear-gradient(135deg, ${alpha(unifiedAccent, 0.95)} 0%, ${alpha(
+              unifiedAccent,
+              0.7
+            )} 100%)`,
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+            mb: 3,
+          }}
+        >
+          مدیریت داده
+        </Typography>
 
-      {loading && <LinearProgress sx={{ mb: 2 }} />}
+        <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+          ایمپورت سناریو و منابع از اکسل؛ پیش‌نمایش قبل از ذخیره؛ یا بارگذاری هر اکسل ناهمگون و استانداردسازی خودکار
+          با کمک AI.
+        </Typography>
 
-      <Paper sx={{ borderRadius: 2, overflow: 'hidden' }}>
-        <Tabs value={tab} onChange={(_, v) => setTab(v)} variant="scrollable">
-          <Tab icon={<CloudUploadIcon />} iconPosition="start" label="ایمپورت سناریو" />
-          <Tab icon={<TableChartIcon />} iconPosition="start" label="ایمپورت منابع" />
-          <Tab icon={<DownloadIcon />} iconPosition="start" label="دانلود قالب" />
-          <Tab icon={<PsychologyIcon />} iconPosition="start" label="کمک AI" />
-        </Tabs>
+        {loading && <LinearProgress sx={{ mb: 2 }} />}
 
-        <Box sx={{ p: 2 }}>
-          <TabPanel value={tab} index={0}>
+        <Paper
+          sx={{
+            flex: 1,
+            display: 'flex',
+            flexDirection: 'column',
+            borderRadius: 3,
+            background: unifiedSurface,
+            backdropFilter: 'blur(20px)',
+            border: `1px solid ${alpha(unifiedAccent, 0.24)}`,
+            overflow: 'hidden',
+          }}
+        >
+          <Box
+            sx={{
+              borderBottom: 1,
+              borderColor: alpha(unifiedAccent, 0.2),
+              background: alpha(unifiedAccent, 0.06),
+            }}
+          >
+            <Tabs
+              value={tab}
+              onChange={(_, v) => setTab(v)}
+              variant="scrollable"
+              scrollButtons="auto"
+              sx={{
+                '& .MuiTabs-indicator': {
+                  height: 3,
+                  borderRadius: '3px 3px 0 0',
+                  backgroundColor: unifiedAccent,
+                },
+                '& .MuiTab-root': {
+                  minHeight: 64,
+                  textTransform: 'none',
+                  fontSize: '1rem',
+                  fontWeight: 500,
+                  '&.Mui-selected': {
+                    fontWeight: 700,
+                    color: unifiedAccent,
+                  },
+                },
+              }}
+            >
+              <Tab
+                icon={<CloudUploadIcon />}
+                iconPosition="start"
+                label="ایمپورت سناریو"
+                sx={{ '&:hover': { background: alpha(unifiedAccent, 0.08) } }}
+              />
+              <Tab
+                icon={<TableChartIcon />}
+                iconPosition="start"
+                label="ایمپورت منابع"
+                sx={{ '&:hover': { background: alpha(unifiedAccent, 0.08) } }}
+              />
+              <Tab
+                icon={<DownloadIcon />}
+                iconPosition="start"
+                label="دانلود قالب"
+                sx={{ '&:hover': { background: alpha(unifiedAccent, 0.08) } }}
+              />
+              <Tab
+                icon={<PsychologyIcon />}
+                iconPosition="start"
+                label="کمک AI"
+                sx={{ '&:hover': { background: alpha(unifiedAccent, 0.08) } }}
+              />
+            </Tabs>
+          </Box>
+
+          <Box sx={{ flex: 1, minHeight: 0, overflow: 'auto' }}>
+            <TabPanel value={tab} index={0}>
             <input
               ref={scenarioInputRef}
               type="file"
@@ -253,9 +390,11 @@ const DataManagementPage: React.FC = () => {
               hidden
               onChange={onScenarioFile}
             />
-            <Button variant="outlined" onClick={() => scenarioInputRef.current?.click()}>
-              انتخاب فایل اکسل
-            </Button>
+            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} alignItems={{ sm: 'center' }}>
+              <Button variant="outlined" onClick={() => scenarioInputRef.current?.click()}>
+                انتخاب فایل اکسل
+              </Button>
+            </Stack>
             {scenarioFile && (
               <Typography variant="body2" sx={{ mt: 1 }}>
                 فایل: {scenarioFile.name}
@@ -322,22 +461,19 @@ const DataManagementPage: React.FC = () => {
                 setResourcesResult(null);
               }}
             />
-            <Button variant="outlined" onClick={() => resourcesInputRef.current?.click()}>
-              انتخاب فایل اکسل (شیت‌های تجهیزات و پرسنل)
-            </Button>
+            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} alignItems={{ sm: 'center' }}>
+              <Button variant="outlined" onClick={() => resourcesInputRef.current?.click()}>
+                انتخاب فایل اکسل (شیت‌های تجهیزات و پرسنل)
+              </Button>
+              <Button variant="contained" disabled={!resourcesFile || loading} onClick={handleResourcesImport}>
+                وارد کردن به مدیریت منابع
+              </Button>
+            </Stack>
             {resourcesFile && (
               <Typography variant="body2" sx={{ mt: 1 }}>
                 {resourcesFile.name}
               </Typography>
             )}
-            <Button
-              variant="contained"
-              sx={{ mt: 2 }}
-              disabled={!resourcesFile || loading}
-              onClick={handleResourcesImport}
-            >
-              وارد کردن به مدیریت منابع
-            </Button>
             {resourcesResult && (
               <Alert severity="info" sx={{ mt: 2 }}>
                 {resourcesResult}
@@ -506,7 +642,8 @@ const DataManagementPage: React.FC = () => {
           </TabPanel>
         </Box>
       </Paper>
-    </Box>
+      </Box>
+    </ThemeProvider>
   );
 };
 
