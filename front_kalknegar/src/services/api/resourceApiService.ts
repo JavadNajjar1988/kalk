@@ -98,7 +98,9 @@ export class ResourceApiService extends BaseApiClient {
     type?: ResourceType,
     limit = 20,
   ): Promise<ResourceSearchResultDto[]> {
-    const params = new URLSearchParams({ q, limit: String(limit) });
+    const qq = (q ?? '').trim();
+    if (!qq) return [];
+    const params = new URLSearchParams({ q: qq, limit: String(limit) });
     if (type) params.set('type', type);
     const res = await super.get<ResourceSearchResultDto[]>(
       `/resources/search?${params.toString()}`,

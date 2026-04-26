@@ -102,6 +102,8 @@ class ResourceApiService extends BaseApiClient {
   }
 
   async search(q: string, type?: ResourceType, limit = 20): Promise<ResourceDto[]> {
+    const qq = (q ?? '').trim();
+    if (!qq) return [];
     const params: Record<string, string> = { q, limit: String(limit) };
     if (type) params.type = type;
     const response = await this.get<ResourceDto[]>('/resources/search', params);
