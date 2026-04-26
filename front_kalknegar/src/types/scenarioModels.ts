@@ -138,7 +138,16 @@ export interface UnitProperties {
 }
 
 export interface Media {
-  url: string;
+  /**
+   * شناسه فایل مدیا در سیستم مدیریت منابع (resource_media.id).
+   * اولویت با این فیلد است؛ اگر تعیین شده باشد، URL از API منابع ساخته می‌شود
+   * و فیلد `url` به‌عنوان fallback (سناریوهای قدیمی) باقی می‌ماند.
+   */
+  mediaId?: string;
+  /** ارجاع اختیاری به منبع داخلی (resource.id) که این مدیا به آن منتسب است. */
+  resourceId?: string;
+  /** URL مستقیم — فقط برای fallback / سازگاری با سناریوهای قبل از اتصال به مدیریت منابع. */
+  url?: string;
   caption?: string;
   credits?: string;
   creditsUrl?: string;
@@ -149,6 +158,8 @@ export interface UnitEquipment {
   name: string;
   description?: string;
   onHand?: number;
+  /** ارجاع به کاتالوگ منابع (resource.id با type=equipment). */
+  resourceId?: string;
 }
 
 export interface UnitPersonnel {
@@ -156,6 +167,8 @@ export interface UnitPersonnel {
   name: string;
   description?: string;
   onHand?: number;
+  /** ارجاع به کاتالوگ منابع (resource.id با type=personnel). */
+  resourceId?: string;
 }
 
 export interface UnitSupply {
@@ -269,6 +282,7 @@ export interface ScenarioInfo {
 
 export type SymbologyStandard = "2525" | "app6";
 export type ScenarioVersion =
+  | "0.41.0"
   | "0.40.0"
   | "0.39.0"
   | "0.38.0"
@@ -298,11 +312,15 @@ export interface EquipmentData {
   name: string;
   description?: string;
   sidc?: string;
+  /** ارجاع به ردیف کاتالوگ منابع (resource.id با type=equipment). */
+  resourceId?: string;
 }
 
 export interface PersonnelData {
   name: string;
   description?: string;
+  /** ارجاع به ردیف کاتالوگ منابع (resource.id با type=personnel). */
+  resourceId?: string;
 }
 
 export interface SupplyCategory {

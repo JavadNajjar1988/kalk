@@ -17,6 +17,7 @@ import {
   IconButton,
   Chip,
   Grid,
+  Avatar,
 } from '@mui/material';
 import {
   Add as AddIcon,
@@ -24,7 +25,10 @@ import {
   Delete as DeleteIcon,
   Search as SearchIcon,
   LocalShipping as LogisticsIcon,
+  ImageNotSupported as NoImageIcon,
 } from '@mui/icons-material';
+import resourceApiService from '@/services/api/resourceApiService';
+import { applyPrimaryImageChanges, PrimaryImageChanges } from './components/primaryImageHelpers';
 import { useTranslation } from '@/hooks/useTranslation';
 import { useAppDispatch, useAppSelector } from '@/store';
 import {
@@ -89,21 +93,42 @@ const LogisticsTab: React.FC = () => {
     setSelectedLogistics(null);
   };
 
-  const handleSave = async (itemData: Omit<LogisticsItem, 'id' | 'createdAt' | 'updatedAt'>) => {
+  const handleSave = async (
+    itemData: Omit<LogisticsItem, 'id' | 'createdAt' | 'updatedAt'>,
+    imageChanges?: PrimaryImageChanges,
+  ) => {
     try {
       if (selectedLogistics) {
-        // Update existing logistics
-        await dispatch(updateTabItem({ 
-          tabType: 'logistics', 
-          itemId: selectedLogistics.id, 
-          itemData 
+        const newPrimaryMediaId = await applyPrimaryImageChanges({
+          resourceId: selectedLogistics.id,
+          currentPrimaryMediaId: selectedLogistics.primaryMediaId,
+          changes: imageChanges,
+        });
+        await dispatch(updateTabItem({
+          tabType: 'logistics',
+          itemId: selectedLogistics.id,
+          itemData: { ...itemData, primaryMediaId: newPrimaryMediaId },
         })).unwrap();
       } else {
-        // Add new logistics
-        await dispatch(createTabItem({ 
-          tabType: 'logistics', 
-          itemData 
+        const result = await dispatch(createTabItem({
+          tabType: 'logistics',
+          itemData,
         })).unwrap();
+        const created = result.item as LogisticsItem;
+        if (imageChanges?.selectedFile) {
+          const newPrimaryMediaId = await applyPrimaryImageChanges({
+            resourceId: created.id,
+            currentPrimaryMediaId: undefined,
+            changes: imageChanges,
+          });
+          if (newPrimaryMediaId) {
+            await dispatch(updateTabItem({
+              tabType: 'logistics',
+              itemId: created.id,
+              itemData: { ...itemData, primaryMediaId: newPrimaryMediaId },
+            })).unwrap();
+          }
+        }
       }
       handleCloseModal();
     } catch (error) {
@@ -267,6 +292,7 @@ const LogisticsTab: React.FC = () => {
           <Table stickyHeader>
             <TableHead>
               <TableRow>
+                <TableCell sx={{ width: 64 }}>تصویر</TableCell>
                 <TableCell>کد آیتم</TableCell>
                 <TableCell>نام آیتم</TableCell>
                 <TableCell>دسته‌بندی</TableCell>
@@ -282,6 +308,19 @@ const LogisticsTab: React.FC = () => {
                 .slice(pagination.page * pagination.pageSize, pagination.page * pagination.pageSize + pagination.pageSize)
                 .map((item) => (
                 <TableRow key={item.id} hover>
+                  <TableCell>
+                    {item.primaryMediaId ? (
+                      <Avatar
+                        variant="rounded"
+                        src={resourceApiService.getMediaUrl(item.primaryMediaId)}
+                        sx={{ width: 40, height: 40 }}
+                      />
+                    ) : (
+                      <Avatar variant="rounded" sx={{ width: 40, height: 40, bgcolor: 'background.default', color: 'text.disabled' }}>
+                        <NoImageIcon fontSize="small" />
+                      </Avatar>
+                    )}
+                  </TableCell>
                   <TableCell>{item.itemCode}</TableCell>
                   <TableCell>{item.name}</TableCell>
                   <TableCell>{item.category}</TableCell>

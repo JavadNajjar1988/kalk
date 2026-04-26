@@ -17,11 +17,13 @@ import {
   resourcesDialogActionsSx,
   resourcesOutlinedCancelButtonSx,
 } from '../resourcesDialogStyles';
+import PrimaryImageField from '../components/PrimaryImageField';
+import type { PrimaryImageChanges } from '../components/primaryImageHelpers';
 
 interface LogisticsModalProps {
   open: boolean;
   onClose: () => void;
-  onSave: (data: any) => void;
+  onSave: (data: any, imageChanges?: PrimaryImageChanges) => void;
   logistics?: any;
   categories: any[];
 }
@@ -51,6 +53,8 @@ const LogisticsModal: React.FC<LogisticsModalProps> = ({
 }) => {
   const theme = useTheme();
   const [formData, setFormData] = useState<any>(initialFormData);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [clearExisting, setClearExisting] = useState<boolean>(false);
 
   useEffect(() => {
     if (logistics) {
@@ -58,6 +62,8 @@ const LogisticsModal: React.FC<LogisticsModalProps> = ({
     } else {
       setFormData(initialFormData);
     }
+    setSelectedFile(null);
+    setClearExisting(false);
   }, [logistics, open]);
 
   const handleChange = (fieldId: string, value: any) => {
@@ -70,12 +76,15 @@ const LogisticsModal: React.FC<LogisticsModalProps> = ({
   const handleSubmit = () => {
     const quantity = Number(formData.quantity || 0);
     const unitPrice = Number(formData.unitPrice || 0);
-    onSave({
-      ...formData,
-      quantity,
-      unitPrice,
-      totalValue: quantity * unitPrice,
-    });
+    onSave(
+      {
+        ...formData,
+        quantity,
+        unitPrice,
+        totalValue: quantity * unitPrice,
+      },
+      { selectedFile, clearExisting },
+    );
   };
 
   return (
@@ -196,6 +205,17 @@ const LogisticsModal: React.FC<LogisticsModalProps> = ({
               <MenuItem value="out-of-stock">تمام موجودی</MenuItem>
               <MenuItem value="ordered">سفارش داده‌شده</MenuItem>
             </TextField>
+          </Grid>
+          <Grid item xs={12}>
+            <PrimaryImageField
+              primaryMediaId={formData.primaryMediaId}
+              selectedFile={selectedFile}
+              clearExisting={clearExisting}
+              onChange={({ selectedFile: f, clearExisting: c }) => {
+                setSelectedFile(f);
+                setClearExisting(c);
+              }}
+            />
           </Grid>
         </Grid>
       </DialogContent>

@@ -17,11 +17,13 @@ import {
   resourcesDialogActionsSx,
   resourcesOutlinedCancelButtonSx,
 } from '../resourcesDialogStyles';
+import PrimaryImageField from '../components/PrimaryImageField';
+import type { PrimaryImageChanges } from '../components/primaryImageHelpers';
 
 interface EquipmentModalProps {
   open: boolean;
   onClose: () => void;
-  onSave: (data: any) => void;
+  onSave: (data: any, imageChanges?: PrimaryImageChanges) => void;
   equipment?: any;
   categories?: Array<{ id: string; name: string }>;
 }
@@ -48,6 +50,8 @@ const EquipmentModal: React.FC<EquipmentModalProps> = ({
 }) => {
   const theme = useTheme();
   const [formData, setFormData] = useState<any>(initialFormData);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [clearExisting, setClearExisting] = useState<boolean>(false);
 
   useEffect(() => {
     if (equipment) {
@@ -55,6 +59,8 @@ const EquipmentModal: React.FC<EquipmentModalProps> = ({
     } else {
       setFormData(initialFormData);
     }
+    setSelectedFile(null);
+    setClearExisting(false);
   }, [equipment, open]);
 
   const handleChange = (fieldId: string, value: any) => {
@@ -65,10 +71,13 @@ const EquipmentModal: React.FC<EquipmentModalProps> = ({
   };
 
   const handleSubmit = () => {
-    onSave({
-      ...formData,
-      assignedTo: formData.assignedTo || '',
-    });
+    onSave(
+      {
+        ...formData,
+        assignedTo: formData.assignedTo || '',
+      },
+      { selectedFile, clearExisting },
+    );
   };
 
   return (
@@ -190,6 +199,17 @@ const EquipmentModal: React.FC<EquipmentModalProps> = ({
               <MenuItem value="poor">ضعیف</MenuItem>
               <MenuItem value="damaged">آسیب‌دیده</MenuItem>
             </TextField>
+          </Grid>
+          <Grid item xs={12}>
+            <PrimaryImageField
+              primaryMediaId={formData.primaryMediaId}
+              selectedFile={selectedFile}
+              clearExisting={clearExisting}
+              onChange={({ selectedFile: f, clearExisting: c }) => {
+                setSelectedFile(f);
+                setClearExisting(c);
+              }}
+            />
           </Grid>
         </Grid>
       </DialogContent>

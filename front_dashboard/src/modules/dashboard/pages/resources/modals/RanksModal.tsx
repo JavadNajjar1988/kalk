@@ -25,6 +25,8 @@ import {
   resourcesDialogContentDividersSx,
   resourcesDialogActionsSx,
 } from '../resourcesDialogStyles';
+import PrimaryImageField from '../components/PrimaryImageField';
+import type { PrimaryImageChanges } from '../components/primaryImageHelpers';
 
 // انواع و فهرست‌های کمکی
 const echelons = ["لشکر", "تیپ", "گردان", "گروهان", "دسته"] as const;
@@ -82,8 +84,8 @@ export type MilitaryUnitForm = {
 interface RanksModalProps {
   open: boolean;
   onClose: () => void;
-  onSave: (data: any) => void; // نگه‌داشتن امضا برای سازگاری
-  rank?: Partial<MilitaryUnitForm>; // داده‌ی اولیه‌ی احتمالی
+  onSave: (data: any, imageChanges?: PrimaryImageChanges) => void; // نگه‌داشتن امضا برای سازگاری
+  rank?: Partial<MilitaryUnitForm> & { primaryMediaId?: string };
   categories: any[]; // برای سازگاری
   fields: any[]; // برای سازگاری
 }
@@ -130,9 +132,14 @@ const RanksModal: React.FC<RanksModalProps> = ({ open, onClose, onSave, rank }) 
     notes: "",
   });
 
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [clearExisting, setClearExisting] = useState<boolean>(false);
+
   useEffect(() => {
     if (open) {
       setForm((prev) => ({ ...prev, ...(rank || {}) }));
+      setSelectedFile(null);
+      setClearExisting(false);
     }
   }, [open, rank]);
 
@@ -188,7 +195,7 @@ const RanksModal: React.FC<RanksModalProps> = ({ open, onClose, onSave, rank }) 
       status: defaultStatus,
     };
 
-    onSave(itemData);
+    onSave(itemData, { selectedFile, clearExisting });
     onClose();
   }
 
@@ -229,6 +236,17 @@ const RanksModal: React.FC<RanksModalProps> = ({ open, onClose, onSave, rank }) 
       </DialogTitle>
       <DialogContent dividers sx={resourcesDialogContentDividersSx(theme)}>
         <Box sx={{ mt: 1 }}>
+          <Box sx={{ mb: 2 }}>
+            <PrimaryImageField
+              primaryMediaId={(rank as any)?.primaryMediaId}
+              selectedFile={selectedFile}
+              clearExisting={clearExisting}
+              onChange={({ selectedFile: f, clearExisting: c }) => {
+                setSelectedFile(f);
+                setClearExisting(c);
+              }}
+            />
+          </Box>
           <Grid container spacing={2}>
             <Grid item xs={12} md={6}>
                 <TextField

@@ -21,6 +21,7 @@ import {
   IconButton,
   Chip,
   Grid,
+  Avatar,
   useTheme,
 } from '@mui/material';
 import {
@@ -36,7 +37,11 @@ import {
   Delete as DeleteIcon,
   Search as SearchIcon,
   Groups as PersonnelIcon,
+  ImageNotSupported as NoImageIcon,
 } from '@mui/icons-material';
+import resourceApiService from '@/services/api/resourceApiService';
+import PrimaryImageField from './components/PrimaryImageField';
+import { applyPrimaryImageChanges } from './components/primaryImageHelpers';
 import { useTranslation } from '@/hooks/useTranslation';
 import { useAppDispatch, useAppSelector } from '@/store';
 import {
@@ -86,6 +91,8 @@ const PersonnelTab: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState(filters.search || '');
   const [statusFilter, setStatusFilter] = useState<string>(filters.status || 'all');
   const [rankFilter, setRankFilter] = useState<string>((filters as any).rank || 'all');
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [clearExisting, setClearExisting] = useState<boolean>(false);
   
   // Load data on mount
   useEffect(() => {
@@ -117,12 +124,16 @@ const PersonnelTab: React.FC = () => {
       status: person?.status || 'active',
       startDate: person?.startDate || '',
     });
+    setSelectedFile(null);
+    setClearExisting(false);
     setModalOpen(true);
   };
 
   const handleCloseModal = () => {
     setModalOpen(false);
     setSelectedPersonnel(null);
+    setSelectedFile(null);
+    setClearExisting(false);
   };
 
   const handleSave = async () => {
@@ -140,20 +151,39 @@ const PersonnelTab: React.FC = () => {
         status: personnelForm.status,
         startDate: personnelForm.startDate || new Date().toISOString().split('T')[0],
       };
-      
+      const imageChanges = { selectedFile, clearExisting };
+
       if (selectedPersonnel) {
-        // Update existing personnel
-        await dispatch(updateTabItem({ 
-          tabType: 'personnel', 
-          itemId: selectedPersonnel.id, 
-          itemData: personnelData 
+        const newPrimaryMediaId = await applyPrimaryImageChanges({
+          resourceId: selectedPersonnel.id,
+          currentPrimaryMediaId: selectedPersonnel.primaryMediaId,
+          changes: imageChanges,
+        });
+        await dispatch(updateTabItem({
+          tabType: 'personnel',
+          itemId: selectedPersonnel.id,
+          itemData: { ...personnelData, primaryMediaId: newPrimaryMediaId },
         })).unwrap();
       } else {
-        // Add new personnel
-        await dispatch(createTabItem({ 
-          tabType: 'personnel', 
-          itemData: personnelData 
+        const result = await dispatch(createTabItem({
+          tabType: 'personnel',
+          itemData: personnelData,
         })).unwrap();
+        const created = result.item as PersonnelItem;
+        if (imageChanges.selectedFile) {
+          const newPrimaryMediaId = await applyPrimaryImageChanges({
+            resourceId: created.id,
+            currentPrimaryMediaId: undefined,
+            changes: imageChanges,
+          });
+          if (newPrimaryMediaId) {
+            await dispatch(updateTabItem({
+              tabType: 'personnel',
+              itemId: created.id,
+              itemData: { ...personnelData, primaryMediaId: newPrimaryMediaId },
+            })).unwrap();
+          }
+        }
       }
       handleCloseModal();
     } catch (error) {
@@ -326,6 +356,7 @@ const PersonnelTab: React.FC = () => {
           <Table stickyHeader>
             <TableHead>
               <TableRow>
+                <TableCell sx={{ width: 64 }}>تصویر</TableCell>
                 <TableCell>کد پرسنلی</TableCell>
                 <TableCell>نام و نام خانوادگی</TableCell>
                 <TableCell>کد ملی</TableCell>
@@ -343,6 +374,18 @@ const PersonnelTab: React.FC = () => {
                 .slice(pagination.page * pagination.pageSize, pagination.page * pagination.pageSize + pagination.pageSize)
                 .map((person) => (
                 <TableRow key={person.id} hover>
+                  <TableCell>
+                    {person.primaryMediaId ? (
+                      <Avatar
+                        src={resourceApiService.getMediaUrl(person.primaryMediaId)}
+                        sx={{ width: 40, height: 40 }}
+                      />
+                    ) : (
+                      <Avatar sx={{ width: 40, height: 40, bgcolor: 'background.default', color: 'text.disabled' }}>
+                        <NoImageIcon fontSize="small" />
+                      </Avatar>
+                    )}
+                  </TableCell>
                   <TableCell>
                     <Typography variant="body2" fontWeight="medium" color="primary.main">
                       {person.personalCode}
@@ -488,6 +531,17 @@ const PersonnelTab: React.FC = () => {
                 <MenuItem value="leave">مرخصی</MenuItem>
                 <MenuItem value="mission">ماموریت</MenuItem>
               </TextField>
+            </Grid>
+            <Grid item xs={12}>
+              <PrimaryImageField
+                primaryMediaId={selectedPersonnel?.primaryMediaId}
+                selectedFile={selectedFile}
+                clearExisting={clearExisting}
+                onChange={({ selectedFile: f, clearExisting: c }) => {
+                  setSelectedFile(f);
+                  setClearExisting(c);
+                }}
+              />
             </Grid>
           </Grid>
         </DialogContent>

@@ -8,16 +8,10 @@ import {
   TextField,
   Grid,
   MenuItem,
-  Box,
-  Typography,
-  Paper,
   useTheme,
 } from '@mui/material';
-import { alpha } from '@mui/material/styles';
 import {
   buildResourcesFormDialogSx,
-  buildResourcesTextFieldOutlineSx,
-  getResourcesDialogAccent,
   resourcesDialogTitleSx,
   resourcesDialogContentDividersSx,
   resourcesDialogActionsSx,
@@ -26,11 +20,13 @@ import {
 import { useTranslation } from '@/hooks/useTranslation';
 import AmmunitionHierarchicalSelector from '@/components/common/AmmunitionHierarchicalSelector';
 import type { AmmunitionPath, AmmunitionFieldDefinition } from '@/hooks/useAmmunitionHierarchy';
+import PrimaryImageField from '../components/PrimaryImageField';
+import type { PrimaryImageChanges } from '../components/primaryImageHelpers';
 
 interface AmmunitionModalProps {
   open: boolean;
   onClose: () => void;
-  onSave: (data: any) => void;
+  onSave: (data: any, imageChanges?: PrimaryImageChanges) => void;
   ammunition?: any;
 }
 
@@ -42,12 +38,12 @@ const AmmunitionModal: React.FC<AmmunitionModalProps> = ({
 }) => {
   const { t } = useTranslation();
   const theme = useTheme();
-  const accent = getResourcesDialogAccent(theme);
-  const textFieldSx = buildResourcesTextFieldOutlineSx(theme);
 
   const [formData, setFormData] = useState<any>({});
   const [selectedAmmunitionPath, setSelectedAmmunitionPath] = useState<AmmunitionPath[]>([]);
   const [ammunitionHierarchyFields, setAmmunitionHierarchyFields] = useState<AmmunitionFieldDefinition[]>([]);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [clearExisting, setClearExisting] = useState<boolean>(false);
 
   useEffect(() => {
     if (ammunition) {
@@ -63,6 +59,8 @@ const AmmunitionModal: React.FC<AmmunitionModalProps> = ({
       setSelectedAmmunitionPath([]);
       setAmmunitionHierarchyFields([]);
     }
+    setSelectedFile(null);
+    setClearExisting(false);
   }, [ammunition, open]);
 
   const handleChange = (fieldId: string, value: any) => {
@@ -85,7 +83,7 @@ const AmmunitionModal: React.FC<AmmunitionModalProps> = ({
       }
     });
 
-    onSave(finalData);
+    onSave(finalData, { selectedFile, clearExisting });
   };
 
   const handleAmmunitionPathChange = (path: AmmunitionPath[], _finalNodeId?: string) => {
@@ -102,7 +100,6 @@ const AmmunitionModal: React.FC<AmmunitionModalProps> = ({
       variant: 'outlined' as const,
       size: 'small' as const,
       required: field.isRequired,
-      sx: textFieldSx,
     };
 
     switch (field.type) {
@@ -190,114 +187,41 @@ const AmmunitionModal: React.FC<AmmunitionModalProps> = ({
       </DialogTitle>
 
       <DialogContent dividers sx={resourcesDialogContentDividersSx(theme)}>
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-
-          <Paper
-            elevation={0}
-            sx={{
-              p: 3,
-              borderRadius: 3,
-              backgroundColor: 'rgba(255, 255, 255, 0.95)',
-              border: `1px solid ${alpha(accent, 0.15)}`,
-              boxShadow: `0 8px 24px ${alpha(accent, 0.08)}`,
-              display: 'flex',
-              flexDirection: 'column',
-              gap: 2,
-            }}
-          >
-            <Typography
-              variant="subtitle2"
-              sx={{
-                color: accent,
-                fontWeight: 600,
-                display: 'flex',
-                alignItems: 'center',
-                gap: 1,
-              }}
-            >
-              <Box
-                component="span"
-                sx={{
-                  width: 4,
-                  height: 16,
-                  bgcolor: accent,
-                  borderRadius: 1,
-                }}
-              />
-              سلسله‌مراتب مهمات
-            </Typography>
+        <Grid container spacing={2} sx={{ mt: 0.5 }}>
+          <Grid item xs={12}>
             <AmmunitionHierarchicalSelector
               value={selectedAmmunitionPath}
               onChange={handleAmmunitionPathChange}
               onFieldsChange={handleAmmunitionFieldsChange}
             />
-          </Paper>
+          </Grid>
 
-          {ammunitionHierarchyFields.length > 0 && (
-            <Paper
-              elevation={0}
-              sx={{
-                borderRadius: 3,
-                backgroundColor: 'rgba(255, 255, 255, 0.95)',
-                border: `1px solid ${alpha(accent, 0.1)}`,
-                boxShadow: `0 6px 18px ${alpha(accent, 0.06)}`,
+          <Grid item xs={12}>
+            <PrimaryImageField
+              primaryMediaId={formData.primaryMediaId}
+              selectedFile={selectedFile}
+              clearExisting={clearExisting}
+              onChange={({ selectedFile: f, clearExisting: c }) => {
+                setSelectedFile(f);
+                setClearExisting(c);
               }}
-            >
-              <Box
-                sx={{
-                  p: 2,
-                  bgcolor: alpha(accent, 0.08),
-                  borderBottom: `1px solid ${alpha(accent, 0.1)}`,
-                }}
-              >
-                <Typography
-                  variant="subtitle2"
-                  sx={{
-                    color: accent,
-                    fontWeight: 600,
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 1,
-                  }}
-                >
-                  <Box
-                    component="span"
-                    sx={{
-                      width: 4,
-                      height: 16,
-                      bgcolor: accent,
-                      borderRadius: 1,
-                    }}
-                  />
-                  {t('resources.ammunition.dynamicAttributes') ?? 'ویژگی‌های پویا'}
-                </Typography>
-              </Box>
+            />
+          </Grid>
 
-              <Box sx={{ p: 3 }}>
-                <Grid container spacing={2}>
-                  {ammunitionHierarchyFields.map((field: AmmunitionFieldDefinition) => (
-                    <Grid
-                      item
-                      xs={12}
-                      sm={field.type === 'text' || field.type === 'number' ? 6 : 12}
-                      key={field.id}
-                    >
-                      {renderAmmunitionField(field)}
-                    </Grid>
-                  ))}
-                </Grid>
-              </Box>
-            </Paper>
-          )}
-        </Box>
+          {ammunitionHierarchyFields.map((field: AmmunitionFieldDefinition) => (
+            <Grid
+              item
+              xs={12}
+              sm={field.type === 'text' || field.type === 'number' ? 6 : 12}
+              key={field.id}
+            >
+              {renderAmmunitionField(field)}
+            </Grid>
+          ))}
+        </Grid>
       </DialogContent>
 
-      <DialogActions
-        sx={{
-          ...resourcesDialogActionsSx(theme),
-          justifyContent: 'flex-end',
-        }}
-      >
+      <DialogActions sx={resourcesDialogActionsSx(theme)}>
         <Button
           onClick={onClose}
           variant="outlined"
@@ -310,17 +234,7 @@ const AmmunitionModal: React.FC<AmmunitionModalProps> = ({
           onClick={handleSubmit}
           variant="contained"
           color="primary"
-          disabled={ammunitionHierarchyFields.length === 0}
-          sx={{
-            borderRadius: 2,
-            px: 3,
-            '&:disabled': {
-              backgroundColor: alpha(accent, 0.2),
-              color: 'rgba(255,255,255,0.7)',
-              transform: 'none',
-              boxShadow: 'none',
-            },
-          }}
+          sx={{ borderRadius: 2, px: 3 }}
         >
           ذخیره
         </Button>

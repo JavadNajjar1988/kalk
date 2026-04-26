@@ -17,6 +17,7 @@ import {
   IconButton,
   Chip,
   Grid,
+  Avatar,
 } from '@mui/material';
 import {
   Add as AddIcon,
@@ -24,7 +25,10 @@ import {
   Delete as DeleteIcon,
   Search as SearchIcon,
   Inventory as EquipmentIcon,
+  ImageNotSupported as NoImageIcon,
 } from '@mui/icons-material';
+import resourceApiService from '@/services/api/resourceApiService';
+import { applyPrimaryImageChanges, PrimaryImageChanges } from '@/modules/dashboard/pages/resources/components/primaryImageHelpers';
 import { useTranslation } from '@/hooks/useTranslation';
 import { useAppDispatch, useAppSelector } from '@/store';
 import {
@@ -90,21 +94,42 @@ const EquipmentTab: React.FC = () => {
     setSelectedEquipment(null);
   };
 
-  const handleSave = async (itemData: Omit<EquipmentItem, 'id' | 'createdAt' | 'updatedAt'>) => {
+  const handleSave = async (
+    itemData: Omit<EquipmentItem, 'id' | 'createdAt' | 'updatedAt'>,
+    imageChanges?: PrimaryImageChanges,
+  ) => {
     try {
       if (selectedEquipment) {
-        // Update existing equipment
-        await dispatch(updateTabItem({ 
-          tabType: 'equipment', 
-          itemId: selectedEquipment.id, 
-          itemData 
+        const newPrimaryMediaId = await applyPrimaryImageChanges({
+          resourceId: selectedEquipment.id,
+          currentPrimaryMediaId: selectedEquipment.primaryMediaId,
+          changes: imageChanges,
+        });
+        await dispatch(updateTabItem({
+          tabType: 'equipment',
+          itemId: selectedEquipment.id,
+          itemData: { ...itemData, primaryMediaId: newPrimaryMediaId },
         })).unwrap();
       } else {
-        // Add new equipment
-        await dispatch(createTabItem({ 
-          tabType: 'equipment', 
-          itemData 
+        const result = await dispatch(createTabItem({
+          tabType: 'equipment',
+          itemData,
         })).unwrap();
+        const created = result.item as EquipmentItem;
+        if (imageChanges?.selectedFile) {
+          const newPrimaryMediaId = await applyPrimaryImageChanges({
+            resourceId: created.id,
+            currentPrimaryMediaId: undefined,
+            changes: imageChanges,
+          });
+          if (newPrimaryMediaId) {
+            await dispatch(updateTabItem({
+              tabType: 'equipment',
+              itemId: created.id,
+              itemData: { ...itemData, primaryMediaId: newPrimaryMediaId },
+            })).unwrap();
+          }
+        }
       }
       handleCloseModal();
     } catch (error) {
@@ -296,6 +321,7 @@ const EquipmentTab: React.FC = () => {
           <Table stickyHeader>
             <TableHead>
               <TableRow>
+                <TableCell sx={{ width: 64 }}>تصویر</TableCell>
                 <TableCell>کد تجهیز</TableCell>
                 <TableCell>نام تجهیز</TableCell>
                 <TableCell>نوع</TableCell>
@@ -311,6 +337,22 @@ const EquipmentTab: React.FC = () => {
                 .slice(pagination.page * pagination.pageSize, pagination.page * pagination.pageSize + pagination.pageSize)
                 .map((item) => (
                 <TableRow key={item.id} hover>
+                  <TableCell>
+                    {item.primaryMediaId ? (
+                      <Avatar
+                        variant="rounded"
+                        src={resourceApiService.getMediaUrl(item.primaryMediaId)}
+                        sx={{ width: 40, height: 40 }}
+                      />
+                    ) : (
+                      <Avatar
+                        variant="rounded"
+                        sx={{ width: 40, height: 40, bgcolor: 'background.default', color: 'text.disabled' }}
+                      >
+                        <NoImageIcon fontSize="small" />
+                      </Avatar>
+                    )}
+                  </TableCell>
                   <TableCell>{item.equipmentCode}</TableCell>
                   <TableCell>{item.name}</TableCell>
                   <TableCell>{item.type}</TableCell>
