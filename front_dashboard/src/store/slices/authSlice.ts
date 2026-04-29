@@ -45,8 +45,12 @@ export const loginUser = createAsyncThunk(
       });
       
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.detail || 'خطا در ورود');
+        // Backend error envelope uses { success: false, message, ... } (not FastAPI's { detail }).
+        const errorData = await response.json().catch(() => ({} as any));
+        const message =
+          (errorData && (errorData.detail || errorData.message || errorData.error)) ||
+          `خطا در ورود (HTTP ${response.status})`;
+        throw new Error(message);
       }
       
       const tokenData = await response.json();

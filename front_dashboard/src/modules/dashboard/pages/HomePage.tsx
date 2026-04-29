@@ -1634,13 +1634,6 @@ const HomePage: React.FC = () => {
         roles: ['admin', 'commander'],
       },
       {
-        title: t('dashboard.quickActions.viewMap'),
-        icon: <MapIcon />,
-        color: '#2e7d32',
-        onClick: () => navigate('/dashboard/map'),
-        roles: ['admin', 'commander', 'operator', 'viewer'],
-      },
-      {
         title: t('dashboard.quickActions.reporting'),
         icon: <TrendingUp />,
         color: '#ed6c02',

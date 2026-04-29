@@ -6,7 +6,6 @@ import {
   CONTROL_SYMBOLS_ROUTE,
   GRID_EDIT_ROUTE,
   MAP_EDIT_MODE_ROUTE,
-  NEW_SCENARIO_ROUTE,
   ORBAT_CHART_ROUTE,
   STORY_MODE_ROUTE,
   TACTICAL_GRAPHICS_ROUTE,
@@ -106,7 +105,6 @@ function requireAuth(
 
 const ScenarioEditorWrapper = () =>
   lazyImportWithRetry(() => import("../modules/scenarioeditor/ScenarioEditorWrapper.vue"))();
-const NewScenarioView = () => import("../modules/scenarioeditor/NewScenarioView.vue");
 const StoryModeView = () => import("../modules/storymode/StoryModeWrapper.vue");
 const OrbatChartView = () => import("../modules/charteditor/OrbatChartViewWrapper.vue");
 const ComponentsTestView = () => import("../views/ComponentsTestView.vue");
@@ -124,13 +122,25 @@ const SymbolDesignerPage = () => import("../modules/tactical-symbol-designer/Sym
 const TacticalSymbolDefinitionPage = () => import("../modules/tactical-symbols/TacticalSymbolDefinitionView.vue");
 const ControlSymbolsLab = () => import("../views/ControlSymbolsLab.vue");
 const SimpleTacticalMapView = () => import("../views/SimpleTacticalMapView.vue");
+
+function redirectToDashboard(next: NavigationGuardNext) {
+  const parentOrigin = (() => {
+    const raw = (import.meta as any).env?.VITE_PARENT_ORIGIN as string | undefined;
+    return raw && raw.trim().length > 0 ? raw : "http://127.0.0.1:3000";
+  })();
+
+  window.location.replace(`${parentOrigin}/dashboard/scenario-management`);
+  // do not call next() after hard navigation
+}
+
 const routes = [
   {
-    path: "/newscenario",
-    name: NEW_SCENARIO_ROUTE,
-    component: NewScenarioView,
+    path: "/",
+    name: "KalknegarRootDisabled",
     meta: { requiresAuth: true },
-    beforeEnter: requireAuth,
+    beforeEnter: (to, from, next) => {
+      requireAuth(to, from, () => redirectToDashboard(next));
+    },
   },
   {
     path: "/scenario/:scenarioId",
@@ -216,8 +226,10 @@ const routes = [
     },
   },
   {
-    path: "/",
-    redirect: { name: NEW_SCENARIO_ROUTE },
+    path: "/newscenario",
+    beforeEnter: (to, from, next) => {
+      requireAuth(to, from, () => redirectToDashboard(next));
+    },
   },
 ] as RouteRecordRaw[];
 

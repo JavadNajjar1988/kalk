@@ -44,11 +44,6 @@
             </div>
             <div class="flex items-center gap-3 mt-4 sm:mt-0">
               <SortDropdown :options="sortOptions" />
-              <Button class="bg-purple-400 hover:bg-purple-500 text-white px-6 py-2.5 rounded-xl font-semibold text-sm shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-0.5" as-child>
-                <router-link :to="{ name: NEW_SCENARIO_ROUTE }">
-                  ایجاد سناریوی جدید
-                </router-link>
-              </Button>
             </div>
           </header>
           <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
@@ -115,27 +110,6 @@
             </router-link>
           </div>
 
-          <!-- Create New Scenario Card -->
-          <div class="group bg-gray-50 dark:bg-slate-700 rounded-2xl border-2 border-dashed border-gray-300 dark:border-slate-600 hover:border-emerald-400 dark:hover:border-emerald-500 transition-all duration-300 flex items-center justify-center min-h-[320px]">
-            <button
-              type="button"
-              @click="newScenario"
-              class="text-center p-8 w-full h-full flex flex-col items-center justify-center hover:bg-emerald-50 dark:hover:bg-emerald-900/20 rounded-2xl transition-all duration-300"
-            >
-              <div class="w-16 h-16 bg-emerald-200 dark:bg-emerald-800 rounded-2xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
-                <svg class="w-8 h-8 text-emerald-700 dark:text-emerald-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-                </svg>
-              </div>
-              <h4 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-                ایجاد سناریوی جدید
-              </h4>
-              <p class="text-gray-600 dark:text-gray-400 text-sm">
-                شروع پروژه جدید با قالب آزاد
-              </p>
-            </button>
-          </div>
-
           <!-- Load Scenario Card -->
           <div class="group bg-green-50 dark:bg-emerald-900/20 rounded-2xl border border-green-200 dark:border-emerald-700 hover:border-green-400 dark:hover:border-emerald-500 transition-all duration-300 min-h-[320px]">
             <div class="p-6 h-full flex flex-col">
@@ -179,7 +153,7 @@
 import { useRouter } from "vue-router";
 
 import WipBadge from "../components/WipBadge.vue";
-import { MAP_EDIT_MODE_ROUTE, NEW_SCENARIO_ROUTE } from "@/router/names";
+import { MAP_EDIT_MODE_ROUTE } from "@/router/names";
 import LoadScenarioPanel from "@/modules/scenarioeditor/LoadScenarioPanel.vue";
 import LoadScenarioFromUrlPanel from "@/modules/scenarioeditor/LoadScenarioFromUrlPanel.vue";
 import ScenarioLinkCard from "@/components/ScenarioLinkCard.vue";
@@ -195,9 +169,5 @@ const getScenarioTo = (scenarioId: string) => {
     name: MAP_EDIT_MODE_ROUTE,
     params: { scenarioId: `demo-${scenarioId}` },
   };
-};
-
-const newScenario = () => {
-  router.push({ name: NEW_SCENARIO_ROUTE });
 };
 </script>

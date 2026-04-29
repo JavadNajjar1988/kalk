@@ -28,6 +28,8 @@ class OfflineMapResponse(OfflineMapBase):
     created_at: datetime
     updated_at: Optional[datetime]
     url_template: str
+    minzoom: Optional[int] = None
+    maxzoom: Optional[int] = None
 
     class Config:
         from_attributes = True
@@ -54,3 +56,24 @@ class FilesystemFolderInfo(BaseModel):
 class FilesystemFolderListResponse(BaseModel):
     root: str
     entries: list[FilesystemFolderInfo]
+
+
+# ---- Tile Roots (admin-managed) ---------------------------------------------
+
+class TileRootCreate(BaseModel):
+    label: str
+    path: str
+
+class TileRootResponse(BaseModel):
+    id: int
+    label: str
+    path: str
+    is_active: bool
+    valid: bool
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+class TileRootListResponse(BaseModel):
+    items: list[TileRootResponse]

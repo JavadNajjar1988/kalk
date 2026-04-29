@@ -26,6 +26,7 @@ from app.api.routes import users as users_routes
 from app.api.routes import dashboard_header as dashboard_header_routes
 from app.api.routes import data_import as data_import_routes
 from app.api.routes import resources as resources_routes
+from app.api.routes import tile_roots as tile_roots_routes
 
 
 def create_app() -> FastAPI:
@@ -109,6 +110,7 @@ def create_app() -> FastAPI:
     api.include_router(dashboard_header_routes.router)
     api.include_router(data_import_routes.router)
     api.include_router(resources_routes.router)
+    api.include_router(tile_roots_routes.router)
 
     return app
 

@@ -4,7 +4,7 @@
     "name": "osm",
     "layerSourceType": "xyz",
     "sourceOptions": {
-      "url": "http://127.0.0.1:8480/data/maps.mbtiles/{z}/{x}/{-y}.png",
+      "url": "/tiles/data/a8d25aa7-1d18-4595-8864-56a8520702bd/{z}/{x}/{-y}.png",
       "crossOrigin": "anonymous",
       "attributions": "نقشه محلی آفلاین",
       "minZoom": 0,

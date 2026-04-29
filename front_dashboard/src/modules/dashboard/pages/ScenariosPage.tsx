@@ -1526,7 +1526,19 @@ const ScenariosPage: React.FC = () => {
           handleMenuClose();
         }}>
           <PlayArrow sx={{ mr: 1 }} />
-          اجرا
+          اجرای شبیه ساز
+        </MenuItem>
+
+        <MenuItem
+          onClick={() => {
+            if (menuScenario) {
+              handleOpenScenarioInKalknegar(menuScenario.id);
+            }
+            handleMenuClose();
+          }}
+        >
+          <MapIcon sx={{ mr: 1 }} />
+          اجرای کالک نگار
         </MenuItem>
         
         <MenuItem onClick={async () => {

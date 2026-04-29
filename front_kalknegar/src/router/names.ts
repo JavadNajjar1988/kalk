@@ -1,5 +1,4 @@
 export const OLD_MAP_ROUTE = "ScenarioRoute";
-export const NEW_SCENARIO_ROUTE = "NewScenarioRoute";
 export const STORY_MODE_ROUTE = "StoryModeRoute";
 export const ORBAT_CHART_ROUTE = "OrbatChartRoute";
 export const GRID_EDIT_ROUTE = "GridEditRoute";

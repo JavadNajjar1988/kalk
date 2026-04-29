@@ -6,9 +6,11 @@ const resolveTileServerBase = () => {
   if (raw && raw.length > 0) {
     return raw.replace(/\/+$/, '');
   }
+  // Default behavior:
+  // - In bundled/offline mode, tiles are exposed via nginx under /tiles (same origin).
+  // - In local dev, users can override via VITE_TILESERVER_URL (recommended).
   if (typeof window !== 'undefined') {
-    const { protocol, hostname } = window.location;
-    return `${protocol}//${hostname}:8480`;
+    return `${window.location.origin}/tiles`;
   }
   return 'http://127.0.0.1:8480';
 };
@@ -84,12 +86,15 @@ const initialState: MapState = {
   baseLayers: [
     {
       id: 'osm',
-      name: 'نقشه آفلاین جهانی',
+      name: 'نقشه (پیش‌فرض)',
       type: 'base',
       visible: true,
       opacity: 1,
       maxZoom: 13,
-      url: `${defaultTileServerBase}/data/maps.mbtiles/{z}/{x}/{y}.png`,
+      // گزینه B: URL پیش‌فرض نباید به یک فایل mbtiles ثابت وابسته باشد.
+      // اگر کاتالوگ موجود باشد، در MapPage از روی /api/catalog/layers.json جایگزین می‌شود.
+      // در غیر اینصورت، روی OSM آنلاین می‌ماند تا 404 نگیریم.
+      url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
     },
     {
       id: 'satellite',
@@ -168,6 +173,10 @@ const mapSlice = createSlice({
   name: 'map',
   initialState,
   reducers: {
+    // جایگزینی کامل لایه‌های پایه (بر اساس کاتالوگ یا تنظیمات سیستم)
+    setBaseLayers: (state, action: PayloadAction<MapLayer[]>) => {
+      state.baseLayers = action.payload;
+    },
     // تغییر مرکز نقشه
     setCenter: (state, action: PayloadAction<Coordinates>) => {
       state.center = action.payload;
@@ -318,6 +327,7 @@ export const {
   setCenter,
   setZoom,
   setBounds,
+  setBaseLayers,
   toggleBaseLayer,
   toggleOverlayLayer,
   toggleMilitaryLayer,

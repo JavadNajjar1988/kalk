@@ -120,6 +120,13 @@ export default defineConfig({
         secure: false,
         agent: proxyKeepAliveAgent,
       },
+      '/tiles': {
+        target: 'http://127.0.0.1:8480',
+        changeOrigin: true,
+        secure: false,
+        agent: proxyKeepAliveAgent,
+        rewrite: (path) => path.replace(/^\/tiles/, ''),
+      },
       '/simulator': {
         target: 'http://127.0.0.1:3001',
         changeOrigin: true,
@@ -138,7 +145,7 @@ export default defineConfig({
         target: 'http://127.0.0.1:5180',
         changeOrigin: true,
         secure: false,
-        ws: true,
+        ws: false,
         agent: proxyKeepAliveAgent,
         rewrite: (path) => {
           if (path === '/kalknegar') {

@@ -30,12 +30,6 @@
       <header class="flex items-center justify-end border-b border-gray-200 pb-5">
         <div class="mt-3 flex items-center sm:mt-0 sm:ml-4">
           <SortDropdown class="mr-4" :options="sortOptions" />
-          <router-link
-            :to="{ name: NEW_SCENARIO_ROUTE }"
-            class="inline-flex items-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-xs hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
-          >
-            ایجاد جدید
-          </router-link>
         </div>
       </header>
       <ul class="mt-4 grid grid-cols-1 gap-6 sm:grid-cols-2">
@@ -62,7 +56,6 @@ import LoadScenarioUrlForm from "@/modules/scenarioeditor/LoadScenarioUrlForm.vu
 import { useBrowserScenarios } from "@/composables/browserScenarios";
 import { RadioGroup, RadioGroupLabel, RadioGroupOption } from "@headlessui/vue";
 import { ref } from "vue";
-import { NEW_SCENARIO_ROUTE } from "@/router/names";
 import SortDropdown from "@/components/SortDropdown.vue";
 import ScenarioLinkCard from "@/components/ScenarioLinkCard.vue";
 import NewSimpleModal from "@/components/NewSimpleModal.vue";

@@ -88,6 +88,8 @@ export async function createBaseLayers(view: View, currentBaseLayerName = "osm")
             source: new XYZ({
               url: activeMap.url_template,
               crossOrigin: "anonymous",
+              minZoom: typeof activeMap.minzoom === "number" ? activeMap.minzoom : 0,
+              maxZoom: typeof activeMap.maxzoom === "number" ? activeMap.maxzoom : 24,
             }),
             properties: {
               title: activeMap.name ?? "Offline Map",

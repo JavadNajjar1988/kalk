@@ -37,8 +37,13 @@ class Settings(BaseSettings):
 
     # وقتی True باشد، تمام بررسی‌های احراز هویت در backend نادیده گرفته می‌شود.
     DISABLE_AUTH: bool = False
-    TILESERVER_URL: str = "http://127.0.0.1:8480"
+    # In production/offline bundle, TileServer is exposed via nginx under /tiles (same origin).
+    # You can override via env TILESERVER_URL if needed (e.g. "http://tileserver:8080" for internal network).
+    TILESERVER_URL: str = "/tiles"
     FILESYSTEM_TILE_ROOT: str = "sat"
+    # Comma-separated extra root paths for tile folders (e.g. mounted NAS, external drives).
+    # Example: "D:/maps/tiles,/mnt/nas/tiles"
+    FILESYSTEM_TILE_EXTRA_ROOTS: str = ""
     SCENARIO_IMAGE_DIR: str = "backend/static/scenarios/images"
     SCENARIO_INTRO_VIDEO_DIR: str = "backend/static/scenarios/intro-videos"
     # SDI catalog

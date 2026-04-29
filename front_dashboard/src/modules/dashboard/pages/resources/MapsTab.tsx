@@ -167,16 +167,17 @@ interface CatalogLayer {
   id: string;
   title: string;
   type: string;
-  minzoom?: number;
-  maxzoom?: number;
+  minzoom?: number | null;
+  maxzoom?: number | null;
   srs?: string;
   updated?: string;
-  status: 'draft' | 'published' | 'retired';
+  status?: 'draft' | 'published' | 'retired';
   category?: string;
   description?: string;
   bbox?: number[];
   path?: string;
   adminMapId?: number;
+  ui?: { visibleByDefault?: boolean; defaultOpacity?: number };
 }
 
 // Helper component for TabPanel
@@ -200,6 +201,341 @@ function TabPanel(props: TabPanelProps) {
     </div>
   );
 }
+
+// ---- مدیریت مسیرهای مجاز تایل (Tile Roots) ----
+interface TileRootItem {
+  id: number;
+  label: string;
+  path: string;
+  is_active: boolean;
+  valid: boolean;
+  created_at: string;
+}
+
+const TileRootsManager: React.FC<{ apiBase: string }> = ({ apiBase }) => {
+  const theme = useTheme();
+  const [roots, setRoots] = React.useState<TileRootItem[]>([]);
+  const [loading, setLoading] = React.useState(false);
+  const [error, setError] = React.useState<string | null>(null);
+  const [addOpen, setAddOpen] = React.useState(false);
+  const [newLabel, setNewLabel] = React.useState('');
+  const [newPath, setNewPath] = React.useState('');
+  const [submitting, setSubmitting] = React.useState(false);
+
+  const authHeaders = React.useCallback(() => {
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+    const token = localStorage.getItem('access_token');
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+    return headers;
+  }, []);
+
+  const loadRoots = React.useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await fetch(`${apiBase}/tile-roots`, { headers: authHeaders() });
+      if (!res.ok) throw new Error('خطا در دریافت مسیرها');
+      const data = await res.json();
+      setRoots(Array.isArray(data.items) ? data.items : []);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'خطا');
+    } finally {
+      setLoading(false);
+    }
+  }, [apiBase, authHeaders]);
+
+  React.useEffect(() => { loadRoots(); }, [loadRoots]);
+
+  const handleAdd = async () => {
+    if (!newLabel.trim() || !newPath.trim()) return;
+    setSubmitting(true);
+    setError(null);
+    try {
+      const res = await fetch(`${apiBase}/tile-roots`, {
+        method: 'POST',
+        headers: authHeaders(),
+        body: JSON.stringify({ label: newLabel.trim(), path: newPath.trim() }),
+      });
+      if (!res.ok) {
+        const d = await res.json().catch(() => ({}));
+        throw new Error(d.detail || 'خطا در افزودن مسیر');
+      }
+      setNewLabel('');
+      setNewPath('');
+      setAddOpen(false);
+      await loadRoots();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'خطا');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleToggle = async (id: number) => {
+    try {
+      await fetch(`${apiBase}/tile-roots/${id}/toggle`, { method: 'PUT', headers: authHeaders() });
+      await loadRoots();
+    } catch {}
+  };
+
+  const handleDelete = async (id: number) => {
+    if (!window.confirm('آیا از حذف این مسیر مطمئنید؟')) return;
+    try {
+      await fetch(`${apiBase}/tile-roots/${id}`, { method: 'DELETE', headers: authHeaders() });
+      await loadRoots();
+    } catch {}
+  };
+
+  return (
+    <Card>
+      <CardHeader
+        title="مسیرهای مجاز نقشه (Tile Roots)"
+        subheader="مسیرهایی که سیستم مجاز است پوشه تایل‌ها را از آنها بخواند"
+        action={
+          <Button
+            variant="contained"
+            size="small"
+            startIcon={<Add />}
+            onClick={() => setAddOpen(true)}
+          >
+            افزودن مسیر
+          </Button>
+        }
+      />
+      <CardContent>
+        {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
+
+        {loading ? (
+          <Box sx={{ display: 'flex', justifyContent: 'center', py: 3 }}>
+            <CircularProgress size={28} />
+          </Box>
+        ) : roots.length === 0 ? (
+          <Alert severity="info">
+            هیچ مسیر اضافه‌ای تعریف نشده. مسیر پیش‌فرض (FILESYSTEM_TILE_ROOT) همچنان فعال است.
+          </Alert>
+        ) : (
+          <Table size="small">
+            <TableHead>
+              <TableRow>
+                <TableCell>برچسب</TableCell>
+                <TableCell>مسیر</TableCell>
+                <TableCell align="center">وضعیت</TableCell>
+                <TableCell align="center">معتبر</TableCell>
+                <TableCell align="center">عملیات</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {roots.map((r) => (
+                <TableRow key={r.id}>
+                  <TableCell>{r.label}</TableCell>
+                  <TableCell sx={{ fontFamily: 'monospace', fontSize: '0.85rem', direction: 'ltr', textAlign: 'left' }}>
+                    {r.path}
+                  </TableCell>
+                  <TableCell align="center">
+                    <Chip
+                      label={r.is_active ? 'فعال' : 'غیرفعال'}
+                      color={r.is_active ? 'success' : 'default'}
+                      size="small"
+                    />
+                  </TableCell>
+                  <TableCell align="center">
+                    <Chip
+                      label={r.valid ? 'موجود' : 'ناموجود'}
+                      color={r.valid ? 'info' : 'error'}
+                      size="small"
+                      variant="outlined"
+                    />
+                  </TableCell>
+                  <TableCell align="center">
+                    <Tooltip title={r.is_active ? 'غیرفعال‌سازی' : 'فعال‌سازی'}>
+                      <IconButton size="small" onClick={() => handleToggle(r.id)}>
+                        {r.is_active ? <Visibility fontSize="small" /> : <VisibilityOff fontSize="small" />}
+                      </IconButton>
+                    </Tooltip>
+                    <Tooltip title="حذف">
+                      <IconButton size="small" color="error" onClick={() => handleDelete(r.id)}>
+                        <Delete fontSize="small" />
+                      </IconButton>
+                    </Tooltip>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        )}
+
+        {/* فرم افزودن مسیر جدید */}
+        {addOpen && (
+          <Box sx={{ mt: 2, p: 2, border: '1px solid', borderColor: 'divider', borderRadius: 1 }}>
+            <Typography variant="subtitle2" sx={{ mb: 1 }}>افزودن مسیر جدید</Typography>
+            <Grid container spacing={2}>
+              <Grid item xs={12} sm={4}>
+                <TextField
+                  fullWidth
+                  size="small"
+                  label="برچسب (نام نمایشی)"
+                  value={newLabel}
+                  onChange={(e) => setNewLabel(e.target.value)}
+                  placeholder="مثلاً: دیتاسنتر شرق"
+                />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  fullWidth
+                  size="small"
+                  label="مسیر مطلق"
+                  value={newPath}
+                  onChange={(e) => setNewPath(e.target.value)}
+                  placeholder="D:/maps/tiles یا /mnt/nas/tiles"
+                  sx={{ direction: 'ltr' }}
+                  inputProps={{ style: { fontFamily: 'monospace' } }}
+                />
+              </Grid>
+              <Grid item xs={12} sm={2} sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+                <Button
+                  variant="contained"
+                  size="small"
+                  onClick={handleAdd}
+                  disabled={submitting || !newLabel.trim() || !newPath.trim()}
+                >
+                  {submitting ? <CircularProgress size={18} /> : 'ثبت'}
+                </Button>
+                <Button
+                  size="small"
+                  onClick={() => { setAddOpen(false); setNewLabel(''); setNewPath(''); setError(null); }}
+                >
+                  لغو
+                </Button>
+              </Grid>
+            </Grid>
+          </Box>
+        )}
+      </CardContent>
+    </Card>
+  );
+};
+
+const DEFAULT_BASEMAP_ID_KEY = 'kalk.defaultBasemapId';
+const DEFAULT_BASEMAP_OPACITY_KEY = 'kalk.defaultBasemapOpacity';
+
+const DefaultBasemapFromCatalog: React.FC<{ apiBase: string }> = ({ apiBase }) => {
+  const [items, setItems] = React.useState<CatalogLayer[]>([]);
+  const [loading, setLoading] = React.useState(false);
+  const [error, setError] = React.useState<string | null>(null);
+  const [selectedId, setSelectedId] = React.useState<string>(() => localStorage.getItem(DEFAULT_BASEMAP_ID_KEY) || '');
+  const [opacity, setOpacity] = React.useState<number>(() => {
+    const raw = localStorage.getItem(DEFAULT_BASEMAP_OPACITY_KEY);
+    const v = raw ? Number(raw) : NaN;
+    return Number.isFinite(v) ? Math.min(1, Math.max(0, v)) : 1;
+  });
+
+  const load = React.useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await fetch(`${apiBase}/catalog/layers.json`);
+      if (!res.ok) throw new Error('خطا در دریافت کاتالوگ');
+      const payload = await res.json();
+      const layers = Array.isArray(payload?.layers) ? (payload.layers as CatalogLayer[]) : [];
+      const publishedRaster = layers.filter(
+        (l) => l && l.status === 'published' && l.type === 'raster-xyz' && typeof l.path === 'string' && l.path.length > 0
+      );
+      setItems(publishedRaster);
+
+      if (!selectedId) {
+        const pick = publishedRaster.find((l) => l?.ui?.visibleByDefault === true) ?? publishedRaster[0];
+        if (pick?.id) setSelectedId(pick.id);
+      }
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'خطا');
+    } finally {
+      setLoading(false);
+    }
+  }, [apiBase, selectedId]);
+
+  React.useEffect(() => {
+    load();
+  }, [load]);
+
+  const save = () => {
+    if (selectedId) localStorage.setItem(DEFAULT_BASEMAP_ID_KEY, selectedId);
+    localStorage.setItem(DEFAULT_BASEMAP_OPACITY_KEY, String(opacity));
+  };
+
+  return (
+    <Card>
+      <CardHeader
+        title="Basemap پیش‌فرض (از کاتالوگ)"
+        subheader="گزینه B: Basemap بر اساس layers.json انتخاب می‌شود (بدون وابستگی به maps.mbtiles ثابت)"
+        action={
+          <Button variant="outlined" size="small" startIcon={<Refresh />} onClick={load} disabled={loading}>
+            بروزرسانی
+          </Button>
+        }
+      />
+      <CardContent>
+        {error && (
+          <Alert severity="error" sx={{ mb: 2 }}>
+            {error}
+          </Alert>
+        )}
+
+        {loading ? (
+          <Box sx={{ py: 2 }}>
+            <LinearProgress />
+          </Box>
+        ) : items.length === 0 ? (
+          <Alert severity="warning">
+            هیچ لایه‌ی منتشرشده‌ای از نوع <b>raster-xyz</b> در کاتالوگ پیدا نشد.
+          </Alert>
+        ) : (
+          <>
+            <FormControl fullWidth size="small" sx={{ mb: 2 }}>
+              <InputLabel>Basemap پیش‌فرض</InputLabel>
+              <Select
+                label="Basemap پیش‌فرض"
+                value={selectedId}
+                onChange={(e) => setSelectedId(e.target.value as string)}
+              >
+                {items.map((l) => (
+                  <MenuItem key={l.id} value={l.id}>
+                    {l.title} ({l.id})
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+
+            <Typography variant="subtitle2" sx={{ mb: 0.5 }}>
+              شفافیت پیش‌فرض: {Math.round(opacity * 100)}%
+            </Typography>
+            <Slider value={opacity} min={0} max={1} step={0.05} onChange={(_e, v) => setOpacity(v as number)} />
+
+            <Box sx={{ display: 'flex', gap: 1, mt: 2 }}>
+              <Button variant="contained" onClick={save} disabled={!selectedId}>
+                ذخیره
+              </Button>
+              <Button
+                variant="text"
+                onClick={() => {
+                  localStorage.removeItem(DEFAULT_BASEMAP_ID_KEY);
+                  localStorage.removeItem(DEFAULT_BASEMAP_OPACITY_KEY);
+                  setSelectedId('');
+                  setOpacity(1);
+                }}
+              >
+                پاک کردن تنظیمات
+              </Button>
+            </Box>
+
+            <Alert severity="info" sx={{ mt: 2, fontSize: '0.875rem' }}>
+              این تنظیم روی همین داشبورد ذخیره می‌شود و در صفحه نقشه (Map) به عنوان Basemap پیش‌فرض استفاده می‌گردد.
+            </Alert>
+          </>
+        )}
+      </CardContent>
+    </Card>
+  );
+};
 
 const MapsTab: React.FC = () => {
   const theme = useTheme();
@@ -530,7 +866,6 @@ const MapsTab: React.FC = () => {
   
   const [openDialog, setOpenDialog] = useState(false);
   const [dialogMode, setDialogMode] = useState<'serverLayer' | 'upload' | 'offline' | 'filesystem'>('serverLayer');
-  const [selectedLayer, setSelectedLayer] = useState<MapLayer | null>(null);
   const [formData, setFormData] = useState<Partial<MapLayer>>({
     name: '',
     type: 'xyz',
@@ -545,7 +880,15 @@ const MapsTab: React.FC = () => {
   const [testConnResult, setTestConnResult] = useState<string | null>(null);
 
   // SDI Servers management
-  interface SdiServer { id: number; name: string; base_url: string; service_types: string[]; status: string; }
+  interface SdiServer {
+    id: number;
+    name: string;
+    base_url: string;
+    service_types: string[];
+    status: string;
+    auth_type?: string;
+    created_at?: string;
+  }
   const [servers, setServers] = useState<SdiServer[]>([]);
   const loadServers = useCallback(async () => {
     try {
@@ -553,7 +896,17 @@ const MapsTab: React.FC = () => {
       if (res.ok) {
         const data = await res.json();
         const items = Array.isArray(data.servers) ? data.servers : [];
-        setServers(items.map((s: any) => ({ id: s.id, name: s.name, base_url: s.base_url, service_types: s.service_types || [], status: s.status })));
+        setServers(
+          items.map((s: any) => ({
+            id: s.id,
+            name: s.name,
+            base_url: s.base_url,
+            service_types: s.service_types || [],
+            status: s.status,
+            auth_type: s.auth_type,
+            created_at: s.created_at,
+          }))
+        );
       }
     } catch {}
   }, [apiBase]);
@@ -1072,15 +1425,28 @@ const MapsTab: React.FC = () => {
     try {
       setLoading(true);
       const res = await authFetch(apiBase, `/sdi/offline/harvest-from-offline-map/${offlineId}`, { method: 'POST' });
-      if (!res.ok) throw new Error('harvest failed');
+      if (!res.ok) {
+        if (res.status === 403) {
+          throw new Error('دسترسی کافی ندارید (نیاز به نقش ADMIN).');
+        }
+        const detail = await res.text().catch(() => '');
+        throw new Error(detail || 'harvest failed');
+      }
       const sdiMap = await res.json();
       const pub = await authFetch(apiBase, `/sdi/maps/${sdiMap.id}/publish`, { method: 'POST' });
-      if (!pub.ok) throw new Error('publish failed');
+      if (!pub.ok) {
+        if (pub.status === 403) {
+          throw new Error('انتشار نیاز به نقش ADMIN دارد.');
+        }
+        const detail = await pub.text().catch(() => '');
+        throw new Error(detail || 'publish failed');
+      }
       await loadCatalog();
       await loadOfflineSdiStatus();
       setActiveStep(2);
     } catch (e) {
       console.error(e);
+      alert(e instanceof Error ? e.message : 'خطا در Harvest/Publish');
     } finally {
       setLoading(false);
     }
@@ -2085,6 +2451,17 @@ const MapsTab: React.FC = () => {
         <Paper sx={{ p: 2 }}>
           <Typography variant="h6" sx={{ mb: 2 }}>تنظیمات</Typography>
           <Grid container spacing={3}>
+
+            {/* بخش مدیریت مسیرهای مجاز تایل */}
+            <Grid item xs={12}>
+              <TileRootsManager apiBase={apiBase} />
+            </Grid>
+
+            {/* انتخاب Basemap پیش‌فرض از کاتالوگ (گزینه B) */}
+            <Grid item xs={12} md={6}>
+              <DefaultBasemapFromCatalog apiBase={apiBase} />
+            </Grid>
+
             <Grid item xs={12} md={6}>
               <Card>
                 <CardHeader title="مسیر کاتالوگ" />

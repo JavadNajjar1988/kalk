@@ -1,0 +1,97 @@
+services:
+  db:
+    image: postgis/postgis:16-3.4
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: ${POSTGRES_DB:-kalk}
+    ports:
+      - "5432:5432"
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      - kalknet
+
+  migrate:
+    image: kalk-api:1.1.0
+    restart: "no"
+    environment:
+      DB_URL: ${DB_URL:-postgresql+asyncpg://postgres:postgres@db:5432/kalk}
+    depends_on:
+      db:
+        condition: service_healthy
+    command: ["sh", "-lc", "alembic -c alembic.ini upgrade head"]
+    networks:
+      - kalknet
+
+  api:
+    image: kalk-api:1.1.0
+    restart: unless-stopped
+    environment:
+      DB_URL: ${DB_URL:-postgresql+asyncpg://postgres:postgres@db:5432/kalk}
+      CORS_ORIGINS: '["http://localhost:3000","http://localhost:5173","http://localhost:5174","http://localhost:3001","http://127.0.0.1:3000","http://127.0.0.1:5173","http://127.0.0.1:3001"]'
+      DISABLE_AUTH: ${DISABLE_AUTH:-false}
+      JWT_SECRET: ${JWT_SECRET:-kalk-dev-local-jwt-secret}
+      JWT_ALG: ${JWT_ALG:-HS256}
+      ACCESS_TOKEN_EXPIRE_MINUTES: ${ACCESS_TOKEN_EXPIRE_MINUTES:-60}
+      ADMIN_BOOTSTRAP_PASSWORD: ${ADMIN_BOOTSTRAP_PASSWORD:-admin123}
+      FILESYSTEM_TILE_ROOT: ${FILESYSTEM_TILE_ROOT:-/app/backend/static/maps}
+      TILESERVER_URL: ${TILESERVER_URL:-/tiles}
+    ports:
+      - "8002:8000"
+    volumes:
+      - maps-data:/app/backend/static/maps
+      - /var/run/docker.sock:/var/run/docker.sock
+    depends_on:
+      db:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:8000/api/health || wget -qO- http://localhost:8000/api/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+    networks:
+      - kalknet
+
+  tileserver:
+    image: maptiler/tileserver-gl:latest
+    container_name: tileserver
+    restart: unless-stopped
+    working_dir: /data
+    volumes:
+      - maps-data:/data
+    healthcheck:
+      test: ["CMD", "node", "/usr/src/app/src/healthcheck.js"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - kalknet
+
+  web:
+    image: kalk-web:1.3.0
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    depends_on:
+      - api
+      - tileserver
+    networks:
+      - kalknet
+
+volumes:
+  db-data:
+  maps-data:
+
+networks:
+  kalknet:

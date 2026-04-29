@@ -31,6 +31,12 @@ export default defineConfig({
         changeOrigin: true,
         secure: false,
       },
+      '/tiles': {
+        target: 'http://127.0.0.1:8480',
+        changeOrigin: true,
+        secure: false,
+        rewrite: (path) => path.replace(/^\/tiles/, ''),
+      },
     },
   },
 });

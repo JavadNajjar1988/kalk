@@ -3,12 +3,16 @@ from fastapi.responses import FileResponse
 from sqlalchemy import select, delete as sa_delete, func
 from sqlalchemy.exc import SQLAlchemyError
 from pathlib import Path
+import logging
 import shutil
+import subprocess
 import uuid
+
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
 from app.deps import DbSession
-from app.models.map import OfflineMap
+from app.models.map import OfflineMap, TileRoot
 from app.schemas.map import (
     OfflineMapUpdate,
     OfflineMapResponse,
@@ -17,13 +21,27 @@ from app.schemas.map import (
     FilesystemFolderListResponse,
     FilesystemFolderInfo,
 )
+from app.services.sdi.harvest import harvest_offline_folder, harvest_offline_mbtiles
 
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/maps", tags=["maps"])
 
-# مسیر پوشه ذخیره فایل‌ها
 MAPS_DIR = Path("backend/static/maps")
 MAPS_DIR.mkdir(exist_ok=True, parents=True)
+
+
+def _restart_tileserver() -> None:
+    try:
+        subprocess.Popen(
+            ["docker", "restart", "tileserver"],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        )
+        logger.info("tileserver restart triggered")
+    except Exception as e:
+        logger.warning("Could not restart tileserver: %s", e)
 
 
 def _is_safe_map_path(p: Path) -> bool:
@@ -38,13 +56,10 @@ def _build_url_template(map_obj: OfflineMap) -> str:
     if map_obj.storage_type == "filesystem":
         return f"/api/tile-cache/{map_obj.id}/{{z}}/{{x}}/{{y}}"
     base_url = settings.TILESERVER_URL.rstrip("/")
-    filename = map_obj.filename
-    # حذف پسوند .mbtiles از نام فایل برای TileServer-GL
-    # TileServer-GL از استاندارد TMS استفاده می‌کند (Y از پایین به بالا)
-    # برای OpenLayers که از OSM style استفاده می‌کند، باید از {-y} استفاده کنیم
-    if filename.endswith('.mbtiles'):
-        filename = filename[:-8]  # حذف '.mbtiles'
-    return f"{base_url}/data/{filename}/{{z}}/{{x}}/{{-y}}.png"
+    tileset = Path(map_obj.filename or map_obj.file_path).name
+    if tileset.lower().endswith(".mbtiles"):
+        tileset = tileset[:-8]
+    return f"{base_url}/data/{tileset}/{{z}}/{{x}}/{{-y}}.png"
 
 
 def _filesystem_base_root() -> Path:
@@ -53,26 +68,87 @@ def _filesystem_base_root() -> Path:
     try:
         return root.resolve()
     except FileNotFoundError:
-        raise HTTPException(status_code=404, detail="U.O3UOO� U_OUOU� U+U,O'U� UOOU?O� U+O'O_")
+        raise HTTPException(status_code=404, detail="پوشه ریشه نقشه یافت نشد")
 
 
-def _resolve_filesystem_folder(folder_value: str, base_root: Path) -> Path:
+def _env_tile_roots() -> list[Path]:
+    """Roots from FILESYSTEM_TILE_ROOT + FILESYSTEM_TILE_EXTRA_ROOTS (env / .env)."""
+    roots: list[Path] = []
+    try:
+        roots.append(_filesystem_base_root())
+    except HTTPException:
+        pass
+
+    extra = (settings.FILESYSTEM_TILE_EXTRA_ROOTS or "").strip()
+    if extra:
+        for raw in extra.split(","):
+            raw = raw.strip()
+            if not raw:
+                continue
+            p = Path(raw)
+            p = p if p.is_absolute() else (Path.cwd() / p)
+            try:
+                resolved = p.resolve()
+                if resolved.exists() and resolved.is_dir():
+                    roots.append(resolved)
+            except Exception:
+                continue
+    return roots
+
+
+async def _all_tile_roots(session: AsyncSession) -> list[Path]:
+    """Return roots from env + admin-managed roots in DB."""
+    roots = _env_tile_roots()
+
+    res = await session.execute(select(TileRoot).where(TileRoot.is_active == True))  # noqa: E712
+    for row in res.scalars().all():
+        p = Path(row.path)
+        try:
+            resolved = p.resolve()
+            if resolved.exists() and resolved.is_dir() and resolved not in roots:
+                roots.append(resolved)
+        except Exception:
+            continue
+    return roots
+
+
+def _is_under_allowed_roots(target: Path, roots: list[Path]) -> bool:
+    """Check if target path is under any of the allowed tile roots."""
+    resolved = target.resolve()
+    for root in roots:
+        try:
+            resolved.relative_to(root)
+            return True
+        except ValueError:
+            continue
+    return False
+
+
+async def _resolve_filesystem_folder(folder_value: str, session: AsyncSession) -> Path:
+    """Resolve a folder path against all allowed tile roots.
+
+    Accepts absolute paths (if they fall under an allowed root) and
+    relative paths (resolved against each root in order).
+    """
     cleaned = folder_value.strip()
     if not cleaned:
-        return base_root
+        roots = await _all_tile_roots(session)
+        if roots:
+            return roots[0]
+        raise HTTPException(status_code=404, detail="پوشه ریشه نقشه یافت نشد")
 
+    roots = await _all_tile_roots(session)
     raw = Path(cleaned)
-    candidates = []
+
+    candidates: list[Path] = []
     if raw.is_absolute():
         candidates.append(raw)
-    candidates.append(base_root / raw)
-    if raw.parts and raw.parts[0] == base_root.name:
-        candidates.append(base_root.parent / raw)
+    for root in roots:
+        candidates.append(root / raw)
+        if raw.parts and raw.parts[0] == root.name:
+            candidates.append(root.parent / raw)
 
-    resolved_path = None
-    outside_base = False
-    seen = set()
-
+    seen: set[str] = set()
     for candidate in candidates:
         try:
             candidate_resolved = candidate.resolve()
@@ -87,24 +163,22 @@ def _resolve_filesystem_folder(folder_value: str, base_root: Path) -> Path:
         if not candidate_resolved.exists() or not candidate_resolved.is_dir():
             continue
 
-        try:
-            candidate_resolved.relative_to(base_root)
-        except ValueError:
-            outside_base = True
-            continue
+        if _is_under_allowed_roots(candidate_resolved, roots):
+            return candidate_resolved
 
-        resolved_path = candidate_resolved
-        break
-
-    if resolved_path is None:
-        if outside_base:
-            raise HTTPException(status_code=400, detail="O_O3O�O�O3UO O\"U� OUOU+ U.O3UOO� U.O�OO� U+UOO3O�")
-        raise HTTPException(status_code=404, detail="U_U^O'U� U+U,O'U� UOOU?O� U+O'O_")
-
-    return resolved_path
+    raise HTTPException(
+        status_code=400,
+        detail="مسیر مورد نظر در محدوده مسیرهای مجاز قرار ندارد. "
+               "مسیرهای مجاز را در تنظیمات FILESYSTEM_TILE_EXTRA_ROOTS اضافه کنید.",
+    )
 
 
 def _map_to_response(map_obj: OfflineMap) -> OfflineMapResponse:
+    meta = (
+        harvest_offline_folder(map_obj.file_path)
+        if map_obj.storage_type == "filesystem"
+        else harvest_offline_mbtiles(map_obj.file_path)
+    )
     return OfflineMapResponse(
         id=map_obj.id,
         name=map_obj.name,
@@ -117,6 +191,8 @@ def _map_to_response(map_obj: OfflineMap) -> OfflineMapResponse:
         created_at=map_obj.created_at,
         updated_at=map_obj.updated_at,
         url_template=_build_url_template(map_obj),
+        minzoom=meta.get("minzoom"),
+        maxzoom=meta.get("maxzoom"),
     )
 
 
@@ -140,14 +216,12 @@ async def get_offline_maps(
     )
 
 
-@router.get("/filesystem-folders", response_model=FilesystemFolderListResponse)
-async def list_filesystem_folders():
-    base_root = _filesystem_base_root()
-
+def _scan_root_for_folders(root: Path) -> list[FilesystemFolderInfo]:
+    """Scan a single root for tile folders containing .sqlitedb files."""
     tile_counts: dict[Path, int] = {}
-    for tile_path in base_root.rglob("*.sqlitedb"):
+    for tile_path in root.rglob("*.sqlitedb"):
         try:
-            rel_parts = tile_path.relative_to(base_root).parts
+            rel_parts = tile_path.relative_to(root).parts
         except ValueError:
             continue
 
@@ -158,18 +232,18 @@ async def list_filesystem_folders():
                 break
             anchor_parts.append(part)
 
-        anchor_path = base_root if not anchor_parts else base_root.joinpath(*anchor_parts)
+        anchor_path = root if not anchor_parts else root.joinpath(*anchor_parts)
         tile_counts[anchor_path] = tile_counts.get(anchor_path, 0) + 1
 
     entries: list[FilesystemFolderInfo] = []
     for folder_path, count in sorted(tile_counts.items(), key=lambda item: str(item[0])):
         try:
-            relative = folder_path.relative_to(base_root)
+            relative = folder_path.relative_to(root)
             relative_str = relative.as_posix() if relative.parts else "."
         except ValueError:
             continue
 
-        label = base_root.name if folder_path == base_root else relative_str
+        label = root.name if folder_path == root else f"{root.name}/{relative_str}"
         entries.append(
             FilesystemFolderInfo(
                 label=label,
@@ -179,17 +253,30 @@ async def list_filesystem_folders():
             )
         )
 
-    if not entries and base_root.exists():
+    if not entries and root.exists():
         entries.append(
             FilesystemFolderInfo(
-                label=base_root.name,
-                folder=str(base_root),
+                label=root.name,
+                folder=str(root),
                 relative_path=".",
                 approx_tile_count=None,
             )
         )
 
-    return FilesystemFolderListResponse(root=str(base_root), entries=entries)
+    return entries
+
+
+@router.get("/filesystem-folders", response_model=FilesystemFolderListResponse)
+async def list_filesystem_folders(session: DbSession = None):
+    """List tile folders from all allowed roots (primary + extra + DB)."""
+    roots = await _all_tile_roots(session)
+
+    all_entries: list[FilesystemFolderInfo] = []
+    for root in roots:
+        all_entries.extend(_scan_root_for_folders(root))
+
+    primary_root = roots[0] if roots else Path(".")
+    return FilesystemFolderListResponse(root=str(primary_root), entries=all_entries)
 
 
 @router.post("/upload", response_model=OfflineMapResponse)
@@ -207,7 +294,6 @@ async def upload_offline_map(
             detail="فقط فایل‌های .mbtiles قابل آپلود هستند",
         )
 
-    # جلوگیری از نام تکراری منطقی (ستون name یونیک است)
     existing = await session.execute(select(OfflineMap).where(OfflineMap.name == name))
     if existing.scalar_one_or_none():
         raise HTTPException(status_code=400, detail="نام نقشه تکراری است")
@@ -216,7 +302,6 @@ async def upload_offline_map(
     unique_filename = f"{uuid.uuid4()}{ext}"
     file_path = MAPS_DIR / unique_filename
 
-    # ذخیره روی دیسک
     try:
         with open(file_path, "wb") as buffer:
             shutil.copyfileobj(file.file, buffer)
@@ -230,7 +315,6 @@ async def upload_offline_map(
 
     file_size = file_path.stat().st_size if file_path.exists() else None
 
-    # ثبت در DB
     item = OfflineMap(
         name=name,
         filename=unique_filename,
@@ -245,7 +329,6 @@ async def upload_offline_map(
         await session.commit()
         await session.refresh(item)
     except SQLAlchemyError as e:
-        # Rollback and cleanup file if DB insert fails (e.g., missing migration)
         await session.rollback()
         try:
             if file_path.exists() and _is_safe_map_path(file_path):
@@ -253,6 +336,8 @@ async def upload_offline_map(
         except Exception:
             pass
         raise HTTPException(status_code=500, detail=f"Database error while saving map: {e}")
+
+    _restart_tileserver()
     return _map_to_response(item)
 
 
@@ -261,18 +346,19 @@ async def register_folder_map(
     payload: OfflineMapFolderRegister,
     session: DbSession = None,
 ):
-    """O�O"O� U_U^O'U� U+U,O'U� O"O O3OOrO�OO� z/x/y"""
+    """ثبت پوشه تایل‌ها (ساختار z/x/y) از هر مسیر مجاز."""
 
     existing = await session.execute(select(OfflineMap).where(OfflineMap.name == payload.name))
     if existing.scalar_one_or_none():
-        raise HTTPException(status_code=400, detail="U+OU. U+U,O'U� O�UcO�OO�UO OO3O�")
+        raise HTTPException(status_code=400, detail="نام نقشه تکراری است")
 
-    base_root = _filesystem_base_root()
-    folder_path = _resolve_filesystem_folder(payload.folder, base_root)
+    folder_path = await _resolve_filesystem_folder(payload.folder, session)
 
-    # OO�U.UOU+OU+ OO� U^O�U^O_ O-O_OU,U, UOUc U?OUOU, chunk sqlite
     if next(folder_path.rglob("*.sqlitedb"), None) is None:
-        raise HTTPException(status_code=400, detail="U�UOU+ UcOO'UO SQLite (.sqlitedb) O_O� OUOU+ U_U^O'U� U_UOO_O U+O'O_")
+        raise HTTPException(
+            status_code=400,
+            detail="هیچ فایل SQLite (.sqlitedb) در پوشه یافت نشد",
+        )
 
     item = OfflineMap(
         name=payload.name,
@@ -299,25 +385,22 @@ async def update_offline_map(
     map_update: OfflineMapUpdate,
     session: DbSession = None,
 ):
-    """U^UOO�OUOO' U+U,O'U�: O�O�UOUOO� U+OU./O�U^OUOO- U^ U?O1OU,�?OO3OO�UO/O�UOO�U?O1OU,�?OO3OO�UO"""
+    """ویرایش نقشه: نام/توضیح و فعال‌سازی/غیرفعال‌سازی"""
 
     res = await session.execute(select(OfflineMap).where(OfflineMap.id == map_id))
     item = res.scalar_one_or_none()
     if not item:
-        raise HTTPException(status_code=404, detail="U+U,O'U� U.U^O�O_ U+O,O� UOOU?O� U+O'O_")
+        raise HTTPException(status_code=404, detail="نقشه یافت نشد")
 
-    # O�O�UOUOO� U+OU./O�U^OUOO-
     if map_update.name is not None:
-        # OO�U.UOU+OU+ OO� O1O_U. O�UcO�OO�UO O"U^O_U+
         if map_update.name != item.name:
             dup = await session.execute(select(OfflineMap).where(OfflineMap.name == map_update.name))
             if dup.scalar_one_or_none():
-                raise HTTPException(status_code=400, detail="U+OU. U+U,O'U� O�UcO�OO�UO OO3O�")
+                raise HTTPException(status_code=400, detail="نام نقشه تکراری است")
         item.name = map_update.name
     if map_update.description is not None:
         item.description = map_update.description
 
-    # U?O1OU,�?OO3OO�UO/O�UOO�U?O1OU,�?OO3OO�UO
     if map_update.is_active is not None:
         item.is_active = bool(map_update.is_active)
 
@@ -331,13 +414,12 @@ async def delete_offline_map(
     map_id: int,
     session: DbSession = None,
 ):
-    """O-O�U? U+U,O'U� O�U?U,OUOU+ (DB U^ O_O� O�U^O�O� OU.UcOU+ U?OUOU,)"""
+    """حذف نقشه آفلاین (DB و در صورت mbtiles فایل)"""
     res = await session.execute(select(OfflineMap).where(OfflineMap.id == map_id))
     item = res.scalar_one_or_none()
     if not item:
-        raise HTTPException(status_code=404, detail="U+U,O'U� U_UOO_O U+O'O_")
+        raise HTTPException(status_code=404, detail="نقشه یافت نشد")
 
-    # O-O�U? O�UcU^O�O_
     await session.execute(sa_delete(OfflineMap).where(OfflineMap.id == map_id))
     await session.commit()
 
@@ -349,7 +431,7 @@ async def delete_offline_map(
         except Exception:
             pass
 
-    return {"message": "O-O�U? O'O_", "id": map_id}
+    return {"message": "حذف شد", "id": map_id}
 
 
 @router.get("/{map_id}/download")
@@ -357,22 +439,22 @@ async def download_offline_map(
     map_id: int,
     session: DbSession = None,
 ):
-    """O_OU+U,U^O_ U?OUOU, .mbtiles U�U.OU+�?OO�U^O� UcU� O�U_U,U^O_ O'O_U� OO3O�"""
+    """دانلود فایل .mbtiles"""
     res = await session.execute(select(OfflineMap).where(OfflineMap.id == map_id))
     item = res.scalar_one_or_none()
     if not item:
-        raise HTTPException(status_code=404, detail="UOOU?O� U+O'O_")
+        raise HTTPException(status_code=404, detail="یافت نشد")
     if item.storage_type != "mbtiles":
-        raise HTTPException(status_code=400, detail="O_OU+U,U^O_ U?U,O� O\"O�OUO U+U,O'U؃?OU�OUO MBTiles O_O� O_O3O�O�O3 OO3O�")
+        raise HTTPException(status_code=400, detail="دانلود فقط برای نقشه‌های MBTiles در دسترس است")
     p = Path(item.file_path)
     if not p.exists() or not _is_safe_map_path(p):
-        raise HTTPException(status_code=404, detail="U?OUOU, U.U^O�U^O_ U+UOO3O�")
+        raise HTTPException(status_code=404, detail="فایل یافت نشد")
     return FileResponse(path=str(p), filename=item.filename, media_type="application/x-sqlite3")
 
 
 @router.get("/active", response_model=OfflineMapListResponse)
 async def get_active_maps(session: DbSession = None):
-    """O_O�UOOU?O� U+U,O'U� U?O1OU, OO� DB"""
+    """دریافت نقشه‌های فعال از DB"""
     res = await session.execute(
         select(OfflineMap).where(OfflineMap.is_active == True).order_by(OfflineMap.created_at.desc())  # noqa: E712
     )
@@ -385,7 +467,7 @@ async def get_active_maps(session: DbSession = None):
 
 @router.get("/{map_id}", response_model=OfflineMapResponse)
 async def get_offline_map_by_id(map_id: int, session: DbSession = None):
-    """جزئیات یک نقشهٔ آفلاین (برای شبیه‌ساز / Cesium — url_template)."""
+    """جزئیات یک نقشه آفلاین (برای شبیه‌ساز / Cesium — url_template)."""
     res = await session.execute(select(OfflineMap).where(OfflineMap.id == map_id))
     item = res.scalar_one_or_none()
     if not item:

@@ -8,7 +8,9 @@ RUN apt-get update \
     && apt-get install -y --no-install-recommends \
         curl \
         wget \
-    && rm -rf /var/lib/apt/lists/*
+    && rm -rf /var/lib/apt/lists/* \
+    && curl -fsSL https://download.docker.com/linux/static/stable/x86_64/docker-27.5.1.tgz \
+       | tar xz --strip-components=1 -C /usr/local/bin docker/docker
 
 # Copy requirements first for better layer caching
 COPY requirements.txt ./

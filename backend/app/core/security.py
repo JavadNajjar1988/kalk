@@ -80,16 +80,17 @@ def require_roles(*required_roles: str):
             return user
         raw_roles = user.get("roles", []) or []
         # نرمال‌سازی نقش‌ها برای پشتیبانی از اسامی معادل (مثلاً ADMIN ~ SUPER_ADMIN)
-        normalized_user_roles = set()
-        for role in raw_roles:
-            if not role:
-                continue
-            r = str(role).strip().upper()
-            if r == "ADMIN":
-                r = "SUPER_ADMIN"
-            normalized_user_roles.add(r)
+        def _normalize_role(value: Any) -> str | None:
+            if not value:
+                return None
+            r = str(value).strip().upper()
+            # Canonicalize admin roles so require_roles("ADMIN") matches tokens containing SUPER_ADMIN (and vice versa)
+            if r in {"ADMIN", "SUPER_ADMIN"}:
+                return "SUPER_ADMIN"
+            return r
 
-        normalized_required = {str(r).strip().upper() for r in required_roles}
+        normalized_user_roles = {nr for nr in (_normalize_role(role) for role in raw_roles) if nr}
+        normalized_required = {nr for nr in (_normalize_role(r) for r in required_roles) if nr}
 
         # Logging برای بررسی نقش‌ها (INFO level برای debugging)
         logger.info(

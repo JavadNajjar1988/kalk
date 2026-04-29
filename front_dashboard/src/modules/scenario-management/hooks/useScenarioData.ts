@@ -252,8 +252,8 @@ export const useScenarioData = (options: UseScenarioDataOptions = {}): UseScenar
   }, []);
 
   const handleNewScenario = useCallback(() => {
-    // Navigate to kalknegar new scenario page
-    window.open('/kalknegar/newscenario?integration=react', '_self');
+    // Navigate to React dashboard new scenario flow
+    window.open('/dashboard/scenario-management/new', '_self');
   }, []);
 
   const handleUploadScenario = useCallback(async (file: File): Promise<UploadResult> => {

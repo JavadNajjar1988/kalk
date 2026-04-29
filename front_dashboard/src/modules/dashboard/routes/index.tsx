@@ -3,7 +3,6 @@ import { Route, Routes, Navigate, Outlet } from 'react-router-dom';
 
 import MainLayout from '@/components/layout/MainLayout';
 import HomePage from '../pages/HomePage';
-import MapPage from '../pages/MapPage';
 import AlertsPage from '../pages/AlertsPage';
 import BaseInfoPage from '../pages/BaseInfoPage';
 import HelpPage from '../pages/HelpPage';
@@ -42,7 +41,6 @@ const DashboardRoutes: React.FC = () => {
         </MainLayout>
       }>
         <Route index element={<HomePage />} />
-        <Route path="map" element={<MapPage />} />
         <Route path="alerts" element={<AlertsPage />} />
         <Route path="base-info" element={<BaseInfoPage />} />
         <Route path="help" element={<HelpPage />} />
