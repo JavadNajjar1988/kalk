@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, type HTMLAttributes, ref, watch } from "vue";
 import { useEventListener } from "@vueuse/core";
-import { Search, X, ListChecksIcon } from "lucide-vue-next";
+import { Search, X, ListChecksIcon } from "@lucide/vue";
 
 import DeleteStoredScenariosModal from "@/components/DeleteStoredScenariosModal.vue";
 import ScenarioLinkCard from "@/components/ScenarioLinkCard.vue";
@@ -311,7 +311,7 @@ useEventListener("keydown", (event: KeyboardEvent) => {
       </div>
     </header>
 
-    <div class="max-h-[60vh] min-h-0 overflow-y-auto">
+    <div class="-m-2 max-h-[60vh] min-h-0 overflow-y-auto p-2">
       <ul
         v-if="filteredScenarios.length > 0"
         :class="

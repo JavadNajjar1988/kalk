@@ -27,10 +27,20 @@ vi.mock("@/stores/selectedStore", () => ({
 
 vi.mock("@atlaskit/pragmatic-drag-and-drop/element/adapter", () => ({
   monitorForElements: () => () => {},
+  draggable: () => () => {},
+  dropTargetForElements: () => () => {},
+}));
+
+vi.mock("@atlaskit/pragmatic-drag-and-drop/combine", () => ({
+  combine:
+    (...cleanups: Array<() => void>) =>
+    () =>
+      cleanups.forEach((fn) => fn && fn()),
 }));
 
 vi.mock("@atlaskit/pragmatic-drag-and-drop-hitbox/closest-edge", () => ({
   extractClosestEdge: () => null,
+  attachClosestEdge: (data: unknown) => data,
 }));
 
 describe("ScenarioLayersTabPanel", () => {
@@ -43,6 +53,7 @@ describe("ScenarioLayersTabPanel", () => {
         panToFeature: true,
         zoomToScenarioLayer: true,
         zoomToMapLayer: canZoomMapLayer,
+        featureTransform: true,
         mapLayerTransform: true,
         mapLayerExtent: canZoomMapLayer,
       },
@@ -77,7 +88,7 @@ describe("ScenarioLayersTabPanel", () => {
                   isHidden: false,
                 },
               ]),
-              layersFeatures: ref([]),
+              layerItemsLayers: ref([]),
               deleteMapLayer: vi.fn(),
               moveMapLayer: vi.fn(),
               addLayer: vi.fn(),
@@ -85,7 +96,8 @@ describe("ScenarioLayersTabPanel", () => {
               deleteLayer: vi.fn(),
               moveLayer: vi.fn(),
               getLayerIndex: vi.fn(() => 0),
-              getFeatureById: vi.fn(),
+              getLayerItemById: vi.fn(),
+              getGeometryLayerItemById: vi.fn(),
               duplicateFeature: vi.fn(),
               deleteFeature: vi.fn(),
               moveFeature: vi.fn(),
@@ -113,7 +125,7 @@ describe("ScenarioLayersTabPanel", () => {
   it("routes map-layer double click through the layer controller", async () => {
     const { wrapper, zoomToMapLayer } = mountComponent(true);
 
-    await wrapper.find("li").trigger("dblclick");
+    await wrapper.find("[data-map-layer-id] button").trigger("dblclick");
 
     expect(zoomToMapLayer).toHaveBeenCalledWith("map-layer-1");
   });

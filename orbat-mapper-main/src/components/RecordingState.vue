@@ -5,13 +5,7 @@ import {
   useRecordingStore,
   type RecordingMix,
 } from "@/stores/recordingStore";
-import {
-  ChevronDown,
-  MapPinned,
-  Settings2,
-  SplinePointer,
-  Workflow,
-} from "lucide-vue-next";
+import { ChevronDown, MapPinned, Settings2, SplinePointer, Workflow } from "@lucide/vue";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -69,8 +63,7 @@ const toggleRecordingPrefix = () => {
       type="button"
       variant="ghost"
       size="sm"
-      class="h-8 gap-1.5 rounded-none px-2 transition-colors sm:h-9 sm:gap-2 sm:px-3"
-      :class="{ 'bg-red-50/50 dark:bg-red-950/20': isAnyRecording }"
+      class="h-8 gap-1.5 rounded-none px-2 transition-colors lg:h-9 lg:gap-2 lg:px-3"
       :aria-label="
         isAnyRecording
           ? `Stop recording. Currently recording ${recordingSummary}.`
@@ -85,19 +78,12 @@ const toggleRecordingPrefix = () => {
     >
       <span
         class="h-2 w-2 rounded-full transition-all duration-500"
-        :class="
-          isAnyRecording ? 'bg-red-600 ring-2 ring-red-500/20' : 'bg-muted-foreground/40'
-        "
+        :class="isAnyRecording ? 'bg-red-600' : 'bg-muted-foreground/40'"
       />
-      <span
-        class="text-xs font-bold tracking-widest uppercase transition-colors"
-        :class="
-          isAnyRecording ? 'text-red-600 dark:text-red-400' : 'text-muted-foreground'
-        "
-      >
+      <span class="text-muted-foreground text-xs font-bold tracking-widest uppercase">
         Rec
       </span>
-      <span class="text-muted-foreground hidden items-center gap-1 sm:inline-flex">
+      <span class="text-muted-foreground hidden items-center gap-1 lg:inline-flex">
         <Workflow
           v-if="store.isRecordingHierarchy"
           class="h-3.5 w-3.5"
@@ -122,12 +108,12 @@ const toggleRecordingPrefix = () => {
           type="button"
           variant="ghost"
           size="sm"
-          class="h-8 rounded-none border-l px-1.5 sm:h-9 sm:px-2"
+          class="h-8 rounded-none border-l px-1.5 lg:h-9 lg:px-2"
           aria-label="Choose recording modes"
           title="Choose recording modes"
         >
-          <Settings2 class="text-muted-foreground hidden h-4 w-4 sm:block" />
-          <ChevronDown class="text-muted-foreground/50 h-3 w-3 sm:ml-1" />
+          <Settings2 class="text-muted-foreground hidden h-4 w-4 lg:block" />
+          <ChevronDown class="text-muted-foreground/50 h-3 w-3 lg:ml-1" />
         </Button>
       </DropdownMenuTrigger>
 

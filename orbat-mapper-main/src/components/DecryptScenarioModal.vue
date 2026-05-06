@@ -5,10 +5,11 @@ import InputGroup from "@/components/InputGroup.vue";
 import InputCheckbox from "@/components/InputCheckbox.vue";
 import { Button } from "@/components/ui/button";
 import { decryptScenario } from "@/utils/crypto";
+import { upgradeScenarioIfNecessary } from "@/scenariostore/upgrade";
 
 import type { EncryptedScenario, Scenario } from "@/types/scenarioModels";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { AlertCircleIcon } from "lucide-vue-next";
+import { AlertCircleIcon } from "@lucide/vue";
 
 const props = defineProps<{
   encryptedScenario: EncryptedScenario;
@@ -33,7 +34,7 @@ async function onDecrypt() {
   error.value = "";
   try {
     const decrypted = await decryptScenario(props.encryptedScenario, password.value);
-    emit("decrypted", decrypted);
+    emit("decrypted", upgradeScenarioIfNecessary(decrypted));
     open.value = false;
   } catch (e: any) {
     console.error(e);

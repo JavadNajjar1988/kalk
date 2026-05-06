@@ -33,6 +33,7 @@ import { activeScenarioKey } from "@/components/injects";
 import type { EntityId } from "@/types/base";
 import type { TScenario } from "@/scenariostore";
 import { useSelectedItems } from "@/stores/selectedStore";
+import { useSelectionActions } from "@/composables/selectionActions";
 import type { FeatureLike } from "ol/Feature";
 import BaseEvent from "ol/events/Event";
 import { useMapDropTarget } from "@/composables/useMapDropTarget";
@@ -48,27 +49,14 @@ import Style from "ol/style/Style";
 import { LayerTypes } from "@/modules/scenarioeditor/featureLayerUtils.ts";
 import { getTopHitLayerType } from "@/modules/scenarioeditor/featureLayerUtils.ts";
 import { useRecordingStore } from "@/stores/recordingStore";
+import {
+  normalizeRotation,
+  ROTATION_EPSILON,
+  shortestRotationDelta,
+  toHeadingFromNorthDegrees,
+} from "@/geo/rotation";
 
 let zoomResolutions: number[] = [];
-const ROTATION_EPSILON = 1e-6;
-
-function normalizeRotation(rotation: number): number {
-  const normalized = rotation % 360;
-  return normalized < 0 ? normalized + 360 : normalized;
-}
-
-function toHeadingFromNorthDegrees(center: Coordinate, point: Coordinate): number {
-  const dx = point[0] - center[0];
-  const dy = point[1] - center[1];
-  const angleFromEast = (Math.atan2(dy, dx) * 180) / Math.PI;
-  return normalizeRotation(90 - angleFromEast);
-}
-
-function shortestRotationDelta(nextAngle: number, prevAngle: number) {
-  let delta = normalizeRotation(nextAngle - prevAngle);
-  if (delta > 180) delta -= 360;
-  return delta;
-}
 
 function setMapCursor(mapRef: OLMap, cursor: string) {
   const targetElement = mapRef.getTargetElement();
@@ -548,11 +536,8 @@ export function useUnitSelectInteraction(
   const enableRef = ref(options.enable ?? true);
   const enableBoxSelectRef = ref(options.enableBoxSelect ?? true);
 
-  const {
-    selectedUnitIds: selectedIds,
-    selectedFeatureIds,
-    clear: clearSelectedItems,
-  } = useSelectedItems();
+  const { selectedUnitIds: selectedIds, clear: clearSelectedItems } = useSelectedItems();
+  const { canAdditivelySelectUnit } = useSelectionActions();
   const activeScenario = injectStrict(activeScenarioKey);
   const {
     geo,
@@ -569,7 +554,7 @@ export function useUnitSelectInteraction(
       clickCondition(event) &&
       getTopHitLayerType(olMap, event.pixel, hitTolerance) !==
         LayerTypes.scenarioFeature &&
-      !(event.originalEvent.shiftKey && selectedFeatureIds.value.size > 0),
+      (!event.originalEvent.shiftKey || canAdditivelySelectUnit()),
     removeCondition: altKeyOnly,
   });
 

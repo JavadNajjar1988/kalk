@@ -6,6 +6,12 @@ import type {
   MilSymbolProperties,
   OrbatMapperGeoJsonCollection,
 } from "@/importexport/jsonish/types.ts";
+import {
+  type GeometryLayerItem,
+  type NScenarioLayerItem,
+  isNGeometryLayerItem,
+  toGeometryLayerItemGeoJsonProperties,
+} from "@/types/scenarioLayerItems";
 
 export function useGeoJsonConverter(scenario: TScenario) {
   const { geo, unitActions } = scenario;
@@ -36,18 +42,20 @@ export function useGeoJsonConverter(scenario: TScenario) {
   function convertScenarioFeaturesToGeoJson(options: Partial<GeoJsonSettings> = {}) {
     const includeIdInProperties = options.includeIdInProperties ?? false;
     return featureCollection(
-      geo.layers.value
-        .map((layer) => layer.features)
+      geo.layerItemsLayers.value
+        .map((layer) => layer.items)
         .flat(1)
+        .filter((layerItem): layerItem is NScenarioLayerItem & GeometryLayerItem =>
+          isNGeometryLayerItem(layerItem),
+        )
         .map((f) => {
-          const { id, geometry, properties, meta } = f;
+          const { id, geometry } = f;
+          const properties = toGeometryLayerItemGeoJsonProperties(f);
           return {
             type: "Feature",
             id: options.includeId ? id : undefined,
             properties: {
               id: includeIdInProperties ? id : undefined,
-              name: meta.name,
-              description: meta.description,
               ...properties,
             },
             geometry,

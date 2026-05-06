@@ -42,7 +42,7 @@ services:
       ACCESS_TOKEN_EXPIRE_MINUTES: ${ACCESS_TOKEN_EXPIRE_MINUTES:-60}
       ADMIN_BOOTSTRAP_PASSWORD: ${ADMIN_BOOTSTRAP_PASSWORD:-admin123}
       FILESYSTEM_TILE_ROOT: ${FILESYSTEM_TILE_ROOT:-/app/backend/static/maps}
-      TILESERVER_URL: ${TILESERVER_URL:-/tiles}
+      TILESERVER_URL: /tiles
     ports:
       - "8002:8000"
     volumes:

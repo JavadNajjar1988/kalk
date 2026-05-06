@@ -1,8 +1,12 @@
 <script setup lang="ts">
-import { SYMBOL_BROWSER_ROUTE, TEXT_TO_ORBAT_ROUTE } from "@/router/names";
+import {
+  MAP_EDIT_MODE_ROUTE,
+  SYMBOL_BROWSER_ROUTE,
+  TEXT_TO_ORBAT_ROUTE,
+} from "@/router/names";
 
 // ... existing imports
-import { ExternalLinkIcon, MoonStarIcon, SunIcon } from "lucide-vue-next";
+import { ExternalLinkIcon, MoonStarIcon, SunIcon } from "@lucide/vue";
 import ProseSection from "../components/ProseSection.vue";
 import LandingPageScenarios from "./LandingPageScenarios.vue";
 import { IconGithub as GithubIcon } from "@iconify-prerendered/vue-mdi";
@@ -166,6 +170,13 @@ const features = [
               <router-link :to="{ name: TEXT_TO_ORBAT_ROUTE }" class="shrink-0"
                 >Text to ORBAT
               </router-link>
+              <router-link
+                :to="{
+                  name: MAP_EDIT_MODE_ROUTE,
+                  params: { scenarioId: 'demo-falkland82' },
+                }"
+                >Globe view</router-link
+              >
 
               <router-link
                 :to="{ name: SYMBOL_BROWSER_ROUTE }"

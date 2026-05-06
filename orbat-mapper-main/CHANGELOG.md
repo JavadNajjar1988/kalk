@@ -2,10 +2,50 @@
 
 All notable changes to this project will be documented in this file.
 
+## May 2026
+
+### Added
+
+- Added experimental KML support for MapLibre mode.
+- Added an unsaved changes indicator and quick save button to the navbar.
+- Added twilight zones to the day/night terminator overlay (MapLibre mode only).
+- Added raster tile layer rendering and management to MapLibre mode.
+- Added image layer rendering and transform support to MapLibre mode.
+- Added line-placement label rendering in MapLibre mode so labels with `text-placement: line` follow the line geometry.
+
+### Changed
+
+- MapLibre is now the default map mode.
+
+### Fixed
+
+- MapLibre scenario feature labels now honor the configured `text-offset-x`/`text-offset-y` (previously a fixed offset was used). Pixel values are converted to ems to match OpenLayers sizing.
+- Circle drawing now works in MapLibre mode.
+- Fixed scenario timeline alignment across daylight saving time transitions by recomputing the timezone offset from the current scenario time.
+- Map symbol sizes can now be adjusted in MapLibre mode.
+- Added a day/night terminator overlay to MapLibre mode.
+- Added box zoom support to MapLibre mode.
+- Added feature hover tooltips to MapLibre mode.
+- Fixed MapLibre scenario feature marker sizes so point features match OpenLayers sizing.
+- Fixed MapLibre scenario feature rendering for null polygon fills and zero-opacity fills.
+- Added MapLibre support for custom unit symbols, including clearer selected-state highlighting.
+- Fixed MapLibre unit labels so they shift correctly for scaled ordinary and custom icons, including hostile diamond frames.
+
 ## April 2026
 
 ### Added
 
+- Added snapping support to MapLibre draw and modify tools.
+- Added support for route planning with obstacles.
+- Added support for pasting GeoJSON from the clipboard directly into the scenario editor as scenario features, including `Ctrl/Cmd+V` import into the active feature layer.
+- Added GPX import support, including track conversion and unit track assignment.
+- Added draw and modify support for scenario features in MapLibre mode.
+- Added measurement tools to MapLibre mode.
+- Added symbol text amplifier rendering in MapLibre mode.
+- Added geometry statistics to scenario feature details.
+- Clicking KML/KMZ features now opens a read-only details view with attached properties, including richer HTML description rendering.
+- Added view constraints support (max extent, min/max zoom) to map settings. Constraints are saved as part of the scenario.
+- Added experimental MapLibre mode with globe support. Functionality from the main map view will be gradually ported over. 
 - Added a standalone symbol browser page at `/symbol-browser`.
 - Added symbol export with copy and download as PNG and SVG, with configurable size and display options.
 - Added "Copy as GeoJSON" to the feature layer menu, individual feature menu, and feature details panel. Circles are exported as polygons.
@@ -13,13 +53,22 @@ All notable changes to this project will be documented in this file.
 - Added multi-select batch delete for stored scenarios in the landing page and import scenario browsers, including filtered select-all and confirmation dialog support.
 - Added a sort direction control to the stored scenario browser dropdown, with an icon indicating ascending or descending order.
 - Added a recording control dropdown to the navbar.
+- Added recovery drafts for scenario editing, along with "Revert to opened state" and "Revert to saved version" actions.
+- Added Ctrl/Cmd + drag box select for units in MapLibre mode.
 
 ### Changed
 
+- Added a "Paste from clipboard" entry to the Edit menu for scenario and GeoJSON clipboard imports.
+- KML/KMZ features with labels are now decluttered by default.
 - Moved the dark mode toggle into the main menu on mobile devices.
 - Reworked the ORBAT panel footer recording controls into compact direct toggles for hierarchy and position recording.
+- Simplified recording button and indicator styling so active states no longer rely on dynamic red styling.
 - The stored scenario browser now keeps its header controls visible while long scenario lists scroll within a capped results area.
 - The stored scenario browser sort dropdown now shows the active sort field with radio-item selection.
+- Scenario editing now uses a hybrid save model: "Save scenario" updates the stored scenario, autosave writes recovery drafts, and leaving or reloading warns only about changes not explicitly saved.
+- Switching between OpenLayers and MapLibre now preserves the in-memory map view.
+- Feature style slider drags now collapse into a single undo entry.
+- The Transform tab now defaults its update target to the selected feature.
 
 ### Fixed
 
@@ -28,6 +77,9 @@ All notable changes to this project will be documented in this file.
 - Fixed overlapping unit/feature selection on the map so the topmost item takes priority.
 - Fixed blank map clicks so they clear selected scenario features.
 - Fixed shift-click selection on the map so it only extends the current selection type instead of switching between units and scenario features.
+- Fixed KMZ/KML feature clicks in the OpenLayers editor so imported reference features no longer crash the map renderer. 
+- Fixed transform tool updates so existing features update their geometry kind when a transformation changes the geometry type.
+- Fixed the MapLibre scale control so it responds to dynamic measurement unit changes.
 
 ## March 2026
 

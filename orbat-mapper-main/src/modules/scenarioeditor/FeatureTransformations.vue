@@ -1,22 +1,19 @@
 <script setup lang="ts">
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { PlusIcon } from "lucide-vue-next";
+import { PlusIcon } from "@lucide/vue";
 import { geometryCollection } from "@turf/helpers";
 import { computed, onUnmounted, ref, watch } from "vue";
 import BaseButton from "@/components/BaseButton.vue";
 import { injectStrict, nanoid } from "@/utils";
 import {
   activeLayerKey,
-  activeNativeMapKey,
   activeScenarioKey,
+  activeScenarioMapEngineKey,
 } from "@/components/injects";
 import type { FeatureId } from "@/types/scenarioGeoModels";
-import type { NScenarioFeature, NUnit } from "@/types/internalModels";
+import type { NGeometryLayerItem, NUnit } from "@/types/internalModels";
 import type { Feature } from "geojson";
 import { useDebounceFn } from "@vueuse/core";
-import VectorLayer from "ol/layer/Vector";
-import VectorSource from "ol/source/Vector";
-import { drawGeoJsonLayer } from "@/composables/openlayersHelpers";
 import { useTransformSettingsStore } from "@/stores/transformStore";
 import { storeToRefs } from "pinia";
 import InputCheckbox from "@/components/InputCheckbox.vue";
@@ -40,9 +37,9 @@ const isUnitMode = props.unitMode;
 
 const scn = injectStrict(activeScenarioKey);
 const activeLayerId = injectStrict(activeLayerKey);
-
-const olMapRef = injectStrict(activeNativeMapKey);
+const scenarioMapEngineRef = injectStrict(activeScenarioMapEngineKey);
 const fmt = useTimeFormatStore();
+const previewOverlayId = `transform-preview-${nanoid()}`;
 
 const formattedTime = computed(() =>
   fmt.scenarioFormatter.format(+scn.time.scenarioTime.value),
@@ -55,7 +52,7 @@ const selectedItems = computed(() => {
     return Array.from(selectedUnitIds.value).map((id) => scn.helpers.getUnitById(id));
   } else {
     return Array.from(selectedFeatureIds.value).map(
-      (id) => scn.geo.getFeatureById(id)?.feature,
+      (id) => scn.geo.getGeometryLayerItemById(id)?.layerItem,
     );
   }
 });
@@ -67,29 +64,32 @@ const { showPreview, transformations, updateActiveFeature, updateAtTime } = stor
 
 const toggleRedraw = ref(true);
 const addActiveLayer = ref(activeLayerId.value!);
-
-const previewLayer = new VectorLayer({
-  source: new VectorSource({}),
-  style: {
-    "stroke-color": "red",
-    "stroke-width": 3,
-    "stroke-line-dash": [10, 10],
-    "fill-color": "rgba(188,35,65,0.2)",
-    "circle-radius": 5,
-    "circle-fill-color": "red",
-    "circle-stroke-color": "red",
-  },
-});
-
-olMapRef.value.addLayer(previewLayer);
+const activeTab = ref("add");
+let previewMap = scenarioMapEngineRef.value?.map;
 
 const calculatePreview = useDebounceFn(
-  (features: NScenarioFeature[] | NUnit[], ops: TransformationOperation[]) => {
+  (
+    features: NGeometryLayerItem[] | NUnit[],
+    ops: TransformationOperation[],
+    map = scenarioMapEngineRef.value?.map,
+  ) => {
+    if (!map) return;
     const geometry = isUnitMode
       ? doUnitTransformations(features as NUnit[], ops)
-      : doScenarioFeatureTransformation(features as NScenarioFeature[], ops);
+      : doScenarioFeatureTransformation(features as NGeometryLayerItem[], ops);
 
-    drawGeoJsonLayer(previewLayer, geometry);
+    previewMap = map;
+    map.addGeoJsonOverlay(previewOverlayId, geometry, {
+      style: {
+        strokeColor: "red",
+        strokeWidth: 3,
+        strokeLineDash: [10, 10],
+        fillColor: "rgba(188,35,65,0.2)",
+        circleRadius: 5,
+        circleFillColor: "red",
+        circleStrokeColor: "red",
+      },
+    });
   },
   200,
 );
@@ -97,13 +97,14 @@ const calculatePreview = useDebounceFn(
 function createScenarioFeatureFromGeoJSON(
   feature: Feature,
   layerId: FeatureId,
-): NScenarioFeature {
+): NGeometryLayerItem {
   return {
-    type: "Feature",
+    kind: "geometry",
     id: nanoid(),
-    properties: feature.properties,
+    userData: (feature.properties as Record<string, unknown> | undefined) ?? {},
     geometry: feature.geometry,
-    meta: { type: feature.geometry.type, name: "New Feature" },
+    geometryMeta: { geometryKind: feature.geometry.type },
+    name: "New Feature",
     style: {},
     _pid: layerId,
   };
@@ -112,14 +113,29 @@ function createScenarioFeatureFromGeoJSON(
 if (!props.unitMode) {
   watch(
     [
-      () => (selectedItems.value[0] as NScenarioFeature)?.geometry,
-      () => (selectedItems.value[0] as NScenarioFeature)?._state?.geometry,
+      () => (selectedItems.value[0] as NGeometryLayerItem)?.geometry,
+      () => (selectedItems.value[0] as NGeometryLayerItem)?._state?.geometry,
     ],
     () => {
       toggleRedraw.value = !toggleRedraw.value;
     },
     { deep: true },
   );
+}
+
+function updatePreview() {
+  if (showPreview.value && transformations.value && selectedItems.value.length) {
+    const currentItems = props.unitMode
+      ? (selectedItems.value as NUnit[])
+      : (selectedItems.value.filter(Boolean) as NGeometryLayerItem[]);
+    calculatePreview(
+      currentItems,
+      transformations.value.filter((v) => !!v),
+      scenarioMapEngineRef.value?.map,
+    );
+  } else {
+    clearPreview();
+  }
 }
 
 watch(
@@ -130,18 +146,23 @@ watch(
     () => scn.store.state.unitStateCounter,
     () => scn.store.state.currentTime,
   ],
-  () => {
-    if (showPreview.value && transformations.value) {
-      calculatePreview(
-        selectedItems.value,
-        transformations.value.filter((v) => !!v),
-      );
-    } else {
-      previewLayer.getSource()?.clear();
-    }
-  },
+  updatePreview,
   { deep: true },
 );
+
+watch(
+  () => scenarioMapEngineRef.value?.map,
+  () => {
+    clearPreview();
+    updatePreview();
+  },
+);
+
+watch(activeTab, (tab) => {
+  if (tab !== "update" || isUnitMode) return;
+  const firstSelected = selectedFeatureIds.value.values().next().value;
+  if (firstSelected) updateActiveFeature.value = firstSelected;
+});
 
 function onSubmit(updateMode = false) {
   if (selectedItems.value.length === 0) return;
@@ -151,7 +172,7 @@ function onSubmit(updateMode = false) {
   let transformedFeature = isUnitMode
     ? doUnitTransformations(selectedItems.value as NUnit[], filteredTrans)
     : doScenarioFeatureTransformation(
-        selectedItems.value as NScenarioFeature[],
+        selectedItems.value.filter(Boolean) as NGeometryLayerItem[],
         filteredTrans,
       );
   if (!transformedFeature) return;
@@ -171,6 +192,7 @@ function onSubmit(updateMode = false) {
     } else {
       scn.geo.updateFeature(updateActiveFeature.value, {
         geometry: scenarioFeature.geometry,
+        geometryMeta: scenarioFeature.geometryMeta,
       });
     }
   } else {
@@ -178,18 +200,15 @@ function onSubmit(updateMode = false) {
 
     const activeFeatureName = isUnitMode
       ? (activeFeature as NUnit).name
-      : (activeFeature as NScenarioFeature).meta.name;
+      : (activeFeature as NGeometryLayerItem).name;
     const featureName = isMultiMode.value ? "FeatureCollection" : activeFeatureName;
-    scenarioFeature.meta.name = `${featureName} (${filteredTrans[0].transform})`;
+    scenarioFeature.name = `${featureName} (${filteredTrans[0].transform})`;
     scn.geo.addFeature(scenarioFeature, layerId!);
   }
-  previewLayer.getSource()?.clear();
+  clearPreview();
 }
 
-onUnmounted(() => {
-  previewLayer.getSource()?.clear();
-  olMapRef.value.removeLayer(previewLayer);
-});
+onUnmounted(() => clearPreview());
 
 function addTransformation() {
   transformations.value.push(createDefaultTransformationOperation());
@@ -197,6 +216,15 @@ function addTransformation() {
 
 function deleteTransformation(index: number) {
   transformations.value.splice(index, 1);
+}
+
+function clearPreview() {
+  const currentMap = scenarioMapEngineRef.value?.map;
+  previewMap?.removeGeoJsonOverlay(previewOverlayId);
+  if (currentMap && currentMap !== previewMap) {
+    currentMap.removeGeoJsonOverlay(previewOverlayId);
+  }
+  previewMap = currentMap;
 }
 </script>
 <template>
@@ -218,7 +246,7 @@ function deleteTransformation(index: number) {
         <InputCheckbox v-model="showPreview" label="Show preview" class="" />
       </div>
     </div>
-    <Tabs defaultValue="add" class="border-border mt-4 border-t pt-4">
+    <Tabs v-model="activeTab" class="border-border mt-4 border-t pt-4">
       <TabsList class="w-full">
         <TabsTrigger value="add">New feature</TabsTrigger>
         <TabsTrigger value="update">Update existing</TabsTrigger>

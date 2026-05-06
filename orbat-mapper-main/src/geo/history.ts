@@ -6,7 +6,12 @@ import type { LocationState, Unit } from "@/types/scenarioModels";
 import type { NUnit } from "@/types/internalModels";
 import { greatCircle } from "@turf/great-circle";
 import { getDistance } from "ol/sphere";
-import type { Position } from "geojson";
+import type {
+  Feature as GeoJsonFeature,
+  LineString as GeoJsonLineString,
+  Point as GeoJsonPoint,
+  Position,
+} from "geojson";
 import type { GeometryLayout } from "ol/geom/Geometry";
 import Fill from "ol/style/Fill";
 import Stroke from "ol/style/Stroke";
@@ -17,6 +22,7 @@ import VectorLayer from "ol/layer/Vector";
 import VectorSource from "ol/source/Vector";
 import LayerGroup from "ol/layer/Group";
 import { useTimeFormatStore } from "@/stores/timeFormatStore";
+import { unwindCoordinates } from "@/geo/longitude";
 
 export const VIA_TIME = -1337;
 
@@ -136,31 +142,6 @@ export function createUnitHistoryLayers() {
   };
 }
 
-function unwindCoordinates(coordinates: number[][]): number[][] {
-  const result = [coordinates[0]]; // Start with the first coordinate
-
-  for (let i = 1; i < coordinates.length; i++) {
-    const currentCoordinate = [...coordinates[i]];
-    const prevLongitude = result[i - 1][0];
-    let longitude = coordinates[i][0];
-    const latitude = coordinates[i][1];
-
-    while (longitude - prevLongitude > 180) {
-      longitude -= 360;
-    }
-
-    while (prevLongitude - longitude > 180) {
-      longitude += 360;
-    }
-    currentCoordinate[0] = longitude;
-    currentCoordinate[1] = latitude;
-
-    result.push(currentCoordinate);
-  }
-
-  return result;
-}
-
 interface CreateUnitPathFeaturesOptions {
   isEditMode?: boolean;
   timeZone?: string;
@@ -266,6 +247,128 @@ function createGreatCircleArcFeature(leg: Position[]) {
     }
   }
   return coords;
+}
+
+export interface UnitPathGeoJson {
+  legs: GeoJsonFeature<GeoJsonLineString>[];
+  arcs: GeoJsonFeature<GeoJsonLineString>[];
+  waypoints: GeoJsonFeature<GeoJsonPoint>[];
+  viaPoints: GeoJsonFeature<GeoJsonPoint>[];
+}
+
+function createArcCoords(leg: Position[]): Position[] {
+  const coords: Position[] = [];
+  for (let i = 0; i < leg.length - 1; i++) {
+    const from = leg[i];
+    const to = leg[i + 1];
+    const distance = getDistance(from, to);
+    if (distance > 100000) {
+      const arcLine = greatCircle(from, to, {
+        offset: -100000,
+        npoints: Math.min(Math.ceil(distance / 200000), 50),
+      });
+      if (arcLine.geometry.type === "LineString") {
+        coords.push(...(arcLine.geometry.coordinates as Position[]));
+      } else {
+        for (const line of arcLine.geometry.coordinates) {
+          coords.push(...(line as Position[]));
+        }
+      }
+    } else {
+      coords.push(from, to);
+    }
+  }
+  return coords;
+}
+
+export function createUnitPathGeoJson(unit: Unit | NUnit): UnitPathGeoJson {
+  const fmt = useTimeFormatStore();
+  const state = [
+    { location: unit.location, t: Number.MIN_SAFE_INTEGER },
+    ...(unit.state || []),
+  ].filter((s) => s.location !== undefined) as LocationState[];
+
+  const parts = splitLocationStateIntoParts(state);
+
+  const waypoints: GeoJsonFeature<GeoJsonPoint>[] = [];
+  const viaPoints: GeoJsonFeature<GeoJsonPoint>[] = [];
+  const legs: GeoJsonFeature<GeoJsonLineString>[] = [];
+  const arcs: GeoJsonFeature<GeoJsonLineString>[] = [];
+
+  let waypointIndex = 0;
+  parts.forEach((part) => {
+    part.forEach((s) => {
+      waypointIndex += 1;
+      const isInitial = s.t === Number.MIN_SAFE_INTEGER;
+      const label = isInitial
+        ? `#${waypointIndex}`
+        : `#${waypointIndex} ${fmt.trackFormatter.format(s.t)}`;
+      const stateIndex = isInitial
+        ? -1
+        : (unit.state?.findIndex((entry) => entry.t === s.t) ?? -1);
+      const feature: GeoJsonFeature<GeoJsonPoint> = {
+        type: "Feature",
+        geometry: {
+          type: "Point",
+          coordinates: [s.location[0], s.location[1]],
+        },
+        properties: {
+          unitId: unit.id,
+          waypointId: s.id,
+          t: s.t,
+          stateIndex,
+          label,
+          isInitial,
+        },
+      };
+      if (s.id !== undefined) feature.id = s.id;
+      waypoints.push(feature);
+      s.via?.forEach((viaCoord, viaIndex) => {
+        viaPoints.push({
+          type: "Feature",
+          geometry: {
+            type: "Point",
+            coordinates: [viaCoord[0], viaCoord[1]],
+          },
+          properties: {
+            unitId: unit.id,
+            stateIndex,
+            viaIndex,
+          },
+        });
+      });
+    });
+
+    if (part.length < 2) return;
+    const segment: Position[] = [];
+    for (let i = 0; i < part.length - 1; i++) {
+      const from = part[i];
+      const to = part[i + 1];
+      if (i === 0) segment.push([from.location[0], from.location[1]]);
+      if (to.via) {
+        to.via.forEach((v) => segment.push([v[0], v[1]]));
+      }
+      segment.push([to.location[0], to.location[1]]);
+    }
+    legs.push({
+      type: "Feature",
+      geometry: {
+        type: "LineString",
+        coordinates: unwindCoordinates(segment),
+      },
+      properties: { unitId: unit.id },
+    });
+    arcs.push({
+      type: "Feature",
+      geometry: {
+        type: "LineString",
+        coordinates: unwindCoordinates(createArcCoords(segment)),
+      },
+      properties: { unitId: unit.id },
+    });
+  });
+
+  return { legs, arcs, waypoints, viaPoints };
 }
 
 function splitLocationStateIntoParts(state: LocationState[]): LocationState[][] {

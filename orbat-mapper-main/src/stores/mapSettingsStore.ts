@@ -3,6 +3,9 @@ import { type CoordinateFormatType } from "@/composables/geoShowLocation";
 import { useLocalStorage } from "@vueuse/core";
 import { DEFAULT_BASEMAP_ID } from "@/config/constants";
 
+export type MapProjection = "globe" | "mercator";
+export type MapLibreUnitRotationMode = "screen" | "mixed" | "map";
+
 export const useMapSettingsStore = defineStore("mapSettings", {
   state: () => ({
     showLocation: useLocalStorage("showLocation", true),
@@ -13,12 +16,18 @@ export const useMapSettingsStore = defineStore("mapSettings", {
     showScaleLine: useLocalStorage("showScaleLine", true),
     showFeatureTooltip: useLocalStorage("showFeatureTooltip", true),
     baseLayerName: DEFAULT_BASEMAP_ID,
+    maplibreBaseLayerName: useLocalStorage("maplibreBaseLayerName", ""),
     showDayNightTerminator: false,
-    mapIconSize: useLocalStorage("mapIconSize", 30),
+    mapIconSize: useLocalStorage("mapIconSize", 25),
     mapCustomIconScale: useLocalStorage("mapCustomIconScale", 1.7),
     mapUnitLabelBelow: useLocalStorage("mapUnitLabelBelow", false),
     mapWrapUnitLabels: useLocalStorage("mapWrapUnitLabels", false),
     mapWrapLabelWidth: useLocalStorage("mapWrapLabelWidth", 15),
     mapLabelSize: useLocalStorage("mapLabelSize", 12),
+    mapProjection: useLocalStorage<MapProjection>("mapProjection", "globe"),
+    mapLibreUnitRotationMode: useLocalStorage<MapLibreUnitRotationMode>(
+      "mapLibreUnitRotationMode",
+      "screen",
+    ),
   }),
 });

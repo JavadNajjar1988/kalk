@@ -2,6 +2,7 @@ import json
 import hashlib
 import os
 from typing import Any
+from urllib.parse import urlsplit
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -9,9 +10,22 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.config import settings
 from app.models.sdi import SDIMap
 
+LEGACY_LOCAL_TILESERVER_NETLOCS = {"127.0.0.1:8480", "localhost:8480"}
+
 
 def _sha256_of_bytes(data: bytes) -> str:
     return hashlib.sha256(data).hexdigest()
+
+
+def _public_catalog_path(path: str) -> str:
+    parsed = urlsplit(path)
+    if parsed.scheme in {"http", "https"} and parsed.netloc in LEGACY_LOCAL_TILESERVER_NETLOCS:
+        if parsed.path.startswith("/data/"):
+            suffix = parsed.path
+            if parsed.query:
+                suffix = f"{suffix}?{parsed.query}"
+            return f"/tiles{suffix}"
+    return path
 
 
 async def generate_layers_json(session: AsyncSession) -> dict[str, Any]:
@@ -32,7 +46,7 @@ async def generate_layers_json(session: AsyncSession) -> dict[str, Any]:
                 "description": m.description or None,
                 "type": ("raster-xyz" if m.source_type.startswith("xyz") else m.source_type),
                 "source": m.source_type,
-                "path": m.url_or_path,
+                "path": _public_catalog_path(m.url_or_path),
                 "srs": m.srs or None,
                 "minzoom": m.minzoom,
                 "maxzoom": m.maxzoom,

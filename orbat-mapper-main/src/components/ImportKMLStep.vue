@@ -2,7 +2,7 @@
 import { injectStrict, nanoid } from "@/utils";
 import { activeScenarioKey, searchActionsKey } from "@/components/injects";
 import { onMounted, ref, shallowRef, triggerRef } from "vue";
-import { ChevronRightIcon } from "lucide-vue-next";
+import { ChevronRightIcon } from "@lucide/vue";
 import { stripFileExtension } from "@/utils/files";
 import AlertWarning from "@/components/AlertWarning.vue";
 import { Button } from "@/components/ui/button";
@@ -104,6 +104,7 @@ async function onLoad() {
       id: nanoid(),
       type: "KMLLayer",
     });
+    if (!newLayer) continue;
 
     await onImageLayerSelectHook.trigger({ layerId: newLayer.id });
   }

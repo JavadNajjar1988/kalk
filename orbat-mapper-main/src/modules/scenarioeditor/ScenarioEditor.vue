@@ -20,7 +20,13 @@ import {
   IconUndoVariant as IconUndo,
 } from "@iconify-prerendered/vue-mdi";
 
-import { createEventHook, useClipboard, useTitle, watchOnce } from "@vueuse/core";
+import {
+  createEventHook,
+  useClipboard,
+  useEventListener,
+  useTitle,
+  watchOnce,
+} from "@vueuse/core";
 import MainViewSlideOver from "@/components/MainViewSlideOver.vue";
 import { type ScenarioActions, TAB_LAYERS, type UiAction } from "@/types/constants";
 import { useNotifications } from "@/composables/notifications";
@@ -45,6 +51,7 @@ import { storeToRefs } from "pinia";
 import {
   CHART_EDIT_MODE_ROUTE,
   GRID_EDIT_ROUTE,
+  LEGACY_MAP_ROUTE,
   MAP_EDIT_MODE_ROUTE,
   NEW_SCENARIO_ROUTE,
 } from "@/router/names";
@@ -58,7 +65,7 @@ import { useMapSettingsStore } from "@/stores/mapSettingsStore";
 import { useTimeFormatterProvider } from "@/stores/timeFormatStore";
 import PlaybackMenu from "@/modules/scenarioeditor/PlaybackMenu.vue";
 import DebugInfo from "@/components/DebugInfo.vue";
-import { MapIcon, MoonStarIcon, SunIcon } from "lucide-vue-next";
+import { CircleAlertIcon, GlobeIcon, MapIcon, MoonStarIcon, SunIcon } from "@lucide/vue";
 import { UseDark } from "@vueuse/components";
 import { Button } from "@/components/ui/button";
 import {
@@ -68,6 +75,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useBrowserScenarios } from "@/composables/browserScenarios";
+import type { EncryptedScenario, Scenario } from "@/types/scenarioModels";
+import { useScenarioClipboardImport } from "@/modules/scenarioeditor/useScenarioClipboardImport";
+import type { ScenarioMapViewSnapshot } from "@/modules/scenarioeditor/scenarioMapViewSnapshot";
+import { useScenarioShare } from "@/composables/scenarioShare";
+import RecordingState from "@/components/RecordingState.vue";
 
 const props = defineProps<{ activeScenario: TScenario }>();
 
@@ -95,6 +108,9 @@ const ShareScenarioModal = defineAsyncComponent(
 const EncryptScenarioModal = defineAsyncComponent(
   () => import("@/components/EncryptScenarioModal.vue"),
 );
+const DecryptScenarioModal = defineAsyncComponent(
+  () => import("@/components/DecryptScenarioModal.vue"),
+);
 
 const dropZoneRef = ref<HTMLDivElement>();
 const activeParentId = ref<EntityId | undefined | null>(null);
@@ -116,6 +132,7 @@ const onImageLayerSelectHook = createEventHook<{ layerId: FeatureId }>();
 const onFeatureSelectHook = createEventHook<{
   featureId: FeatureId;
   layerId: FeatureId;
+  options?: { noZoom?: boolean };
 }>();
 const onEventSelectHook = createEventHook<EventSearchResult>();
 const onPlaceSelectHook = createEventHook<PhotonSearchResult>();
@@ -146,7 +163,8 @@ const selectedModeRoute = computed({
     if (
       route.name === MAP_EDIT_MODE_ROUTE ||
       route.name === GRID_EDIT_ROUTE ||
-      route.name === CHART_EDIT_MODE_ROUTE
+      route.name === CHART_EDIT_MODE_ROUTE ||
+      route.name === LEGACY_MAP_ROUTE
     ) {
       return route.name;
     }
@@ -160,9 +178,20 @@ const selectedModeRoute = computed({
 });
 
 const modeOptions = [
-  { value: MAP_EDIT_MODE_ROUTE, label: "Map", icon: MapIcon },
-  { value: GRID_EDIT_ROUTE, label: "Grid", icon: TableIcon },
-  { value: CHART_EDIT_MODE_ROUTE, label: "Chart", icon: IconSitemap },
+  { value: MAP_EDIT_MODE_ROUTE, label: "MapLibre", icon: GlobeIcon, obsolete: false },
+  { value: GRID_EDIT_ROUTE, label: "Grid", icon: TableIcon, obsolete: false },
+  {
+    value: CHART_EDIT_MODE_ROUTE,
+    label: "Chart",
+    icon: IconSitemap,
+    obsolete: false,
+  },
+  {
+    value: LEGACY_MAP_ROUTE,
+    label: "OpenLayers legacy",
+    icon: MapIcon,
+    obsolete: true,
+  },
 ] as const;
 
 const activeModeOption = computed(
@@ -179,6 +208,14 @@ const showImportModal = ref(false);
 const showShareUrlModal = ref(false);
 const showShareModal = ref(false);
 const showEncryptModal = ref(false);
+const showDecryptModal = ref(false);
+const currentEncryptedScenario = ref<EncryptedScenario | null>(null);
+const sharedMapView = ref<ScenarioMapViewSnapshot>();
+const mapRouteProps = computed(() =>
+  route.name === MAP_EDIT_MODE_ROUTE || route.name === LEGACY_MAP_ROUTE
+    ? { initialMapView: sharedMapView.value }
+    : {},
+);
 
 useTimeFormatterProvider({ activeScenario: props.activeScenario });
 
@@ -189,8 +226,11 @@ const mapStore = useMapSettingsStore();
 mapStore.baseLayerName = state.mapSettings.baseMapId;
 
 const originalTitle = useTitle().value;
-const windowTitle = computed(() => state.info.name);
+const windowTitle = computed(() =>
+  io.savedDirty.value ? `${state.info.name} *` : state.info.name,
+);
 const { send } = useNotifications();
+const { loadScenario: browserLoadScenario } = useBrowserScenarios();
 
 useTitle(windowTitle);
 
@@ -249,10 +289,35 @@ const onFeatureSelect = (featureId: FeatureId, layerId: FeatureId) => {
   onFeatureSelectHook.trigger({ featureId, layerId });
 };
 
-import { useScenarioShare } from "@/composables/scenarioShare";
-import RecordingState from "@/components/RecordingState.vue";
-
 useScenarioShare();
+
+function onDecrypted(scenario: Scenario) {
+  void browserLoadScenario(scenario);
+  showDecryptModal.value = false;
+  currentEncryptedScenario.value = null;
+}
+
+const { handlePastedText, pasteFromClipboard } = useScenarioClipboardImport({
+  activeScenario: props.activeScenario,
+  activeLayerId,
+  onScenarioLoaded: browserLoadScenario,
+  onEncryptedScenario(scenario) {
+    currentEncryptedScenario.value = scenario;
+    showDecryptModal.value = true;
+  },
+});
+
+useEventListener(document, "paste", (e: ClipboardEvent) => {
+  if (!inputEventFilter(e)) return;
+  if (e.clipboardData?.types.includes("application/orbat")) return;
+
+  const text = e.clipboardData?.getData("text/plain");
+  if (!text) return;
+
+  if (handlePastedText(text)) {
+    e.preventDefault();
+  }
+});
 
 async function onScenarioAction(action: ScenarioActions) {
   if (action === "addSide") {
@@ -260,7 +325,7 @@ async function onScenarioAction(action: ScenarioActions) {
   } else if (action === "save") {
     const preId = state.id;
     const newId = await io.saveToIndexedDb();
-    send({ message: "Scenario saved to IndexedDb" });
+    send({ message: "Scenario saved in browser" });
     if (preId !== newId) {
       await router.push({ name: MAP_EDIT_MODE_ROUTE, params: { scenarioId: newId } });
     }
@@ -272,9 +337,19 @@ async function onScenarioAction(action: ScenarioActions) {
     await io.downloadAsJson();
   } else if (action === "loadNew") {
     showLoadModal.value = true;
+  } else if (action === "restoreOriginal") {
+    if (io.restoreLoadedBaseline()) {
+      send({ message: "Reverted scenario to the opened state" });
+    }
+  } else if (action === "revertToSaved") {
+    if (io.revertToSaved()) {
+      send({ message: "Reverted scenario to the saved version" });
+    }
   } else if (action === "exportToClipboard") {
     await copyToClipboard(io.stringifyScenario());
     if (copied.value) send({ message: "Scenario copied to clipboard", type: "success" });
+  } else if (action === "pasteFromClipboard") {
+    await pasteFromClipboard();
   } else if (action === "shareAsUrl") {
     showShareUrlModal.value = true;
   } else if (action === "share") {
@@ -337,8 +412,13 @@ function showInfo() {
 
 const { isOverDropZone } = useFileDropZone(dropZoneRef, onDrop);
 
-if (state.layers.length > 0) {
-  activeLayerId.value = state.layers[0];
+const firstOverlayLayerId = state.layerStack.find((layerId) => {
+  const layer = state.layerStackMap[layerId];
+  return layer?.kind === "overlay";
+});
+
+if (firstOverlayLayerId) {
+  activeLayerId.value = firstOverlayLayerId;
 }
 </script>
 
@@ -356,10 +436,20 @@ if (state.layers.length > 0) {
           >
             {{ activeScenario.store.state.info.name }}
           </Button>
+          <Button
+            v-if="io.savedDirty.value"
+            variant="outline"
+            class="hidden h-6 shrink-0 gap-1 rounded-full px-2 py-0 text-xs sm:inline-flex"
+            title="Save scenario"
+            @click="onScenarioAction('save')"
+          >
+            <span class="mr-1 size-2 rounded-full bg-amber-500" />
+            Save
+          </Button>
         </div>
       </div>
       <div class="flex shrink-0 items-center gap-0.5 overflow-clip sm:gap-2">
-        <Button variant="ghost" class="hidden sm:inline-flex" asChild
+        <Button variant="ghost" class="hidden lg:inline-flex" asChild
           ><a
             :href="
               route.meta.helpUrl ||
@@ -389,14 +479,23 @@ if (state.layers.length > 0) {
         </Button>
         <div class="flex min-w-0 items-center gap-0.5 sm:gap-2">
           <RecordingState />
-          <PlaybackMenu v-if="route.name === MAP_EDIT_MODE_ROUTE" />
+          <PlaybackMenu
+            v-if="route.name === MAP_EDIT_MODE_ROUTE || route.name === LEGACY_MAP_ROUTE"
+          />
           <Select v-model="selectedModeRoute">
             <SelectTrigger
-              class="bg-muted-foreground/20 border-0 sm:hidden"
+              class="bg-muted-foreground/20 border-0 lg:hidden"
               aria-label="Edit mode"
             >
               <SelectValue>
-                <component :is="activeModeOption.icon" class="size-6 text-green-500" />
+                <span class="relative inline-flex">
+                  <component :is="activeModeOption.icon" class="size-6 text-green-500" />
+                  <CircleAlertIcon
+                    v-if="activeModeOption.obsolete"
+                    class="bg-background text-muted-foreground absolute -right-1 -bottom-1 size-3.5 rounded-full"
+                    aria-hidden="true"
+                  />
+                </span>
               </SelectValue>
             </SelectTrigger>
             <SelectContent class="">
@@ -405,22 +504,29 @@ if (state.layers.length > 0) {
                 :key="mode.value"
                 :value="mode.value"
               >
-                <component :is="mode.icon" class="size-5" />
+                <span class="relative inline-flex">
+                  <component :is="mode.icon" class="size-5" />
+                  <CircleAlertIcon
+                    v-if="mode.obsolete"
+                    class="bg-background text-muted-foreground absolute -right-1 -bottom-1 size-3 rounded-full"
+                    aria-hidden="true"
+                  />
+                </span>
                 <span>{{ mode.label }}</span>
               </SelectItem>
             </SelectContent>
           </Select>
           <div
             id="mode-switcher"
-            class="bg-muted-foreground/20 dark:bg-foreground/15 text-muted-foreground/80 hidden items-center rounded-lg px-1 sm:flex"
+            class="bg-muted-foreground/20 dark:bg-foreground/15 text-muted-foreground/80 hidden items-center rounded-lg px-1 lg:flex"
           >
             <router-link
               :to="{ name: MAP_EDIT_MODE_ROUTE }"
-              title="Map edit mode"
+              title="MapLibre view"
               exact-active-class="text-green-500"
               class="hover:bg-muted hover:text-foreground focus:ring-ring inline-flex items-center justify-center rounded-md p-1.5 focus:ring-2 focus:outline-hidden focus:ring-inset"
             >
-              <MapIcon class="size-6" />
+              <GlobeIcon class="size-6" />
             </router-link>
             <router-link
               :to="{ name: GRID_EDIT_ROUTE }"
@@ -437,6 +543,20 @@ if (state.layers.length > 0) {
               class="hover:bg-muted hover:text-foreground focus:ring-ring inline-flex items-center justify-center rounded-md p-1.5 focus:ring-2 focus:outline-hidden focus:ring-inset"
             >
               <IconSitemap class="size-6" />
+            </router-link>
+            <router-link
+              :to="{ name: LEGACY_MAP_ROUTE }"
+              title="OpenLayers legacy view (obsolete)"
+              exact-active-class="text-green-500"
+              class="hover:bg-muted hover:text-foreground focus:ring-ring inline-flex items-center justify-center rounded-md p-1.5 focus:ring-2 focus:outline-hidden focus:ring-inset"
+            >
+              <span class="relative inline-flex">
+                <MapIcon class="size-6" />
+                <CircleAlertIcon
+                  class="bg-background text-muted-foreground absolute -right-1 -bottom-1 size-3.5 rounded-full"
+                  aria-hidden="true"
+                />
+              </span>
             </router-link>
           </div>
         </div>
@@ -497,6 +617,9 @@ if (state.layers.length > 0) {
       <!--      <keep-alive include="ScenarioEditorGeo">-->
       <component
         :is="Component"
+        :key="route.fullPath"
+        v-bind="mapRouteProps"
+        @map-view-change="sharedMapView = $event"
         @show-export="showExportModal = true"
         @show-load="showLoadModal = true"
         @show-settings="isOpen = true"
@@ -531,7 +654,11 @@ if (state.layers.length > 0) {
       @select-place="onPlaceSelectHook.trigger($event)"
       @select-action="onScenarioAction"
     />
-    <LoadScenarioDialog v-if="showLoadModal" v-model="showLoadModal" />
+    <LoadScenarioDialog
+      v-if="showLoadModal"
+      v-model="showLoadModal"
+      :routeName="selectedModeRoute"
+    />
     <InputDateModal
       v-if="showDateModal"
       v-model="showDateModal"
@@ -560,6 +687,12 @@ if (state.layers.length > 0) {
     <ShareScenarioUrlModal v-if="showShareUrlModal" v-model="showShareUrlModal" />
     <ShareScenarioModal v-if="showShareModal" v-model="showShareModal" />
     <EncryptScenarioModal v-if="showEncryptModal" v-model="showEncryptModal" />
+    <DecryptScenarioModal
+      v-if="showDecryptModal && currentEncryptedScenario"
+      v-model="showDecryptModal"
+      :encrypted-scenario="currentEncryptedScenario"
+      @decrypted="onDecrypted"
+    />
     <div
       v-if="isOverDropZone"
       class="bg-background/80 fixed inset-0 z-50 flex items-center justify-center"

@@ -5,13 +5,20 @@ import OLMap from "ol/Map";
 import { OlMapAdapter } from "@/geo/engines/openlayers/olMapAdapter";
 import { useGeoStore } from "@/stores/geoStore";
 import { useMapSettingsStore } from "@/stores/mapSettingsStore";
+import { toLonLat } from "ol/proj";
 import type Select from "ol/interaction/Select";
+import type View from "ol/View";
 import type { ScenarioLayerController } from "@/geo/contracts/scenarioLayerController";
 import ScenarioMapLogic from "@/components/ScenarioMapLogic.vue";
 import MapContextMenu from "@/components/MapContextMenu.vue";
-import { useMapViewStore } from "@/stores/mapViewStore";
-import View from "ol/View";
+import {
+  toScenarioMapViewCenter,
+  type ScenarioMapViewSnapshot,
+} from "@/modules/scenarioeditor/scenarioMapViewSnapshot";
 
+const props = defineProps<{
+  initialView?: ScenarioMapViewSnapshot;
+}>();
 const emit = defineEmits<{
   (
     e: "map-ready",
@@ -22,11 +29,11 @@ const emit = defineEmits<{
       scenarioLayerController: ScenarioLayerController;
     },
   ): void;
+  (e: "map-view-change", value: ScenarioMapViewSnapshot): void;
 }>();
 
 const mapLogicComponent = ref<InstanceType<typeof ScenarioMapLogic> | null>(null);
 const mapSettings = useMapSettingsStore();
-const mapViewStore = useMapViewStore();
 const mapRef = shallowRef<OLMap>();
 const geoStore = useGeoStore();
 
@@ -38,27 +45,44 @@ const onMapReady = (olMap: OLMap) => {
   geoStore.setMapAdapter(ownAdapter);
 };
 
+function onMapMoveEnd({ view }: { view: View }) {
+  const center = view.getCenter();
+  const zoom = view.getZoom();
+
+  if (!center || zoom === undefined) {
+    return;
+  }
+
+  const lonLatCenter = toScenarioMapViewCenter(toLonLat(center, view.getProjection()));
+  if (!lonLatCenter) {
+    return;
+  }
+
+  emit("map-view-change", {
+    center: lonLatCenter,
+    zoom,
+    rotation: view.getRotation(),
+  });
+}
+
 onUnmounted(() => {
   if (geoStore.mapAdapter === ownAdapter) {
     geoStore.setMapAdapter(null);
   }
   ownAdapter = null;
 });
-
-function onMoveEnd({ view }: { view: View }) {
-  mapViewStore.zoomLevel = view.getZoom() ?? 0;
-}
 </script>
 <template>
   <div class="@container h-full">
-    <div class="map-wrapper bg-background relative h-full">
+    <div class="map-ui-root bg-background relative h-full">
       <MapContextMenu :map-ref="mapRef" v-slot="{ onContextMenu }">
         <MapContainer
           @ready="onMapReady"
+          @moveend="onMapMoveEnd"
           @dragover.prevent
           :base-layer-name="mapSettings.baseLayerName"
+          :initial-view="props.initialView"
           @contextmenu="onContextMenu"
-          @moveend="onMoveEnd"
         />
       </MapContextMenu>
 
@@ -66,25 +90,10 @@ function onMoveEnd({ view }: { view: View }) {
         ref="mapLogicComponent"
         v-if="mapRef"
         :ol-map="mapRef"
+        :initial-view="props.initialView"
         @map-ready="emit('map-ready', $event)"
       />
       <slot />
     </div>
   </div>
 </template>
-
-<style>
-.map-wrapper {
-  --ol-toolbar-clearance-left: 0rem;
-}
-
-@container (min-width: 40rem) and (max-width: 60rem) {
-  .map-wrapper {
-    --ol-toolbar-clearance-left: 4.5rem;
-  }
-}
-
-.ol-scale-line {
-  bottom: calc(2.2rem + var(--ol-toolbar-clearance-left));
-}
-</style>

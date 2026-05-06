@@ -1,5 +1,10 @@
 import { describe, expect, it, vi } from "vitest";
-import { getTopHitLayerType } from "@/modules/scenarioeditor/featureLayerUtils";
+import {
+  getTopHitLayerType,
+  isReferenceFeatureLayerType,
+  isScenarioFeatureLayerType,
+  LayerTypes,
+} from "@/modules/scenarioeditor/featureLayerUtils";
 
 describe("getTopHitLayerType", () => {
   it("returns the layer type for the first hit only", () => {
@@ -28,5 +33,17 @@ describe("getTopHitLayerType", () => {
     } as any;
 
     expect(getTopHitLayerType(olMap, [10, 20], 20)).toBeUndefined();
+  });
+
+  it("identifies scenario feature layers only", () => {
+    expect(isScenarioFeatureLayerType(LayerTypes.scenarioFeature)).toBe(true);
+    expect(isScenarioFeatureLayerType("UNITS")).toBe(false);
+    expect(isScenarioFeatureLayerType(undefined)).toBe(false);
+  });
+
+  it("identifies reference feature layers only", () => {
+    expect(isReferenceFeatureLayerType(LayerTypes.referenceFeature)).toBe(true);
+    expect(isReferenceFeatureLayerType(LayerTypes.scenarioFeature)).toBe(false);
+    expect(isReferenceFeatureLayerType(undefined)).toBe(false);
   });
 });

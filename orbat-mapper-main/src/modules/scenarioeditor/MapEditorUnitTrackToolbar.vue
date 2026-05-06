@@ -5,6 +5,7 @@ import {
   IconMapMarkerDistance as ShowPathIcon,
   IconTimelineClockOutline,
 } from "@iconify-prerendered/vue-mdi";
+import { PlusIcon, RouteIcon } from "@lucide/vue";
 import FloatingPanel from "@/components/FloatingPanel.vue";
 
 import { useMainToolbarStore } from "@/stores/mainToolbarStore";
@@ -15,7 +16,9 @@ const unitSettings = useUnitSettingsStore();
 const store = useMainToolbarStore();
 </script>
 <template>
-  <FloatingPanel class="pointer-events-auto flex items-center space-x-1 rounded-md p-1">
+  <FloatingPanel
+    class="no-scrollbar pointer-events-auto flex max-w-full items-center space-x-1 overflow-x-auto rounded-md p-1"
+  >
     <p class="text-muted-foreground px-2 text-sm font-medium">Track</p>
     <div class="border-border h-5 border-l" />
 
@@ -41,6 +44,18 @@ const store = useMainToolbarStore();
       :active="unitSettings.showWaypointTimestamps"
     >
       <IconTimelineClockOutline class="size-5" />
+    </MainToolbarButton>
+
+    <div class="border-border h-5 border-l" />
+    <MainToolbarButton
+      title="Plan route"
+      @click="store.toggleToolbar('route')"
+      :active="store.currentToolbar === 'route'"
+    >
+      <div class="relative">
+        <RouteIcon class="size-5" />
+        <PlusIcon class="bg-background absolute -right-1.5 -bottom-1 size-3 stroke-[3]" />
+      </div>
     </MainToolbarButton>
 
     <MainToolbarButton title="Toggle toolbar" @click="store.clearToolbar()">

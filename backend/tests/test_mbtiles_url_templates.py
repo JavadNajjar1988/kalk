@@ -2,6 +2,7 @@ from app.api.routes.maps import _build_url_template
 from app.api.routes.sdi import _build_tiles_url_template
 from app.core.config import settings
 from app.models.map import OfflineMap
+from app.services.sdi.publish import _public_catalog_path
 
 
 def _offline_map(storage_type: str = "mbtiles") -> OfflineMap:
@@ -35,3 +36,12 @@ def test_filesystem_tile_url_stays_on_filesystem_cache(monkeypatch):
 
     assert _build_url_template(_offline_map("filesystem")) == "/api/tile-cache/42/{z}/{x}/{y}"
     assert _build_tiles_url_template(_offline_map("filesystem")) == "/api/tile-cache/42/{z}/{x}/{y}"
+
+
+def test_catalog_rewrites_legacy_localhost_tileserver_urls_to_same_origin_tiles():
+    legacy_path = "http://127.0.0.1:8480/data/local-map/{z}/{x}/{-y}.png"
+    localhost_path = "http://localhost:8480/data/local-map/{z}/{x}/{-y}.png"
+
+    assert _public_catalog_path(legacy_path) == "/tiles/data/local-map/{z}/{x}/{-y}.png"
+    assert _public_catalog_path(localhost_path) == "/tiles/data/local-map/{z}/{x}/{-y}.png"
+    assert _public_catalog_path("/tiles/data/local-map/{z}/{x}/{-y}.png") == "/tiles/data/local-map/{z}/{x}/{-y}.png"

@@ -4,6 +4,8 @@ import "nprogress/nprogress.css";
 import LandingPage from "../views/LandingPage.vue";
 import {
   CHART_EDIT_MODE_ROUTE,
+  LEGACY_MAP_ROUTE,
+  MAPLIBRE_ROUTE,
   GRID_EDIT_ROUTE,
   IMPORT_SCENARIO_ROUTE,
   LANDING_PAGE_ROUTE,
@@ -33,7 +35,9 @@ const SymbolBrowserView = () => import("@/views/SymbolBrowserView.vue");
 const GridEditView = () => import("@/modules/scenarioeditor/GridEditView.vue");
 const ChartEditView = () => import("@/modules/scenarioeditor/ChartEditView.vue");
 const ScenarioEditorMap = () => import("@/modules/scenarioeditor/ScenarioEditorMap.vue");
-const routes = [
+const ScenarioEditorMaplibre = () =>
+  import("@/modules/maplibreview/ScenarioEditorMaplibre.vue");
+export const routes = [
   {
     path: "/scenario/:scenarioId",
     props: true,
@@ -45,6 +49,12 @@ const routes = [
       {
         path: "",
         name: MAP_EDIT_MODE_ROUTE,
+        component: ScenarioEditorMaplibre,
+        meta: { helpUrl: "https://docs.orbat-mapper.app/guide/map-edit-mode" },
+      },
+      {
+        path: "legacy",
+        name: LEGACY_MAP_ROUTE,
         component: ScenarioEditorMap,
         meta: { helpUrl: "https://docs.orbat-mapper.app/guide/map-edit-mode" },
       },
@@ -59,6 +69,11 @@ const routes = [
         name: CHART_EDIT_MODE_ROUTE,
         component: ChartEditView,
         meta: { helpUrl: "https://docs.orbat-mapper.app/guide/chart-edit-mode" },
+      },
+      {
+        path: "maplibre",
+        name: MAPLIBRE_ROUTE,
+        redirect: (to) => ({ name: MAP_EDIT_MODE_ROUTE, params: to.params }),
       },
     ],
   },
@@ -100,6 +115,10 @@ const routes = [
     path: "/symbol-browser",
     name: SYMBOL_BROWSER_ROUTE,
     component: SymbolBrowserView,
+  },
+  {
+    path: "/globe/:scenarioId",
+    redirect: (to) => ({ name: MAP_EDIT_MODE_ROUTE, params: to.params }),
   },
   { path: "/", name: LANDING_PAGE_ROUTE, component: LandingPage },
 ] as RouteRecordRaw[];

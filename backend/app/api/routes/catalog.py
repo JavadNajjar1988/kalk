@@ -6,7 +6,7 @@ import os
 
 from app.core.config import settings
 from app.db.session import AsyncSessionLocal
-from app.services.sdi.publish import generate_layers_json
+from app.services.sdi.publish import generate_layers_json, _public_catalog_path
 
 
 router = APIRouter(prefix="/catalog", tags=["catalog"])
@@ -32,6 +32,10 @@ async def get_layers_catalog():
         with open(path, "rb") as f:
             data = f.read()
         payload = json.loads(data.decode("utf-8"))
+        if isinstance(payload, dict):
+            for layer in payload.get("layers") or []:
+                if isinstance(layer, dict) and isinstance(layer.get("path"), str):
+                    layer["path"] = _public_catalog_path(layer["path"])
         return JSONResponse(payload)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"failed_to_read_catalog: {e}")

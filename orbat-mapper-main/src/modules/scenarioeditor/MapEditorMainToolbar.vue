@@ -16,9 +16,9 @@ import {
   IconSkipPrevious,
   IconUndoVariant as UndoIcon,
 } from "@iconify-prerendered/vue-mdi";
-import { RotateCwIcon } from "lucide-vue-next";
+import { RotateCwIcon } from "@lucide/vue";
 import MainToolbarButton from "@/components/MainToolbarButton.vue";
-import { useMainToolbarStore } from "@/stores/mainToolbarStore";
+import { type ToolbarType, useMainToolbarStore } from "@/stores/mainToolbarStore";
 import { injectStrict } from "@/utils";
 import { activeScenarioKey, activeScenarioMapEngineKey } from "@/components/injects";
 import { storeToRefs } from "pinia";
@@ -26,7 +26,7 @@ import { useUnitSettingsStore } from "@/stores/geoStore";
 import { useEventBus, useToggle } from "@vueuse/core";
 import PanelSymbolButton from "@/components/PanelSymbolButton.vue";
 import FloatingPanel from "@/components/FloatingPanel.vue";
-import { computed, onMounted, type Ref, watch } from "vue";
+import { computed, onMounted, type Ref, watch, watchEffect } from "vue";
 import { SID_INDEX, Sidc } from "@/symbology/sidc";
 import { useGetMapLocation } from "@/composables/geoMapLocation";
 import { useMapSelectStore } from "@/stores/mapSelectStore";
@@ -39,6 +39,27 @@ import EchelonPickerPopover from "@/modules/scenarioeditor/EchelonPickerPopover.
 import { Button } from "@/components/ui/button";
 import { CUSTOM_SYMBOL_PREFIX } from "@/config/constants.ts";
 import { useRecordingStore } from "@/stores/recordingStore";
+
+const props = withDefaults(
+  defineProps<{
+    canMoveUnits?: boolean;
+    canRotateUnits?: boolean;
+    canMeasure?: boolean;
+    canDraw?: boolean;
+    canTrack?: boolean;
+    canAddUnits?: boolean;
+    locationPickerEventSource?: "map" | "dom";
+  }>(),
+  {
+    canMoveUnits: true,
+    canRotateUnits: true,
+    canMeasure: true,
+    canDraw: true,
+    canTrack: true,
+    canAddUnits: true,
+    locationPickerEventSource: "map",
+  },
+);
 
 const emit = defineEmits([
   "open-time-modal",
@@ -99,9 +120,11 @@ const {
 } = useGetMapLocation(() => engineRef.value?.map, {
   cancelOnClickOutside: false,
   stopPropagationOnClickOutside: false,
+  eventSource: props.locationPickerEventSource,
 });
 
 function addUnit(sidc: string, closePopover?: (ref?: Ref | HTMLElement) => void) {
+  if (!props.canAddUnits) return;
   activeSidc.value = sidc;
   closePopover && closePopover();
   startGetLocation();
@@ -180,22 +203,59 @@ function setSelectMode() {
 }
 
 function setMoveMode() {
-  if (!recordingStore.isRecordingLocation) return;
+  if (!props.canMoveUnits || !recordingStore.isRecordingLocation) return;
   moveUnitEnabled.value = true;
   rotateUnitEnabled.value = false;
 }
 
 function setRotateMode() {
+  if (!props.canRotateUnits) return;
   rotateUnitEnabled.value = true;
   moveUnitEnabled.value = false;
 }
+
+function toggleToolbarIfSupported(toolbar: ToolbarType) {
+  if (
+    (toolbar === "measurements" && !props.canMeasure) ||
+    (toolbar === "draw" && !props.canDraw) ||
+    (toolbar === "track" && !props.canTrack)
+  ) {
+    return;
+  }
+  store.toggleToolbar(toolbar);
+}
+
+watchEffect(() => {
+  if (!props.canMoveUnits && moveUnitEnabled.value) {
+    moveUnitEnabled.value = false;
+  }
+  if (!props.canRotateUnits && rotateUnitEnabled.value) {
+    rotateUnitEnabled.value = false;
+  }
+  if (
+    (store.currentToolbar === "measurements" && !props.canMeasure) ||
+    (store.currentToolbar === "draw" && !props.canDraw) ||
+    (store.currentToolbar === "track" && !props.canTrack)
+  ) {
+    store.clearToolbar();
+  }
+});
 </script>
 
 <template>
-  <nav
-    class="bg-sidebar border-border pointer-events-auto flex w-full items-center justify-between border p-1 text-sm shadow-sm sm:rounded-xl sm:p-2 md:w-auto"
+  <FloatingPanel
+    v-if="isGetLocationActive"
+    class="bg-opacity-75 absolute bottom-14 overflow-visible p-2 px-4 text-sm sm:bottom-16 sm:left-1/2 sm:-translate-x-1/2"
   >
-    <section class="flex items-center justify-between">
+    Click on map or ORBAT to place unit.
+    <Button type="button" variant="link" size="sm" @click="cancelGetLocation()">
+      Cancel
+    </Button>
+  </FloatingPanel>
+  <nav
+    class="no-scrollbar bg-sidebar border-border pointer-events-auto flex w-full max-w-full items-center justify-between gap-2 overflow-x-auto overscroll-x-contain border p-1 text-sm shadow-sm sm:rounded-xl sm:p-2 md:w-auto"
+  >
+    <section class="flex shrink-0 items-center justify-between">
       <MainToolbarButton
         title="Keep selected tool active after drawing"
         @click="toggleAddMultiple()"
@@ -215,18 +275,21 @@ function setRotateMode() {
         :active="moveUnitEnabled && !rotateUnitEnabled"
         @click="setMoveMode()"
         :title="
-          recordingStore.isRecordingLocation
-            ? 'Move unit'
-            : 'Move unit disabled. Enable Unit position in Rec first.'
+          !props.canMoveUnits
+            ? 'Move unit not supported in MapLibre mode yet'
+            : recordingStore.isRecordingLocation
+              ? 'Move unit'
+              : 'Move unit disabled. Enable Unit position in Rec first.'
         "
-        :disabled="!recordingStore.isRecordingLocation"
+        :disabled="!props.canMoveUnits || !recordingStore.isRecordingLocation"
       >
         <MoveIcon class="size-6" />
       </MainToolbarButton>
       <MainToolbarButton
         :active="rotateUnitEnabled"
         @click="setRotateMode()"
-        title="Rotate unit"
+        :title="props.canRotateUnits ? 'Rotate unit' : 'Rotate unit not supported'"
+        :disabled="!props.canRotateUnits"
       >
         <RotateCwIcon class="size-5" />
       </MainToolbarButton>
@@ -240,22 +303,31 @@ function setRotateMode() {
       <div class="border-border h-7 border-l-2 sm:mx-1" />
       <MainToolbarButton
         :active="store.currentToolbar === 'measurements'"
-        @click="store.toggleToolbar('measurements')"
-        title="Measurements"
+        @click="toggleToolbarIfSupported('measurements')"
+        :title="
+          props.canMeasure
+            ? 'Measurements'
+            : 'Measurements not supported in MapLibre mode yet'
+        "
+        :disabled="!props.canMeasure"
       >
         <MeasurementIcon class="size-6" />
       </MainToolbarButton>
       <MainToolbarButton
         :active="store.currentToolbar === 'draw'"
-        @click="store.toggleToolbar('draw')"
-        title="Draw"
+        @click="toggleToolbarIfSupported('draw')"
+        :title="props.canDraw ? 'Draw' : 'Draw not supported in MapLibre mode yet'"
+        :disabled="!props.canDraw"
       >
         <DrawIcon class="size-6" />
       </MainToolbarButton>
       <MainToolbarButton
-        title="Unit track"
+        :title="
+          props.canTrack ? 'Unit track' : 'Unit track not supported in MapLibre mode yet'
+        "
         :active="store.currentToolbar === 'track'"
-        @click="store.toggleToolbar('track')"
+        @click="toggleToolbarIfSupported('track')"
+        :disabled="!props.canTrack"
       >
         <IconMapMarkerPath class="size-6" />
       </MainToolbarButton>
@@ -271,17 +343,28 @@ function setRotateMode() {
           class="group relative ml-2 sm:ml-5"
           :symbol-options="symbolOptions"
           @click="addUnit(activeSidc)"
-          title="Add unit"
-          :disabled="!activeParentId || unitActions.isUnitLocked(activeParentId)"
+          :title="
+            props.canAddUnits ? 'Add unit' : 'Add unit not supported in MapLibre mode yet'
+          "
+          :disabled="
+            !props.canAddUnits ||
+            !activeParentId ||
+            unitActions.isUnitLocked(activeParentId)
+          "
         >
           <AddSymbolIcon
             class="bg-opacity-70 text-muted-foreground group-hover:text-foreground bg-background absolute -right-2 bottom-0 h-4 w-4 rounded-full"
           />
         </PanelSymbolButton>
-        <SymbolPickerPopover :symbol-options="symbolOptions" :add-unit="addUnit" />
+        <SymbolPickerPopover
+          v-if="props.canAddUnits"
+          :symbol-options="symbolOptions"
+          :add-unit="addUnit"
+        />
       </div>
+      <slot name="extra-tools" />
     </section>
-    <section class="flex items-center">
+    <section class="flex shrink-0 items-center">
       <div class="border-border -mx-1 h-7 border-l-2 sm:mx-1" />
       <MainToolbarButton title="Undo" @click="undo()" :disabled="!canUndo">
         <UndoIcon class="size-6" />
@@ -327,14 +410,5 @@ function setRotateMode() {
         <IconSkipNext class="size-5 w-5" aria-hidden="true" />
       </MainToolbarButton>
     </section>
-    <FloatingPanel
-      v-if="isGetLocationActive"
-      class="bg-opacity-75 absolute bottom-14 overflow-visible p-2 px-4 text-sm sm:bottom-16 sm:left-1/2 sm:-translate-x-1/2"
-    >
-      Click on map or ORBAT to place unit.
-      <Button type="button" variant="link" size="sm" @click="cancelGetLocation()">
-        Cancel
-      </Button>
-    </FloatingPanel>
   </nav>
 </template>

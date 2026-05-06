@@ -1,21 +1,30 @@
 import type OLMap from "ol/Map";
 import { fromLonLat, toLonLat, transformExtent } from "ol/proj";
 import type { AllGeoJSON } from "@turf/helpers";
-import type { Position } from "geojson";
-import GeoJSON from "ol/format/GeoJSON";
+import type { GeoJSON as GeoJsonObject, Position } from "geojson";
+import GeoJSONFormat from "ol/format/GeoJSON";
 import Feature from "ol/Feature";
 import SimpleGeometry from "ol/geom/SimpleGeometry";
+import VectorLayer from "ol/layer/Vector";
+import VectorSource from "ol/source/Vector";
 import turfEnvelope from "@turf/envelope";
 import { unByKey } from "ol/Observable";
+import View from "ol/View";
+import { LayerTypes } from "@/modules/scenarioeditor/featureLayerUtils";
 import type {
   AnimateOptions,
   FitOptions,
+  GeoJsonOverlayOptions,
   MapAdapter,
   MapEventHandler,
   MapEventType,
+  ViewConstraints,
 } from "@/geo/contracts/mapAdapter";
 
 export class OlMapAdapter implements MapAdapter {
+  private _viewConstraints: ViewConstraints = {};
+  private readonly geoJsonOverlayLayers = new Map<string, VectorLayer<VectorSource>>();
+
   constructor(private olMap: OLMap) {}
 
   private get projection() {
@@ -39,7 +48,7 @@ export class OlMapAdapter implements MapAdapter {
 
   fitGeometry(geojson: AllGeoJSON, options: FitOptions = {}): void {
     const { duration = 900, maxZoom = 15, padding } = options;
-    const bb = new GeoJSON().readFeature(turfEnvelope(geojson), {
+    const bb = new GeoJSONFormat().readFeature(turfEnvelope(geojson), {
       featureProjection: this.projection,
       dataProjection: "EPSG:4326",
     }) as Feature;
@@ -86,6 +95,37 @@ export class OlMapAdapter implements MapAdapter {
     return this.olMap.getView().getResolutionForZoom(zoom);
   }
 
+  getViewConstraints(): ViewConstraints {
+    return this._viewConstraints;
+  }
+
+  setViewConstraints(constraints: ViewConstraints): void {
+    this._viewConstraints = { ...this._viewConstraints, ...constraints };
+    const view = this.olMap.getView();
+
+    if (constraints.minZoom !== undefined) {
+      view.setMinZoom(constraints.minZoom ?? 0);
+    }
+    if (constraints.maxZoom !== undefined) {
+      view.setMaxZoom(constraints.maxZoom ?? 28);
+    }
+    if (constraints.extent !== undefined) {
+      const currentView = this.olMap.getView();
+      const newView = new View({
+        center: currentView.getCenter(),
+        zoom: currentView.getZoom(),
+        rotation: currentView.getRotation(),
+        projection: currentView.getProjection(),
+        minZoom: currentView.getMinZoom(),
+        maxZoom: currentView.getMaxZoom(),
+        extent: constraints.extent
+          ? transformExtent(constraints.extent, "EPSG:4326", this.projection)
+          : undefined,
+      });
+      this.olMap.setView(newView);
+    }
+  }
+
   updateSize(): void {
     this.olMap.updateSize();
   }
@@ -111,33 +151,119 @@ export class OlMapAdapter implements MapAdapter {
     if (el) el.style.cursor = cursor;
   }
 
+  private getUnitIdAtPixel(pixel: [number, number] | undefined): string | undefined {
+    if (!pixel || typeof this.olMap.forEachFeatureAtPixel !== "function") {
+      return undefined;
+    }
+
+    let unitId: string | undefined;
+    this.olMap.forEachFeatureAtPixel(
+      pixel,
+      (feature, layer) => {
+        if (layer?.get("layerType") !== LayerTypes.units) {
+          return false;
+        }
+        const id = feature.getId();
+        if (id === undefined || id === null) {
+          return false;
+        }
+        unitId = String(id);
+        return true;
+      },
+      { hitTolerance: 20 },
+    );
+    return unitId;
+  }
+
+  private createMapEventPayload(e: any, includeUnitHit: boolean) {
+    const pixel = e.pixel as [number, number] | undefined;
+    const unitId = includeUnitHit ? this.getUnitIdAtPixel(pixel) : undefined;
+    return {
+      coordinate: e.coordinate
+        ? (toLonLat(e.coordinate, this.projection) as Position)
+        : undefined,
+      pixel,
+      unitId,
+      targetUnitId: unitId,
+      stopPropagation: () => e.stopPropagation(),
+    };
+  }
+
   on(event: MapEventType, handler: MapEventHandler): () => void {
     const key = this.olMap.on(event as any, (e: any) => {
-      handler({
-        coordinate: e.coordinate
-          ? (toLonLat(e.coordinate, this.projection) as Position)
-          : undefined,
-        pixel: e.pixel as [number, number] | undefined,
-        stopPropagation: () => e.stopPropagation(),
-      });
+      handler(
+        this.createMapEventPayload(e, event === "click" || event === "singleclick"),
+      );
     });
     return () => unByKey(key);
   }
 
   once(event: MapEventType, handler: MapEventHandler): () => void {
     const key = this.olMap.once(event as any, (e: any) => {
-      handler({
-        coordinate: e.coordinate
-          ? (toLonLat(e.coordinate, this.projection) as Position)
-          : undefined,
-        pixel: e.pixel as [number, number] | undefined,
-        stopPropagation: () => e.stopPropagation(),
-      });
+      handler(
+        this.createMapEventPayload(e, event === "click" || event === "singleclick"),
+      );
     });
     return () => unByKey(key);
+  }
+
+  addGeoJsonOverlay(
+    id: string,
+    geojson: GeoJsonObject | null | undefined,
+    options: GeoJsonOverlayOptions = {},
+  ): void {
+    const layer = this.getOrCreateGeoJsonOverlayLayer(id, options);
+    layer.getSource()?.clear();
+    if (!geojson) return;
+    layer.getSource()?.addFeatures(
+      new GeoJSONFormat().readFeatures(geojson, {
+        featureProjection: this.projection,
+        dataProjection: "EPSG:4326",
+      }),
+    );
+  }
+
+  removeGeoJsonOverlay(id: string): void {
+    const layer = this.geoJsonOverlayLayers.get(id);
+    if (!layer) return;
+    layer.setMap(null);
+    this.geoJsonOverlayLayers.delete(id);
   }
 
   getNativeMap(): OLMap {
     return this.olMap;
   }
+
+  private getOrCreateGeoJsonOverlayLayer(
+    id: string,
+    options: GeoJsonOverlayOptions,
+  ): VectorLayer<VectorSource> {
+    const existingLayer = this.geoJsonOverlayLayers.get(id);
+    if (existingLayer) {
+      existingLayer.setStyle(createOlGeoJsonOverlayStyle(options));
+      return existingLayer;
+    }
+
+    const layer = new VectorLayer({
+      source: new VectorSource(),
+      style: createOlGeoJsonOverlayStyle(options),
+    });
+    layer.setMap(this.olMap);
+    this.geoJsonOverlayLayers.set(id, layer);
+    return layer;
+  }
+}
+
+function createOlGeoJsonOverlayStyle(options: GeoJsonOverlayOptions = {}) {
+  const style = options.style ?? {};
+  return {
+    "stroke-color": style.strokeColor ?? "red",
+    "stroke-width": style.strokeWidth ?? 3,
+    "stroke-line-dash": style.strokeLineDash ?? [10, 10],
+    "fill-color": style.fillColor ?? "rgba(188,35,65,0.2)",
+    "circle-radius": style.circleRadius ?? 5,
+    "circle-fill-color": style.circleFillColor ?? "red",
+    "circle-stroke-color": style.circleStrokeColor ?? "red",
+    "circle-stroke-width": 1,
+  };
 }

@@ -24,7 +24,11 @@ import {
   useUnitSelectInteraction,
 } from "@/composables/geoUnitLayers";
 import LayerGroup from "ol/layer/Group";
-import { useScenarioFeatureSelect } from "@/modules/scenarioeditor/featureLayerUtils";
+import {
+  getTopHitLayerType,
+  isReferenceFeatureLayerType,
+  useScenarioFeatureSelect,
+} from "@/modules/scenarioeditor/featureLayerUtils";
 import { useMapSelectStore } from "@/stores/mapSelectStore";
 import { provideMapHover } from "@/composables/geoHover";
 import { saveMapAsPng, useOlEvent } from "@/composables/openlayersHelpers";
@@ -42,8 +46,11 @@ import { useSelectedItems } from "@/stores/selectedStore";
 import MapHoverFeatureTooltip from "@/components/MapHoverFeatureTooltip.vue";
 import { useRecordingStore } from "@/stores/recordingStore";
 import { useOlScenarioLayerController } from "@/geo/engines/openlayers/olScenarioLayerController";
+import { extractReferenceFeatureSelection } from "@/modules/scenarioeditor/referenceFeatureUtils";
 
-const props = defineProps<{ olMap: OLMap }>();
+import type { ScenarioMapViewSnapshot } from "@/modules/scenarioeditor/scenarioMapViewSnapshot";
+
+const props = defineProps<{ olMap: OLMap; initialView?: ScenarioMapViewSnapshot }>();
 const emit = defineEmits<{
   (
     e: "map-ready",
@@ -66,7 +73,7 @@ const mapRef = shallowRef<OLMap>();
 const uiStore = useUiStore();
 const recordingStore = useRecordingStore();
 
-const { selectedFeatureIds } = useSelectedItems();
+const { selectedFeatureIds, activeReferenceFeature } = useSelectedItems();
 
 const breakpoints = useBreakpoints(breakpointsTailwind);
 const isMobile = breakpoints.smallerOrEqual("md");
@@ -155,6 +162,30 @@ useOlEvent(unitLayerGroup.on("change:visible", toggleUnitInteractions));
 olMap.addInteraction(moveUnitInteraction);
 olMap.addInteraction(rotateInteraction);
 
+useOlEvent(
+  olMap.on("singleclick", (event) => {
+    const topHitLayerType = getTopHitLayerType(olMap, event.pixel, 20);
+    if (!isReferenceFeatureLayerType(topHitLayerType)) {
+      activeReferenceFeature.value = null;
+      return;
+    }
+
+    let selection = null;
+    olMap.forEachFeatureAtPixel(
+      event.pixel,
+      (feature, layer) => {
+        if (!isReferenceFeatureLayerType(layer?.get("layerType"))) {
+          return false;
+        }
+        selection = extractReferenceFeatureSelection(feature, layer);
+        return true;
+      },
+      { hitTolerance: 20 },
+    );
+    activeReferenceFeature.value = selection;
+  }),
+);
+
 const { showLocation, coordinateFormat, showScaleLine } =
   storeToRefs(useMapSettingsStore());
 
@@ -173,19 +204,21 @@ drawUnits();
 drawHistory();
 //loadScenarioLayers();
 
-// Set initial view: prioritize bounding box, then fall back to unit extent
-if (state.boundingBox && state.boundingBox.length === 4) {
-  const padding: [number, number, number, number] = [20, 20, 20, 20];
+// Set initial view only when there's no snapshot to restore
+if (!props.initialView) {
+  if (state.boundingBox && state.boundingBox.length === 4) {
+    const padding: [number, number, number, number] = [20, 20, 20, 20];
 
-  geoStore.zoomToBbox(state.boundingBox as [number, number, number, number], {
-    duration: 0,
-    maxZoom: 16,
-    padding,
-  });
-} else {
-  const extent = unitLayer.getSource()?.getExtent();
-  if (extent && !unitLayer.getSource()?.isEmpty())
-    olMap.getView().fit(extent, { padding: [100, 100, 150, 100], maxZoom: 16 });
+    geoStore.zoomToBbox(state.boundingBox as [number, number, number, number], {
+      duration: 0,
+      maxZoom: 16,
+      padding,
+    });
+  } else {
+    const extent = unitLayer.getSource()?.getExtent();
+    if (extent && !unitLayer.getSource()?.isEmpty())
+      olMap.getView().fit(extent, { padding: [100, 100, 150, 100], maxZoom: 16 });
+  }
 }
 
 function toggleUnitInteractions(event: ObjectEvent) {
@@ -253,6 +286,11 @@ watch(
     clearUnitStyleCache();
     drawUnits();
   },
+);
+
+watch(
+  () => state.rangeRingStateCounter,
+  () => drawRangeRings(),
 );
 
 watch([doNotFilterLayers, () => state.featureStateCounter], () => {

@@ -3,11 +3,11 @@ import InputGroup from "@/components/InputGroup.vue";
 import { computed, defineAsyncComponent, ref, watch } from "vue";
 import BaseButton from "@/components/BaseButton.vue";
 import { klona } from "klona";
-import type { NScenarioEvent, NScenarioFeature, NUnit } from "@/types/internalModels";
+import type { NGeometryLayerItem, NScenarioEvent, NUnit } from "@/types/internalModels";
 import { createShortUnitName } from "@/utils/shortUnitName";
 import { useTextToOrbatStore } from "@/views/texttoorbat/textToOrbatStore";
 import { storeToRefs } from "pinia";
-import { WandSparklesIcon, ChevronDownIcon } from "lucide-vue-next";
+import { WandSparklesIcon, ChevronDownIcon } from "@lucide/vue";
 import { Field, FieldDescription, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -26,7 +26,9 @@ const SimpleMarkdownInput = defineAsyncComponent(
   () => import("@/components/SimpleMarkdownInput.vue"),
 );
 
-const props = defineProps<{ item?: NUnit | NScenarioFeature | NScenarioEvent | null }>();
+const props = defineProps<{
+  item?: NUnit | NGeometryLayerItem | NScenarioEvent | null;
+}>();
 const emit = defineEmits(["cancel", "update"]);
 
 type ItemMetaForm = {
@@ -48,18 +50,18 @@ const form = ref<Partial<ItemMetaForm>>({
 });
 
 const isScenarioFeatureType = (
-  item: NUnit | NScenarioFeature | NScenarioEvent,
-): item is NScenarioFeature => {
-  return "type" in item && item.type == "Feature";
+  item: NUnit | NGeometryLayerItem | NScenarioEvent,
+): item is NGeometryLayerItem => {
+  return "kind" in item && item.kind === "geometry";
 };
 
 const isScenarioEventType = (
-  item: NUnit | NScenarioFeature | NScenarioEvent,
+  item: NUnit | NGeometryLayerItem | NScenarioEvent,
 ): item is NScenarioEvent => {
   return "startTime" in item || ("_type" in item && item._type === "scenario");
 };
 
-const isUnitType = (item: NUnit | NScenarioFeature | NScenarioEvent): item is NUnit => {
+const isUnitType = (item: NUnit | NGeometryLayerItem | NScenarioEvent): item is NUnit => {
   return "sidc" in item;
 };
 
@@ -77,9 +79,9 @@ watch(
     if (!item) return;
     if (isScenarioFeatureType(item)) {
       form.value = {
-        name: item?.meta?.name ?? "",
-        description: item?.meta?.description ?? "",
-        externalUrl: item?.meta?.externalUrl ?? "",
+        name: item?.name ?? "",
+        description: item?.description ?? "",
+        externalUrl: item?.externalUrl ?? "",
       };
     } else if (isUnitType(item)) {
       form.value = {

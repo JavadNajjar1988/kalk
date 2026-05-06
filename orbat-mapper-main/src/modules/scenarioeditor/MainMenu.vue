@@ -26,7 +26,7 @@ import { breakpointsTailwind, useBreakpoints } from "@vueuse/core";
 import { injectStrict } from "@/utils";
 import { activeScenarioKey } from "@/components/injects";
 import { useShareHistory } from "@/composables/scenarioShare";
-import { LockIcon, MoonStarIcon, SunIcon } from "lucide-vue-next";
+import { LockIcon, MoonStarIcon, SunIcon } from "@lucide/vue";
 import { UseDark } from "@vueuse/components";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
@@ -43,6 +43,7 @@ const emit = defineEmits<{
 
 const {
   store: { undo, redo, canRedo, canUndo },
+  io: { hasDistinctOpenedBaseline, hasSavedBaseline },
 } = injectStrict(activeScenarioKey);
 
 const route = useRoute();
@@ -185,8 +186,25 @@ const { history: shareHistory, clearHistory: clearShareHistory } = useShareHisto
             <DropdownMenuShortcut class="ml-4">Ctrl/⌘ shift Z</DropdownMenuShortcut>
           </DropdownMenuItem>
           <DropdownMenuSeparator />
+          <DropdownMenuItem
+            v-if="hasDistinctOpenedBaseline"
+            @select="emit('action', 'restoreOriginal')"
+          >
+            Revert to opened state
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            @select="emit('action', 'revertToSaved')"
+            :disabled="!hasSavedBaseline"
+          >
+            Revert to saved version
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
           <DropdownMenuItem @select="emit('action', 'exportToClipboard')">
             Copy scenario to clipboard
+          </DropdownMenuItem>
+          <DropdownMenuItem @select="emit('action', 'pasteFromClipboard')">
+            Paste from clipboard
+            <DropdownMenuShortcut class="ml-4">Ctrl/⌘ V</DropdownMenuShortcut>
           </DropdownMenuItem>
         </DropdownMenuSubContent>
       </DropdownMenuSub>

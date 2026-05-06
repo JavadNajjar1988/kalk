@@ -11,6 +11,13 @@ import type { FeatureId } from "@/types/scenarioGeoModels";
 import type { TGeo } from "@/scenariostore";
 import View from "ol/View";
 import Geometry from "ol/geom/Geometry";
+import { isNGeometryLayerItem } from "@/types/scenarioLayerItems";
+import { useRoutingStore } from "@/stores/routingStore";
+import { isObstacleHighlighted } from "@/geo/routing/obstacleHighlight";
+import {
+  createFeatureSelectionMarkerStyle,
+  createFeatureSelectionStyle,
+} from "@/modules/scenarioeditor/featureLayerUtils";
 
 let zoomResolutions: number[] = [];
 
@@ -33,8 +40,12 @@ const defaultStyle = new Style({
   }),
 });
 
+const obstacleHighlightStyle = createFeatureSelectionStyle();
+const obstacleHighlightMarkerStyle = createFeatureSelectionMarkerStyle();
+
 export function useFeatureStyles(geo: TGeo) {
   const styleCache = new Map<any, { style: Style | Style[]; revision: number }>();
+  const routingStore = useRoutingStore();
 
   function clearCache() {
     styleCache.clear();
@@ -55,11 +66,13 @@ export function useFeatureStyles(geo: TGeo) {
     }
     let cachedStyle = cachedItem?.style;
 
-    const { feature: scenarioFeature } = geo.getFeatureById(featureId);
-    if (!scenarioFeature) return;
+    const { layerItem } = geo.getLayerItemById(featureId);
+    if (!layerItem || !isNGeometryLayerItem(layerItem)) return;
+    const scenarioFeature = layerItem;
 
     const {
-      meta: { name: label, _zIndex },
+      name: label,
+      _zIndex,
       style: {
         showLabel = false,
         limitVisibility,
@@ -73,7 +86,7 @@ export function useFeatureStyles(geo: TGeo) {
     if (!cachedStyle) {
       const baseStyle = createSimpleStyle(scenarioFeature.style || {}) || defaultStyle;
       // @ts-ignore
-      feature.set("_zIndex", scenarioFeature.meta._zIndex, true);
+      feature.set("_zIndex", scenarioFeature._zIndex, true);
 
       // Create arrow styles if applicable
       const geometry = feature.getGeometry();
@@ -119,6 +132,25 @@ export function useFeatureStyles(geo: TGeo) {
     // Update arrow z-index
     for (let i = 1; i < stylesArray.length; i++) {
       stylesArray[i].setZIndex((_zIndex ?? 0) + 1);
+    }
+
+    const highlighted = isObstacleHighlighted(
+      {
+        active: routingStore.obstaclePickerOpen,
+        layerIds: routingStore.obstacleLayerIds,
+        featureIds: routingStore.obstacleFeatureIds,
+      },
+      featureId,
+      scenarioFeature._pid,
+    );
+    if (highlighted) {
+      if (feature.getGeometry()?.getType() === "Point") {
+        return [obstacleHighlightMarkerStyle, ...stylesArray];
+      }
+      obstacleHighlightStyle
+        .getStroke()
+        ?.setWidth((baseStyle.getStroke()?.getWidth() || 0) + 8);
+      return [obstacleHighlightStyle, ...stylesArray];
     }
 
     return cachedStyle;
