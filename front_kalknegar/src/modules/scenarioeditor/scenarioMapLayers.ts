@@ -4,11 +4,13 @@ import { activeScenarioKey } from "@/components/injects";
 import LayerGroup from "ol/layer/Group";
 import type {
   FeatureId,
+  ScenarioGeoJSONLayer,
   ScenarioImageLayer,
   ScenarioKMLLayer,
   ScenarioMapLayer,
   ScenarioMapLayerType,
   ScenarioTileJSONLayer,
+  ScenarioWMSLayer,
   ScenarioXYZLayer,
 } from "@/types/scenarioGeoModels";
 import GeoImageLayer from "ol-ext/layer/GeoImage";
@@ -31,6 +33,7 @@ import type {
   ScenarioTileJSONLayerUpdate,
 } from "@/types/internalModels";
 import XYZ from "ol/source/XYZ";
+import TileWMS from "ol/source/TileWMS";
 import type { TGeo } from "@/scenariostore";
 import {
   type TransformUpdate,
@@ -38,6 +41,7 @@ import {
 } from "@/composables/geoImageLayerInteraction";
 import VectorSource from "ol/source/Vector";
 import VectorLayer from "ol/layer/Vector";
+import GeoJSON from "ol/format/GeoJSON";
 import { KMLZ } from "@/geo/kmlz";
 import { imageCache } from "@/importexport/fileHandling";
 
@@ -176,6 +180,45 @@ export function useScenarioMapLayers(olMap: OLMap) {
     });
   }
 
+  async function addGeoJSONLayer(data: ScenarioGeoJSONLayer) {
+    if (!data.url) {
+      console.warn("Missing url for GeoJSON layer");
+      return;
+    }
+
+    const format = new GeoJSON({
+      dataProjection: "EPSG:4326",
+      featureProjection: olMap.getView().getProjection(),
+    });
+
+    const source = new VectorSource({
+      url: data.url,
+      format,
+    });
+
+    const newLayer = new VectorLayer({
+      opacity: data.opacity ?? 0.7,
+      visible: !(data.isHidden ?? false),
+      source,
+      properties: {
+        id: data.id,
+        title: data.name,
+        name: data.name,
+      },
+    });
+
+    scn.geo.updateMapLayer(
+      data.id,
+      { _status: "initialized" },
+      { noEmit: true, undoable: false },
+    );
+    mapLayersGroup.getLayers().push(newLayer);
+    newLayer.getSource()?.once("featuresloadend", () => {
+      const layerExtent = fixExtent(source.getExtent());
+      layerExtent && !isEmpty(layerExtent) && olMap.getView().fit(layerExtent);
+    });
+  }
+
   function addTileJSONLayer(data: ScenarioTileJSONLayer) {
     if (!data.url) {
       console.warn("Missing url for tile layer");
@@ -270,6 +313,44 @@ export function useScenarioMapLayers(olMap: OLMap) {
     mapLayersGroup.getLayers().push(newLayer);
   }
 
+  function addWMSLayer(data: ScenarioWMSLayer) {
+    const baseUrl = data.url?.trim();
+    const layersParam = data.layers?.trim();
+    if (!baseUrl || !layersParam) {
+      console.warn("Missing url or layers for WMS layer");
+      return;
+    }
+    const source = new TileWMS({
+      url: baseUrl,
+      params: {
+        LAYERS: layersParam,
+        TILED: true,
+        FORMAT: (data.imageFormat || "image/png").trim(),
+        TRANSPARENT: true,
+      },
+      crossOrigin: "anonymous",
+    });
+    const newLayer = new TileLayer({
+      opacity: data.opacity ?? 0.7,
+      visible: !(data.isHidden ?? false),
+      source,
+      properties: {
+        id: data.id,
+        title: data.name,
+        name: data.name,
+      },
+    });
+    if (data.extent && data.extent.length === 4) {
+      newLayer.setExtent(data.extent as [number, number, number, number]);
+    }
+    scn.geo.updateMapLayer(
+      data.id,
+      { _status: "initialized" },
+      { noEmit: true, undoable: false },
+    );
+    mapLayersGroup.getLayers().push(newLayer);
+  }
+
   function deleteLayer(layerId: FeatureId) {
     const layer = getOlLayerById(layerId);
     if (layer) {
@@ -285,6 +366,8 @@ export function useScenarioMapLayers(olMap: OLMap) {
     if (mapLayer.type === "TileJSONLayer") addTileJSONLayer(mapLayer);
     if (mapLayer.type === "XYZLayer") addXYZLayer(mapLayer);
     if (mapLayer.type === "KMLLayer") addKMLLayer(mapLayer);
+    if (mapLayer.type === "GeoJSONLayer") addGeoJSONLayer(mapLayer);
+    if (mapLayer.type === "WMSLayer") addWMSLayer(mapLayer);
   }
 
   function updateLayer(layerId: FeatureId, data: ScenarioMapLayerUpdate) {
@@ -311,6 +394,24 @@ export function useScenarioMapLayers(olMap: OLMap) {
         deleteLayer(layerId);
         addLayer(layerId);
         if (imageTransformIsActive.value) startTransform(layer, layerId);
+      }
+    }
+
+    if (mapLayer.type === "WMSLayer") {
+      const w = data as Partial<ScenarioWMSLayer>;
+      const urlChanged = "url" in data && data.url !== undefined;
+      const restChanged =
+        w.layers !== undefined || w.imageFormat !== undefined || w.extent !== undefined;
+      if (urlChanged || restChanged) {
+        deleteLayer(layerId);
+        addLayer(layerId);
+      }
+    }
+
+    if (mapLayer.type === "KMLLayer" || mapLayer.type === "GeoJSONLayer") {
+      if ("url" in data && data.url !== undefined) {
+        deleteLayer(layerId);
+        addLayer(layerId);
       }
     }
 
@@ -435,7 +536,12 @@ function getOrCreateLayerGroup(olMap: OLMap) {
 export function getMapLayerIcon(mapLayer: ScenarioMapLayer) {
   if (mapLayer.type === "ImageLayer") return ImageIcon;
   if (mapLayer.type === "KMLLayer") return VectorIcon;
-  if (mapLayer.type === "TileJSONLayer" || mapLayer.type === "XYZLayer")
+  if (mapLayer.type === "GeoJSONLayer") return VectorIcon;
+  if (
+    mapLayer.type === "TileJSONLayer" ||
+    mapLayer.type === "XYZLayer" ||
+    mapLayer.type === "WMSLayer"
+  )
     return IconWebBox;
   return ImageIcon;
 }
@@ -470,6 +576,26 @@ export function addMapLayer(
       name: "New image layer",
       url: "",
       attributions: "",
+      _status: "uninitialized",
+      _isNew: true,
+    });
+  } else if (layerType === "WMSLayer") {
+    newLayer = geo.addMapLayer({
+      id: nanoid(),
+      type: "WMSLayer",
+      name: "New WMS layer",
+      url: "",
+      layers: "",
+      imageFormat: "image/png",
+      _status: "uninitialized",
+      _isNew: true,
+    });
+  } else if (layerType === "GeoJSONLayer") {
+    newLayer = geo.addMapLayer({
+      id: nanoid(),
+      type: "GeoJSONLayer",
+      name: "New GeoJSON layer",
+      url: "",
       _status: "uninitialized",
       _isNew: true,
     });

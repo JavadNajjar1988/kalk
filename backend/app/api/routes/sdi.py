@@ -1,9 +1,10 @@
 from fastapi import APIRouter, Query, HTTPException, Depends
-from sqlalchemy import select, func
+from sqlalchemy import delete, func, select, update
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.deps import DbSession
-from app.models.sdi import SDIMap, SDIServer
+from app.models.sdi import SDIJob, SDIMap, SDIServer
 from app.models.map import OfflineMap
 from app.schemas.sdi import (
     SDIMapResponse,
@@ -17,7 +18,7 @@ from app.schemas.sdi import (
 )
 from app.core.config import settings
 from app.services.sdi.publish import generate_layers_json
-from app.core.security import require_roles
+from app.core.security import get_current_user, require_roles
 from app.services.sdi.harvest import (
     harvest_offline_mbtiles,
     harvest_offline_folder,
@@ -78,9 +79,23 @@ async def create_sdi_map(payload: SDIMapCreate, session: DbSession = None):
 
 @router.get("/servers", response_model=SDIServerListResponse)
 async def list_servers(session: DbSession = None):
-    res = await session.execute(select(SDIServer).order_by(SDIServer.created_at.desc()))
-    items = list(res.scalars().all() or [])
-    return SDIServerListResponse(servers=[SDIServerResponse.model_validate(i) for i in items])
+    try:
+        res = await session.execute(select(SDIServer).order_by(SDIServer.created_at.desc()))
+        items = list(res.scalars().all() or [])
+        return SDIServerListResponse(servers=[SDIServerResponse.model_validate(i) for i in items])
+    except SQLAlchemyError as e:
+        cause = str(e.__cause__) if e.__cause__ is not None else ""
+        combined = f"{e!s} {cause}".lower()
+        if "sdi_servers" in combined and (
+            "no such table" in combined
+            or "does not exist" in combined
+            or "undefinedtable" in combined.replace(" ", "")
+        ):
+            raise HTTPException(
+                status_code=503,
+                detail="sdi_tables_missing_run_alembic_upgrade",
+            ) from e
+        raise
 
 
 @router.post("/servers", response_model=SDIServerResponse)
@@ -127,13 +142,19 @@ async def delete_server(server_id: int, session: DbSession = None):
     obj = res.scalar_one_or_none()
     if not obj:
         raise HTTPException(status_code=404, detail="server_not_found")
+    await session.execute(update(SDIMap).where(SDIMap.server_id == server_id).values(server_id=None))
+    await session.execute(delete(SDIJob).where(SDIJob.server_id == server_id))
     await session.delete(obj)
     await session.commit()
     return {"deleted": server_id}
 
 
-@router.post("/servers/{server_id}/test", dependencies=[Depends(require_roles("ADMIN"))])
-async def test_server(server_id: int, session: DbSession = None):
+@router.post("/servers/{server_id}/test")
+async def test_server(
+    server_id: int,
+    session: DbSession = None,
+    _: dict = Depends(get_current_user),
+):
     res = await session.execute(select(SDIServer).where(SDIServer.id == server_id))
     obj: SDIServer | None = res.scalar_one_or_none()
     if not obj:
@@ -146,8 +167,11 @@ async def test_server(server_id: int, session: DbSession = None):
         return {"ok": False, "error": str(e)}
 
 
-@router.post("/servers/test", dependencies=[Depends(require_roles("ADMIN"))])
-async def test_server_ad_hoc(base_url: str):
+@router.post("/servers/test")
+async def test_server_ad_hoc(
+    base_url: str = Query(..., min_length=1),
+    _: dict = Depends(get_current_user),
+):
     try:
         async with httpx.AsyncClient(timeout=5.0, verify=False) as client:
             r = await client.get(base_url)

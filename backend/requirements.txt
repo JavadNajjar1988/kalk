@@ -15,3 +15,5 @@ pytest-asyncio>=0.23.7
 aiosqlite>=0.20.0
 python-multipart>=0.0.9
 openpyxl>=3.1.2
+pyshp>=2.3.1
+pyproj>=3.6.1

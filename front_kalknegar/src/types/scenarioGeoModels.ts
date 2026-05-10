@@ -112,6 +112,12 @@ export interface ScenarioKMLLayer extends ScenarioMapLayerBase {
   extractStyles?: boolean;
 }
 
+/** GeoJSON از URL (کاتالوگ / آپلود بک‌اند)؛ مختصات ذخیره‌شده باید WGS84 باشد */
+export interface ScenarioGeoJSONLayer extends ScenarioMapLayerBase {
+  type: "GeoJSONLayer";
+  url: string;
+}
+
 export interface ScenarioXYZLayer extends ScenarioMapLayerBase {
   type: "XYZLayer";
   url: string;
@@ -122,11 +128,22 @@ export interface ScenarioTileJSONLayer extends ScenarioMapLayerBase {
   url: string;
 }
 
+/** OGC WMS (TileWMS) — url is service base, layers is LAYERS param */
+export interface ScenarioWMSLayer extends ScenarioMapLayerBase {
+  type: "WMSLayer";
+  url: string;
+  layers: string;
+  /** optional GetMap FORMAT, default image/png */
+  imageFormat?: string;
+}
+
 export type ScenarioMapLayer =
   | ScenarioImageLayer
   | ScenarioTileJSONLayer
   | ScenarioXYZLayer
-  | ScenarioKMLLayer;
+  | ScenarioKMLLayer
+  | ScenarioGeoJSONLayer
+  | ScenarioWMSLayer;
 
 export type ScenarioMapLayerType = ScenarioMapLayer["type"];
 

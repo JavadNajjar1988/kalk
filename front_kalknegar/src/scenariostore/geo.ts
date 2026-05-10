@@ -168,7 +168,9 @@ export function useGeo(store: NewScenarioStore) {
       opacity: 0.7,
       ...data,
       _isNew: true,
-      _isTemporary: data.url.startsWith("blob:"),
+      _isTemporary:
+        typeof (data as { url?: string }).url === "string" &&
+        (data as { url: string }).url.startsWith("blob:"),
     });
     if (!newLayer.id) newLayer.id = nanoid();
     update(

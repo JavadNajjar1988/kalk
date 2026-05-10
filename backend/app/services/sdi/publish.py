@@ -38,34 +38,38 @@ async def generate_layers_json(session: AsyncSession) -> dict[str, Any]:
 
     layers: list[dict[str, Any]] = []
     for m in items:
-        layers.append(
-            {
-                "id": f"{(m.title or '').lower().replace(' ', '-')}-{m.version or 'v1'}",
-                "title": m.title,
-                "category": m.category or None,
-                "description": m.description or None,
-                "type": ("raster-xyz" if m.source_type.startswith("xyz") else m.source_type),
-                "source": m.source_type,
-                "path": _public_catalog_path(m.url_or_path),
-                "srs": m.srs or None,
-                "minzoom": m.minzoom,
-                "maxzoom": m.maxzoom,
-                "updated": (m.updated_at.isoformat() if m.updated_at else None),
-                "status": "published",
-                "ui": {
-                    "defaultOpacity": 1.0,
-                    "visibleByDefault": False,
-                    "tags": [],
-                },
-                "admin": {
-                    "map_id": m.id,
-                    "version": m.version or "v1",
-                    "checksum": m.hash or None,
-                    "roles": m.roles or settings.DEFAULT_ROLES,
-                },
-                "bbox": m.bbox,
-            }
-        )
+        entry: dict[str, Any] = {
+            "id": f"{(m.title or '').lower().replace(' ', '-')}-{m.version or 'v1'}",
+            "title": m.title,
+            "category": m.category or None,
+            "description": m.description or None,
+            "type": ("raster-xyz" if m.source_type.startswith("xyz") else m.source_type),
+            "source": m.source_type,
+            "path": _public_catalog_path(m.url_or_path),
+            "srs": m.srs or None,
+            "minzoom": m.minzoom,
+            "maxzoom": m.maxzoom,
+            "updated": (m.updated_at.isoformat() if m.updated_at else None),
+            "status": "published",
+            "ui": {
+                "defaultOpacity": 1.0,
+                "visibleByDefault": False,
+                "tags": [],
+            },
+            "admin": {
+                "map_id": m.id,
+                "version": m.version or "v1",
+                "checksum": m.hash or None,
+                "roles": m.roles or settings.DEFAULT_ROLES,
+            },
+            "bbox": m.bbox,
+        }
+        # WMS/WMTS clients need the OGC layer name (stored on SDIMap, omitted before).
+        if m.layer_name:
+            entry["layer_name"] = m.layer_name
+        if m.format:
+            entry["format"] = m.format
+        layers.append(entry)
 
     payload: dict[str, Any] = {
         "schema_version": 1,

@@ -11,6 +11,8 @@ const layerTypeLabelMap: Record<ScenarioMapLayerType, string> = {
   ImageLayer: "Image layer",
   TileJSONLayer: "TileJSON layer",
   KMLLayer: "KML layer",
+  GeoJSONLayer: "GeoJSON layer",
+  WMSLayer: "WMS layer",
 };
 
 export function useMapLayerInfo(layer: ScenarioMapLayer) {

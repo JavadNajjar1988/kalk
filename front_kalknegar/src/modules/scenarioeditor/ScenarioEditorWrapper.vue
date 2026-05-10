@@ -11,10 +11,20 @@ import {
 } from "@/services/api/scenarioApiService";
 import { useDebounceFn, useEventListener } from "@vueuse/core";
 import ScenarioNotFoundPage from "@/modules/scenarioeditor/ScenarioNotFoundPage.vue";
+import { mergePublishedCatalogMapLayers } from "@/services/catalogMapLayersSync";
 
 const props = defineProps<{ scenarioId: string }>();
 
 const { scenario, isReady } = useScenario();
+
+async function applyPublishedCatalogMapLayers() {
+  await nextTick();
+  try {
+    await mergePublishedCatalogMapLayers(scenario.value.geo);
+  } catch (e) {
+    console.warn("[ScenarioEditorWrapper] catalog map layers merge skipped:", e);
+  }
+}
 const localReady = ref(false);
 const scenarioNotFound = ref(false);
 
@@ -127,6 +137,7 @@ watch(
         selectedItems.clear();
         selectedItems.showScenarioInfo.value = true;
       }
+      await applyPublishedCatalogMapLayers();
       localReady.value = true;
       syncBasemapBaselineAfterLoad(newScenarioId);
     } else {
@@ -201,6 +212,7 @@ watch(
           
           if (scn.type === 'ORBAT-mapper') {
             scenario.value.io.loadFromObject(scn as any);
+            await applyPublishedCatalogMapLayers();
             selectedItems.clear();
             selectedItems.showScenarioInfo.value = true;
             syncBasemapBaselineAfterLoad(newScenarioId);

@@ -54,6 +54,7 @@ export type ScenarioActions =
   | "addSide"
   | "addTileJSONLayer"
   | "addXYZLayer"
+  | "addWMSLayer"
   | "addImageLayer"
   | "duplicate"
   | "export"

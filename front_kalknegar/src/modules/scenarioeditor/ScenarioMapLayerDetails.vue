@@ -21,6 +21,7 @@ import { useSelectedItems } from "@/stores/selectedStore";
 import { TabPanel } from "@headlessui/vue";
 import ImageMapLayerSettings from "@/modules/scenarioeditor/ImageMapLayerSettings.vue";
 import TileJSONMapLayerSettings from "@/modules/scenarioeditor/TileMapLayerSettings.vue";
+import WmsMapLayerSettings from "@/modules/scenarioeditor/WmsMapLayerSettings.vue";
 import { type LayerUpdateOptions } from "@/composables/geoMapLayers";
 import { useUiStore } from "@/stores/uiStore";
 import MapLayerMetaSettings from "@/modules/scenarioeditor/MapLayerMetaSettings.vue";
@@ -101,6 +102,10 @@ function onImageLayerAction(action: ScenarioMapLayerAction) {
   }
 }
 
+function onAuxMapLayerSettingsAction(action: string) {
+  if (action === "zoom") imageBus.emit({ action: "zoom", id: props.layerId });
+}
+
 function toggleLayerVisibility() {
   updateLayer({ isHidden: !(mapLayer.value.isHidden ?? false) });
 }
@@ -153,6 +158,12 @@ function toggleLayerVisibility() {
           :layer="mapLayer"
           @update="updateLayer"
           @action="onImageLayerAction"
+        />
+        <WmsMapLayerSettings
+          v-else-if="mapLayer.type === 'WMSLayer'"
+          :layer="mapLayer"
+          @update="updateLayer"
+          @action="onAuxMapLayerSettingsAction"
         />
       </TabPanel>
       <TabPanel v-if="uiStore.debugMode" class="prose prose-sm max-w-none">

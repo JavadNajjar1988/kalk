@@ -80,6 +80,14 @@ const mapLayerButtonItems: ButtonGroupItem[] = [
     label: "افزودن لایه TileJSON",
     onClick: () => addNewMapLayer("TileJSONLayer"),
   },
+  {
+    label: "افزودن لایه WMS",
+    onClick: () => addNewMapLayer("WMSLayer"),
+  },
+  {
+    label: "افزودن لایه GeoJSON",
+    onClick: () => addNewMapLayer("GeoJSONLayer"),
+  },
 ];
 
 const {
@@ -171,6 +179,8 @@ const mapLayersMenuItems: MenuItemData[] = [
   { label: "افزودن لایه تصویر", action: () => addNewMapLayer("ImageLayer") },
   { label: "افزودن لایه TileJSON", action: () => addNewMapLayer("TileJSONLayer") },
   { label: "افزودن لایه کاشی XYZ", action: () => addNewMapLayer("XYZLayer") },
+  { label: "افزودن لایه WMS", action: () => addNewMapLayer("WMSLayer") },
+  { label: "افزودن لایه GeoJSON", action: () => addNewMapLayer("GeoJSONLayer") },
 ];
 
 function onMapLayerAction(layer: ScenarioMapLayer, action: ScenarioMapLayerAction) {

@@ -56,7 +56,7 @@ export interface LayerFeatureSearchResult extends LayerFeatureItem, SearchResult
 
 export interface MapLayerSearchResult extends SearchResult {
   category: "Map layers";
-  type: "ImageLayer" | "TileJSONLayer";
+  type: "ImageLayer" | "TileJSONLayer" | "XYZLayer" | "KMLLayer" | "GeoJSONLayer" | "WMSLayer";
 }
 
 export interface EventSearchResult extends SearchResult {

@@ -96,6 +96,7 @@ onScenarioAction(({ action }) => {
   if (
     action === "addTileJSONLayer" ||
     action === "addXYZLayer" ||
+    action === "addWMSLayer" ||
     action === "addImageLayer"
   ) {
     const layerType =
@@ -103,7 +104,9 @@ onScenarioAction(({ action }) => {
         ? "XYZLayer"
         : action === "addImageLayer"
           ? "ImageLayer"
-          : "TileJSONLayer";
+          : action === "addWMSLayer"
+            ? "WMSLayer"
+            : "TileJSONLayer";
     ui.activeTabIndex = TAB_LAYERS;
     const newLayer = addMapLayer(layerType, activeScenario.geo);
     ui.mapLayersPanelOpen = true;

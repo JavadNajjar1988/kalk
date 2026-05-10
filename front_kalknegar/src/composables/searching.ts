@@ -204,6 +204,7 @@ const actionItems: ActionItem[] = [
   { action: "addSide", label: "افزودن طرف", icon: "add" },
   { action: "addTileJSONLayer", label: "افزودن لایه نقشه TileJSON", icon: "add" },
   { action: "addXYZLayer", label: "افزودن لایه نقشه XYZ", icon: "add" },
+  { action: "addWMSLayer", label: "افزودن لایه نقشه WMS", icon: "add" },
   { action: "addImageLayer", label: "افزودن لایه تصویر", icon: "add" },
   { action: "startPlayback", label: "شروع پخش", icon: "play" },
   { action: "stopPlayback", label: "توقف پخش", icon: "pause" },

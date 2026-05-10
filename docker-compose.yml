@@ -23,7 +23,19 @@ services:
       context: ./backend
       dockerfile: Dockerfile
     restart: unless-stopped
-    command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+    # فقط کد Python زیر app/ را برای reload نگاه کن؛ آپلود mbtiles به static/maps باعث قطع اتصال نشود
+    command:
+      [
+        "uvicorn",
+        "app.main:app",
+        "--host",
+        "0.0.0.0",
+        "--port",
+        "8000",
+        "--reload",
+        "--reload-dir",
+        "/app/app",
+      ]
     volumes:
       - ./backend:/app
       - ./backend/static/maps:/app/backend/static/maps

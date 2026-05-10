@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "catalog_version": "3320bd5c9cba2a3e21891b9545e07c5880c7b29538d48b6b05b48920458db6db",
+  "catalog_version": "93598e2c201f909e8ff4a3c2c2899cb2a6748810da169b92f54d2f4e639b3d8c",
   "layers": [
     {
       "id": "33-v1",
@@ -33,7 +33,8 @@
         47.225,
         8.8,
         47.533
-      ]
+      ],
+      "format": "pbf"
     },
     {
       "id": "09-v1",
@@ -61,7 +62,8 @@
           "user"
         ]
       },
-      "bbox": null
+      "bbox": null,
+      "format": "png"
     },
     {
       "id": "44-v1",
@@ -94,7 +96,8 @@
         -85.05112878,
         180.0,
         85.05112878
-      ]
+      ],
+      "format": "png"
     },
     {
       "id": "44-v1",
@@ -127,7 +130,8 @@
         -85.05112878,
         180.0,
         85.05112878
-      ]
+      ],
+      "format": "png"
     },
     {
       "id": "44-v1",
@@ -160,7 +164,8 @@
         -85.05112878,
         180.0,
         85.05112878
-      ]
+      ],
+      "format": "png"
     },
     {
       "id": "44-v1",
@@ -193,7 +198,8 @@
         -85.05112878,
         180.0,
         85.05112878
-      ]
+      ],
+      "format": "png"
     },
     {
       "id": "44-v1",
@@ -226,7 +232,8 @@
         -85.05112878,
         180.0,
         85.05112878
-      ]
+      ],
+      "format": "png"
     },
     {
       "id": "44-v1",
@@ -259,20 +266,21 @@
         -85.05112878,
         180.0,
         85.05112878
-      ]
+      ],
+      "format": "png"
     },
     {
-      "id": "44-v1",
-      "title": "44",
+      "id": "wms-demo-server-for-mapserver,-setup-by-gatewaygeo-v1",
+      "title": "WMS Demo Server for MapServer, setup by GatewayGeo",
       "category": null,
       "description": null,
-      "type": "raster-xyz",
-      "source": "xyz_mbtiles",
-      "path": "/tiles/data/a8d25aa7-1d18-4595-8864-56a8520702bd/{z}/{x}/{-y}.png",
+      "type": "wms",
+      "source": "wms",
+      "path": "https://demo.mapserver.org/cgi-bin/wms",
       "srs": "EPSG:3857",
-      "minzoom": 0,
-      "maxzoom": 13,
-      "updated": "2026-04-28T12:18:19.878966+00:00",
+      "minzoom": null,
+      "maxzoom": null,
+      "updated": "2026-05-10T06:16:58.020238+00:00",
       "status": "published",
       "ui": {
         "defaultOpacity": 1.0,
@@ -280,7 +288,7 @@
         "tags": []
       },
       "admin": {
-        "map_id": 9,
+        "map_id": 10,
         "version": "v1",
         "checksum": null,
         "roles": [
@@ -289,10 +297,361 @@
       },
       "bbox": [
         -180.0,
-        -85.05112878,
+        -90.0,
         180.0,
-        85.05112878
-      ]
+        90.0
+      ],
+      "layer_name": "WMS_server",
+      "format": "image/png"
+    },
+    {
+      "id": "blue-marble-world-elevation-and-bathymetry-raster-v1",
+      "title": "Blue Marble World Elevation and Bathymetry Raster",
+      "category": null,
+      "description": null,
+      "type": "wms",
+      "source": "wms",
+      "path": "https://demo.mapserver.org/cgi-bin/wms",
+      "srs": "EPSG:3857",
+      "minzoom": null,
+      "maxzoom": null,
+      "updated": "2026-05-10T06:17:00.344646+00:00",
+      "status": "published",
+      "ui": {
+        "defaultOpacity": 1.0,
+        "visibleByDefault": false,
+        "tags": []
+      },
+      "admin": {
+        "map_id": 11,
+        "version": "v1",
+        "checksum": null,
+        "roles": [
+          "user"
+        ]
+      },
+      "bbox": [
+        -180.0,
+        -90.0,
+        180.0,
+        90.0
+      ],
+      "layer_name": "bluemarble",
+      "format": "image/png"
+    },
+    {
+      "id": "world-continents-v1",
+      "title": "World continents",
+      "category": null,
+      "description": null,
+      "type": "wms",
+      "source": "wms",
+      "path": "https://demo.mapserver.org/cgi-bin/wms",
+      "srs": "EPSG:3857",
+      "minzoom": null,
+      "maxzoom": null,
+      "updated": "2026-05-10T06:17:01.826363+00:00",
+      "status": "published",
+      "ui": {
+        "defaultOpacity": 1.0,
+        "visibleByDefault": false,
+        "tags": []
+      },
+      "admin": {
+        "map_id": 12,
+        "version": "v1",
+        "checksum": null,
+        "roles": [
+          "user"
+        ]
+      },
+      "bbox": [
+        -180.0,
+        -90.0,
+        180.0,
+        83.627419
+      ],
+      "layer_name": "continents",
+      "format": "image/png"
+    },
+    {
+      "id": "world-country-boundaries-v1",
+      "title": "World country boundaries",
+      "category": null,
+      "description": null,
+      "type": "wms",
+      "source": "wms",
+      "path": "https://demo.mapserver.org/cgi-bin/wms",
+      "srs": "EPSG:3857",
+      "minzoom": null,
+      "maxzoom": null,
+      "updated": "2026-05-10T06:17:04.949760+00:00",
+      "status": "published",
+      "ui": {
+        "defaultOpacity": 1.0,
+        "visibleByDefault": false,
+        "tags": []
+      },
+      "admin": {
+        "map_id": 13,
+        "version": "v1",
+        "checksum": null,
+        "roles": [
+          "user"
+        ]
+      },
+      "bbox": [
+        -180.0,
+        -90.0,
+        180.0,
+        83.627419
+      ],
+      "layer_name": "country_bounds",
+      "format": "image/png"
+    },
+    {
+      "id": "world-cities-v1",
+      "title": "World cities",
+      "category": null,
+      "description": null,
+      "type": "wms",
+      "source": "wms",
+      "path": "https://demo.mapserver.org/cgi-bin/wms",
+      "srs": "EPSG:3857",
+      "minzoom": null,
+      "maxzoom": null,
+      "updated": "2026-05-10T06:17:06.460491+00:00",
+      "status": "published",
+      "ui": {
+        "defaultOpacity": 1.0,
+        "visibleByDefault": false,
+        "tags": []
+      },
+      "admin": {
+        "map_id": 14,
+        "version": "v1",
+        "checksum": null,
+        "roles": [
+          "user"
+        ]
+      },
+      "bbox": [
+        -178.166667,
+        -54.8,
+        179.383333,
+        78.933333
+      ],
+      "layer_name": "cities",
+      "format": "image/png"
+    },
+    {
+      "id": "wms-demo-server-for-mapserver,-setup-by-gatewaygeo-v1",
+      "title": "WMS Demo Server for MapServer, setup by GatewayGeo",
+      "category": null,
+      "description": null,
+      "type": "wms",
+      "source": "wms",
+      "path": "https://demo.mapserver.org/cgi-bin/wms",
+      "srs": "EPSG:3857",
+      "minzoom": null,
+      "maxzoom": null,
+      "updated": "2026-05-10T06:48:49.025345+00:00",
+      "status": "published",
+      "ui": {
+        "defaultOpacity": 1.0,
+        "visibleByDefault": false,
+        "tags": []
+      },
+      "admin": {
+        "map_id": 15,
+        "version": "v1",
+        "checksum": null,
+        "roles": [
+          "user"
+        ]
+      },
+      "bbox": [
+        -180.0,
+        -90.0,
+        180.0,
+        90.0
+      ],
+      "layer_name": "WMS_server",
+      "format": "image/png"
+    },
+    {
+      "id": "blue-marble-world-elevation-and-bathymetry-raster-v1",
+      "title": "Blue Marble World Elevation and Bathymetry Raster",
+      "category": null,
+      "description": null,
+      "type": "wms",
+      "source": "wms",
+      "path": "https://demo.mapserver.org/cgi-bin/wms",
+      "srs": "EPSG:3857",
+      "minzoom": null,
+      "maxzoom": null,
+      "updated": "2026-05-10T06:48:50.640353+00:00",
+      "status": "published",
+      "ui": {
+        "defaultOpacity": 1.0,
+        "visibleByDefault": false,
+        "tags": []
+      },
+      "admin": {
+        "map_id": 16,
+        "version": "v1",
+        "checksum": null,
+        "roles": [
+          "user"
+        ]
+      },
+      "bbox": [
+        -180.0,
+        -90.0,
+        180.0,
+        90.0
+      ],
+      "layer_name": "bluemarble",
+      "format": "image/png"
+    },
+    {
+      "id": "world-continents-v1",
+      "title": "World continents",
+      "category": null,
+      "description": null,
+      "type": "wms",
+      "source": "wms",
+      "path": "https://demo.mapserver.org/cgi-bin/wms",
+      "srs": "EPSG:3857",
+      "minzoom": null,
+      "maxzoom": null,
+      "updated": "2026-05-10T06:48:51.908357+00:00",
+      "status": "published",
+      "ui": {
+        "defaultOpacity": 1.0,
+        "visibleByDefault": false,
+        "tags": []
+      },
+      "admin": {
+        "map_id": 17,
+        "version": "v1",
+        "checksum": null,
+        "roles": [
+          "user"
+        ]
+      },
+      "bbox": [
+        -180.0,
+        -90.0,
+        180.0,
+        83.627419
+      ],
+      "layer_name": "continents",
+      "format": "image/png"
+    },
+    {
+      "id": "world-country-boundaries-v1",
+      "title": "World country boundaries",
+      "category": null,
+      "description": null,
+      "type": "wms",
+      "source": "wms",
+      "path": "https://demo.mapserver.org/cgi-bin/wms",
+      "srs": "EPSG:3857",
+      "minzoom": null,
+      "maxzoom": null,
+      "updated": "2026-05-10T06:48:54.877619+00:00",
+      "status": "published",
+      "ui": {
+        "defaultOpacity": 1.0,
+        "visibleByDefault": false,
+        "tags": []
+      },
+      "admin": {
+        "map_id": 18,
+        "version": "v1",
+        "checksum": null,
+        "roles": [
+          "user"
+        ]
+      },
+      "bbox": [
+        -180.0,
+        -90.0,
+        180.0,
+        83.627419
+      ],
+      "layer_name": "country_bounds",
+      "format": "image/png"
+    },
+    {
+      "id": "world-cities-v1",
+      "title": "World cities",
+      "category": null,
+      "description": null,
+      "type": "wms",
+      "source": "wms",
+      "path": "https://demo.mapserver.org/cgi-bin/wms",
+      "srs": "EPSG:3857",
+      "minzoom": null,
+      "maxzoom": null,
+      "updated": "2026-05-10T06:48:56.351409+00:00",
+      "status": "published",
+      "ui": {
+        "defaultOpacity": 1.0,
+        "visibleByDefault": false,
+        "tags": []
+      },
+      "admin": {
+        "map_id": 19,
+        "version": "v1",
+        "checksum": null,
+        "roles": [
+          "user"
+        ]
+      },
+      "bbox": [
+        -178.166667,
+        -54.8,
+        179.383333,
+        78.933333
+      ],
+      "layer_name": "cities",
+      "format": "image/png"
+    },
+    {
+      "id": "1212-v1",
+      "title": "1212",
+      "category": "uploaded-vector",
+      "description": null,
+      "type": "geojson",
+      "source": "geojson",
+      "path": "/api/catalog/vector-data/212a521ba64f4af2a6385bd9aad93adc.geojson",
+      "srs": "EPSG:4326",
+      "minzoom": null,
+      "maxzoom": null,
+      "updated": null,
+      "status": "published",
+      "ui": {
+        "defaultOpacity": 1.0,
+        "visibleByDefault": false,
+        "tags": []
+      },
+      "admin": {
+        "map_id": 20,
+        "version": "v1",
+        "checksum": "31ce483f2b572d6ebbda035233bda6b9a6f7c21e46964035e944565842a13fee",
+        "roles": [
+          "user"
+        ]
+      },
+      "bbox": [
+        13.53888,
+        50.95808,
+        14.014905,
+        51.19802
+      ],
+      "format": "geojson"
     }
   ]
 }

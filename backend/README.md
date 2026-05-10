@@ -9,10 +9,12 @@
 python -m venv .venv
 . .venv\Scripts\Activate.ps1
 pip install -r requirements.txt
-uvicorn app.main:app --reload --port 8000
+# پورت 8002 با پروکسی Vite داشبورد هم‌خوان است (--port 8002)
+# --reload-dir app: فقط ماژول‌های Python reload شوند؛ آپلود فایل به static/maps باعث قطع اتصال (ERR_CONNECTION_RESET) نشود
+uvicorn app.main:app --reload --port 8002 --reload-dir app
 ```
 
-Swagger: `http://localhost:8000/api/docs`
+Swagger: `http://localhost:8002/api/docs` (اگر پورت 8002 باشد)
 
 ## متغیرهای محیطی (نمونه)
 ```

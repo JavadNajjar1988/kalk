@@ -23,10 +23,12 @@ import type {
   RangeRingGroup,
   ScenarioFeature,
   ScenarioFeatureMeta,
+  ScenarioGeoJSONLayer,
   ScenarioImageLayer,
   ScenarioKMLLayer,
   ScenarioLayer,
   ScenarioTileJSONLayer,
+  ScenarioWMSLayer,
   ScenarioXYZLayer,
 } from "@/types/scenarioGeoModels";
 import type { Optional } from "@/types/helpers";
@@ -147,12 +149,16 @@ export interface ScenarioTileJSONLayerUpdate
   extends Partial<Omit<ScenarioTileJSONLayer, "id">> {}
 export interface ScenarioXYZLayerUpdate extends Partial<Omit<ScenarioXYZLayer, "id">> {}
 export interface ScenarioKMLLayerUpdate extends Partial<Omit<ScenarioKMLLayer, "id">> {}
+export interface ScenarioGeoJSONLayerUpdate extends Partial<Omit<ScenarioGeoJSONLayer, "id">> {}
+export interface ScenarioWMSLayerUpdate extends Partial<Omit<ScenarioWMSLayer, "id">> {}
 
 export type ScenarioMapLayerUpdate =
   | ScenarioImageLayerUpdate
   | ScenarioTileJSONLayerUpdate
   | ScenarioXYZLayerUpdate
-  | ScenarioKMLLayerUpdate;
+  | ScenarioKMLLayerUpdate
+  | ScenarioGeoJSONLayerUpdate
+  | ScenarioWMSLayerUpdate;
 
 export interface SideGroupUpdate extends Partial<Omit<NSideGroup, "id" | "subUnits">> {}
 export interface UnitUpdate extends Partial<Omit<NUnit, "id">> {}

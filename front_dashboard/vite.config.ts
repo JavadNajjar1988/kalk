@@ -118,7 +118,9 @@ export default defineConfig({
         target: 'http://127.0.0.1:8002',
         changeOrigin: true,
         secure: false,
-        agent: proxyKeepAliveAgent,
+        // آپلود mbtiles بزرگ: timeout بالا؛ اگر قطع شد، علت متداول ری‌استارت uvicorn (--reload روی کل پوشه) است؛ README بک‌اند
+        timeout: 3_600_000,
+        proxyTimeout: 3_600_000,
       },
       '/tiles': {
         target: 'http://127.0.0.1:8480',

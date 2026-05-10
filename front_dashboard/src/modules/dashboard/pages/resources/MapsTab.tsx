@@ -99,6 +99,9 @@ import {
   setActiveOfflineMaps,
 } from '@/store/slices/mapSlice';
 import type { MapLayer } from '@/types/orbat';
+
+/** فرم دیالوگ لایه؛ `file` فقط در UI است و هرگز در Redux ذخیره نمی‌شود */
+type MapLayerFormState = Partial<Omit<MapLayer, 'id'>> & { file?: File | null };
 import { useTranslation } from '@/hooks/useTranslation';
 import MapsDeleteConfirmModal from '@/modules/dashboard/pages/resources/MapsDeleteConfirmModal';
 import {
@@ -139,6 +142,26 @@ const authFetch = async (baseUrl: string, endpoint: string, options: RequestInit
   
   return response;
 };
+
+/** پاسخ خطای این بک‌اند معمولاً { success:false, message } است نه تنها FastAPI { detail } */
+function parseBackendErrorBody(errBody: unknown, fallback: string): string {
+  if (!errBody || typeof errBody !== 'object') return fallback;
+  const o = errBody as Record<string, unknown>;
+  if (typeof o.message === 'string' && o.message.trim()) return o.message.trim();
+  if (typeof o.detail === 'string' && (o.detail as string).trim()) return (o.detail as string).trim();
+  const d = o.detail;
+  if (Array.isArray(d)) {
+    const msgs = d
+      .map((x) =>
+        typeof x === 'object' && x !== null && 'msg' in x && typeof (x as { msg: unknown }).msg === 'string'
+          ? (x as { msg: string }).msg
+          : null,
+      )
+      .filter(Boolean) as string[];
+    if (msgs.length) return msgs.join('؛ ');
+  }
+  return fallback;
+}
 
 // Interface برای نقشه‌های آفلاین
 interface OfflineMap {
@@ -863,10 +886,13 @@ const MapsTab: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [uploadError, setUploadError] = useState<string | null>(null);
+  const [vectorUploadLoading, setVectorUploadLoading] = useState(false);
+  /** بدون فایل .prj در ZIP شیپ؛ کد عددی EPSG برای تبدیل به WGS84 (مثل 32639) */
+  const [vectorCrsEpsg, setVectorCrsEpsg] = useState('');
   
   const [openDialog, setOpenDialog] = useState(false);
   const [dialogMode, setDialogMode] = useState<'serverLayer' | 'upload' | 'offline' | 'filesystem'>('serverLayer');
-  const [formData, setFormData] = useState<Partial<MapLayer>>({
+  const [formData, setFormData] = useState<MapLayerFormState>({
     name: '',
     type: 'xyz',
     url: '',
@@ -907,8 +933,19 @@ const MapsTab: React.FC = () => {
             created_at: s.created_at,
           }))
         );
+      } else {
+        const raw = await res.text();
+        let detail: unknown = raw;
+        try {
+          detail = raw ? JSON.parse(raw) : raw;
+        } catch {
+          /* نگه داشتن متن خام اگر JSON نبود */
+        }
+        console.error('GET /sdi/servers failed', res.status, detail);
       }
-    } catch {}
+    } catch (e) {
+      console.error('GET /sdi/servers', e);
+    }
   }, [apiBase]);
   useEffect(() => { loadServers(); }, [loadServers]);
 
@@ -1110,7 +1147,9 @@ const MapsTab: React.FC = () => {
       };
 
       xhr.onerror = () => {
-        setUploadError('خطا در اتصال به سرور');
+        setUploadError(
+          'اتصال هنگام آپلود قطع شد (Connection reset). با حالت reload معمولاً به‌خاطر ری‌استارت سرور پس از ذخیرهٔ فایل نقشه رخ می‌دهد؛ سرور را با «فقط نظارت بر پوشه app» اجرا کنید (به README بک‌اند یا docker-compose نگاه کنید) و مطمئن شوید API روی پورت پروکسی (مثل 8002) در دسترس است.',
+        );
         setUploadProgress(0);
         setLoading(false);
       };
@@ -1288,6 +1327,7 @@ const MapsTab: React.FC = () => {
   }, [activeTab, loadJobs]);
 
   const handleOpenDialog = (mode: 'serverLayer' | 'upload' | 'offline' | 'filesystem') => {
+    setVectorCrsEpsg('');
     setDialogMode(mode);
     if (mode === 'offline') {
       setOfflineFormData({ name: '', description: '', file: null });
@@ -1344,33 +1384,91 @@ const MapsTab: React.FC = () => {
     setFilesystemFolderInput('');
     setFilesystemFoldersError(null);
     setUploadError(null);
+    setVectorCrsEpsg('');
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (dialogMode === 'offline') {
       uploadOfflineMap();
-    } else if (dialogMode === 'filesystem') {
-      registerFilesystemMap();
-    } else {
-      // Optionally save SDI server metadata
-      if (saveAsSdiServer && formData.url) {
-        try {
-          const u = new URL(formData.url);
-          const body = {
-            name: u.host,
-            base_url: formData.url,
-            service_types: [formData.type || 'xyz'],
-            auth_type: 'none',
-          } as any;
-          authFetch(apiBase, '/sdi/servers', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
-            .then(r => r.json())
-            .then(s => setSavedServerId(s.id))
-            .catch(() => {});
-        } catch {}
-      }
-      dispatch(addMapLayer(formData as Omit<MapLayer, 'id'>));
-      handleCloseDialog();
+      return;
     }
+    if (dialogMode === 'filesystem') {
+      registerFilesystemMap();
+      return;
+    }
+    // Optionally save SDI server metadata
+    if (saveAsSdiServer && formData.url) {
+      try {
+        const u = new URL(formData.url);
+        const body = {
+          name: u.host,
+          base_url: formData.url,
+          service_types: [formData.type || 'xyz'],
+          auth_type: 'none',
+        } as any;
+        authFetch(apiBase, '/sdi/servers', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
+          .then(r => r.json())
+          .then(s => setSavedServerId(s.id))
+          .catch(() => {});
+      } catch { /* ignore */ }
+    }
+    if (dialogMode === 'upload') {
+      const file = formData.file;
+      const name = formData.name?.trim();
+      const fmt = formData.format?.trim();
+      if (!name || !file || !fmt) {
+        return;
+      }
+      setVectorUploadLoading(true);
+      setUploadError(null);
+      try {
+        const fd = new FormData();
+        fd.append('title', name);
+        fd.append('file', file);
+        if (vectorCrsEpsg.trim()) {
+          fd.append('crs_epsg', vectorCrsEpsg.trim());
+        }
+        const res = await authFetch(apiBase, '/catalog/upload-vector', { method: 'POST', body: fd });
+        if (!res.ok) {
+          let msg = `آپلود ناموفق بود (HTTP ${res.status}).`;
+          try {
+            const errBody = await res.json();
+            msg = parseBackendErrorBody(errBody, msg);
+          } catch {
+            /* ignore */
+          }
+          setUploadError(msg);
+          return;
+        }
+        const data = await res.json() as { layer_url: string; source_type?: string };
+        dispatch(
+          addMapLayer({
+            name,
+            type: fmt === 'geotiff' ? 'raster' : 'vector',
+            url: data.layer_url,
+            visible: formData.visible ?? true,
+            opacity: typeof formData.opacity === 'number' ? formData.opacity : 1,
+            format: fmt,
+            minZoom: formData.minZoom,
+            maxZoom: formData.maxZoom,
+            attribution: formData.attribution,
+            extent: formData.extent,
+            layers: formData.layers,
+            tileSize: formData.tileSize,
+            projection: formData.projection,
+          }),
+        );
+        await loadCatalog();
+        handleCloseDialog();
+      } catch (e) {
+        setUploadError(e instanceof Error ? e.message : 'خطا در ارتباط با سرور');
+      } finally {
+        setVectorUploadLoading(false);
+      }
+      return;
+    }
+    dispatch(addMapLayer(formData as Omit<MapLayer, 'id'>));
+    handleCloseDialog();
   };
 
   const testServerConnection = async () => {
@@ -1380,10 +1478,24 @@ const MapsTab: React.FC = () => {
     try {
       const params = new URLSearchParams({ base_url: String(formData.url) });
       const res = await authFetch(apiBase, `/sdi/servers/test?${params.toString()}`, { method: 'POST' });
-      const data = await res.json();
-      if (data.ok) setTestConnResult('موفق'); else setTestConnResult('ناموفق');
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        const msg =
+          typeof (data as { detail?: unknown }).detail === 'string'
+            ? (data as { detail: string }).detail
+            : res.status === 403
+              ? 'دسترسی رد شد (نیاز به ورود / نقش)'
+              : `HTTP ${res.status}`;
+        setTestConnResult(`ناموفق: ${msg}`);
+        return;
+      }
+      if (data.ok) {
+        setTestConnResult(`موفق (کد ${(data as { status?: number }).status ?? '—'})`);
+      } else {
+        setTestConnResult(`ناموفق: ${(data as { error?: string }).error || 'پاسخ غیرمنتظره'}`);
+      }
     } catch {
-      setTestConnResult('ناموفق');
+      setTestConnResult('ناموفق: خطای شبکه یا نشست');
     } finally {
       setTestConnLoading(false);
     }
@@ -1454,6 +1566,10 @@ const MapsTab: React.FC = () => {
 
   const handleDelete = (id: string) => {
     if (window.confirm(t('resources.maps.deleteConfirm'))) {
+      const layer = mapLayers.find((l) => l.id === id);
+      if (layer?.url?.startsWith('blob:')) {
+        URL.revokeObjectURL(layer.url);
+      }
       dispatch(deleteMapLayer(id));
     }
   };
@@ -1612,6 +1728,7 @@ const MapsTab: React.FC = () => {
                               </Typography>
                             </Box>
                           }
+                          secondaryTypographyProps={{ component: 'div' }}
                         />
                         <ListItemSecondaryAction>
                           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -1699,6 +1816,7 @@ const MapsTab: React.FC = () => {
                               </Typography>
                             </Box>
                           }
+                          secondaryTypographyProps={{ component: 'div' }}
                         />
                         <ListItemSecondaryAction>
                           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -1872,13 +1990,20 @@ const MapsTab: React.FC = () => {
                                 onClick={async () => {
                                   try {
                                     const res = await authFetch(apiBase, `/sdi/servers/${server.id}/test`, { method: 'POST' });
-                                    const data = await res.json();
-                                    if (data.ok) {
-                                      alert('اتصال موفق است ✓');
-                                    } else {
-                                      alert(`اتصال ناموفق: ${data.error || 'خطا'}`);
+                                    const data = await res.json().catch(() => ({}));
+                                    if (!res.ok) {
+                                      const detail = typeof (data as { detail?: unknown }).detail === 'string'
+                                        ? (data as { detail: string }).detail
+                                        : `HTTP ${res.status}`;
+                                      alert(`اتصال ناموفق (${detail})`);
+                                      return;
                                     }
-                                  } catch (error) {
+                                    if (data.ok) {
+                                      alert(`اتصال موفق ✓ (کد HTTP ${(data as { status?: number }).status ?? '—'})`);
+                                    } else {
+                                      alert(`اتصال ناموفق: ${(data as { error?: string }).error || 'خطای نامشخص'}`);
+                                    }
+                                  } catch {
                                     alert('خطا در تست اتصال');
                                   }
                                 }}
@@ -2953,8 +3078,19 @@ const MapsTab: React.FC = () => {
                         />
                       </Button>
                       <Typography variant="caption" color="text.secondary" display="block" sx={{ mt: 0.5 }}>
-                        برای Shapefile، فایل ZIP شامل shp/dbf/shx/prj را بارگذاری کنید.
+                        برای Shapefile، ZIP را با shp/dbf/shx (و ترجیحاً prj) بفرستید. اگر prj ندارید، EPSG سیستم مختصات را پایین وارد کنید (مثل ۳۲۶۳۹ برای یک ناحیهٔ UTM در ایران؛ بستهٔ پروژهٔ شما ممکن است متفاوت باشد).
                       </Typography>
+                      {formData.format === 'shapefile' && (
+                        <TextField
+                          fullWidth
+                          sx={{ mt: 2 }}
+                          label="EPSG (اختیاری — اگر بدون فایل .prj آپلود می‌کنید)"
+                          placeholder="32639"
+                          value={vectorCrsEpsg}
+                          onChange={(e) => setVectorCrsEpsg(e.target.value.replace(/[^\d]/g, '').slice(0, 6))}
+                          helperText="فقط اعداد؛ خالی یعنی باید .prj داخل ZIP باشد یا مختصات از قبل طول‌عرض جغرافی است."
+                        />
+                      )}
                       {formData.file && (
                         <Typography variant="caption" display="block" sx={{ mt: 1 }}>
                           {t('resources.maps.dialog.selectedFile')}: {formData.file.name}
@@ -2977,15 +3113,26 @@ const MapsTab: React.FC = () => {
             انصراف
           </Button>
           <Button
-            onClick={handleSave}
+            onClick={() => void handleSave()}
             variant="contained"
             color="primary"
             disabled={
-              dialogMode === 'offline' 
-                ? !offlineFormData.name || !offlineFormData.file 
+              vectorUploadLoading ||
+              (dialogMode === 'offline'
+                ? !offlineFormData.name || !offlineFormData.file
                 : dialogMode === 'filesystem'
                   ? !filesystemFormData.name || !filesystemFormData.folder
-                  : !formData.name
+                  : dialogMode === 'serverLayer'
+                    ? !formData.name?.trim() || !formData.url?.trim()
+                    : !formData.name?.trim() ||
+                      !formData.file ||
+                      !formData.format?.trim() ||
+                      formData.format === 'geotiff')
+            }
+            startIcon={
+              dialogMode === 'upload' && vectorUploadLoading ? (
+                <CircularProgress size={18} color="inherit" />
+              ) : null
             }
             sx={{ borderRadius: 2, px: 3 }}
           >

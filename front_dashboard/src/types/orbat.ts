@@ -121,7 +121,6 @@ export interface MapLayer {
   layers?: string;
   tileSize?: number;
   projection?: string;
-  file?: File;
 }
 
 // انواع رده‌های نظامی
