@@ -1,4 +1,4 @@
-from fastapi import APIRouter, File, Form, HTTPException, UploadFile
+from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
 from fastapi.responses import FileResponse, JSONResponse
 import hashlib
 import json
@@ -12,6 +12,7 @@ from pydantic import BaseModel
 from app.core.config import settings
 from app.deps import DbSession
 from app.models.sdi import SDIMap
+from app.core.security import require_roles
 from app.services.catalog_vector_upload import (
     VectorConversionError,
     _bbox_from_fc,
@@ -86,6 +87,24 @@ async def get_catalog_version():
         return {"catalog_version": _compute_version_from_bytes(data)}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"failed_to_read_version: {e}")
+
+
+@router.post("/rollback", dependencies=[Depends(require_roles("ADMIN"))])
+async def rollback_catalog():
+    """Rollback catalog file to last backup (best-effort).
+
+    Swaps `layers.bak.json` back to `layers.json` if backup exists.
+    """
+    final_path = settings.CATALOG_PATH
+    bak_path = settings.CATALOG_BACKUP_PATH
+    if not os.path.exists(bak_path):
+        raise HTTPException(status_code=404, detail="catalog_backup_not_found")
+    try:
+        # overwrite current catalog with backup
+        os.replace(bak_path, final_path)
+        return {"ok": True}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"failed_to_rollback_catalog: {e}")
 
 
 @router.get("/vector-data/{filename}")

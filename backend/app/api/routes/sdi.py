@@ -144,10 +144,21 @@ async def delete_server(server_id: int, session: DbSession = None):
     obj = res.scalar_one_or_none()
     if not obj:
         raise HTTPException(status_code=404, detail="server_not_found")
-    await session.execute(update(SDIMap).where(SDIMap.server_id == server_id).values(server_id=None))
+    # delete all harvested maps for this server as requested
+    has_published = False
+    try:
+        r = await session.execute(
+            select(func.count()).select_from(SDIMap).where(SDIMap.server_id == server_id, SDIMap.status == "published")
+        )
+        has_published = int(r.scalar_one() or 0) > 0
+    except Exception:
+        has_published = False
+    await session.execute(delete(SDIMap).where(SDIMap.server_id == server_id))
     await session.execute(delete(SDIJob).where(SDIJob.server_id == server_id))
     await session.delete(obj)
     await session.commit()
+    if has_published:
+        await generate_layers_json(session)
     return {"deleted": server_id}
 
 
@@ -327,7 +338,24 @@ async def update_sdi_map(map_id: int, payload: SDIMapUpdate, session: DbSession 
         setattr(obj, field, value)
     await session.commit()
     await session.refresh(obj)
+    # if catalog-visible, regenerate layers.json so edits show up immediately
+    if obj.status == "published":
+        await generate_layers_json(session)
     return SDIMapResponse.model_validate(obj)
+
+
+@router.delete("/maps/{map_id}", dependencies=[Depends(require_roles("ADMIN"))])
+async def delete_sdi_map(map_id: int, session: DbSession = None):
+    res = await session.execute(select(SDIMap).where(SDIMap.id == map_id))
+    obj: SDIMap | None = res.scalar_one_or_none()
+    if not obj:
+        raise HTTPException(status_code=404, detail="sdi_map_not_found")
+    was_published = obj.status == "published"
+    await session.delete(obj)
+    await session.commit()
+    if was_published:
+        await generate_layers_json(session)
+    return {"deleted": map_id}
 
 
 @router.post("/maps/{map_id}/publish", dependencies=[Depends(require_roles("ADMIN"))])

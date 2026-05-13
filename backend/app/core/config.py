@@ -49,6 +49,7 @@ class Settings(BaseSettings):
     # SDI catalog
     CATALOG_PATH: str = "backend/static/maps/layers.json"
     CATALOG_TMP_PATH: str = "backend/static/maps/layers.tmp.json"
+    CATALOG_BACKUP_PATH: str = "backend/static/maps/layers.bak.json"
     DEFAULT_ROLES: list[str] = ["user"]
 
     # اختیاری: API سازگار با OpenAI برای نگاشت ستون‌ها (فاز AI)

@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "catalog_version": "41a9a04684ae066cc0432a5e257b2d41185d0793ed7ebbe7a8cf3a24b4226f74",
+  "catalog_version": "453d208b239b6f9df9b67691f5db12871e8097996489ef1793250b6608912b5a",
   "layers": [
     {
       "id": "44-v1",
@@ -428,6 +428,41 @@
       },
       "admin": {
         "map_id": 10,
+        "version": "v1",
+        "checksum": null,
+        "roles": [
+          "user"
+        ]
+      },
+      "bbox": [
+        -180.0,
+        -90.0,
+        180.0,
+        90.0
+      ],
+      "layer_name": "WMS_server",
+      "format": "image/png"
+    },
+    {
+      "id": "wms-demo-server-for-mapserver,-setup-by-gatewaygeo-v1",
+      "title": "WMS Demo Server for MapServer, setup by GatewayGeo",
+      "category": null,
+      "description": null,
+      "type": "wms",
+      "source": "wms",
+      "path": "https://demo.mapserver.org/cgi-bin/wms",
+      "srs": "EPSG:3857",
+      "minzoom": null,
+      "maxzoom": null,
+      "updated": "2026-05-13T06:08:47.735449+00:00",
+      "status": "published",
+      "ui": {
+        "defaultOpacity": 1.0,
+        "visibleByDefault": false,
+        "tags": []
+      },
+      "admin": {
+        "map_id": 15,
         "version": "v1",
         "checksum": null,
         "roles": [

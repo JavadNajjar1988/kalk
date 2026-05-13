@@ -85,9 +85,18 @@ async def generate_layers_json(session: AsyncSession) -> dict[str, Any]:
     # write atomically
     tmp_path = settings.CATALOG_TMP_PATH
     final_path = settings.CATALOG_PATH
+    bak_path = settings.CATALOG_BACKUP_PATH
     os.makedirs(os.path.dirname(final_path), exist_ok=True)
     with open(tmp_path, "wb") as f:
         f.write(json.dumps(payload, ensure_ascii=False, indent=2).encode("utf-8"))
+
+    # keep last known-good catalog for rollback
+    try:
+        if os.path.exists(final_path):
+            os.replace(final_path, bak_path)
+    except Exception:
+        # best-effort backup; don't fail publish if backup can't be written
+        pass
     os.replace(tmp_path, final_path)
 
     return payload

@@ -715,6 +715,21 @@ const MapsTab: React.FC = () => {
   const [selectedLayers, setSelectedLayers] = useState<string[]>([]);
   const [previewLayer, setPreviewLayer] = useState<CatalogLayer | null>(null);
   const [editLayer, setEditLayer] = useState<CatalogLayer | null>(null);
+  const [editLayerLoading, setEditLayerLoading] = useState(false);
+  const [editLayerError, setEditLayerError] = useState<string | null>(null);
+  const [editLayerForm, setEditLayerForm] = useState<{
+    title: string;
+    description: string;
+    category: string;
+    source_type: string;
+    url_or_path: string;
+    layer_name: string;
+    format: string;
+    srs: string;
+    minzoom: string;
+    maxzoom: string;
+    status: 'draft' | 'published' | 'retired';
+  } | null>(null);
 
   // بارگذاری کاتالوگ از layers.json
   const loadCatalog = useCallback(async () => {
@@ -880,6 +895,72 @@ const MapsTab: React.FC = () => {
       alert('خطا در بازگشت کاتالوگ');
     }
   };
+
+  const deleteCatalogLayer = async (layer: CatalogLayer) => {
+    if (!layer.adminMapId) {
+      alert('شناسه SDI برای حذف یافت نشد');
+      return;
+    }
+    if (!window.confirm(`آیا از حذف لایه "${layer.title}" مطمئن هستید؟`)) return;
+    try {
+      const res = await authFetch(apiBase, `/sdi/maps/${layer.adminMapId}`, { method: 'DELETE' });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        const detail =
+          data && typeof data === 'object' && 'detail' in data && typeof (data as any).detail === 'string'
+            ? (data as any).detail
+            : `HTTP ${res.status}`;
+        alert(`حذف انجام نشد (${detail})`);
+        return;
+      }
+      await loadCatalog();
+    } catch (e) {
+      alert('خطا در حذف لایه');
+    }
+  };
+
+  useEffect(() => {
+    // وقتی کاربر روی Edit می‌زند، جزئیات را از SDI بگیریم تا فرم واقعی باشد
+    const run = async () => {
+      if (!editLayer?.adminMapId) {
+        setEditLayerForm(null);
+        setEditLayerError(null);
+        return;
+      }
+      setEditLayerLoading(true);
+      setEditLayerError(null);
+      try {
+        const res = await authFetch(apiBase, `/sdi/maps/${editLayer.adminMapId}`);
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          const detail =
+            data && typeof data === 'object' && 'detail' in data && typeof (data as any).detail === 'string'
+              ? (data as any).detail
+              : `HTTP ${res.status}`;
+          throw new Error(detail);
+        }
+        setEditLayerForm({
+          title: String(data.title ?? ''),
+          description: String(data.description ?? ''),
+          category: String(data.category ?? ''),
+          source_type: String(data.source_type ?? ''),
+          url_or_path: String(data.url_or_path ?? ''),
+          layer_name: String(data.layer_name ?? ''),
+          format: String(data.format ?? ''),
+          srs: String(data.srs ?? 'EPSG:3857'),
+          minzoom: data.minzoom === null || data.minzoom === undefined ? '' : String(data.minzoom),
+          maxzoom: data.maxzoom === null || data.maxzoom === undefined ? '' : String(data.maxzoom),
+          status: (data.status as any) === 'published' ? 'published' : (data.status as any) === 'retired' ? 'retired' : 'draft',
+        });
+      } catch (e) {
+        setEditLayerError(e instanceof Error ? e.message : 'خطا در بارگذاری');
+        setEditLayerForm(null);
+      } finally {
+        setEditLayerLoading(false);
+      }
+    };
+    run();
+  }, [editLayer, apiBase]);
   
   // State برای نقشه‌های آفلاین
   const [offlineMaps, setOfflineMaps] = useState<OfflineMap[]>([]);
@@ -2377,6 +2458,16 @@ const MapsTab: React.FC = () => {
                               <Edit fontSize="small" />
                             </IconButton>
                           </Tooltip>
+                          <Tooltip title="حذف">
+                            <IconButton
+                              size="small"
+                              color="error"
+                              onClick={() => deleteCatalogLayer(layer)}
+                              aria-label={`حذف لایه ${layer.title}`}
+                            >
+                              <Delete fontSize="small" />
+                            </IconButton>
+                          </Tooltip>
                           {layer.status !== 'published' && (
                             <Tooltip title="Publish">
                               <IconButton 
@@ -3505,6 +3596,216 @@ const MapsTab: React.FC = () => {
         onConfirm={confirmDeleteOfflineMap}
         isDeleting={isDeleting}
       />
+
+      {/* Preview Catalog Layer */}
+      <Dialog
+        open={Boolean(previewLayer)}
+        onClose={() => setPreviewLayer(null)}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle>پیش‌نمایش لایه</DialogTitle>
+        <DialogContent dividers>
+          <Typography variant="subtitle2" sx={{ mb: 1 }}>{previewLayer?.title}</Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+            {previewLayer?.type} {previewLayer?.status ? `— ${previewLayer.status}` : ''}
+          </Typography>
+          {previewLayer?.path && (
+            <TextField
+              fullWidth
+              label="آدرس"
+              value={previewLayer.path}
+              InputProps={{ readOnly: true }}
+              sx={{ mb: 2 }}
+            />
+          )}
+          {previewLayer?.adminMapId && (
+            <Typography variant="caption" color="text.secondary">
+              SDI Map ID: {previewLayer.adminMapId}
+            </Typography>
+          )}
+        </DialogContent>
+        <DialogActions>
+          {previewLayer?.path && (
+            <Button onClick={() => window.open(previewLayer.path, '_blank')}>باز کردن</Button>
+          )}
+          <Button onClick={() => setPreviewLayer(null)}>بستن</Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Edit Catalog Layer (SDI Map) */}
+      <Dialog
+        open={Boolean(editLayer)}
+        onClose={() => { setEditLayer(null); setEditLayerForm(null); setEditLayerError(null); }}
+        maxWidth="md"
+        fullWidth
+      >
+        <DialogTitle>ویرایش لایه</DialogTitle>
+        <DialogContent dividers>
+          {editLayerError && <Alert severity="error" sx={{ mb: 2 }}>{editLayerError}</Alert>}
+          {editLayerLoading || !editLayerForm ? (
+            <Box sx={{ py: 2 }}>
+              <LinearProgress />
+              <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
+                در حال بارگذاری...
+              </Typography>
+            </Box>
+          ) : (
+            <Grid container spacing={2} sx={{ mt: 0.5 }}>
+              <Grid item xs={12} md={6}>
+                <TextField
+                  fullWidth
+                  label="عنوان"
+                  value={editLayerForm.title}
+                  onChange={(e) => setEditLayerForm({ ...editLayerForm, title: e.target.value })}
+                />
+              </Grid>
+              <Grid item xs={12} md={6}>
+                <FormControl fullWidth>
+                  <InputLabel>وضعیت</InputLabel>
+                  <Select
+                    label="وضعیت"
+                    value={editLayerForm.status}
+                    onChange={(e) => setEditLayerForm({ ...editLayerForm, status: e.target.value as any })}
+                  >
+                    <MenuItem value="draft">Draft</MenuItem>
+                    <MenuItem value="published">Published</MenuItem>
+                    <MenuItem value="retired">Retired</MenuItem>
+                  </Select>
+                </FormControl>
+              </Grid>
+
+              <Grid item xs={12}>
+                <TextField
+                  fullWidth
+                  label="URL/Path"
+                  value={editLayerForm.url_or_path}
+                  onChange={(e) => setEditLayerForm({ ...editLayerForm, url_or_path: e.target.value })}
+                />
+              </Grid>
+
+              <Grid item xs={12} md={6}>
+                <TextField
+                  fullWidth
+                  label="نوع منبع (source_type)"
+                  value={editLayerForm.source_type}
+                  onChange={(e) => setEditLayerForm({ ...editLayerForm, source_type: e.target.value })}
+                  helperText="مثل xyz / wms / wmts"
+                />
+              </Grid>
+              <Grid item xs={12} md={6}>
+                <TextField
+                  fullWidth
+                  label="SRS"
+                  value={editLayerForm.srs}
+                  onChange={(e) => setEditLayerForm({ ...editLayerForm, srs: e.target.value })}
+                />
+              </Grid>
+
+              <Grid item xs={12} md={6}>
+                <TextField
+                  fullWidth
+                  label="layer_name (برای WMS/WMTS)"
+                  value={editLayerForm.layer_name}
+                  onChange={(e) => setEditLayerForm({ ...editLayerForm, layer_name: e.target.value })}
+                />
+              </Grid>
+              <Grid item xs={12} md={6}>
+                <TextField
+                  fullWidth
+                  label="format"
+                  value={editLayerForm.format}
+                  onChange={(e) => setEditLayerForm({ ...editLayerForm, format: e.target.value })}
+                  helperText="مثل image/png"
+                />
+              </Grid>
+
+              <Grid item xs={12} md={6}>
+                <TextField
+                  fullWidth
+                  label="minzoom"
+                  value={editLayerForm.minzoom}
+                  onChange={(e) => setEditLayerForm({ ...editLayerForm, minzoom: e.target.value })}
+                />
+              </Grid>
+              <Grid item xs={12} md={6}>
+                <TextField
+                  fullWidth
+                  label="maxzoom"
+                  value={editLayerForm.maxzoom}
+                  onChange={(e) => setEditLayerForm({ ...editLayerForm, maxzoom: e.target.value })}
+                />
+              </Grid>
+
+              <Grid item xs={12} md={6}>
+                <TextField
+                  fullWidth
+                  label="دسته‌بندی"
+                  value={editLayerForm.category}
+                  onChange={(e) => setEditLayerForm({ ...editLayerForm, category: e.target.value })}
+                />
+              </Grid>
+              <Grid item xs={12} md={6}>
+                <TextField
+                  fullWidth
+                  label="توضیحات"
+                  value={editLayerForm.description}
+                  onChange={(e) => setEditLayerForm({ ...editLayerForm, description: e.target.value })}
+                />
+              </Grid>
+            </Grid>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => { setEditLayer(null); setEditLayerForm(null); setEditLayerError(null); }}>
+            بستن
+          </Button>
+          <Button
+            variant="contained"
+            disabled={!editLayer?.adminMapId || !editLayerForm || editLayerLoading}
+            onClick={async () => {
+              if (!editLayer?.adminMapId || !editLayerForm) return;
+              try {
+                const payload: any = {
+                  title: editLayerForm.title,
+                  description: editLayerForm.description || null,
+                  category: editLayerForm.category || null,
+                  source_type: editLayerForm.source_type || null,
+                  url_or_path: editLayerForm.url_or_path,
+                  layer_name: editLayerForm.layer_name || null,
+                  format: editLayerForm.format || null,
+                  srs: editLayerForm.srs || null,
+                  status: editLayerForm.status,
+                  minzoom: editLayerForm.minzoom.trim() === '' ? null : Number(editLayerForm.minzoom),
+                  maxzoom: editLayerForm.maxzoom.trim() === '' ? null : Number(editLayerForm.maxzoom),
+                };
+                const res = await authFetch(apiBase, `/sdi/maps/${editLayer.adminMapId}`, {
+                  method: 'PUT',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify(payload),
+                });
+                const data = await res.json().catch(() => ({}));
+                if (!res.ok) {
+                  const detail =
+                    data && typeof data === 'object' && 'detail' in data && typeof (data as any).detail === 'string'
+                      ? (data as any).detail
+                      : `HTTP ${res.status}`;
+                  alert(`ذخیره انجام نشد (${detail})`);
+                  return;
+                }
+                await loadCatalog();
+                setEditLayer(null);
+                setEditLayerForm(null);
+                setEditLayerError(null);
+              } catch {
+                alert('خطا در ذخیره');
+              }
+            }}
+          >
+            ذخیره
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 };
