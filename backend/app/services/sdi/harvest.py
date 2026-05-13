@@ -3,7 +3,7 @@ from __future__ import annotations
 import os
 import sqlite3
 from typing import Optional, Dict, Any, List
-from urllib.parse import urlencode, urlparse, parse_qs, urlunparse
+from urllib.parse import urlencode, urlparse, parse_qs, urlunparse, unquote
 import httpx
 import xml.etree.ElementTree as ET
 
@@ -185,6 +185,60 @@ async def harvest_wmts_layers(base_url: str) -> List[Dict[str, Any]]:
             }
         )
     return layers
+
+
+def _normalize_xyz_tile_template(base_url: str) -> str:
+    """Build a Slippy Map XYZ URL template from a root URL or return if already templated.
+
+    If the URL already contains {z}/{x}/{y} placeholders, it is returned trimmed.
+    Otherwise appends /{z}/{x}/{y}.png (common default for raster tiles).
+    """
+    u = (base_url or "").strip().rstrip("/")
+    if not u:
+        return u
+    lower = u.lower()
+    if "{z}" in lower and "{x}" in lower and "{y}" in lower:
+        return u
+    # OSM-style root → template
+    return f"{u}/{{z}}/{{x}}/{{y}}.png"
+
+
+def _title_from_xyz_url(url: str) -> str:
+    try:
+        path = urlparse(url).path.rstrip("/")
+        seg = path.split("/")[-1] if path else ""
+        seg = unquote(seg or "").strip()
+        if seg and seg not in ("{z}", "{x}", "{y}"):
+            return seg.replace("-", " ").replace("_", " ").strip() or "XYZ tiles"
+    except Exception:
+        pass
+    return "XYZ tiles"
+
+
+async def harvest_xyz_layers(base_url: str) -> List[Dict[str, Any]]:
+    """Single logical layer for an XYZ / raster tile endpoint.
+
+    Expects either a tile root (we append /{z}/{x}/{y}.png) or a full template URL.
+    """
+    template = _normalize_xyz_tile_template(base_url)
+    if not template:
+        return []
+    stem = base_url.split("{", 1)[0].rstrip("/") if "{" in (base_url or "") else (base_url or "").rstrip("/")
+    title = _title_from_xyz_url(stem)
+    return [
+        {
+            "source_type": "xyz",
+            "url_or_path": template,
+            "layer_name": None,
+            "title": title,
+            "status": "draft",
+            "srs": "EPSG:3857",
+            "format": "image/png",
+            "minzoom": 0,
+            "maxzoom": 22,
+            "bbox": None,
+        }
+    ]
 
 
 async def harvest_ogcapi_features(base_url: str) -> List[Dict[str, Any]]:

@@ -1504,11 +1504,12 @@ const MapsTab: React.FC = () => {
   const discoverServerLayers = async () => {
     if (!formData.url) return;
     try {
+      const svc = formData.type === 'osm' ? 'xyz' : formData.type || 'wms';
       // همیشه یک سرور SDI موقت/جدید می‌سازیم تا harvest کنیم
       const body = {
         name: (() => { try { return new URL(String(formData.url)).host; } catch { return 'server'; } })(),
         base_url: formData.url,
-        service_types: [formData.type || 'wms'],
+        service_types: [svc],
         auth_type: 'none',
       } as any;
       const created = await authFetch(apiBase, '/sdi/servers', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
