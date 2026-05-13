@@ -26,6 +26,7 @@ from app.services.sdi.harvest import (
     harvest_wmts_layers,
     harvest_ogcapi_features,
     harvest_xyz_layers,
+    should_harvest_xyz,
 )
 import httpx
 
@@ -219,11 +220,7 @@ async def harvest_server(server_id: int, session: DbSession = None):
                 logs.append("ogcapi: ok")
             except Exception as e:
                 logs.append(f"ogcapi: error {e}")
-        _bu_lower = (server.base_url or "").lower()
-        _is_xyz = any(t.lower() == "xyz" for t in svc_types) or (
-            "{z}" in _bu_lower and "{x}" in _bu_lower and "{y}" in _bu_lower
-        )
-        if _is_xyz:
+        if should_harvest_xyz(server.base_url, svc_types):
             try:
                 candidates += await harvest_xyz_layers(server.base_url)
                 logs.append("xyz: ok")
@@ -246,7 +243,10 @@ async def harvest_server(server_id: int, session: DbSession = None):
                 status="draft",
                 roles=None,
                 category=None,
-                extra_metadata={"server_id": server.id},
+                extra_metadata={
+                    **(c.get("extra_metadata") or {}),
+                    "server_id": server.id,
+                },
             )
             session.add(obj)
             await session.flush()

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import re
 import sqlite3
 from typing import Optional, Dict, Any, List
 from urllib.parse import urlencode, urlparse, parse_qs, urlunparse, unquote
@@ -187,20 +188,129 @@ async def harvest_wmts_layers(base_url: str) -> List[Dict[str, Any]]:
     return layers
 
 
+# Path ending with /zoom/x/y or /zoom/x/y.ext — typical XYZ tile samples pasted by admins.
+_TILE_NUMERIC_TAIL_RE = re.compile(
+    r"/(\d+)/(\d+)/(\d+)(\.(?:png|jpg|jpeg|webp))?/?$",
+    re.IGNORECASE,
+)
+
+
+def _concrete_tile_url_to_template(raw_url: str) -> Optional[str]:
+    """Turn .../z/x/y or .../z/x/y.ext into .../{z}/{x}/{y}[.ext]. Query string preserved."""
+    u = (raw_url or "").strip()
+    if not u or "{z}" in u.lower():
+        return None
+    parsed = urlparse(u)
+    path = unquote(parsed.path or "")
+    m = _TILE_NUMERIC_TAIL_RE.search(path)
+    if not m:
+        return None
+    ext = m.group(4) or ""
+    prefix = path[: m.start()].rstrip("/")
+    new_path = f"{prefix}/{{z}}/{{x}}/{{y}}{ext}"
+    parts = list(parsed)
+    parts[2] = new_path if new_path.startswith("/") else f"/{new_path}"
+    return urlunparse(parts)
+
+
+def should_harvest_xyz(base_url: str, service_types: Optional[List[str]] = None) -> bool:
+    """True if harvest should run the XYZ branch (explicit type, template URL, or concrete tile URL)."""
+    types = [(t or "").lower() for t in (service_types or [])]
+    if any(t == "xyz" for t in types):
+        return True
+    bu = (base_url or "").strip()
+    low = bu.lower()
+    if "{z}" in low and "{x}" in low and ("{y}" in low or "{-y}" in low):
+        return True
+    path = unquote(urlparse(bu).path or "")
+    return _TILE_NUMERIC_TAIL_RE.search(path) is not None
+
+
 def _normalize_xyz_tile_template(base_url: str) -> str:
     """Build a Slippy Map XYZ URL template from a root URL or return if already templated.
 
-    If the URL already contains {z}/{x}/{y} placeholders, it is returned trimmed.
-    Otherwise appends /{z}/{x}/{y}.png (common default for raster tiles).
+    - Full sample tile URLs (.../z/x/y.png) → placeholders (query preserved).
+    - If the URL already contains {z}/{x}/{y}, returned as-is (trimmed).
+    - Otherwise appends /{z}/{x}/{y}.png (common default for raster tiles).
     """
-    u = (base_url or "").strip().rstrip("/")
+    u = (base_url or "").strip()
     if not u:
-        return u
+        return ""
     lower = u.lower()
-    if "{z}" in lower and "{x}" in lower and "{y}" in lower:
-        return u
-    # OSM-style root → template
-    return f"{u}/{{z}}/{{x}}/{{y}}.png"
+    if "{z}" in lower and "{x}" in lower and ("{y}" in lower or "{-y}" in lower):
+        return u.rstrip("/") if not urlparse(u).query else u
+
+    concrete = _concrete_tile_url_to_template(u)
+    if concrete:
+        return concrete
+
+    root = u.rstrip("/")
+    return f"{root}/{{z}}/{{x}}/{{y}}.png"
+
+
+def _fill_xyz_template(template: str, z: int, x: int, y_xyz: int) -> str:
+    """Expand placeholders; {-y} uses TMS row compatible with OpenLayers XYZ source."""
+    out = template
+    if "{-y}" in out:
+        out = out.replace("{-y}", str((1 << z) - 1 - y_xyz))
+    return out.replace("{z}", str(z)).replace("{x}", str(x)).replace("{y}", str(y_xyz))
+
+
+def _xyz_template_variants(template: str) -> List[str]:
+    """Alternate conventions some tile servers use."""
+    seen: set[str] = set()
+    ordered: List[str] = []
+
+    def add(t: str) -> None:
+        t = t.strip()
+        if t and t not in seen:
+            seen.add(t)
+            ordered.append(t)
+
+    add(template)
+    if "/{z}/{x}/{y}" in template:
+        add(template.replace("/{z}/{x}/{y}", "/{z}/{y}/{x}"))
+    if "{y}" in template and "{-y}" not in template:
+        add(template.replace("{y}", "{-y}"))
+    return ordered
+
+
+_XYZ_PROBE_TILES = ((2, 2, 2), (3, 4, 5), (1, 1, 1), (2, 1, 1))
+
+
+async def _xyz_url_reachable(client: httpx.AsyncClient, url: str) -> bool:
+    try:
+        r = await client.head(url)
+        if r.status_code == 200:
+            ct = (r.headers.get("content-type") or "").lower()
+            return "image" in ct or ct == "" or "octet-stream" in ct
+        if r.status_code == 405:
+            g = await client.get(url)
+            return g.status_code == 200 and len(g.content) >= 64
+        if r.status_code == 404:
+            g = await client.get(url)
+            return g.status_code == 200 and len(g.content) >= 64
+    except httpx.RequestError:
+        return False
+    return False
+
+
+async def _probe_xyz_template(template: str) -> tuple[str, str]:
+    """Try a few Slippy variants; return (chosen_template, probe_label)."""
+    variants = _xyz_template_variants(template)
+    async with httpx.AsyncClient(timeout=8.0, verify=False, follow_redirects=True) as client:
+        for tmpl in variants:
+            for z, x, y in _XYZ_PROBE_TILES:
+                filled = _fill_xyz_template(tmpl, z, x, y)
+                if await _xyz_url_reachable(client, filled):
+                    if tmpl == template:
+                        return tmpl, "default"
+                    if "{-y}" in tmpl and "{-y}" not in template:
+                        return tmpl, "tms"
+                    if "/{z}/{y}/{x}" in tmpl:
+                        return tmpl, "z_y_x"
+                    return tmpl, "variant"
+    return template, "unverified"
 
 
 def _title_from_xyz_url(url: str) -> str:
@@ -218,17 +328,32 @@ def _title_from_xyz_url(url: str) -> str:
 async def harvest_xyz_layers(base_url: str) -> List[Dict[str, Any]]:
     """Single logical layer for an XYZ / raster tile endpoint.
 
-    Expects either a tile root (we append /{z}/{x}/{y}.png) or a full template URL.
+    Accepts:
+    - Tile root → ``/\\{z\\}/\\{x\\}/\\{y\\}.png`` appended.
+    - Full template with ``\\{z\\}``, ``\\{x\\}``, ``\\{y\\}`` or ``\\{-y\\}``.
+    - A **concrete** sample tile URL (``.../4/3/8.png``) → converted to a template.
+
+    Probes the live server with a few zoom/x/y combinations and picks TMS ``\\{-y\\}``
+    or ``/\\{z\\}/\\{y\\}/\\{x\\}`` when the default Slippy layout 404s.
     """
     template = _normalize_xyz_tile_template(base_url)
     if not template:
         return []
-    stem = base_url.split("{", 1)[0].rstrip("/") if "{" in (base_url or "") else (base_url or "").rstrip("/")
+    chosen, probe = await _probe_xyz_template(template)
+    raw = (base_url or "").strip()
+    if "{" in raw:
+        stem = raw.split("{", 1)[0].rstrip("/")
+    else:
+        conv = _concrete_tile_url_to_template(raw)
+        stem = conv.split("{", 1)[0].rstrip("/") if conv else raw.rstrip("/")
     title = _title_from_xyz_url(stem)
+    extra: Dict[str, Any] = {"xyz_probe": probe}
+    if chosen != template:
+        extra["xyz_template_normalized_from"] = template
     return [
         {
             "source_type": "xyz",
-            "url_or_path": template,
+            "url_or_path": chosen,
             "layer_name": None,
             "title": title,
             "status": "draft",
@@ -237,6 +362,7 @@ async def harvest_xyz_layers(base_url: str) -> List[Dict[str, Any]]:
             "minzoom": 0,
             "maxzoom": 22,
             "bbox": None,
+            "extra_metadata": extra,
         }
     ]
 
