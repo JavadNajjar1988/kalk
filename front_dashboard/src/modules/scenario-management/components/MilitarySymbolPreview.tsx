@@ -16,6 +16,14 @@ import ms from 'milsymbol';
 import type { SymbolOptions } from 'milsymbol';
 import { buildSIDC } from '../constants/militarySymbols';
 
+/** milsymbol از کلید `standard` با مقادیر '2525' | 'APP6' استفاده می‌کند */
+function resolveMilsymbolStandard(symbologyStandard?: string): '2525' | 'APP6' | undefined {
+  if (!symbologyStandard) return undefined;
+  const s = symbologyStandard.toLowerCase();
+  if (s === '2525' || s === '2525d') return '2525';
+  return 'APP6';
+}
+
 interface MilitarySymbolPreviewProps {
   standardIdentity: string;
   echelon?: string;
@@ -182,13 +190,14 @@ const MilitarySymbolPreview = memo<MilitarySymbolPreviewProps>(({
   const symbolSvg = useMemo(() => {
     const resolvedFillColor = customSymbolOptions?.fillColor ?? fillColor ?? getIdentityColor(standardIdentity);
     
+    const msStandard = resolveMilsymbolStandard(symbologyStandard);
     const symbolOptions: Partial<SymbolOptions> = {
       size,
       outlineColor: 'white',
       outlineWidth: compact ? 4 : 8,
       strokeWidth: 0,
       simpleStatusModifier: false,
-      ...(symbologyStandard ? { symbologyStandard } : {}),
+      ...(msStandard ? { standard: msStandard } : {}),
       ...customSymbolOptions,
       fillColor: resolvedFillColor
     };
@@ -227,12 +236,15 @@ const MilitarySymbolPreview = memo<MilitarySymbolPreviewProps>(({
       return (
         <SymbolErrorBoundary fallback={fallbackComponent}>
           <Box
+            className="milsymbol"
             sx={{
               width: size,
               height: size,
               display: 'flex',
               alignItems: 'center',
-              justifyContent: 'center'
+              justifyContent: 'center',
+              lineHeight: 0,
+              '& svg': { display: 'block', maxWidth: '100%', height: 'auto' },
             }}
             dangerouslySetInnerHTML={{ __html: symbolSvg }}
           />
@@ -291,7 +303,11 @@ const MilitarySymbolPreview = memo<MilitarySymbolPreviewProps>(({
           }}
         >
           {symbolSvg ? (
-            <div dangerouslySetInnerHTML={{ __html: symbolSvg }} />
+            <Box
+              className="milsymbol"
+              sx={{ lineHeight: 0, '& svg': { display: 'block', maxWidth: '100%', height: 'auto' } }}
+              dangerouslySetInnerHTML={{ __html: symbolSvg }}
+            />
           ) : (
             <Box
               sx={{

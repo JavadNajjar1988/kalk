@@ -49,6 +49,18 @@ export const LAND_UNIT_ICONS = [
 
 // Helper functions
 export const getStandardIdentityOptions = () => Object.values(STANDARD_IDENTITIES);
+
+/**
+ * هویت طرف‌های درگیری در فرم سناریو — فقط ارقام معتبر رقم ۴ام SIDC (بعد از ۱۰۰).
+ * ترتیب نمایش: دوست، دشمن، خنثی، نامعلوم.
+ */
+export const COMBAT_SIDE_STANDARD_IDENTITY_OPTIONS = [
+  STANDARD_IDENTITIES.FRIEND,
+  STANDARD_IDENTITIES.HOSTILE,
+  STANDARD_IDENTITIES.NEUTRAL,
+  STANDARD_IDENTITIES.UNKNOWN,
+] as const;
+
 export const getEchelonOptions = () => Object.values(ECHELON_LEVELS).sort((a, b) => a.order - b.order);
 export const getLandUnitIcons = () => LAND_UNIT_ICONS;
 

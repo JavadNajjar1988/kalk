@@ -54,7 +54,8 @@ import {
 } from '@/modules/dashboard/pages/resources/resourcesDialogStyles';
 import { 
   LAND_UNIT_ICONS, 
-  getEchelonOptions
+  getEchelonOptions,
+  COMBAT_SIDE_STANDARD_IDENTITY_OPTIONS,
 } from '@/modules/scenario-management/constants/militarySymbols';
 
 interface NewScenarioDialogProps {
@@ -155,7 +156,8 @@ const NewScenarioDialog: React.FC<NewScenarioDialogProps> = ({
   });
 
   const [noInitialOrbat, setNoInitialOrbat] = useState(false);
-  const [selectedStandardIdentity, setSelectedStandardIdentity] = useState('1'); // Friend
+  /** رقم هویت در SIDC (مثلاً ۳=دوست، ۶=دشمن) — مطابق MIL-STD-2525D */
+  const [selectedStandardIdentity, setSelectedStandardIdentity] = useState('3');
   const [sides, setSides] = useState<SideData[]>([]);
   
   const [weather, setWeather] = useState<WeatherData>({
@@ -728,10 +730,11 @@ const NewScenarioDialog: React.FC<NewScenarioDialogProps> = ({
                     label="هویت استاندارد"
                     onChange={(e) => setSelectedStandardIdentity(e.target.value)}
                   >
-                    <MenuItem value="1">دوست</MenuItem>
-                    <MenuItem value="2">دشمن</MenuItem>
-                    <MenuItem value="3">خنثی</MenuItem>
-                    <MenuItem value="4">نامشخص</MenuItem>
+                    {COMBAT_SIDE_STANDARD_IDENTITY_OPTIONS.map((opt) => (
+                      <MenuItem key={opt.value} value={opt.value}>
+                        {opt.label}
+                      </MenuItem>
+                    ))}
                   </Select>
                 </FormControl>
 
