@@ -3102,7 +3102,16 @@ const MapsTab: React.FC = () => {
                         label={t('resources.maps.dialog.serverUrlLabel')}
                         value={formData.url || ''}
                         onChange={(e) => setFormData({ ...formData, url: e.target.value })}
-                        placeholder="https://example.com/geoserver/wms"
+                        placeholder={
+                          formData.type === 'xyz' || formData.type === 'osm'
+                            ? 'http://212.33.198.117:5055/map_tile/mapbox'
+                            : 'https://example.com/geoserver/wms'
+                        }
+                        helperText={
+                          formData.type === 'xyz' || formData.type === 'osm'
+                            ? 'برای XYZ می‌توانید ریشه آدرس (بدون z/x/y) یا یک تایل نمونه مثل .../2/1/1 بدهید. اگر سرور پسوند .png ندارد، قالب نهایی باید .../{z}/{x}/{y} باشد.'
+                            : undefined
+                        }
                       />
                     </Grid>
                     <Grid item xs={12} md={6}>

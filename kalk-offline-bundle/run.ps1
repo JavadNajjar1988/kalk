@@ -41,8 +41,8 @@ if (-not (Test-Path $imagesDir)) {
 }
 
 $expectedImages = @(
-    @{ Tag = "kalk-api:1.1.0";              File = "kalk-api_1.1.0.tar" },
-    @{ Tag = "kalk-web:1.3.0";              File = "kalk-web_1.3.0.tar" },
+    @{ Tag = "kalk-api:1.2.0";              File = "kalk-api_1.2.0.tar" },
+    @{ Tag = "kalk-web:1.4.0";              File = "kalk-web_1.4.0.tar" },
     @{ Tag = "postgis/postgis:16-3.4";      File = "postgis_16-3.4.tar" },
     @{ Tag = "maptiler/tileserver-gl:latest"; File = "tileserver-gl_latest.tar" }
 )

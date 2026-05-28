@@ -229,9 +229,9 @@ def should_harvest_xyz(base_url: str, service_types: Optional[List[str]] = None)
 def _normalize_xyz_tile_template(base_url: str) -> str:
     """Build a Slippy Map XYZ URL template from a root URL or return if already templated.
 
-    - Full sample tile URLs (.../z/x/y.png) → placeholders (query preserved).
+    - Full sample tile URLs (.../z/x/y or .../z/x/y.png) → placeholders (query preserved).
     - If the URL already contains {z}/{x}/{y}, returned as-is (trimmed).
-    - Otherwise appends /{z}/{x}/{y}.png (common default for raster tiles).
+    - Otherwise appends /{z}/{x}/{y} (no extension; probe adds .png/.jpg if needed).
     """
     u = (base_url or "").strip()
     if not u:
@@ -245,7 +245,7 @@ def _normalize_xyz_tile_template(base_url: str) -> str:
         return concrete
 
     root = u.rstrip("/")
-    return f"{root}/{{z}}/{{x}}/{{y}}.png"
+    return f"{root}/{{z}}/{{x}}/{{y}}"
 
 
 def _fill_xyz_template(template: str, z: int, x: int, y_xyz: int) -> str:
@@ -268,6 +268,17 @@ def _xyz_template_variants(template: str) -> List[str]:
             ordered.append(t)
 
     add(template)
+
+    # Some servers use /z/x/y, others require .png/.jpg suffix (or the opposite).
+    for ext in (".png", ".jpg", ".jpeg", ".webp"):
+        if template.endswith(f"{{y}}{ext}"):
+            add(template[: -len(ext)])
+            break
+    else:
+        if template.endswith("{y}") or template.endswith("/{y}"):
+            for ext in (".png", ".jpg", ".webp"):
+                add(f"{template.rstrip('/')}{ext}")
+
     if "/{z}/{x}/{y}" in template:
         add(template.replace("/{z}/{x}/{y}", "/{z}/{y}/{x}"))
     if "{y}" in template and "{-y}" not in template:
@@ -329,7 +340,7 @@ async def harvest_xyz_layers(base_url: str) -> List[Dict[str, Any]]:
     """Single logical layer for an XYZ / raster tile endpoint.
 
     Accepts:
-    - Tile root → ``/\\{z\\}/\\{x\\}/\\{y\\}.png`` appended.
+    - Tile root → ``/\\{z\\}/\\{x\\}/\\{y\\}`` appended (probe tries ``.png`` if needed).
     - Full template with ``\\{z\\}``, ``\\{x\\}``, ``\\{y\\}`` or ``\\{-y\\}``.
     - A **concrete** sample tile URL (``.../4/3/8.png``) → converted to a template.
 

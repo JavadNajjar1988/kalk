@@ -19,7 +19,7 @@ services:
       - kalknet
 
   migrate:
-    image: kalk-api:1.1.0
+    image: kalk-api:1.2.0
     restart: "no"
     environment:
       DB_URL: ${DB_URL:-postgresql+asyncpg://postgres:postgres@db:5432/kalk}
@@ -31,7 +31,7 @@ services:
       - kalknet
 
   api:
-    image: kalk-api:1.1.0
+    image: kalk-api:1.2.0
     restart: unless-stopped
     environment:
       DB_URL: ${DB_URL:-postgresql+asyncpg://postgres:postgres@db:5432/kalk}
@@ -67,6 +67,14 @@ services:
     container_name: tileserver
     restart: unless-stopped
     working_dir: /data
+    user: "0:0"
+    command:
+      - /bin/sh
+      - -lc
+      - |
+        chmod -R a+rwX /data 2>/dev/null || true
+        rm -f /data/config.json 2>/dev/null || true
+        exec /usr/src/app/docker-entrypoint.sh
     volumes:
       - maps-data:/data
     healthcheck:
@@ -79,7 +87,7 @@ services:
       - kalknet
 
   web:
-    image: kalk-web:1.3.0
+    image: kalk-web:1.4.0
     restart: unless-stopped
     ports:
       - "3000:3000"
