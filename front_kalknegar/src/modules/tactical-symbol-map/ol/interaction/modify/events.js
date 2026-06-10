@@ -118,9 +118,9 @@ export const pointer = (options, rbush, event) => {
 
   pointer.pick = () => {
     const candidates = sortedSegments()
-    const segment = candidates.find(s =>
-      s.splittable !== false && s.geometry.getType() === 'LineString'
-    ) || candidates[0]
+    // Prefer the closest segment that allows inserting a new vertex.
+    // Corridor handles (Point) are non-splittable and must be skipped.
+    const segment = candidates.find(s => s.splittable !== false) ?? candidates[0]
     const [coordinate, index] = vertex(segment)
 
     // Coordinate must never be undefined in order

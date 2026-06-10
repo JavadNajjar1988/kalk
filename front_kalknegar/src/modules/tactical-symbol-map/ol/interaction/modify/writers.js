@@ -69,13 +69,30 @@ Writers.Point = options => {
 
 
 Writers.MultiPoint = options => {
-  const { geometry } = options
-  return geometry.getCoordinates().map((coordinate, index) => ({
+  const { geometry, descriptor } = options
+  const coordinates = geometry.getCoordinates()
+  const maxPoints = descriptor?.maxPoints
+  const atCapacity = Number.isFinite(maxPoints) && coordinates.length >= maxPoints
+
+  const vertices = coordinates.map((coordinate, index) => ({
     ...options,
     index,
     vertices: [coordinate, coordinate],
-    extent: geometry.getExtent()
+    splittable: false,
+    extent: Extent.boundingExtent([coordinate, coordinate])
   }))
+
+  if (atCapacity || coordinates.length < 2) return vertices
+
+  const segments = R.aperture(2, coordinates).map((verts, index) => ({
+    ...options,
+    index,
+    vertices: verts,
+    splittable: true,
+    extent: Extent.boundingExtent(verts)
+  }))
+
+  return vertices.concat(segments)
 }
 
 Writers.LineString = options => {
@@ -84,9 +101,13 @@ Writers.LineString = options => {
   // Cases where a line segment may NOT be splitted (add vertex):
   // - max points is explicitly limited to 2
   // - geometries with orbit layout
+  // - current coordinate count already reached maxPoints
 
+  const coordCount = geometry.getCoordinates().length
+  const maxPoints = descriptor?.maxPoints
+  const atCapacity = Number.isFinite(maxPoints) && coordCount >= maxPoints
   const fix = descriptor
-    ? (descriptor.maxPoints === 2 || descriptor.layout === 'orbit')
+    ? (descriptor.maxPoints === 2 || descriptor.layout === 'orbit' || atCapacity)
     : false
 
   const segments = R.aperture(2, geometry.getCoordinates())
@@ -100,13 +121,16 @@ Writers.LineString = options => {
 }
 
 Writers.MultiLineString = options => {
-  const { geometry } = options
+  const { geometry, descriptor } = options
+  const maxPoints = descriptor?.maxPoints
   return geometry.getCoordinates().reduce((acc, line, q) => {
+    const atCapacity = Number.isFinite(maxPoints) && line.length >= maxPoints
     return acc.concat(R.aperture(2, line).map((vertices, index) => ({
       ...options,
       depth: [q],
       index,
       vertices,
+      splittable: !atCapacity,
       extent: Extent.boundingExtent(vertices)
     })))
   }, [])
@@ -210,6 +234,9 @@ export const insertVertex = (node, coordinate) => {
     case 'LineString':
       coordinates.splice(offset, 0, coordinate)
       break
+    case 'MultiPoint':
+      coordinates.splice(offset, 0, coordinate)
+      break
     case 'MultiLineString':
       coordinates[depth[0]].splice(offset, 0, coordinate)
       break
@@ -232,6 +259,7 @@ export const removeVertex = (node, index) => {
 
   const guards = {
     LineString: coordinates => coordinates.length > 2,
+    MultiPoint: coordinates => coordinates.length > 1,
     MultiLineString: coordinates => coordinates[depth[0]].length > 2,
     Polygon: coordinates =>
       coordinates[depth[0]].length > 4 &&
@@ -241,6 +269,7 @@ export const removeVertex = (node, index) => {
 
   const mutators = {
     LineString: R.tap(coordinates => coordinates.splice(offset, 1)),
+    MultiPoint: R.tap(coordinates => coordinates.splice(offset, 1)),
     MultiLineString: R.tap(coordinates => coordinates[depth[0]].splice(offset, 1)),
     Polygon: R.tap(coordinates => {
       coordinates[depth[0]].splice(offset, 1)

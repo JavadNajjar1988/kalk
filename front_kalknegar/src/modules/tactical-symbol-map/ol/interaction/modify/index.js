@@ -111,9 +111,16 @@ export class Modify extends Interaction {
     // eventHandler :: Coordinate [Number, Number] =>
     //   State -> [ol/structs/RBush, ol/MapBrowserEvent] -> [State, Coordinate]
     const eventHandler = (state, [rbush, event]) => {
+      // Rebuild from live geometry: coordinate edits use internalChange and can
+      // leave the cached RBush stale until the deferred commit event fires.
+      const selectedFeatures = options.source.getFeatures()
+      const activeRbush = selectedFeatures.length === 1
+        ? writeIndex(selectedFeatures[0])
+        : rbush
+
       // For empty index, reset to loaded state:
-      if (rbush.isEmpty()) return [selected(true), Events.coordinate(null)]
-      const pointer = Events.pointer(options, rbush, event)
+      if (activeRbush.isEmpty()) return [selected(true), Events.coordinate(null)]
+      const pointer = Events.pointer(options, activeRbush, event)
       const handler = state[event.type]
       return (handler && handler(pointer)) || [state, undefined]
     }
