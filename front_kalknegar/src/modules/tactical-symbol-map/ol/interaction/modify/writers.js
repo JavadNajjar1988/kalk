@@ -55,10 +55,13 @@ export const writeIndex = feature => {
 export const Writers = {}
 
 Writers.Point = options => {
-  const { geometry } = options
+  const { geometry, signature } = options
   const coordinate = geometry.getCoordinates()
+  const isCorridorHandle = typeof signature === 'string' &&
+    (signature.includes('corridor') || signature.includes('orbit'))
   return [{
     ...options,
+    splittable: !isCorridorHandle,
     vertices: [coordinate, coordinate],
     extent: geometry.getExtent()
   }]

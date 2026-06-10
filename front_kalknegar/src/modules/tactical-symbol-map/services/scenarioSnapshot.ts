@@ -51,6 +51,31 @@ interface TacticalStoreLike {
   batch: (db: any, operations: any[], options?: Record<string, any>) => Promise<void>;
 }
 
+type MaybeRef<T> = T | { value: T | null | undefined } | null | undefined;
+
+function readMaybeRef<T>(value: MaybeRef<T>): T | null | undefined {
+  return value &&
+    typeof value === "object" &&
+    Object.prototype.hasOwnProperty.call(value, "value")
+    ? value.value
+    : value;
+}
+
+export function isTacticalStoreReady(
+  store: MaybeRef<TacticalStoreLike>,
+): store is TacticalStoreLike | { value: TacticalStoreLike } {
+  const resolved = readMaybeRef(store);
+  return Boolean(resolved?.tuples && resolved?.batch);
+}
+
+function resolveTacticalStore(store: MaybeRef<TacticalStoreLike>): TacticalStoreLike {
+  const resolved = readMaybeRef(store);
+  if (!resolved?.tuples || !resolved?.batch) {
+    throw new TypeError("Tactical store is not initialized");
+  }
+  return resolved;
+}
+
 function isTuple(value: unknown): value is TacticalTuple {
   return (
     Array.isArray(value) &&
@@ -109,8 +134,9 @@ export function withTacticalSnapshotInMetadata(
 }
 
 export async function exportTacticalSnapshot(
-  store: TacticalStoreLike,
+  inputStore: MaybeRef<TacticalStoreLike>,
 ): Promise<TacticalSymbolsSnapshot> {
+  const store = resolveTacticalStore(inputStore);
   const byKey = new Map<string, any>();
   for (const prefix of SNAPSHOT_PREFIXES) {
     const tuples = await store.tuples(prefix);
@@ -129,9 +155,10 @@ export async function exportTacticalSnapshot(
 }
 
 export async function importTacticalSnapshot(
-  store: TacticalStoreLike,
+  inputStore: MaybeRef<TacticalStoreLike>,
   snapshot: TacticalSymbolsSnapshot | null | undefined,
 ): Promise<void> {
+  const store = resolveTacticalStore(inputStore);
   const normalized = normalizeSnapshot(snapshot);
   const next = new Map<string, any>(normalized?.tuples ?? []);
   const currentKeys = await collectCurrentKeys(store);

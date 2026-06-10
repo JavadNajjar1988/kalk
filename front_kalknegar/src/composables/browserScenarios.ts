@@ -8,6 +8,7 @@ import { MAP_EDIT_MODE_ROUTE } from "@/router/names";
 import type { Scenario } from "@/types/scenarioModels";
 import { nanoid } from "@/utils";
 import { useRouter } from "vue-router";
+import { normalizeImportedScenarioId } from "./browserScenarioImport";
 
 export const DEMO_SCENARIOS = [
   {
@@ -105,22 +106,23 @@ export function useBrowserScenarios() {
 
   async function loadScenario(v: Scenario) {
     const { addScenario, getScenarioInfo, putScenario } = await useIndexedDb();
+    const importedScenario = normalizeImportedScenarioId(v);
 
-    const existingScenarioInfo = await getScenarioInfo(v.id ?? nanoid());
+    const existingScenarioInfo = await getScenarioInfo(importedScenario.id ?? nanoid());
     if (existingScenarioInfo) {
-      let scenarioId = v.id;
+      let scenarioId = importedScenario.id;
       if (
         window.confirm(
           "سناریویی با همین شناسه در مرورگر ذخیره شده است. آیا می‌خواهید آن را با این سناریو جایگزین کنید؟",
         )
       ) {
-        scenarioId = await putScenario(v);
+        scenarioId = await putScenario(importedScenario);
       } else {
-        scenarioId = await addScenario(v, nanoid());
+        scenarioId = await addScenario(importedScenario, nanoid());
       }
       await router.push({ name: MAP_EDIT_MODE_ROUTE, params: { scenarioId } });
     } else {
-      const scenarioId = await addScenario(v);
+      const scenarioId = await addScenario(importedScenario);
       await router.push({ name: MAP_EDIT_MODE_ROUTE, params: { scenarioId } });
     }
   }

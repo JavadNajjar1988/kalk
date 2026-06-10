@@ -21,7 +21,7 @@ import {
   useNewScenarioStore,
 } from "./newScenarioStore";
 import { useSymbolSettingsStore } from "@/stores/settingsStore";
-import type { ShallowRef } from "vue";
+import { computed, ref, type ShallowRef } from "vue";
 import { isLoading } from "@/scenariostore/index";
 import { INTERNAL_NAMES, TIMESTAMP_NAMES } from "@/types/internalModels";
 import dayjs from "dayjs";
@@ -44,6 +44,7 @@ import { saveBlobToLocalFile } from "@/utils/files";
 import { useServicesStore } from "@/modules/tactical-symbol-map/stores/services.js";
 import {
   exportTacticalSnapshot,
+  isTacticalStoreReady,
   withTacticalSnapshotInMetadata,
 } from "@/modules/tactical-symbol-map/services/scenarioSnapshot";
 
@@ -60,7 +61,7 @@ export function createEmptyScenario(options: CreateEmptyScenarioOptions = {}): S
   let timeZone;
   try {
     timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-  } catch (e) { }
+  } catch (e) {}
   const rangeRingGroups: RangeRingGroup[] = addGroups
     ? [{ name: "GR1" }, { name: "GR2" }]
     : [];
@@ -209,73 +210,73 @@ export function serializeUnit(
     rangeRings,
     state: state
       ? state.map((s) => {
-        let diffEquipment, diffPersonnel, diffSupplies;
-        const c = klona(s) as State;
+          let diffEquipment, diffPersonnel, diffSupplies;
+          const c = klona(s) as State;
 
-        if (s.diff) {
-          if (s.diff.equipment) {
-            diffEquipment = s.diff.equipment.map(({ id, count, onHand }) => {
-              return { name: scnState.equipmentMap[id]?.name ?? id, count, onHand };
-            });
+          if (s.diff) {
+            if (s.diff.equipment) {
+              diffEquipment = s.diff.equipment.map(({ id, count, onHand }) => {
+                return { name: scnState.equipmentMap[id]?.name ?? id, count, onHand };
+              });
+            }
+
+            if (s.diff?.personnel) {
+              diffPersonnel = s.diff.personnel.map(({ id, count, onHand }) => {
+                return { name: scnState.personnelMap[id]?.name ?? id, count, onHand };
+              });
+            }
+
+            if (s.diff?.supplies) {
+              diffSupplies = s.diff.supplies.map(({ id, count, onHand }) => {
+                return {
+                  name: scnState.supplyCategoryMap[id]?.name ?? id,
+                  count,
+                  onHand,
+                };
+              });
+            }
+            c.diff = {
+              equipment: diffEquipment,
+              personnel: diffPersonnel,
+              supplies: diffSupplies,
+            };
           }
 
-          if (s.diff?.personnel) {
-            diffPersonnel = s.diff.personnel.map(({ id, count, onHand }) => {
-              return { name: scnState.personnelMap[id]?.name ?? id, count, onHand };
-            });
+          if (s.update) {
+            let updateEquipment, updatePersonnel, updateSupplies;
+
+            if (s.update.equipment) {
+              updateEquipment = s.update.equipment.map(({ id, count, onHand }) => {
+                return { name: scnState.equipmentMap[id]?.name ?? id, count, onHand };
+              });
+            }
+            if (s.update.personnel) {
+              updatePersonnel = s.update.personnel.map(({ id, count, onHand }) => {
+                return { name: scnState.personnelMap[id]?.name ?? id, count, onHand };
+              });
+            }
+
+            if (s.update.supplies) {
+              updateSupplies = s.update.supplies.map(({ id, count, onHand }) => {
+                return {
+                  name: scnState.supplyCategoryMap[id]?.name ?? id,
+                  count,
+                  onHand,
+                };
+              });
+            }
+            c.update = {
+              equipment: updateEquipment,
+              personnel: updatePersonnel,
+              supplies: updateSupplies,
+            };
           }
 
-          if (s.diff?.supplies) {
-            diffSupplies = s.diff.supplies.map(({ id, count, onHand }) => {
-              return {
-                name: scnState.supplyCategoryMap[id]?.name ?? id,
-                count,
-                onHand,
-              };
-            });
+          if (s.status) {
+            c.status = scnState.unitStatusMap[s.status]?.name;
           }
-          c.diff = {
-            equipment: diffEquipment,
-            personnel: diffPersonnel,
-            supplies: diffSupplies,
-          };
-        }
-
-        if (s.update) {
-          let updateEquipment, updatePersonnel, updateSupplies;
-
-          if (s.update.equipment) {
-            updateEquipment = s.update.equipment.map(({ id, count, onHand }) => {
-              return { name: scnState.equipmentMap[id]?.name ?? id, count, onHand };
-            });
-          }
-          if (s.update.personnel) {
-            updatePersonnel = s.update.personnel.map(({ id, count, onHand }) => {
-              return { name: scnState.personnelMap[id]?.name ?? id, count, onHand };
-            });
-          }
-
-          if (s.update.supplies) {
-            updateSupplies = s.update.supplies.map(({ id, count, onHand }) => {
-              return {
-                name: scnState.supplyCategoryMap[id]?.name ?? id,
-                count,
-                onHand,
-              };
-            });
-          }
-          c.update = {
-            equipment: updateEquipment,
-            personnel: updatePersonnel,
-            supplies: updateSupplies,
-          };
-        }
-
-        if (s.status) {
-          c.status = scnState.unitStatusMap[s.status]?.name;
-        }
-        return c;
-      })
+          return c;
+        })
       : undefined,
   };
 }
@@ -340,18 +341,31 @@ function getSupplyUoMs(state: ScenarioState): UnitOfMeasure[] {
 
 export function useScenarioIO(store: ShallowRef<NewScenarioStore>) {
   const settingsStore = useSymbolSettingsStore();
+  const apiSaveState = ref<"idle" | "saving" | "saved" | "error">("idle");
+  const lastApiSavedAt = ref<Date | null>(null);
+  const lastDraftSavedAt = ref<Date | null>(null);
+  const lastSavedChangeCounter = ref(store.value.changeCounter?.value ?? 0);
+  const savedDirty = computed(() => {
+    return (store.value.changeCounter?.value ?? 0) !== lastSavedChangeCounter.value;
+  });
 
   async function syncTacticalSnapshotToState() {
     try {
       const servicesStore = useServicesStore();
       const tacticalStore = servicesStore.store as any;
-      if (!tacticalStore) {
-        console.warn("[syncTacticalSnapshotToState] Tactical store not initialized — tactical symbols will NOT be saved in this session.");
+      if (!isTacticalStoreReady(tacticalStore)) {
+        console.warn(
+          "[syncTacticalSnapshotToState] Tactical store not initialized; tactical symbols will not be saved in this session.",
+        );
         return;
       }
 
       const snapshot = await exportTacticalSnapshot(tacticalStore);
-      console.log("[syncTacticalSnapshotToState] Exported tactical snapshot:", snapshot.tuples.length, "tuples");
+      console.log(
+        "[syncTacticalSnapshotToState] Exported tactical snapshot:",
+        snapshot.tuples.length,
+        "tuples",
+      );
       store.value.state.metadata = withTacticalSnapshotInMetadata(
         store.value.state.metadata,
         snapshot,
@@ -420,21 +434,34 @@ export function useScenarioIO(store: ShallowRef<NewScenarioStore>) {
   }
 
   async function saveToIndexedDb() {
-    await syncTacticalSnapshotToState();
-    const scn = serializeToObject();
-    console.log("[saveToIndexedDb] metadata.tacticalSymbols tuples:", scn.metadata?.tacticalSymbols?.tuples?.length ?? 0);
-    if (scn.id.startsWith("demo-")) {
-      scn.id = nanoid();
-      store.value.state.id = scn.id;
+    apiSaveState.value = "saving";
+    try {
+      await syncTacticalSnapshotToState();
+      const scn = serializeToObject();
+      console.log(
+        "[saveToIndexedDb] metadata.tacticalSymbols tuples:",
+        scn.metadata?.tacticalSymbols?.tuples?.length ?? 0,
+      );
+      if (scn.id.startsWith("demo-")) {
+        scn.id = nanoid();
+        store.value.state.id = scn.id;
+      }
+
+      // ذخیره در IndexedDB محلی
+      const { putScenario } = await useIndexedDb();
+      await putScenario(scn);
+      lastDraftSavedAt.value = new Date();
+
+      // ذخیره در API
+      const saved = await scenarioApiService.save(scn);
+      lastApiSavedAt.value = new Date();
+      lastSavedChangeCounter.value = store.value.changeCounter?.value ?? 0;
+      apiSaveState.value = "saved";
+      return saved.id;
+    } catch (error) {
+      apiSaveState.value = "error";
+      throw error;
     }
-
-    // ذخیره در IndexedDB محلی
-    const { putScenario } = await useIndexedDb();
-    await putScenario(scn);
-
-    // ذخیره در API
-    const saved = await scenarioApiService.save(scn);
-    return saved.id;
   }
 
   async function duplicateScenario() {
@@ -456,6 +483,10 @@ export function useScenarioIO(store: ShallowRef<NewScenarioStore>) {
 
   function loadFromObject(data: Scenario) {
     store.value = useNewScenarioStore(data);
+    lastSavedChangeCounter.value = store.value.changeCounter?.value ?? 0;
+    apiSaveState.value = "idle";
+    lastApiSavedAt.value = null;
+    lastDraftSavedAt.value = null;
     settingsStore.symbologyStandard = store.value.state.info.symbologyStandard || "2525";
   }
 
@@ -475,7 +506,13 @@ export function useScenarioIO(store: ShallowRef<NewScenarioStore>) {
     loadFromObject(scn);
   }
 
-  async function loadDemoScenario(id: string | "Operation_Beit_ol_Moqaddas_1982_FA" | "Operation_Mersad_1988_FA" | "Iran_Israel_War_June_2025_FA") {
+  async function loadDemoScenario(
+    id:
+      | string
+      | "Operation_Beit_ol_Moqaddas_1982_FA"
+      | "Operation_Mersad_1988_FA"
+      | "Iran_Israel_War_June_2025_FA",
+  ) {
     isLoading.value = true;
     try {
       const base = (import.meta as any).env?.BASE_URL || "/";
@@ -529,5 +566,9 @@ export function useScenarioIO(store: ShallowRef<NewScenarioStore>) {
     duplicateScenario,
     stringifyObject,
     toObject,
+    apiSaveState,
+    lastApiSavedAt,
+    lastDraftSavedAt,
+    savedDirty,
   };
 }

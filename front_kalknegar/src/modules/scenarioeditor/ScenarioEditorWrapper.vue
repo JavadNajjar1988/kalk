@@ -12,6 +12,12 @@ import {
 import { useDebounceFn, useEventListener } from "@vueuse/core";
 import ScenarioNotFoundPage from "@/modules/scenarioeditor/ScenarioNotFoundPage.vue";
 import { mergePublishedCatalogMapLayers } from "@/services/catalogMapLayersSync";
+import {
+  createScenarioAutosaveQueue,
+  handleTacticalBatchChange,
+  type TacticalBatchEvent,
+} from "./scenarioAutosave";
+import { useServicesStore } from "@/modules/tactical-symbol-map/stores/services.js";
 
 const props = defineProps<{ scenarioId: string }>();
 
@@ -27,6 +33,8 @@ async function applyPublishedCatalogMapLayers() {
 }
 const localReady = ref(false);
 const scenarioNotFound = ref(false);
+const autosaveQueue = createScenarioAutosaveQueue();
+const servicesStore = useServicesStore();
 
 const introModalOpen = ref(false);
 const introStatus = ref<ScenarioIntroStatus | null>(null);
@@ -35,13 +43,19 @@ function resolveIntroVideoUrl(url: string | null | undefined): string {
   if (!url?.trim()) return "";
   const u = url.trim();
   if (/^https?:\/\//i.test(u)) return u;
-  const rawBase = String((scenarioApiService as any).baseUrl || "/api").replace(/\/+$/, "");
+  const rawBase = String((scenarioApiService as any).baseUrl || "/api").replace(
+    /\/+$/,
+    "",
+  );
   try {
     if (rawBase.startsWith("http")) {
       return new URL(u.startsWith("/") ? u : `/${u}`, `${rawBase}/`).href;
     }
     if (typeof window !== "undefined") {
-      return new URL(u.startsWith("/") ? u : `/${u}`, `${window.location.origin}${rawBase.startsWith("/") ? "" : "/"}${rawBase}/`).href;
+      return new URL(
+        u.startsWith("/") ? u : `/${u}`,
+        `${window.location.origin}${rawBase.startsWith("/") ? "" : "/"}${rawBase}/`,
+      ).href;
     }
   } catch {
     /* ignore */
@@ -76,26 +90,33 @@ const selectedItems = useSelectedItems();
 
 async function broadcastBasemapChange(baseMapId: string) {
   try {
-    const token = localStorage.getItem('access_token');
-    const headers: Record<string, string> = { 'Content-Type': 'application/json', Accept: 'application/json' };
+    const token = localStorage.getItem("access_token");
+    const headers: Record<string, string> = {
+      "Content-Type": "application/json",
+      Accept: "application/json",
+    };
     if (token) {
       headers.Authorization = `Bearer ${token}`;
     }
     // Use the same base that ScenarioApiService resolved.
-    const base = (scenarioApiService as any)?.baseUrl || '/api';
-    const url = `${String(base).replace(/\/+$/, '')}/scenarios/${encodeURIComponent(props.scenarioId)}/basemap`;
-    const res = await fetch(url, { method: 'POST', headers, body: JSON.stringify({ baseMapId }) });
+    const base = (scenarioApiService as any)?.baseUrl || "/api";
+    const url = `${String(base).replace(/\/+$/, "")}/scenarios/${encodeURIComponent(props.scenarioId)}/basemap`;
+    const res = await fetch(url, {
+      method: "POST",
+      headers,
+      body: JSON.stringify({ baseMapId }),
+    });
     if (!res.ok) {
-      const detail = await res.text().catch(() => '');
+      const detail = await res.text().catch(() => "");
       console.warn(
-        '[ScenarioEditorWrapper] basemap broadcast rejected:',
+        "[ScenarioEditorWrapper] basemap broadcast rejected:",
         res.status,
         res.statusText,
         detail || url,
       );
     }
   } catch (e) {
-    console.warn('[ScenarioEditorWrapper] Failed to broadcast basemap change', e);
+    console.warn("[ScenarioEditorWrapper] Failed to broadcast basemap change", e);
   }
 }
 
@@ -105,6 +126,55 @@ const debouncedBroadcastBasemap = useDebounceFn((baseMapId: string) => {
 }, 250);
 
 /** بعد از لود سناریو، مقدار نقشه پایه را ثبت می‌کنیم تا همان لحظهٔ لود دوباره به شبیه‌ساز broadcast نشود. */
+function isScenarioDirty() {
+  return scenario.value?.io?.savedDirty?.value ?? false;
+}
+
+async function autosaveScenario() {
+  if (!localReady.value || !isReady.value) {
+    return;
+  }
+
+  await autosaveQueue.run({
+    isDemoScenario: isDemoScenario(props.scenarioId),
+    isDirty: isScenarioDirty,
+    save: () => scenario.value.io.saveToIndexedDb(),
+  });
+}
+
+const debouncedAutosaveScenario = useDebounceFn(() => {
+  void autosaveScenario();
+}, 3000);
+
+let currentTacticalStore: any = null;
+const onTacticalBatch = (event: TacticalBatchEvent) => {
+  handleTacticalBatchChange({
+    event,
+    localReady: localReady.value,
+    isReady: isReady.value,
+    isDemoScenario: isDemoScenario(props.scenarioId),
+    markChanged: () => scenario.value?.store?.markChanged?.(),
+    saveNow: () => void autosaveScenario(),
+  });
+};
+
+function detachTacticalStoreListener() {
+  currentTacticalStore?.off?.("batch", onTacticalBatch);
+  currentTacticalStore = null;
+}
+
+function readMaybeRef(value: any) {
+  return value &&
+    typeof value === "object" &&
+    Object.prototype.hasOwnProperty.call(value, "value")
+    ? value.value
+    : value;
+}
+
+function cancelDebounced(fn: unknown) {
+  (fn as { cancel?: () => void }).cancel?.();
+}
+
 const basemapBaseline = ref<{ scenarioId: string; baseMapId: string } | null>(null);
 
 function syncBasemapBaselineAfterLoad(expectedScenarioId: string) {
@@ -124,8 +194,10 @@ function syncBasemapBaselineAfterLoad(expectedScenarioId: string) {
 watch(
   () => props.scenarioId,
   async (newScenarioId) => {
+    localReady.value = false;
     basemapBaseline.value = null;
-    debouncedBroadcastBasemap.cancel?.();
+    cancelDebounced(debouncedBroadcastBasemap);
+    cancelDebounced(debouncedAutosaveScenario);
     introModalOpen.value = false;
     introStatus.value = null;
     if (isDemoScenario(newScenarioId)) {
@@ -142,75 +214,84 @@ watch(
       syncBasemapBaselineAfterLoad(newScenarioId);
     } else {
       try {
-        console.log('[ScenarioEditorWrapper] Loading scenario:', newScenarioId);
+        console.log("[ScenarioEditorWrapper] Loading scenario:", newScenarioId);
         const scn = await scenarioApiService.getById(newScenarioId);
-        console.log('[ScenarioEditorWrapper] Scenario loaded:', scn);
-        console.log('[ScenarioEditorWrapper] Scenario type:', scn?.type);
-        console.log('[ScenarioEditorWrapper] Scenario keys:', scn ? Object.keys(scn) : 'null');
-        
+        console.log("[ScenarioEditorWrapper] Scenario loaded:", scn);
+        console.log("[ScenarioEditorWrapper] Scenario type:", scn?.type);
+        console.log(
+          "[ScenarioEditorWrapper] Scenario keys:",
+          scn ? Object.keys(scn) : "null",
+        );
+
         // بررسی اینکه آیا سناریو ساختار درستی دارد
-        if (scn && typeof scn === 'object') {
+        if (scn && typeof scn === "object") {
           // اگر type وجود ندارد، اضافه می‌کنیم
           if (!scn.type) {
-            console.warn('[ScenarioEditorWrapper] Scenario missing type, adding ORBAT-mapper');
-            scn.type = 'ORBAT-mapper';
+            console.warn(
+              "[ScenarioEditorWrapper] Scenario missing type, adding ORBAT-mapper",
+            );
+            scn.type = "ORBAT-mapper";
           }
-          
+
           // اگر version وجود ندارد، اضافه می‌کنیم
           if (!scn.version) {
-            console.warn('[ScenarioEditorWrapper] Scenario missing version, adding 0.40.0');
-            scn.version = '0.40.0';
+            console.warn(
+              "[ScenarioEditorWrapper] Scenario missing version, adding 0.40.0",
+            );
+            scn.version = "0.40.0";
           }
-          
+
           // اگر layers وجود ندارد یا خالی است، یک لایه خالی اضافه می‌کنیم
           if (!scn.layers || !Array.isArray(scn.layers) || scn.layers.length === 0) {
-            console.warn('[ScenarioEditorWrapper] Scenario missing layers, adding default layer');
-            scn.layers = [{ id: `layer-${Date.now()}`, name: 'Features', features: [] }];
+            console.warn(
+              "[ScenarioEditorWrapper] Scenario missing layers, adding default layer",
+            );
+            scn.layers = [{ id: `layer-${Date.now()}`, name: "Features", features: [] }];
           }
-          
+
           // اگر sides وجود ندارد، اضافه می‌کنیم
           if (!scn.sides) {
             scn.sides = [];
           }
-          
+
           // اگر events وجود ندارد، اضافه می‌کنیم
           if (!scn.events) {
             scn.events = [];
           }
-          
+
           // اگر mapLayers وجود ندارد، اضافه می‌کنیم
           if (!scn.mapLayers) {
             scn.mapLayers = [];
           }
-          
+
           // اگر settings وجود ندارد، اضافه می‌کنیم
           if (!scn.settings) {
             scn.settings = {
               rangeRingGroups: [],
               statuses: [],
               supplyClasses: [
-                { name: 'Class I' },
-                { name: 'Class II' },
-                { name: 'Class III' },
-                { name: 'Class IV' },
-                { name: 'Class V' },
+                { name: "Class I" },
+                { name: "Class II" },
+                { name: "Class III" },
+                { name: "Class IV" },
+                { name: "Class V" },
               ],
               supplyUoMs: [
-                { name: 'Kilogram', code: 'KG', type: 'weight' },
-                { name: 'Liter', code: 'LI', type: 'volume' },
-                { name: 'Each', code: 'EA', type: 'quantity' },
-                { name: 'Meter', code: 'MR', type: 'distance' },
-                { name: 'Gallon', code: 'GL', type: 'volume' },
+                { name: "Kilogram", code: "KG", type: "weight" },
+                { name: "Liter", code: "LI", type: "volume" },
+                { name: "Each", code: "EA", type: "quantity" },
+                { name: "Meter", code: "MR", type: "distance" },
+                { name: "Gallon", code: "GL", type: "volume" },
               ],
               map: {
-                baseMapId: 'osm',
+                baseMapId: "osm",
               },
             };
           }
-          
-          console.log('[ScenarioEditorWrapper] Scenario after fixes:', scn);
-          
-          if (scn.type === 'ORBAT-mapper') {
+
+          console.log("[ScenarioEditorWrapper] Scenario after fixes:", scn);
+
+          if (scn.type === "ORBAT-mapper") {
             scenario.value.io.loadFromObject(scn as any);
             await applyPublishedCatalogMapLayers();
             selectedItems.clear();
@@ -221,18 +302,50 @@ watch(
               introModalOpen.value = true;
             }
           } else {
-            console.error('[ScenarioEditorWrapper] Invalid scenario type:', scn.type);
+            console.error("[ScenarioEditorWrapper] Invalid scenario type:", scn.type);
             scenarioNotFound.value = true;
           }
         } else {
-          console.error('[ScenarioEditorWrapper] Invalid scenario structure:', scn);
+          console.error("[ScenarioEditorWrapper] Invalid scenario structure:", scn);
           scenarioNotFound.value = true;
         }
       } catch (e) {
-        console.error('[ScenarioEditorWrapper] Failed to load scenario:', e);
+        console.error("[ScenarioEditorWrapper] Failed to load scenario:", e);
         scenarioNotFound.value = true;
       }
       localReady.value = true;
+    }
+  },
+  { immediate: true },
+);
+
+watch(
+  () => scenario.value?.store?.changeCounter?.value ?? 0,
+  (changeCounter, previousChangeCounter) => {
+    if (
+      !localReady.value ||
+      !isReady.value ||
+      changeCounter === 0 ||
+      changeCounter === previousChangeCounter
+    ) {
+      return;
+    }
+
+    debouncedAutosaveScenario();
+  },
+);
+
+watch(
+  () => readMaybeRef((servicesStore as any).store),
+  (tacticalStore) => {
+    if (tacticalStore === currentTacticalStore) {
+      return;
+    }
+
+    detachTacticalStoreListener();
+    if (tacticalStore?.on && tacticalStore?.off) {
+      currentTacticalStore = tacticalStore;
+      currentTacticalStore.on("batch", onTacticalBatch);
     }
   },
   { immediate: true },
@@ -259,7 +372,9 @@ watch(
 );
 
 onUnmounted(() => {
-  debouncedBroadcastBasemap.cancel?.();
+  cancelDebounced(debouncedBroadcastBasemap);
+  cancelDebounced(debouncedAutosaveScenario);
+  detachTacticalStoreListener();
 });
 
 function isDemoScenario(scenarioId: string) {
@@ -279,7 +394,8 @@ useEventListener(window, "beforeunload", async () => {
 });
 
 async function saveScenarioIfNecessary({ saveDemo = false } = {}) {
-  if (scenario.value?.store?.canUndo?.value) {
+  cancelDebounced(debouncedAutosaveScenario);
+  if (isScenarioDirty()) {
     if (isDemoScenario(props.scenarioId)) {
       if (!saveDemo) {
         return;
@@ -315,9 +431,14 @@ async function saveScenarioIfNecessary({ saveDemo = false } = {}) {
   />
 
   <button
-    v-if="localReady && isReady && !isDemoScenario(scenarioId) && introStatus?.intro_replay_available"
+    v-if="
+      localReady &&
+      isReady &&
+      !isDemoScenario(scenarioId) &&
+      introStatus?.intro_replay_available
+    "
     type="button"
-    class="fixed bottom-6 left-6 z-[100] rounded-full border border-border bg-card px-4 py-2 text-sm font-medium text-foreground shadow-lg hover:bg-muted"
+    class="border-border bg-card text-foreground hover:bg-muted fixed bottom-6 left-6 z-[100] rounded-full border px-4 py-2 text-sm font-medium shadow-lg"
     @click="introModalOpen = true"
   >
     اینترو سناریو

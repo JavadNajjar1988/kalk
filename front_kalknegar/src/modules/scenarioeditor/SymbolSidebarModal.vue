@@ -81,6 +81,22 @@
               @selection-change="onSelectionChange"
               @symbol-dblclick="onSymbolDblClick"
             />
+            <div
+              v-else-if="initializationError"
+              class="flex h-full items-center justify-center px-6 text-center"
+            >
+              <div class="space-y-3">
+                <p class="text-sm font-medium text-red-700">
+                  کتابخانه نمادهای تاکتیکی بارگذاری نشد.
+                </p>
+                <p class="text-xs text-muted-foreground">
+                  {{ initializationError }}
+                </p>
+                <Button type="button" size="sm" @click="initializeServices()">
+                  تلاش مجدد
+                </Button>
+              </div>
+            </div>
             <div v-else class="flex items-center justify-center h-full">
               <div class="text-center">
                 <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
@@ -136,6 +152,7 @@ const activeScenario = injectStrict(activeScenarioKey);
 const selectedSymbolId = ref<string | null>(null);
 const selectedSymbolTitle = ref<string | null>(null);
 const placementError = ref<string | null>(null);
+const initializationError = ref<string | null>(null);
 const isDrawingActive = ref(false);
 const selectedHostility = ref("F");
 const selectedStatus = ref("P");
@@ -163,6 +180,7 @@ function handleOutsideInteraction(event: Event) {
 const initializeServices = async () => {
   try {
     servicesReady.value = false;
+    initializationError.value = null;
     if (services.value) {
       cancelPlacement();
     }
@@ -179,6 +197,11 @@ const initializeServices = async () => {
     servicesReady.value = true;
   } catch (error) {
     console.error("Failed to initialize symbol sidebar services:", error);
+    servicesReady.value = false;
+    initializationError.value =
+      error instanceof Error
+        ? error.message
+        : "خطای ناشناخته در آماده‌سازی کتابخانه نمادها.";
   }
 };
 

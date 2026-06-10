@@ -12,13 +12,15 @@ export const isLoading = ref(false);
 
 // Todo: add store ref as parameter in case we want to load multiple scenarios.
 export function useScenario() {
+  const io = useScenarioIO(globalStoreRef);
+
   return {
     scenario: computed(() => {
       return {
         store: globalStoreRef.value,
         unitActions: useUnitManipulations(globalStoreRef.value),
         time: useScenarioTime(globalStoreRef.value),
-        io: useScenarioIO(globalStoreRef),
+        io,
         geo: useGeo(globalStoreRef.value),
         helpers: useStateHelpers(globalStoreRef.value),
       };

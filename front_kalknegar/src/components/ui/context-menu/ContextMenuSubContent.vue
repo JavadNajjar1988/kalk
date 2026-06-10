@@ -43,8 +43,9 @@ defineOptions({ inheritAttrs: false });
 </template>
 <style scoped>
 .context-menu-sub-content {
-  background-color: var(--surface-panel);
-  border-color: var(--surface-border);
+  background-color: hsl(var(--popover));
+  color: hsl(var(--popover-foreground));
+  border-color: hsl(var(--border));
   box-shadow: 0 10px 24px var(--surface-shadow);
 }
 </style>

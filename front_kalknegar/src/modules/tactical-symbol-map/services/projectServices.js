@@ -1,6 +1,6 @@
 /**
- * Initialize all services needed for a project
- * This is the web version adapted from Project-services.web.js
+ * Initialize all services needed for a project.
+ * This is the web version adapted from Project-services.web.js.
  */
 import leveljs from 'level-js'
 import * as L from '../shared/level/index.js'
@@ -24,54 +24,62 @@ import Signal from '@syncpoint/signal'
 import { bindings } from '../renderer/bindings.js'
 import { Clipboard } from '../renderer/Clipboard.js'
 
-export async function initializeProjectServices(projectUUID) {
-  console.log('🔄 projectServices.js: Initializing services for project:', projectUUID)
+const PERSISTENT_BOOTSTRAP_TIMEOUT_MS = 8000
+
+function timeoutAfter(ms, message) {
+  return new Promise((_, reject) => {
+    setTimeout(() => reject(new Error(message)), ms)
+  })
+}
+
+function createProjectDb(projectUUID, { persistent }) {
+  if (persistent) {
+    const down = leveljs(`kalk:${projectUUID}`)
+    return L.leveldb({ down })
+  }
+
+  return L.leveldb()
+}
+
+async function initializeProjectServicesWithDb(projectUUID, { persistent }) {
+  console.log('projectServices.js: Initializing services for project:', projectUUID, {
+    persistent
+  })
+
   const services = {}
-  
-  // Event emitter for communication
   const emitter = new Emitter()
-  console.log('✅ projectServices.js: Emitter created')
-  
-  // Mock undo/selection/osdDriver/ipcRenderer for web MVP
-  const undo = new MockUndo() // Now inherits from Emitter
+  const undo = new MockUndo()
   const selection = new MockSelection()
   const osdDriver = new MockOSDDriver()
   const ipcRenderer = new MockIpcRenderer()
-  
-  // Persistent DB per project in browser (IndexedDB)
+
   try {
-    const down = leveljs(`kalk:${projectUUID}`)
-    const db = L.leveldb({ down })
-    
+    const db = createProjectDb(projectUUID, { persistent })
+
     const jsonDB = L.jsonDB(db)
     const wkbDB = L.wkbDB(db)
-    const preferencesDB = L.preferencesDB(db)
-    const sessionDB = L.sessionDB(db)
-    
-    // Initialize stores
     const projectStore = new ProjectStore()
     const preferencesStore = new PreferencesStore()
     const sessionStore = new SessionStore()
-    
-    // Initialize main store with mock undo/selection
     const store = new Store(jsonDB, wkbDB, undo, selection)
-    
-    // Initialize additional stores
     const tileLayerStore = new TileLayerStore(store)
     const spatialIndex = new SpatialIndex(wkbDB)
     const featureStore = new FeatureStore(store)
-    
-    // Initialize Clipboard
     const clipboard = new Clipboard(selection, store)
-    
-    // Initialize SearchIndex dependencies
     const documentStore = new DocumentStore(store)
     const coordinatesFormat = new CoordinatesFormat(emitter, preferencesStore)
     const optionStore = new OptionStore(coordinatesFormat, store, sessionStore)
     const nominatim = new Nominatim(store)
-    const searchIndex = new SearchIndex(jsonDB, documentStore, optionStore, emitter, nominatim, sessionStore, spatialIndex)
-    
-    // Assign services
+    const searchIndex = new SearchIndex(
+      jsonDB,
+      documentStore,
+      optionStore,
+      emitter,
+      nominatim,
+      sessionStore,
+      spatialIndex,
+    )
+
     services.emitter = emitter
     services.projectStore = projectStore
     services.preferencesStore = preferencesStore
@@ -91,8 +99,11 @@ export async function initializeProjectServices(projectUUID) {
     services.clipboard = clipboard
     services.jsonDB = jsonDB
     services.wkbDB = wkbDB
-    
-    // Initialize Schema
+    services.replicationProvider = { disabled: true }
+    services.signals = {
+      'replication/operational': Signal.of(false),
+    }
+
     const schema = new Schema(db, {
       ids: 'KEY-ONLY',
       tags: 'SEPARATE',
@@ -101,48 +112,56 @@ export async function initializeProjectServices(projectUUID) {
       styles: 'SEPARATE',
       ms2525c: 'LOADED',
       skkm: 'LOADED',
-      'default-style': 'LOADED'
+      'default-style': 'LOADED',
     })
-    
-    // Orderly bootstrapping
-    console.log('🔧 projectServices.js: Bootstrapping schema...')
+
+    console.log('projectServices.js: Bootstrapping schema...')
     await schema.bootstrap()
-    console.log('✅ projectServices.js: Schema bootstrapped')
-    
-    console.log('🔧 projectServices.js: Bootstrapping tileLayerStore...')
+    console.log('projectServices.js: Schema bootstrapped')
+
+    console.log('projectServices.js: Bootstrapping tileLayerStore...')
     await tileLayerStore.bootstrap()
-    console.log('✅ projectServices.js: TileLayerStore bootstrapped')
-    
-    console.log('🔧 projectServices.js: Bootstrapping spatialIndex...')
+    console.log('projectServices.js: TileLayerStore bootstrapped')
+
+    console.log('projectServices.js: Bootstrapping spatialIndex...')
     await spatialIndex.bootstrap()
-    console.log('✅ projectServices.js: SpatialIndex bootstrapped')
-    
-    console.log('🔧 projectServices.js: Bootstrapping searchIndex...')
+    console.log('projectServices.js: SpatialIndex bootstrapped')
+
+    console.log('projectServices.js: Bootstrapping searchIndex...')
     await searchIndex.bootstrap()
-    console.log('✅ projectServices.js: SearchIndex bootstrapped')
-    
-    // Initialize replication provider (disabled for web MVP)
-    services.replicationProvider = { disabled: true }
-    
-    // Initialize signals
-    services.signals = {}
-    services.signals['replication/operational'] = Signal.of(false)
-    
-    // Initialize command registry
+    console.log('projectServices.js: SearchIndex bootstrapped')
+
     const commandRegistry = new CommandRegistry(services)
     services.commandRegistry = commandRegistry
     bindings(commandRegistry, emitter)
-    
-    console.log('✅ projectServices.js: All services initialized successfully', {
+
+    console.log('projectServices.js: All services initialized successfully', {
       serviceKeys: Object.keys(services),
       tileLayerStore: !!services.tileLayerStore,
-      store: !!services.store
+      store: !!services.store,
+      persistent,
     })
-    
+
     return services
   } catch (error) {
-    console.error('Failed to initialize project services:', error)
     throw error
   }
 }
 
+export async function initializeProjectServices(projectUUID) {
+  try {
+    return await Promise.race([
+      initializeProjectServicesWithDb(projectUUID, { persistent: true }),
+      timeoutAfter(
+        PERSISTENT_BOOTSTRAP_TIMEOUT_MS,
+        `Persistent tactical services bootstrap timed out after ${PERSISTENT_BOOTSTRAP_TIMEOUT_MS}ms`,
+      ),
+    ])
+  } catch (error) {
+    console.warn(
+      'projectServices.js: Falling back to in-memory tactical services.',
+      error,
+    )
+    return initializeProjectServicesWithDb(projectUUID, { persistent: false })
+  }
+}

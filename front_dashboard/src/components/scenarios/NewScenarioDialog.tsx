@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   Dialog,
   DialogTitle,
@@ -42,7 +42,6 @@ import {
   Delete,
   Add,
 } from '@mui/icons-material';
-import { useTranslation } from '@/hooks/useTranslation';
 import type { Scenario, ScenarioStatus } from '@/types';
 import MilitarySymbolPreview from '@/modules/scenario-management/components/MilitarySymbolPreview';
 import {
@@ -52,16 +51,21 @@ import {
   resourcesDialogActionsSx,
   resourcesOutlinedCancelButtonSx,
 } from '@/modules/dashboard/pages/resources/resourcesDialogStyles';
-import { 
-  LAND_UNIT_ICONS, 
+import {
+  LAND_UNIT_ICONS,
   getEchelonOptions,
   COMBAT_SIDE_STANDARD_IDENTITY_OPTIONS,
 } from '@/modules/scenario-management/constants/militarySymbols';
+import {
+  buildScenarioDialogPayload,
+  type ScenarioDialogPayload,
+} from './scenarioDialogAutosave';
 
 interface NewScenarioDialogProps {
   open: boolean;
   onClose: () => void;
   onSave: (scenario: Partial<Scenario>) => void;
+  onAutosave?: (scenario: Partial<Scenario>) => void;
   scenario?: Scenario; // در حالت ویرایش، سناریوی موجود را می‌گیریم
 }
 
@@ -125,14 +129,15 @@ const NewScenarioDialog: React.FC<NewScenarioDialogProps> = ({
   open,
   onClose,
   onSave,
+  onAutosave,
   scenario,
 }) => {
-  const { t } = useTranslation();
   const theme = useTheme();
   const [activeStep, setActiveStep] = useState(0);
   const [previewImageUrl, setPreviewImageUrl] = useState<string | null>(null);
   const [previewImageFile, setPreviewImageFile] = useState<File | null>(null);
-  
+  const lastAutosaveSnapshotRef = useRef('');
+
   // Form data
   const [formData, setFormData] = useState({
     name: 'سناریوی جدید',
@@ -159,7 +164,7 @@ const NewScenarioDialog: React.FC<NewScenarioDialogProps> = ({
   /** رقم هویت در SIDC (مثلاً ۳=دوست، ۶=دشمن) — مطابق MIL-STD-2525D */
   const [selectedStandardIdentity, setSelectedStandardIdentity] = useState('3');
   const [sides, setSides] = useState<SideData[]>([]);
-  
+
   const [weather, setWeather] = useState<WeatherData>({
     sunPhase: 'day',
     sunElevationDeg: 30,
@@ -218,7 +223,8 @@ const NewScenarioDialog: React.FC<NewScenarioDialogProps> = ({
           createdDate: meta.createdDate || '',
           purpose: meta.purpose || '',
           bboxText: '', // فعلاً از متادیتا برنمی‌گردانیم
-          symbologyStandard: (meta.symbologyStandard === '2525' ? '2525' : 'app6'),
+          symbologyStandard:
+            meta.symbologyStandard === '2525' ? '2525' : 'app6',
           timeZone: meta.timeZone || 'UTC',
           year,
           month,
@@ -231,12 +237,14 @@ const NewScenarioDialog: React.FC<NewScenarioDialogProps> = ({
           tags: Array.isArray(meta.tags) ? meta.tags : [],
         });
 
-        setNoInitialOrbat(Array.isArray(meta.sides) ? meta.sides.length === 0 : true);
+        setNoInitialOrbat(
+          Array.isArray(meta.sides) ? meta.sides.length === 0 : true
+        );
         setSides(Array.isArray(meta.sides) ? meta.sides : []);
 
         // هواشناسی
         if (meta.weather) {
-          setWeather((prev) => ({
+          setWeather(prev => ({
             ...prev,
             ...meta.weather,
           }));
@@ -305,12 +313,63 @@ const NewScenarioDialog: React.FC<NewScenarioDialogProps> = ({
     }
   }, [open, scenario]);
 
+  useEffect(() => {
+    if (!open) {
+      lastAutosaveSnapshotRef.current = '';
+      return;
+    }
+
+    if (!scenario?.id || !onAutosave || previewImageFile) {
+      return;
+    }
+
+    const imageUrl =
+      previewImageUrl && !previewImageUrl.startsWith('data:')
+        ? previewImageUrl
+        : undefined;
+    const payload = buildScenarioDialogPayload({
+      scenarioId: scenario.id,
+      formData,
+      noInitialOrbat,
+      sides,
+      weather,
+      imageUrl,
+    });
+    const snapshot = JSON.stringify(payload);
+
+    if (!lastAutosaveSnapshotRef.current) {
+      lastAutosaveSnapshotRef.current = snapshot;
+      return;
+    }
+
+    if (snapshot === lastAutosaveSnapshotRef.current) {
+      return;
+    }
+
+    const timer = window.setTimeout(() => {
+      lastAutosaveSnapshotRef.current = snapshot;
+      onAutosave(payload);
+    }, 2500);
+
+    return () => window.clearTimeout(timer);
+  }, [
+    open,
+    scenario?.id,
+    onAutosave,
+    formData,
+    noInitialOrbat,
+    sides,
+    weather,
+    previewImageUrl,
+    previewImageFile,
+  ]);
+
   const handleNext = () => {
-    setActiveStep((prevActiveStep) => prevActiveStep + 1);
+    setActiveStep(prevActiveStep => prevActiveStep + 1);
   };
 
   const handleBack = () => {
-    setActiveStep((prevActiveStep) => prevActiveStep - 1);
+    setActiveStep(prevActiveStep => prevActiveStep - 1);
   };
 
   const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -318,7 +377,7 @@ const NewScenarioDialog: React.FC<NewScenarioDialogProps> = ({
     if (file) {
       setPreviewImageFile(file);
       const reader = new FileReader();
-      reader.onload = (e) => {
+      reader.onload = e => {
         setPreviewImageUrl(e.target?.result as string);
       };
       reader.readAsDataURL(file);
@@ -342,7 +401,7 @@ const NewScenarioDialog: React.FC<NewScenarioDialogProps> = ({
   const handleObjectiveChange = (index: number, value: string) => {
     setFormData(prev => ({
       ...prev,
-      objectives: prev.objectives.map((obj, i) => i === index ? value : obj),
+      objectives: prev.objectives.map((obj, i) => (i === index ? value : obj)),
     }));
   };
 
@@ -363,17 +422,26 @@ const NewScenarioDialog: React.FC<NewScenarioDialogProps> = ({
   const handleTagChange = (index: number, value: string) => {
     setFormData(prev => ({
       ...prev,
-      tags: prev.tags.map((tag, i) => i === index ? value : tag),
+      tags: prev.tags.map((tag, i) => (i === index ? value : tag)),
     }));
   };
 
   const handleAddSide = () => {
-    setSides(prev => [...prev, {
-      name: 'طرف',
-      standardIdentity: selectedStandardIdentity,
-      symbolOptions: {},
-      units: [{ rootUnitName: 'ستاد', rootUnitEchelon: '18', rootUnitIcon: '121000' }],
-    }]);
+    setSides(prev => [
+      ...prev,
+      {
+        name: 'طرف',
+        standardIdentity: selectedStandardIdentity,
+        symbolOptions: {},
+        units: [
+          {
+            rootUnitName: 'ستاد',
+            rootUnitEchelon: '18',
+            rootUnitIcon: '121000',
+          },
+        ],
+      },
+    ]);
   };
 
   const handleRemoveSide = (index: number) => {
@@ -381,19 +449,33 @@ const NewScenarioDialog: React.FC<NewScenarioDialogProps> = ({
   };
 
   const handleAddRootUnit = (sideIndex: number) => {
-    setSides(prev => prev.map((side, i) => 
-      i === sideIndex 
-        ? { ...side, units: [...side.units, { rootUnitName: 'ستاد', rootUnitEchelon: '18', rootUnitIcon: '121000' }] }
-        : side
-    ));
+    setSides(prev =>
+      prev.map((side, i) =>
+        i === sideIndex
+          ? {
+              ...side,
+              units: [
+                ...side.units,
+                {
+                  rootUnitName: 'ستاد',
+                  rootUnitEchelon: '18',
+                  rootUnitIcon: '121000',
+                },
+              ],
+            }
+          : side
+      )
+    );
   };
 
   const handleRemoveUnit = (sideIndex: number, unitIndex: number) => {
-    setSides(prev => prev.map((side, i) => 
-      i === sideIndex 
-        ? { ...side, units: side.units.filter((_, j) => j !== unitIndex) }
-        : side
-    ));
+    setSides(prev =>
+      prev.map((side, i) =>
+        i === sideIndex
+          ? { ...side, units: side.units.filter((_, j) => j !== unitIndex) }
+          : side
+      )
+    );
   };
 
   const handleSubmit = async () => {
@@ -409,20 +491,27 @@ const NewScenarioDialog: React.FC<NewScenarioDialogProps> = ({
     // Parse bounding box if provided
     let boundingBox: number[] | undefined;
     if (formData.bboxText && formData.bboxText.trim().length > 0) {
-      const nums = formData.bboxText.split(',').map((s) => Number(s.trim()));
-      if (nums.length === 4 && nums.every((n) => Number.isFinite(n))) {
+      const nums = formData.bboxText.split(',').map(s => Number(s.trim()));
+      if (nums.length === 4 && nums.every(n => Number.isFinite(n))) {
         boundingBox = [nums[0], nums[1], nums[2], nums[3]];
       }
     }
 
     // آپلود تصویر به سرور اگر فایل جدید انتخاب شده باشد
     let imageUrl: string | undefined = previewImageUrl || undefined;
-    
+
     // اگر previewImageUrl یک data URL است (base64) و فایل هم وجود دارد، باید آپلود کنیم
-    if (previewImageFile && previewImageUrl && previewImageUrl.startsWith('data:')) {
+    if (
+      previewImageFile &&
+      previewImageUrl &&
+      previewImageUrl.startsWith('data:')
+    ) {
       try {
-        const { scenarioApiService } = await import('@/services/api/scenarioApiService');
-        const uploadResult = await scenarioApiService.uploadScenarioImage(previewImageFile);
+        const { scenarioApiService } = await import(
+          '@/services/api/scenarioApiService'
+        );
+        const uploadResult =
+          await scenarioApiService.uploadScenarioImage(previewImageFile);
         imageUrl = uploadResult.url;
       } catch (error) {
         console.error('Failed to upload image:', error);
@@ -431,12 +520,14 @@ const NewScenarioDialog: React.FC<NewScenarioDialogProps> = ({
       }
     }
 
-    const scenarioData: Partial<Scenario> = {
+    const scenarioData: ScenarioDialogPayload = {
       name: formData.name,
       description: formData.description,
       status: formData.status,
       startTime,
-      endTime: formData.endTime ? new Date(formData.endTime).toISOString() : undefined,
+      endTime: formData.endTime
+        ? new Date(formData.endTime).toISOString()
+        : undefined,
       objectives: formData.objectives.filter(obj => obj.trim()),
       // اضافه کردن تصویر در سطح اصلی سناریو (فقط URL، نه base64)
       image: imageUrl,
@@ -486,14 +577,16 @@ const NewScenarioDialog: React.FC<NewScenarioDialogProps> = ({
                 </Typography>
               </Box>
             </Box>
-            
+
             <Grid container spacing={3}>
               <Grid item xs={12} md={8}>
                 <TextField
                   fullWidth
                   label="نام"
                   value={formData.name}
-                  onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+                  onChange={e =>
+                    setFormData(prev => ({ ...prev, name: e.target.value }))
+                  }
                   required
                 />
               </Grid>
@@ -507,19 +600,29 @@ const NewScenarioDialog: React.FC<NewScenarioDialogProps> = ({
                   />
                   <Button
                     size="small"
-                    onClick={() => setFormData(prev => ({ ...prev, scenarioCode: generateScenarioCode() }))}
+                    onClick={() =>
+                      setFormData(prev => ({
+                        ...prev,
+                        scenarioCode: generateScenarioCode(),
+                      }))
+                    }
                   >
                     تولید مجدد
                   </Button>
                 </Box>
               </Grid>
-              
+
               <Grid item xs={12} md={4}>
                 <TextField
                   fullWidth
                   label="نام نویسنده"
                   value={formData.authorName}
-                  onChange={(e) => setFormData(prev => ({ ...prev, authorName: e.target.value }))}
+                  onChange={e =>
+                    setFormData(prev => ({
+                      ...prev,
+                      authorName: e.target.value,
+                    }))
+                  }
                 />
               </Grid>
               <Grid item xs={12} md={4}>
@@ -527,7 +630,12 @@ const NewScenarioDialog: React.FC<NewScenarioDialogProps> = ({
                   fullWidth
                   label="تاریخ ایجاد (شمسی)"
                   value={formData.createdDate}
-                  onChange={(e) => setFormData(prev => ({ ...prev, createdDate: e.target.value }))}
+                  onChange={e =>
+                    setFormData(prev => ({
+                      ...prev,
+                      createdDate: e.target.value,
+                    }))
+                  }
                   placeholder="مثلاً 1403/07/10"
                 />
               </Grid>
@@ -537,7 +645,12 @@ const NewScenarioDialog: React.FC<NewScenarioDialogProps> = ({
                   <Select
                     value={formData.purpose}
                     label="هدف سناریو"
-                    onChange={(e) => setFormData(prev => ({ ...prev, purpose: e.target.value }))}
+                    onChange={e =>
+                      setFormData(prev => ({
+                        ...prev,
+                        purpose: e.target.value,
+                      }))
+                    }
                   >
                     <MenuItem value="">- انتخاب کنید -</MenuItem>
                     <MenuItem value="operational">عملیاتی</MenuItem>
@@ -546,14 +659,19 @@ const NewScenarioDialog: React.FC<NewScenarioDialogProps> = ({
                   </Select>
                 </FormControl>
               </Grid>
-              
+
               <Grid item xs={12} md={4}>
                 <FormControl fullWidth>
                   <InputLabel>وضعیت سناریو</InputLabel>
                   <Select
                     value={formData.status}
                     label="وضعیت سناریو"
-                    onChange={(e) => setFormData(prev => ({ ...prev, status: e.target.value as ScenarioStatus }))}
+                    onChange={e =>
+                      setFormData(prev => ({
+                        ...prev,
+                        status: e.target.value as ScenarioStatus,
+                      }))
+                    }
                   >
                     <MenuItem value="draft">پیش‌نویس</MenuItem>
                     <MenuItem value="active">فعال</MenuItem>
@@ -570,26 +688,46 @@ const NewScenarioDialog: React.FC<NewScenarioDialogProps> = ({
                   <RadioGroup
                     row
                     value={formData.symbologyStandard}
-                    onChange={(e) => setFormData(prev => ({ ...prev, symbologyStandard: e.target.value as 'app6' | '2525' }))}
+                    onChange={e =>
+                      setFormData(prev => ({
+                        ...prev,
+                        symbologyStandard: e.target.value as 'app6' | '2525',
+                      }))
+                    }
                   >
                     <Paper
                       sx={{
                         p: 2,
                         mr: 2,
                         border: formData.symbologyStandard === 'app6' ? 2 : 1,
-                        borderColor: formData.symbologyStandard === 'app6' ? 'primary.main' : 'divider',
+                        borderColor:
+                          formData.symbologyStandard === 'app6'
+                            ? 'primary.main'
+                            : 'divider',
                         cursor: 'pointer',
                         '&:hover': { bgcolor: 'action.hover' },
                       }}
-                      onClick={() => setFormData(prev => ({ ...prev, symbologyStandard: 'app6' }))}
+                      onClick={() =>
+                        setFormData(prev => ({
+                          ...prev,
+                          symbologyStandard: 'app6',
+                        }))
+                      }
                     >
                       <FormControlLabel
                         value="app6"
                         control={<Radio />}
                         label={
                           <Box>
-                            <Typography variant="body1" fontWeight="bold">APP-6</Typography>
-                            <Typography variant="caption" color="text.secondary">نسخه ناتو</Typography>
+                            <Typography variant="body1" fontWeight="bold">
+                              APP-6
+                            </Typography>
+                            <Typography
+                              variant="caption"
+                              color="text.secondary"
+                            >
+                              نسخه ناتو
+                            </Typography>
                           </Box>
                         }
                       />
@@ -598,19 +736,34 @@ const NewScenarioDialog: React.FC<NewScenarioDialogProps> = ({
                       sx={{
                         p: 2,
                         border: formData.symbologyStandard === '2525' ? 2 : 1,
-                        borderColor: formData.symbologyStandard === '2525' ? 'primary.main' : 'divider',
+                        borderColor:
+                          formData.symbologyStandard === '2525'
+                            ? 'primary.main'
+                            : 'divider',
                         cursor: 'pointer',
                         '&:hover': { bgcolor: 'action.hover' },
                       }}
-                      onClick={() => setFormData(prev => ({ ...prev, symbologyStandard: '2525' }))}
+                      onClick={() =>
+                        setFormData(prev => ({
+                          ...prev,
+                          symbologyStandard: '2525',
+                        }))
+                      }
                     >
                       <FormControlLabel
                         value="2525"
                         control={<Radio />}
                         label={
                           <Box>
-                            <Typography variant="body1" fontWeight="bold">MIL-STD-2525D</Typography>
-                            <Typography variant="caption" color="text.secondary">نسخه آمریکایی</Typography>
+                            <Typography variant="body1" fontWeight="bold">
+                              MIL-STD-2525D
+                            </Typography>
+                            <Typography
+                              variant="caption"
+                              color="text.secondary"
+                            >
+                              نسخه آمریکایی
+                            </Typography>
                           </Box>
                         }
                       />
@@ -626,7 +779,12 @@ const NewScenarioDialog: React.FC<NewScenarioDialogProps> = ({
                   multiline
                   rows={3}
                   value={formData.description}
-                  onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+                  onChange={e =>
+                    setFormData(prev => ({
+                      ...prev,
+                      description: e.target.value,
+                    }))
+                  }
                   helperText="از نحو مارک‌داون برای قالب‌بندی استفاده کنید"
                 />
               </Grid>
@@ -649,7 +807,11 @@ const NewScenarioDialog: React.FC<NewScenarioDialogProps> = ({
                         onChange={handleImageChange}
                       />
                     </Button>
-                    <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
+                    <Typography
+                      variant="caption"
+                      color="text.secondary"
+                      sx={{ mt: 1, display: 'block' }}
+                    >
                       فرمت‌های رایج تصویری پشتیبانی می‌شوند. اندازه مناسب: ۱۶:۹
                     </Typography>
                   </Grid>
@@ -669,7 +831,11 @@ const NewScenarioDialog: React.FC<NewScenarioDialogProps> = ({
                           component="img"
                           src={previewImageUrl}
                           alt="Preview"
-                          sx={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                          sx={{
+                            width: '100%',
+                            height: '100%',
+                            objectFit: 'cover',
+                          }}
                         />
                       ) : (
                         <ImageIcon sx={{ fontSize: 48, color: 'grey.400' }} />
@@ -686,7 +852,9 @@ const NewScenarioDialog: React.FC<NewScenarioDialogProps> = ({
                   label="کران جغرافیایی (BBox) — ترتیب: minX,minY,maxX,maxY"
                   placeholder="مثلاً 44.5,25.1,63.3,39.8"
                   value={formData.bboxText}
-                  onChange={(e) => setFormData(prev => ({ ...prev, bboxText: e.target.value }))}
+                  onChange={e =>
+                    setFormData(prev => ({ ...prev, bboxText: e.target.value }))
+                  }
                 />
               </Grid>
             </Grid>
@@ -709,12 +877,12 @@ const NewScenarioDialog: React.FC<NewScenarioDialogProps> = ({
                 </Typography>
               </Box>
             </Box>
-            
+
             <FormControlLabel
               control={
                 <Switch
                   checked={noInitialOrbat}
-                  onChange={(e) => setNoInitialOrbat(e.target.checked)}
+                  onChange={e => setNoInitialOrbat(e.target.checked)}
                 />
               }
               label="طرف‌ها و واحدهای ریشه را بعداً اضافه کن"
@@ -728,9 +896,9 @@ const NewScenarioDialog: React.FC<NewScenarioDialogProps> = ({
                   <Select
                     value={selectedStandardIdentity}
                     label="هویت استاندارد"
-                    onChange={(e) => setSelectedStandardIdentity(e.target.value)}
+                    onChange={e => setSelectedStandardIdentity(e.target.value)}
                   >
-                    {COMBAT_SIDE_STANDARD_IDENTITY_OPTIONS.map((opt) => (
+                    {COMBAT_SIDE_STANDARD_IDENTITY_OPTIONS.map(opt => (
                       <MenuItem key={opt.value} value={opt.value}>
                         {opt.label}
                       </MenuItem>
@@ -739,7 +907,11 @@ const NewScenarioDialog: React.FC<NewScenarioDialogProps> = ({
                 </FormControl>
 
                 {sides.map((side, sideIndex) => (
-                  <Accordion key={sideIndex} defaultExpanded={sideIndex === 0} sx={{ mb: 2 }}>
+                  <Accordion
+                    key={sideIndex}
+                    defaultExpanded={sideIndex === 0}
+                    sx={{ mb: 2 }}
+                  >
                     <AccordionSummary expandIcon={<ExpandMore />}>
                       <Typography variant="subtitle1" fontWeight="bold">
                         طرف {sideIndex + 1}: {side.name || 'بدون نام'}
@@ -752,7 +924,7 @@ const NewScenarioDialog: React.FC<NewScenarioDialogProps> = ({
                             fullWidth
                             label="نام طرف"
                             value={side.name}
-                            onChange={(e) => {
+                            onChange={e => {
                               const newSides = [...sides];
                               newSides[sideIndex].name = e.target.value;
                               setSides(newSides);
@@ -765,7 +937,7 @@ const NewScenarioDialog: React.FC<NewScenarioDialogProps> = ({
                             label="رنگ نماد"
                             type="color"
                             value={side.symbolOptions?.fillColor || '#000000'}
-                            onChange={(e) => {
+                            onChange={e => {
                               const newSides = [...sides];
                               newSides[sideIndex].symbolOptions = {
                                 ...newSides[sideIndex].symbolOptions,
@@ -777,124 +949,201 @@ const NewScenarioDialog: React.FC<NewScenarioDialogProps> = ({
                           />
                         </Grid>
                       </Grid>
-                      
+
                       <Divider sx={{ my: 2 }}>واحدهای ریشه</Divider>
                       {side.units.map((unit, unitIndex) => (
-                          <Box key={unitIndex} sx={{ mb: 3, p: 2, bgcolor: alpha(theme.palette.primary.main, 0.05), borderRadius: 1, border: `1px solid ${alpha(theme.palette.primary.main, 0.1)}` }}>
-                            <Grid container spacing={2} alignItems="center">
-                              <Grid item xs={12} md={6}>
-                                <TextField
-                                  fullWidth
-                                  label="نام واحد ریشه"
-                                  value={unit.rootUnitName}
-                                  onChange={(e) => {
+                        <Box
+                          key={unitIndex}
+                          sx={{
+                            mb: 3,
+                            p: 2,
+                            bgcolor: alpha(theme.palette.primary.main, 0.05),
+                            borderRadius: 1,
+                            border: `1px solid ${alpha(theme.palette.primary.main, 0.1)}`,
+                          }}
+                        >
+                          <Grid container spacing={2} alignItems="center">
+                            <Grid item xs={12} md={6}>
+                              <TextField
+                                fullWidth
+                                label="نام واحد ریشه"
+                                value={unit.rootUnitName}
+                                onChange={e => {
+                                  const newSides = [...sides];
+                                  newSides[sideIndex].units[
+                                    unitIndex
+                                  ].rootUnitName = e.target.value;
+                                  setSides(newSides);
+                                }}
+                              />
+                            </Grid>
+                            <Grid item xs={12} md={6}>
+                              <Box
+                                sx={{
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  gap: 2,
+                                  justifyContent: 'center',
+                                  p: 1,
+                                }}
+                              >
+                                <MilitarySymbolPreview
+                                  standardIdentity={side.standardIdentity}
+                                  echelon={unit.rootUnitEchelon || '18'}
+                                  icon={unit.rootUnitIcon || '121000'}
+                                  fillColor={side.symbolOptions?.fillColor}
+                                  size={32}
+                                  compact={true}
+                                  symbologyStandard={formData.symbologyStandard}
+                                  symbolOptions={side.symbolOptions || {}}
+                                />
+                              </Box>
+                            </Grid>
+                          </Grid>
+
+                          <Grid container spacing={2} sx={{ mt: 1 }}>
+                            <Grid item xs={12} md={6}>
+                              <FormControl fullWidth>
+                                <InputLabel>آیکون اصلی</InputLabel>
+                                <Select
+                                  value={unit.rootUnitIcon || '121000'}
+                                  label="آیکون اصلی"
+                                  onChange={e => {
                                     const newSides = [...sides];
-                                    newSides[sideIndex].units[unitIndex].rootUnitName = e.target.value;
+                                    newSides[sideIndex].units[
+                                      unitIndex
+                                    ].rootUnitIcon = e.target.value;
                                     setSides(newSides);
                                   }}
-                                />
-                              </Grid>
-                              <Grid item xs={12} md={6}>
-                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, justifyContent: 'center', p: 1 }}>
-                                  <MilitarySymbolPreview
-                                    standardIdentity={side.standardIdentity}
-                                    echelon={unit.rootUnitEchelon || '18'}
-                                    icon={unit.rootUnitIcon || '121000'}
-                                    fillColor={side.symbolOptions?.fillColor}
-                                    size={32}
-                                    compact={true}
-                                    symbologyStandard={formData.symbologyStandard}
-                                    symbolOptions={side.symbolOptions || {}}
-                                  />
-                                </Box>
-                              </Grid>
+                                >
+                                  {LAND_UNIT_ICONS.map(icon => (
+                                    <MenuItem
+                                      key={icon.value}
+                                      value={icon.value}
+                                    >
+                                      <Box
+                                        sx={{
+                                          display: 'flex',
+                                          alignItems: 'center',
+                                          gap: 1,
+                                        }}
+                                      >
+                                        <MilitarySymbolPreview
+                                          standardIdentity={
+                                            side.standardIdentity
+                                          }
+                                          echelon={unit.rootUnitEchelon || '18'}
+                                          icon={icon.value}
+                                          fillColor={
+                                            side.symbolOptions?.fillColor
+                                          }
+                                          size={20}
+                                          compact={true}
+                                          symbologyStandard={
+                                            formData.symbologyStandard
+                                          }
+                                          symbolOptions={
+                                            side.symbolOptions || {}
+                                          }
+                                        />
+                                        <Typography variant="body2">
+                                          {icon.text}
+                                        </Typography>
+                                      </Box>
+                                    </MenuItem>
+                                  ))}
+                                </Select>
+                              </FormControl>
                             </Grid>
-                            
-                            <Grid container spacing={2} sx={{ mt: 1 }}>
-                              <Grid item xs={12} md={6}>
-                                <FormControl fullWidth>
-                                  <InputLabel>آیکون اصلی</InputLabel>
-                                  <Select
-                                    value={unit.rootUnitIcon || '121000'}
-                                    label="آیکون اصلی"
-                                    onChange={(e) => {
-                                      const newSides = [...sides];
-                                      newSides[sideIndex].units[unitIndex].rootUnitIcon = e.target.value;
-                                      setSides(newSides);
-                                    }}
-                                  >
-                                    {LAND_UNIT_ICONS.map((icon) => (
-                                      <MenuItem key={icon.value} value={icon.value}>
-                                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                          <MilitarySymbolPreview
-                                            standardIdentity={side.standardIdentity}
-                                            echelon={unit.rootUnitEchelon || '18'}
-                                            icon={icon.value}
-                                            fillColor={side.symbolOptions?.fillColor}
-                                            size={20}
-                                            compact={true}
-                                            symbologyStandard={formData.symbologyStandard}
-                                            symbolOptions={side.symbolOptions || {}}
-                                          />
-                                          <Typography variant="body2">{icon.text}</Typography>
-                                        </Box>
-                                      </MenuItem>
-                                    ))}
-                                  </Select>
-                                </FormControl>
-                              </Grid>
-                              <Grid item xs={12} md={6}>
-                                <FormControl fullWidth>
-                                  <InputLabel>رده</InputLabel>
-                                  <Select
-                                    value={unit.rootUnitEchelon || '18'}
-                                    label="رده"
-                                    onChange={(e) => {
-                                      const newSides = [...sides];
-                                      newSides[sideIndex].units[unitIndex].rootUnitEchelon = e.target.value;
-                                      setSides(newSides);
-                                    }}
-                                  >
-                                    {getEchelonOptions().map((echelon) => (
-                                      <MenuItem key={echelon.value} value={echelon.value}>
-                                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                          <MilitarySymbolPreview
-                                            standardIdentity={side.standardIdentity}
-                                            echelon={echelon.value}
-                                            icon={unit.rootUnitIcon || '121000'}
-                                            fillColor={side.symbolOptions?.fillColor}
-                                            size={20}
-                                            compact={true}
-                                            symbologyStandard={formData.symbologyStandard}
-                                            symbolOptions={side.symbolOptions || {}}
-                                          />
-                                          <Typography variant="body2">{echelon.label}</Typography>
-                                        </Box>
-                                      </MenuItem>
-                                    ))}
-                                  </Select>
-                                </FormControl>
-                              </Grid>
+                            <Grid item xs={12} md={6}>
+                              <FormControl fullWidth>
+                                <InputLabel>رده</InputLabel>
+                                <Select
+                                  value={unit.rootUnitEchelon || '18'}
+                                  label="رده"
+                                  onChange={e => {
+                                    const newSides = [...sides];
+                                    newSides[sideIndex].units[
+                                      unitIndex
+                                    ].rootUnitEchelon = e.target.value;
+                                    setSides(newSides);
+                                  }}
+                                >
+                                  {getEchelonOptions().map(echelon => (
+                                    <MenuItem
+                                      key={echelon.value}
+                                      value={echelon.value}
+                                    >
+                                      <Box
+                                        sx={{
+                                          display: 'flex',
+                                          alignItems: 'center',
+                                          gap: 1,
+                                        }}
+                                      >
+                                        <MilitarySymbolPreview
+                                          standardIdentity={
+                                            side.standardIdentity
+                                          }
+                                          echelon={echelon.value}
+                                          icon={unit.rootUnitIcon || '121000'}
+                                          fillColor={
+                                            side.symbolOptions?.fillColor
+                                          }
+                                          size={20}
+                                          compact={true}
+                                          symbologyStandard={
+                                            formData.symbologyStandard
+                                          }
+                                          symbolOptions={
+                                            side.symbolOptions || {}
+                                          }
+                                        />
+                                        <Typography variant="body2">
+                                          {echelon.label}
+                                        </Typography>
+                                      </Box>
+                                    </MenuItem>
+                                  ))}
+                                </Select>
+                              </FormControl>
                             </Grid>
-                            
-                            <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
-                              نگران نباشید اگر نمی‌توانید آیکون مناسب را پیدا کنید. می‌توانید بعداً آن را تغییر دهید.
-                            </Typography>
+                          </Grid>
+
+                          <Typography
+                            variant="caption"
+                            color="text.secondary"
+                            sx={{ mt: 1, display: 'block' }}
+                          >
+                            نگران نباشید اگر نمی‌توانید آیکون مناسب را پیدا
+                            کنید. می‌توانید بعداً آن را تغییر دهید.
+                          </Typography>
                           {side.units.length > 1 && (
                             <Button
                               size="small"
                               color="error"
                               startIcon={<Delete />}
-                              onClick={() => handleRemoveUnit(sideIndex, unitIndex)}
+                              onClick={() =>
+                                handleRemoveUnit(sideIndex, unitIndex)
+                              }
                               sx={{ mt: 1 }}
                             >
                               حذف واحد
                             </Button>
                           )}
-                          {unitIndex < side.units.length - 1 && <Divider sx={{ mt: 2 }} />}
+                          {unitIndex < side.units.length - 1 && (
+                            <Divider sx={{ mt: 2 }} />
+                          )}
                         </Box>
                       ))}
-                      <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1, mt: 2 }}>
+                      <Box
+                        sx={{
+                          display: 'flex',
+                          justifyContent: 'flex-end',
+                          gap: 1,
+                          mt: 2,
+                        }}
+                      >
                         <Button
                           size="small"
                           variant="outlined"
@@ -909,7 +1158,9 @@ const NewScenarioDialog: React.FC<NewScenarioDialogProps> = ({
                             size="small"
                             color="error"
                             startIcon={<Delete />}
-                            onClick={() => handleRemoveUnit(sideIndex, side.units.length - 1)}
+                            onClick={() =>
+                              handleRemoveUnit(sideIndex, side.units.length - 1)
+                            }
                             disabled={!side.units.length}
                           >
                             حذف واحد
@@ -930,7 +1181,7 @@ const NewScenarioDialog: React.FC<NewScenarioDialogProps> = ({
                     </AccordionDetails>
                   </Accordion>
                 ))}
-                
+
                 <Box sx={{ display: 'flex', justifyContent: 'center', mt: 3 }}>
                   <Button
                     variant="outlined"
@@ -961,14 +1212,16 @@ const NewScenarioDialog: React.FC<NewScenarioDialogProps> = ({
                 </Typography>
               </Box>
             </Box>
-            
+
             <Grid container spacing={3}>
               <Grid item xs={12}>
                 <TextField
                   fullWidth
                   label="منطقه زمانی"
                   value={formData.timeZone}
-                  onChange={(e) => setFormData(prev => ({ ...prev, timeZone: e.target.value }))}
+                  onChange={e =>
+                    setFormData(prev => ({ ...prev, timeZone: e.target.value }))
+                  }
                   placeholder="UTC"
                 />
               </Grid>
@@ -978,7 +1231,12 @@ const NewScenarioDialog: React.FC<NewScenarioDialogProps> = ({
                   label="سال"
                   type="number"
                   value={formData.year}
-                  onChange={(e) => setFormData(prev => ({ ...prev, year: parseInt(e.target.value) || 0 }))}
+                  onChange={e =>
+                    setFormData(prev => ({
+                      ...prev,
+                      year: parseInt(e.target.value) || 0,
+                    }))
+                  }
                 />
               </Grid>
               <Grid item xs={4}>
@@ -987,7 +1245,12 @@ const NewScenarioDialog: React.FC<NewScenarioDialogProps> = ({
                   label="ماه"
                   type="number"
                   value={formData.month}
-                  onChange={(e) => setFormData(prev => ({ ...prev, month: parseInt(e.target.value) || 0 }))}
+                  onChange={e =>
+                    setFormData(prev => ({
+                      ...prev,
+                      month: parseInt(e.target.value) || 0,
+                    }))
+                  }
                 />
               </Grid>
               <Grid item xs={4}>
@@ -996,7 +1259,12 @@ const NewScenarioDialog: React.FC<NewScenarioDialogProps> = ({
                   label="روز"
                   type="number"
                   value={formData.day}
-                  onChange={(e) => setFormData(prev => ({ ...prev, day: parseInt(e.target.value) || 0 }))}
+                  onChange={e =>
+                    setFormData(prev => ({
+                      ...prev,
+                      day: parseInt(e.target.value) || 0,
+                    }))
+                  }
                 />
               </Grid>
               <Grid item xs={6}>
@@ -1005,7 +1273,12 @@ const NewScenarioDialog: React.FC<NewScenarioDialogProps> = ({
                   label="ساعت"
                   type="number"
                   value={formData.hour}
-                  onChange={(e) => setFormData(prev => ({ ...prev, hour: parseInt(e.target.value) || 0 }))}
+                  onChange={e =>
+                    setFormData(prev => ({
+                      ...prev,
+                      hour: parseInt(e.target.value) || 0,
+                    }))
+                  }
                   inputProps={{ min: 0, max: 23 }}
                 />
               </Grid>
@@ -1015,20 +1288,30 @@ const NewScenarioDialog: React.FC<NewScenarioDialogProps> = ({
                   label="دقیقه"
                   type="number"
                   value={formData.minute}
-                  onChange={(e) => setFormData(prev => ({ ...prev, minute: parseInt(e.target.value) || 0 }))}
+                  onChange={e =>
+                    setFormData(prev => ({
+                      ...prev,
+                      minute: parseInt(e.target.value) || 0,
+                    }))
+                  }
                   inputProps={{ min: 0, max: 59 }}
                 />
               </Grid>
               <Grid item xs={12}>
-                <Paper 
-                  sx={{ 
-                    p: 3, 
+                <Paper
+                  sx={{
+                    p: 3,
                     bgcolor: alpha(theme.palette.primary.main, 0.1),
                     border: `1px solid ${alpha(theme.palette.primary.main, 0.2)}`,
                     borderRadius: 2,
                   }}
                 >
-                  <Typography variant="body1" align="center" fontWeight="bold" color="primary.main">
+                  <Typography
+                    variant="body1"
+                    align="center"
+                    fontWeight="bold"
+                    color="primary.main"
+                  >
                     {new Date(
                       formData.year,
                       formData.month - 1,
@@ -1061,11 +1344,12 @@ const NewScenarioDialog: React.FC<NewScenarioDialogProps> = ({
                   جو و وضعیت جوی
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
-                  پارامترهای جوی را برای زمان شروع سناریو مشخص کنید. (زمان و منطقه زمانی از مرحله ۳ استفاده می‌شود)
+                  پارامترهای جوی را برای زمان شروع سناریو مشخص کنید. (زمان و
+                  منطقه زمانی از مرحله ۳ استفاده می‌شود)
                 </Typography>
               </Box>
             </Box>
-            
+
             <Grid container spacing={3}>
               <Grid item xs={12}>
                 <Divider sx={{ my: 1 }}>روشنایی</Divider>
@@ -1076,7 +1360,12 @@ const NewScenarioDialog: React.FC<NewScenarioDialogProps> = ({
                   <Select
                     value={weather.sunPhase}
                     label="روشنایی"
-                    onChange={(e) => setWeather(prev => ({ ...prev, sunPhase: e.target.value as any }))}
+                    onChange={e =>
+                      setWeather(prev => ({
+                        ...prev,
+                        sunPhase: e.target.value as any,
+                      }))
+                    }
                   >
                     <MenuItem value="day">روز</MenuItem>
                     <MenuItem value="night">شب</MenuItem>
@@ -1091,7 +1380,12 @@ const NewScenarioDialog: React.FC<NewScenarioDialogProps> = ({
                   label="زاویه خورشید (°)"
                   type="number"
                   value={weather.sunElevationDeg}
-                  onChange={(e) => setWeather(prev => ({ ...prev, sunElevationDeg: parseFloat(e.target.value) || 0 }))}
+                  onChange={e =>
+                    setWeather(prev => ({
+                      ...prev,
+                      sunElevationDeg: parseFloat(e.target.value) || 0,
+                    }))
+                  }
                 />
               </Grid>
               <Grid item xs={12} md={4}>
@@ -1099,7 +1393,9 @@ const NewScenarioDialog: React.FC<NewScenarioDialogProps> = ({
                   fullWidth
                   label="وضعیت آسمان"
                   value={weather.sky}
-                  onChange={(e) => setWeather(prev => ({ ...prev, sky: e.target.value }))}
+                  onChange={e =>
+                    setWeather(prev => ({ ...prev, sky: e.target.value }))
+                  }
                   placeholder="صاف / نیمه‌ابری / ابری"
                 />
               </Grid>
@@ -1113,7 +1409,12 @@ const NewScenarioDialog: React.FC<NewScenarioDialogProps> = ({
                   label="دما (°C)"
                   type="number"
                   value={weather.temperatureC}
-                  onChange={(e) => setWeather(prev => ({ ...prev, temperatureC: parseFloat(e.target.value) || 0 }))}
+                  onChange={e =>
+                    setWeather(prev => ({
+                      ...prev,
+                      temperatureC: parseFloat(e.target.value) || 0,
+                    }))
+                  }
                 />
               </Grid>
               <Grid item xs={12} md={4}>
@@ -1122,7 +1423,12 @@ const NewScenarioDialog: React.FC<NewScenarioDialogProps> = ({
                   label="رطوبت نسبی (%)"
                   type="number"
                   value={weather.humidityPct}
-                  onChange={(e) => setWeather(prev => ({ ...prev, humidityPct: parseFloat(e.target.value) || 0 }))}
+                  onChange={e =>
+                    setWeather(prev => ({
+                      ...prev,
+                      humidityPct: parseFloat(e.target.value) || 0,
+                    }))
+                  }
                 />
               </Grid>
               <Grid item xs={12} md={4}>
@@ -1131,7 +1437,12 @@ const NewScenarioDialog: React.FC<NewScenarioDialogProps> = ({
                   label="فشار (hPa)"
                   type="number"
                   value={weather.pressureHpa}
-                  onChange={(e) => setWeather(prev => ({ ...prev, pressureHpa: parseFloat(e.target.value) || 0 }))}
+                  onChange={e =>
+                    setWeather(prev => ({
+                      ...prev,
+                      pressureHpa: parseFloat(e.target.value) || 0,
+                    }))
+                  }
                 />
               </Grid>
 
@@ -1144,7 +1455,12 @@ const NewScenarioDialog: React.FC<NewScenarioDialogProps> = ({
                   label="باد سطحی - سرعت (گره)"
                   type="number"
                   value={weather.windSurfaceSpeedKt}
-                  onChange={(e) => setWeather(prev => ({ ...prev, windSurfaceSpeedKt: parseFloat(e.target.value) || 0 }))}
+                  onChange={e =>
+                    setWeather(prev => ({
+                      ...prev,
+                      windSurfaceSpeedKt: parseFloat(e.target.value) || 0,
+                    }))
+                  }
                 />
               </Grid>
               <Grid item xs={12} md={3}>
@@ -1153,7 +1469,12 @@ const NewScenarioDialog: React.FC<NewScenarioDialogProps> = ({
                   label="باد سطحی - سمت (°)"
                   type="number"
                   value={weather.windSurfaceDirDeg}
-                  onChange={(e) => setWeather(prev => ({ ...prev, windSurfaceDirDeg: parseFloat(e.target.value) || 0 }))}
+                  onChange={e =>
+                    setWeather(prev => ({
+                      ...prev,
+                      windSurfaceDirDeg: parseFloat(e.target.value) || 0,
+                    }))
+                  }
                 />
               </Grid>
               <Grid item xs={12} md={3}>
@@ -1162,7 +1483,12 @@ const NewScenarioDialog: React.FC<NewScenarioDialogProps> = ({
                   label="باد لایه بالاتر - سرعت (گره)"
                   type="number"
                   value={weather.windUpperSpeedKt}
-                  onChange={(e) => setWeather(prev => ({ ...prev, windUpperSpeedKt: parseFloat(e.target.value) || 0 }))}
+                  onChange={e =>
+                    setWeather(prev => ({
+                      ...prev,
+                      windUpperSpeedKt: parseFloat(e.target.value) || 0,
+                    }))
+                  }
                 />
               </Grid>
               <Grid item xs={12} md={3}>
@@ -1171,7 +1497,12 @@ const NewScenarioDialog: React.FC<NewScenarioDialogProps> = ({
                   label="باد لایه بالاتر - سمت (°)"
                   type="number"
                   value={weather.windUpperDirDeg}
-                  onChange={(e) => setWeather(prev => ({ ...prev, windUpperDirDeg: parseFloat(e.target.value) || 0 }))}
+                  onChange={e =>
+                    setWeather(prev => ({
+                      ...prev,
+                      windUpperDirDeg: parseFloat(e.target.value) || 0,
+                    }))
+                  }
                 />
               </Grid>
 
@@ -1184,7 +1515,12 @@ const NewScenarioDialog: React.FC<NewScenarioDialogProps> = ({
                   <Select
                     value={weather.precipitationType}
                     label="نوع بارش"
-                    onChange={(e) => setWeather(prev => ({ ...prev, precipitationType: e.target.value as any }))}
+                    onChange={e =>
+                      setWeather(prev => ({
+                        ...prev,
+                        precipitationType: e.target.value as any,
+                      }))
+                    }
                   >
                     <MenuItem value="none">بدون بارش</MenuItem>
                     <MenuItem value="rain">باران</MenuItem>
@@ -1199,7 +1535,12 @@ const NewScenarioDialog: React.FC<NewScenarioDialogProps> = ({
                   label="شدت (mm/h)"
                   type="number"
                   value={weather.precipitationIntensity}
-                  onChange={(e) => setWeather(prev => ({ ...prev, precipitationIntensity: parseFloat(e.target.value) || 0 }))}
+                  onChange={e =>
+                    setWeather(prev => ({
+                      ...prev,
+                      precipitationIntensity: parseFloat(e.target.value) || 0,
+                    }))
+                  }
                 />
               </Grid>
               <Grid item xs={12} md={4}>
@@ -1208,7 +1549,12 @@ const NewScenarioDialog: React.FC<NewScenarioDialogProps> = ({
                   label="مدت (دقیقه)"
                   type="number"
                   value={weather.precipitationDurationMin}
-                  onChange={(e) => setWeather(prev => ({ ...prev, precipitationDurationMin: parseFloat(e.target.value) || 0 }))}
+                  onChange={e =>
+                    setWeather(prev => ({
+                      ...prev,
+                      precipitationDurationMin: parseFloat(e.target.value) || 0,
+                    }))
+                  }
                 />
               </Grid>
 
@@ -1221,7 +1567,12 @@ const NewScenarioDialog: React.FC<NewScenarioDialogProps> = ({
                   label="سقف ابر (ft)"
                   type="number"
                   value={weather.cloudCeilingFt}
-                  onChange={(e) => setWeather(prev => ({ ...prev, cloudCeilingFt: parseFloat(e.target.value) || 0 }))}
+                  onChange={e =>
+                    setWeather(prev => ({
+                      ...prev,
+                      cloudCeilingFt: parseFloat(e.target.value) || 0,
+                    }))
+                  }
                 />
               </Grid>
               <Grid item xs={12} md={4}>
@@ -1230,7 +1581,12 @@ const NewScenarioDialog: React.FC<NewScenarioDialogProps> = ({
                   label="پوشش ابر (%)"
                   type="number"
                   value={weather.cloudCoveragePct}
-                  onChange={(e) => setWeather(prev => ({ ...prev, cloudCoveragePct: parseFloat(e.target.value) || 0 }))}
+                  onChange={e =>
+                    setWeather(prev => ({
+                      ...prev,
+                      cloudCoveragePct: parseFloat(e.target.value) || 0,
+                    }))
+                  }
                 />
               </Grid>
               <Grid item xs={12} md={4}>
@@ -1239,7 +1595,12 @@ const NewScenarioDialog: React.FC<NewScenarioDialogProps> = ({
                   label="برد دید افقی (km)"
                   type="number"
                   value={weather.visibilityKm}
-                  onChange={(e) => setWeather(prev => ({ ...prev, visibilityKm: parseFloat(e.target.value) || 0 }))}
+                  onChange={e =>
+                    setWeather(prev => ({
+                      ...prev,
+                      visibilityKm: parseFloat(e.target.value) || 0,
+                    }))
+                  }
                 />
               </Grid>
 
@@ -1252,7 +1613,12 @@ const NewScenarioDialog: React.FC<NewScenarioDialogProps> = ({
                   <Select
                     value={weather.groundCondition}
                     label="وضعیت زمین"
-                    onChange={(e) => setWeather(prev => ({ ...prev, groundCondition: e.target.value as any }))}
+                    onChange={e =>
+                      setWeather(prev => ({
+                        ...prev,
+                        groundCondition: e.target.value as any,
+                      }))
+                    }
                   >
                     <MenuItem value="dry">خشک</MenuItem>
                     <MenuItem value="semi-wet">نیمه‌مرطوب</MenuItem>
@@ -1265,7 +1631,12 @@ const NewScenarioDialog: React.FC<NewScenarioDialogProps> = ({
                   control={
                     <Switch
                       checked={weather.groundIcing}
-                      onChange={(e) => setWeather(prev => ({ ...prev, groundIcing: e.target.checked }))}
+                      onChange={e =>
+                        setWeather(prev => ({
+                          ...prev,
+                          groundIcing: e.target.checked,
+                        }))
+                      }
                     />
                   }
                   label="یخ‌زدگی سطح"
@@ -1277,7 +1648,12 @@ const NewScenarioDialog: React.FC<NewScenarioDialogProps> = ({
                   label="تلفات انرژی حرکت (%)"
                   type="number"
                   value={weather.movementEnergyLossPct}
-                  onChange={(e) => setWeather(prev => ({ ...prev, movementEnergyLossPct: parseFloat(e.target.value) || 0 }))}
+                  onChange={e =>
+                    setWeather(prev => ({
+                      ...prev,
+                      movementEnergyLossPct: parseFloat(e.target.value) || 0,
+                    }))
+                  }
                 />
               </Grid>
 
@@ -1290,7 +1666,12 @@ const NewScenarioDialog: React.FC<NewScenarioDialogProps> = ({
                   label="شاخص کیفیت هوا (AQI)"
                   type="number"
                   value={weather.airQualityIndex}
-                  onChange={(e) => setWeather(prev => ({ ...prev, airQualityIndex: parseFloat(e.target.value) || 0 }))}
+                  onChange={e =>
+                    setWeather(prev => ({
+                      ...prev,
+                      airQualityIndex: parseFloat(e.target.value) || 0,
+                    }))
+                  }
                 />
               </Grid>
               <Grid item xs={12} md={4}>
@@ -1299,7 +1680,12 @@ const NewScenarioDialog: React.FC<NewScenarioDialogProps> = ({
                   <Select
                     value={weather.dustLevel}
                     label="گردوغبار"
-                    onChange={(e) => setWeather(prev => ({ ...prev, dustLevel: e.target.value as any }))}
+                    onChange={e =>
+                      setWeather(prev => ({
+                        ...prev,
+                        dustLevel: e.target.value as any,
+                      }))
+                    }
                   >
                     <MenuItem value="low">کم</MenuItem>
                     <MenuItem value="medium">متوسط</MenuItem>
@@ -1313,7 +1699,12 @@ const NewScenarioDialog: React.FC<NewScenarioDialogProps> = ({
                   label="کاهش دید به‌علت گردوغبار (%)"
                   type="number"
                   value={weather.visibilityReductionPct}
-                  onChange={(e) => setWeather(prev => ({ ...prev, visibilityReductionPct: parseFloat(e.target.value) || 0 }))}
+                  onChange={e =>
+                    setWeather(prev => ({
+                      ...prev,
+                      visibilityReductionPct: parseFloat(e.target.value) || 0,
+                    }))
+                  }
                 />
               </Grid>
             </Grid>
@@ -1336,7 +1727,7 @@ const NewScenarioDialog: React.FC<NewScenarioDialogProps> = ({
                 </Typography>
               </Box>
             </Box>
-            
+
             <Grid container spacing={3}>
               <Grid item xs={12}>
                 <Typography variant="subtitle2" gutterBottom>
@@ -1349,7 +1740,9 @@ const NewScenarioDialog: React.FC<NewScenarioDialogProps> = ({
                         fullWidth
                         placeholder={`هدف ${index + 1}`}
                         value={objective}
-                        onChange={(e) => handleObjectiveChange(index, e.target.value)}
+                        onChange={e =>
+                          handleObjectiveChange(index, e.target.value)
+                        }
                       />
                       <Button
                         color="error"
@@ -1359,10 +1752,7 @@ const NewScenarioDialog: React.FC<NewScenarioDialogProps> = ({
                       </Button>
                     </Box>
                   ))}
-                  <Button
-                    variant="outlined"
-                    onClick={handleAddObjective}
-                  >
+                  <Button variant="outlined" onClick={handleAddObjective}>
                     افزودن هدف
                   </Button>
                 </Stack>
@@ -1379,7 +1769,7 @@ const NewScenarioDialog: React.FC<NewScenarioDialogProps> = ({
                         fullWidth
                         placeholder="برچسب"
                         value={tag}
-                        onChange={(e) => handleTagChange(index, e.target.value)}
+                        onChange={e => handleTagChange(index, e.target.value)}
                       />
                       <Button
                         color="error"
@@ -1389,10 +1779,7 @@ const NewScenarioDialog: React.FC<NewScenarioDialogProps> = ({
                       </Button>
                     </Box>
                   ))}
-                  <Button
-                    variant="outlined"
-                    onClick={handleAddTag}
-                  >
+                  <Button variant="outlined" onClick={handleAddTag}>
                     افزودن برچسب
                   </Button>
                 </Stack>
@@ -1404,7 +1791,9 @@ const NewScenarioDialog: React.FC<NewScenarioDialogProps> = ({
                   label="زمان پایان سناریو"
                   type="datetime-local"
                   value={formData.endTime}
-                  onChange={(e) => setFormData(prev => ({ ...prev, endTime: e.target.value }))}
+                  onChange={e =>
+                    setFormData(prev => ({ ...prev, endTime: e.target.value }))
+                  }
                   InputLabelProps={{ shrink: true }}
                 />
               </Grid>
@@ -1414,7 +1803,12 @@ const NewScenarioDialog: React.FC<NewScenarioDialogProps> = ({
                   <Select
                     value={formData.status}
                     label="وضعیت سناریو"
-                    onChange={(e) => setFormData(prev => ({ ...prev, status: e.target.value as ScenarioStatus }))}
+                    onChange={e =>
+                      setFormData(prev => ({
+                        ...prev,
+                        status: e.target.value as ScenarioStatus,
+                      }))
+                    }
                   >
                     <MenuItem value="draft">پیش‌نویس</MenuItem>
                     <MenuItem value="active">فعال</MenuItem>
@@ -1440,21 +1834,27 @@ const NewScenarioDialog: React.FC<NewScenarioDialogProps> = ({
                   مرور نهایی
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
-                  خلاصه‌ای از تنظیمات سناریو را بررسی کنید و در صورت نیاز بازگردید و اصلاح کنید.
+                  خلاصه‌ای از تنظیمات سناریو را بررسی کنید و در صورت نیاز
+                  بازگردید و اصلاح کنید.
                 </Typography>
               </Box>
             </Box>
-            
-            <Paper 
-              sx={{ 
-                p: 3, 
+
+            <Paper
+              sx={{
+                p: 3,
                 bgcolor: alpha(theme.palette.background.paper, 0.7),
                 border: `1px solid ${alpha(theme.palette.divider, 0.1)}`,
               }}
             >
               <Grid container spacing={3}>
                 <Grid item xs={12} md={6}>
-                  <Typography variant="caption" color="text.secondary" display="block" gutterBottom>
+                  <Typography
+                    variant="caption"
+                    color="text.secondary"
+                    display="block"
+                    gutterBottom
+                  >
                     نام سناریو
                   </Typography>
                   <Typography variant="body1" fontWeight="bold">
@@ -1462,7 +1862,12 @@ const NewScenarioDialog: React.FC<NewScenarioDialogProps> = ({
                   </Typography>
                 </Grid>
                 <Grid item xs={12} md={6}>
-                  <Typography variant="caption" color="text.secondary" display="block" gutterBottom>
+                  <Typography
+                    variant="caption"
+                    color="text.secondary"
+                    display="block"
+                    gutterBottom
+                  >
                     کد سناریو
                   </Typography>
                   <Typography variant="body1" fontFamily="monospace">
@@ -1470,7 +1875,12 @@ const NewScenarioDialog: React.FC<NewScenarioDialogProps> = ({
                   </Typography>
                 </Grid>
                 <Grid item xs={12} md={6}>
-                  <Typography variant="caption" color="text.secondary" display="block" gutterBottom>
+                  <Typography
+                    variant="caption"
+                    color="text.secondary"
+                    display="block"
+                    gutterBottom
+                  >
                     زمان شروع
                   </Typography>
                   <Typography variant="body1">
@@ -1490,16 +1900,27 @@ const NewScenarioDialog: React.FC<NewScenarioDialogProps> = ({
                   </Typography>
                 </Grid>
                 <Grid item xs={12} md={6}>
-                  <Typography variant="caption" color="text.secondary" display="block" gutterBottom>
+                  <Typography
+                    variant="caption"
+                    color="text.secondary"
+                    display="block"
+                    gutterBottom
+                  >
                     وضعیت جوی
                   </Typography>
                   <Typography variant="body1">
-                    {weather.sky || '-'} | دید {weather.visibilityKm || 0} km | دما {weather.temperatureC || 0}°C
+                    {weather.sky || '-'} | دید {weather.visibilityKm || 0} km |
+                    دما {weather.temperatureC || 0}°C
                   </Typography>
                 </Grid>
                 {formData.authorName && (
                   <Grid item xs={12} md={6}>
-                    <Typography variant="caption" color="text.secondary" display="block" gutterBottom>
+                    <Typography
+                      variant="caption"
+                      color="text.secondary"
+                      display="block"
+                      gutterBottom
+                    >
                       نویسنده
                     </Typography>
                     <Typography variant="body1">
@@ -1509,72 +1930,137 @@ const NewScenarioDialog: React.FC<NewScenarioDialogProps> = ({
                 )}
                 {formData.purpose && (
                   <Grid item xs={12} md={6}>
-                    <Typography variant="caption" color="text.secondary" display="block" gutterBottom>
+                    <Typography
+                      variant="caption"
+                      color="text.secondary"
+                      display="block"
+                      gutterBottom
+                    >
                       هدف سناریو
                     </Typography>
                     <Typography variant="body1">
-                      {formData.purpose === 'operational' ? 'عملیاتی' : 
-                       formData.purpose === 'educational' ? 'آموزشی' : 
-                       formData.purpose === 'training' ? 'تمرینی' : formData.purpose}
+                      {formData.purpose === 'operational'
+                        ? 'عملیاتی'
+                        : formData.purpose === 'educational'
+                          ? 'آموزشی'
+                          : formData.purpose === 'training'
+                            ? 'تمرینی'
+                            : formData.purpose}
                     </Typography>
                   </Grid>
                 )}
                 <Grid item xs={12} md={6}>
-                  <Typography variant="caption" color="text.secondary" display="block" gutterBottom>
+                  <Typography
+                    variant="caption"
+                    color="text.secondary"
+                    display="block"
+                    gutterBottom
+                  >
                     وضعیت سناریو
                   </Typography>
-                  <Chip 
+                  <Chip
                     label={
-                      formData.status === 'draft' ? 'پیش‌نویس' :
-                      formData.status === 'active' ? 'فعال' :
-                      formData.status === 'paused' ? 'متوقف' :
-                      formData.status === 'completed' ? 'تکمیل شده' :
-                      formData.status === 'archived' ? 'آرشیو شده' : formData.status
+                      formData.status === 'draft'
+                        ? 'پیش‌نویس'
+                        : formData.status === 'active'
+                          ? 'فعال'
+                          : formData.status === 'paused'
+                            ? 'متوقف'
+                            : formData.status === 'completed'
+                              ? 'تکمیل شده'
+                              : formData.status === 'archived'
+                                ? 'آرشیو شده'
+                                : formData.status
                     }
                     color={
-                      formData.status === 'active' ? 'success' :
-                      formData.status === 'paused' ? 'warning' :
-                      formData.status === 'completed' ? 'info' :
-                      formData.status === 'archived' ? 'default' : 'default'
+                      formData.status === 'active'
+                        ? 'success'
+                        : formData.status === 'paused'
+                          ? 'warning'
+                          : formData.status === 'completed'
+                            ? 'info'
+                            : formData.status === 'archived'
+                              ? 'default'
+                              : 'default'
                     }
                     size="small"
                   />
                 </Grid>
                 {formData.objectives.length > 0 && (
                   <Grid item xs={12}>
-                    <Typography variant="caption" color="text.secondary" display="block" gutterBottom>
+                    <Typography
+                      variant="caption"
+                      color="text.secondary"
+                      display="block"
+                      gutterBottom
+                    >
                       اهداف ({formData.objectives.filter(o => o.trim()).length})
                     </Typography>
-                    <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
-                      {formData.objectives.filter(o => o.trim()).map((obj, idx) => (
-                        <Chip key={idx} label={obj} size="small" />
-                      ))}
+                    <Stack
+                      direction="row"
+                      spacing={1}
+                      flexWrap="wrap"
+                      useFlexGap
+                    >
+                      {formData.objectives
+                        .filter(o => o.trim())
+                        .map((obj, idx) => (
+                          <Chip key={idx} label={obj} size="small" />
+                        ))}
                     </Stack>
                   </Grid>
                 )}
                 {formData.tags.length > 0 && (
                   <Grid item xs={12}>
-                    <Typography variant="caption" color="text.secondary" display="block" gutterBottom>
+                    <Typography
+                      variant="caption"
+                      color="text.secondary"
+                      display="block"
+                      gutterBottom
+                    >
                       برچسب‌ها ({formData.tags.filter(t => t.trim()).length})
                     </Typography>
-                    <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
-                      {formData.tags.filter(t => t.trim()).map((tag, idx) => (
-                        <Chip key={idx} label={tag} size="small" color="primary" variant="outlined" />
-                      ))}
+                    <Stack
+                      direction="row"
+                      spacing={1}
+                      flexWrap="wrap"
+                      useFlexGap
+                    >
+                      {formData.tags
+                        .filter(t => t.trim())
+                        .map((tag, idx) => (
+                          <Chip
+                            key={idx}
+                            label={tag}
+                            size="small"
+                            color="primary"
+                            variant="outlined"
+                          />
+                        ))}
                     </Stack>
                   </Grid>
                 )}
                 {sides.length > 0 && (
                   <Grid item xs={12}>
-                    <Typography variant="caption" color="text.secondary" display="block" gutterBottom>
+                    <Typography
+                      variant="caption"
+                      color="text.secondary"
+                      display="block"
+                      gutterBottom
+                    >
                       طرف‌ها ({sides.length})
                     </Typography>
-                    <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
+                    <Stack
+                      direction="row"
+                      spacing={1}
+                      flexWrap="wrap"
+                      useFlexGap
+                    >
                       {sides.map((side, idx) => (
-                        <Chip 
-                          key={idx} 
-                          label={`${side.name || `طرف ${idx + 1}`} (${side.units.length} واحد)`} 
-                          size="small" 
+                        <Chip
+                          key={idx}
+                          label={`${side.name || `طرف ${idx + 1}`} (${side.units.length} واحد)`}
+                          size="small"
                           color="secondary"
                         />
                       ))}
@@ -1607,7 +2093,13 @@ const NewScenarioDialog: React.FC<NewScenarioDialogProps> = ({
       ]}
     >
       <DialogTitle sx={{ ...resourcesDialogTitleSx(theme), pt: 2, pb: 1.5 }}>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <Box
+          sx={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+          }}
+        >
           <Typography variant="h6">
             {scenario ? 'ویرایش سناریو' : 'ایجاد سناریوی جدید'}
           </Typography>
@@ -1616,10 +2108,10 @@ const NewScenarioDialog: React.FC<NewScenarioDialogProps> = ({
           </IconButton>
         </Box>
       </DialogTitle>
-      
+
       <DialogContent dividers sx={resourcesDialogContentDividersSx(theme)}>
         <Stepper activeStep={activeStep} sx={{ mb: 4, mt: 1 }}>
-          {steps.map((label) => (
+          {steps.map(label => (
             <Step key={label}>
               <StepLabel>{label}</StepLabel>
             </Step>
@@ -1629,7 +2121,9 @@ const NewScenarioDialog: React.FC<NewScenarioDialogProps> = ({
         {renderStepContent()}
       </DialogContent>
 
-      <DialogActions sx={{ ...resourcesDialogActionsSx(theme), flexWrap: 'wrap' }}>
+      <DialogActions
+        sx={{ ...resourcesDialogActionsSx(theme), flexWrap: 'wrap' }}
+      >
         <Button
           onClick={onClose}
           variant="outlined"
@@ -1640,7 +2134,13 @@ const NewScenarioDialog: React.FC<NewScenarioDialogProps> = ({
         </Button>
         <Box sx={{ flex: 1 }} />
         {activeStep > 0 && (
-          <Button onClick={handleBack} startIcon={<ArrowBack />} variant="outlined" color="inherit" sx={resourcesOutlinedCancelButtonSx(theme)}>
+          <Button
+            onClick={handleBack}
+            startIcon={<ArrowBack />}
+            variant="outlined"
+            color="inherit"
+            sx={resourcesOutlinedCancelButtonSx(theme)}
+          >
             مرحله قبل
           </Button>
         )}
@@ -1671,4 +2171,3 @@ const NewScenarioDialog: React.FC<NewScenarioDialogProps> = ({
 };
 
 export default NewScenarioDialog;
-

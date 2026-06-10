@@ -2,7 +2,7 @@
  * A custom store based on https://github.com/Korijn/vue-store
  */
 import { createEventHook } from "@vueuse/core";
-import { computed, reactive, shallowReactive, toRaw } from "vue";
+import { computed, reactive, ref, shallowReactive, toRaw } from "vue";
 import type { Patch } from "immer";
 import { enablePatches, produceWithPatches, setAutoFreeze } from "immer";
 import { applyPatch } from "rfc6902";
@@ -32,6 +32,7 @@ export function useImmerStore<T extends object, M>(baseState: T) {
 
   const past = shallowReactive<UndoEntry<M>[]>([]);
   const future = shallowReactive<UndoEntry<M>[]>([]);
+  const changeCounter = ref(0);
 
   const canUndo = computed(() => past.length > 0);
   const canRedo = computed(() => future.length > 0);
@@ -52,6 +53,7 @@ export function useImmerStore<T extends object, M>(baseState: T) {
     applyPatchWrapper(state, patches);
     past.push({ patches, inversePatches, meta });
     future.splice(0);
+    changeCounter.value++;
   };
 
   function groupUpdate(updates: () => void, meta?: MetaEntry<M>) {
@@ -75,6 +77,7 @@ export function useImmerStore<T extends object, M>(baseState: T) {
     const { patches, inversePatches, meta } = past.pop()!;
     applyPatchWrapper(state, inversePatches);
     future.unshift({ patches, inversePatches, meta });
+    changeCounter.value++;
     undoRedoHook.trigger({ patch: inversePatches, meta, action: "undo" });
     return true;
   };
@@ -84,6 +87,7 @@ export function useImmerStore<T extends object, M>(baseState: T) {
     const { patches, inversePatches, meta } = future.shift()!;
     applyPatchWrapper(state, patches);
     past.push({ patches, inversePatches, meta });
+    changeCounter.value++;
     undoRedoHook.trigger({ patch: patches, meta, action: "redo" });
     return true;
   };
@@ -91,6 +95,10 @@ export function useImmerStore<T extends object, M>(baseState: T) {
   const clearUndoRedoStack = () => {
     past.splice(0);
     future.splice(0);
+  };
+
+  const markChanged = () => {
+    changeCounter.value++;
   };
 
   return {
@@ -101,6 +109,8 @@ export function useImmerStore<T extends object, M>(baseState: T) {
     clearUndoRedoStack,
     canRedo,
     canUndo,
+    changeCounter,
+    markChanged,
     groupUpdate,
     onUndoRedo: undoRedoHook.on,
   };

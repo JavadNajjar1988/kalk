@@ -108,7 +108,8 @@ const drag = (feature, update) => ({
  * Insert vertex state.
  */
 const insert = pick => {
-  const { segment } = pick
+  const { segment, coordinate: anchor } = pick
+  let inserted = false
 
   return {
     pointerdrag: pointer => {
@@ -118,6 +119,7 @@ const insert = pick => {
       if (pointer.withinTolerance(distance)) {
         return [insert(pick), Events.coordinate(pointer.coordinate)]
       } else {
+        inserted = true
         const coordinate = pointer.coordinate
         const feature = segment.feature
         const [coordinates, update] = insertVertex(segment, coordinate)
@@ -126,7 +128,19 @@ const insert = pick => {
       }
     },
 
-    pointerup: () => [selected()]
+    pointerup: () => {
+      if (inserted) return [selected()]
+
+      const feature = segment.feature
+      const [coordinates] = insertVertex(segment, anchor)
+      feature.updateCoordinates(coordinates)
+      feature.commit()
+
+      return [selected(), [
+        Events.modifyend(feature),
+        Events.coordinate(null)
+      ]]
+    }
   }
 }
 

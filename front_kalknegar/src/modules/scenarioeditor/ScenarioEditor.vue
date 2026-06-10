@@ -1,18 +1,32 @@
 <template>
   <div class="bg-background flex h-dvh flex-col overflow-hidden" ref="dropZoneRef">
     <nav
-      class="dashboard-header scenario-header relative flex shrink-0 items-center justify-between px-3 py-1.5 text-sm text-foreground print:hidden"
+      class="dashboard-header scenario-header text-foreground relative flex shrink-0 items-center justify-between px-3 py-1.5 text-sm print:hidden"
     >
       <div class="flex min-w-0 flex-auto items-center">
         <div class="flex min-w-0 flex-auto items-center">
           <MainMenu @action="onScenarioAction" @ui-action="onUiAction" />
           <button
             type="button"
-            class="scenario-title-button hidden truncate pl-3 mr-4 sm:block"
+            class="scenario-title-button mr-2 inline-flex min-w-0 items-center gap-1.5 pl-2 sm:mr-4 sm:pl-3"
+            :title="scenarioTitleButtonTitle"
             @click="showInfo()"
           >
-            {{ activeScenario.store.state.info.name }}
+            <span
+              class="h-2 w-2 shrink-0 rounded-full ring-2 ring-white/70 dark:ring-slate-950/60"
+              :class="scenarioSaveDotClass"
+              aria-hidden="true"
+            ></span>
+            <span class="truncate">{{ activeScenario.store.state.info.name }}</span>
           </button>
+          <span
+            class="scenario-save-status hidden items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] font-medium md:inline-flex"
+            :class="scenarioSaveStatusClass"
+            :title="scenarioSaveStatus.title"
+          >
+            <span class="h-1.5 w-1.5 rounded-full" :class="scenarioSaveDotClass"></span>
+            {{ scenarioSaveStatus.label }}
+          </span>
         </div>
       </div>
       <div class="flex shrink-0 items-center gap-1 sm:gap-2">
@@ -21,7 +35,6 @@
           class="header-icon-button search-button inline-flex items-center justify-center rounded-md p-1.5"
         >
           <SearchIcon class="block h-5 w-5 transition-all duration-300" />
-        
         </button>
         <div class="flex min-w-0 items-center gap-0.5 sm:gap-1">
           <RecordingState />
@@ -47,7 +60,6 @@
             class="header-icon-button chart-button inline-flex items-center justify-center rounded-md p-1.5"
           >
             <IconSitemap class="h-5 w-5 transition-all duration-300" />
-           
           </router-link>
         </div>
         <div class="flex items-center">
@@ -65,7 +77,6 @@
             title="انجام مجدد عمل"
             :disabled="!canRedo"
           >
-          
             <IconRedo class="block h-5 w-5 transition-all duration-300" />
           </button>
         </div>
@@ -74,8 +85,7 @@
           class="header-icon-button keyboard-button hidden items-center justify-center rounded-md p-1.5 sm:block"
           title="نمایش میانبرهای صفحه کلید"
         >
-       
-            <IconKeyboard class="block h-5 w-5 transition-all duration-300" />
+          <IconKeyboard class="block h-5 w-5 transition-all duration-300" />
         </button>
 
         <div class="relative hidden sm:block" ref="themeMenuRef">
@@ -89,15 +99,20 @@
           <div
             v-if="themeMenuOpen"
             dir="rtl"
-            class="theme-menu-panel absolute left-0 top-full z-50 mt-2 w-60 rounded-xl border p-3 text-right"
+            class="theme-menu-panel absolute top-full left-0 z-50 mt-2 w-60 rounded-xl border p-3 text-right"
           >
             <div
-              class="flex items-center justify-between border-b pb-2 text-xs font-semibold text-foreground"
+              class="text-foreground flex items-center justify-between border-b pb-2 text-xs font-semibold"
             >
               <span>انتخاب تم</span>
-              <button class="theme-menu-close-button text-[11px]" @click="themeMenuOpen = false">بستن</button>
+              <button
+                class="theme-menu-close-button text-[11px]"
+                @click="themeMenuOpen = false"
+              >
+                بستن
+              </button>
             </div>
-            <p class="mt-2 text-[11px] text-muted-foreground">
+            <p class="text-muted-foreground mt-2 text-[11px]">
               یکی از ترکیب‌رنگ‌های زیر را برای محیط کار انتخاب کنید.
             </p>
             <div class="mt-3 grid grid-cols-2 gap-3">
@@ -106,11 +121,18 @@
                 :key="option.key"
                 @click="selectTheme(option.key)"
                 class="flex flex-col rounded-xl border p-2 text-right transition-all duration-200"
-                :class="selectedTheme === option.key ? 'scale-[1.02]' : 'hover:-translate-y-0.5'"
+                :class="
+                  selectedTheme === option.key ? 'scale-[1.02]' : 'hover:-translate-y-0.5'
+                "
                 :style="getThemeOptionStyle(option.key)"
               >
-                <span class="text-[11px] font-medium text-muted-foreground">{{ option.label }}</span>
-                <span class="mt-2 block h-8 w-full rounded-lg" :style="{ background: option.preview }"></span>
+                <span class="text-muted-foreground text-[11px] font-medium">{{
+                  option.label
+                }}</span>
+                <span
+                  class="mt-2 block h-8 w-full rounded-lg"
+                  :style="{ background: option.preview }"
+                ></span>
               </button>
             </div>
           </div>
@@ -192,14 +214,14 @@
       v-if="isOverDropZone"
       class="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/80"
     >
-      <p class="rounded border bg-white/40 p-4 text-gray-900">فایل را برای وارد کردن داده‌ها رها کنید</p>
+      <p class="rounded border bg-white/40 p-4 text-gray-900">
+        فایل را برای وارد کردن داده‌ها رها کنید
+      </p>
     </div>
     <div
       v-if="uiStore.debugMode"
       class="bg-opacity-70 fixed bottom-2 left-2 z-50 rounded bg-gray-50 text-gray-900 print:hidden"
     >
-      
-
       <p></p>
     </div>
   </div>
@@ -236,7 +258,13 @@ import {
   type ThemeKey,
 } from "@/constants/themePresets";
 
-import { createEventHook, onClickOutside, useClipboard, useTitle, watchOnce } from "@vueuse/core";
+import {
+  createEventHook,
+  onClickOutside,
+  useClipboard,
+  useTitle,
+  watchOnce,
+} from "@vueuse/core";
 import MainViewSlideOver from "@/components/MainViewSlideOver.vue";
 import { type ScenarioActions, TAB_LAYERS, type UiAction } from "@/types/constants";
 import AppNotifications from "@/components/AppNotifications.vue";
@@ -273,6 +301,7 @@ import MainMenu from "@/modules/scenarioeditor/MainMenu.vue";
 import RecordingState from "@/components/RecordingState.vue";
 import { useMapSettingsStore } from "@/stores/mapSettingsStore";
 import { useTimeFormatterProvider } from "@/stores/timeFormatStore";
+import { buildScenarioSaveDotClass, buildScenarioSaveStatus } from "./scenarioSaveStatus";
 
 const props = defineProps<{ activeScenario: TScenario }>();
 
@@ -334,6 +363,38 @@ const {
 const route = useRoute();
 const router = useRouter();
 const { copy: copyToClipboard, copied } = useClipboard();
+const isDemoScenario = computed(() =>
+  String(route.params.scenarioId ?? "").startsWith("demo-"),
+);
+const scenarioSaveStatus = computed(() =>
+  buildScenarioSaveStatus({
+    isDemoScenario: isDemoScenario.value,
+    saveState: io.apiSaveState.value,
+    dirty: io.savedDirty.value,
+    lastSavedAt: io.lastApiSavedAt.value ?? io.lastDraftSavedAt.value,
+    timeZone: state.info.timeZone,
+  }),
+);
+const scenarioTitleButtonTitle = computed(
+  () => `${state.info.name} - ${scenarioSaveStatus.value.label}`,
+);
+const scenarioSaveStatusClass = computed(() => {
+  switch (scenarioSaveStatus.value.tone) {
+    case "saving":
+      return "border-sky-300 bg-sky-50 text-sky-700";
+    case "saved":
+      return "border-emerald-300 bg-emerald-50 text-emerald-700";
+    case "dirty":
+      return "border-amber-300 bg-amber-50 text-amber-700";
+    case "error":
+      return "border-red-300 bg-red-50 text-red-700";
+    default:
+      return "border-slate-300 bg-slate-50 text-slate-600";
+  }
+});
+const scenarioSaveDotClass = computed(() =>
+  buildScenarioSaveDotClass(scenarioSaveStatus.value.tone),
+);
 
 const isOpen = ref(false);
 const showLoadModal = ref(false);
@@ -491,9 +552,12 @@ async function onScenarioAction(action: ScenarioActions) {
     await router.push({ name: MAP_EDIT_MODE_ROUTE, params: { scenarioId } });
   } else if (action === "createNew") {
     // Redirect to dashboard for creating new scenario
-    const parentOrigin = window.parent !== window 
-      ? (document.referrer ? new URL(document.referrer).origin : window.location.origin)
-      : window.location.origin;
+    const parentOrigin =
+      window.parent !== window
+        ? document.referrer
+          ? new URL(document.referrer).origin
+          : window.location.origin
+        : window.location.origin;
     window.location.href = parentOrigin;
   } else if (action === "browseSymbols") {
     const activeUnitId = selectedItems.activeUnitId.value;
@@ -521,7 +585,7 @@ function showKeyboardShortcuts() {
 
 function onGeneralKeyup(event: KeyboardEvent) {
   // نمایش میانبرها وقتی کلید '?' فشرده می‌شود (Shift + '/')
-  if (event.key === '?' || (event.shiftKey && event.key === '/')) {
+  if (event.key === "?" || (event.shiftKey && event.key === "/")) {
     showKeyboardShortcuts();
   }
 }

@@ -117,7 +117,10 @@ export const pointer = (options, rbush, event) => {
   pointer.pixelDistance = R.compose(pixelDistance, closestOnSegment)
 
   pointer.pick = () => {
-    const [segment] = sortedSegments()
+    const candidates = sortedSegments()
+    const segment = candidates.find(s =>
+      s.splittable !== false && s.geometry.getType() === 'LineString'
+    ) || candidates[0]
     const [coordinate, index] = vertex(segment)
 
     // Coordinate must never be undefined in order

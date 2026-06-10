@@ -115,8 +115,8 @@
   --surface-glass: rgba(15, 23, 42, 0.92);
   --surface-border: rgba(100, 116, 139, 0.45);
   --surface-shadow: rgba(2, 6, 23, 0.45);
-  --surface-panel: rgba(15, 23, 42, 0.92);
-  --surface-panel-muted: rgba(30, 41, 59, 0.92);
+  --surface-panel: #0f172a;
+  --surface-panel-muted: #1e293b;
 }
 @theme {
   --font-sans: "IranSans", "IRANSansX", "IRANSansWeb", "Iranian Sans", "Tahoma", "Segoe UI", "Arial", sans-serif;
