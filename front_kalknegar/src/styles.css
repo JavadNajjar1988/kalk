@@ -350,6 +350,18 @@
   box-shadow: 0 1px 2px var(--surface-shadow);
 }
 
+[data-slot="context-menu-content"],
+[data-slot="context-menu-sub-content"] {
+  background-color: var(--surface-panel) !important;
+  background-image: none !important;
+  color: var(--color-foreground) !important;
+  border-color: var(--surface-border) !important;
+  opacity: 1 !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  box-shadow: 0 10px 24px var(--surface-shadow);
+}
+
 .badge {
   @apply inline-flex items-center rounded-md bg-yellow-50 px-1.5 py-0.5 text-xs font-medium text-yellow-800 ring-1 ring-yellow-600/20 ring-inset;
 }

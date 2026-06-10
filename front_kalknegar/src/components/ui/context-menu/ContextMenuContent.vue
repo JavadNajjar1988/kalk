@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { OPAQUE_MENU_STYLE } from "@/lib/opaqueMenuStyle";
 import { cn } from "@/lib/utils";
 import {
   ContextMenuContent,
@@ -29,6 +30,7 @@ const forwarded = useForwardPropsEmits(delegatedProps, emits);
       data-slot="context-menu-content"
       v-bind="forwarded"
       dir="rtl"
+      :style="OPAQUE_MENU_STYLE"
       :class="
         cn(
           'context-menu-content text-right rtl data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 z-50 max-h-(--reka-context-menu-content-available-height) min-w-[8rem] overflow-visible rounded-2xl border p-1 shadow-xl [&_[data-slot=context-menu-item]]:justify-end [&_[data-slot=context-menu-sub-trigger]]:justify-end',
@@ -40,11 +42,3 @@ const forwarded = useForwardPropsEmits(delegatedProps, emits);
     </ContextMenuContent>
   </ContextMenuPortal>
 </template>
-<style scoped>
-.context-menu-content {
-  background-color: hsl(var(--popover));
-  color: hsl(var(--popover-foreground));
-  border-color: hsl(var(--border));
-  box-shadow: 0 10px 24px var(--surface-shadow);
-}
-</style>
