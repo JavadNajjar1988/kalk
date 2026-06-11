@@ -59,6 +59,52 @@ describe('fadeZones', () => {
     expect(styles.every(entry => entry['line-opacity'] === undefined)).toBe(true)
   })
 
+  it('lets delete zones override existing fade zones', () => {
+    const line = TS.lineString([
+      TS.coordinate(0, 0),
+      TS.coordinate(10, 0)
+    ])
+
+    const styles = applyFadeZones(
+      [{ id: 'style:2525c/default-stroke', geometry: line }],
+      [
+        { from: 0, to: 1, opacity: 0.15 },
+        { from: 0.25, to: 0.75, opacity: 0 }
+      ],
+      line
+    )
+
+    expect(styles).toHaveLength(2)
+    expect(styles.map(entry => entry.geometry.getGeometryType())).toEqual([
+      'LineString',
+      'LineString'
+    ])
+    expect(styles.map(entry => entry['line-opacity'])).toEqual([0.15, 0.15])
+  })
+
+  it('segments the rendered style geometry instead of replacing it with the base geometry', () => {
+    const baseLine = TS.lineString([
+      TS.coordinate(0, 0),
+      TS.coordinate(10, 0)
+    ])
+    const renderedLine = TS.lineString([
+      TS.coordinate(0, 10),
+      TS.coordinate(10, 10)
+    ])
+
+    const styles = applyFadeZones(
+      [{ id: 'style:2525c/default-stroke', geometry: renderedLine }],
+      [{ from: 0.25, to: 0.75, opacity: 0.15 }],
+      baseLine
+    )
+
+    expect(styles.map(entry => entry.geometry.getCoordinates().map(c => c.y))).toEqual([
+      [10, 10],
+      [10, 10],
+      [10, 10]
+    ])
+  })
+
   it('cuts the line part of a GeometryCollection while preserving point parts', () => {
     const geometry = new GeometryCollection([
       new LineString([[0, 0], [10, 0]]),

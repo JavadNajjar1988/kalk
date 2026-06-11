@@ -3,17 +3,16 @@ import Feature from 'ol/Feature'
 import Point from 'ol/geom/Point'
 import VectorLayer from 'ol/layer/Vector'
 import VectorSource from 'ol/source/Vector'
+import RBush from 'ol/structs/RBush'
+import * as Extent from 'ol/extent'
 import * as style from 'ol/style'
 import { closestOnSegment } from 'ol/coordinate'
 import { pointer as pointerPick } from './modify/events'
-import { writeIndex } from './modify/writers'
-import { writeGeometryObject } from '../../ol/format'
 import uuid from '../../shared/uuid'
 import * as TS from '../ts'
 import {
   positionOnFeature,
   mergeFadeZone,
-  cutLineGeometry,
   extractSubLine,
   toFadeBaseLine
 } from '../style/fadeZones'
@@ -46,6 +45,48 @@ const brushCursorStyle = brushSize => new style.Style({
     fill: new style.Fill({ color: 'rgba(255,80,80,0.15)' })
   })
 })
+
+const lineSegments = coordinates => {
+  if (!Array.isArray(coordinates) || coordinates.length < 2) return []
+  return coordinates.slice(1).map((coordinate, index) => {
+    const vertices = [coordinates[index], coordinate]
+    return {
+      vertices,
+      splittable: true,
+      extent: Extent.boundingExtent(vertices)
+    }
+  })
+}
+
+const eraseSegments = geometry => {
+  if (!geometry) return []
+  switch (geometry.getType()) {
+    case 'LineString':
+      return lineSegments(geometry.getCoordinates())
+    case 'MultiLineString':
+      return geometry.getCoordinates().flatMap(lineSegments)
+    case 'Polygon':
+      return geometry.getCoordinates().flatMap(lineSegments)
+    case 'MultiPolygon':
+      return geometry.getCoordinates().flatMap(polygon => polygon.flatMap(lineSegments))
+    case 'GeometryCollection':
+      return geometry.getGeometriesArray().flatMap(eraseSegments)
+    default:
+      return []
+  }
+}
+
+const writeEraseIndex = feature => {
+  const rbush = new RBush()
+  const segments = eraseSegments(feature.getGeometry())
+  if (!segments.length) return rbush
+
+  rbush.load(
+    segments.map(segment => segment.extent),
+    segments
+  )
+  return rbush
+}
 
 const previewStroke = mode => new style.Style({
   stroke: new style.Stroke({
@@ -174,7 +215,7 @@ export default options => {
   }
 
   const pickOnFeature = (feature, event) => {
-    const rbush = writeIndex(feature)
+    const rbush = writeEraseIndex(feature)
     const pick = pointerPick({
       pixelTolerance: Math.max(hitTolerance, brushCursorRadius(brushSize))
     }, rbush, event).pick()
@@ -287,36 +328,7 @@ export default options => {
 
   const persistCut = (feature, from, to) => {
     if (to - from < MIN_STROKE) return
-    const key = feature.getId()
-    const nextGeometry = cutLineGeometry(feature.getGeometry(), from, to)
-    if (!nextGeometry) {
-      persistFade(feature, from, to, 0)
-      return
-    }
-
-    const geometry = writeGeometryObject(nextGeometry)
-    feature.internalChange?.(true)
-    feature.setGeometry(nextGeometry)
-    feature.unset('fadeZones', true)
-    feature.internalChange?.(false)
-    if (isTimedRecording()) {
-      const baseGeometry = feature.$?.baseGeometry?.()
-      persistTimedState(feature, {
-        geometry,
-        properties: { fadeZones: undefined }
-      }, baseGeometry ? { geometry: baseGeometry, properties: {} } : null)
-      feature.commit?.()
-      return
-    }
-    store.update([key], value => ({
-      ...value,
-      geometry,
-      properties: {
-        ...value.properties,
-        fadeZones: undefined
-      }
-    }))
-    feature.commit?.()
+    persistFade(feature, from, to, 0)
   }
 
   const applyBrushRange = (feature, from, to, { preview = false } = {}) => {

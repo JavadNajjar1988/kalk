@@ -16,6 +16,18 @@ const Styles = {
   style: options => new olStyle.Style(options)
 }
 
+const NAMED_COLORS = {
+  black: [0, 0, 0],
+  white: [255, 255, 255],
+  red: [255, 0, 0],
+  brown: [165, 42, 42],
+  gold: [255, 215, 0],
+  green: [0, 128, 0],
+  blue: [0, 0, 255],
+  purple: [128, 0, 128],
+  yellow: [255, 255, 0]
+}
+
 const TEXT_ALIGN = {
   start: 'end',
   end: 'start',
@@ -27,6 +39,9 @@ const TEXT_ALIGN = {
 const colorWithOpacity = (color, opacity) => {
   if (!color || opacity === undefined || opacity >= 1) return color
   if (opacity <= 0) return 'rgba(0,0,0,0)'
+
+  const named = NAMED_COLORS[String(color).toLowerCase()]
+  if (named) return `rgba(${named[0]},${named[1]},${named[2]},${opacity})`
 
   const rgba = /^rgba\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*,\s*([\d.]+)\s*\)$/i.exec(color)
   if (rgba) {

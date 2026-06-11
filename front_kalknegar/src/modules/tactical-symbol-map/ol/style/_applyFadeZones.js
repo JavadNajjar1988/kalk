@@ -68,7 +68,7 @@ export default (styles, fadeZones, baseGeometry) => {
     if (shouldSegment(entry, geom)) {
       return segments.flatMap(segment => {
         if (segment.opacity <= 0) return []
-        const sub = extractSubGeometry(baseLine, segment.from, segment.to)
+        const sub = extractSubGeometry(geom, segment.from, segment.to)
         if (!sub) return []
         const coords = typeof sub.getCoordinates === 'function'
           ? sub.getCoordinates()

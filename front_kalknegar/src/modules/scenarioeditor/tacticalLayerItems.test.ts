@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   buildTacticalLayerItems,
+  createTacticalLayer,
   readTacticalLayerTuples,
   reorderTacticalPanelItems,
   writeTacticalPanelOrder,
@@ -77,6 +78,15 @@ describe("tactical layer items", () => {
     expect(layers[0]?.features[0]?.name).toBe(PERSIAN_DEFAULT_FEATURE_NAME);
   });
 
+  it("translates the tactical store default layer name", () => {
+    const layers = buildTacticalLayerItems([
+      ["layer:alpha", { name: "Default Layer" }],
+      ["feature:alpha/one", { type: "Feature", properties: {} }],
+    ]);
+
+    expect(layers[0]?.name).toBe("لایه پیش‌فرض");
+  });
+
   it("reads tactical feature tuples from explicit store scopes", async () => {
     const calls: string[] = [];
     const store = {
@@ -97,6 +107,22 @@ describe("tactical layer items", () => {
       ["hidden+feature:alpha/one", true],
     ]);
     expect(calls).toEqual(["layer:", "feature:", "hidden+layer:", "hidden+feature:"]);
+  });
+
+  it("keeps explicit tactical layers even when they do not have symbols yet", () => {
+    const layers = buildTacticalLayerItems([
+      ["layer:alpha", { name: "Empty layer", layerPanelOrder: 2 }],
+    ]);
+
+    expect(layers).toEqual([
+      {
+        id: "layer:alpha",
+        name: "Empty layer",
+        isHidden: false,
+        order: 2,
+        features: [],
+      },
+    ]);
   });
 
   it("sorts tactical layers and features by their layer panel order", () => {
@@ -155,5 +181,31 @@ describe("tactical layer items", () => {
         ],
       },
     ]);
+  });
+
+  it("creates a tactical layer and makes it the default target for new symbols", async () => {
+    const inserted: any[] = [];
+    const defaultLayers: string[] = [];
+    const store = {
+      insert: async (tuples: any[]) => {
+        inserted.push(...tuples);
+      },
+      setDefaultLayer: async (id: string) => {
+        defaultLayers.push(id);
+      },
+    };
+
+    await expect(
+      createTacticalLayer(store, {
+        id: "layer:new",
+        name: "لایه تاکتیکال ۲",
+        order: 2,
+      }),
+    ).resolves.toBe("layer:new");
+
+    expect(inserted).toEqual([
+      ["layer:new", { name: "لایه تاکتیکال ۲", layerPanelOrder: 2 }],
+    ]);
+    expect(defaultLayers).toEqual(["layer:new"]);
   });
 });

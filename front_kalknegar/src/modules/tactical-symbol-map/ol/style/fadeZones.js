@@ -23,8 +23,10 @@ export const mergeFadeZone = (zones, zone) =>
   normalizeFadeZones([...(zones || []), zone])
 
 export const opacityAt = (t, zones) => {
-  const zone = (zones || []).find(z => t >= z.from && t <= z.to)
-  return zone ? zone.opacity : 1
+  const matches = (zones || []).filter(z => t >= z.from && t <= z.to)
+  return matches.length
+    ? Math.min(...matches.map(z => z.opacity))
+    : 1
 }
 
 /**

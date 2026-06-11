@@ -1,9 +1,13 @@
 <script setup lang="ts">
 import { computed, nextTick, onUnmounted, ref, watch } from "vue";
+import type { Edge } from "@atlaskit/pragmatic-drag-and-drop-hitbox/closest-edge";
 import {
   IconEye,
   IconEyeOff,
   IconLayersOutline,
+  IconPlus,
+  IconStar,
+  IconStarOutline,
 } from "@iconify-prerendered/vue-mdi";
 import { storeToRefs } from "pinia";
 
@@ -13,6 +17,7 @@ import type { MenuItemData } from "@/components/types";
 import { useServicesStore } from "@/modules/tactical-symbol-map/stores/services.js";
 import {
   buildTacticalLayerItems,
+  createTacticalLayer,
   readTacticalLayerTuples,
   reorderTacticalPanelItems,
   type TacticalFeatureItem,
@@ -22,10 +27,15 @@ import {
 import TacticalSymbolLayerListItem from "./TacticalSymbolLayerListItem.vue";
 
 const servicesStore = useServicesStore();
-const { store: tacticalStoreRef, selection: tacticalSelectionRef } =
-  storeToRefs(servicesStore);
+const serviceRefs = storeToRefs(servicesStore as any) as any;
+const tacticalStoreRef = serviceRefs.store;
+const tacticalSelectionRef = serviceRefs.selection;
 const tacticalLayers = ref<TacticalFeatureLayerItem[]>([]);
-const hasAnyTacticalSymbols = computed(() => tacticalLayers.value.length > 0);
+const hasTacticalPanel = computed(
+  () => Boolean(tacticalStoreRef.value) || tacticalLayers.value.length > 0,
+);
+const activeTacticalLayerId = ref<string | null>(null);
+const isAddingTacticalLayer = ref(false);
 const isOpen = ref(true);
 const editingFeatureId = ref<string | null>(null);
 const editableFeatureName = ref("");
@@ -61,9 +71,14 @@ function getTacticalSelection() {
 async function refreshTacticalLayers() {
   const serial = ++refreshSerial;
   const store = getTacticalStore();
-  const tuples = await readTacticalLayerTuples(store);
+  const [tuples, defaultLayerId] = await Promise.all([
+    readTacticalLayerTuples(store),
+    typeof store?.defaultLayerId === "function" ? store.defaultLayerId() : null,
+  ]);
   if (serial !== refreshSerial) return;
   tacticalLayers.value = buildTacticalLayerItems(tuples);
+  activeTacticalLayerId.value =
+    typeof defaultLayerId === "string" ? defaultLayerId : null;
 }
 
 function onStoreBatch() {
@@ -166,6 +181,34 @@ async function setTacticalVisibility(id: string, isHidden: boolean) {
   await refreshTacticalLayers();
 }
 
+async function setActiveTacticalLayer(layerId: string) {
+  const store = getTacticalStore();
+  if (!store || typeof store.setDefaultLayer !== "function") return;
+  await store.setDefaultLayer(layerId);
+  activeTacticalLayerId.value = layerId;
+  await refreshTacticalLayers();
+}
+
+async function addTacticalLayer() {
+  const store = getTacticalStore();
+  if (!store || isAddingTacticalLayer.value) return;
+
+  isAddingTacticalLayer.value = true;
+  try {
+    const order = tacticalLayers.value.length + 1;
+    const layerId = await createTacticalLayer(store, {
+      order,
+      name: `لایه تاکتیکال ${order.toLocaleString("fa-IR")}`,
+    });
+    if (layerId) {
+      activeTacticalLayerId.value = layerId;
+    }
+    await refreshTacticalLayers();
+  } finally {
+    isAddingTacticalLayer.value = false;
+  }
+}
+
 function onFeatureClick(feature: TacticalFeatureItem, event: MouseEvent) {
   const selection = getTacticalSelection();
   if (!selection) return;
@@ -234,8 +277,9 @@ async function moveTacticalFeature(
 async function onFeatureDrop(
   source: TacticalFeatureItem,
   destination: TacticalFeatureItem,
-  edge: "top" | "bottom",
+  edge: Edge,
 ) {
+  if (edge !== "top" && edge !== "bottom") return;
   const layer = tacticalLayers.value.find((item) => item.id === destination.layerId);
   if (!layer) return;
   const nextFeatures = reorderTacticalPanelItems(
@@ -260,13 +304,13 @@ function onFeatureAction(feature: TacticalFeatureItem, action: TacticalFeatureAc
 
 <template>
   <ChevronPanel
-    v-if="hasAnyTacticalSymbols"
+    v-if="hasTacticalPanel"
     label="نمادهای تاکتیکال"
     v-model:open="isOpen"
     class="mb-4"
     header-class="-ml-2"
   >
-    <ul class="-mt-6 -ml-5">
+    <ul v-if="tacticalLayers.length > 0" class="-mt-6 -ml-5">
       <li v-for="layer in tacticalLayers" :key="layer.id" class="border-l border-transparent">
         <div class="group flex items-center justify-between py-2 text-sm text-foreground">
           <div class="flex min-w-0 items-center">
@@ -274,7 +318,13 @@ function onFeatureAction(feature: TacticalFeatureItem, action: TacticalFeatureAc
               class="text-muted-foreground h-5 w-5"
               :class="{ 'opacity-50': layer.isHidden }"
             />
-            <span class="mr-2 truncate font-bold" :class="{ 'opacity-50': layer.isHidden }">
+            <span
+              class="mr-2 truncate font-bold"
+              :class="[
+                layer.isHidden ? 'opacity-50' : '',
+                activeTacticalLayerId === layer.id ? 'text-red-900' : '',
+              ]"
+            >
               {{ layer.name }}
             </span>
           </div>
@@ -282,6 +332,15 @@ function onFeatureAction(feature: TacticalFeatureItem, action: TacticalFeatureAc
             <button
               type="button"
               class="text-muted-foreground hover:text-primary-foreground opacity-0 group-focus-within:opacity-100 group-hover:opacity-100"
+              title="تنظیم به عنوان لایه فعال"
+              @click.stop="setActiveTacticalLayer(layer.id)"
+            >
+              <IconStar v-if="activeTacticalLayerId === layer.id" class="h-5 w-5" />
+              <IconStarOutline v-else class="h-5 w-5" />
+            </button>
+            <button
+              type="button"
+              class="text-muted-foreground hover:text-primary-foreground mr-1 opacity-0 group-focus-within:opacity-100 group-hover:opacity-100"
               title="تغییر قابلیت مشاهده لایه"
               @click.stop="setTacticalVisibility(layer.id, layer.isHidden)"
             >
@@ -314,5 +373,19 @@ function onFeatureAction(feature: TacticalFeatureItem, action: TacticalFeatureAc
         </ul>
       </li>
     </ul>
+    <p v-else class="-mt-3 -ml-5 text-right text-xs text-muted-foreground">
+      هنوز لایه تاکتیکال وجود ندارد.
+    </p>
+    <div class="-ml-5 flex justify-end">
+      <button
+        type="button"
+        class="border-border hover:bg-muted flex items-center rounded border px-3 py-2 text-sm text-foreground disabled:cursor-not-allowed disabled:opacity-50"
+        :disabled="!tacticalStoreRef || isAddingTacticalLayer"
+        @click="addTacticalLayer"
+      >
+        <IconPlus class="ml-2 h-5 w-5" />
+        افزودن لایه تاکتیکال
+      </button>
+    </div>
   </ChevronPanel>
 </template>

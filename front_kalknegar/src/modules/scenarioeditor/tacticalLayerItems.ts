@@ -1,3 +1,5 @@
+import * as TacticalIds from "@/modules/tactical-symbol-map/ids.js";
+
 export interface TacticalFeatureLayerItem {
   id: string;
   name: string;
@@ -74,7 +76,9 @@ function getHiddenTargetId(id: string) {
 
 function getLayerName(value: unknown, index: number) {
   if (isObject(value) && typeof value.name === "string" && value.name.trim()) {
-    return value.name.trim();
+    const name = value.name.trim();
+    if (name === "Default Layer") return "لایه پیش‌فرض";
+    return name;
   }
   return `لایه تاکتیکال ${toPersianNumber(index)}`;
 }
@@ -116,6 +120,26 @@ export async function readTacticalLayerTuples(store: any): Promise<TacticalTuple
     TACTICAL_LAYER_TUPLE_SCOPES.map((scope) => read(scope)),
   );
   return tupleGroups.flat();
+}
+
+export async function createTacticalLayer(
+  store: any,
+  options: { id?: string; name?: string; order?: number } = {},
+): Promise<string | null> {
+  if (!store || typeof store.insert !== "function") return null;
+
+  const id = options.id ?? TacticalIds.layerId();
+  const order = options.order ?? 1;
+  const name =
+    typeof options.name === "string" && options.name.trim()
+      ? options.name.trim()
+      : `لایه تاکتیکال ${toPersianNumber(order)}`;
+
+  await store.insert([[id, { name, layerPanelOrder: order }]]);
+  if (typeof store.setDefaultLayer === "function") {
+    await store.setDefaultLayer(id);
+  }
+  return id;
 }
 
 export function reorderTacticalPanelItems<T extends { id: string }>(
@@ -221,11 +245,15 @@ export function buildTacticalLayerItems(tuples: TacticalTuple[]): TacticalFeatur
     });
   }
 
+  for (const layerId of layerValues.keys()) {
+    ensureLayer(layerId);
+  }
+
   return [...layers.values()]
     .map((layer) => ({
       ...layer,
       features: [...layer.features].sort((a, b) => a.order - b.order),
     }))
-    .filter((layer) => layer.features.length > 0)
+    .filter((layer) => layer.features.length > 0 || layerValues.has(layer.id))
     .sort((a, b) => a.order - b.order);
 }
