@@ -8,6 +8,7 @@ import { flat, select } from '../../shared/signal'
 import { setCoordinates } from '../geometry'
 import keyequals from '../../ol/style/keyequals'
 import isEqual from 'react-fast-compare'
+import { effectiveTimedProperties, pickTimedState } from './timedFeatureState'
 
 const scenarioTimeKey = 'scenario:time'
 const isTimedFeatureKey = key => typeof key === 'string' && key.startsWith('timed+feature:')
@@ -39,6 +40,7 @@ const readFeature = R.curry((state, source) => {
     // has actually changed.
     //
     properties: Signal.of(properties, { equals: isEqual }),
+    baseProperties: Signal.of(properties, { equals: isEqual }),
     geometry: Signal.of(geometry, { equals: keyequals() }),
     // baseGeometry must remain GeoJSON (not ol/geom/*).
     // It's used as the non-time-varying fallback for playback.
@@ -79,24 +81,32 @@ const readFeature = R.curry((state, source) => {
   return feature
 })
 
-function pickTimedGeometry (timedStates, t) {
-  if (!Array.isArray(timedStates) || timedStates.length === 0) return null
-  let best = null
-  for (const s of timedStates) {
-    if (!s || typeof s.t !== 'number') continue
-    if (s.t <= t && s.geometry) best = s.geometry
-    if (s.t > t) break
-  }
-  return best
+function setFeatureProperties (feature, nextProperties) {
+  const { geometry, ...currentProperties } = feature.getProperties()
+  Object.keys(currentProperties).forEach(key => {
+    if (!(key in nextProperties)) feature.unset(key, true)
+  })
+  feature.setProperties(nextProperties, true)
 }
 
-function applyEffectiveGeometry (state, feature) {
+function basePropertiesOf (feature) {
+  if (typeof feature.$?.baseProperties === 'function') return feature.$.baseProperties()
+  const { geometry, ...properties } = feature.getProperties()
+  return properties
+}
+
+function applyEffectiveState (state, feature) {
   const id = feature.getId()
   const t = typeof state.scenarioTime === 'number' ? state.scenarioTime : Number.MIN_SAFE_INTEGER
-  const timedStates = state.timedFeatures?.[id]
-  const effective = pickTimedGeometry(timedStates, t) ?? feature.$.baseGeometry()
-  if (!effective || !effective.type) return
-  const next = format.readGeometry(effective)
+  const timedState = pickTimedState(state.timedFeatures?.[id], t)
+  const effectiveProperties = effectiveTimedProperties(basePropertiesOf(feature), timedState)
+  const effectiveGeometry = timedState?.geometry ?? feature.$.baseGeometry()
+
+  setFeatureProperties(feature, effectiveProperties)
+  feature.$.properties(effectiveProperties)
+
+  if (!effectiveGeometry || !effectiveGeometry.type) return
+  const next = format.readGeometry(effectiveGeometry)
   if (!next) return
   feature.internalChange(true)
   feature.setGeometry(next)
@@ -172,7 +182,7 @@ export const featureSource = services => {
       .map(readFeature(state))
       .filter(Boolean)
     source.addFeatures(features)
-    source.getFeatures().forEach(f => applyEffectiveGeometry(state, f))
+    source.getFeatures().forEach(f => applyEffectiveState(state, f))
   })()
 
   // ==> batch event handling
@@ -203,18 +213,18 @@ export const featureSource = services => {
     let feature = getFeatureById(key)
     if (type === 'del') source.removeFeature(feature)
     else if (feature) {
-      feature.setProperties(value.properties)
+      feature.$.baseProperties(value.properties)
       // It is possible that only properties have changed.
       // Don't set null/undefined geometry!
       const geometry = format.readGeometry(value.geometry)
       if (geometry) {
         feature.$.baseGeometry(value.geometry)
-        applyEffectiveGeometry(state, feature)
       }
+      applyEffectiveState(state, feature)
     } else {
       feature = readFeature(state, { id: key, ...value })
       source.addFeature(feature)
-      applyEffectiveGeometry(state, feature)
+      applyEffectiveState(state, feature)
     }
   })
 
@@ -226,7 +236,7 @@ export const featureSource = services => {
 
   scenarioTimeUpdates.on(({ value }) => {
     state.scenarioTime = value
-    source.getFeatures().forEach(f => applyEffectiveGeometry(state, f))
+    source.getFeatures().forEach(f => applyEffectiveState(state, f))
   })
 
   timedFeatureUpdates.on(({ type, key, value }) => {
@@ -235,7 +245,7 @@ export const featureSource = services => {
     if (type === 'del') delete state.timedFeatures[featureId]
     else state.timedFeatures[featureId] = value
     const f = getFeatureById(featureId)
-    if (f) applyEffectiveGeometry(state, f)
+    if (f) applyEffectiveState(state, f)
   })
 
   // <== batch event handling

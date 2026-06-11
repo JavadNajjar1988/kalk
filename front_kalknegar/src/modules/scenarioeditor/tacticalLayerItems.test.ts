@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest";
 
-import { buildTacticalLayerItems, readTacticalLayerTuples } from "./tacticalLayerItems";
+import {
+  buildTacticalLayerItems,
+  readTacticalLayerTuples,
+  reorderTacticalPanelItems,
+  writeTacticalPanelOrder,
+} from "./tacticalLayerItems";
 
 const PERSIAN_DEFAULT_LAYER_NAME = "\u0644\u0627\u06cc\u0647 \u062a\u0627\u06a9\u062a\u06cc\u06a9\u0627\u0644 \u06f1";
 const PERSIAN_DEFAULT_FEATURE_NAME =
@@ -34,6 +39,7 @@ describe("tactical layer items", () => {
         id: "layer:alpha",
         name: "Tactical layer",
         isHidden: true,
+        order: 1,
         features: [
           {
             id: "feature:alpha/one",
@@ -41,6 +47,7 @@ describe("tactical layer items", () => {
             name: "Contact line",
             sidc: "GFGPOLK----X",
             isHidden: false,
+            order: 1,
           },
           {
             id: "feature:alpha/two",
@@ -48,6 +55,7 @@ describe("tactical layer items", () => {
             name: "Alpha",
             sidc: "SFGPUCI----K",
             isHidden: true,
+            order: 2,
           },
         ],
       },
@@ -89,5 +97,63 @@ describe("tactical layer items", () => {
       ["hidden+feature:alpha/one", true],
     ]);
     expect(calls).toEqual(["layer:", "feature:", "hidden+layer:", "hidden+feature:"]);
+  });
+
+  it("sorts tactical layers and features by their layer panel order", () => {
+    const layers = buildTacticalLayerItems([
+      ["layer:alpha", { name: "Alpha", layerPanelOrder: 2 }],
+      ["layer:beta", { name: "Beta", layerPanelOrder: 1 }],
+      ["feature:alpha/one", { name: "One", layerPanelOrder: 20 }],
+      ["feature:alpha/two", { name: "Two", layerPanelOrder: 10 }],
+      ["feature:beta/three", { name: "Three", layerPanelOrder: 30 }],
+    ]);
+
+    expect(layers.map((layer) => layer.id)).toEqual(["layer:beta", "layer:alpha"]);
+    expect(layers[1]?.features.map((feature) => feature.id)).toEqual([
+      "feature:alpha/two",
+      "feature:alpha/one",
+    ]);
+  });
+
+  it("reorders tactical panel items around a destination edge", () => {
+    const items = [{ id: "one" }, { id: "two" }, { id: "three" }];
+
+    expect(reorderTacticalPanelItems(items, "one", "three", "bottom")).toEqual([
+      { id: "two" },
+      { id: "three" },
+      { id: "one" },
+    ]);
+    expect(reorderTacticalPanelItems(items, "three", "one", "top")).toEqual([
+      { id: "three" },
+      { id: "one" },
+      { id: "two" },
+    ]);
+  });
+
+  it("writes tactical panel order back to store values", async () => {
+    const updates: any[] = [];
+    const store = {
+      tuplesJSON: async (ids: string[]) =>
+        ids.map((id) => [id, { name: id, layerPanelOrder: 99 }]),
+      update: async (keys: string[], newValues: any[], oldValues: any[]) => {
+        updates.push({ keys, newValues, oldValues });
+      },
+    };
+
+    await writeTacticalPanelOrder(store, ["feature:a/one", "feature:a/two"]);
+
+    expect(updates).toEqual([
+      {
+        keys: ["feature:a/one", "feature:a/two"],
+        oldValues: [
+          { name: "feature:a/one", layerPanelOrder: 99 },
+          { name: "feature:a/two", layerPanelOrder: 99 },
+        ],
+        newValues: [
+          { name: "feature:a/one", layerPanelOrder: 1 },
+          { name: "feature:a/two", layerPanelOrder: 2 },
+        ],
+      },
+    ]);
   });
 });

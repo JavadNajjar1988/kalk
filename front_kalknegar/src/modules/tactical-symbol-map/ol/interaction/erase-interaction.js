@@ -20,6 +20,8 @@ import {
 
 const ORIGINATOR_ID = uuid()
 
+const scenarioTimeKey = 'scenario:time'
+const timedFeatureKey = featureId => `timed+feature:${featureId}`
 const FADE_OPACITY = 0.15
 const DEFAULT_BRUSH_SIZE = 3
 const MIN_STROKE = 0.004
@@ -77,8 +79,27 @@ const expandBrush = (minT, maxT, t, size) => {
   ]
 }
 
+const upsertTimedState = (states, next) => {
+  const list = Array.isArray(states) ? [...states] : []
+  const idx = list.findIndex(s => s && s.t === next.t)
+  if (idx >= 0) {
+    list[idx] = {
+      ...list[idx],
+      ...next,
+      properties: {
+        ...(list[idx].properties || {}),
+        ...(next.properties || {})
+      }
+    }
+  } else {
+    list.push(next)
+  }
+  list.sort((a, b) => (a.t < b.t ? -1 : a.t > b.t ? 1 : 0))
+  return list
+}
+
 export default options => {
-  const { services, map, hitTolerance = 12 } = options
+  const { services, map, hitTolerance = 12, recordingStore } = options
   const { store, emitter } = services
 
   let mode = 'fade'
@@ -154,7 +175,9 @@ export default options => {
 
   const pickOnFeature = (feature, event) => {
     const rbush = writeIndex(feature)
-    const pick = pointerPick({ pixelTolerance: hitTolerance }, rbush, event).pick()
+    const pick = pointerPick({
+      pixelTolerance: Math.max(hitTolerance, brushCursorRadius(brushSize))
+    }, rbush, event).pick()
     if (!pick.coordinate) return null
     const coordinate = pick.segment?.vertices
       ? closestOnSegment(event.coordinate, pick.segment.vertices)
@@ -173,7 +196,10 @@ export default options => {
           candidates.push(feature)
         }
       },
-      { hitTolerance, layerFilter: layer => layer.get('selectable') }
+      {
+        hitTolerance: Math.max(hitTolerance, brushCursorRadius(brushSize)),
+        layerFilter: layer => layer.get('selectable')
+      }
     )
 
     if (!candidates.length) return null
@@ -189,6 +215,48 @@ export default options => {
     return best
   }
 
+  const getScenarioTime = () => {
+    if (typeof options.getScenarioTime === 'function') {
+      const t = options.getScenarioTime()
+      if (typeof t === 'number' && Number.isFinite(t)) return t
+    }
+    const t = store.value?.(scenarioTimeKey, Number.MIN_SAFE_INTEGER)
+    return typeof t === 'number' && Number.isFinite(t)
+      ? t
+      : Number.MIN_SAFE_INTEGER
+  }
+
+  const getPlaybackRange = () => {
+    if (typeof options.getPlaybackRange !== 'function') return null
+    const range = options.getPlaybackRange()
+    const start = Number(range?.start)
+    const end = Number(range?.end)
+    if (!Number.isFinite(start) || !Number.isFinite(end) || start === end) return null
+    return {
+      start: Math.min(start, end),
+      end: Math.max(start, end)
+    }
+  }
+
+  const isTimedRecording = () => !!recordingStore?.isRecordingTacticalGeometry
+
+  const persistTimedState = (feature, nextState, restoreState = null) => {
+    const key = feature.getId()
+    const timedKey = timedFeatureKey(key)
+    const range = getPlaybackRange()
+    const t = range?.start ?? getScenarioTime()
+    const oldStates = store.value?.(timedKey, []) || []
+    const update = states => {
+      let nextStates = upsertTimedState(states, { t, ...nextState })
+      if (range && restoreState) {
+        nextStates = upsertTimedState(nextStates, { t: range.end, ...restoreState })
+      }
+      store.update([timedKey], [nextStates], [states])
+    }
+    if (typeof oldStates?.then === 'function') oldStates.then(update)
+    else update(oldStates)
+  }
+
   const persistFade = (feature, from, to, opacity = FADE_OPACITY) => {
     if (to - from < MIN_STROKE) return
     const key = feature.getId()
@@ -198,6 +266,15 @@ export default options => {
       opacity
     })
     feature.set('fadeZones', fadeZones)
+    if (isTimedRecording()) {
+      persistTimedState(
+        feature,
+        { properties: { fadeZones } },
+        { properties: {} }
+      )
+      feature.commit?.()
+      return
+    }
     store.update([key], value => ({
       ...value,
       properties: {
@@ -222,6 +299,15 @@ export default options => {
     feature.setGeometry(nextGeometry)
     feature.unset('fadeZones', true)
     feature.internalChange?.(false)
+    if (isTimedRecording()) {
+      const baseGeometry = feature.$?.baseGeometry?.()
+      persistTimedState(feature, {
+        geometry,
+        properties: { fadeZones: undefined }
+      }, baseGeometry ? { geometry: baseGeometry, properties: {} } : null)
+      feature.commit?.()
+      return
+    }
     store.update([key], value => ({
       ...value,
       geometry,

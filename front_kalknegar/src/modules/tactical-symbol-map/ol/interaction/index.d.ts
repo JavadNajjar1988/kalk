@@ -8,6 +8,15 @@ export interface TacticalInteractionOptions {
     services: any;
     sources: VectorSources;
     styles: LayerStyles;
+    recordingStore?: {
+        isRecordingTacticalLocation?: boolean;
+        isRecordingTacticalGeometry?: boolean;
+    };
+    getScenarioTime?: () => number;
+    getPlaybackRange?: () => {
+        start?: number;
+        end?: number;
+    };
 }
 
 declare function tacticalInteractions(options: TacticalInteractionOptions): void;

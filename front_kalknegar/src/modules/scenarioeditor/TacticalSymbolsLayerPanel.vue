@@ -1,33 +1,46 @@
 <script setup lang="ts">
 import { computed, nextTick, onUnmounted, ref, watch } from "vue";
-import { IconLayersOutline, IconShieldOutline } from "@iconify-prerendered/vue-mdi";
+import {
+  IconEye,
+  IconEyeOff,
+  IconLayersOutline,
+} from "@iconify-prerendered/vue-mdi";
 import { storeToRefs } from "pinia";
 
 import ChevronPanel from "@/components/ChevronPanel.vue";
 import DotsMenu from "@/components/DotsMenu.vue";
-import EditableLabel from "@/components/EditableLabel.vue";
 import type { MenuItemData } from "@/components/types";
 import { useServicesStore } from "@/modules/tactical-symbol-map/stores/services.js";
 import {
   buildTacticalLayerItems,
   readTacticalLayerTuples,
+  reorderTacticalPanelItems,
   type TacticalFeatureItem,
   type TacticalFeatureLayerItem,
+  writeTacticalPanelOrder,
 } from "./tacticalLayerItems";
+import TacticalSymbolLayerListItem from "./TacticalSymbolLayerListItem.vue";
 
 const servicesStore = useServicesStore();
-const { store: tacticalStoreRef } = storeToRefs(servicesStore);
+const { store: tacticalStoreRef, selection: tacticalSelectionRef } =
+  storeToRefs(servicesStore);
 const tacticalLayers = ref<TacticalFeatureLayerItem[]>([]);
 const hasAnyTacticalSymbols = computed(() => tacticalLayers.value.length > 0);
 const isOpen = ref(true);
 const editingFeatureId = ref<string | null>(null);
 const editableFeatureName = ref("");
+const selectedTacticalFeatureIds = ref<Set<string>>(new Set());
 
-const featureMenuItems: MenuItemData<"rename">[] = [
-  { label: "تغییر نام", action: "rename" },
+type TacticalLayerAction = "moveUp" | "moveDown";
+type TacticalFeatureAction = "rename" | "moveUp" | "moveDown";
+
+const layerMenuItems: MenuItemData<TacticalLayerAction>[] = [
+  { label: "بردن بالا", action: "moveUp" },
+  { label: "بردن پایین", action: "moveDown" },
 ];
 
 let activeStore: any = null;
+let activeSelection: any = null;
 let refreshSerial = 0;
 
 function readMaybeRef<T>(value: T | { value: T }): T {
@@ -39,6 +52,10 @@ function readMaybeRef<T>(value: T | { value: T }): T {
 
 function getTacticalStore() {
   return readMaybeRef(tacticalStoreRef);
+}
+
+function getTacticalSelection() {
+  return readMaybeRef(tacticalSelectionRef);
 }
 
 async function refreshTacticalLayers() {
@@ -60,6 +77,37 @@ function detachStoreListener() {
   activeStore = null;
 }
 
+function onSelectionChange({
+  selected = [],
+  deselected = [],
+}: {
+  selected?: string[];
+  deselected?: string[];
+}) {
+  const next = new Set(selectedTacticalFeatureIds.value);
+  selected.forEach((id) => next.add(id));
+  deselected.forEach((id) => next.delete(id));
+  selectedTacticalFeatureIds.value = next;
+}
+
+function detachSelectionListener() {
+  if (activeSelection && typeof activeSelection.off === "function") {
+    activeSelection.off("selection", onSelectionChange);
+  }
+  activeSelection = null;
+}
+
+function attachSelectionListener(selection: any) {
+  detachSelectionListener();
+  activeSelection = selection;
+  selectedTacticalFeatureIds.value = new Set(
+    typeof activeSelection?.selected === "function" ? activeSelection.selected() : [],
+  );
+  if (activeSelection && typeof activeSelection.on === "function") {
+    activeSelection.on("selection", onSelectionChange);
+  }
+}
+
 function attachStoreListener(store: any) {
   detachStoreListener();
   activeStore = store;
@@ -75,8 +123,15 @@ watch(
   { immediate: true },
 );
 
+watch(
+  () => tacticalSelectionRef.value,
+  (selection) => attachSelectionListener(selection),
+  { immediate: true },
+);
+
 onUnmounted(() => {
   detachStoreListener();
+  detachSelectionListener();
 });
 
 function startRename(feature: TacticalFeatureItem) {
@@ -100,9 +155,105 @@ async function updateFeatureName(feature: TacticalFeatureItem, value: string) {
   await refreshTacticalLayers();
 }
 
-function onFeatureAction(feature: TacticalFeatureItem, action: "rename") {
+async function setTacticalVisibility(id: string, isHidden: boolean) {
+  const store = getTacticalStore();
+  if (!store) return;
+  if (isHidden && typeof store.show === "function") {
+    await store.show([id]);
+  } else if (!isHidden && typeof store.hide === "function") {
+    await store.hide([id]);
+  }
+  await refreshTacticalLayers();
+}
+
+function onFeatureClick(feature: TacticalFeatureItem, event: MouseEvent) {
+  const selection = getTacticalSelection();
+  if (!selection) return;
+  if (event.ctrlKey || event.metaKey) {
+    if (selectedTacticalFeatureIds.value.has(feature.id)) {
+      selection.deselect?.([feature.id]);
+    } else {
+      selection.select?.([feature.id]);
+    }
+    return;
+  }
+  selection.set?.([feature.id]);
+}
+
+async function writeLayerOrder(nextLayers: TacticalFeatureLayerItem[]) {
+  const store = getTacticalStore();
+  await writeTacticalPanelOrder(
+    store,
+    nextLayers.map((layer) => layer.id),
+  );
+  await refreshTacticalLayers();
+}
+
+async function writeFeatureOrder(nextFeatures: TacticalFeatureItem[]) {
+  const store = getTacticalStore();
+  await writeTacticalPanelOrder(
+    store,
+    nextFeatures.map((feature) => feature.id),
+  );
+  await refreshTacticalLayers();
+}
+
+async function moveTacticalLayer(layer: TacticalFeatureLayerItem, action: TacticalLayerAction) {
+  const currentIndex = tacticalLayers.value.findIndex((item) => item.id === layer.id);
+  const destination = tacticalLayers.value[action === "moveUp" ? currentIndex - 1 : currentIndex + 1];
+  if (!destination) return;
+  const edge = action === "moveUp" ? "top" : "bottom";
+  const nextLayers = reorderTacticalPanelItems(
+    tacticalLayers.value,
+    layer.id,
+    destination.id,
+    edge,
+  );
+  await writeLayerOrder(nextLayers);
+}
+
+async function moveTacticalFeature(
+  feature: TacticalFeatureItem,
+  action: Extract<TacticalFeatureAction, "moveUp" | "moveDown">,
+) {
+  const layer = tacticalLayers.value.find((item) => item.id === feature.layerId);
+  if (!layer) return;
+  const currentIndex = layer.features.findIndex((item) => item.id === feature.id);
+  const destination = layer.features[action === "moveUp" ? currentIndex - 1 : currentIndex + 1];
+  if (!destination) return;
+  const edge = action === "moveUp" ? "top" : "bottom";
+  const nextFeatures = reorderTacticalPanelItems(
+    layer.features,
+    feature.id,
+    destination.id,
+    edge,
+  );
+  await writeFeatureOrder(nextFeatures);
+}
+
+async function onFeatureDrop(
+  source: TacticalFeatureItem,
+  destination: TacticalFeatureItem,
+  edge: "top" | "bottom",
+) {
+  const layer = tacticalLayers.value.find((item) => item.id === destination.layerId);
+  if (!layer) return;
+  const nextFeatures = reorderTacticalPanelItems(
+    layer.features,
+    source.id,
+    destination.id,
+    edge,
+  );
+  await writeFeatureOrder(nextFeatures);
+}
+
+function onFeatureAction(feature: TacticalFeatureItem, action: TacticalFeatureAction) {
   if (action === "rename") {
     startRename(feature);
+    return;
+  }
+  if (action === "moveUp" || action === "moveDown") {
+    void moveTacticalFeature(feature, action);
   }
 }
 </script>
@@ -117,50 +268,49 @@ function onFeatureAction(feature: TacticalFeatureItem, action: "rename") {
   >
     <ul class="-mt-6 -ml-5">
       <li v-for="layer in tacticalLayers" :key="layer.id" class="border-l border-transparent">
-        <div class="flex items-center py-2 text-sm text-foreground">
-          <IconLayersOutline
-            class="text-muted-foreground h-5 w-5"
-            :class="{ 'opacity-50': layer.isHidden }"
-          />
-          <span class="mr-2 truncate font-bold" :class="{ 'opacity-50': layer.isHidden }">
-            {{ layer.name }}
-          </span>
-        </div>
-        <ul>
-          <li
-            v-for="feature in layer.features"
-            :key="feature.id"
-            class="group hover:bg-accent flex items-center justify-between py-2 pr-6 select-none"
-            :data-tactical-feature-id="feature.id"
-          >
-            <div class="flex min-w-0 flex-auto items-center">
-              <IconShieldOutline
-                class="text-muted-foreground h-5 w-5 flex-none"
-                :class="{ 'opacity-50': feature.isHidden || layer.isHidden }"
-              />
-              <EditableLabel
-                v-if="editingFeatureId === feature.id"
-                v-model="editableFeatureName"
-                text-class="text-sm leading-5 text-foreground"
-                class="mr-2 min-w-0 flex-auto"
-                @click.stop
-                @dblclick.stop
-                @update-value="updateFeatureName(feature, $event)"
-              />
-              <span
-                v-else
-                class="group-hover:text-accent-foreground mr-2 truncate text-sm text-foreground"
-                :class="{ 'opacity-50': feature.isHidden || layer.isHidden }"
-              >
-                {{ feature.name }}
-              </span>
-            </div>
+        <div class="group flex items-center justify-between py-2 text-sm text-foreground">
+          <div class="flex min-w-0 items-center">
+            <IconLayersOutline
+              class="text-muted-foreground h-5 w-5"
+              :class="{ 'opacity-50': layer.isHidden }"
+            />
+            <span class="mr-2 truncate font-bold" :class="{ 'opacity-50': layer.isHidden }">
+              {{ layer.name }}
+            </span>
+          </div>
+          <div class="flex items-center">
+            <button
+              type="button"
+              class="text-muted-foreground hover:text-primary-foreground opacity-0 group-focus-within:opacity-100 group-hover:opacity-100"
+              title="تغییر قابلیت مشاهده لایه"
+              @click.stop="setTacticalVisibility(layer.id, layer.isHidden)"
+            >
+              <IconEyeOff v-if="layer.isHidden" class="h-5 w-5" />
+              <IconEye v-else class="h-5 w-5" />
+            </button>
             <DotsMenu
-              :items="featureMenuItems"
-              @action="onFeatureAction(feature, $event)"
+              :items="layerMenuItems"
+              @action="moveTacticalLayer(layer, $event)"
               class="opacity-0 group-focus-within:opacity-100 group-hover:opacity-100"
             />
-          </li>
+          </div>
+        </div>
+        <ul>
+          <TacticalSymbolLayerListItem
+            v-for="feature in layer.features"
+            :key="feature.id"
+            :feature="feature"
+            :layer-hidden="layer.isHidden"
+            :selected="selectedTacticalFeatureIds.has(feature.id)"
+            :editing="editingFeatureId === feature.id"
+            :editable-name="editableFeatureName"
+            @feature-click="onFeatureClick"
+            @feature-action="onFeatureAction"
+            @feature-visibility="setTacticalVisibility(feature.id, feature.isHidden)"
+            @feature-drop="onFeatureDrop"
+            @update-editable-name="editableFeatureName = $event"
+            @update-feature-name="updateFeatureName"
+          />
         </ul>
       </li>
     </ul>

@@ -61,4 +61,141 @@ describe('eraseInteraction', () => {
       opacity: 0.15
     })
   })
+
+  it('uses the visible brush size for hit detection even when map hit tolerance is small', () => {
+    const feature = new Feature(new LineString([[0, 0], [10, 0]]))
+    feature.setId('feature:test')
+    feature.set('sidc', 'G*G*GLB---')
+
+    const state = {
+      'feature:test': {
+        geometry: writeGeometryObject(feature.getGeometry()),
+        properties: { sidc: feature.get('sidc') }
+      }
+    }
+    const store = {
+      update: (keys, updater) => {
+        keys.forEach(key => {
+          state[key] = updater(state[key])
+        })
+      }
+    }
+    const emitter = new EventEmitter()
+    const map = makeMap(feature)
+    const interaction = eraseInteraction({
+      services: { store, emitter },
+      map,
+      hitTolerance: 1
+    })
+
+    emitter.emit('ERASE_FADE_START', { brushSize: 3 })
+    interaction.handleEvent(pointerEvent(map, 'pointerdown', [2, 6]))
+    interaction.handleEvent(pointerEvent(map, 'pointerdrag', [5, 6]))
+
+    expect(state['feature:test'].properties.fadeZones).toBeDefined()
+  })
+
+  it('records fade zones as timed tactical state while tactical geometry recording is enabled', () => {
+    const feature = new Feature(new LineString([[0, 0], [10, 0]]))
+    feature.setId('feature:test')
+    feature.set('sidc', 'G*G*GLB---')
+
+    const state = {
+      'scenario:time': 100,
+      'feature:test': {
+        geometry: writeGeometryObject(feature.getGeometry()),
+        properties: { sidc: feature.get('sidc') }
+      },
+      'timed+feature:feature:test': []
+    }
+    const store = {
+      value: (key, fallback) => state[key] ?? fallback,
+      update: (keys, valuesOrUpdater) => {
+        keys.forEach((key, index) => {
+          state[key] = typeof valuesOrUpdater === 'function'
+            ? valuesOrUpdater(state[key])
+            : valuesOrUpdater[index]
+        })
+      }
+    }
+    const emitter = new EventEmitter()
+    const map = makeMap(feature)
+    const interaction = eraseInteraction({
+      services: { store, emitter },
+      map,
+      hitTolerance: 12,
+      recordingStore: { isRecordingTacticalGeometry: true }
+    })
+
+    emitter.emit('ERASE_FADE_START', { brushSize: 3 })
+    interaction.handleEvent(pointerEvent(map, 'pointerdown', [2, 0]))
+    interaction.handleEvent(pointerEvent(map, 'pointerdrag', [5, 0]))
+
+    expect(state['feature:test'].properties.fadeZones).toBeUndefined()
+    expect(state['timed+feature:feature:test']).toEqual([
+      {
+        t: 100,
+        properties: {
+          fadeZones: [
+            { from: 0.1875, to: 0.21250000000000002, opacity: 0.15 },
+            { from: 0.1875, to: 0.5125, opacity: 0.15 }
+          ]
+        }
+      }
+    ])
+  })
+
+  it('records fade zones between playback range markers when both markers are available', () => {
+    const feature = new Feature(new LineString([[0, 0], [10, 0]]))
+    feature.setId('feature:test')
+    feature.set('sidc', 'G*G*GLB---')
+
+    const state = {
+      'feature:test': {
+        geometry: writeGeometryObject(feature.getGeometry()),
+        properties: { sidc: feature.get('sidc') }
+      },
+      'timed+feature:feature:test': []
+    }
+    const store = {
+      value: (key, fallback) => state[key] ?? fallback,
+      update: (keys, valuesOrUpdater) => {
+        keys.forEach((key, index) => {
+          state[key] = typeof valuesOrUpdater === 'function'
+            ? valuesOrUpdater(state[key])
+            : valuesOrUpdater[index]
+        })
+      }
+    }
+    const emitter = new EventEmitter()
+    const map = makeMap(feature)
+    const interaction = eraseInteraction({
+      services: { store, emitter },
+      map,
+      hitTolerance: 12,
+      recordingStore: { isRecordingTacticalGeometry: true },
+      getScenarioTime: () => 150,
+      getPlaybackRange: () => ({ start: 100, end: 200 })
+    })
+
+    emitter.emit('ERASE_FADE_START', { brushSize: 3 })
+    interaction.handleEvent(pointerEvent(map, 'pointerdown', [2, 0]))
+    interaction.handleEvent(pointerEvent(map, 'pointerdrag', [5, 0]))
+
+    expect(state['timed+feature:feature:test']).toEqual([
+      {
+        t: 100,
+        properties: {
+          fadeZones: [
+            { from: 0.1875, to: 0.21250000000000002, opacity: 0.15 },
+            { from: 0.1875, to: 0.5125, opacity: 0.15 }
+          ]
+        }
+      },
+      {
+        t: 200,
+        properties: {}
+      }
+    ])
+  })
 })

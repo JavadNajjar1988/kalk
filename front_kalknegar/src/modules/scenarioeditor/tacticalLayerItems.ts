@@ -2,6 +2,7 @@ export interface TacticalFeatureLayerItem {
   id: string;
   name: string;
   isHidden: boolean;
+  order: number;
   features: TacticalFeatureItem[];
 }
 
@@ -11,9 +12,30 @@ export interface TacticalFeatureItem {
   name: string;
   sidc?: string;
   isHidden: boolean;
+  order: number;
 }
 
 type TacticalTuple = [string, any];
+type DropEdge = "top" | "bottom";
+const tacticalFeatureDragKey = Symbol("tacticalFeature");
+
+export type TacticalFeatureDragItem = {
+  [tacticalFeatureDragKey]: boolean;
+  feature: TacticalFeatureItem;
+};
+
+export function getTacticalFeatureDragItem(feature: TacticalFeatureItem): TacticalFeatureDragItem {
+  return {
+    [tacticalFeatureDragKey]: true,
+    feature,
+  };
+}
+
+export function isTacticalFeatureDragItem(
+  data: Record<string | symbol, unknown>,
+): data is TacticalFeatureDragItem {
+  return Boolean(data[tacticalFeatureDragKey]);
+}
 
 const FEATURE_SCOPE = "feature:";
 const LAYER_SCOPE = "layer:";
@@ -70,6 +92,16 @@ function getFeatureName(value: Record<string, any>, index: number) {
   return name?.trim() ?? `نماد تاکتیکال ${toPersianNumber(index)}`;
 }
 
+function getPanelOrder(value: unknown, fallback: number) {
+  if (isObject(value) && typeof value.layerPanelOrder === "number") {
+    return value.layerPanelOrder;
+  }
+  if (isObject(value) && typeof value.properties?.layerPanelOrder === "number") {
+    return value.properties.layerPanelOrder;
+  }
+  return fallback;
+}
+
 export async function readTacticalLayerTuples(store: any): Promise<TacticalTuple[]> {
   if (!store) return [];
   const read =
@@ -84,6 +116,55 @@ export async function readTacticalLayerTuples(store: any): Promise<TacticalTuple
     TACTICAL_LAYER_TUPLE_SCOPES.map((scope) => read(scope)),
   );
   return tupleGroups.flat();
+}
+
+export function reorderTacticalPanelItems<T extends { id: string }>(
+  items: T[],
+  sourceId: string,
+  destinationId: string,
+  edge: DropEdge,
+): T[] {
+  if (sourceId === destinationId) return items;
+  const sourceIndex = items.findIndex((item) => item.id === sourceId);
+  const destinationIndex = items.findIndex((item) => item.id === destinationId);
+  if (sourceIndex === -1 || destinationIndex === -1) return items;
+
+  const next = [...items];
+  const [sourceItem] = next.splice(sourceIndex, 1);
+  let targetIndex = next.findIndex((item) => item.id === destinationId);
+  if (edge === "bottom") targetIndex += 1;
+  next.splice(targetIndex, 0, sourceItem);
+  return next;
+}
+
+export async function writeTacticalPanelOrder(
+  store: any,
+  orderedIds: string[],
+): Promise<void> {
+  if (!store || orderedIds.length === 0) return;
+  const read =
+    typeof store.tuplesJSON === "function"
+      ? store.tuplesJSON.bind(store)
+      : typeof store.tuples === "function"
+        ? store.tuples.bind(store)
+        : null;
+  if (!read || typeof store.update !== "function") return;
+
+  const currentValues = new Map<string, any>(await read(orderedIds));
+  const keys: string[] = [];
+  const oldValues: any[] = [];
+  const newValues: any[] = [];
+
+  orderedIds.forEach((id, index) => {
+    const oldValue = currentValues.get(id);
+    if (!isObject(oldValue)) return;
+    keys.push(id);
+    oldValues.push(oldValue);
+    newValues.push({ ...oldValue, layerPanelOrder: index + 1 });
+  });
+
+  if (keys.length === 0) return;
+  await store.update(keys, newValues, oldValues);
 }
 
 export function buildTacticalLayerItems(tuples: TacticalTuple[]): TacticalFeatureLayerItem[] {
@@ -118,6 +199,7 @@ export function buildTacticalLayerItems(tuples: TacticalTuple[]): TacticalFeatur
       id: layerId,
       name: getLayerName(layerValues.get(layerId), layerFallbackIndex),
       isHidden: hiddenIds.has(layerId),
+      order: getPanelOrder(layerValues.get(layerId), layerFallbackIndex),
       features: [],
     };
     layers.set(layerId, layer);
@@ -135,8 +217,15 @@ export function buildTacticalLayerItems(tuples: TacticalTuple[]): TacticalFeatur
       sidc:
         typeof value.properties?.sidc === "string" ? value.properties.sidc : undefined,
       isHidden: hiddenIds.has(featureId),
+      order: getPanelOrder(value, featureFallbackIndex),
     });
   }
 
-  return [...layers.values()].filter((layer) => layer.features.length > 0);
+  return [...layers.values()]
+    .map((layer) => ({
+      ...layer,
+      features: [...layer.features].sort((a, b) => a.order - b.order),
+    }))
+    .filter((layer) => layer.features.length > 0)
+    .sort((a, b) => a.order - b.order);
 }

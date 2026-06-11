@@ -29,6 +29,7 @@ import { useMapHover } from "@/composables/geoHover";
 import { saveMapAsPng, useOlEvent } from "@/composables/openlayersHelpers";
 import { useMapSettingsStore } from "@/stores/mapSettingsStore";
 import { useRecordingStore } from "@/stores/recordingStore";
+import { usePlaybackStore } from "@/stores/playbackStore";
 import { useShowLocationControl } from "@/composables/geoShowLocation";
 import { useShowScaleLine } from "@/composables/geoScaleLine";
 import { ObjectEvent } from "ol/Object";
@@ -74,6 +75,7 @@ const geoStore = useGeoStore();
 const settingsStore = useSettingsStore();
 const symbolSettings = useSymbolSettingsStore();
 const recordingStore = useRecordingStore();
+const playbackStore = usePlaybackStore();
 const { moveUnitEnabled } = storeToRefs(useUnitSettingsStore());
 const { measurementUnit } = storeToRefs(useMeasurementsStore());
 const { unitLayer, drawUnits } = useUnitLayer();
@@ -287,6 +289,10 @@ watch(
           styles,
           recordingStore,
           getScenarioTime: () => state.currentTime,
+          getPlaybackRange: () => ({
+            start: playbackStore.startMarker,
+            end: playbackStore.endMarker,
+          }),
         });
         tacticalInteractionReady.value = true;
         olMap.getInteractions().on("add", ({ element }) => {
