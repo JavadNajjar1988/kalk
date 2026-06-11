@@ -44,8 +44,15 @@ const normalizeCorridorGeometry = (geometry, resolution) => {
   return TS.collect([lineString, generatedPoint])
 }
 
+const lineFromCorridor = geometry => {
+  if (!geometry) return null
+  const parts = TS.geometries(geometry)
+  return parts.find(part => part.getGeometryType() === 'LineString') || null
+}
+
 const specifics = $ => {
   $.corridorGeometry = Signal.link(normalizeCorridorGeometry, [$.jtsGeometry, $.resolution])
+  $.fadeBaseGeometry = $.corridorGeometry.map(lineFromCorridor)
   $.context = Signal.link(_context, [$.corridorGeometry, $.resolution])
   $.shape = $.context.ap($.parameterizedSIDC.map(_shape(styles)))
   $.selection = Signal.link(_selection, [$.selectionMode, $.corridorGeometry])

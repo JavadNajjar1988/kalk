@@ -24,10 +24,33 @@ const TEXT_ALIGN = {
   center: 'center'
 }
 
+const colorWithOpacity = (color, opacity) => {
+  if (!color || opacity === undefined || opacity >= 1) return color
+  if (opacity <= 0) return 'rgba(0,0,0,0)'
+
+  const rgba = /^rgba\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*,\s*([\d.]+)\s*\)$/i.exec(color)
+  if (rgba) {
+    return `rgba(${rgba[1]},${rgba[2]},${rgba[3]},${Math.min(1, parseFloat(rgba[4]) * opacity)})`
+  }
+
+  const rgb = /^rgb\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*\)$/i.exec(color)
+  if (rgb) return `rgba(${rgb[1]},${rgb[2]},${rgb[3]},${opacity})`
+
+  const hex = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(color)
+  if (hex) {
+    return `rgba(${parseInt(hex[1], 16)},${parseInt(hex[2], 16)},${parseInt(hex[3], 16)},${opacity})`
+  }
+
+  return color
+}
+
+const resolveOpacity = props => props['line-opacity'] ?? props['shape-opacity'] ?? props['icon-opacity']
+
 const makeStroke = props => {
   if (!props['line-width']) return null
+  const opacity = resolveOpacity(props)
   return Styles.stroke({
-    color: props['line-color'],
+    color: colorWithOpacity(props['line-color'], opacity),
     lineCap: props['line-cap'],
     lineJoin: props['line-join'],
     lineDash: props['line-dash-array'],
@@ -36,8 +59,9 @@ const makeStroke = props => {
 }
 
 const makeFill = props => {
+  const opacity = resolveOpacity(props)
   if (props['fill-color']) {
-    return Styles.fill({ color: props['fill-color'] })
+    return Styles.fill({ color: colorWithOpacity(props['fill-color'], opacity) })
   } else if (props['fill-pattern']) {
     const color = patterns.fill({
       pattern: props['fill-pattern'],
@@ -87,10 +111,11 @@ const makeText = props => {
 }
 
 const makeCircle = props => {
-  const fill = Styles.fill({ color: props['circle-fill-color'] })
+  const opacity = resolveOpacity(props)
+  const fill = Styles.fill({ color: colorWithOpacity(props['circle-fill-color'], opacity) })
   const stroke = props['circle-line-color']
     ? Styles.stroke({
-      color: props['circle-line-color'],
+      color: colorWithOpacity(props['circle-line-color'], opacity),
       width: props['circle-line-width']
     })
     : null
@@ -103,10 +128,11 @@ const makeCircle = props => {
 }
 
 const makeShape = props => {
+  const opacity = resolveOpacity(props)
   const fillColor = props['shape-fill-color']
-  const fill = fillColor ? Styles.fill({ color: fillColor }) : null
+  const fill = fillColor ? Styles.fill({ color: colorWithOpacity(fillColor, opacity) }) : null
   const stroke = Styles.stroke({
-    color: props['shape-line-color'],
+    color: colorWithOpacity(props['shape-line-color'], opacity),
     width: props['shape-line-width']
   })
 
@@ -152,21 +178,25 @@ const makeSymbol = props => {
   const symbol = new Symbol(props['symbol-code'], { ...options, infoFields: true })
   const { width, height } = symbol.getSize()
 
+  const opacity = resolveOpacity(props)
   return Styles.icon({
     anchor: [symbol.getAnchor().x, symbol.getAnchor().y],
     imgSize: [Math.floor(width), Math.floor(height)],
     src: 'data:image/svg+xml;utf8,' + symbol.asSVG(),
     anchorXUnits: 'pixels',
     anchorYUnits: 'pixels',
-    scale: props['icon-scale'] || 0.5
+    scale: props['icon-scale'] || 0.5,
+    opacity: opacity < 1 ? opacity : undefined
   })
 }
 
 const makeIcon = props => {
+  const opacity = resolveOpacity(props)
   return Styles.icon({
     src: props['icon-url'],
     scale: props['icon-scale'] || 1,
-    rotation: props['icon-rotate'] || 0
+    rotation: props['icon-rotate'] || 0,
+    opacity: opacity < 1 ? opacity : undefined
   })
 }
 
@@ -214,10 +244,11 @@ export const styleFactory = props => {
   const styleOptions = []
 
   if (props['line-halo-width']) {
+    const haloOpacity = resolveOpacity(props)
     styleOptions.push({
       geometry: props.geometry,
       stroke: makeStroke({
-        'line-color': props['line-halo-color'],
+        'line-color': colorWithOpacity(props['line-halo-color'], haloOpacity),
         'line-dash-array': props['line-halo-dash-array'],
         'line-width': props['line-width'] + 2 * props['line-halo-width'],
         'line-cap': props['line-cap'],

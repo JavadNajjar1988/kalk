@@ -81,6 +81,7 @@ export type ScenarioFeatureActions =
   | "moveUp"
   | "moveDown"
   | "pan"
+  | "rename"
   | "duplicate"
   | "removeMedia";
 

@@ -1,4 +1,5 @@
 import Draw from 'ol/interaction/Draw'
+import DragPan from 'ol/interaction/DragPan'
 import { defaults as defaultInteractions } from 'ol/interaction'
 import selectInteraction from './select-interaction'
 import translateInteraction from './translate-interaction'
@@ -7,6 +8,7 @@ import modifyInteraction from './modify-interaction'
 import snapInteraction from './snap-interaction'
 import boxselectInteraction from './boxselect-interaction'
 import drawInteraction from './draw-interaction'
+import eraseInteraction from './erase-interaction'
 
 /**
  *
@@ -17,6 +19,7 @@ export default options => {
   const translate = translateInteraction(options)
   const boxselect = boxselectInteraction(options)
   const modify = modifyInteraction(options)
+  const erase = eraseInteraction(options)
   const snap = snapInteraction(options)
 
   // Draw interaction is dynamically added to map as required.
@@ -24,14 +27,21 @@ export default options => {
 
   const interactions = defaultInteractions({ doubleClickZoom: false }).extend(
     // Events are delegated from right to left.
-    // For example: CMD/pointerdown would not be delegates to modify
-    // interaction if boxelect is placed before (right of) modify.
-    // boxelect consumes CMD/pointerdown.
-    [select, clone, translate, boxselect, modify, snap]
+    // erase is last so it receives pointer events before modify/select.
+    [select, clone, translate, boxselect, modify, snap, erase]
   )
 
   const { map } = options
   interactions.getArray().forEach(interaction => map.addInteraction(interaction))
+
+  const dragPan = map.getInteractions().getArray().find(i => i instanceof DragPan)
+
+  erase.on('change:active', () => {
+    const eraseActive = erase.getActive()
+    modify.setActive(!eraseActive)
+    select.setActive(!eraseActive)
+    if (dragPan) dragPan.setActive(!eraseActive)
+  })
 
   map.getInteractions().on('add', ({ target, element }) => {
     if (element instanceof Draw) {

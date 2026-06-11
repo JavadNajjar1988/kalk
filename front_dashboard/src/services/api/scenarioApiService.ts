@@ -175,6 +175,7 @@ export class ScenarioApiService extends BaseApiClient {
         intro_title: apiItem.intro_title ?? (base as any).intro_title,
         intro_summary: apiItem.intro_summary ?? (base as any).intro_summary,
         archived_at: apiItem.archived_at ?? null,
+        importAction: apiItem.importAction,
         // اگر image در metadata نباشد، آن را اضافه می‌کنیم
         metadata: {
           ...(base.metadata || {}),
@@ -311,10 +312,14 @@ export class ScenarioApiService extends BaseApiClient {
   }
 
   // POST /api/scenarios/import
-  async importScenario(file: File): Promise<EnhancedScenario> {
+  async importScenario(file: File): Promise<EnhancedScenario & { importAction?: 'created' | 'updated' }> {
     try {
-      const response = await this.uploadFile<EnhancedScenario>('/scenarios/import', file);
-      return handleApiResponse(response);
+      const response = await this.uploadFile<EnhancedScenario & { importAction?: 'created' | 'updated' }>(
+        '/scenarios/import',
+        file,
+      );
+      const data = handleApiResponse(response);
+      return this.mapScenarioOutToEnhanced(data);
     } catch (error) {
       console.error('Failed to import scenario:', error);
       throw error;

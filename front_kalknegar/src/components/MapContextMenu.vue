@@ -18,12 +18,15 @@ import {
   IconClockEnd,
   IconClockStart,
   IconContentCopy,
+  IconContentDuplicate,
+  IconContentPaste,
   IconPause,
   IconPlay,
   IconSpeedometer,
   IconSpeedometerSlow,
   IconTarget,
   IconMapMarker as PointIcon,
+  IconTrashCanOutline,
 } from "@iconify-prerendered/vue-mdi";
 import { computed, ref } from "vue";
 import type OLMap from "ol/Map";
@@ -40,6 +43,7 @@ import {
   getGeometryIcon,
   type LayerType,
 } from "@/modules/scenarioeditor/featureLayerUtils";
+import { getScenarioFeatureDefaultName } from "@/modules/scenarioeditor/scenarioFeatureNaming";
 import { injectStrict, nanoid } from "@/utils";
 import {
   activeLayerKey,
@@ -57,18 +61,41 @@ import { useActiveSidc } from "@/composables/mainToolbarData";
 import { useActiveUnitStore } from "@/stores/dragStore";
 import { useMainToolbarStore } from "@/stores/mainToolbarStore.ts";
 import type { ScenarioFeature } from "@/types/scenarioGeoModels.ts";
+import { useServicesStore } from "@/modules/tactical-symbol-map/stores/services.js";
+import { UnitActions } from "@/types/constants";
+import { useUnitActions } from "@/composables/scenarioActions";
+import {
+  copyTacticalTargets,
+  deleteTacticalTargets,
+  duplicateTacticalTargets,
+  getTacticalOperationTargetIds,
+  isTacticalMapFeatureId,
+  pasteTacticalTargets,
+} from "@/components/mapContextMenuTacticalActions";
+import {
+  createOrbatClipboardData,
+  getInternalOrbatClipboardData,
+  getOrbatOperationTargetIds,
+  getSingleOrbatPasteParentId,
+  setInternalOrbatClipboardData,
+} from "@/components/mapContextMenuOrbatActions";
+import { addUnitHierarchy, parseApplicationOrbat } from "@/importexport/convertUtils";
 
 const tm = useTimeFormatStore();
 const mainToolbarStore = useMainToolbarStore();
+const tacticalServicesStore = useServicesStore();
 
 const props = defineProps<{ mapRef?: OLMap }>();
 
+const activeScenario = injectStrict(activeScenarioKey);
 const {
   store,
   unitActions,
+  io,
   geo,
   helpers: { getUnitById },
-} = injectStrict(activeScenarioKey);
+} = activeScenario;
+const { onUnitAction } = useUnitActions({ activeScenario });
 const activeLayerId = injectStrict(activeLayerKey);
 
 const { onScenarioActionHook } = injectStrict(searchActionsKey);
@@ -95,10 +122,43 @@ const dropPosition = ref<Position>([0, 0]);
 const pixelPosition = ref<number[] | null>(null);
 const clickedUnits = ref<NUnit[]>([]);
 const clickedFeatures = ref<NScenarioFeature[]>([]);
+const clickedTacticalIds = ref<string[]>([]);
+const selectedTacticalIdsAtOpen = ref<string[]>([]);
 const mapZoomLevel = ref(0);
 
 const formattedPosition = computed(() =>
   getCoordinateFormatFunction(coordinateFormat.value)(dropPosition.value),
+);
+
+const tacticalOperationTargetIds = computed(() =>
+  getTacticalOperationTargetIds({
+    selectedIds: selectedTacticalIdsAtOpen.value,
+    clickedIds: clickedTacticalIds.value,
+  }),
+);
+const orbatOperationTargetIds = computed(() =>
+  getOrbatOperationTargetIds({
+    selectedIds: [...selectedUnitIds.value],
+    clickedIds: clickedUnits.value.map((unit) => unit.id),
+  }),
+);
+const orbatOperationTargetUnits = computed(() =>
+  orbatOperationTargetIds.value
+    .map((id) => getUnitById(id))
+    .filter((unit): unit is NUnit => Boolean(unit)),
+);
+const operationTargetKind = computed<"orbat" | "tactical" | null>(() => {
+  if (orbatOperationTargetIds.value.length > 0) return "orbat";
+  if (tacticalOperationTargetIds.value.length > 0) return "tactical";
+  return null;
+});
+const operationTargetCount = computed(() =>
+  operationTargetKind.value === "orbat"
+    ? orbatOperationTargetIds.value.length
+    : tacticalOperationTargetIds.value.length,
+);
+const canPasteOrbat = computed(
+  () => getSingleOrbatPasteParentId(orbatOperationTargetIds.value) !== null,
 );
 
 async function onExport() {
@@ -114,18 +174,24 @@ function onContextMenu(e: MouseEvent) {
   mapZoomLevel.value = mapRef.getView()?.getZoom() ?? 0;
   clickedUnits.value = [];
   clickedFeatures.value = [];
+  clickedTacticalIds.value = [];
+  const tacticalServices = tacticalServicesStore.getServices();
+  selectedTacticalIdsAtOpen.value =
+    tacticalServices.selection?.selected?.(isTacticalMapFeatureId) ?? [];
   pixelPosition.value = mapRef.getEventPixel(e);
   dropPosition.value = toLonLat(mapRef.getEventCoordinate(e));
   mapRef.forEachFeatureAtPixel(pixelPosition.value, (feature, layer) => {
     const layerType = layer?.get("layerType") as LayerType;
+    const featureId = feature.getId();
     if (layerType === "UNITS") {
-      const unitId = feature.getId() as string;
+      const unitId = featureId as string;
       const unit = getUnitById(unitId);
       unit && clickedUnits.value.push(unit);
     } else if (layerType === "SCENARIO_FEATURE") {
-      const featureId = feature.getId() as string;
-      const { feature: scenarioFeature } = geo.getFeatureById(featureId);
+      const { feature: scenarioFeature } = geo.getFeatureById(featureId as string);
       scenarioFeature && clickedFeatures.value.push(scenarioFeature);
+    } else if (isTacticalMapFeatureId(featureId)) {
+      clickedTacticalIds.value.push(featureId);
     }
   });
 }
@@ -164,6 +230,100 @@ async function onCopy() {
   send({
     message: `Copied ${formattedPosition.value} to the clipboard`,
   });
+}
+
+async function onTacticalCopy() {
+  await copyTacticalTargets(
+    tacticalServicesStore.getServices(),
+    tacticalOperationTargetIds.value,
+  );
+  send({ message: "رونوشت نماد تاکتیکی آماده شد." });
+}
+
+async function onTacticalDuplicate() {
+  await duplicateTacticalTargets(
+    tacticalServicesStore.getServices(),
+    tacticalOperationTargetIds.value,
+  );
+  send({ message: "نماد تاکتیکی تکثیر شد." });
+}
+
+async function onTacticalDelete() {
+  await deleteTacticalTargets(
+    tacticalServicesStore.getServices(),
+    tacticalOperationTargetIds.value,
+  );
+  send({ message: "نماد تاکتیکی حذف شد." });
+}
+
+async function onOrbatCopy() {
+  const clipboardData = createOrbatClipboardData({
+    targetIds: orbatOperationTargetIds.value,
+    state: store.state,
+    stringifyObject: io.stringifyObject,
+  });
+  if (!clipboardData) return;
+
+  setInternalOrbatClipboardData(clipboardData.applicationOrbat);
+  await copyToClipboard(clipboardData.textPlain);
+  send({ message: "رونوشت نماد اوربت آماده شد." });
+}
+
+function onOrbatDuplicate() {
+  onUnitAction(orbatOperationTargetUnits.value, UnitActions.Clone);
+  send({ message: "نماد اوربت تکثیر شد." });
+}
+
+function onOrbatDelete() {
+  onUnitAction(orbatOperationTargetUnits.value, UnitActions.Delete);
+  send({ message: "نماد اوربت حذف شد." });
+}
+
+async function onOrbatPaste() {
+  const parentId = getSingleOrbatPasteParentId(orbatOperationTargetIds.value);
+  const applicationOrbat = getInternalOrbatClipboardData();
+  const pastedOrbat = applicationOrbat ? parseApplicationOrbat(applicationOrbat) : null;
+  if (!parentId || !pastedOrbat?.length) {
+    send({ message: "برای چسباندن، ابتدا یک نماد اوربت را رونوشت کنید." });
+    return;
+  }
+
+  pastedOrbat.forEach((unit) => addUnitHierarchy(unit, parentId, activeScenario));
+  unitActions.getUnitById(parentId)._isOpen = true;
+  send({ message: "نماد اوربت چسبانده شد." });
+}
+
+async function onOperationCopy() {
+  if (operationTargetKind.value === "orbat") {
+    await onOrbatCopy();
+  } else if (operationTargetKind.value === "tactical") {
+    await onTacticalCopy();
+  }
+}
+
+async function onOperationPaste() {
+  if (operationTargetKind.value === "orbat") {
+    await onOrbatPaste();
+  } else if (operationTargetKind.value === "tactical") {
+    await pasteTacticalTargets(tacticalServicesStore.getServices());
+    send({ message: "نماد تاکتیکی چسبانده شد." });
+  }
+}
+
+async function onOperationDuplicate() {
+  if (operationTargetKind.value === "orbat") {
+    onOrbatDuplicate();
+  } else if (operationTargetKind.value === "tactical") {
+    await onTacticalDuplicate();
+  }
+}
+
+async function onOperationDelete() {
+  if (operationTargetKind.value === "orbat") {
+    onOrbatDelete();
+  } else if (operationTargetKind.value === "tactical") {
+    await onTacticalDelete();
+  }
 }
 
 function onUnitSelect(unit: NUnit, event: MouseEvent | PointerEvent | KeyboardEvent) {
@@ -217,10 +377,13 @@ function onAddUnit() {
 function onAddPoint() {
   const activeLayer = geo.getLayerById(activeLayerId.value ?? geo.layers.value[0]?.id);
   if (!activeLayer) return;
-  const name = `Point ${(activeLayer.features.length ?? 0) + 1}`;
+  const name = getScenarioFeatureDefaultName(
+    "Point",
+    (activeLayer.features.length ?? 0) + 1,
+  );
 
   const newFeature: ScenarioFeature = {
-    type: "فیچر",
+    type: "Feature",
     id: nanoid(),
     meta: {
       type: "Point",
@@ -309,6 +472,39 @@ function onAddPoint() {
         </ContextMenuSubContent>
       </ContextMenuSub>
       <ContextMenuSeparator v-if="clickedFeatures.length || clickedUnits.length" />
+      <ContextMenuSub v-if="operationTargetKind">
+        <ContextMenuSubTrigger inset>
+          <span>عملیات</span>&nbsp;
+          <span class="font-medium text-gray-500"
+            >({{ operationTargetCount }})</span
+          >
+        </ContextMenuSubTrigger>
+        <ContextMenuSubContent>
+          <ContextMenuItem @select="onOperationCopy">
+            <IconContentCopy class="mr-2 h-4 w-4" />
+            رونوشت
+          </ContextMenuItem>
+          <ContextMenuItem
+            @select="onOperationPaste"
+            :disabled="operationTargetKind === 'orbat' && !canPasteOrbat"
+          >
+            <IconContentPaste class="mr-2 h-4 w-4" />
+            چسباندن
+          </ContextMenuItem>
+          <ContextMenuItem @select="onOperationDuplicate">
+            <IconContentDuplicate class="mr-2 h-4 w-4" />
+            تکثیر
+          </ContextMenuItem>
+          <ContextMenuItem
+            variant="destructive"
+            @select="onOperationDelete"
+          >
+            <IconTrashCanOutline class="mr-2 h-4 w-4" />
+            حذف
+          </ContextMenuItem>
+        </ContextMenuSubContent>
+      </ContextMenuSub>
+      <ContextMenuSeparator v-if="operationTargetKind" />
       <ContextMenuSub>
         <ContextMenuSubTrigger inset><span>افزودن</span></ContextMenuSubTrigger>
         <ContextMenuSubContent>

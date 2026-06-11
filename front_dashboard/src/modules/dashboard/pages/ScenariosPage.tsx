@@ -687,10 +687,13 @@ const ScenariosPage: React.FC = () => {
   const [importError, setImportError] = useState<string | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [selectedFileInfo, setSelectedFileInfo] = useState<{
+    id?: string;
     name?: string;
     description?: string;
     type?: string;
+    existingScenarioName?: string;
   } | null>(null);
+  const [importUpdateConfirmOpen, setImportUpdateConfirmOpen] = useState(false);
   const [isDragActive, setIsDragActive] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [executionDialogOpen, setExecutionDialogOpen] = useState(false);
@@ -1078,6 +1081,7 @@ const ScenariosPage: React.FC = () => {
     setImportError(null);
     setSelectedFile(null);
     setSelectedFileInfo(null);
+    setImportUpdateConfirmOpen(false);
     setIsDragActive(false);
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
@@ -1108,6 +1112,7 @@ const ScenariosPage: React.FC = () => {
       }
 
       return {
+        id: typeof data?.id === 'string' ? data.id : undefined,
         name: data?.name || data?.meta?.name,
         description: data?.description || data?.meta?.description,
         type: data?.type,
@@ -1130,8 +1135,15 @@ const ScenariosPage: React.FC = () => {
     setImportError(null);
     try {
       const info = await validateScenarioFile(file);
+      const existingScenario = info.id
+        ? scenarios.find(scenario => scenario.id === info.id)
+        : undefined;
+
       setSelectedFile(file);
-      setSelectedFileInfo(info);
+      setSelectedFileInfo({
+        ...info,
+        existingScenarioName: existingScenario?.name,
+      });
     } catch (error) {
       setSelectedFile(null);
       setSelectedFileInfo(null);
@@ -1171,7 +1183,7 @@ const ScenariosPage: React.FC = () => {
     }
   };
 
-  const handleImportScenarioFile = async () => {
+  const performScenarioImport = async () => {
     if (!selectedFile) {
       return;
     }
@@ -1180,9 +1192,13 @@ const ScenariosPage: React.FC = () => {
     setImportError(null);
 
     try {
-      await scenarioApiService.importScenario(selectedFile);
+      const result = await scenarioApiService.importScenario(selectedFile);
       dispatch(fetchScenarios());
-      dispatch(showSuccessNotification('سناریو با موفقیت بارگذاری شد.'));
+      const successMessage =
+        result.importAction === 'updated'
+          ? 'سناریوی موجود با موفقیت به‌روزرسانی شد.'
+          : 'سناریو با موفقیت بارگذاری شد.';
+      dispatch(showSuccessNotification(successMessage));
       handleCloseImportDialog();
     } catch (error) {
       const message =
@@ -1191,7 +1207,25 @@ const ScenariosPage: React.FC = () => {
       dispatch(showErrorNotification('بارگذاری سناریو با خطا مواجه شد.'));
     } finally {
       setImporting(false);
+      setImportUpdateConfirmOpen(false);
     }
+  };
+
+  const handleImportScenarioFile = () => {
+    if (!selectedFile) {
+      return;
+    }
+
+    if (selectedFileInfo?.existingScenarioName) {
+      setImportUpdateConfirmOpen(true);
+      return;
+    }
+
+    void performScenarioImport();
+  };
+
+  const handleConfirmImportUpdate = () => {
+    void performScenarioImport();
   };
 
   return (
@@ -1856,6 +1890,13 @@ const ScenariosPage: React.FC = () => {
               )}
             </Box>
 
+            {selectedFileInfo?.existingScenarioName && (
+              <Alert severity="warning" sx={{ mt: 2 }}>
+                سناریوی «{selectedFileInfo.existingScenarioName}» از قبل در سیستم وجود
+                دارد. با بارگذاری این فایل، محتوای سناریوی موجود جایگزین می‌شود.
+              </Alert>
+            )}
+
             {importError && (
               <Alert severity="error" sx={{ mt: 2 }}>
                 {importError}
@@ -1874,12 +1915,58 @@ const ScenariosPage: React.FC = () => {
             </Button>
             <Button
               variant="contained"
-              color="primary"
+              color={selectedFileInfo?.existingScenarioName ? 'warning' : 'primary'}
               onClick={handleImportScenarioFile}
               disabled={!selectedFile || importing}
               sx={{ borderRadius: 2, px: 3 }}
             >
-              {importing ? 'در حال بارگذاری...' : 'بارگذاری سناریو'}
+              {importing
+                ? 'در حال بارگذاری...'
+                : selectedFileInfo?.existingScenarioName
+                  ? 'به‌روزرسانی سناریو'
+                  : 'بارگذاری سناریو'}
+            </Button>
+          </DialogActions>
+        </Dialog>
+
+        <Dialog
+          open={importUpdateConfirmOpen}
+          onClose={() => !importing && setImportUpdateConfirmOpen(false)}
+          maxWidth="sm"
+          fullWidth
+          sx={buildResourcesFormDialogSx(theme)}
+        >
+          <DialogTitle sx={resourcesDialogTitleSx(theme)}>
+            به‌روزرسانی سناریوی موجود
+          </DialogTitle>
+          <DialogContent dividers sx={resourcesDialogContentDividersSx(theme)}>
+            <Typography variant="body1" sx={{ mb: 2, lineHeight: 1.8 }}>
+              سناریوی «{selectedFileInfo?.existingScenarioName}» از قبل در سیستم
+              ثبت شده است.
+            </Typography>
+            <Typography variant="body2" color="text.secondary" sx={{ lineHeight: 1.8 }}>
+              آیا می‌خواهید این سناریو با محتوای فایل انتخاب‌شده به‌روزرسانی شود؟
+              داده‌های فعلی سناریو با محتوای فایل جایگزین می‌شوند.
+            </Typography>
+          </DialogContent>
+          <DialogActions sx={resourcesDialogActionsSx(theme)}>
+            <Button
+              onClick={() => setImportUpdateConfirmOpen(false)}
+              disabled={importing}
+              variant="outlined"
+              color="inherit"
+              sx={resourcesOutlinedCancelButtonSx(theme)}
+            >
+              انصراف
+            </Button>
+            <Button
+              variant="contained"
+              color="warning"
+              onClick={handleConfirmImportUpdate}
+              disabled={importing}
+              sx={{ borderRadius: 2, px: 3 }}
+            >
+              {importing ? 'در حال به‌روزرسانی...' : 'بله، به‌روزرسانی شود'}
             </Button>
           </DialogActions>
         </Dialog>

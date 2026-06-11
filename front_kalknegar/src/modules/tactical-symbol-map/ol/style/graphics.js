@@ -7,6 +7,8 @@ import { GeometryProperties } from '../../components/properties/geometries.js'
 import _rewrite from './_rewrite'
 import _evalSync from './_evalSync'
 import _clip from './_clip'
+import _applyFadeZones from './_applyFadeZones'
+import { normalizeFadeZones } from './fadeZones'
 
 const EMPTY_OBJECT = {}
 export default specifics => $ => {
@@ -29,6 +31,11 @@ export default specifics => $ => {
 
   specifics($)
 
+  $.fadeZones = $.properties.map(p => normalizeFadeZones(p?.fadeZones))
+  if (!$.fadeBaseGeometry) {
+    $.fadeBaseGeometry = $.jtsSmoothenedGeometry || $.jtsGeometry
+  }
+
   $.styles = Signal.link(
     (...styles) => styles.reduce(R.concat),
     [
@@ -38,7 +45,9 @@ export default specifics => $ => {
     ]
   )
 
-  return $.styles
+  $.fadedStyles = Signal.link(_applyFadeZones, [$.styles, $.fadeZones, $.fadeBaseGeometry])
+
+  return $.fadedStyles
     .ap($.styleRegistry)
     .ap($.evalSync)
     .ap($.clip)

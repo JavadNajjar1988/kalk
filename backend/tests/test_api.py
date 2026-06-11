@@ -1,4 +1,5 @@
 import asyncio
+import json
 import os
 import pathlib
 
@@ -97,4 +98,38 @@ async def test_auth_and_crud_scenarios():
         resp = await ac.delete(f"{settings.API_PREFIX}/scenarios/{scn_id}", headers=headers)
         assert resp.status_code == 200 or resp.status_code == 204
 
+
+@pytest.mark.asyncio
+async def test_import_scenario_upsert():
+    async with AsyncClient(app=app, base_url="http://test") as ac:
+        resp = await ac.post(f"{settings.API_PREFIX}/auth/token", data={"username": "admin", "password": "admin123"})
+        assert resp.status_code == 200
+        token = resp.json()["access_token"]
+        headers = {"Authorization": f"Bearer {token}"}
+
+        scenario_id = "upsert-test-scenario-id-001"
+        payload = {
+            "id": scenario_id,
+            "type": "ORBAT-mapper",
+            "name": "سناریو import اول",
+        }
+        files = {"file": ("scenario.json", json.dumps(payload, ensure_ascii=False), "application/json")}
+
+        resp = await ac.post(f"{settings.API_PREFIX}/scenarios/import", headers=headers, files=files)
+        assert resp.status_code == 201
+        data = resp.json()["data"]
+        assert data["id"] == scenario_id
+        assert data["importAction"] == "created"
+        assert data["name"] == "سناریو import اول"
+
+        payload["name"] = "سناریو import به‌روز"
+        files = {"file": ("scenario.json", json.dumps(payload, ensure_ascii=False), "application/json")}
+        resp = await ac.post(f"{settings.API_PREFIX}/scenarios/import", headers=headers, files=files)
+        assert resp.status_code == 200
+        data = resp.json()["data"]
+        assert data["id"] == scenario_id
+        assert data["importAction"] == "updated"
+        assert data["name"] == "سناریو import به‌روز"
+
+        await ac.delete(f"{settings.API_PREFIX}/scenarios/{scenario_id}", headers=headers)
 

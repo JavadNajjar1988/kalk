@@ -6,7 +6,7 @@ import shutil
 import uuid
 from pathlib import Path
 
-from fastapi import APIRouter, Depends, File, HTTPException, Request, UploadFile, status
+from fastapi import APIRouter, Depends, File, HTTPException, Request, Response, UploadFile, status
 from fastapi.responses import FileResponse
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -21,6 +21,11 @@ from app.models.scenario_intro_view import ScenarioIntroView
 from app.models.user import User
 from app.schemas.scenario import ScenarioCreate, ScenarioOut, ScenarioUpdate
 from app.realtime.manager import manager
+from app.services.scenario_import import (
+    broadcast_scenario_import,
+    scenario_import_response_data,
+    upsert_scenario_from_import,
+)
 from pydantic import BaseModel, Field
 import logging
 
@@ -171,11 +176,10 @@ async def get_scenario_image(filename: str):
 
 @router.post(
     "/import",
-    status_code=status.HTTP_201_CREATED,
     response_model=dict,
     dependencies=[Depends(require_roles("SUPER_ADMIN", "COMMANDER"))],
 )
-async def import_scenario(db: DbSession, file: UploadFile = File(...)):
+async def import_scenario(db: DbSession, response: Response, file: UploadFile = File(...)):
     """
     Import a scenario from a JSON file (ORBAT-mapper format).
     """
@@ -264,39 +268,28 @@ async def import_scenario(db: DbSession, file: UploadFile = File(...)):
     if scenario_image and len(scenario_image) > 500:
         scenario_image = scenario_image[:500]
 
-    # Create scenario object
-    now = datetime.now(timezone.utc)
     scenario_id = scenario_data.get("id")
     if not scenario_id or len(scenario_id) > 36:
         scenario_id = str(uuid.uuid4())
 
-    obj = Scenario(
-        id=scenario_id,
-        name=scenario_name,
-        description=scenario_description,
-        image=scenario_image,
-        content=scenario_data,  # Store the entire scenario data in content field
-        created=now,
-        modified=now,
-    )
-
-    db.add(obj)
     try:
-        await db.commit()
-        await db.refresh(obj)
+        obj, created = await upsert_scenario_from_import(
+            db,
+            scenario_id=scenario_id,
+            name=scenario_name,
+            description=scenario_description,
+            image=scenario_image,
+            content=scenario_data,
+        )
     except Exception as e:
-        await db.rollback()
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to save scenario: {str(e)}",
-        )
+        ) from e
 
-    await manager.broadcast(
-        "scenarios",
-        {"type": "scenario_created", "data": ScenarioOut.model_validate(obj).model_dump()},
-    )
-
-    return success(ScenarioOut.model_validate(obj).model_dump())
+    await broadcast_scenario_import(obj, created)
+    response.status_code = status.HTTP_201_CREATED if created else status.HTTP_200_OK
+    return success(scenario_import_response_data(obj, created))
 
 
 @router.post(

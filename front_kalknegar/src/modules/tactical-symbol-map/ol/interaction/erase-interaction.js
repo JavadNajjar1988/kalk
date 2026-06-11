@@ -1,0 +1,384 @@
+import Interaction from 'ol/interaction/Interaction'
+import Feature from 'ol/Feature'
+import Point from 'ol/geom/Point'
+import VectorLayer from 'ol/layer/Vector'
+import VectorSource from 'ol/source/Vector'
+import * as style from 'ol/style'
+import { closestOnSegment } from 'ol/coordinate'
+import { pointer as pointerPick } from './modify/events'
+import { writeIndex } from './modify/writers'
+import { writeGeometryObject } from '../../ol/format'
+import uuid from '../../shared/uuid'
+import * as TS from '../ts'
+import {
+  positionOnFeature,
+  mergeFadeZone,
+  cutLineGeometry,
+  extractSubLine,
+  toFadeBaseLine
+} from '../style/fadeZones'
+
+const ORIGINATOR_ID = uuid()
+
+const FADE_OPACITY = 0.15
+const DEFAULT_BRUSH_SIZE = 3
+const MIN_STROKE = 0.004
+
+const ERASABLE_FADE = new Set(['LineString', 'MultiLineString', 'Polygon', 'MultiPolygon'])
+const ERASABLE_CUT = new Set(['LineString', 'MultiLineString', 'Polygon', 'MultiPolygon'])
+
+const normalizeBrushSize = value => {
+  const next = Number(value)
+  if (!Number.isFinite(next)) return DEFAULT_BRUSH_SIZE
+  return Math.max(1, Math.min(5, Math.round(next)))
+}
+
+const brushSpan = brushSize => 0.01 + normalizeBrushSize(brushSize) * 0.005
+
+const brushCursorRadius = brushSize => 5 + normalizeBrushSize(brushSize) * 2
+
+const brushCursorStyle = brushSize => new style.Style({
+  image: new style.Circle({
+    radius: brushCursorRadius(brushSize),
+    stroke: new style.Stroke({ color: 'rgba(255,80,80,0.9)', width: 2 }),
+    fill: new style.Fill({ color: 'rgba(255,80,80,0.15)' })
+  })
+})
+
+const previewStroke = mode => new style.Style({
+  stroke: new style.Stroke({
+    color: mode === 'cut' ? 'rgba(255,60,60,0.9)' : 'rgba(255,160,60,0.85)',
+    width: 4,
+    lineDash: [8, 6]
+  })
+})
+
+const geometryKind = feature => {
+  const geom = feature?.getGeometry()
+  if (!geom) return null
+  const type = geom.getType()
+  if (type === 'GeometryCollection') {
+    return toFadeBaseLine(TS.read(geom)) ? 'LineString' : null
+  }
+  return type
+}
+
+const isErasable = (feature, brushMode) => {
+  const type = geometryKind(feature)
+  if (!type) return false
+  return brushMode === 'cut' ? ERASABLE_CUT.has(type) : ERASABLE_FADE.has(type)
+}
+
+const expandBrush = (minT, maxT, t, size) => {
+  const half = brushSpan(size) / 2
+  return [
+    Math.max(0, Math.min(minT, t - half)),
+    Math.min(1, Math.max(maxT, t + half))
+  ]
+}
+
+export default options => {
+  const { services, map, hitTolerance = 12 } = options
+  const { store, emitter } = services
+
+  let mode = 'fade'
+  let brushing = false
+  let brushFeature = null
+  let brushFrom = null
+  let brushTo = null
+  let brushSize = DEFAULT_BRUSH_SIZE
+  let lastAppliedFrom = null
+  let lastAppliedTo = null
+
+  const overlaySource = new VectorSource({ useSpatialIndex: false })
+  const overlayLayer = new VectorLayer({
+    source: overlaySource,
+    updateWhileAnimating: true,
+    updateWhileInteracting: true,
+    zIndex: 25
+  })
+
+  const clearOverlay = () => {
+    overlaySource.clear()
+  }
+
+  const showBrushCursor = coordinate => {
+    const existing = overlaySource.getFeatureById('brush-cursor')
+    if (!coordinate) {
+      if (existing) overlaySource.removeFeature(existing)
+      return
+    }
+    if (existing) {
+      existing.getGeometry().setCoordinates(coordinate)
+      existing.setStyle(brushCursorStyle(brushSize))
+    } else {
+      const feature = new Feature(new Point(coordinate))
+      feature.setId('brush-cursor')
+      feature.setStyle(brushCursorStyle(brushSize))
+      overlaySource.addFeature(feature)
+    }
+  }
+
+  const showPreview = (feature, from, to) => {
+    const olGeom = feature.getGeometry()
+    const jts = TS.read(olGeom)
+    const baseLine = toFadeBaseLine(jts)
+    if (!baseLine) return
+
+    const indexed = TS.lengthIndexedLine(baseLine)
+    const sub = extractSubLine(indexed, from, to)
+    if (!sub) return
+
+    const olPreview = TS.write(sub)
+    let preview = overlaySource.getFeatureById('brush-preview')
+    if (!preview) {
+      preview = new Feature(olPreview)
+      preview.setId('brush-preview')
+      preview.setStyle(previewStroke(mode))
+      overlaySource.addFeature(preview)
+    } else {
+      preview.setGeometry(olPreview)
+      preview.setStyle(previewStroke(mode))
+    }
+  }
+
+  const resetBrush = () => {
+    brushing = false
+    brushFeature = null
+    brushFrom = null
+    brushTo = null
+    lastAppliedFrom = null
+    lastAppliedTo = null
+    clearOverlay()
+  }
+
+  const pickOnFeature = (feature, event) => {
+    const rbush = writeIndex(feature)
+    const pick = pointerPick({ pixelTolerance: hitTolerance }, rbush, event).pick()
+    if (!pick.coordinate) return null
+    const coordinate = pick.segment?.vertices
+      ? closestOnSegment(event.coordinate, pick.segment.vertices)
+      : pick.coordinate
+    const t = positionOnFeature(feature.getGeometry(), coordinate)
+    if (t === null) return null
+    return { coordinate, t }
+  }
+
+  const findFeatureAt = event => {
+    const candidates = []
+    map.forEachFeatureAtPixel(
+      event.pixel,
+      (feature, layer) => {
+        if (layer?.get('selectable') && isErasable(feature, mode)) {
+          candidates.push(feature)
+        }
+      },
+      { hitTolerance, layerFilter: layer => layer.get('selectable') }
+    )
+
+    if (!candidates.length) return null
+
+    let best = null
+    for (const feature of candidates) {
+      const pick = pickOnFeature(feature, event)
+      if (pick) {
+        best = { feature, ...pick }
+        break
+      }
+    }
+    return best
+  }
+
+  const persistFade = (feature, from, to, opacity = FADE_OPACITY) => {
+    if (to - from < MIN_STROKE) return
+    const key = feature.getId()
+    const fadeZones = mergeFadeZone(feature.get('fadeZones'), {
+      from,
+      to,
+      opacity
+    })
+    feature.set('fadeZones', fadeZones)
+    store.update([key], value => ({
+      ...value,
+      properties: {
+        ...value.properties,
+        fadeZones
+      }
+    }))
+    feature.commit?.()
+  }
+
+  const persistCut = (feature, from, to) => {
+    if (to - from < MIN_STROKE) return
+    const key = feature.getId()
+    const nextGeometry = cutLineGeometry(feature.getGeometry(), from, to)
+    if (!nextGeometry) {
+      persistFade(feature, from, to, 0)
+      return
+    }
+
+    const geometry = writeGeometryObject(nextGeometry)
+    feature.internalChange?.(true)
+    feature.setGeometry(nextGeometry)
+    feature.unset('fadeZones', true)
+    feature.internalChange?.(false)
+    store.update([key], value => ({
+      ...value,
+      geometry,
+      properties: {
+        ...value.properties,
+        fadeZones: undefined
+      }
+    }))
+    feature.commit?.()
+  }
+
+  const applyBrushRange = (feature, from, to, { preview = false } = {}) => {
+    if (to - from < MIN_STROKE) return
+    if (preview) {
+      showPreview(feature, from, to)
+      return
+    }
+    if (mode === 'cut') persistCut(feature, from, to)
+    else persistFade(feature, from, to)
+    emitter.emit('ui/erase/applied', { from, to, mode })
+  }
+
+  const extendBrush = (feature, t) => {
+    const [from, to] = expandBrush(brushFrom, brushTo, t, brushSize)
+    brushFrom = from
+    brushTo = to
+
+    if (mode === 'fade') {
+      const grown = lastAppliedFrom === null ||
+        from < lastAppliedFrom - 0.001 ||
+        to > lastAppliedTo + 0.001
+      if (grown) {
+        applyBrushRange(feature, from, to)
+        lastAppliedFrom = from
+        lastAppliedTo = to
+      }
+      showPreview(feature, from, to)
+    } else {
+      showPreview(feature, from, to)
+    }
+  }
+
+  const interaction = new Interaction({ handleEvent })
+
+  function handleEvent (event) {
+    if (!interaction.getActive()) return true
+
+    if (event.type === 'pointermove' && !brushing) {
+      const hit = findFeatureAt(event)
+      showBrushCursor(hit?.coordinate ?? null)
+      return true
+    }
+
+    if (event.type === 'pointerdown' && event.originalEvent?.buttons === 1) {
+      const hit = findFeatureAt(event)
+      if (!hit) return true
+
+      event.stopPropagation()
+      brushing = true
+      brushFeature = hit.feature
+      brushFrom = hit.t
+      brushTo = hit.t
+      lastAppliedFrom = null
+      lastAppliedTo = null
+      extendBrush(hit.feature, hit.t)
+      showBrushCursor(hit.coordinate)
+      return false
+    }
+
+    const isBrushingMove =
+      brushing &&
+      brushFeature &&
+      (event.type === 'pointerdrag' ||
+        (event.type === 'pointermove' && event.originalEvent?.buttons === 1))
+
+    if (isBrushingMove) {
+      event.stopPropagation()
+      const pick = pickOnFeature(brushFeature, event)
+      if (pick) {
+        extendBrush(brushFeature, pick.t)
+        showBrushCursor(pick.coordinate)
+      }
+      return false
+    }
+
+    if (event.type === 'pointerup' && brushing && brushFeature) {
+      event.stopPropagation()
+      if (mode === 'cut' && brushFrom !== null && brushTo !== null) {
+        applyBrushRange(brushFeature, brushFrom, brushTo)
+      }
+      resetBrush()
+      return false
+    }
+
+    return true
+  }
+
+  interaction.setMode = nextMode => {
+    mode = nextMode === 'cut' ? 'cut' : 'fade'
+    resetBrush()
+  }
+
+  interaction.getMode = () => mode
+
+  interaction.setBrushSize = nextBrushSize => {
+    brushSize = normalizeBrushSize(nextBrushSize)
+    const cursor = overlaySource.getFeatureById('brush-cursor')
+    if (cursor) cursor.setStyle(brushCursorStyle(brushSize))
+  }
+
+  interaction.getBrushSize = () => brushSize
+
+  interaction.cancel = () => resetBrush()
+
+  const baseSetMap = interaction.setMap.bind(interaction)
+  interaction.setMap = mapInstance => {
+    baseSetMap(mapInstance)
+    overlayLayer.setMap(mapInstance)
+  }
+
+  emitter.on('ERASE_FADE_START', options => {
+    emitter.emit('command/draw/cancel', { originatorId: ORIGINATOR_ID })
+    interaction.setBrushSize(options?.brushSize)
+    interaction.setMode('fade')
+    interaction.setActive(true)
+    emitter.emit('ui/erase/active', { mode: 'fade', brushSize })
+  })
+
+  emitter.on('ERASE_CUT_START', options => {
+    emitter.emit('command/draw/cancel', { originatorId: ORIGINATOR_ID })
+    interaction.setBrushSize(options?.brushSize)
+    interaction.setMode('cut')
+    interaction.setActive(true)
+    emitter.emit('ui/erase/active', { mode: 'cut', brushSize })
+  })
+
+  emitter.on('command/erase/brush-size', options => {
+    interaction.setBrushSize(options?.brushSize)
+    if (interaction.getActive()) {
+      emitter.emit('ui/erase/active', { mode, brushSize })
+    }
+  })
+
+  emitter.on('command/erase/cancel', () => {
+    interaction.setActive(false)
+    resetBrush()
+    emitter.emit('ui/erase/inactive')
+  })
+
+  emitter.on('command/draw/cancel', ({ originatorId }) => {
+    if (originatorId === ORIGINATOR_ID) return
+    if (interaction.getActive()) {
+      interaction.setActive(false)
+      resetBrush()
+      emitter.emit('ui/erase/inactive')
+    }
+  })
+
+  return interaction
+}

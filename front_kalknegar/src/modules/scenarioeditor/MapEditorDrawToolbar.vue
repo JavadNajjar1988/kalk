@@ -101,6 +101,7 @@ import { useSelectedItems } from "@/stores/selectedStore";
 import Feature from "ol/Feature";
 import { type AnyVectorLayer } from "@/geo/types";
 import { convertOlFeatureToScenarioFeature } from "@/modules/scenarioeditor/scenarioFeatureLayers";
+import { getScenarioFeatureDefaultName } from "./scenarioFeatureNaming";
 
 const {
   store: { groupUpdate },
@@ -167,7 +168,10 @@ function addOlFeature(olFeature: Feature, olLayer: AnyVectorLayer) {
     scenarioLayer.features.length,
     (lastFeatureInLayer?.meta._zIndex || 0) + 1,
   );
-  scenarioFeature.meta.name = `${scenarioFeature.meta.type} ${_zIndex + 1}`;
+  scenarioFeature.meta.name = getScenarioFeatureDefaultName(
+    scenarioFeature.meta.type,
+    _zIndex + 1,
+  );
   scenarioFeature.meta._zIndex = _zIndex;
   scenarioFeature.style = currentDrawStyle.value ?? {};
 

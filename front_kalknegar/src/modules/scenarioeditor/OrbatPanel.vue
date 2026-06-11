@@ -40,12 +40,15 @@ import { useEventBus, useEventListener } from "@vueuse/core";
 import { orbatUnitClick } from "@/components/eventKeys";
 import { useSelectedItems } from "@/stores/selectedStore";
 import { inputEventFilter } from "@/components/helpers";
-import { serializeUnit } from "@/scenariostore/io";
 import {
   addUnitHierarchy,
-  orbatToText,
   parseApplicationOrbat,
 } from "@/importexport/convertUtils";
+import {
+  createOrbatClipboardData,
+  getInternalOrbatClipboardData,
+  setInternalOrbatClipboardData,
+} from "@/components/mapContextMenuOrbatActions";
 import { type EntityId } from "@/types/base";
 import { monitorForElements } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
 import { isSideDragItem, isSideGroupDragItem, isUnitDragItem } from "@/types/draggables";
@@ -332,13 +335,16 @@ function onCopy(c: ClipboardEvent) {
   // only copy if an ORBAT item has focus
   if (!unitId) return;
 
-  const serializedUnits = [...selectedUnitIds.value].map((id) =>
-    serializeUnit(id, state, { newId: true }),
-  );
-  c.clipboardData?.setData("application/orbat", io.stringifyObject(serializedUnits));
+  const clipboardData = createOrbatClipboardData({
+    targetIds: [...selectedUnitIds.value],
+    state,
+    stringifyObject: io.stringifyObject,
+  });
+  if (!clipboardData) return;
 
-  const txt = serializedUnits.map((unit) => orbatToText(unit).join("")).join("");
-  c.clipboardData?.setData("text/plain", txt);
+  setInternalOrbatClipboardData(clipboardData.applicationOrbat);
+  c.clipboardData?.setData("application/orbat", clipboardData.applicationOrbat);
+  c.clipboardData?.setData("text/plain", clipboardData.textPlain);
 
   c.preventDefault();
 }
@@ -349,10 +355,13 @@ function onPaste(e: ClipboardEvent) {
 
   const parentId = getUnitIdFromElement(target.closest('li[id^="ou-"]'));
   // only paste if an ORBAT item has focus
-  if (!parentId || !e.clipboardData?.types.includes("application/orbat")) return;
-  const pastedOrbat = parseApplicationOrbat(
-    e.clipboardData?.getData("application/orbat"),
-  );
+  if (!parentId) return;
+  const applicationOrbat = e.clipboardData?.types.includes("application/orbat")
+    ? e.clipboardData?.getData("application/orbat")
+    : getInternalOrbatClipboardData();
+  if (!applicationOrbat) return;
+
+  const pastedOrbat = parseApplicationOrbat(applicationOrbat);
   pastedOrbat?.forEach((unit) => addUnitHierarchy(unit, parentId, activeScenario));
   unitActions.getUnitById(parentId)._isOpen = true;
 

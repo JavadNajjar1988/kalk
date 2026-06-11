@@ -28,6 +28,7 @@ import ScenarioFeatureSelect from "@/components/ScenarioFeatureSelect.vue";
 import { Label } from "@/components/ui/label";
 import { useTimeFormatStore } from "@/stores/timeFormatStore.ts";
 import { geometry } from "@turf/turf";
+import { DEFAULT_SCENARIO_FEATURE_NAME } from "./scenarioFeatureNaming";
 
 const props = withDefaults(defineProps<{ unitMode?: boolean }>(), { unitMode: false });
 
@@ -98,7 +99,7 @@ function createScenarioFeatureFromGeoJSON(
     id: nanoid(),
     properties: feature.properties,
     geometry: feature.geometry,
-    meta: { type: feature.geometry.type, name: "New Feature" },
+    meta: { type: feature.geometry.type, name: DEFAULT_SCENARIO_FEATURE_NAME },
     style: {},
     _pid: layerId,
   };

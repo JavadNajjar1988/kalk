@@ -47,6 +47,7 @@ import {
   isTacticalStoreReady,
   withTacticalSnapshotInMetadata,
 } from "@/modules/tactical-symbol-map/services/scenarioSnapshot";
+import { DEFAULT_SCENARIO_LAYER_NAME } from "@/modules/scenarioeditor/scenarioFeatureNaming";
 
 export interface CreateEmptyScenarioOptions {
   id?: string;
@@ -81,7 +82,7 @@ export function createEmptyScenario(options: CreateEmptyScenarioOptions = {}): S
     symbologyStandard,
     sides: [],
     events: [],
-    layers: [{ id: nanoid(), name: "Features", features: [] }],
+    layers: [{ id: nanoid(), name: DEFAULT_SCENARIO_LAYER_NAME, features: [] }],
     mapLayers: [],
     settings: {
       rangeRingGroups,

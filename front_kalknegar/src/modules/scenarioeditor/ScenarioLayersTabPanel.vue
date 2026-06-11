@@ -30,6 +30,7 @@ import { imageLayerAction } from "@/components/eventKeys";
 import { addMapLayer, getMapLayerIcon } from "@/modules/scenarioeditor/scenarioMapLayers";
 import SplitButton from "@/components/SplitButton.vue";
 import ScenarioFeatureLayer from "@/modules/scenarioeditor/ScenarioFeatureLayer.vue";
+import TacticalSymbolsLayerPanel from "@/modules/scenarioeditor/TacticalSymbolsLayerPanel.vue";
 import { monitorForElements } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
 import {
   isScenarioFeatureDragItem,
@@ -39,6 +40,7 @@ import {
   type Edge,
   extractClosestEdge,
 } from "@atlaskit/pragmatic-drag-and-drop-hitbox/closest-edge";
+import { DEFAULT_NEW_SCENARIO_LAYER_NAME } from "./scenarioFeatureNaming";
 
 const emit = defineEmits(["feature-click"]);
 
@@ -283,7 +285,7 @@ function onFeatureDrop(data: {
 function addNewLayer() {
   const addedLayer = geo.addLayer({
     id: nanoid(),
-    name: `New layer`,
+    name: DEFAULT_NEW_SCENARIO_LAYER_NAME,
     features: [],
     _isNew: false,
   });
@@ -462,6 +464,7 @@ onUnmounted(() => {
       @feature-action="onFeatureAction"
       @layer-action="onLayerAction"
     />
+    <TacticalSymbolsLayerPanel />
 
     <footer class="my-8 text-right">
       <SplitButton :items="mapLayerButtonItems" />

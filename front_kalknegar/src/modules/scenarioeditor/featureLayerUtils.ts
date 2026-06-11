@@ -87,6 +87,7 @@ export function getItemsIcon(type: string) {
 export const featureMenuItems: MenuItemData<ScenarioFeatureActions>[] = [
   { label: "بزرگ‌نمایی به", action: "zoom" },
   { label: "حرکت به", action: "pan" },
+  { label: "تغییر نام", action: "rename" },
   { label: "حرکت به بالا", action: "moveUp" },
   { label: "حرکت به پایین", action: "moveDown" },
   { label: "حذف", action: "delete" },

@@ -59,6 +59,14 @@
       >
         <IconMapMarkerPath class="size-6 transition-all duration-300" />
       </MainToolbarButton>
+      <MainToolbarButton
+        title="ویرایش نماد تاکتیکی (محو / برش)"
+        :active="store.currentToolbar === 'tactical'"
+        @click="store.toggleToolbar('tactical')"
+        class="toolbar-icon-button tactical-button hidden sm:flex"
+      >
+        <TacticalEditIcon class="size-6 transition-all duration-300" />
+      </MainToolbarButton>
       <div class="border-slate-200 dark:border-slate-600 h-7 border-r-2 sm:mx-1" />
       <div class="mr-2 flex items-center">
         <EchelonPickerPopover
@@ -258,6 +266,7 @@ import {
   PhClockCountdown as IconClockStart,
   PhClockClockwise as IconClockEnd,
   PhSquaresFour as SimpleTacticalIcon,
+  PhEraser as TacticalEditIcon,
 } from "@phosphor-icons/vue";
 import { useRouter } from "vue-router";
 import { SIMPLE_TACTICAL_MAP_ROUTE } from "@/router/names";

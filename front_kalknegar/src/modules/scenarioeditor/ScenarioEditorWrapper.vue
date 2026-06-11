@@ -18,6 +18,7 @@ import {
   type TacticalBatchEvent,
 } from "./scenarioAutosave";
 import { useServicesStore } from "@/modules/tactical-symbol-map/stores/services.js";
+import { DEFAULT_SCENARIO_LAYER_NAME } from "./scenarioFeatureNaming";
 
 const props = defineProps<{ scenarioId: string }>();
 
@@ -246,7 +247,13 @@ watch(
             console.warn(
               "[ScenarioEditorWrapper] Scenario missing layers, adding default layer",
             );
-            scn.layers = [{ id: `layer-${Date.now()}`, name: "Features", features: [] }];
+            scn.layers = [
+              {
+                id: `layer-${Date.now()}`,
+                name: DEFAULT_SCENARIO_LAYER_NAME,
+                features: [],
+              },
+            ];
           }
 
           // اگر sides وجود ندارد، اضافه می‌کنیم

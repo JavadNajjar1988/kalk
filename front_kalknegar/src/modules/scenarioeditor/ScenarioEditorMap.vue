@@ -112,6 +112,10 @@
             class="absolute bottom-14 sm:bottom-16"
             v-if="toolbarStore.currentToolbar === 'track'"
           />
+          <MapEditorTacticalToolbar
+            class="absolute bottom-14 sm:bottom-16"
+            v-if="toolbarStore.currentToolbar === 'tactical'"
+          />
         </footer>
       </div>
       <MapEditorDesktopPanel
@@ -188,6 +192,7 @@ import UnitDetails from "@/modules/scenarioeditor/UnitDetails.vue";
 import ScenarioInfoPanel from "@/modules/scenarioeditor/ScenarioInfoPanel.vue";
 import ScenarioTimeline from "@/modules/scenarioeditor/ScenarioTimeline.vue";
 import MapEditorUnitTrackToolbar from "@/modules/scenarioeditor/MapEditorUnitTrackToolbar.vue";
+import MapEditorTacticalToolbar from "@/modules/scenarioeditor/MapEditorTacticalToolbar.vue";
 import { storeToRefs } from "pinia";
 import { usePlaybackStore } from "@/stores/playbackStore";
 import UnitBreadcrumbs from "@/modules/scenarioeditor/UnitBreadcrumbs.vue";

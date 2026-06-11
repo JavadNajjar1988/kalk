@@ -16,7 +16,10 @@ export const bindings = (commandRegistry, emitter) => {
     if (deleteCommand.enabled()) deleteCommand.execute()
   })
 
-  Mousetrap.bind('esc', () => emitter.emit('command/draw/cancel'))
+  Mousetrap.bind('esc', () => {
+    emitter.emit('command/erase/cancel')
+    emitter.emit('command/draw/cancel')
+  })
 }
 
 

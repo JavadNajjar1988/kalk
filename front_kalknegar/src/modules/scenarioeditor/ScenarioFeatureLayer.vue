@@ -42,6 +42,7 @@ import {
   extractClosestEdge,
 } from "@atlaskit/pragmatic-drag-and-drop-hitbox/closest-edge";
 import DropIndicator from "@/components/DropIndicator.vue";
+import { getScenarioLayerDisplayName } from "./scenarioFeatureNaming";
 
 const props = defineProps<{ layer: NScenarioLayer; features: NScenarioFeature[] }>();
 const emit = defineEmits<{
@@ -174,7 +175,7 @@ onUnmounted(() => {
 </script>
 <template>
   <ChevronPanel
-    :label="layer.name"
+    :label="getScenarioLayerDisplayName(layer.name)"
     v-model:open="layer._isOpen"
     :header-class="['-ml-2', isDragging ? 'opacity-20' : '']"
     v-model:header-ref="elRef"
@@ -195,7 +196,7 @@ onUnmounted(() => {
           layer.id === activeLayerId ? 'text-red-900' : '',
         ]"
       >
-        {{ layer.name }}
+        {{ getScenarioLayerDisplayName(layer.name) }}
       </div>
       <DropIndicator
         v-if="itemState.type === 'drag-over' && itemState.closestEdge"
