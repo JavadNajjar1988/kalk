@@ -63,7 +63,13 @@ interface ScenarioFeatureLike {
   properties?: Record<string, any>;
   style?: Record<string, any>;
   meta?: Record<string, any>;
-  state?: Array<{ t?: any; geometry?: GeoJsonGeometryLike; properties?: Record<string, any> }>;
+  state?: ScenarioFeatureStateLike[];
+}
+
+interface ScenarioFeatureStateLike {
+  t?: any;
+  geometry?: GeoJsonGeometryLike;
+  properties?: Record<string, any>;
 }
 
 interface GeoJsonGeometryLike {
@@ -104,6 +110,7 @@ export interface ScenarioRenderSummary {
 
 const DEFAULT_TACTICAL_SIZE = getEnvNumber('VITE_TACTICAL_SYMBOL_SIZE', 72);
 const DEFAULT_MILITARY_SIZE = getEnvNumber('VITE_MILITARY_SYMBOL_SIZE', 80);
+const RANGE_RING_HEIGHT_METERS = 12;
 const PUBLIC_BASE_URL = normalizePublicBaseUrl(((import.meta as any).env?.BASE_URL as string | undefined) || '/');
 const FRIENDLY_FIXED_WING_MODEL_PATH = 'Model/aircraft/friendly/scene.glb';
 const HOSTILE_FIXED_WING_MODEL_PATH = 'Model/aircraft/hostile/scene.glb';
@@ -564,6 +571,15 @@ function parseColorWithOpacity(colorStr: any, opacity: any, defaultOpacity = 1.0
   }
 }
 
+function parseColor(colorStr: any, fallback: Cesium.Color): Cesium.Color {
+  if (typeof colorStr !== 'string' || !colorStr.trim()) return fallback;
+  try {
+    return Cesium.Color.fromCssColorString(colorStr.trim());
+  } catch {
+    return fallback;
+  }
+}
+
 function buildLineMaterial(
   color: Cesium.Color,
   strokeStyle: string,
@@ -673,6 +689,30 @@ function extractTacticalFeatures(
     }
   });
 
+  const timedStateMap = new Map<string, ScenarioFeatureStateLike[]>();
+  tuples.forEach(([key, value]) => {
+    if (!key.startsWith('timed+feature:')) return;
+    if (!Array.isArray(value)) return;
+    const featureKey = key.slice('timed+feature:'.length);
+    const states = value
+      .filter((state) => state && typeof state === 'object')
+      .map((state) => ({
+        ...state,
+        geometry: state.geometry ? convertGeometryCoords(state.geometry as GeoJsonGeometryLike) : undefined,
+        properties: state.properties && typeof state.properties === 'object'
+          ? state.properties
+          : undefined,
+      }))
+      .sort((a, b) => {
+        const at = parseScenarioTimeToEpochMs(a.t) ?? Number.NEGATIVE_INFINITY;
+        const bt = parseScenarioTimeToEpochMs(b.t) ?? Number.NEGATIVE_INFINITY;
+        return at - bt;
+      });
+    if (states.length) {
+      timedStateMap.set(featureKey, states);
+    }
+  });
+
   const features: ScenarioFeatureLike[] = [];
   tuples.forEach(([key, value]) => {
     if (!key.startsWith('feature:')) return;
@@ -694,6 +734,7 @@ function extractTacticalFeatures(
       properties: (value as any).properties || {},
       style: style || {},
       meta: (value as any).meta || {},
+      state: timedStateMap.get(key),
     });
   });
 
@@ -965,6 +1006,67 @@ function getFeatureProperties(feature: ScenarioFeatureLike): Record<string, any>
     }
   }
   return {};
+}
+
+function pickTimedFeatureState(
+  feature: ScenarioFeatureLike,
+  epochMs: number,
+): ScenarioFeatureStateLike | null {
+  if (!Array.isArray(feature.state) || feature.state.length === 0) return null;
+
+  let best: ScenarioFeatureStateLike | null = null;
+  for (const state of feature.state) {
+    const t = parseScenarioTimeToEpochMs(state?.t);
+    if (t === null) continue;
+    if (t <= epochMs) best = state;
+    if (t > epochMs) break;
+  }
+  return best;
+}
+
+function effectiveTimedFeature(
+  feature: ScenarioFeatureLike,
+  fallbackGeometry: GeoJsonGeometryLike,
+  epochMs: number,
+): ScenarioFeatureLike {
+  const timedState = pickTimedFeatureState(feature, epochMs);
+  const properties = { ...(feature.properties ?? {}) };
+  if (timedState?.properties && typeof timedState.properties === 'object') {
+    Object.entries(timedState.properties).forEach(([key, value]) => {
+      if (value === undefined) delete properties[key];
+      else properties[key] = value;
+    });
+  }
+
+  return {
+    ...feature,
+    geometry: timedState?.geometry ?? feature.geometry ?? fallbackGeometry,
+    properties,
+  };
+}
+
+function tacticalRenderPrefix(
+  scenarioId: string,
+  feature: ScenarioFeatureLike,
+  index: number,
+): string {
+  return `odin-tactical-${scenarioId}-${feature.id ?? 'f'}-${index}`;
+}
+
+function removeEntitiesByPrefix(viewer: Cesium.Viewer, prefix: string): void {
+  const entities = viewer.entities.values.filter((entity) =>
+    typeof entity.id === 'string' && entity.id.startsWith(prefix),
+  );
+  entities.forEach((entity) => viewer.entities.remove(entity));
+}
+
+function timedFeatureSignature(feature: ScenarioFeatureLike): string {
+  return JSON.stringify({
+    geometry: feature.geometry,
+    properties: feature.properties,
+    style: feature.style,
+    meta: feature.meta,
+  });
 }
 
 function toCartesian(lon: number, lat: number, height = 0): Cesium.Cartesian3 {
@@ -1266,6 +1368,7 @@ function addTacticalGeometry(
 ) {
   const gType = geometry?.type ?? '';
   const properties = getFeatureProperties(feature);
+  const isVisibleAt = getVisibilityPredicate(layer, feature);
   const s: Record<string, any> = { ...(feature.style || {}), ...(properties || {}) };
 
   const sidc =
@@ -1281,6 +1384,44 @@ function addTacticalGeometry(
   // ---- Path A: exact tactical renderer (same family search as KalkNegar) ----
   // Try this for every non-plain-point tactical geometry before any billboard fallback.
   if (sidc && gType !== 'Point') {
+    if (Array.isArray(feature.state) && feature.state.length > 0) {
+      const prefix = tacticalRenderPrefix(scenarioId, feature, index);
+      let lastSignature = '';
+      const renderCurrentState = () => {
+        const epochMs = getCurrentEpochMs(viewer.clock.currentTime);
+        if (!isVisibleAt(epochMs)) {
+          removeEntitiesByPrefix(viewer, prefix);
+          lastSignature = '';
+          return;
+        }
+
+        const effectiveFeature = effectiveTimedFeature(feature, geometry, epochMs);
+        const signature = timedFeatureSignature(effectiveFeature);
+        if (signature === lastSignature) return;
+
+        removeEntitiesByPrefix(viewer, prefix);
+        renderTacticalFeature(
+          viewer,
+          {
+            id: feature.id,
+            geometry: effectiveFeature.geometry ?? geometry,
+            properties: effectiveFeature.properties,
+            style: effectiveFeature.style,
+            meta: effectiveFeature.meta,
+          },
+          scenarioId,
+          index,
+        );
+        lastSignature = signature;
+      };
+
+      renderCurrentState();
+      viewer.clock.onTick.addEventListener(renderCurrentState);
+      return;
+    }
+
+    if (!isVisibleAt(getCurrentEpochMs(viewer.clock.currentTime))) return;
+
     const rendered = renderTacticalFeature(
       viewer,
       { id: feature.id, geometry, properties: feature.properties, style: feature.style, meta: feature.meta },
@@ -1842,6 +1983,14 @@ export function getScenarioTimeBounds(
             feature.state.forEach((s) => consider(parseScenarioTimeToEpochMs((s as any)?.t)));
           }
         });
+      });
+    }
+
+    const tacticalTuples = content.metadata?.tacticalSymbols?.tuples;
+    if (Array.isArray(tacticalTuples)) {
+      tacticalTuples.forEach(([key, value]: [string, any]) => {
+        if (!key.startsWith('timed+feature:') || !Array.isArray(value)) return;
+        value.forEach((state: any) => consider(parseScenarioTimeToEpochMs(state?.t)));
       });
     }
   });

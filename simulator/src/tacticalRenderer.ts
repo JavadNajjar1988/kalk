@@ -14,6 +14,7 @@
 import * as Cesium from 'cesium';
 import { TS } from './tacticalTs';
 import { parameterizeSidc, computeTacticalDescriptors } from './tacticalStyles';
+import { applyFadeZonesToDescriptors } from './tacticalFadeZones';
 
 // ---------------------------------------------------------------------------
 // Coordinate projection: WGS84 (lon°, lat°) ↔ EPSG:3857 (meters)
@@ -145,6 +146,29 @@ function descriptorIdToVisual(id: string, sidc: string): TacticalVisual {
   if (id.includes('solid-stroke'))  return { ...base };
   if (id.includes('default-stroke')) return { ...base };
   return base;
+}
+
+function descriptorOpacity(descriptor: Record<string, any>): number {
+  const candidates = [
+    descriptor['line-opacity'],
+    descriptor['shape-opacity'],
+    descriptor['icon-opacity'],
+    descriptor['fill-opacity'],
+  ]
+    .map((value) => Number(value))
+    .filter((value) => Number.isFinite(value));
+
+  if (!candidates.length) return 1;
+  return Math.max(0, Math.min(1, Math.min(...candidates)));
+}
+
+function applyVisualOpacity(visual: TacticalVisual, opacity: number): TacticalVisual {
+  if (opacity >= 1) return visual;
+  return {
+    ...visual,
+    strokeColor: visual.strokeColor.withAlpha(visual.strokeColor.alpha * opacity),
+    fillColor: visual.fillColor.withAlpha(visual.fillColor.alpha * opacity),
+  };
 }
 
 function parseColor(value: any, fallback: Cesium.Color): Cesium.Color {
@@ -335,6 +359,7 @@ function renderTextDescriptor(
   viewer: Cesium.Viewer,
   descriptor: Record<string, any>,
   id: string,
+  opacity: number,
 ): boolean {
   if (!descriptor?.geometry || !descriptor['text-field']) return false;
   if (descriptor.geometry.getGeometryType?.() !== 'Point') return false;
@@ -364,6 +389,7 @@ function renderTextDescriptor(
     position: Cesium.Cartesian3.fromDegrees(lon, lat, 0),
     billboard: {
       image,
+      color: Cesium.Color.WHITE.withAlpha(opacity),
       heightReference: Cesium.HeightReference.CLAMP_TO_GROUND,
       horizontalOrigin: origins.horizontalOrigin,
       verticalOrigin: origins.verticalOrigin,
@@ -381,6 +407,7 @@ function renderShapeDescriptor(
   descriptor: Record<string, any>,
   visual: TacticalVisual,
   id: string,
+  opacity: number,
 ): boolean {
   if (!descriptor?.geometry || descriptor.geometry.getGeometryType?.() !== 'Point') return false;
   if (!descriptor['shape-points']) return false;
@@ -397,6 +424,7 @@ function renderShapeDescriptor(
     position: Cesium.Cartesian3.fromDegrees(lon, lat, 0),
     billboard: {
       image,
+      color: Cesium.Color.WHITE.withAlpha(opacity),
       heightReference: Cesium.HeightReference.CLAMP_TO_GROUND,
       horizontalOrigin: Cesium.HorizontalOrigin.CENTER,
       verticalOrigin: Cesium.VerticalOrigin.CENTER,
@@ -577,13 +605,21 @@ export function renderTacticalFeature(
   });
   if (!descriptors || descriptors.length === 0) return false;
 
+  const renderDescriptors = applyFadeZonesToDescriptors(
+    descriptors,
+    props.fadeZones ?? feature.style?.fadeZones ?? feature.meta?.fadeZones,
+    jtsGeom,
+  );
+  if (!renderDescriptors.length) return true;
+
   const baseId = `odin-tactical-${scenarioId}-${feature.id ?? 'f'}-${index}`;
 
-  descriptors.forEach((desc, di) => {
+  renderDescriptors.forEach((desc, di) => {
     if (!desc?.geometry) return;
-    const visual = descriptorIdToVisual(desc.id ?? '', sidc);
-    if (renderTextDescriptor(viewer, desc, `${baseId}-txt-${di}`)) return;
-    if (renderShapeDescriptor(viewer, desc, visual, `${baseId}-shape-${di}`)) return;
+    const opacity = descriptorOpacity(desc);
+    const visual = applyVisualOpacity(descriptorIdToVisual(desc.id ?? '', sidc), opacity);
+    if (renderTextDescriptor(viewer, desc, `${baseId}-txt-${di}`, opacity)) return;
+    if (renderShapeDescriptor(viewer, desc, visual, `${baseId}-shape-${di}`, opacity)) return;
     renderJtsGeometry(viewer, desc.geometry, visual, `${baseId}-${di}`);
   });
 

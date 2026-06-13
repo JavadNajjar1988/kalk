@@ -25,8 +25,8 @@ const FADE_OPACITY = 0.15
 const DEFAULT_BRUSH_SIZE = 3
 const MIN_STROKE = 0.004
 
-const ERASABLE_FADE = new Set(['LineString', 'MultiLineString', 'Polygon', 'MultiPolygon'])
-const ERASABLE_CUT = new Set(['LineString', 'MultiLineString', 'Polygon', 'MultiPolygon'])
+const ERASABLE_FADE = new Set(['LineString', 'MultiLineString', 'Polygon', 'MultiPolygon', 'MultiPoint'])
+const ERASABLE_CUT = new Set(['LineString', 'MultiLineString', 'Polygon', 'MultiPolygon', 'MultiPoint'])
 
 const normalizeBrushSize = value => {
   const next = Number(value)
@@ -62,6 +62,8 @@ const eraseSegments = geometry => {
   if (!geometry) return []
   switch (geometry.getType()) {
     case 'LineString':
+      return lineSegments(geometry.getCoordinates())
+    case 'MultiPoint':
       return lineSegments(geometry.getCoordinates())
     case 'MultiLineString':
       return geometry.getCoordinates().flatMap(lineSegments)

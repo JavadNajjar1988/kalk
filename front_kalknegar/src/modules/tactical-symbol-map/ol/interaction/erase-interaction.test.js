@@ -1,6 +1,7 @@
 import { EventEmitter } from 'events'
 import Feature from 'ol/Feature'
 import LineString from 'ol/geom/LineString'
+import MultiPoint from 'ol/geom/MultiPoint'
 import GeometryCollection from 'ol/geom/GeometryCollection'
 import Point from 'ol/geom/Point'
 import { describe, expect, it } from 'vitest'
@@ -94,6 +95,43 @@ describe('eraseInteraction', () => {
     emitter.emit('ERASE_FADE_START', { brushSize: 3 })
     interaction.handleEvent(pointerEvent(map, 'pointerdown', [2, 6]))
     interaction.handleEvent(pointerEvent(map, 'pointerdrag', [5, 6]))
+
+    expect(state['feature:test'].properties.fadeZones).toBeDefined()
+  })
+
+  it('persists fade zones while brushing a MultiPoint tactical graphic', () => {
+    const feature = new Feature(new MultiPoint([
+      [0, 0],
+      [10, 0],
+      [20, 5]
+    ]))
+    feature.setId('feature:test')
+    feature.set('sidc', 'G*T*Q-----')
+
+    const state = {
+      'feature:test': {
+        geometry: writeGeometryObject(feature.getGeometry()),
+        properties: { sidc: feature.get('sidc') }
+      }
+    }
+    const store = {
+      update: (keys, updater) => {
+        keys.forEach(key => {
+          state[key] = updater(state[key])
+        })
+      }
+    }
+    const emitter = new EventEmitter()
+    const map = makeMap(feature)
+    const interaction = eraseInteraction({
+      services: { store, emitter },
+      map,
+      hitTolerance: 12
+    })
+
+    emitter.emit('ERASE_FADE_START', { brushSize: 3 })
+    interaction.handleEvent(pointerEvent(map, 'pointerdown', [5, 0]))
+    interaction.handleEvent(pointerEvent(map, 'pointerdrag', [10, 0]))
 
     expect(state['feature:test'].properties.fadeZones).toBeDefined()
   })

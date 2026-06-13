@@ -84,6 +84,11 @@ export const toFadeBaseLines = geometry => {
 
   if (type === 'LineString' || type === 'LinearRing') return [asLineString(geometry)]
 
+  if (type === 'MultiPoint') {
+    const coordinates = TS.coordinates(geometry)
+    return coordinates.length >= 2 ? [TS.lineString(coordinates)] : []
+  }
+
   if (type === 'MultiLineString') {
     return TS.geometries(geometry).map(asLineString)
   }
