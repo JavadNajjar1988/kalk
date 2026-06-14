@@ -446,6 +446,28 @@ describe("normal storyboard playback triggers", () => {
     expect(storyboard.activeScene.value?.id).toBe("scene-1");
     expect(storyboard.detectTriggeredScenes(3000)).toHaveLength(0);
   });
+
+  it("does not retrigger a displayed scene after a minor timeline jitter", () => {
+    const store = useNewScenarioStore(
+      baseScenario({
+        storyboard: {
+          enabled: true,
+          settings: {
+            defaultSceneDurationMs: 6000,
+            autoDuration: true,
+            showMode: "toast",
+          },
+          scenes: [{ id: "scene-1", title: "Crossed", startTime: 2000 }],
+        },
+      }),
+    );
+    const storyboard = useStoryboard(store);
+
+    storyboard.detectTriggeredScenes(2000).forEach((scene) => storyboard.showScene(scene));
+
+    expect(storyboard.detectTriggeredScenes(1999)).toHaveLength(0);
+    expect(storyboard.detectTriggeredScenes(2001)).toHaveLength(0);
+  });
 });
 
 describe("story playback mode", () => {

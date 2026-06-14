@@ -12,7 +12,7 @@
           v-if="mapRef"
           class="pointer-events-none absolute inset-0 flex flex-col justify-between"
         >
-          <header class="flex flex-none items-center justify-between px-4 pt-4">
+          <header class="relative z-50 flex flex-none items-center justify-between px-4 pt-16">
             <div class="flex items-center space-x-2 space-x-reverse">
               <MapTimeController
                 class="pointer-events-auto"
@@ -38,7 +38,7 @@
             </div>
           </header>
           <div
-            class="pointer-events-none absolute inset-x-4 bottom-0 z-40 flex justify-center"
+            class="pointer-events-none absolute inset-x-4 top-32 z-50 flex justify-center"
           >
             <StoryboardOverlay
               :scene="storyboard.activeScene.value"

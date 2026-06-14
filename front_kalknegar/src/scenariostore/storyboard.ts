@@ -101,6 +101,8 @@ export interface StoryboardCameraAdapter {
   zoomToEventWhere: (eventId: EntityId, maxZoom?: number) => void;
 }
 
+const STORYBOARD_REWIND_RESET_THRESHOLD_MS = 1000;
+
 export function getTriggeredStoryboardScenes(
   input: TriggeredScenesInput,
 ): StoryboardScene[] {
@@ -140,7 +142,7 @@ export function useStoryboard(
   }
 
   function detectTriggeredScenes(currentTime: number) {
-    if (currentTime < previousTime.value) {
+    if (currentTime < previousTime.value - STORYBOARD_REWIND_RESET_THRESHOLD_MS) {
       resetDisplayedScenes();
     }
 
