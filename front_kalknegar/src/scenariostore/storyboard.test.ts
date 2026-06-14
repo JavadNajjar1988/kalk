@@ -1,6 +1,6 @@
 import { createPinia, setActivePinia } from "pinia";
 import { beforeEach, describe, expect, it } from "vitest";
-import { prepareScenario } from "@/scenariostore/newScenarioStore";
+import { prepareScenario, useNewScenarioStore } from "@/scenariostore/newScenarioStore";
 import { useScenario } from "@/scenariostore";
 import { createEmptyScenario } from "@/scenariostore/io";
 import {
@@ -274,5 +274,56 @@ describe("storyboard helpers", () => {
 
     expect(storyboard.detectTriggeredScenes(1000)).toEqual([]);
     expect(storyboard.displayedSceneIds.value.size).toBe(0);
+  });
+});
+
+describe("useStoryboard mutations", () => {
+  beforeEach(() => {
+    setActivePinia(createPinia());
+  });
+
+  it("creates linked scenes for events that are not already linked", () => {
+    const store = useNewScenarioStore(
+      baseScenario({
+        events: [
+          { id: "event-1", title: "First", startTime: 1000 },
+          { id: "event-2", title: "Second", startTime: 2000 },
+        ],
+        storyboard: {
+          enabled: true,
+          settings: {
+            defaultSceneDurationMs: 6000,
+            autoDuration: true,
+            showMode: "toast",
+          },
+          scenes: [{ id: "existing", title: "First", linkedEventId: "event-1" }],
+        },
+      }),
+    );
+    const storyboard = useStoryboard(store);
+
+    storyboard.createScenesFromEvents();
+
+    expect(store.state.storyboard.scenes.map((scene) => scene.linkedEventId)).toEqual([
+      "event-1",
+      "event-2",
+    ]);
+  });
+
+  it("adds, updates, reorders, and deletes scenes", () => {
+    const store = useNewScenarioStore(baseScenario());
+    const storyboard = useStoryboard(store);
+
+    const sceneId = storyboard.addScene({
+      title: "Independent",
+      body: "Text",
+      startTime: 5000,
+    });
+    storyboard.updateScene(sceneId, { title: "Updated", order: 2 });
+    storyboard.addScene({ title: "Before", order: 1 });
+    storyboard.reorderScenes(["before-missing-id", sceneId]);
+    storyboard.deleteScene(sceneId);
+
+    expect(store.state.storyboard.scenes.some((scene) => scene.id === sceneId)).toBe(false);
   });
 });

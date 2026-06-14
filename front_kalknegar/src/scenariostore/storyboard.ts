@@ -150,16 +150,79 @@ export function useStoryboard(store: NewScenarioStore) {
     activeScene.value = null;
   }
 
+  function createScenesFromEvents() {
+    store.update((state) => {
+      const linkedIds = new Set(
+        state.storyboard.scenes
+          .map((scene) => scene.linkedEventId)
+          .filter((id): id is EntityId => Boolean(id)),
+      );
+
+      state.events.forEach((eventId) => {
+        if (linkedIds.has(eventId)) return;
+        const event = state.eventMap[eventId];
+        if (!event || event._type !== "scenario") return;
+        state.storyboard.scenes.push(buildSceneFromEvent(event));
+      });
+    });
+  }
+
+  function addScene(scene: Omit<StoryboardScene, "id"> & { id?: EntityId }) {
+    const id = scene.id ?? nanoid();
+    store.update((state) => {
+      state.storyboard.enabled = true;
+      state.storyboard.scenes.push({
+        ...scene,
+        id,
+        camera: scene.camera ?? { type: "none" },
+      });
+    });
+    return id;
+  }
+
+  function updateScene(id: EntityId, patch: Partial<StoryboardScene>) {
+    store.update((state) => {
+      const scene = state.storyboard.scenes.find((item) => item.id === id);
+      if (!scene) return;
+      Object.assign(scene, patch);
+    });
+  }
+
+  function deleteScene(id: EntityId) {
+    store.update((state) => {
+      state.storyboard.scenes = state.storyboard.scenes.filter((scene) => scene.id !== id);
+    });
+    displayedSceneIds.value.delete(id);
+    if (activeScene.value?.id === id) activeScene.value = null;
+  }
+
+  function reorderScenes(sceneIds: EntityId[]) {
+    store.update((state) => {
+      const knownIds = new Set(state.storyboard.scenes.map((scene) => scene.id));
+      sceneIds
+        .filter((id) => knownIds.has(id))
+        .forEach((id, index) => {
+          const scene = state.storyboard.scenes.find((item) => item.id === id);
+          if (scene) scene.order = index + 1;
+        });
+    });
+  }
+
   return {
     activeScene,
     resolvedScenes,
     displayedSceneIds,
     storyPlaybackRunning,
     storyPlaybackIndex,
+    addScene,
     clearActiveScene,
+    createScenesFromEvents,
+    deleteScene,
     detectTriggeredScenes,
     markDisplayed,
+    reorderScenes,
     resetDisplayedScenes,
     showScene,
+    updateScene,
   };
 }
