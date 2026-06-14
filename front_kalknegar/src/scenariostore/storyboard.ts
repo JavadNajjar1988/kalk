@@ -94,7 +94,7 @@ export function getTriggeredStoryboardScenes(input: TriggeredScenesInput): Story
   if (input.currentTime < input.previousTime) return [];
 
   return sortStoryboardScenes(input.scenes).filter((scene) => {
-    if (!scene.startTime) return false;
+    if (scene.startTime === undefined) return false;
     if (input.displayedSceneIds.has(scene.id)) return false;
     return scene.startTime > input.previousTime && scene.startTime <= input.currentTime;
   });

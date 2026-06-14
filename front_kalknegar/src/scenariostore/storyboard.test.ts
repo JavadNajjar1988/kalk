@@ -9,6 +9,7 @@ import {
   getTriggeredStoryboardScenes,
   resolveStoryboardScene,
   sortStoryboardScenes,
+  useStoryboard,
 } from "@/scenariostore/storyboard";
 import type { Scenario } from "@/types/scenarioModels";
 
@@ -208,5 +209,70 @@ describe("storyboard helpers", () => {
     });
 
     expect(triggered.map((scene) => scene.id)).toEqual(["inside"]);
+  });
+
+  it("returns a scene at zero when crossing from a negative timestamp", () => {
+    const triggered = getTriggeredStoryboardScenes({
+      scenes: [{ id: "zero", title: "Zero", startTime: 0 }],
+      previousTime: -100,
+      currentTime: 0,
+      displayedSceneIds: new Set(),
+    });
+
+    expect(triggered.map((scene) => scene.id)).toEqual(["zero"]);
+  });
+
+  it("keeps composable storyboard state and resets displayed scenes on rewind", () => {
+    const store = {
+      state: {
+        currentTime: 2500,
+        eventMap: {
+          "event-1": {
+            id: "event-1",
+            _type: "scenario",
+            title: "Linked event",
+            description: "Linked body",
+            startTime: 2000,
+          },
+        },
+        storyboard: {
+          enabled: true,
+          settings: {
+            defaultSceneDurationMs: 6000,
+            autoDuration: true,
+            showMode: "toast",
+          },
+          scenes: [
+            {
+              id: "scene-linked",
+              title: "Scene override",
+              linkedEventId: "event-1",
+            },
+          ],
+        },
+      },
+    } as Parameters<typeof useStoryboard>[0];
+    const storyboard = useStoryboard(store);
+
+    expect(storyboard.resolvedScenes.value).toEqual([
+      expect.objectContaining({
+        id: "scene-linked",
+        title: "Scene override",
+        body: "Linked body",
+        startTime: 2000,
+      }),
+    ]);
+
+    storyboard.showScene(storyboard.resolvedScenes.value[0]);
+
+    expect(storyboard.activeScene.value).toMatchObject({
+      id: "scene-linked",
+      title: "Scene override",
+      body: "Linked body",
+    });
+    expect(storyboard.displayedSceneIds.value.has("scene-linked")).toBe(true);
+
+    expect(storyboard.detectTriggeredScenes(1000)).toEqual([]);
+    expect(storyboard.displayedSceneIds.value.size).toBe(0);
   });
 });
