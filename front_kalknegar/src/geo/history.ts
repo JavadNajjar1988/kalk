@@ -4,8 +4,6 @@ import MultiPoint from "ol/geom/MultiPoint";
 import Point from "ol/geom/Point";
 import type { LocationState, Unit } from "@/types/scenarioModels";
 import type { NUnit } from "@/types/internalModels";
-import { greatCircle } from "@turf/great-circle";
-import { getDistance } from "ol/sphere";
 import type { Position } from "geojson";
 import type { GeometryLayout } from "ol/geom/Geometry";
 import Fill from "ol/style/Fill";
@@ -17,6 +15,7 @@ import VectorLayer from "ol/layer/Vector";
 import VectorSource from "ol/source/Vector";
 import LayerGroup from "ol/layer/Group";
 import { useTimeFormatStore } from "@/stores/timeFormatStore";
+import { buildUnitPathCoordinates } from "@/geo/unitPath";
 
 export const VIA_TIME = -1337;
 
@@ -194,22 +193,31 @@ export function createUnitPathFeatures(
       // arcFeatures.push(createSegmentFeature[[...part[0].location, part[0].t]]);return;
       return;
     }
-    const segment = [];
+    const editableSegment: Position[] = [];
+    const displaySegment: Position[] = [];
     for (let i = 0; i < part.length - 1; i++) {
       const from = part[i];
       const to = part[i + 1];
-      if (i === 0) segment.push([...from.location, from.t]);
+      const controlPoints = to.via
+        ? [from.location, ...to.via, to.location]
+        : [from.location, to.location];
+      const renderedPoints = buildUnitPathCoordinates(controlPoints, to.pathMode);
+
+      if (i === 0) editableSegment.push([...from.location, from.t]);
       if (to.via) {
         to.via.forEach((v) => {
-          segment.push([...v, VIA_TIME]);
+          editableSegment.push([...v, VIA_TIME]);
         });
       }
-      segment.push([...to.location, to.t]);
+      editableSegment.push([...to.location, to.t]);
+
+      if (displaySegment.length) renderedPoints.shift();
+      displaySegment.push(...renderedPoints);
     }
     if (isEditMode) {
-      legFeatures.push(createSegmentFeature(segment));
+      legFeatures.push(createSegmentFeature(editableSegment));
     }
-    arcFeatures.push(createSegmentFeature(createGreatCircleArcFeature(segment), "XY"));
+    arcFeatures.push(createSegmentFeature(displaySegment, "XY"));
   });
 
   function createSegmentFeature(
@@ -246,26 +254,6 @@ export function createUnitPathFeatures(
   }
 
   return { legFeatures, waypointFeatures, viaPointFeatures: [], arcFeatures };
-}
-
-function createGreatCircleArcFeature(leg: Position[]) {
-  const coords: Position[] = [];
-  for (let i = 0; i < leg.length - 1; i++) {
-    const from = leg[i];
-    const to = leg[i + 1];
-    const distance = getDistance(from, to);
-    if (distance > 100000) {
-      const arcLine = greatCircle(from, to, {
-        offset: -100000,
-        npoints: Math.min(Math.ceil(distance / 200000), 50),
-      });
-      // @ts-ignore
-      coords.push(...arcLine.geometry.coordinates);
-    } else {
-      coords.push(...[from, to]);
-    }
-  }
-  return coords;
 }
 
 function splitLocationStateIntoParts(state: LocationState[]): LocationState[][] {

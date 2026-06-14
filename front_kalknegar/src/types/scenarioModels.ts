@@ -21,6 +21,7 @@ import type {
 } from "@/types/internalModels";
 import type { VisibilityStyleSpec } from "@/geo/simplestyle";
 import type { EventType } from "./constants";
+import type { PathMode } from "@/geo/unitPath";
 
 export interface State extends Partial<ScenarioEventDescription> {
   id: string;
@@ -28,6 +29,7 @@ export interface State extends Partial<ScenarioEventDescription> {
   location?: Position | null;
   sidc?: string;
   via?: Position[];
+  pathMode?: PathMode;
   symbolOptions?: UnitSymbolOptions;
   textAmplifiers?: TextAmplifiers;
   interpolate?: boolean;

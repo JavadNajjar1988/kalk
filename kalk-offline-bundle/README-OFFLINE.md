@@ -14,8 +14,8 @@ kalk-offline-bundle/
 ├─ run.ps1                      # اسکریپت اجرای خودکار (Windows)
 ├─ README-OFFLINE.md            # همین فایل
 └─ images/
-   ├─ kalk-web_1.3.0.tar        # ایمیج Frontend (Dashboard + KalkNegar + Simulator + nginx؛ آپلود تا 16g)
-   ├─ kalk-api_1.1.0.tar        # ایمیج Backend (FastAPI + Python + Docker CLI)
+   ├─ kalk-web_1.4.0.tar        # ایمیج Frontend (Dashboard + KalkNegar + Simulator + nginx؛ آپلود تا 16g)
+   ├─ kalk-api_1.2.0.tar        # ایمیج Backend (FastAPI + Python + Docker CLI)
    ├─ postgis_16-3.4.tar        # ایمیج PostgreSQL/PostGIS
    └─ tileserver-gl_latest.tar  # ایمیج TileServer-GL (سرو نقشه‌های MBTiles)
 ```
@@ -42,8 +42,8 @@ kalk-offline-bundle/
 
 ```bash
 # 1) بارگذاری ایمیج‌ها (فقط بار اول)
-docker load -i images/kalk-web_1.3.0.tar
-docker load -i images/kalk-api_1.1.0.tar
+docker load -i images/kalk-web_1.4.0.tar
+docker load -i images/kalk-api_1.2.0.tar
 docker load -i images/postgis_16-3.4.tar
 docker load -i images/tileserver-gl_latest.tar
 

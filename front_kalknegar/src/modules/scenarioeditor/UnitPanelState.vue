@@ -106,7 +106,12 @@
         <DotsMenu :items="menuItems" @action="onStateAction(index, $event)" portal />
       </div>
       <div
-        v-if="s.via?.length || s.viaStartTime !== undefined || s.interpolate === false"
+        v-if="
+          s.via?.length ||
+          s.viaStartTime !== undefined ||
+          s.interpolate === false ||
+          s.pathMode === 'curved'
+        "
         class="absolute -top-3 left-1/2"
       >
         <div
@@ -120,6 +125,9 @@
           <span v-if="s.viaStartTime" class="ml-2 text-xs text-gray-600">{{
             formatDateString(s.viaStartTime, store.state.info.timeZone)
           }}</span>
+          <span v-if="s.pathMode === 'curved'" class="ml-2 text-xs text-gray-600">
+            منحنی
+          </span>
         </div>
       </div>
     </li>

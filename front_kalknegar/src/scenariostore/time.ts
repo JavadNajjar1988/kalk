@@ -18,6 +18,7 @@ import { invalidateUnitStyle } from "@/geo/unitStyles";
 import type { CurrentScenarioFeatureState } from "@/types/scenarioGeoModels";
 import { nanoid } from "@/utils";
 import { syncTimedHierarchyProjection } from "@/scenariostore/hierarchy";
+import { buildUnitPathCoordinates } from "@/geo/unitPath";
 
 export type GoToScenarioEventOptions = {
   silent?: boolean;
@@ -136,14 +137,13 @@ export function updateCurrentUnitState(
         !(s.interpolate === false) &&
         (s.viaStartTime ?? -Infinity) <= timestamp
       ) {
-        if (s.viaStartTime) {
-          console.log("yo");
-        }
-        const n = lineString(
+        const pathCoordinates = buildUnitPathCoordinates(
           s.via
             ? [currentState.location, ...s.via, s.location]
             : [currentState.location, s.location],
+          s.pathMode,
         );
+        const n = lineString(pathCoordinates);
         const timeDiff = s.t - (s.viaStartTime ?? currentState.t);
         const pathLength = turfLength(n);
         const averageSpeed = pathLength / timeDiff;
