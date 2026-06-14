@@ -16,6 +16,7 @@ import type {
   UnitStatus,
 } from "@/types/scenarioModels";
 import {
+  DEFAULT_STORYBOARD_SETTINGS,
   type NewScenarioStore,
   type ScenarioState,
   useNewScenarioStore,
@@ -84,6 +85,11 @@ export function createEmptyScenario(options: CreateEmptyScenarioOptions = {}): S
     events: [],
     layers: [{ id: nanoid(), name: DEFAULT_SCENARIO_LAYER_NAME, features: [] }],
     mapLayers: [],
+    storyboard: {
+      enabled: false,
+      scenes: [],
+      settings: { ...DEFAULT_STORYBOARD_SETTINGS },
+    },
     settings: {
       rangeRingGroups,
       statuses: [],
@@ -401,6 +407,7 @@ export function useScenarioIO(store: ShallowRef<NewScenarioStore>) {
         supplyUoMs: getSupplyUoMs(state),
         map: state.mapSettings,
       },
+      storyboard: klona(state.storyboard),
       metadata: state.metadata,
     };
   }

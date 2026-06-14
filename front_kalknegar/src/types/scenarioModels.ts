@@ -259,6 +259,38 @@ export interface ScenarioEvent extends ScenarioEventDescription {
   involvedUnits?: EntityId[]; // New field for explicitly listing units involved
 }
 
+export type StoryboardShowMode = "toast" | "cinematic";
+
+export interface StoryboardSettings {
+  defaultSceneDurationMs: number;
+  autoDuration: boolean;
+  showMode: StoryboardShowMode;
+}
+
+export type StoryboardCamera =
+  | { type: "none" }
+  | { type: "eventWhere"; maxZoom?: number }
+  | { type: "geometry"; geometry: GeometryWhere["geometry"]; maxZoom?: number }
+  | { type: "units"; units: EntityId[]; maxZoom?: number };
+
+export interface StoryboardScene {
+  id: EntityId;
+  title: string;
+  body?: string;
+  startTime?: ScenarioTime;
+  durationMs?: number;
+  order?: number;
+  linkedEventId?: EntityId;
+  camera?: StoryboardCamera;
+  pausePlayback?: boolean;
+}
+
+export interface Storyboard {
+  enabled: boolean;
+  scenes: StoryboardScene[];
+  settings: StoryboardSettings;
+}
+
 export interface WhereOptions {
   mapAnimation?: "flyTo" | "easeTo" | "jumpTo";
   maxZoom?: number;
@@ -705,6 +737,7 @@ export interface Scenario extends ScenarioInfo {
   supplyCategories?: SupplyCategory[];
   unitTemplates?: Unit[];
   settings?: ScenarioSettings;
+  storyboard?: Storyboard;
   
   // فیلدهای جدید اضافه شده
   endTime?: ScenarioTime;

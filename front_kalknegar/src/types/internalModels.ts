@@ -8,6 +8,8 @@ import type {
   SideGroup,
   SpeedUnitOfMeasure,
   State,
+  Storyboard,
+  StoryboardScene,
   SupplyCategory,
   SupplyClass,
   Unit,
@@ -238,6 +240,14 @@ export interface NScenarioEvent extends ScenarioEvent {
   id: EntityId;
   _type: ScenarioEventType;
   _pid?: EntityId;
+}
+
+export interface NStoryboardScene extends StoryboardScene {
+  id: EntityId;
+}
+
+export interface NStoryboard extends Storyboard {
+  scenes: NStoryboardScene[];
 }
 
 export type UnitPropertyUpdate = {

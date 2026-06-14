@@ -6,6 +6,8 @@ import { useScenarioTime } from "./time";
 import { useGeo } from "@/scenariostore/geo";
 import { useStateHelpers } from "@/scenariostore/helpers";
 
+export { createEmptyScenario } from "./io";
+
 const globalStoreRef = shallowRef<NewScenarioStore>({} as any);
 
 export const isLoading = ref(false);

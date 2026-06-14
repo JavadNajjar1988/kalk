@@ -9,6 +9,8 @@ import type {
   Side,
   SideGroup,
   State,
+  Storyboard,
+  StoryboardScene,
   SupplyCategory,
   SupplyClass,
   Unit,
@@ -86,6 +88,7 @@ export interface ScenarioState {
   featureStateCounter: number;
   settingsStateCounter: number; // used to force reactivity
   mapSettings: MapSettings;
+  storyboard: Storyboard;
 }
 
 export type NewScenarioStore = ReturnType<typeof useNewScenarioStore>;
@@ -96,6 +99,28 @@ export function convertStateToInternalFormat(e: State): State {
     t: +dayjs(e.t),
     viaStartTime: e.viaStartTime !== undefined ? +dayjs(e.viaStartTime) : undefined,
     id: e.id || nanoid(),
+  };
+}
+
+export const DEFAULT_STORYBOARD_SETTINGS = {
+  defaultSceneDurationMs: 6000,
+  autoDuration: true,
+  showMode: "toast" as const,
+};
+
+export function normalizeStoryboard(storyboard?: Storyboard): Storyboard {
+  return {
+    enabled: storyboard?.enabled ?? false,
+    settings: {
+      ...DEFAULT_STORYBOARD_SETTINGS,
+      ...(storyboard?.settings ?? {}),
+    },
+    scenes: (storyboard?.scenes ?? []).map((scene: StoryboardScene) => ({
+      ...scene,
+      id: scene.id ?? nanoid(),
+      startTime:
+        scene.startTime !== undefined ? +dayjs(scene.startTime) : undefined,
+    })),
   };
 }
 
@@ -483,6 +508,7 @@ export function prepareScenario(newScenario: Scenario): ScenarioState {
     settingsStateCounter,
     unitStatusMap,
     mapSettings,
+    storyboard: normalizeStoryboard(scenario.storyboard),
     // getUnitById(id: EntityId) {
     //   return this.unitMap[id];
     // },
