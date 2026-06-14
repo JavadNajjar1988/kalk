@@ -251,7 +251,7 @@ describe("storyboard helpers", () => {
           ],
         },
       },
-    } as Parameters<typeof useStoryboard>[0];
+    } as unknown as Parameters<typeof useStoryboard>[0];
     const storyboard = useStoryboard(store);
 
     expect(storyboard.resolvedScenes.value).toEqual([
