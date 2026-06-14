@@ -1,5 +1,8 @@
 <template>
-  <main class="overflow-auto bg-white dark:bg-slate-800 border-t-2 border-purple-200 dark:border-slate-600 rounded-t-3xl" :class="[showBottomPanel ? 'h-1/2' : 'h-12']">
+  <main
+    class="overflow-auto rounded-t-3xl border-t-2 border-purple-200 bg-white dark:border-slate-600 dark:bg-slate-800"
+    :class="[showBottomPanel ? 'h-1/2' : 'h-12']"
+  >
     <div v-show="!showBottomPanel" class="flex h-full items-center" ref="swipeUpEl">
       <div
         class="relative flex flex-1 items-center justify-center"
@@ -28,20 +31,30 @@
       :selected-index="activeTabIndex"
       @change="changeTab"
     >
-      <TabList class="flex flex-0 justify-between border-b border-purple-200 dark:border-slate-600 bg-purple-50 dark:bg-slate-700">
+      <TabList
+        class="flex flex-0 justify-between border-b border-purple-200 bg-purple-50 dark:border-slate-600 dark:bg-slate-700"
+      >
         <div ref="swipeDownEl" class="flex flex-auto items-center justify-evenly">
           <Tab
             as="template"
-            v-for="tab in ['آرایش نبرد', 'رویدادها', 'لایه‌ها', 'تنظیمات', 'فیلتر', 'جزئیات']"
+            v-for="tab in [
+              'آرایش نبرد',
+              'رویدادها',
+              'استوری‌بورد',
+              'لایه‌ها',
+              'تنظیمات',
+              'فیلتر',
+              'جزئیات',
+            ]"
             :key="tab"
             v-slot="{ selected }"
           >
             <button
               :class="[
                 selected
-                  ? 'border-purple-500 text-purple-600 dark:text-purple-400 bg-white dark:bg-slate-700'
+                  ? 'border-purple-500 bg-white text-purple-600 dark:bg-slate-700 dark:text-purple-400'
                   : 'border-transparent text-slate-500 hover:border-purple-300 hover:text-purple-600 dark:text-slate-400 dark:hover:text-purple-400',
-                'w-1/2 border-b-2 px-2 py-4 text-center text-sm font-medium transition-all duration-200 rounded-t-lg',
+                'w-1/2 rounded-t-lg border-b-2 px-2 py-4 text-center text-sm font-medium transition-all duration-200',
               ]"
             >
               {{ tab }}
@@ -56,6 +69,9 @@
         </TabPanel>
         <TabPanel class="p-4 pb-10">
           <ScenarioEventsPanel />
+        </TabPanel>
+        <TabPanel class="p-4 pb-10">
+          <StoryboardPanel />
         </TabPanel>
         <TabPanel class="p-4 pb-10">
           <ScenarioLayersTabPanel />
@@ -97,6 +113,7 @@
 import { Tab, TabGroup, TabList, TabPanel, TabPanels } from "@headlessui/vue";
 import { IconChevronDoubleUp } from "@iconify-prerendered/vue-mdi";
 import ScenarioEventsPanel from "@/modules/scenarioeditor/ScenarioEventsPanel.vue";
+import StoryboardPanel from "@/modules/scenarioeditor/StoryboardPanel.vue";
 import ScenarioInfoPanel from "@/modules/scenarioeditor/ScenarioInfoPanel.vue";
 import ScenarioFeatureDetails from "@/modules/scenarioeditor/ScenarioFeatureDetails.vue";
 import OrbatPanel from "@/modules/scenarioeditor/OrbatPanel.vue";
