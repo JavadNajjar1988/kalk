@@ -305,12 +305,16 @@ describe("useStoryboard mutations", () => {
     storyboard.createScenesFromEvents();
 
     expect(store.state.storyboard.scenes).toHaveLength(2);
-    expect(store.state.storyboard.scenes.find((scene) => scene.id === "existing")).toEqual({
+    expect(
+      store.state.storyboard.scenes.find((scene) => scene.id === "existing"),
+    ).toEqual({
       id: "existing",
       title: "First",
       linkedEventId: "event-1",
     });
-    expect(store.state.storyboard.scenes.filter((scene) => scene.id !== "existing")).toEqual([
+    expect(
+      store.state.storyboard.scenes.filter((scene) => scene.id !== "existing"),
+    ).toEqual([
       expect.objectContaining({
         title: "Second",
         linkedEventId: "event-2",
@@ -340,8 +344,14 @@ describe("useStoryboard mutations", () => {
       camera: { type: "none" },
     });
 
-    storyboard.updateScene(sceneId, { id: "changed-id", title: "Updated", order: 2 } as any);
-    expect(store.state.storyboard.scenes.some((scene) => scene.id === "changed-id")).toBe(false);
+    storyboard.updateScene(sceneId, {
+      id: "changed-id",
+      title: "Updated",
+      order: 2,
+    } as any);
+    expect(store.state.storyboard.scenes.some((scene) => scene.id === "changed-id")).toBe(
+      false,
+    );
     expect(store.state.storyboard.scenes.find((scene) => scene.id === sceneId)).toEqual(
       expect.objectContaining({
         id: sceneId,
@@ -358,13 +368,15 @@ describe("useStoryboard mutations", () => {
     expect(store.state.storyboard.scenes.find((scene) => scene.id === beforeId)).toEqual(
       expect.objectContaining({ order: 2 }),
     );
-    expect(store.state.storyboard.scenes.some((scene) => scene.id === "before-missing-id")).toBe(
-      false,
-    );
+    expect(
+      store.state.storyboard.scenes.some((scene) => scene.id === "before-missing-id"),
+    ).toBe(false);
 
     storyboard.deleteScene(sceneId);
 
-    expect(store.state.storyboard.scenes.some((scene) => scene.id === sceneId)).toBe(false);
+    expect(store.state.storyboard.scenes.some((scene) => scene.id === sceneId)).toBe(
+      false,
+    );
     expect(store.state.storyboard.scenes.find((scene) => scene.id === beforeId)).toEqual(
       expect.objectContaining({
         id: beforeId,
@@ -403,5 +415,35 @@ describe("useStoryboard mutations", () => {
     expect(sortedScenes.map((scene) => scene.id)).toEqual(["c", "a", "b"]);
     expect(sortedScenes.map((scene) => scene.order)).toEqual([1, 2, 3]);
     expect(orderById).toEqual({ a: 2, b: 3, c: 1 });
+  });
+});
+
+describe("normal storyboard playback triggers", () => {
+  beforeEach(() => {
+    setActivePinia(createPinia());
+  });
+
+  it("shows a scene once when current time crosses its start time", () => {
+    const store = useNewScenarioStore(
+      baseScenario({
+        storyboard: {
+          enabled: true,
+          settings: {
+            defaultSceneDurationMs: 6000,
+            autoDuration: true,
+            showMode: "toast",
+          },
+          scenes: [{ id: "scene-1", title: "Crossed", startTime: 2000 }],
+        },
+      }),
+    );
+    const storyboard = useStoryboard(store);
+
+    expect(storyboard.detectTriggeredScenes(1500)).toHaveLength(0);
+    const triggered = storyboard.detectTriggeredScenes(2500);
+    triggered.forEach((scene) => storyboard.showScene(scene));
+
+    expect(storyboard.activeScene.value?.id).toBe("scene-1");
+    expect(storyboard.detectTriggeredScenes(3000)).toHaveLength(0);
   });
 });

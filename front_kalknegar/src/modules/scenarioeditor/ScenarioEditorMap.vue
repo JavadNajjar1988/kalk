@@ -26,6 +26,15 @@
               />
             </div>
           </header>
+          <div
+            class="pointer-events-none absolute inset-x-4 bottom-0 z-40 flex justify-center"
+          >
+            <StoryboardOverlay
+              :scene="storyboard.activeScene.value"
+              :settings="state.storyboard.settings"
+              @close="storyboard.clearActiveScene()"
+            />
+          </div>
           <MapEditorDetailsPanel
             v-if="!isMobile && showDetailsPanel"
             :side="rtlPanels ? 'left' : 'right'"
@@ -196,6 +205,8 @@ import MapEditorTacticalToolbar from "@/modules/scenarioeditor/MapEditorTactical
 import { storeToRefs } from "pinia";
 import { usePlaybackStore } from "@/stores/playbackStore";
 import UnitBreadcrumbs from "@/modules/scenarioeditor/UnitBreadcrumbs.vue";
+import StoryboardOverlay from "@/modules/scenarioeditor/StoryboardOverlay.vue";
+import { useStoryboard } from "@/scenariostore/storyboard";
 
 const emit = defineEmits(["showExport", "showLoad", "show-settings"]);
 const activeScenario = injectStrict(activeScenarioKey);
@@ -209,6 +220,7 @@ const toolbarStore = useMainToolbarStore();
 const activeUnitStore = useActiveUnitStore();
 const ui = useUiStore();
 const playback = usePlaybackStore();
+const storyboard = useStoryboard(activeScenario.store);
 // For fa-IR UI, prefer details on the left and orbat on the right
 const rtlPanels = true;
 
@@ -264,14 +276,11 @@ function onOpenDetailsPanel() {
   showScenarioInfo.value = true;
 }
 
-watch(
-  [showLeftPanel, orbatPanelWidth, showDetailsPanel, detailsWidth, isMobile],
-  () => {
-    nextTick(() => {
-      mapRef.value?.updateSize();
-    });
-  },
-);
+watch([showLeftPanel, orbatPanelWidth, showDetailsPanel, detailsWidth, isMobile], () => {
+  nextTick(() => {
+    mapRef.value?.updateSize();
+  });
+});
 
 onUnmounted(() => {
   activeUnitStore.clearActiveUnit();
@@ -333,6 +342,16 @@ watch(
     }
   },
   { immediate: true },
+);
+
+watch(
+  () => state.currentTime,
+  (currentTime) => {
+    if (!state.storyboard.enabled) return;
+    if (state.storyboard.settings.showMode !== "toast") return;
+    const [nextScene] = storyboard.detectTriggeredScenes(currentTime);
+    if (nextScene) storyboard.showScene(nextScene);
+  },
 );
 </script>
 <style scoped>
