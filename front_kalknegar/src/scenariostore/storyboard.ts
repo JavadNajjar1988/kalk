@@ -180,11 +180,13 @@ export function useStoryboard(store: NewScenarioStore) {
     return id;
   }
 
-  function updateScene(id: EntityId, patch: Partial<StoryboardScene>) {
+  function updateScene(id: EntityId, patch: Partial<Omit<StoryboardScene, "id">>) {
     store.update((state) => {
       const scene = state.storyboard.scenes.find((item) => item.id === id);
       if (!scene) return;
-      Object.assign(scene, patch);
+      const safePatch = { ...(patch as Partial<StoryboardScene>) };
+      delete safePatch.id;
+      Object.assign(scene, safePatch);
     });
   }
 
@@ -198,13 +200,24 @@ export function useStoryboard(store: NewScenarioStore) {
 
   function reorderScenes(sceneIds: EntityId[]) {
     store.update((state) => {
-      const knownIds = new Set(state.storyboard.scenes.map((scene) => scene.id));
-      sceneIds
-        .filter((id) => knownIds.has(id))
-        .forEach((id, index) => {
-          const scene = state.storyboard.scenes.find((item) => item.id === id);
-          if (scene) scene.order = index + 1;
-        });
+      const scenesById = new Map(state.storyboard.scenes.map((scene) => [scene.id, scene]));
+      const prioritizedIds: EntityId[] = [];
+      const seenIds = new Set<EntityId>();
+
+      sceneIds.forEach((id) => {
+        if (!scenesById.has(id) || seenIds.has(id)) return;
+        prioritizedIds.push(id);
+        seenIds.add(id);
+      });
+
+      const prioritizedScenes = prioritizedIds.map((id) => scenesById.get(id)!);
+      const remainingScenes = sortStoryboardScenes(
+        state.storyboard.scenes.filter((scene) => !seenIds.has(scene.id)),
+      );
+
+      [...prioritizedScenes, ...remainingScenes].forEach((scene, index) => {
+        scene.order = index + 1;
+      });
     });
   }
 

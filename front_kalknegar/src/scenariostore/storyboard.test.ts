@@ -340,9 +340,11 @@ describe("useStoryboard mutations", () => {
       camera: { type: "none" },
     });
 
-    storyboard.updateScene(sceneId, { title: "Updated", order: 2 });
+    storyboard.updateScene(sceneId, { id: "changed-id", title: "Updated", order: 2 } as any);
+    expect(store.state.storyboard.scenes.some((scene) => scene.id === "changed-id")).toBe(false);
     expect(store.state.storyboard.scenes.find((scene) => scene.id === sceneId)).toEqual(
       expect.objectContaining({
+        id: sceneId,
         title: "Updated",
         order: 2,
       }),
@@ -369,5 +371,37 @@ describe("useStoryboard mutations", () => {
         title: "Before",
       }),
     );
+  });
+
+  it("normalizes omitted scene orders after prioritized reordering", () => {
+    const store = useNewScenarioStore(
+      baseScenario({
+        storyboard: {
+          enabled: true,
+          settings: {
+            defaultSceneDurationMs: 6000,
+            autoDuration: true,
+            showMode: "toast",
+          },
+          scenes: [
+            { id: "a", title: "A", order: 1 },
+            { id: "b", title: "B", order: 2 },
+            { id: "c", title: "C", order: 3 },
+          ],
+        },
+      }),
+    );
+    const storyboard = useStoryboard(store);
+
+    storyboard.reorderScenes(["c", "a"]);
+
+    const sortedScenes = sortStoryboardScenes(store.state.storyboard.scenes);
+    const orderById = Object.fromEntries(
+      store.state.storyboard.scenes.map((scene) => [scene.id, scene.order]),
+    );
+
+    expect(sortedScenes.map((scene) => scene.id)).toEqual(["c", "a", "b"]);
+    expect(sortedScenes.map((scene) => scene.order)).toEqual([1, 2, 3]);
+    expect(orderById).toEqual({ a: 2, b: 3, c: 1 });
   });
 });
