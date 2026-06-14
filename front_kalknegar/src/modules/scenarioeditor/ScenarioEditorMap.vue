@@ -24,6 +24,17 @@
                 @next-event="goToNextScenarioEvent()"
                 @prev-event="goToPrevScenarioEvent()"
               />
+              <StoryboardPlaybackControls
+                v-if="
+                  state.storyboard.enabled || storyboard.resolvedScenes.value.length > 0
+                "
+                :running="storyboard.storyPlaybackRunning.value"
+                :has-scenes="storyboard.resolvedScenes.value.length > 0"
+                @start="storyboard.startStoryPlayback()"
+                @stop="storyboard.stopStoryPlayback()"
+                @previous="storyboard.previousStoryScene()"
+                @next="storyboard.nextStoryScene()"
+              />
             </div>
           </header>
           <div
@@ -206,6 +217,7 @@ import { storeToRefs } from "pinia";
 import { usePlaybackStore } from "@/stores/playbackStore";
 import UnitBreadcrumbs from "@/modules/scenarioeditor/UnitBreadcrumbs.vue";
 import StoryboardOverlay from "@/modules/scenarioeditor/StoryboardOverlay.vue";
+import StoryboardPlaybackControls from "@/modules/scenarioeditor/StoryboardPlaybackControls.vue";
 import { useStoryboard } from "@/scenariostore/storyboard";
 
 const emit = defineEmits(["showExport", "showLoad", "show-settings"]);
@@ -351,6 +363,15 @@ watch(
     if (state.storyboard.settings.showMode !== "toast") return;
     const [nextScene] = storyboard.detectTriggeredScenes(currentTime);
     if (nextScene) storyboard.showScene(nextScene);
+  },
+);
+
+watch(
+  () => storyboard.activeScene.value?.startTime,
+  (sceneTime) => {
+    if (!storyboard.storyPlaybackRunning.value) return;
+    if (sceneTime === undefined) return;
+    setCurrentTime(sceneTime);
   },
 );
 </script>

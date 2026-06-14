@@ -50,7 +50,9 @@ export function sortStoryboardScenes<T extends StoryboardScene>(scenes: T[]): T[
   });
 }
 
-export function buildSceneFromEvent(event: NScenarioEvent | ScenarioEvent): StoryboardScene {
+export function buildSceneFromEvent(
+  event: NScenarioEvent | ScenarioEvent,
+): StoryboardScene {
   const camera: StoryboardCamera | undefined =
     event.where && "maxZoom" in event.where
       ? { type: "eventWhere", maxZoom: event.where.maxZoom }
@@ -90,7 +92,9 @@ export interface TriggeredScenesInput {
   displayedSceneIds: Set<EntityId>;
 }
 
-export function getTriggeredStoryboardScenes(input: TriggeredScenesInput): StoryboardScene[] {
+export function getTriggeredStoryboardScenes(
+  input: TriggeredScenesInput,
+): StoryboardScene[] {
   if (input.currentTime < input.previousTime) return [];
 
   return sortStoryboardScenes(input.scenes).filter((scene) => {
@@ -150,6 +154,45 @@ export function useStoryboard(store: NewScenarioStore) {
     activeScene.value = null;
   }
 
+  function showStorySceneAt(index: number) {
+    const scene = resolvedScenes.value[index];
+    if (!scene) {
+      storyPlaybackRunning.value = false;
+      activeScene.value = null;
+      return;
+    }
+    storyPlaybackIndex.value = index;
+    showScene(scene);
+  }
+
+  function startStoryPlayback() {
+    store.update((state) => {
+      state.storyboard.enabled = true;
+      state.storyboard.settings.showMode = "cinematic";
+    });
+    resetDisplayedScenes();
+    storyPlaybackRunning.value = true;
+    showStorySceneAt(0);
+  }
+
+  function stopStoryPlayback() {
+    storyPlaybackRunning.value = false;
+    activeScene.value = null;
+  }
+
+  function nextStoryScene() {
+    const nextIndex = storyPlaybackIndex.value + 1;
+    if (nextIndex >= resolvedScenes.value.length) {
+      stopStoryPlayback();
+      return;
+    }
+    showStorySceneAt(nextIndex);
+  }
+
+  function previousStoryScene() {
+    showStorySceneAt(Math.max(0, storyPlaybackIndex.value - 1));
+  }
+
   function createScenesFromEvents() {
     store.update((state) => {
       const linkedIds = new Set(
@@ -192,7 +235,9 @@ export function useStoryboard(store: NewScenarioStore) {
 
   function deleteScene(id: EntityId) {
     store.update((state) => {
-      state.storyboard.scenes = state.storyboard.scenes.filter((scene) => scene.id !== id);
+      state.storyboard.scenes = state.storyboard.scenes.filter(
+        (scene) => scene.id !== id,
+      );
     });
     displayedSceneIds.value.delete(id);
     if (activeScene.value?.id === id) activeScene.value = null;
@@ -200,7 +245,9 @@ export function useStoryboard(store: NewScenarioStore) {
 
   function reorderScenes(sceneIds: EntityId[]) {
     store.update((state) => {
-      const scenesById = new Map(state.storyboard.scenes.map((scene) => [scene.id, scene]));
+      const scenesById = new Map(
+        state.storyboard.scenes.map((scene) => [scene.id, scene]),
+      );
       const prioritizedIds: EntityId[] = [];
       const seenIds = new Set<EntityId>();
 
@@ -233,9 +280,13 @@ export function useStoryboard(store: NewScenarioStore) {
     deleteScene,
     detectTriggeredScenes,
     markDisplayed,
+    nextStoryScene,
+    previousStoryScene,
     reorderScenes,
     resetDisplayedScenes,
     showScene,
+    startStoryPlayback,
+    stopStoryPlayback,
     updateScene,
   };
 }

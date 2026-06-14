@@ -447,3 +447,40 @@ describe("normal storyboard playback triggers", () => {
     expect(storyboard.detectTriggeredScenes(3000)).toHaveLength(0);
   });
 });
+
+describe("story playback mode", () => {
+  beforeEach(() => {
+    setActivePinia(createPinia());
+  });
+
+  it("starts, advances, and stops story playback by scene order", () => {
+    const store = useNewScenarioStore(
+      baseScenario({
+        storyboard: {
+          enabled: true,
+          settings: {
+            defaultSceneDurationMs: 6000,
+            autoDuration: true,
+            showMode: "cinematic",
+          },
+          scenes: [
+            { id: "scene-2", title: "Second", startTime: 2000, order: 2 },
+            { id: "scene-1", title: "First", startTime: 1000, order: 1 },
+          ],
+        },
+      }),
+    );
+    const storyboard = useStoryboard(store);
+
+    storyboard.startStoryPlayback();
+    expect(storyboard.activeScene.value?.id).toBe("scene-1");
+    expect(storyboard.storyPlaybackRunning.value).toBe(true);
+
+    storyboard.nextStoryScene();
+    expect(storyboard.activeScene.value?.id).toBe("scene-2");
+
+    storyboard.nextStoryScene();
+    expect(storyboard.storyPlaybackRunning.value).toBe(false);
+    expect(storyboard.activeScene.value).toBe(null);
+  });
+});
