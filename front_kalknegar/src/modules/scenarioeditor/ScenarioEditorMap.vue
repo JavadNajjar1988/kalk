@@ -219,6 +219,7 @@ import UnitBreadcrumbs from "@/modules/scenarioeditor/UnitBreadcrumbs.vue";
 import StoryboardOverlay from "@/modules/scenarioeditor/StoryboardOverlay.vue";
 import StoryboardPlaybackControls from "@/modules/scenarioeditor/StoryboardPlaybackControls.vue";
 import { useStoryboard } from "@/scenariostore/storyboard";
+import { useGeoStore } from "@/stores/geoStore";
 
 const emit = defineEmits(["showExport", "showLoad", "show-settings"]);
 const activeScenario = injectStrict(activeScenarioKey);
@@ -232,7 +233,38 @@ const toolbarStore = useMainToolbarStore();
 const activeUnitStore = useActiveUnitStore();
 const ui = useUiStore();
 const playback = usePlaybackStore();
-const storyboard = useStoryboard(activeScenario.store);
+const geoStore = useGeoStore();
+const storyboard = useStoryboard(activeScenario.store, {
+  zoomToUnits: (unitIds, maxZoom) => {
+    const units = unitIds
+      .map((id) => activeScenario.helpers.getUnitById(id))
+      .filter((unit): unit is NonNullable<typeof unit> => Boolean(unit));
+    if (units.length) geoStore.zoomToUnits(units, { duration: 900, maxZoom });
+  },
+  zoomToGeometry: (geometry, maxZoom) => {
+    geoStore.zoomToGeometry(geometry, { duration: 900, maxZoom });
+  },
+  zoomToEventWhere: (eventId, maxZoom) => {
+    const where = activeScenario.store.state.eventMap[eventId]?.where;
+    if (!where) return;
+    if (where.type === "units") {
+      const units = where.units
+        .map((id) => activeScenario.helpers.getUnitById(id))
+        .filter((unit): unit is NonNullable<typeof unit> => Boolean(unit));
+      if (units.length) {
+        geoStore.zoomToUnits(units, {
+          duration: 900,
+          maxZoom: maxZoom ?? where.maxZoom,
+        });
+      }
+      return;
+    }
+    geoStore.zoomToGeometry(where.geometry, {
+      duration: 900,
+      maxZoom: maxZoom ?? where.maxZoom,
+    });
+  },
+});
 // For fa-IR UI, prefer details on the left and orbat on the right
 const rtlPanels = true;
 

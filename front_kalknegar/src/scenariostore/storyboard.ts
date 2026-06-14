@@ -92,6 +92,15 @@ export interface TriggeredScenesInput {
   displayedSceneIds: Set<EntityId>;
 }
 
+export interface StoryboardCameraAdapter {
+  zoomToUnits: (unitIds: EntityId[], maxZoom?: number) => void;
+  zoomToGeometry: (
+    geometry: Extract<StoryboardCamera, { type: "geometry" }>["geometry"],
+    maxZoom?: number,
+  ) => void;
+  zoomToEventWhere: (eventId: EntityId, maxZoom?: number) => void;
+}
+
 export function getTriggeredStoryboardScenes(
   input: TriggeredScenesInput,
 ): StoryboardScene[] {
@@ -104,7 +113,10 @@ export function getTriggeredStoryboardScenes(
   });
 }
 
-export function useStoryboard(store: NewScenarioStore) {
+export function useStoryboard(
+  store: NewScenarioStore,
+  cameraAdapter?: StoryboardCameraAdapter,
+) {
   const displayedSceneIds = ref<Set<EntityId>>(new Set());
   const activeScene = ref<ResolvedStoryboardScene | null>(null);
   const storyPlaybackRunning = ref(false);
@@ -148,10 +160,29 @@ export function useStoryboard(store: NewScenarioStore) {
     if (!resolved.title && !resolved.body) return;
     activeScene.value = resolved;
     markDisplayed(resolved.id);
+    applySceneCamera(resolved);
   }
 
   function clearActiveScene() {
     activeScene.value = null;
+  }
+
+  function applySceneCamera(scene: ResolvedStoryboardScene) {
+    if (!cameraAdapter || !scene.camera || scene.camera.type === "none") return;
+
+    if (scene.camera.type === "units") {
+      cameraAdapter.zoomToUnits(scene.camera.units, scene.camera.maxZoom);
+      return;
+    }
+
+    if (scene.camera.type === "geometry") {
+      cameraAdapter.zoomToGeometry(scene.camera.geometry, scene.camera.maxZoom);
+      return;
+    }
+
+    if (scene.camera.type === "eventWhere" && scene.linkedEventId) {
+      cameraAdapter.zoomToEventWhere(scene.linkedEventId, scene.camera.maxZoom);
+    }
   }
 
   function showStorySceneAt(index: number) {

@@ -1,5 +1,5 @@
 import { createPinia, setActivePinia } from "pinia";
-import { beforeEach, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { prepareScenario, useNewScenarioStore } from "@/scenariostore/newScenarioStore";
 import { useScenario } from "@/scenariostore";
 import { createEmptyScenario } from "@/scenariostore/io";
@@ -482,5 +482,45 @@ describe("story playback mode", () => {
     storyboard.nextStoryScene();
     expect(storyboard.storyPlaybackRunning.value).toBe(false);
     expect(storyboard.activeScene.value).toBe(null);
+  });
+});
+
+describe("storyboard scene camera", () => {
+  beforeEach(() => {
+    setActivePinia(createPinia());
+  });
+
+  it("applies the configured camera when a scene is shown", () => {
+    const store = useNewScenarioStore(
+      baseScenario({
+        events: [{ id: "event-1", title: "Event", startTime: 1000 }],
+        storyboard: {
+          enabled: true,
+          settings: {
+            defaultSceneDurationMs: 6000,
+            autoDuration: true,
+            showMode: "cinematic",
+          },
+          scenes: [
+            {
+              id: "scene-1",
+              title: "Scene",
+              linkedEventId: "event-1",
+              camera: { type: "eventWhere", maxZoom: 10 },
+            },
+          ],
+        },
+      }),
+    );
+    const cameraAdapter = {
+      zoomToUnits: vi.fn(),
+      zoomToGeometry: vi.fn(),
+      zoomToEventWhere: vi.fn(),
+    };
+    const storyboard = useStoryboard(store, cameraAdapter);
+
+    storyboard.showScene(storyboard.resolvedScenes.value[0]);
+
+    expect(cameraAdapter.zoomToEventWhere).toHaveBeenCalledWith("event-1", 10);
   });
 });
