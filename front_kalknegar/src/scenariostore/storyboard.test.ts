@@ -1,7 +1,8 @@
 import { createPinia, setActivePinia } from "pinia";
 import { beforeEach, describe, expect, it } from "vitest";
 import { prepareScenario } from "@/scenariostore/newScenarioStore";
-import { createEmptyScenario, useScenario } from "@/scenariostore";
+import { useScenario } from "@/scenariostore";
+import { createEmptyScenario } from "@/scenariostore/io";
 import type { Scenario } from "@/types/scenarioModels";
 
 function baseScenario(overrides: Partial<Scenario> = {}): Scenario {
