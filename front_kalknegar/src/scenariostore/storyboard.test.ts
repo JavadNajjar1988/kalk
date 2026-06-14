@@ -304,6 +304,18 @@ describe("useStoryboard mutations", () => {
 
     storyboard.createScenesFromEvents();
 
+    expect(store.state.storyboard.scenes).toHaveLength(2);
+    expect(store.state.storyboard.scenes.find((scene) => scene.id === "existing")).toEqual({
+      id: "existing",
+      title: "First",
+      linkedEventId: "event-1",
+    });
+    expect(store.state.storyboard.scenes.filter((scene) => scene.id !== "existing")).toEqual([
+      expect.objectContaining({
+        title: "Second",
+        linkedEventId: "event-2",
+      }),
+    ]);
     expect(store.state.storyboard.scenes.map((scene) => scene.linkedEventId)).toEqual([
       "event-1",
       "event-2",
@@ -319,11 +331,43 @@ describe("useStoryboard mutations", () => {
       body: "Text",
       startTime: 5000,
     });
+    expect(store.state.storyboard.enabled).toBe(true);
+    expect(store.state.storyboard.scenes.find((scene) => scene.id === sceneId)).toEqual({
+      id: sceneId,
+      title: "Independent",
+      body: "Text",
+      startTime: 5000,
+      camera: { type: "none" },
+    });
+
     storyboard.updateScene(sceneId, { title: "Updated", order: 2 });
-    storyboard.addScene({ title: "Before", order: 1 });
-    storyboard.reorderScenes(["before-missing-id", sceneId]);
+    expect(store.state.storyboard.scenes.find((scene) => scene.id === sceneId)).toEqual(
+      expect.objectContaining({
+        title: "Updated",
+        order: 2,
+      }),
+    );
+
+    const beforeId = storyboard.addScene({ title: "Before", order: 1 });
+    storyboard.reorderScenes(["before-missing-id", sceneId, beforeId]);
+    expect(store.state.storyboard.scenes.find((scene) => scene.id === sceneId)).toEqual(
+      expect.objectContaining({ order: 1 }),
+    );
+    expect(store.state.storyboard.scenes.find((scene) => scene.id === beforeId)).toEqual(
+      expect.objectContaining({ order: 2 }),
+    );
+    expect(store.state.storyboard.scenes.some((scene) => scene.id === "before-missing-id")).toBe(
+      false,
+    );
+
     storyboard.deleteScene(sceneId);
 
     expect(store.state.storyboard.scenes.some((scene) => scene.id === sceneId)).toBe(false);
+    expect(store.state.storyboard.scenes.find((scene) => scene.id === beforeId)).toEqual(
+      expect.objectContaining({
+        id: beforeId,
+        title: "Before",
+      }),
+    );
   });
 });
