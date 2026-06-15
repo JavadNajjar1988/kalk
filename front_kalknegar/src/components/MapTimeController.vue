@@ -2,7 +2,7 @@
   <div class="flex items-center space-x-2">
     <p
       v-if="!hideTime"
-      class="pointer-events-none inline-flex w-auto flex-row items-baseline gap-5 font-sans text-xl font-semibold tracking-[0.02em] text-slate-900 sm:text-2xl dark:text-slate-100"
+      class="map-time-display pointer-events-none inline-flex w-auto flex-row items-baseline gap-5 font-sans text-xl font-semibold tracking-[0.02em] sm:text-2xl"
       dir="rtl"
     >
       <span class="whitespace-nowrap">{{ mapTimeDisplay.date }}</span>
@@ -78,3 +78,19 @@ const {
   store: { state },
 } = injectStrict(activeScenarioKey);
 </script>
+
+<style scoped>
+.map-time-display {
+  color: #fff;
+  -webkit-text-stroke: 0.45px rgba(15, 23, 42, 0.95);
+  paint-order: stroke fill;
+  text-shadow:
+    1px 0 1px rgba(15, 23, 42, 0.95),
+    -1px 0 1px rgba(15, 23, 42, 0.95),
+    0 1px 1px rgba(15, 23, 42, 0.95),
+    0 -1px 1px rgba(15, 23, 42, 0.95),
+    1px 1px 1px rgba(15, 23, 42, 0.85),
+    -1px -1px 1px rgba(15, 23, 42, 0.85),
+    0 0 1px rgba(15, 23, 42, 0.95);
+}
+</style>

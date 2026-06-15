@@ -27,4 +27,15 @@ describe("formatMapTimeDisplay", () => {
     expect(component).not.toContain("min-w-[18rem]");
     expect(component).not.toContain("sm:min-w-[21rem]");
   });
+
+  it("renders the map header time with a high contrast map-safe text style", () => {
+    const component = readFileSync(resolve(__dirname, "MapTimeController.vue"), "utf8");
+
+    expect(component).toContain("map-time-display");
+    expect(component).toContain("color: #fff");
+    expect(component).toContain("-webkit-text-stroke");
+    expect(component).toContain("text-shadow");
+    expect(component).not.toContain("text-slate-900");
+    expect(component).not.toContain("dark:text-slate-100");
+  });
 });
