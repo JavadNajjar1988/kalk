@@ -2,7 +2,7 @@
   <div class="flex items-center space-x-2">
     <p
       v-if="!hideTime"
-      class="pointer-events-none flex min-w-[18rem] flex-row items-baseline justify-between gap-8 font-sans text-xl font-semibold tracking-[0.02em] text-slate-900 sm:min-w-[21rem] sm:text-2xl dark:text-slate-100"
+      class="pointer-events-none inline-flex w-auto flex-row items-baseline gap-5 font-sans text-xl font-semibold tracking-[0.02em] text-slate-900 sm:text-2xl dark:text-slate-100"
       dir="rtl"
     >
       <span class="whitespace-nowrap">{{ mapTimeDisplay.date }}</span>

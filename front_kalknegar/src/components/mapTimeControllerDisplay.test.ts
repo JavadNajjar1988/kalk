@@ -1,3 +1,5 @@
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 
 import { formatMapTimeDisplay } from "./mapTimeControllerDisplay";
@@ -14,5 +16,15 @@ describe("formatMapTimeDisplay", () => {
     });
     expect(result.date).not.toMatch(/\s{2,}/);
     expect(result.time).toHaveLength(5);
+  });
+
+  it("keeps the map header date and time visually compact", () => {
+    const component = readFileSync(resolve(__dirname, "MapTimeController.vue"), "utf8");
+
+    expect(component).toContain("inline-flex");
+    expect(component).toContain("gap-5");
+    expect(component).not.toContain("justify-between");
+    expect(component).not.toContain("min-w-[18rem]");
+    expect(component).not.toContain("sm:min-w-[21rem]");
   });
 });
