@@ -24,17 +24,6 @@
                 @next-event="goToNextScenarioEvent()"
                 @prev-event="goToPrevScenarioEvent()"
               />
-              <StoryboardPlaybackControls
-                v-if="
-                  state.storyboard.enabled || storyboard.resolvedScenes.value.length > 0
-                "
-                :running="storyboard.storyPlaybackRunning.value"
-                :has-scenes="storyboard.resolvedScenes.value.length > 0"
-                @start="storyboard.startStoryPlayback()"
-                @stop="storyboard.stopStoryPlayback()"
-                @previous="storyboard.previousStoryScene()"
-                @next="storyboard.nextStoryScene()"
-              />
             </div>
           </header>
           <div
@@ -112,14 +101,30 @@
           v-if="mapRef && ui.showToolbar"
           class="pointer-events-none z-50 flex justify-center sm:absolute sm:bottom-2 sm:w-full sm:p-2"
         >
-          <MapEditorMainToolbar
-            @open-time-modal="openTimeDialog()"
-            @inc-day="onIncDay()"
-            @dec-day="onDecDay()"
-            @next-event="goToNextScenarioEvent()"
-            @prev-event="goToPrevScenarioEvent()"
-            @show-settings="emit('show-settings')"
-          />
+          <div
+            class="pointer-events-auto flex max-w-full flex-wrap items-center justify-center gap-2 px-2"
+          >
+            <MapEditorMainToolbar
+              @open-time-modal="openTimeDialog()"
+              @inc-day="onIncDay()"
+              @dec-day="onDecDay()"
+              @next-event="goToNextScenarioEvent()"
+              @prev-event="goToPrevScenarioEvent()"
+              @show-settings="emit('show-settings')"
+            />
+            <StoryboardPlaybackControls
+              v-if="
+                state.storyboard.enabled || storyboard.resolvedScenes.value.length > 0
+              "
+              class="shrink-0"
+              :running="storyboard.storyPlaybackRunning.value"
+              :has-scenes="storyboard.resolvedScenes.value.length > 0"
+              @start="storyboard.startStoryPlayback()"
+              @stop="storyboard.stopStoryPlayback()"
+              @previous="storyboard.previousStoryScene()"
+              @next="storyboard.nextStoryScene()"
+            />
+          </div>
           <MapEditorMeasurementToolbar
             class="absolute bottom-14 sm:bottom-16"
             v-if="toolbarStore.currentToolbar === 'measurements'"

@@ -33,7 +33,7 @@ defineEmits<{
       @click="$emit('start')"
     >
       <IconPlay class="size-4" aria-hidden="true" />
-      <span>پخش استوری</span>
+      <span class="hidden lg:inline">پخش استوری</span>
     </button>
     <template v-else>
       <button
