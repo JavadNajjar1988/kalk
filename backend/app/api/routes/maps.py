@@ -55,6 +55,9 @@ def _is_safe_map_path(p: Path) -> bool:
 def _build_url_template(map_obj: OfflineMap) -> str:
     if map_obj.storage_type == "filesystem":
         return f"/api/tile-cache/{map_obj.id}/{{z}}/{{x}}/{{y}}"
+    if map_obj.storage_type == "mbtiles":
+        api_prefix = settings.API_PREFIX.rstrip("/")
+        return f"{api_prefix}/tile-cache/mbtiles/{map_obj.id}/{{z}}/{{x}}/{{y}}"
     base_url = settings.TILESERVER_URL.rstrip("/")
     tileset = Path(map_obj.filename or map_obj.file_path).name
     if tileset.lower().endswith(".mbtiles"):

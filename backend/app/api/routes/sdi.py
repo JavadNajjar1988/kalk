@@ -401,6 +401,9 @@ async def retire_map(map_id: int, session: DbSession = None):
 def _build_tiles_url_template(offline: OfflineMap) -> str:
     if offline.storage_type == "filesystem":
         return f"/api/tile-cache/{offline.id}/{{z}}/{{x}}/{{y}}"
+    if offline.storage_type == "mbtiles":
+        api_prefix = settings.API_PREFIX.rstrip("/")
+        return f"{api_prefix}/tile-cache/mbtiles/{offline.id}/{{z}}/{{x}}/{{y}}"
     base_url = settings.TILESERVER_URL.rstrip("/")
     tileset = offline.filename or offline.file_path.rsplit("/", 1)[-1].rsplit("\\", 1)[-1]
     if tileset.lower().endswith(".mbtiles"):

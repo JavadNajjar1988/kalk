@@ -28,6 +28,15 @@ def _public_catalog_path(path: str) -> str:
     return path
 
 
+def _catalog_path_for_map(m: SDIMap) -> str:
+    extra = m.extra_metadata if isinstance(m.extra_metadata, dict) else {}
+    offline_map_id = extra.get("offline_map_id")
+    if m.source_type == "xyz_mbtiles" and offline_map_id:
+        api_prefix = settings.API_PREFIX.rstrip("/")
+        return f"{api_prefix}/tile-cache/mbtiles/{offline_map_id}/{{z}}/{{x}}/{{y}}"
+    return _public_catalog_path(m.url_or_path)
+
+
 async def generate_layers_json(session: AsyncSession) -> dict[str, Any]:
     """Build layers.json payload from published SDI maps.
 
@@ -45,7 +54,7 @@ async def generate_layers_json(session: AsyncSession) -> dict[str, Any]:
             "description": m.description or None,
             "type": ("raster-xyz" if m.source_type.startswith("xyz") else m.source_type),
             "source": m.source_type,
-            "path": _public_catalog_path(m.url_or_path),
+            "path": _catalog_path_for_map(m),
             "srs": m.srs or None,
             "minzoom": m.minzoom,
             "maxzoom": m.maxzoom,
