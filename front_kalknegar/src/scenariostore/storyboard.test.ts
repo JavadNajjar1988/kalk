@@ -505,6 +505,29 @@ describe("story playback mode", () => {
     expect(storyboard.storyPlaybackRunning.value).toBe(false);
     expect(storyboard.activeScene.value).toBe(null);
   });
+
+  it("uses the currently selected storyboard display mode when playback starts", () => {
+    const store = useNewScenarioStore(
+      baseScenario({
+        storyboard: {
+          enabled: true,
+          settings: {
+            defaultSceneDurationMs: 6000,
+            autoDuration: true,
+            showMode: "toast",
+          },
+          scenes: [{ id: "scene-1", title: "First", startTime: 1000, order: 1 }],
+        },
+      }),
+    );
+    const storyboard = useStoryboard(store);
+
+    storyboard.startStoryPlayback();
+
+    expect(store.state.storyboard.settings.showMode).toBe("toast");
+    expect(storyboard.activeScene.value?.id).toBe("scene-1");
+    expect(storyboard.storyPlaybackRunning.value).toBe(true);
+  });
 });
 
 describe("storyboard scene camera", () => {

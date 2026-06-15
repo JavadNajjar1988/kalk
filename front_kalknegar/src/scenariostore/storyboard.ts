@@ -5,6 +5,7 @@ import type {
   ScenarioEvent,
   StoryboardCamera,
   StoryboardScene,
+  StoryboardShowMode,
 } from "@/types/scenarioModels";
 import type { NScenarioEvent } from "@/types/internalModels";
 import type { NewScenarioStore } from "@/scenariostore/newScenarioStore";
@@ -198,10 +199,10 @@ export function useStoryboard(
     showScene(scene);
   }
 
-  function startStoryPlayback() {
+  function startStoryPlayback(showMode?: StoryboardShowMode) {
     store.update((state) => {
       state.storyboard.enabled = true;
-      state.storyboard.settings.showMode = "cinematic";
+      if (showMode) state.storyboard.settings.showMode = showMode;
     });
     resetDisplayedScenes();
     storyPlaybackRunning.value = true;

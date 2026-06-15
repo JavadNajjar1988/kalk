@@ -110,16 +110,18 @@
               "
               :story-running="storyboard.storyPlaybackRunning.value"
               :story-has-scenes="storyboard.resolvedScenes.value.length > 0"
+              :story-show-mode="state.storyboard.settings.showMode"
               @open-time-modal="openTimeDialog()"
               @inc-day="onIncDay()"
               @dec-day="onDecDay()"
               @next-event="goToNextScenarioEvent()"
               @prev-event="goToPrevScenarioEvent()"
               @show-settings="emit('show-settings')"
-              @start-story="storyboard.startStoryPlayback()"
+              @start-story="startStoryboardPlayback"
               @stop-story="storyboard.stopStoryPlayback()"
               @previous-story="storyboard.previousStoryScene()"
               @next-story="storyboard.nextStoryScene()"
+              @select-story-show-mode="setStoryboardShowMode"
             />
           </div>
           <MapEditorMeasurementToolbar
@@ -221,6 +223,7 @@ import UnitBreadcrumbs from "@/modules/scenarioeditor/UnitBreadcrumbs.vue";
 import StoryboardOverlay from "@/modules/scenarioeditor/StoryboardOverlay.vue";
 import { useStoryboard } from "@/scenariostore/storyboard";
 import { useGeoStore } from "@/stores/geoStore";
+import type { StoryboardShowMode } from "@/types/scenarioModels";
 
 const emit = defineEmits(["showExport", "showLoad", "show-settings"]);
 const activeScenario = injectStrict(activeScenarioKey);
@@ -356,6 +359,17 @@ function onIncDay() {
 
 function onDecDay() {
   subtract(1, "day", true);
+}
+
+function setStoryboardShowMode(showMode: StoryboardShowMode) {
+  activeScenario.store.update((draft) => {
+    draft.storyboard.enabled = true;
+    draft.storyboard.settings.showMode = showMode;
+  });
+}
+
+function startStoryboardPlayback(showMode: StoryboardShowMode) {
+  storyboard.startStoryPlayback(showMode);
 }
 
 const { pause, resume } = useRafFn(

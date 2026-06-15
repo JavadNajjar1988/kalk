@@ -112,19 +112,45 @@
           </MainToolbarButton>
         </PopoverTrigger>
         <PopoverContent
-          class="w-48 p-2"
+          class="storyboard-popover-content w-64 border !border-slate-200 !bg-white p-3 text-slate-900 shadow-xl dark:!border-slate-700 dark:!bg-slate-950 dark:text-slate-100"
           align="center"
           side="top"
           :sideOffset="10"
           dir="rtl"
         >
-          <div class="flex flex-col gap-1">
+          <div class="flex flex-col gap-3">
+            <div class="space-y-2">
+              <div class="text-xs font-medium text-slate-500 dark:text-slate-400">
+                نوع نمایش
+              </div>
+              <div class="grid grid-cols-2 gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  :class="storyModeButtonClass('toast')"
+                  @click="selectStoryShowMode('toast')"
+                >
+                  کارت کوتاه
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  :class="storyModeButtonClass('cinematic')"
+                  @click="selectStoryShowMode('cinematic')"
+                >
+                  پخش استوری
+                </Button>
+              </div>
+            </div>
+            <div class="h-px bg-slate-200 dark:bg-slate-800" />
             <Button
               v-if="!props.storyRunning"
               type="button"
-              variant="ghost"
+              variant="default"
               size="sm"
-              class="justify-start gap-2"
+              class="w-full justify-start gap-2 bg-slate-900 text-white hover:bg-slate-800 dark:bg-slate-100 dark:text-slate-950 dark:hover:bg-slate-200"
               :disabled="!props.storyHasScenes"
               @click="startStoryPlayback"
             >
@@ -134,9 +160,9 @@
             <template v-else>
               <Button
                 type="button"
-                variant="ghost"
+                variant="outline"
                 size="sm"
-                class="justify-start gap-2"
+                class="w-full justify-start gap-2"
                 @click="previousStoryScene"
               >
                 <IconSkipPrevious class="size-4" />
@@ -144,9 +170,9 @@
               </Button>
               <Button
                 type="button"
-                variant="ghost"
+                variant="outline"
                 size="sm"
-                class="justify-start gap-2"
+                class="w-full justify-start gap-2"
                 @click="nextStoryScene"
               >
                 <IconSkipNext class="size-4" />
@@ -154,9 +180,9 @@
               </Button>
               <Button
                 type="button"
-                variant="ghost"
+                variant="outline"
                 size="sm"
-                class="justify-start gap-2 text-red-700 hover:text-red-800"
+                class="w-full justify-start gap-2 border-red-200 text-red-700 hover:bg-red-50 hover:text-red-800 dark:border-red-900/60 dark:text-red-300 dark:hover:bg-red-950/40 dark:hover:text-red-200"
                 @click="stopStoryPlayback"
               >
                 <IconStop class="size-4" />
@@ -376,17 +402,20 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { usePlaybackStore } from "@/stores/playbackStore";
 import { useTimeFormatStore } from "@/stores/timeFormatStore";
 import SymbolSidebarModal from "./SymbolSidebarModal.vue";
+import type { StoryboardShowMode } from "@/types/scenarioModels";
 
 const props = withDefaults(
   defineProps<{
     storyboardVisible?: boolean;
     storyRunning?: boolean;
     storyHasScenes?: boolean;
+    storyShowMode?: StoryboardShowMode;
   }>(),
   {
     storyboardVisible: false,
     storyRunning: false,
     storyHasScenes: false,
+    storyShowMode: "cinematic",
   },
 );
 
@@ -401,6 +430,7 @@ const emit = defineEmits([
   "stop-story",
   "previous-story",
   "next-story",
+  "select-story-show-mode",
 ]);
 
 const router = useRouter();
@@ -421,6 +451,7 @@ const recordingStore = useRecordingStore();
 const playback = usePlaybackStore();
 const tm = useTimeFormatStore();
 const storyboardPopoverOpen = ref(false);
+const selectedStoryShowMode = ref<StoryboardShowMode>(props.storyShowMode);
 const selectStore = useMapSelectStore();
 const toggleAddMultiple = useToggle(addMultiple);
 const bus = useEventBus(orbatUnitClick);
@@ -579,7 +610,7 @@ function goToEndTime() {
 }
 
 function startStoryPlayback() {
-  emit("start-story");
+  emit("start-story", selectedStoryShowMode.value);
   storyboardPopoverOpen.value = false;
 }
 
@@ -595,6 +626,27 @@ function previousStoryScene() {
 function nextStoryScene() {
   emit("next-story");
 }
+
+function selectStoryShowMode(showMode: StoryboardShowMode) {
+  selectedStoryShowMode.value = showMode;
+  emit("select-story-show-mode", showMode);
+}
+
+function storyModeButtonClass(showMode: StoryboardShowMode) {
+  return [
+    "rounded-md border px-2 py-1.5 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400",
+    selectedStoryShowMode.value === showMode
+      ? "border-slate-900 bg-slate-900 text-white dark:border-slate-100 dark:bg-slate-100 dark:text-slate-950"
+      : "border-slate-200 bg-white text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200 dark:hover:bg-slate-900",
+  ];
+}
+
+watch(
+  () => props.storyShowMode,
+  (showMode) => {
+    selectedStoryShowMode.value = showMode;
+  },
+);
 
 const symbolSidebarOpen = ref(false)
 
