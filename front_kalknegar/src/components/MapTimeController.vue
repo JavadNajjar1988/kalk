@@ -2,9 +2,11 @@
   <div class="flex items-center space-x-2">
     <p
       v-if="!hideTime"
-      class="pointer-events-none font-sans text-xl font-semibold tracking-[0.02em] text-slate-900 sm:text-2xl dark:text-slate-100"
+      class="pointer-events-none flex min-w-[18rem] flex-row items-baseline justify-between gap-8 font-sans text-xl font-semibold tracking-[0.02em] text-slate-900 sm:min-w-[21rem] sm:text-2xl dark:text-slate-100"
+      dir="rtl"
     >
-      {{ persianTimeDisplay }}
+      <span class="whitespace-nowrap">{{ mapTimeDisplay.date }}</span>
+      <span class="w-20 shrink-0 text-left font-mono tabular-nums tracking-normal">{{ mapTimeDisplay.time }}</span>
     </p>
     <BaseToolbar v-if="showControls">
       <ToolbarButton @click="emit('show-settings')" start>
@@ -46,12 +48,11 @@ import {
   IconSkipNext,
   IconSkipPrevious,
 } from "@iconify-prerendered/vue-mdi";
-import { useUiStore } from "@/stores/uiStore";
 import BaseToolbar from "./BaseToolbar.vue";
 import ToolbarButton from "./ToolbarButton.vue";
-import { injectStrict, toPersianDigits } from "@/utils";
+import { injectStrict } from "@/utils";
 import { activeScenarioKey } from "@/components/injects";
-import { useTimeFormatStore } from "@/stores/timeFormatStore";
+import { formatMapTimeDisplay } from "./mapTimeControllerDisplay";
 
 const props = withDefaults(
   defineProps<{
@@ -61,11 +62,8 @@ const props = withDefaults(
   { showControls: true, hideTime: false },
 );
 
-const fmt = useTimeFormatStore();
-
-// Computed property for Persian time display
-const persianTimeDisplay = computed(() => {
-  return toPersianDigits(fmt.scenarioFormatter.format(state.currentTime));
+const mapTimeDisplay = computed(() => {
+  return formatMapTimeDisplay(state.currentTime, state.info.timeZone || "UTC");
 });
 
 const emit = defineEmits([
@@ -78,8 +76,5 @@ const emit = defineEmits([
 ]);
 const {
   store: { state },
-  time: { scenarioTime },
 } = injectStrict(activeScenarioKey);
-
-const uiStore = useUiStore();
 </script>
