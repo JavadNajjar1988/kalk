@@ -150,7 +150,7 @@
               type="button"
               variant="default"
               size="sm"
-              class="w-full justify-start gap-2 bg-slate-900 text-white hover:bg-slate-800 dark:bg-slate-100 dark:text-slate-950 dark:hover:bg-slate-200"
+              class="w-full justify-start gap-2"
               :disabled="!props.storyHasScenes"
               @click="startStoryPlayback"
             >
@@ -636,8 +636,8 @@ function storyModeButtonClass(showMode: StoryboardShowMode) {
   return [
     "rounded-md border px-2 py-1.5 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400",
     selectedStoryShowMode.value === showMode
-      ? "border-slate-900 bg-slate-900 text-white dark:border-slate-100 dark:bg-slate-100 dark:text-slate-950"
-      : "border-slate-200 bg-white text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200 dark:hover:bg-slate-900",
+      ? "border-primary/30 bg-primary/15 text-primary ring-1 ring-primary/30"
+      : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200 dark:hover:bg-slate-900",
   ];
 }
 
