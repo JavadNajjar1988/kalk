@@ -105,24 +105,21 @@
             class="pointer-events-auto flex max-w-full flex-wrap items-center justify-center gap-2 px-2"
           >
             <MapEditorMainToolbar
+              :storyboard-visible="
+                state.storyboard.enabled || storyboard.resolvedScenes.value.length > 0
+              "
+              :story-running="storyboard.storyPlaybackRunning.value"
+              :story-has-scenes="storyboard.resolvedScenes.value.length > 0"
               @open-time-modal="openTimeDialog()"
               @inc-day="onIncDay()"
               @dec-day="onDecDay()"
               @next-event="goToNextScenarioEvent()"
               @prev-event="goToPrevScenarioEvent()"
               @show-settings="emit('show-settings')"
-            />
-            <StoryboardPlaybackControls
-              v-if="
-                state.storyboard.enabled || storyboard.resolvedScenes.value.length > 0
-              "
-              class="shrink-0"
-              :running="storyboard.storyPlaybackRunning.value"
-              :has-scenes="storyboard.resolvedScenes.value.length > 0"
-              @start="storyboard.startStoryPlayback()"
-              @stop="storyboard.stopStoryPlayback()"
-              @previous="storyboard.previousStoryScene()"
-              @next="storyboard.nextStoryScene()"
+              @start-story="storyboard.startStoryPlayback()"
+              @stop-story="storyboard.stopStoryPlayback()"
+              @previous-story="storyboard.previousStoryScene()"
+              @next-story="storyboard.nextStoryScene()"
             />
           </div>
           <MapEditorMeasurementToolbar
@@ -222,7 +219,6 @@ import { storeToRefs } from "pinia";
 import { usePlaybackStore } from "@/stores/playbackStore";
 import UnitBreadcrumbs from "@/modules/scenarioeditor/UnitBreadcrumbs.vue";
 import StoryboardOverlay from "@/modules/scenarioeditor/StoryboardOverlay.vue";
-import StoryboardPlaybackControls from "@/modules/scenarioeditor/StoryboardPlaybackControls.vue";
 import { useStoryboard } from "@/scenariostore/storyboard";
 import { useGeoStore } from "@/stores/geoStore";
 

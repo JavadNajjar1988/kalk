@@ -100,6 +100,39 @@
         <IconPause v-if="playback.playbackRunning" class="size-6 transition-all duration-300" />
         <IconPlay v-else class="size-6 transition-all duration-300" />
       </MainToolbarButton>
+      <MainToolbarButton
+        v-if="props.storyboardVisible && !props.storyRunning"
+        title="پخش استوری"
+        :active="props.storyRunning"
+        :disabled="!props.storyHasScenes"
+        class="toolbar-icon-button storyboard-playback-button"
+        @click="emit('start-story')"
+      >
+        <IconPlay class="size-5 transition-all duration-300" />
+      </MainToolbarButton>
+      <template v-if="props.storyboardVisible && props.storyRunning">
+        <MainToolbarButton
+          title="صحنه قبلی"
+          class="toolbar-icon-button storyboard-prev-button"
+          @click="emit('previous-story')"
+        >
+          <IconSkipPrevious class="size-5 transition-all duration-300" />
+        </MainToolbarButton>
+        <MainToolbarButton
+          title="صحنه بعدی"
+          class="toolbar-icon-button storyboard-next-button"
+          @click="emit('next-story')"
+        >
+          <IconSkipNext class="size-5 transition-all duration-300" />
+        </MainToolbarButton>
+        <MainToolbarButton
+          title="توقف پخش استوری"
+          class="toolbar-icon-button storyboard-stop-button text-red-700 hover:text-red-800"
+          @click="emit('stop-story')"
+        >
+          <IconStop class="size-5 transition-all duration-300" />
+        </MainToolbarButton>
+      </template>
       <DropdownMenu>
         <DropdownMenuTrigger as-child>
           <MainToolbarButton title="منوی پخش" class="toolbar-icon-button playback-menu-button">
@@ -262,6 +295,7 @@ import {
   PhFastForward as IconFastForward,
   PhPlay as IconPlay,
   PhPause as IconPause,
+  PhStop as IconStop,
   PhCaretDown as IconChevronDown,
   PhClockCountdown as IconClockStart,
   PhClockClockwise as IconClockEnd,
@@ -308,6 +342,19 @@ import { usePlaybackStore } from "@/stores/playbackStore";
 import { useTimeFormatStore } from "@/stores/timeFormatStore";
 import SymbolSidebarModal from "./SymbolSidebarModal.vue";
 
+const props = withDefaults(
+  defineProps<{
+    storyboardVisible?: boolean;
+    storyRunning?: boolean;
+    storyHasScenes?: boolean;
+  }>(),
+  {
+    storyboardVisible: false,
+    storyRunning: false,
+    storyHasScenes: false,
+  },
+);
+
 const emit = defineEmits([
   "open-time-modal",
   "inc-day",
@@ -315,6 +362,10 @@ const emit = defineEmits([
   "next-event",
   "prev-event",
   "show-settings",
+  "start-story",
+  "stop-story",
+  "previous-story",
+  "next-story",
 ]);
 
 const router = useRouter();
