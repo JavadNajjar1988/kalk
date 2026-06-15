@@ -100,39 +100,72 @@
         <IconPause v-if="playback.playbackRunning" class="size-6 transition-all duration-300" />
         <IconPlay v-else class="size-6 transition-all duration-300" />
       </MainToolbarButton>
-      <MainToolbarButton
-        v-if="props.storyboardVisible && !props.storyRunning"
-        title="پخش استوری"
-        :active="props.storyRunning"
-        :disabled="!props.storyHasScenes"
-        class="toolbar-icon-button storyboard-playback-button"
-        @click="emit('start-story')"
-      >
-        <IconPlay class="size-5 transition-all duration-300" />
-      </MainToolbarButton>
-      <template v-if="props.storyboardVisible && props.storyRunning">
-        <MainToolbarButton
-          title="صحنه قبلی"
-          class="toolbar-icon-button storyboard-prev-button"
-          @click="emit('previous-story')"
+      <Popover v-if="props.storyboardVisible" v-model:open="storyboardPopoverOpen">
+        <PopoverTrigger as-child>
+          <MainToolbarButton
+            title="کنترل‌های استوری‌بورد"
+            :active="props.storyRunning"
+            :disabled="!props.storyHasScenes"
+            class="toolbar-icon-button storyboard-menu-button"
+          >
+            <IconStoryboard class="size-5 transition-all duration-300" />
+          </MainToolbarButton>
+        </PopoverTrigger>
+        <PopoverContent
+          class="w-48 p-2"
+          align="center"
+          side="top"
+          :sideOffset="10"
+          dir="rtl"
         >
-          <IconSkipPrevious class="size-5 transition-all duration-300" />
-        </MainToolbarButton>
-        <MainToolbarButton
-          title="صحنه بعدی"
-          class="toolbar-icon-button storyboard-next-button"
-          @click="emit('next-story')"
-        >
-          <IconSkipNext class="size-5 transition-all duration-300" />
-        </MainToolbarButton>
-        <MainToolbarButton
-          title="توقف پخش استوری"
-          class="toolbar-icon-button storyboard-stop-button text-red-700 hover:text-red-800"
-          @click="emit('stop-story')"
-        >
-          <IconStop class="size-5 transition-all duration-300" />
-        </MainToolbarButton>
-      </template>
+          <div class="flex flex-col gap-1">
+            <Button
+              v-if="!props.storyRunning"
+              type="button"
+              variant="ghost"
+              size="sm"
+              class="justify-start gap-2"
+              :disabled="!props.storyHasScenes"
+              @click="startStoryPlayback"
+            >
+              <IconPlay class="size-4" />
+              <span>شروع پخش استوری</span>
+            </Button>
+            <template v-else>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                class="justify-start gap-2"
+                @click="previousStoryScene"
+              >
+                <IconSkipPrevious class="size-4" />
+                <span>صحنه قبلی</span>
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                class="justify-start gap-2"
+                @click="nextStoryScene"
+              >
+                <IconSkipNext class="size-4" />
+                <span>صحنه بعدی</span>
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                class="justify-start gap-2 text-red-700 hover:text-red-800"
+                @click="stopStoryPlayback"
+              >
+                <IconStop class="size-4" />
+                <span>توقف</span>
+              </Button>
+            </template>
+          </div>
+        </PopoverContent>
+      </Popover>
       <DropdownMenu>
         <DropdownMenuTrigger as-child>
           <MainToolbarButton title="منوی پخش" class="toolbar-icon-button playback-menu-button">
@@ -296,6 +329,7 @@ import {
   PhPlay as IconPlay,
   PhPause as IconPause,
   PhStop as IconStop,
+  PhFilmSlate as IconStoryboard,
   PhCaretDown as IconChevronDown,
   PhClockCountdown as IconClockStart,
   PhClockClockwise as IconClockEnd,
@@ -338,6 +372,7 @@ import {
   DropdownMenuShortcut,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { usePlaybackStore } from "@/stores/playbackStore";
 import { useTimeFormatStore } from "@/stores/timeFormatStore";
 import SymbolSidebarModal from "./SymbolSidebarModal.vue";
@@ -385,6 +420,7 @@ const { moveUnitEnabled } = storeToRefs(useUnitSettingsStore());
 const recordingStore = useRecordingStore();
 const playback = usePlaybackStore();
 const tm = useTimeFormatStore();
+const storyboardPopoverOpen = ref(false);
 const selectStore = useMapSelectStore();
 const toggleAddMultiple = useToggle(addMultiple);
 const bus = useEventBus(orbatUnitClick);
@@ -540,6 +576,24 @@ function goToEndTime() {
       setCurrentTime(lastEvent.startTime);
     }
   }
+}
+
+function startStoryPlayback() {
+  emit("start-story");
+  storyboardPopoverOpen.value = false;
+}
+
+function stopStoryPlayback() {
+  emit("stop-story");
+  storyboardPopoverOpen.value = false;
+}
+
+function previousStoryScene() {
+  emit("previous-story");
+}
+
+function nextStoryScene() {
+  emit("next-story");
 }
 
 const symbolSidebarOpen = ref(false)
