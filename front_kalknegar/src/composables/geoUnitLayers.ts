@@ -16,6 +16,10 @@ import {
   unitStyleCache,
 } from "@/geo/unitStyles";
 import {
+  createUnitDensityLayer,
+  unitDensityFeatureOpacity,
+} from "@/geo/unitDensitySummary";
+import {
   altKeyOnly,
   click as clickCondition,
   platformModifierKeyOnly,
@@ -65,6 +69,14 @@ export function useUnitLayer({ activeScenario }: { activeScenario?: TScenario } 
 
   const unitLayer = createUnitLayer();
   unitLayer.setStyle(unitStyleFunction);
+  const unitDensityLayer = createUnitDensityLayer({
+    source: unitLayer.getSource()!,
+    getUnitById,
+    getCombinedSymbolOptions,
+    onDensityChange: (hasDensitySummary) => {
+      unitLayer.setOpacity(unitDensityFeatureOpacity({ hasDensitySummary }));
+    },
+  });
 
   function unitStyleFunction(feature: FeatureLike, resolution: number) {
     const unitId = feature?.getId() as string;
@@ -115,7 +127,7 @@ export function useUnitLayer({ activeScenario }: { activeScenario?: TScenario } 
     //   unitLayer.animateFeature(f, new Fade({ duration: 1000 }))
     // );
   };
-  return { unitLayer, drawUnits, animateUnits };
+  return { unitLayer, unitDensityLayer, drawUnits, animateUnits };
 }
 
 export function useMapDrop(

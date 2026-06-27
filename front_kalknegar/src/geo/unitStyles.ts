@@ -18,7 +18,7 @@ export function invalidateUnitStyle(cacheKey: string) {
   selectedUnitStyleCache.delete(cacheKey);
 }
 
-function createMilSymbolStyle(milSymbol: MilSymbol) {
+export function createMilSymbolStyle(milSymbol: MilSymbol) {
   const { x, y } = milSymbol.getAnchor();
   const image = new Icon({
     scale: 1 / (window.devicePixelRatio || 1),

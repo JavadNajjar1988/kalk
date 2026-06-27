@@ -16,6 +16,7 @@ import {
   extractSubLine,
   toFadeBaseLine
 } from '../style/fadeZones'
+import { extractFadeZoneGeometry } from '../style/_applyFadeZones'
 
 const ORIGINATOR_ID = uuid()
 
@@ -97,6 +98,50 @@ const previewStroke = mode => new style.Style({
     lineDash: [8, 6]
   })
 })
+
+const flattenStyleLike = styles => {
+  if (!styles) return []
+  if (Array.isArray(styles)) return styles.flatMap(flattenStyleLike)
+  return [styles]
+}
+
+const hasPreviewPaint = styleEntry =>
+  !!(styleEntry?.getStroke?.() || styleEntry?.getFill?.())
+
+const styleGeometryDescriptor = (styleEntry, feature) => {
+  if (!hasPreviewPaint(styleEntry)) return null
+  const geometryFunction = styleEntry.getGeometryFunction?.()
+  const geometry = geometryFunction ? geometryFunction(feature) : null
+  if (!geometry) return null
+
+  try {
+    return {
+      id: 'style:2525c/default-stroke',
+      geometry: TS.read(geometry)
+    }
+  } catch {
+    return null
+  }
+}
+
+export const renderedFadePreviewGeometry = (feature, resolution, from, to) => {
+  const styleFunction = feature?.getStyleFunction?.()
+  const olGeometry = feature?.getGeometry?.()
+  if (!styleFunction || !olGeometry) return null
+
+  const renderedStyles = flattenStyleLike(styleFunction(feature, resolution))
+  const descriptors = renderedStyles
+    .map(styleEntry => styleGeometryDescriptor(styleEntry, feature))
+    .filter(Boolean)
+
+  if (!descriptors.length) return null
+
+  try {
+    return extractFadeZoneGeometry(descriptors, from, to, TS.read(olGeometry))
+  } catch {
+    return null
+  }
+}
 
 const geometryKind = feature => {
   const geom = feature?.getGeometry()
@@ -189,8 +234,12 @@ export default options => {
     const baseLine = toFadeBaseLine(jts)
     if (!baseLine) return
 
-    const indexed = TS.lengthIndexedLine(baseLine)
-    const sub = extractSubLine(indexed, from, to)
+    const sub = renderedFadePreviewGeometry(
+      feature,
+      map.getView()?.getResolution?.(),
+      from,
+      to
+    ) || extractSubLine(TS.lengthIndexedLine(baseLine), from, to)
     if (!sub) return
 
     const olPreview = TS.write(sub)

@@ -13,6 +13,16 @@ export interface BinWithX {
   count: number;
 }
 
+export interface TacticalTimelineMarker {
+  t: number;
+  count: number;
+}
+
+export interface TacticalMarkerWithX {
+  x: number;
+  count: number;
+}
+
 export interface HistogramBin {
   t: number;
   count: number;
@@ -27,6 +37,7 @@ export interface TimelineViewportState {
 export interface TimelineRenderInputs {
   events: NScenarioEvent[];
   histogram: HistogramBin[];
+  tacticalMarkers?: TacticalTimelineMarker[];
   minTimestamp: number;
   maxTimestamp: number;
   majorWidth: number;
@@ -36,6 +47,7 @@ export interface TimelineRenderInputs {
 export interface TimelineRenderOutputs {
   eventsWithX: EventWithX[];
   binsWithX: BinWithX[];
+  tacticalMarkersWithX: TacticalMarkerWithX[];
 }
 
 export function getMsPerPixel(majorWidth: number) {
@@ -97,11 +109,54 @@ export function mapHistogramToX({
     }));
 }
 
+export function collectTacticalTimelineMarkers(
+  timedFeatureTuples: Array<[string, unknown]>,
+): TacticalTimelineMarker[] {
+  const counts = new Map<number, number>();
+
+  timedFeatureTuples.forEach(([, states]) => {
+    if (!Array.isArray(states)) return;
+    states.forEach((state) => {
+      if (!state || typeof state !== "object") return;
+      const timestamp = Number((state as { t?: unknown }).t);
+      if (!Number.isFinite(timestamp)) return;
+      counts.set(timestamp, (counts.get(timestamp) ?? 0) + 1);
+    });
+  });
+
+  return [...counts.entries()]
+    .map(([t, count]) => ({ t, count }))
+    .sort((a, b) => a.t - b.t);
+}
+
+export function mapTacticalMarkersToX({
+  tacticalMarkers,
+  minTimestamp,
+  maxTimestamp,
+  majorWidth,
+  tzOffsetMinutes,
+}: Omit<TimelineRenderInputs, "events" | "histogram"> & {
+  tacticalMarkers: TacticalTimelineMarker[];
+}) {
+  const pxPerMs = majorWidth / MS_PER_DAY;
+  const offsetMs = tzOffsetMinutes * 60 * 1000;
+  return tacticalMarkers
+    .filter((marker) => marker.t >= minTimestamp && marker.t <= maxTimestamp)
+    .map((marker) => ({
+      x: (marker.t - minTimestamp + offsetMs) * pxPerMs,
+      count: marker.count,
+    }));
+}
+
 export function buildTimelineRenderData(
   inputs: TimelineRenderInputs,
 ): TimelineRenderOutputs {
   return {
     eventsWithX: mapEventsToX(inputs),
     binsWithX: mapHistogramToX(inputs),
+    tacticalMarkersWithX: mapTacticalMarkersToX({
+      ...inputs,
+      tacticalMarkers: inputs.tacticalMarkers ?? [],
+    }),
   };
 }

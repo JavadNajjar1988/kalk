@@ -1,6 +1,7 @@
 import { TS } from './tacticalTs';
 
 const MIN_ZONE = 0.005;
+const EPSILON = 1e-9;
 
 export interface FadeZone {
   from: number;
@@ -279,6 +280,84 @@ function isWithinSegment(t: number, segment: FadeZone): boolean {
   return t >= segment.from && (t < segment.to || segment.to === 1);
 }
 
+function sameCoordinate(a: any, b: any): boolean {
+  return Math.abs(a.x - b.x) < EPSILON && Math.abs(a.y - b.y) < EPSILON;
+}
+
+function interpolateCoordinate(a: any, b: any, ratio: number): any {
+  return new TS.Coordinate(
+    a.x + (b.x - a.x) * ratio,
+    a.y + (b.y - a.y) * ratio,
+  );
+}
+
+function addLinePart(parts: any[][], start: any, end: any): void {
+  if (sameCoordinate(start, end)) return;
+
+  const current = parts[parts.length - 1];
+  if (current && sameCoordinate(current[current.length - 1], start)) {
+    current.push(end);
+    return;
+  }
+
+  parts.push([start, end]);
+}
+
+function segmentLineStringByBaseRange(line: any, segment: FadeZone, baseLine: any): any[] {
+  const coords = typeof line?.getCoordinates === 'function'
+    ? line.getCoordinates()
+    : [];
+  if (coords.length < 2) return [];
+
+  const positions = coords
+    .map((coord: any) => positionOnGeometry(baseLine, coord));
+  const parts: any[][] = [];
+
+  coords.slice(1).forEach((end: any, index: number) => {
+    const start = coords[index];
+    const fromT = positions[index];
+    const toT = positions[index + 1];
+
+    if (!Number.isFinite(fromT) || !Number.isFinite(toT)) return;
+
+    if (Math.abs(toT - fromT) < EPSILON) {
+      if (isWithinSegment(fromT, segment)) addLinePart(parts, start, end);
+      return;
+    }
+
+    const startRatio = Math.max(
+      0,
+      Math.min(1, (segment.from - fromT) / (toT - fromT), (segment.to - fromT) / (toT - fromT)),
+    );
+    const endRatio = Math.min(
+      1,
+      Math.max(0, (segment.from - fromT) / (toT - fromT), (segment.to - fromT) / (toT - fromT)),
+    );
+
+    if (endRatio - startRatio <= EPSILON) return;
+
+    addLinePart(
+      parts,
+      interpolateCoordinate(start, end, startRatio),
+      interpolateCoordinate(start, end, endRatio),
+    );
+  });
+
+  return parts
+    .filter((part) => part.length >= 2)
+    .map((part) => TS.lineString(part));
+}
+
+function segmentLinePartByBaseRange(geometry: any, segment: FadeZone, baseLine: any): any[] {
+  const type = geometryType(geometry);
+  if (type === 'MultiLineString') {
+    return TS.geometries(geometry).flatMap((part: any) =>
+      segmentLineStringByBaseRange(part, segment, baseLine),
+    );
+  }
+  return segmentLineStringByBaseRange(geometry, segment, baseLine);
+}
+
 function collectGeometry(geometries: any[]): any {
   const parts = geometries.filter(Boolean);
   if (!parts.length) return null;
@@ -298,8 +377,8 @@ function segmentCollectionParts(geometry: any, segment: FadeZone, baseLine: any)
     }
 
     if (isSegmentLineGeometry(part)) {
-      const sub = extractSubGeometry(part, segment.from, segment.to);
-      return sub && hasDrawableCoordinates(sub) ? [sub] : [];
+      return segmentLinePartByBaseRange(part, segment, baseLine)
+        .filter(hasDrawableCoordinates);
     }
 
     if (isPolygonLike(part) || isPoint(part)) {

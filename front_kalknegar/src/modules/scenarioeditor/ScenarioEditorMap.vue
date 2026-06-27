@@ -98,10 +98,11 @@
           </template>
         </main>
         <footer
-          v-if="mapRef && ui.showToolbar"
+          v-if="mapRef"
           class="pointer-events-none z-50 flex justify-center sm:absolute sm:bottom-2 sm:w-full sm:p-2"
         >
           <div
+            v-if="ui.showToolbar"
             class="pointer-events-auto flex max-w-full flex-wrap items-center justify-center gap-2 px-2"
           >
             <MapEditorMainToolbar
@@ -124,21 +125,30 @@
               @select-story-show-mode="setStoryboardShowMode"
             />
           </div>
+          <button
+            v-else
+            type="button"
+            class="pointer-events-auto rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:hover:bg-slate-900"
+            title="نمایش نوار ابزار نقشه"
+            @click="ui.showToolbar = true"
+          >
+            نمایش نوار ابزار
+          </button>
           <MapEditorMeasurementToolbar
             class="absolute bottom-14 sm:bottom-16"
-            v-if="toolbarStore.currentToolbar === 'measurements'"
+            v-if="ui.showToolbar && toolbarStore.currentToolbar === 'measurements'"
           />
           <MapEditorDrawToolbar
             class="absolute bottom-14 sm:bottom-16"
-            v-if="toolbarStore.currentToolbar === 'draw'"
+            v-if="ui.showToolbar && toolbarStore.currentToolbar === 'draw'"
           />
           <MapEditorUnitTrackToolbar
             class="absolute bottom-14 sm:bottom-16"
-            v-if="toolbarStore.currentToolbar === 'track'"
+            v-if="ui.showToolbar && toolbarStore.currentToolbar === 'track'"
           />
           <MapEditorTacticalToolbar
             class="absolute bottom-14 sm:bottom-16"
-            v-if="toolbarStore.currentToolbar === 'tactical'"
+            v-if="ui.showToolbar && toolbarStore.currentToolbar === 'tactical'"
           />
         </footer>
       </div>

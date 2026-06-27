@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { GeometryCollection, LineString, MultiPoint, MultiPolygon, Point } from 'ol/geom'
 import * as TS from '../ts'
-import applyFadeZones from './_applyFadeZones'
+import applyFadeZones, { extractFadeZoneGeometry } from './_applyFadeZones'
 import { cutLineGeometry, toFadeBaseLine } from './fadeZones'
 
 describe('fadeZones', () => {
@@ -159,6 +159,120 @@ describe('fadeZones', () => {
     const faded = styles.find(entry => entry['shape-opacity'] === 0.15)
     expect(faded).toBeDefined()
     expect(TS.geometries(faded.geometry).map(geometry => geometry.getGeometryType())).toContain('Polygon')
+  })
+
+  it('cuts collection line parts at the brushed position on the base line', () => {
+    const baseLine = TS.lineString([
+      TS.coordinate(0, 0),
+      TS.coordinate(30, 0)
+    ])
+    const collection = TS.collect([
+      TS.lineString([
+        TS.coordinate(0, 0),
+        TS.coordinate(5, 5),
+        TS.coordinate(10, 0)
+      ]),
+      TS.lineString([
+        TS.coordinate(10, 0),
+        TS.coordinate(15, 5),
+        TS.coordinate(20, 0)
+      ]),
+      TS.lineString([
+        TS.coordinate(20, 0),
+        TS.coordinate(25, 5),
+        TS.coordinate(30, 0)
+      ])
+    ])
+
+    const styles = applyFadeZones(
+      [{ id: 'style:2525c/default-stroke', geometry: collection }],
+      [{ from: 0.4, to: 0.6, opacity: 0 }],
+      baseLine
+    )
+
+    const remainingParts = styles.flatMap(entry =>
+      entry.geometry.getGeometryType() === 'GeometryCollection'
+        ? TS.geometries(entry.geometry)
+        : [entry.geometry]
+    )
+
+    expect(remainingParts).toHaveLength(4)
+    expect(remainingParts.map(geometry => geometry.getCoordinates().map(coord => [
+      Number(coord.x.toFixed(2)),
+      Number(coord.y.toFixed(2))
+    ]))).toEqual([
+      [[0, 0], [5, 5], [10, 0]],
+      [[10, 0], [12, 2]],
+      [[18, 2], [20, 0]],
+      [[20, 0], [25, 5], [30, 0]]
+    ])
+  })
+
+  it('cuts a collection line part when the brush overlaps its edge but not its midpoint', () => {
+    const baseLine = TS.lineString([
+      TS.coordinate(0, 0),
+      TS.coordinate(30, 0)
+    ])
+    const collection = TS.collect([
+      TS.lineString([
+        TS.coordinate(10, 0),
+        TS.coordinate(15, 5),
+        TS.coordinate(20, 0)
+      ])
+    ])
+
+    const styles = applyFadeZones(
+      [{ id: 'style:2525c/default-stroke', geometry: collection }],
+      [{ from: 0.36, to: 0.44, opacity: 0 }],
+      baseLine
+    )
+
+    const remainingParts = styles.flatMap(entry =>
+      entry.geometry.getGeometryType() === 'GeometryCollection'
+        ? TS.geometries(entry.geometry)
+        : [entry.geometry]
+    )
+
+    expect(remainingParts).toHaveLength(2)
+    expect(remainingParts.map(geometry => geometry.getCoordinates().map(coord => [
+      Number(coord.x.toFixed(2)),
+      Number(coord.y.toFixed(2))
+    ]))).toEqual([
+      [[10, 0], [10.8, 0.8]],
+      [[13.2, 3.2], [15, 5], [20, 0]]
+    ])
+  })
+
+  it('extracts the rendered collection geometry under the brush for preview', () => {
+    const baseLine = TS.lineString([
+      TS.coordinate(0, 0),
+      TS.coordinate(30, 0)
+    ])
+    const collection = TS.collect([
+      TS.lineString([
+        TS.coordinate(10, 0),
+        TS.coordinate(15, 5),
+        TS.coordinate(20, 0)
+      ])
+    ])
+
+    const preview = extractFadeZoneGeometry(
+      [{ id: 'style:2525c/default-stroke', geometry: collection }],
+      0.4,
+      0.6,
+      baseLine
+    )
+
+    const parts = preview.getGeometryType() === 'GeometryCollection'
+      ? TS.geometries(preview)
+      : [preview]
+
+    expect(parts.map(geometry => geometry.getCoordinates().map(coord => [
+      Number(coord.x.toFixed(2)),
+      Number(coord.y.toFixed(2))
+    ]))).toEqual([
+      [[12, 2], [15, 5], [18, 2]]
+    ])
   })
 
   it('cuts the line part of a GeometryCollection while preserving point parts', () => {

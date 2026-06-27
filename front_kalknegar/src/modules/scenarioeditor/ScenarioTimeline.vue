@@ -1,10 +1,11 @@
 ﻿<script setup lang="ts">
 import { IconTriangleDown } from "@iconify-prerendered/vue-mdi";
-import { computed, ref, unref, watch } from "vue";
+import { computed, onUnmounted, ref, unref, watch } from "vue";
 import { useElementSize, useThrottleFn } from "@vueuse/core";
 import { utcDay, utcHour } from "d3-time";
 import { interpolateOranges } from "d3-scale-chromatic";
 import { scaleSequential } from "d3-scale";
+import { storeToRefs } from "pinia";
 import { useActiveScenario } from "@/composables/scenarioUtils";
 import { type NScenarioEvent } from "@/types/internalModels";
 import TimelineContextMenu from "@/components/TimelineContextMenu.vue";
@@ -12,15 +13,19 @@ import { useSelectedItems } from "@/stores/selectedStore";
 import { MS_PER_DAY, MS_PER_HOUR } from "@/utils/time";
 import dayjs from "@/dayjs";
 import { toPersianDigits } from "@/utils/persianNumbers";
+import { useServicesStore } from "@/modules/tactical-symbol-map/stores/services.js";
 import {
   buildTimelineRenderData,
   calculatePixelDateFromViewport,
+  collectTacticalTimelineMarkers,
   getMsPerPixel,
   roundToNearestQuarterHour,
   toLocalX,
   type BinWithX,
   type EventWithX,
   type HistogramBin,
+  type TacticalMarkerWithX,
+  type TacticalTimelineMarker,
   type TimelineAction,
   type TimelineRenderInputs,
 } from "./scenarioTimelineMath";
@@ -80,6 +85,8 @@ const majorTicks = ref<Tick[]>([]);
 const minorTicks = ref<Tick[]>([]);
 const eventsWithX = ref<EventWithX[]>([]);
 const binsWithX = ref<BinWithX[]>([]);
+const tacticalMarkers = ref<TacticalTimelineMarker[]>([]);
+const tacticalMarkersWithX = ref<TacticalMarkerWithX[]>([]);
 const centerTimeStamp = ref(0);
 const xOffset = ref(0);
 const draggedDiff = ref(0);
@@ -110,6 +117,9 @@ const hoveredX = ref(0);
 const showHoverMarker = ref(false);
 
 const { activeScenarioEventId } = useSelectedItems();
+const servicesStore = useServicesStore();
+const serviceRefs = storeToRefs(servicesStore as any) as any;
+const tacticalStoreRef = serviceRefs.store;
 
 const countColor = scaleSequential(interpolateOranges).domain([1, maxCount]);
 
@@ -288,15 +298,59 @@ function updateEvents(minDate: Date, maxDate: Date) {
   const renderInputs: TimelineRenderInputs = {
     events: events.value,
     histogram,
+    tacticalMarkers: tacticalMarkers.value,
     minTimestamp: +minDate,
     maxTimestamp: +maxDate,
     majorWidth: majorWidth.value,
     tzOffsetMinutes: tzOffset,
   };
-  const { eventsWithX: renderEvents, binsWithX: renderBins } =
+  const {
+    eventsWithX: renderEvents,
+    binsWithX: renderBins,
+    tacticalMarkersWithX: renderTacticalMarkers,
+  } =
     buildTimelineRenderData(renderInputs);
   eventsWithX.value = renderEvents;
   binsWithX.value = renderBins;
+  tacticalMarkersWithX.value = renderTacticalMarkers;
+}
+
+let activeTacticalStore: any = null;
+let tacticalRefreshSerial = 0;
+
+function detachTacticalStoreListener() {
+  if (activeTacticalStore && typeof activeTacticalStore.off === "function") {
+    activeTacticalStore.off("batch", onTacticalStoreBatch);
+  }
+  activeTacticalStore = null;
+}
+
+async function refreshTacticalTimelineMarkers() {
+  const serial = ++tacticalRefreshSerial;
+  const tacticalStore = tacticalStoreRef.value;
+  if (!tacticalStore || typeof tacticalStore.tuples !== "function") {
+    tacticalMarkers.value = [];
+    redrawCounter.value += 1;
+    return;
+  }
+
+  const tuples = await tacticalStore.tuples("timed+feature:");
+  if (serial !== tacticalRefreshSerial) return;
+  tacticalMarkers.value = collectTacticalTimelineMarkers(tuples);
+  redrawCounter.value += 1;
+}
+
+function onTacticalStoreBatch() {
+  void refreshTacticalTimelineMarkers();
+}
+
+function attachTacticalStoreListener(tacticalStore: any) {
+  detachTacticalStoreListener();
+  activeTacticalStore = tacticalStore;
+  if (activeTacticalStore && typeof activeTacticalStore.on === "function") {
+    activeTacticalStore.on("batch", onTacticalStoreBatch);
+  }
+  void refreshTacticalTimelineMarkers();
 }
 
 watch(
@@ -309,6 +363,16 @@ watch(
   },
   { immediate: true },
 );
+
+watch(
+  () => tacticalStoreRef.value,
+  (tacticalStore) => attachTacticalStoreListener(tacticalStore),
+  { immediate: true },
+);
+
+onUnmounted(() => {
+  detachTacticalStoreListener();
+});
 
 watch(events, () => {
   if (!width.value) return;
@@ -340,7 +404,13 @@ function onEventClick(event: NScenarioEvent) {
   goToScenarioEvent(event);
 }
 
-function onContextMenuAction(action: TimelineAction) {
+function isTimelineAction(action: string): action is TimelineAction {
+  return action === "zoomIn" || action === "zoomOut" || action === "addScenarioEvent";
+}
+
+function onContextMenuAction(action: string) {
+  if (!isTimelineAction(action)) return;
+
   if (action === "zoomIn") {
     zoomIn();
   } else if (action === "zoomOut") {
@@ -410,6 +480,19 @@ function onContextMenuAction(action: TimelineAction) {
               @mousemove.stop
               :title="event.title"
               @click.stop="onEventClick(event)"
+            />
+            <div
+              v-for="{ x, count } in tacticalMarkersWithX"
+              :key="`tactical-${x}-${count}`"
+              data-testid="tactical-timeline-marker"
+              class="absolute top-0.5 h-3 w-3 -translate-x-1/2 rounded-full border border-blue-800 bg-blue-500 shadow-sm shadow-blue-900/30"
+              :style="`left: ${x}px;`"
+              @mousemove.stop
+              :title="
+                count > 1
+                  ? `${toPersianDigits(String(count))} تغییر نماد تاکتیکی`
+                  : 'تغییر نماد تاکتیکی'
+              "
             />
           </div>
         </div>

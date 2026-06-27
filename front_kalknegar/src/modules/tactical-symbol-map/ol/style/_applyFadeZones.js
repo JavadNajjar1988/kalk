@@ -8,6 +8,8 @@ import {
 } from './fadeZones'
 import * as TS from '../ts'
 
+const EPSILON = 1e-9
+
 const geometryType = geometry =>
   geometry && typeof geometry.getGeometryType === 'function'
     ? geometry.getGeometryType()
@@ -85,6 +87,84 @@ const representativeCoordinate = geometry => {
 const isWithinSegment = (t, segment) =>
   t >= segment.from && (t < segment.to || segment.to === 1)
 
+const sameCoordinate = (a, b) =>
+  Math.abs(a.x - b.x) < EPSILON && Math.abs(a.y - b.y) < EPSILON
+
+const interpolateCoordinate = (a, b, ratio) =>
+  new TS.Coordinate(
+    a.x + (b.x - a.x) * ratio,
+    a.y + (b.y - a.y) * ratio
+  )
+
+const addLinePart = (parts, start, end) => {
+  if (sameCoordinate(start, end)) return null
+
+  const current = parts[parts.length - 1]
+  if (current && sameCoordinate(current[current.length - 1], start)) {
+    current.push(end)
+    return current
+  }
+
+  const next = [start, end]
+  parts.push(next)
+  return next
+}
+
+const segmentLineStringByBaseRange = (line, segment, baseLine) => {
+  const coords = typeof line?.getCoordinates === 'function'
+    ? line.getCoordinates()
+    : []
+  if (coords.length < 2) return []
+
+  const positions = coords
+    .map(coord => positionOnGeometry(baseLine, coord))
+  const parts = []
+
+  coords.slice(1).forEach((end, index) => {
+    const start = coords[index]
+    const fromT = positions[index]
+    const toT = positions[index + 1]
+
+    if (!Number.isFinite(fromT) || !Number.isFinite(toT)) return
+
+    if (Math.abs(toT - fromT) < EPSILON) {
+      if (isWithinSegment(fromT, segment)) addLinePart(parts, start, end)
+      return
+    }
+
+    const startRatio = Math.max(
+      0,
+      Math.min(1, (segment.from - fromT) / (toT - fromT), (segment.to - fromT) / (toT - fromT))
+    )
+    const endRatio = Math.min(
+      1,
+      Math.max(0, (segment.from - fromT) / (toT - fromT), (segment.to - fromT) / (toT - fromT))
+    )
+
+    if (endRatio - startRatio <= EPSILON) return
+
+    addLinePart(
+      parts,
+      interpolateCoordinate(start, end, startRatio),
+      interpolateCoordinate(start, end, endRatio)
+    )
+  })
+
+  return parts
+    .filter(part => part.length >= 2)
+    .map(part => TS.lineString(part))
+}
+
+const segmentLinePartByBaseRange = (geometry, segment, baseLine) => {
+  const type = geometryType(geometry)
+  if (type === 'MultiLineString') {
+    return TS.geometries(geometry).flatMap(part =>
+      segmentLineStringByBaseRange(part, segment, baseLine)
+    )
+  }
+  return segmentLineStringByBaseRange(geometry, segment, baseLine)
+}
+
 const collectGeometry = geometries => {
   const parts = geometries.filter(Boolean)
   if (!parts.length) return null
@@ -103,8 +183,8 @@ const segmentCollectionParts = (geometry, segment, baseLine) => {
     }
 
     if (isSegmentLineGeometry(part)) {
-      const sub = extractSubGeometry(part, segment.from, segment.to)
-      return sub && hasDrawableCoordinates(sub) ? [sub] : []
+      return segmentLinePartByBaseRange(part, segment, baseLine)
+        .filter(hasDrawableCoordinates)
     }
 
     if (isPolygonLike(part) || isPoint(part)) {
@@ -116,6 +196,46 @@ const segmentCollectionParts = (geometry, segment, baseLine) => {
 
     return []
   })
+}
+
+export const extractFadeZoneGeometry = (styles, from, to, baseGeometry) => {
+  if (!baseGeometry || !Array.isArray(styles)) return null
+
+  const baseLine = toFadeBaseLine(baseGeometry)
+  if (!baseLine) return null
+
+  const segment = { from, to, opacity: 1 }
+  const parts = styles.flatMap(entry => {
+    const geom = entry?.geometry
+    if (!geom) return []
+
+    if (isGeometryCollection(geom)) {
+      return segmentCollectionParts(geom, segment, baseLine)
+    }
+
+    if (isSegmentLineGeometry(geom)) {
+      return segmentLinePartByBaseRange(geom, segment, baseLine)
+        .filter(hasDrawableCoordinates)
+    }
+
+    if (isPolygonLike(geom) && isStrokeEntry(entry)) {
+      const sub = extractSubGeometry(geom, from, to)
+      return sub && hasDrawableCoordinates(sub) ? [sub] : []
+    }
+
+    if (isPoint(geom)) {
+      const coord = typeof geom.getCoordinate === 'function'
+        ? geom.getCoordinate()
+        : null
+      if (!coord) return []
+      const t = positionOnGeometry(baseLine, coord)
+      return isWithinSegment(t, segment) ? [geom] : []
+    }
+
+    return []
+  })
+
+  return collectGeometry(parts)
 }
 
 /**

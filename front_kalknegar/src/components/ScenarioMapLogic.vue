@@ -34,6 +34,7 @@ import { useShowLocationControl } from "@/composables/geoShowLocation";
 import { useShowScaleLine } from "@/composables/geoScaleLine";
 import { ObjectEvent } from "ol/Object";
 import { clearUnitStyleCache } from "@/geo/unitStyles";
+import { clearUnitDensityStyleCache } from "@/geo/unitDensitySummary";
 import { useRangeRingsLayer } from "@/composables/geoRangeRings";
 import { useUnitHistory } from "@/composables/geoUnitHistory";
 import { useDayNightLayer } from "@/composables/geoDayNight";
@@ -78,7 +79,7 @@ const recordingStore = useRecordingStore();
 const playbackStore = usePlaybackStore();
 const { moveUnitEnabled } = storeToRefs(useUnitSettingsStore());
 const { measurementUnit } = storeToRefs(useMeasurementsStore());
-const { unitLayer, drawUnits } = useUnitLayer();
+const { unitLayer, unitDensityLayer, drawUnits } = useUnitLayer();
 
 const { onScenarioAction } = useSearchActions();
 
@@ -91,7 +92,7 @@ geoStore.olMap = olMap;
 calculateZoomToResolution(olMap.getView());
 
 const unitLayerGroup = new LayerGroup({
-  layers: [unitLayer],
+  layers: [unitLayer, unitDensityLayer],
 });
 
 unitLayerGroup.set("title", "Units");
@@ -189,6 +190,8 @@ useShowScaleLine(olMap, {
   measurementUnits: measurementUnit,
 });
 
+emit("map-ready", { olMap, featureSelectInteraction, unitSelectInteraction });
+
 drawRangeRings();
 drawUnits();
 drawHistory();
@@ -209,8 +212,6 @@ function toggleMoveUnitInteraction(event: ObjectEvent) {
       recordingStore.isRecordingLocation,
   );
 }
-
-emit("map-ready", { olMap, featureSelectInteraction, unitSelectInteraction });
 
 watch(
   () => recordingStore.isRecordingLocation,
@@ -341,6 +342,7 @@ watch(geo.everyVisibleUnit, () => redrawUnits(), { deep: true });
 
 watch([settingsStore, symbolSettings], () => {
   clearUnitStyleCache();
+  clearUnitDensityStyleCache();
   drawUnits();
 });
 

@@ -4,8 +4,9 @@ import LineString from 'ol/geom/LineString'
 import MultiPoint from 'ol/geom/MultiPoint'
 import GeometryCollection from 'ol/geom/GeometryCollection'
 import Point from 'ol/geom/Point'
+import { Style, Stroke } from 'ol/style'
 import { describe, expect, it } from 'vitest'
-import eraseInteraction from './erase-interaction'
+import eraseInteraction, { renderedFadePreviewGeometry } from './erase-interaction'
 import { writeGeometryObject } from '../../ol/format'
 
 const selectableLayer = {
@@ -28,6 +29,28 @@ const pointerEvent = (map, type, coordinate, buttons = 1) => ({
 })
 
 describe('eraseInteraction', () => {
+  it('builds brush preview from the rendered symbol geometry', () => {
+    const feature = new Feature(new LineString([[0, 0], [30, 0]]))
+    feature.setStyle(new Style({
+      geometry: new GeometryCollection([
+        new LineString([[10, 0], [15, 5], [20, 0]])
+      ]),
+      stroke: new Stroke({ color: 'black', width: 2 })
+    }))
+
+    const preview = renderedFadePreviewGeometry(feature, 1, 0.4, 0.6)
+    const parts = preview.getGeometryType() === 'GeometryCollection'
+      ? preview.getGeometries()
+      : [preview]
+
+    expect(parts.map(geometry => geometry.getCoordinates().map(coord => [
+      Number(coord.x.toFixed(2)),
+      Number(coord.y.toFixed(2))
+    ]))).toEqual([
+      [[12, 2], [15, 5], [18, 2]]
+    ])
+  })
+
   it('persists fade zones while brushing a line feature', () => {
     const feature = new Feature(new LineString([[0, 0], [10, 0]]))
     feature.setId('feature:test')
