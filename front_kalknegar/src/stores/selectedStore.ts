@@ -4,9 +4,13 @@ import { computed, ref, watch } from "vue";
 import { type DetailsPanel } from "@/modules/scenarioeditor/types";
 
 export type SelectedScenarioFeatures = Set<FeatureId>;
+export interface SelectedUnitDensitySummary {
+  unitIds: EntityId[];
+}
 
 const selectedUnitIds = ref<Set<EntityId>>(new Set());
 const activeUnitIdRef = ref<EntityId | undefined | null>();
+const activeUnitDensitySummaryRef = ref<SelectedUnitDensitySummary | null>(null);
 const selectedFeatureIds = ref<SelectedScenarioFeatures>(new Set());
 const activeFeatureIdRef = ref<FeatureId | undefined | null>();
 const activeMapLayerIdRef = ref<FeatureId | undefined | null>();
@@ -69,6 +73,14 @@ const activeUnitId = computed({
   },
 });
 
+const activeUnitDensitySummary = computed({
+  get: () => activeUnitDensitySummaryRef.value,
+  set: (v) => {
+    if (v) clear();
+    activeUnitDensitySummaryRef.value = v;
+  },
+});
+
 const activeFeatureId = computed({
   get: () => activeFeatureIdRef.value,
   set: (v) => {
@@ -101,6 +113,7 @@ function clear() {
   if (selectedFeatureIds.value.size > 0) selectedFeatureIds.value.clear();
   if (selectedScenarioEventIds.value.size > 0) selectedScenarioEventIds.value.clear();
   if (selectedMapLayerIds.value.size > 0) selectedMapLayerIds.value.clear();
+  activeUnitDensitySummaryRef.value = null;
   showScenarioInfo.value = false;
 }
 
@@ -121,6 +134,9 @@ const activeDetailsPanel = computed((): DetailsPanel | null | undefined => {
   if (showScenarioInfo.value) {
     return "scenario";
   }
+  if (activeUnitDensitySummary.value) {
+    return "unitDensitySummary";
+  }
   return;
 });
 
@@ -128,6 +144,7 @@ export function useSelectedItems() {
   return {
     selectedUnitIds,
     activeUnitId,
+    activeUnitDensitySummary,
     selectedFeatureIds,
     activeFeatureId,
     activeScenarioEventId,

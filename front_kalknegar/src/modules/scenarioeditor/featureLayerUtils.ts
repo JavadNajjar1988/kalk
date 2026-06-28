@@ -153,6 +153,7 @@ export function useScenarioFeatureSelect(
   olMap: OLMap,
   options: Partial<{
     enable: MaybeRef<boolean>;
+    shouldIgnoreClick: (event: any) => boolean;
   }> = {},
 ) {
   const { scenarioFeatureStyle } = injectStrict(activeFeatureStylesKey);
@@ -166,7 +167,8 @@ export function useScenarioFeatureSelect(
   const enableRef = ref(options.enable ?? true);
 
   const selectInteraction = new Select({
-    condition: clickCondition,
+    condition: (event) =>
+      clickCondition(event) && !options.shouldIgnoreClick?.(event),
     hitTolerance: 20,
     layers: scenarioLayersOl.getArray(),
     style: (feature: FeatureLike, res: number): Style | Style[] => {

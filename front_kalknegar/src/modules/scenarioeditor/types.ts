@@ -37,7 +37,13 @@ export interface TableColumn extends SelectItem<ColumnField> {
   hidden?: boolean;
 }
 
-export type DetailsPanel = "unit" | "event" | "mapLayer" | "feature" | "scenario";
+export type DetailsPanel =
+  | "unit"
+  | "event"
+  | "mapLayer"
+  | "feature"
+  | "scenario"
+  | "unitDensitySummary";
 
 export type BreadcrumbItemType = {
   name: string;

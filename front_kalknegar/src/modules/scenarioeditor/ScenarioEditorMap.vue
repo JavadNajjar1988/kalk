@@ -48,6 +48,9 @@
               v-else-if="activeDetailsPanel === 'unit'"
               :unit-id="activeUnitId || [...selectedUnitIds][0]"
             />
+            <UnitDensitySummaryDetails
+              v-else-if="activeDetailsPanel === 'unitDensitySummary'"
+            />
             <ScenarioEventDetails
               v-else-if="activeDetailsPanel === 'event'"
               :event-id="activeScenarioEventId!"
@@ -223,6 +226,7 @@ import ScenarioEventDetails from "@/modules/scenarioeditor/ScenarioEventDetails.
 import { useSelectedItems } from "@/stores/selectedStore";
 import ScenarioMapLayerDetails from "@/modules/scenarioeditor/ScenarioMapLayerDetails.vue";
 import UnitDetails from "@/modules/scenarioeditor/UnitDetails.vue";
+import UnitDensitySummaryDetails from "@/modules/scenarioeditor/UnitDensitySummaryDetails.vue";
 import ScenarioInfoPanel from "@/modules/scenarioeditor/ScenarioInfoPanel.vue";
 import ScenarioTimeline from "@/modules/scenarioeditor/ScenarioTimeline.vue";
 import MapEditorUnitTrackToolbar from "@/modules/scenarioeditor/MapEditorUnitTrackToolbar.vue";
@@ -312,6 +316,7 @@ const {
   activeScenarioEventId,
   activeMapLayerId,
   showScenarioInfo,
+  activeUnitDensitySummary,
   activeDetailsPanel,
   clear: clearSelected,
 } = useSelectedItems();
@@ -326,6 +331,7 @@ const showDetailsPanel = computed(() => {
       selectedUnitIds.value.size ||
       activeScenarioEventId.value ||
       activeMapLayerId.value ||
+      activeUnitDensitySummary.value ||
       showScenarioInfo.value,
   );
 });

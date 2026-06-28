@@ -129,9 +129,14 @@ const {
   redraw: redrawSelectedUnits,
 } = useUnitSelectInteraction([unitLayer], olMap, {
   enable: unitSelectEnabled,
+  shouldIgnoreClick: (event) => Boolean(getUnitDensityFeatureAtPixel(event.pixel)),
 });
 
-const { selectedFeatureIds } = useSelectedItems();
+const {
+  selectedFeatureIds,
+  activeUnitDensitySummary,
+  clear: clearSelectedItems,
+} = useSelectedItems();
 const servicesStore = useServicesStore();
 const tacticalInteractionReady = shallowRef(false);
 const tacticalLayersReady = shallowRef(false);
@@ -148,6 +153,7 @@ olMap.addInteraction(historyModify);
 olMap.addInteraction(ctrlClickInteraction);
 const { selectInteraction: featureSelectInteraction } = useScenarioFeatureSelect(olMap, {
   enable: featureSelectEnabled,
+  shouldIgnoreClick: (event) => Boolean(getUnitDensityFeatureAtPixel(event.pixel)),
 });
 
 const { moveInteraction: moveUnitInteraction } = useMoveInteraction(
@@ -157,6 +163,7 @@ const { moveInteraction: moveUnitInteraction } = useMoveInteraction(
 );
 
 useOlEvent(unitLayerGroup.on("change:visible", toggleMoveUnitInteraction));
+useOlEvent(olMap.on("singleclick", onUnitDensitySummaryClick));
 olMap.addInteraction(moveUnitInteraction);
 
 const scenarioInteractions = [
@@ -211,6 +218,34 @@ function toggleMoveUnitInteraction(event: ObjectEvent) {
       moveUnitEnabled.value &&
       recordingStore.isRecordingLocation,
   );
+}
+
+function getUnitDensityFeatureAtPixel(pixel: any) {
+  return olMap.forEachFeatureAtPixel(
+    pixel,
+    (candidateFeature, layer) =>
+      layer === unitDensityLayer ? candidateFeature : undefined,
+    {
+      hitTolerance: 8,
+      layerFilter: (layer) => layer === unitDensityLayer,
+    },
+  ) as any;
+}
+
+function onUnitDensitySummaryClick(event: any) {
+  const feature = getUnitDensityFeatureAtPixel(event.pixel);
+  if (!feature) return;
+
+  const members = feature.get("features");
+  if (!Array.isArray(members) || members.length < 2) return;
+
+  const unitIds = members
+    .map((member: any) => String(member.getId()))
+    .filter(Boolean);
+  if (unitIds.length < 2) return;
+
+  clearSelectedItems();
+  activeUnitDensitySummary.value = { unitIds };
 }
 
 watch(
@@ -345,6 +380,14 @@ watch([settingsStore, symbolSettings], () => {
   clearUnitDensityStyleCache();
   drawUnits();
 });
+
+watch(
+  () => state.settingsStateCounter,
+  () => {
+    clearUnitDensityStyleCache();
+    unitDensityLayer.changed();
+  },
+);
 
 watch(
   [() => state.currentTime, doNotFilterLayers, () => state.featureStateCounter],

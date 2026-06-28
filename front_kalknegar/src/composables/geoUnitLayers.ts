@@ -16,7 +16,9 @@ import {
   unitStyleCache,
 } from "@/geo/unitStyles";
 import {
+  commonParentSummaryForUnits,
   createUnitDensityLayer,
+  getUnitDensitySummaryOverrides,
   unitDensityFeatureOpacity,
 } from "@/geo/unitDensitySummary";
 import {
@@ -63,7 +65,7 @@ export function useUnitLayer({ activeScenario }: { activeScenario?: TScenario } 
   const {
     store: { state, onUndoRedo },
     geo,
-    unitActions: { getCombinedSymbolOptions },
+    unitActions: { getCombinedSymbolOptions, getUnitHierarchy },
     helpers: { getUnitById },
   } = activeScenario || injectStrict(activeScenarioKey);
 
@@ -73,6 +75,14 @@ export function useUnitLayer({ activeScenario }: { activeScenario?: TScenario } 
     source: unitLayer.getSource()!,
     getUnitById,
     getCombinedSymbolOptions,
+    getSummaryOverrides: () => getUnitDensitySummaryOverrides(state.metadata),
+    getParentSummary: (units) =>
+      commonParentSummaryForUnits(units, (unitId) =>
+        getUnitHierarchy(unitId).parents.map((parent) => ({
+          ...parent,
+          symbolOptions: getCombinedSymbolOptions(parent),
+        })),
+      ),
     onDensityChange: (hasDensitySummary) => {
       unitLayer.setOpacity(unitDensityFeatureOpacity({ hasDensitySummary }));
     },
@@ -293,6 +303,7 @@ export function useUnitSelectInteraction(
   options: Partial<{
     enable: MaybeRef<boolean>;
     enableBoxSelect: MaybeRef<boolean>;
+    shouldIgnoreClick: (event: any) => boolean;
   }> = {},
 ) {
   let isInternal = false;
@@ -309,7 +320,8 @@ export function useUnitSelectInteraction(
   const unitSelectInteraction = new Select({
     layers,
     style: selectedUnitStyleFunction,
-    condition: clickCondition,
+    condition: (event) =>
+      clickCondition(event) && !options.shouldIgnoreClick?.(event),
     removeCondition: altKeyOnly,
   });
 

@@ -93,6 +93,9 @@
             :selected-ids="selectedFeatureIds"
             class="p-4"
           />
+          <UnitDensitySummaryDetails
+            v-else-if="activeDetailsPanel === 'unitDensitySummary'"
+          />
           <ScenarioEventDetails
             v-else-if="activeDetailsPanel === 'event'"
             :event-id="activeScenarioEventId!"
@@ -129,6 +132,7 @@ import { useSelectedItems } from "@/stores/selectedStore";
 import ScenarioMapLayerDetails from "@/modules/scenarioeditor/ScenarioMapLayerDetails.vue";
 import ScenarioEventDetails from "@/modules/scenarioeditor/ScenarioEventDetails.vue";
 import UnitDetails from "@/modules/scenarioeditor/UnitDetails.vue";
+import UnitDensitySummaryDetails from "@/modules/scenarioeditor/UnitDensitySummaryDetails.vue";
 import ScenarioSettingsPanel from "@/modules/scenarioeditor/ScenarioSettingsPanel.vue";
 
 const ScenarioFiltersTabPanel = defineAsyncComponent(
