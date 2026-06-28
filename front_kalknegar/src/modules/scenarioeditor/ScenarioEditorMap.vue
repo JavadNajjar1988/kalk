@@ -12,7 +12,9 @@
           v-if="mapRef"
           class="pointer-events-none absolute inset-0 flex flex-col justify-between"
         >
-          <header class="relative z-50 flex flex-none items-center justify-between px-4 pt-16">
+          <header
+            class="relative z-50 flex flex-none items-center justify-between px-4 pt-16"
+          >
             <div class="flex items-center space-x-2 space-x-reverse">
               <MapTimeController
                 class="pointer-events-auto"
@@ -238,6 +240,7 @@ import StoryboardOverlay from "@/modules/scenarioeditor/StoryboardOverlay.vue";
 import { useStoryboard } from "@/scenariostore/storyboard";
 import { useGeoStore } from "@/stores/geoStore";
 import type { StoryboardShowMode } from "@/types/scenarioModels";
+import { advanceScenarioPlaybackTime } from "@/modules/scenarioeditor/scenarioPlayback";
 
 const emit = defineEmits(["showExport", "showLoad", "show-settings"]);
 const activeScenario = injectStrict(activeScenarioKey);
@@ -252,6 +255,12 @@ const activeUnitStore = useActiveUnitStore();
 const ui = useUiStore();
 const playback = usePlaybackStore();
 const geoStore = useGeoStore();
+const eventPlaybackTimes = computed(() =>
+  state.events.flatMap((eventId) => {
+    const startTime = state.eventMap[eventId]?.startTime;
+    return startTime === undefined ? [] : [startTime];
+  }),
+);
 const storyboard = useStoryboard(activeScenario.store, {
   zoomToUnits: (unitIds, maxZoom) => {
     const units = unitIds
@@ -389,19 +398,14 @@ function startStoryboardPlayback(showMode: StoryboardShowMode) {
 }
 
 const { pause, resume } = useRafFn(
-  () => {
-    if (
-      playback.playbackLooping &&
-      playback.endMarker !== undefined &&
-      playback.startMarker !== undefined
-    ) {
-      if (state.currentTime >= playback.endMarker) {
-        setCurrentTime(playback.startMarker);
-        return;
-      }
-    }
-
-    const newTime = state.currentTime + playback.playbackSpeed;
+  ({ delta }) => {
+    const newTime = advanceScenarioPlaybackTime({
+      currentTime: state.currentTime,
+      speedPerSecond: playback.playbackSpeed,
+      elapsedMs: delta,
+      looping: playback.playbackLooping,
+      eventTimes: eventPlaybackTimes.value,
+    });
     setCurrentTime(newTime);
   },
   { immediate: false, fpsLimit: 60 },

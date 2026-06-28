@@ -1,326 +1,337 @@
 <template>
-  <nav
-    class="map-editor-main-toolbar pointer-events-auto flex w-auto flex-row-reverse items-center justify-between rounded-xl border p-2 text-sm text-foreground sm:p-3"
+  <div
+    class="pointer-events-auto flex max-w-full flex-col items-center justify-center gap-1"
   >
-    <section class="flex flex-row-reverse items-center justify-between">
-      <MainToolbarButton
-        title="ابزار انتخاب شده را پس از کشیدن فعال نگه دار"
-        @click="toggleAddMultiple()"
-        class="toolbar-icon-button lock-button hidden sm:flex"
-      >
-        <IconLockOutline v-if="addMultiple" class="size-5 transition-all duration-300" />
-        <IconLockOpenVariantOutline v-else class="size-6 transition-all duration-300" />
-      </MainToolbarButton>
-      <MainToolbarButton @click="setSelectMode()" :active="!moveUnitEnabled" class="toolbar-icon-button select-button">
-        <SelectIcon class="size-6 transition-all duration-300" />
-      </MainToolbarButton>
-      <MainToolbarButton
-        :active="moveUnitEnabled"
-        @click="setMoveMode()"
-        :title="
-          recordingStore.isRecordingLocation
-            ? 'جابجایی واحد'
-            : 'جابجایی واحد غیرفعال است؛ ابتدا «موقعیت واحد» را در منوی ضبط فعال کنید.'
-        "
-        :disabled="!recordingStore.isRecordingLocation"
-        class="toolbar-icon-button move-button"
-      >
-        <MoveIcon class="size-6 transition-all duration-300" />
-      </MainToolbarButton>
-      <MainToolbarButton
-        @click="emit('show-settings')"
-        title="نمایش تنظیمات"
-        class="toolbar-icon-button settings-toolbar-button hidden md:flex"
-      >
-        <SettingsIcon class="size-6 transition-all duration-300" />
-      </MainToolbarButton>
-      <div class="border-slate-200 dark:border-slate-600 h-7 border-r-2 sm:mx-1" />
-      <MainToolbarButton
-        :active="store.currentToolbar === 'measurements'"
-        @click="store.toggleToolbar('measurements')"
-        title="اندازه‌گیری‌ها"
-        class="toolbar-icon-button measurement-button"
-      >
-        <MeasurementIcon class="size-6 transition-all duration-300" />
-      </MainToolbarButton>
-      <MainToolbarButton
-        :active="store.currentToolbar === 'draw'"
-        @click="store.toggleToolbar('draw')"
-        title="کشیدن"
-        class="toolbar-icon-button draw-button"
-      >
-        <DrawIcon class="size-6 transition-all duration-300" />
-      </MainToolbarButton>
-      <MainToolbarButton
-        title="مسیر واحد"
-        :active="store.currentToolbar === 'track'"
-        @click="store.toggleToolbar('track')"
-        class="toolbar-icon-button track-button"
-      >
-        <IconMapMarkerPath class="size-6 transition-all duration-300" />
-      </MainToolbarButton>
-      <MainToolbarButton
-        title="ویرایش نماد تاکتیکی (محو / برش)"
-        :active="store.currentToolbar === 'tactical'"
-        @click="store.toggleToolbar('tactical')"
-        class="toolbar-icon-button tactical-button hidden sm:flex"
-      >
-        <TacticalEditIcon class="size-6 transition-all duration-300" />
-      </MainToolbarButton>
-      <div class="border-slate-200 dark:border-slate-600 h-7 border-r-2 sm:mx-1" />
-      <div class="mr-2 flex items-center">
-        <EchelonPickerPopover
-          :symbol-options="symbolOptions"
-          :select-echelon="selectEchelon"
-        />
-        <PanelSymbolButton
-          :size="22"
-          :sidc="computedSidc"
-          class="group relative mr-2 sm:mr-5"
-          :symbol-options="symbolOptions"
-          @click="addUnit(activeSidc)"
-          title="افزودن واحد"
-          :disabled="!activeParentId || unitActions.isUnitLocked(activeParentId)"
+    <nav
+      class="map-editor-main-toolbar text-foreground pointer-events-auto flex w-auto flex-row-reverse items-center justify-between rounded-xl border p-2 text-sm sm:p-3"
+    >
+      <section class="flex flex-row-reverse items-center justify-between">
+        <MainToolbarButton
+          title="ابزار انتخاب شده را پس از کشیدن فعال نگه دار"
+          @click="toggleAddMultiple()"
+          class="toolbar-icon-button lock-button hidden sm:flex"
         >
-          <AddSymbolIcon
-            class="bg-opacity-70 absolute -left-2 bottom-0 h-4 w-4 rounded-full bg-white text-gray-600 group-hover:text-gray-900 transition-all duration-300"
+          <IconLockOutline
+            v-if="addMultiple"
+            class="size-5 transition-all duration-300"
           />
-        </PanelSymbolButton>
-        <SymbolPickerPopover :symbol-options="symbolOptions" :add-unit="addUnit" />
-      </div>
-    </section>
-    <section class="flex flex-row-reverse items-center">
-      <div class="border-slate-200 dark:border-slate-600 -mx-1 h-8 border-r-2 sm:mx-2" />
-      <!-- Playback controls -->
-      <MainToolbarButton
-        title="اجرا / توقف سناریو"
-        @click="playback.togglePlayback()"
-        class="toolbar-icon-button playback-button"
-      >
-        <IconPause v-if="playback.playbackRunning" class="size-6 transition-all duration-300" />
-        <IconPlay v-else class="size-6 transition-all duration-300" />
-      </MainToolbarButton>
-      <Popover v-if="props.storyboardVisible" v-model:open="storyboardPopoverOpen">
-        <PopoverTrigger as-child>
-          <MainToolbarButton
-            title="کنترل‌های استوری‌بورد"
-            :active="props.storyRunning"
-            :disabled="!props.storyHasScenes"
-            class="toolbar-icon-button storyboard-menu-button"
-          >
-            <IconStoryboard class="size-5 transition-all duration-300" />
-          </MainToolbarButton>
-        </PopoverTrigger>
-        <PopoverContent
-          class="storyboard-popover-content w-64 border !border-slate-200 !bg-white p-3 text-slate-900 shadow-xl dark:!border-slate-700 dark:!bg-slate-950 dark:text-slate-100"
-          align="center"
-          side="top"
-          :sideOffset="10"
-          dir="rtl"
+          <IconLockOpenVariantOutline v-else class="size-6 transition-all duration-300" />
+        </MainToolbarButton>
+        <MainToolbarButton
+          @click="setSelectMode()"
+          :active="!moveUnitEnabled"
+          class="toolbar-icon-button select-button"
         >
-          <div class="flex flex-col gap-3">
-            <div class="space-y-2">
-              <div class="text-xs font-medium text-slate-500 dark:text-slate-400">
-                نوع نمایش
-              </div>
-              <div class="grid grid-cols-2 gap-2">
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  :class="storyModeButtonClass('toast')"
-                  @click="selectStoryShowMode('toast')"
-                >
-                  کارت کوتاه
-                </Button>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  :class="storyModeButtonClass('cinematic')"
-                  @click="selectStoryShowMode('cinematic')"
-                >
-                  پخش استوری
-                </Button>
-              </div>
-            </div>
-            <div class="h-px bg-slate-200 dark:bg-slate-800" />
-            <Button
-              v-if="!props.storyRunning"
-              type="button"
-              variant="default"
-              size="sm"
-              class="w-full justify-start gap-2"
+          <SelectIcon class="size-6 transition-all duration-300" />
+        </MainToolbarButton>
+        <MainToolbarButton
+          :active="moveUnitEnabled"
+          @click="setMoveMode()"
+          :title="
+            recordingStore.isRecordingLocation
+              ? 'جابجایی واحد'
+              : 'جابجایی واحد غیرفعال است؛ ابتدا «موقعیت واحد» را در منوی ضبط فعال کنید.'
+          "
+          :disabled="!recordingStore.isRecordingLocation"
+          class="toolbar-icon-button move-button"
+        >
+          <MoveIcon class="size-6 transition-all duration-300" />
+        </MainToolbarButton>
+        <MainToolbarButton
+          @click="emit('show-settings')"
+          title="نمایش تنظیمات"
+          class="toolbar-icon-button settings-toolbar-button hidden md:flex"
+        >
+          <SettingsIcon class="size-6 transition-all duration-300" />
+        </MainToolbarButton>
+        <div class="h-7 border-r-2 border-slate-200 sm:mx-1 dark:border-slate-600" />
+        <MainToolbarButton
+          :active="store.currentToolbar === 'measurements'"
+          @click="store.toggleToolbar('measurements')"
+          title="اندازه‌گیری‌ها"
+          class="toolbar-icon-button measurement-button"
+        >
+          <MeasurementIcon class="size-6 transition-all duration-300" />
+        </MainToolbarButton>
+        <MainToolbarButton
+          :active="store.currentToolbar === 'draw'"
+          @click="store.toggleToolbar('draw')"
+          title="کشیدن"
+          class="toolbar-icon-button draw-button"
+        >
+          <DrawIcon class="size-6 transition-all duration-300" />
+        </MainToolbarButton>
+        <MainToolbarButton
+          title="مسیر واحد"
+          :active="store.currentToolbar === 'track'"
+          @click="store.toggleToolbar('track')"
+          class="toolbar-icon-button track-button"
+        >
+          <IconMapMarkerPath class="size-6 transition-all duration-300" />
+        </MainToolbarButton>
+        <MainToolbarButton
+          title="ویرایش نماد تاکتیکی (محو / برش)"
+          :active="store.currentToolbar === 'tactical'"
+          @click="store.toggleToolbar('tactical')"
+          class="toolbar-icon-button tactical-button hidden sm:flex"
+        >
+          <TacticalEditIcon class="size-6 transition-all duration-300" />
+        </MainToolbarButton>
+        <MainToolbarButton
+          title="کتابخانه نمادهای تاکتیکی"
+          class="toolbar-icon-button symbol-library-button hidden sm:flex"
+          @click="openSymbolSidebar"
+        >
+          <span class="sr-only">کتابخانه نمادهای تاکتیکی</span>
+          <SymbolLibraryIcon
+            class="size-5 transition-all duration-300"
+            aria-hidden="true"
+          />
+        </MainToolbarButton>
+        <div class="h-7 border-r-2 border-slate-200 sm:mx-1 dark:border-slate-600" />
+        <div class="mr-2 flex items-center">
+          <EchelonPickerPopover
+            :symbol-options="symbolOptions"
+            :select-echelon="selectEchelon"
+          />
+          <PanelSymbolButton
+            :size="22"
+            :sidc="computedSidc"
+            class="group relative mr-2 sm:mr-5"
+            :symbol-options="symbolOptions"
+            @click="addUnit(activeSidc)"
+            title="افزودن واحد"
+            :disabled="!activeParentId || unitActions.isUnitLocked(activeParentId)"
+          >
+            <AddSymbolIcon
+              class="bg-opacity-70 absolute bottom-0 -left-2 h-4 w-4 rounded-full bg-white text-gray-600 transition-all duration-300 group-hover:text-gray-900"
+            />
+          </PanelSymbolButton>
+          <SymbolPickerPopover :symbol-options="symbolOptions" :add-unit="addUnit" />
+        </div>
+      </section>
+    </nav>
+
+    <nav
+      class="map-editor-playback-toolbar text-foreground pointer-events-auto flex w-auto flex-row-reverse items-center justify-center rounded-xl border p-2 text-sm sm:p-3"
+    >
+      <section class="flex flex-row-reverse items-center">
+        <!-- Playback controls -->
+        <MainToolbarButton
+          title="اجرا / توقف سناریو"
+          @click="playback.togglePlayback()"
+          class="toolbar-icon-button playback-button"
+        >
+          <IconPause
+            v-if="playback.playbackRunning"
+            class="size-6 transition-all duration-300"
+          />
+          <IconPlay v-else class="size-6 transition-all duration-300" />
+        </MainToolbarButton>
+        <Popover v-if="props.storyboardVisible" v-model:open="storyboardPopoverOpen">
+          <PopoverTrigger as-child>
+            <MainToolbarButton
+              title="کنترل‌های استوری‌بورد"
+              :active="props.storyRunning"
               :disabled="!props.storyHasScenes"
-              @click="startStoryPlayback"
+              class="toolbar-icon-button storyboard-menu-button"
             >
-              <IconPlay class="size-4" />
-              <span>شروع پخش استوری</span>
-            </Button>
-            <template v-else>
+              <IconStoryboard class="size-5 transition-all duration-300" />
+            </MainToolbarButton>
+          </PopoverTrigger>
+          <PopoverContent
+            class="storyboard-popover-content w-64 border !border-slate-200 !bg-white p-3 text-slate-900 shadow-xl dark:!border-slate-700 dark:!bg-slate-950 dark:text-slate-100"
+            align="center"
+            side="top"
+            :sideOffset="10"
+            dir="rtl"
+          >
+            <div class="flex flex-col gap-3">
+              <div class="space-y-2">
+                <div class="text-xs font-medium text-slate-500 dark:text-slate-400">
+                  نوع نمایش
+                </div>
+                <div class="grid grid-cols-2 gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    :class="storyModeButtonClass('toast')"
+                    @click="selectStoryShowMode('toast')"
+                  >
+                    کارت کوتاه
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    :class="storyModeButtonClass('cinematic')"
+                    @click="selectStoryShowMode('cinematic')"
+                  >
+                    پخش استوری
+                  </Button>
+                </div>
+              </div>
+              <div class="h-px bg-slate-200 dark:bg-slate-800" />
               <Button
+                v-if="!props.storyRunning"
                 type="button"
-                variant="outline"
+                variant="default"
                 size="sm"
                 class="w-full justify-start gap-2"
-                @click="previousStoryScene"
+                :disabled="!props.storyHasScenes"
+                @click="startStoryPlayback"
               >
-                <IconSkipPrevious class="size-4" />
-                <span>صحنه قبلی</span>
+                <IconPlay class="size-4" />
+                <span>شروع پخش استوری</span>
               </Button>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                class="w-full justify-start gap-2"
-                @click="nextStoryScene"
-              >
-                <IconSkipNext class="size-4" />
-                <span>صحنه بعدی</span>
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                class="w-full justify-start gap-2 border-red-200 text-red-700 hover:bg-red-50 hover:text-red-800 dark:border-red-900/60 dark:text-red-300 dark:hover:bg-red-950/40 dark:hover:text-red-200"
-                @click="stopStoryPlayback"
-              >
-                <IconStop class="size-4" />
-                <span>توقف</span>
-              </Button>
-            </template>
-          </div>
-        </PopoverContent>
-      </Popover>
-      <DropdownMenu>
-        <DropdownMenuTrigger as-child>
-          <MainToolbarButton title="منوی پخش" class="toolbar-icon-button playback-menu-button">
-            <IconChevronDown class="size-6 transition-all duration-300" />
-          </MainToolbarButton>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent :side-offset="10">
-          <DropdownMenuItem @select.prevent="playback.togglePlayback()">
-            <IconPause v-if="playback.playbackRunning" class="mr-2 h-4 w-4" />
-            <IconPlay v-else class="mr-2 h-4 w-4" />
-            <span>{{ playback.playbackRunning ? "توقف" : "پخش" }}</span>
-            <DropdownMenuShortcut>k, alt+p</DropdownMenuShortcut>
-          </DropdownMenuItem>
-          <DropdownMenuItem @select.prevent="playback.increaseSpeed()">
-            <IconSpeedometer class="mr-2 h-4 w-4" />
-            <span>افزایش سرعت</span>
-            <DropdownMenuShortcut>&gt;</DropdownMenuShortcut>
-          </DropdownMenuItem>
-          <DropdownMenuItem @select.prevent="playback.decreaseSpeed()">
-            <IconSpeedometerSlow class="mr-2 h-4 w-4" />
-            <span>کاهش سرعت</span>
-            <DropdownMenuShortcut>&lt;</DropdownMenuShortcut>
-          </DropdownMenuItem>
-          <DropdownMenuSeparator />
-          <DropdownMenuCheckboxItem v-model="playback.playbackLooping" @select.prevent>
-            پخش حلقه‌ای
-          </DropdownMenuCheckboxItem>
-          <DropdownMenuItem
-            inset
-            @select.prevent="playback.addMarker(state.currentTime)"
-          >
-            افزودن نشانگر
-            <span class="ml-1"
-              >({{
-                playback.startMarker && playback.endMarker
-                  ? 2
-                  : playback.startMarker || playback.endMarker
-                    ? 1
-                    : 0
-              }}
-              / 2)</span
+              <template v-else>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  class="w-full justify-start gap-2"
+                  @click="previousStoryScene"
+                >
+                  <IconSkipPrevious class="size-4" />
+                  <span>صحنه قبلی</span>
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  class="w-full justify-start gap-2"
+                  @click="nextStoryScene"
+                >
+                  <IconSkipNext class="size-4" />
+                  <span>صحنه بعدی</span>
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  class="w-full justify-start gap-2 border-red-200 text-red-700 hover:bg-red-50 hover:text-red-800 dark:border-red-900/60 dark:text-red-300 dark:hover:bg-red-950/40 dark:hover:text-red-200"
+                  @click="stopStoryPlayback"
+                >
+                  <IconStop class="size-4" />
+                  <span>توقف</span>
+                </Button>
+              </template>
+            </div>
+          </PopoverContent>
+        </Popover>
+        <DropdownMenu>
+          <DropdownMenuTrigger as-child>
+            <MainToolbarButton
+              title="تنظیم سرعت پخش"
+              class="toolbar-icon-button playback-speed-button"
             >
-          </DropdownMenuItem>
-          <DropdownMenuItem
-            inset
-            @select.prevent="playback.clearMarkers()"
-            :disabled="!playback.startMarker && !playback.endMarker"
-          >
-            پاک کردن نشانگرها
-          </DropdownMenuItem>
-          <DropdownMenuItem v-if="playback.startMarker !== undefined" disabled>
-            <IconClockStart class="mr-2 h-4 w-4" />
-            <span>{{
-              tm.scenarioFormatter.format(playback.startMarker)
-            }}</span></DropdownMenuItem
-          >
-          <DropdownMenuItem v-if="playback.endMarker !== undefined" disabled>
-            <IconClockEnd class="mr-2 h-4 w-4" />
-            <span>{{
-              tm.scenarioFormatter.format(playback.endMarker)
-            }}</span></DropdownMenuItem
-          >
-        </DropdownMenuContent>
-      </DropdownMenu>
-      <div class="border-slate-200 dark:border-slate-600 mx-2 hidden h-8 border-r-2 sm:block" />
-      <MainToolbarButton
-        title="انتخاب زمان و تاریخ"
-        class="toolbar-icon-button calendar-button hidden sm:flex"
-        @click="emit('open-time-modal')"
-      >
-        <span class="sr-only">انتخاب زمان و تاریخ</span>
-        <CalendarIcon class="size-5 transition-all duration-300" aria-hidden="true" />
-      </MainToolbarButton>
+              <SpeedControlIcon
+                v-if="playback.playbackSpeedMultiplier === 1"
+                class="size-5 transition-all duration-300"
+              />
+              <span v-else class="text-xs leading-none font-semibold">
+                {{ formatSpeedMultiplier(playback.playbackSpeedMultiplier) }}
+              </span>
+            </MainToolbarButton>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent :side-offset="10" align="center" dir="rtl">
+            <DropdownMenuItem
+              v-for="multiplier in PLAYBACK_SPEED_MULTIPLIERS"
+              :key="multiplier"
+              :class="speedMenuItemClass(multiplier)"
+              @select.prevent="playback.setSpeedMultiplier(multiplier)"
+            >
+              {{ formatSpeedMultiplier(multiplier) }}
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+        <MainToolbarButton
+          title="پخش حلقه‌ای بین اولین و آخرین رویداد"
+          :active="playback.playbackLooping"
+          :disabled="!eventLoopAvailable"
+          class="toolbar-icon-button event-loop-button hidden sm:flex"
+          @click="toggleEventLoopPlayback"
+        >
+          <EventLoopIcon class="size-5 transition-all duration-300" />
+        </MainToolbarButton>
+        <div
+          class="mx-2 hidden h-8 border-r-2 border-slate-200 sm:block dark:border-slate-600"
+        />
+        <MainToolbarButton
+          title="انتخاب زمان و تاریخ"
+          class="toolbar-icon-button calendar-button hidden sm:flex"
+          @click="emit('open-time-modal')"
+        >
+          <span class="sr-only">انتخاب زمان و تاریخ</span>
+          <CalendarIcon class="size-5 transition-all duration-300" aria-hidden="true" />
+        </MainToolbarButton>
 
-      <MainToolbarButton
-        title="کتابخانه نمادهای تاکتیکی"
-        class="toolbar-icon-button hidden sm:flex"
-        @click="openSymbolSidebar"
-      >
-        <span class="sr-only">کتابخانه نمادهای تاکتیکی</span>
-        <SimpleTacticalIcon class="size-5 transition-all duration-300" aria-hidden="true" />
-      </MainToolbarButton>
-
-      <MainToolbarButton
-        title="برو به زمان پایان سناریو"
-        class="toolbar-icon-button end-time-button hidden sm:flex"
-        @click="goToEndTime()"
-      >
-        <span class="sr-only">برو به زمان پایان سناریو</span>
-        <IconFastForward class="size-5 transition-all duration-300" aria-hidden="true" />
-      </MainToolbarButton>
-      <MainToolbarButton
-        title="رویداد بعدی"
-        class="toolbar-icon-button next-event-button hidden sm:flex"
-        @click="emit('next-event')"
-      >
-        <span class="sr-only">رویداد بعدی</span>
-        <IconSkipNext class="size-5 w-5 transition-all duration-300" aria-hidden="true" />
-      </MainToolbarButton>
-      <MainToolbarButton title="روز بعد" class="toolbar-icon-button next-day-button hidden sm:flex" @click="emit('inc-day')">
-        <span class="sr-only">روز بعد</span>
-        <IconChevronRight class="size-5 transition-all duration-300" aria-hidden="true" />
-      </MainToolbarButton>
-      <MainToolbarButton
-        title="روز قبل"
-        class="toolbar-icon-button prev-day-button hidden sm:flex"
-        @click="emit('dec-day')"
-      >
-        <span class="sr-only">روز قبل</span>
-        <IconChevronLeft class="size-5 transition-all duration-300" aria-hidden="true" />
-      </MainToolbarButton>
-      <MainToolbarButton
-        title="رویداد قبلی"
-        class="toolbar-icon-button prev-event-button hidden sm:flex"
-        @click="emit('prev-event')"
-      >
-        <span class="sr-only">رویداد قبلی</span>
-        <IconSkipPrevious class="size-5 transition-all duration-300" aria-hidden="true" />
-      </MainToolbarButton>
-      <MainToolbarButton
-        title="برو به زمان شروع سناریو"
-        class="toolbar-icon-button start-time-button hidden sm:flex"
-        @click="goToStartTime()"
-      >
-        <span class="sr-only">برو به زمان شروع سناریو</span>
-        <IconRewind class="size-5 transition-all duration-300" aria-hidden="true" />
-      </MainToolbarButton>
-      
-    </section>
+        <MainToolbarButton
+          title="برو به زمان پایان سناریو"
+          class="toolbar-icon-button end-time-button hidden sm:flex"
+          @click="goToEndTime()"
+        >
+          <span class="sr-only">برو به زمان پایان سناریو</span>
+          <IconFastForward
+            class="size-5 transition-all duration-300"
+            aria-hidden="true"
+          />
+        </MainToolbarButton>
+        <MainToolbarButton
+          title="رویداد بعدی"
+          class="toolbar-icon-button next-event-button hidden sm:flex"
+          @click="emit('next-event')"
+        >
+          <span class="sr-only">رویداد بعدی</span>
+          <IconSkipNext
+            class="size-5 w-5 transition-all duration-300"
+            aria-hidden="true"
+          />
+        </MainToolbarButton>
+        <MainToolbarButton
+          title="روز بعد"
+          class="toolbar-icon-button next-day-button hidden sm:flex"
+          @click="emit('inc-day')"
+        >
+          <span class="sr-only">روز بعد</span>
+          <IconChevronRight
+            class="size-5 transition-all duration-300"
+            aria-hidden="true"
+          />
+        </MainToolbarButton>
+        <MainToolbarButton
+          title="روز قبل"
+          class="toolbar-icon-button prev-day-button hidden sm:flex"
+          @click="emit('dec-day')"
+        >
+          <span class="sr-only">روز قبل</span>
+          <IconChevronLeft
+            class="size-5 transition-all duration-300"
+            aria-hidden="true"
+          />
+        </MainToolbarButton>
+        <MainToolbarButton
+          title="رویداد قبلی"
+          class="toolbar-icon-button prev-event-button hidden sm:flex"
+          @click="emit('prev-event')"
+        >
+          <span class="sr-only">رویداد قبلی</span>
+          <IconSkipPrevious
+            class="size-5 transition-all duration-300"
+            aria-hidden="true"
+          />
+        </MainToolbarButton>
+        <MainToolbarButton
+          title="برو به زمان شروع سناریو"
+          class="toolbar-icon-button start-time-button hidden sm:flex"
+          @click="goToStartTime()"
+        >
+          <span class="sr-only">برو به زمان شروع سناریو</span>
+          <IconRewind class="size-5 transition-all duration-300" aria-hidden="true" />
+        </MainToolbarButton>
+      </section>
+    </nav>
     <FloatingPanel
       v-if="isGetLocationActive"
       class="bg-opacity-75 absolute bottom-14 overflow-visible p-2 px-4 text-sm sm:bottom-16 sm:left-1/2 sm:-translate-x-1/2"
@@ -330,7 +341,7 @@
         لغو
       </Button>
     </FloatingPanel>
-  </nav>
+  </div>
   <SymbolSidebarModal v-model:open="symbolSidebarOpen" />
 </template>
 <script setup lang="ts">
@@ -356,18 +367,13 @@ import {
   PhPause as IconPause,
   PhStop as IconStop,
   PhFilmSlate as IconStoryboard,
-  PhCaretDown as IconChevronDown,
-  PhClockCountdown as IconClockStart,
-  PhClockClockwise as IconClockEnd,
-  PhSquaresFour as SimpleTacticalIcon,
+  PhBooks as SymbolLibraryIcon,
   PhEraser as TacticalEditIcon,
+  PhGauge as SpeedControlIcon,
+  PhRepeat as EventLoopIcon,
 } from "@phosphor-icons/vue";
 import { useRouter } from "vue-router";
 import { SIMPLE_TACTICAL_MAP_ROUTE } from "@/router/names";
-import {
-  IconSpeedometer,
-  IconSpeedometerSlow,
-} from "@iconify-prerendered/vue-mdi";
 import MainToolbarButton from "@/components/MainToolbarButton.vue";
 import { useMainToolbarStore } from "@/stores/mainToolbarStore";
 import { injectStrict } from "@/utils";
@@ -391,16 +397,17 @@ import EchelonPickerPopover from "@/modules/scenarioeditor/EchelonPickerPopover.
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
-  DropdownMenuCheckboxItem,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuShortcut,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { usePlaybackStore } from "@/stores/playbackStore";
-import { useTimeFormatStore } from "@/stores/timeFormatStore";
+import {
+  PLAYBACK_SPEED_MULTIPLIERS,
+  type PlaybackSpeedMultiplier,
+  usePlaybackStore,
+} from "@/stores/playbackStore";
+import { hasEventPlaybackLoopRange } from "@/modules/scenarioeditor/scenarioPlayback";
 import SymbolSidebarModal from "./SymbolSidebarModal.vue";
 import type { StoryboardShowMode } from "@/types/scenarioModels";
 
@@ -449,7 +456,6 @@ const { addMultiple } = storeToRefs(store);
 const { moveUnitEnabled } = storeToRefs(useUnitSettingsStore());
 const recordingStore = useRecordingStore();
 const playback = usePlaybackStore();
-const tm = useTimeFormatStore();
 const storyboardPopoverOpen = ref(false);
 const selectedStoryShowMode = ref<StoryboardShowMode>(props.storyShowMode);
 const selectStore = useMapSelectStore();
@@ -459,6 +465,16 @@ const { activeUnitId, resetActiveParent, activeParent, activeParentId } =
   useActiveUnitStore();
 
 const { currentSid, currentEchelon, activeSidc } = useToolbarUnitSymbolData();
+
+const eventPlaybackTimes = computed(() =>
+  state.events.flatMap((eventId) => {
+    const startTime = state.eventMap[eventId]?.startTime;
+    return startTime === undefined ? [] : [startTime];
+  }),
+);
+const eventLoopAvailable = computed(() =>
+  hasEventPlaybackLoopRange(eventPlaybackTimes.value),
+);
 
 const computedSidc = computed(() => {
   const parsedSidc = new Sidc(activeSidc.value);
@@ -574,7 +590,7 @@ function goToStartTime() {
 function goToEndTime() {
   // پیدا کردن آخرین زمان از state واحدها و featureها (آخرین انیمیشن/حرکت)
   let maxTime = 0;
-  
+
   // بررسی state واحدها
   Object.values(state.unitMap).forEach((unit) => {
     if (unit?.state && unit.state.length > 0) {
@@ -584,7 +600,7 @@ function goToEndTime() {
       }
     }
   });
-  
+
   // بررسی state featureها
   Object.values(state.featureMap).forEach((feature) => {
     if (feature?.state && feature.state.length > 0) {
@@ -594,15 +610,15 @@ function goToEndTime() {
       }
     }
   });
-  
+
   if (maxTime > 0) {
     setCurrentTime(maxTime);
   } else {
     // اگر هیچکدام نبود، آخرین رویداد را پیدا کن
     const events = state.events.map((id) => state.eventMap[id]);
     if (events.length > 0) {
-      const lastEvent = events.reduce((latest, event) => 
-        event.startTime > latest.startTime ? event : latest
+      const lastEvent = events.reduce((latest, event) =>
+        event.startTime > latest.startTime ? event : latest,
       );
       setCurrentTime(lastEvent.startTime);
     }
@@ -632,6 +648,22 @@ function selectStoryShowMode(showMode: StoryboardShowMode) {
   emit("select-story-show-mode", showMode);
 }
 
+function formatSpeedMultiplier(multiplier: PlaybackSpeedMultiplier) {
+  if (multiplier === 1) return "1X";
+  return multiplier > 0 ? `+${multiplier}X` : `${multiplier}X`;
+}
+
+function speedMenuItemClass(multiplier: PlaybackSpeedMultiplier) {
+  return playback.playbackSpeedMultiplier === multiplier
+    ? "bg-primary/15 text-primary"
+    : "";
+}
+
+function toggleEventLoopPlayback() {
+  if (!eventLoopAvailable.value) return;
+  playback.toggleLooping();
+}
+
 function storyModeButtonClass(showMode: StoryboardShowMode) {
   return [
     "rounded-md border px-2 py-1.5 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400",
@@ -648,10 +680,16 @@ watch(
   },
 );
 
-const symbolSidebarOpen = ref(false)
+watch(eventLoopAvailable, (available) => {
+  if (!available && playback.playbackLooping) {
+    playback.toggleLooping(false);
+  }
+});
+
+const symbolSidebarOpen = ref(false);
 
 function openSymbolSidebar() {
-  symbolSidebarOpen.value = true
+  symbolSidebarOpen.value = true;
 }
 
 function openSimpleTacticalSymbols() {
@@ -660,7 +698,8 @@ function openSimpleTacticalSymbols() {
 }
 </script>
 <style scoped>
-.map-editor-main-toolbar {
+.map-editor-main-toolbar,
+.map-editor-playback-toolbar {
   background-color: var(--surface-panel);
   border-color: var(--surface-border);
   box-shadow: 0 8px 22px rgba(17, 24, 39, 0.16);
@@ -669,7 +708,8 @@ function openSimpleTacticalSymbols() {
   -webkit-backdrop-filter: none;
 }
 
-:global(.dark) .map-editor-main-toolbar {
+:global(.dark) .map-editor-main-toolbar,
+:global(.dark) .map-editor-playback-toolbar {
   box-shadow: 0 10px 24px rgba(2, 6, 23, 0.42);
 }
 
