@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   applyEchelonToSummarySidc,
   commonParentSummaryForUnits,
+  echelonFromSidc,
   getUnitDensitySummaryOverrides,
   resolveUnitDensitySummary,
   promoteEchelonForCluster,
@@ -9,8 +10,10 @@ import {
   shouldOpenUnitDensitySummaryEditor,
   sidcWithInferredParentEchelon,
   summarySidcForUnits,
+  scaleLineDistanceForPointResolution,
+  selectOrbatLodRepresentative,
+  targetEchelonForScaleLineDistance,
   unitDensitySummarySourceLabel,
-  unitDensityFeatureOpacity,
 } from "@/geo/unitDensitySummary";
 
 describe("unitDensitySummary", () => {
@@ -32,9 +35,62 @@ describe("unitDensitySummary", () => {
     expect(units[0].sidc).toBe("10031000151211000000");
   });
 
-  it("dims member units while a summary symbol is visible", () => {
-    expect(unitDensityFeatureOpacity({ hasDensitySummary: true })).toBe(0.35);
-    expect(unitDensityFeatureOpacity({ hasDensitySummary: false })).toBe(1);
+  it("matches the OpenLayers metric scale-line 1/2/5 distances", () => {
+    expect(scaleLineDistanceForPointResolution(60)).toBe(5000);
+    expect(scaleLineDistanceForPointResolution(20)).toBe(2000);
+    expect(scaleLineDistanceForPointResolution(12)).toBe(1000);
+    expect(scaleLineDistanceForPointResolution(4)).toBe(500);
+  });
+
+  it("shows raw battalions and sub-units from the 1 km scale line", () => {
+    expect(targetEchelonForScaleLineDistance(5000)).toBe("21");
+    expect(targetEchelonForScaleLineDistance(2000)).toBe("18");
+    expect(targetEchelonForScaleLineDistance(1000)).toBeNull();
+    expect(targetEchelonForScaleLineDistance(500)).toBeNull();
+  });
+
+  it("selects the real ORBAT parent at the requested echelon", () => {
+    const division = {
+      id: "division",
+      name: "\u0644\u0634\u06a9\u0631 21",
+      sidc: "10031000211211000000",
+    };
+    const brigade = {
+      id: "brigade",
+      name: "\u062a\u06cc\u067e 1",
+      sidc: "10031000181211000000",
+    };
+    const battalion = {
+      id: "battalion",
+      name: "\u06af\u0631\u062f\u0627\u0646 507",
+      sidc: "10031000151211000000",
+    };
+
+    expect(selectOrbatLodRepresentative(battalion, [division, brigade], "21")?.id).toBe(
+      "division",
+    );
+    expect(selectOrbatLodRepresentative(battalion, [division, brigade], "18")?.id).toBe(
+      "brigade",
+    );
+    expect(selectOrbatLodRepresentative(battalion, [division, brigade], "15")?.id).toBe(
+      "battalion",
+    );
+  });
+
+  it("falls back to the highest lower ORBAT echelon when the target is absent", () => {
+    const brigade = {
+      id: "brigade",
+      name: "\u062a\u06cc\u067e 1",
+      sidc: "10031000181211000000",
+    };
+    const battalion = {
+      id: "battalion",
+      name: "\u06af\u0631\u062f\u0627\u0646 507",
+      sidc: "10031000151211000000",
+    };
+
+    expect(selectOrbatLodRepresentative(battalion, [brigade], "21")?.id).toBe("brigade");
+    expect(selectOrbatLodRepresentative(battalion, [], "18")?.id).toBe("battalion");
   });
 
   it("uses a manual summary override for matching unit members", () => {
@@ -159,6 +215,7 @@ describe("unitDensitySummary", () => {
     expect(applyEchelonToSummarySidc("10031000151211000000", "21")).toBe(
       "10031000211211000000",
     );
+    expect(echelonFromSidc("10031000211211000000")).toBe("21");
   });
 
   it("reports the summary source for UI badges", () => {

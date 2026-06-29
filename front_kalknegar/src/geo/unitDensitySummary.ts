@@ -1,7 +1,7 @@
 import Feature from "ol/Feature";
 import VectorLayer from "ol/layer/Vector";
-import ClusterSource from "ol/source/Cluster";
-import type VectorSource from "ol/source/Vector";
+import VectorSource from "ol/source/Vector";
+import Point from "ol/geom/Point";
 import { Fill, Stroke, Style, Text } from "ol/style";
 import type { FeatureLike } from "ol/Feature";
 import type { NUnit } from "@/types/internalModels";
@@ -11,8 +11,15 @@ import { symbolGenerator } from "@/symbology/milsymbwrapper";
 import { useSettingsStore, useSymbolSettingsStore } from "@/stores/settingsStore";
 import { createMilSymbolStyle } from "@/geo/unitStyles";
 
-type UnitLike = Pick<NUnit, "id" | "sidc" | "_state" | "symbolOptions" | "textAmplifiers">;
+type UnitLike = Pick<
+  NUnit,
+  "id" | "sidc" | "_state" | "symbolOptions" | "textAmplifiers"
+>;
 type ParentLike = Pick<NUnit, "id" | "sidc" | "name" | "shortName" | "symbolOptions">;
+type OrbatLodUnitLike = Pick<
+  NUnit,
+  "id" | "sidc" | "name" | "shortName" | "symbolOptions"
+>;
 
 export interface UnitDensitySummaryOverride {
   label?: string;
@@ -51,6 +58,8 @@ const ECHELON_ORDER = [
 
 export const UNIT_DENSITY_DISTANCE_PX = 64;
 export const UNIT_DENSITY_MIN_DISTANCE_PX = 24;
+const SCALE_LINE_LEADING_DIGITS = [1, 2, 5];
+export const ORBAT_LOD_SCALE_LINE_MIN_WIDTH_PX = 64;
 
 const styleCache = new Map<string, Style>();
 
@@ -65,6 +74,27 @@ export function unitDensitySummarySourceLabel(source: UnitDensitySummarySource) 
 function echelonIndex(echelon: string) {
   const index = ECHELON_ORDER.indexOf(echelon);
   return index >= 0 ? index : 0;
+}
+
+export function scaleLineDistanceForPointResolution(
+  pointResolution: number,
+  minWidth = ORBAT_LOD_SCALE_LINE_MIN_WIDTH_PX,
+) {
+  let index = 3 * Math.floor(Math.log(minWidth * pointResolution) / Math.log(10));
+
+  while (true) {
+    const decimal = 10 ** Math.floor(index / 3);
+    const distance =
+      SCALE_LINE_LEADING_DIGITS[((index % 3) + 3) % 3] * decimal;
+    if (Math.round(distance / pointResolution) >= minWidth) return distance;
+    index++;
+  }
+}
+
+export function targetEchelonForScaleLineDistance(distanceMeters: number) {
+  if (distanceMeters >= 5000) return "21";
+  if (distanceMeters >= 2000) return "18";
+  return null;
 }
 
 function minEchelonForCount(count: number) {
@@ -100,6 +130,10 @@ export function applyEchelonToSummarySidc(sidcValue: string, echelon: string) {
   return sidc.toString();
 }
 
+export function echelonFromSidc(sidcValue: string) {
+  return new Sidc(sidcValue).emt;
+}
+
 function inferEchelonFromName(name = "") {
   const normalized = name.trim().toLowerCase();
   if (!normalized) return undefined;
@@ -117,16 +151,10 @@ function inferEchelonFromName(name = "") {
   ) {
     return "21";
   }
-  if (
-    normalized.includes("\u062a\u06cc\u067e") ||
-    normalized.includes("brigade")
-  ) {
+  if (normalized.includes("\u062a\u06cc\u067e") || normalized.includes("brigade")) {
     return "18";
   }
-  if (
-    normalized.includes("\u0647\u0646\u06af") ||
-    normalized.includes("regiment")
-  ) {
+  if (normalized.includes("\u0647\u0646\u06af") || normalized.includes("regiment")) {
     return "17";
   }
   if (
@@ -157,6 +185,25 @@ export function sidcWithInferredParentEchelon(parent: ParentLike) {
   return inferredEchelon
     ? applyEchelonToSummarySidc(parent.sidc, inferredEchelon)
     : parent.sidc;
+}
+
+export function selectOrbatLodRepresentative<T extends OrbatLodUnitLike>(
+  unit: T,
+  parents: T[],
+  targetEchelon: string,
+) {
+  const targetIndex = echelonIndex(targetEchelon);
+  return [...parents, unit].reduce<T | undefined>((selected, candidate) => {
+    const candidateSidc = sidcWithInferredParentEchelon(candidate);
+    const candidateIndex = echelonIndex(new Sidc(candidateSidc).emt);
+    if (candidateIndex > targetIndex) return selected;
+    if (!selected) return candidate;
+
+    const selectedIndex = echelonIndex(
+      new Sidc(sidcWithInferredParentEchelon(selected)).emt,
+    );
+    return candidateIndex >= selectedIndex ? candidate : selected;
+  }, undefined);
 }
 
 export function unitDensitySummaryKey(units: UnitLike[]) {
@@ -235,9 +282,7 @@ export function commonParentSummaryForUnits(
   for (let index = firstPath.length - 1; index >= 0; index--) {
     const candidate = firstPath[index];
     if (
-      parentPaths.every((parents) =>
-        parents.some((parent) => parent.id === candidate.id),
-      )
+      parentPaths.every((parents) => parents.some((parent) => parent.id === candidate.id))
     ) {
       return {
         label: candidate.shortName || candidate.name,
@@ -272,49 +317,42 @@ export function setUnitDensitySummaryOverride(
   };
 }
 
-export function unitDensityFeatureOpacity({
-  hasDensitySummary,
-}: {
-  hasDensitySummary: boolean;
-}) {
-  return hasDensitySummary ? 0.35 : 1;
-}
-
 export function isDensityCluster(feature: FeatureLike) {
   const members = feature.get("features");
-  return Array.isArray(members) && members.length > 1;
+  return feature.get("isUnitLodSummary") === true && Array.isArray(members);
 }
 
 export function createUnitDensityLayer(options: {
   source: VectorSource;
   getUnitById: (id: string) => NUnit | undefined;
   getCombinedSymbolOptions: (unit: NUnit) => UnitSymbolOptions;
+  getParents: (unitId: string) => NUnit[];
   getSummaryOverrides?: () => UnitDensitySummaryOverrides;
-  getParentSummary?: (units: NUnit[]) => UnitDensitySummaryOverride | undefined;
-  onDensityChange?: (hasDensitySummary: boolean) => void;
 }) {
-  const clusterSource = new ClusterSource({
-    source: options.source,
-    distance: UNIT_DENSITY_DISTANCE_PX,
-    minDistance: UNIT_DENSITY_MIN_DISTANCE_PX,
-  });
+  const summarySource = new VectorSource<Feature<Point>>();
 
   const style = (feature: FeatureLike) => {
     const members = feature.get("features") as Feature[] | undefined;
-    if (!Array.isArray(members) || members.length < 2) return undefined;
+    if (!Array.isArray(members) || members.length === 0) return undefined;
 
     const units = members
       .map((member) => options.getUnitById(String(member.getId())))
       .filter(Boolean) as NUnit[];
-    if (units.length < 2) return undefined;
+    if (units.length === 0) return undefined;
 
-    const representative = units[0];
+    const representative =
+      options.getUnitById(String(feature.get("representativeId"))) ?? units[0];
     const settingsStore = useSettingsStore();
     const symbolSettings = useSymbolSettingsStore();
+    const parentSummary = {
+      label: representative.shortName || representative.name,
+      sidc: sidcWithInferredParentEchelon(representative),
+      symbolOptions: options.getCombinedSymbolOptions(representative),
+    };
     const summary = resolveUnitDensitySummary(
       units,
       options.getSummaryOverrides?.() ?? {},
-      options.getParentSummary?.(units),
+      parentSummary,
     );
     const cacheKey = [
       summary.sidc,
@@ -356,7 +394,7 @@ export function createUnitDensityLayer(options: {
   };
 
   const layer = new VectorLayer({
-    source: clusterSource,
+    source: summarySource,
     style,
     declutter: true,
     updateWhileAnimating: true,
@@ -367,11 +405,70 @@ export function createUnitDensityLayer(options: {
     },
   });
   layer.setZIndex(20);
+  layer.setVisible(false);
 
-  const notifyDensity = () => {
-    options.onDensityChange?.(clusterSource.getFeatures().some(isDensityCluster));
-  };
-  clusterSource.on("change", notifyDensity);
+  function refresh(scaleLineDistanceMeters: number) {
+    const targetEchelon = targetEchelonForScaleLineDistance(
+      scaleLineDistanceMeters,
+    );
+    summarySource.clear(true);
+    layer.setVisible(Boolean(targetEchelon));
+    if (!targetEchelon) return null;
 
-  return layer;
+    const groups = new Map<
+      string,
+      { representative: NUnit; members: Feature<Point>[] }
+    >();
+
+    for (const member of options.source.getFeatures() as Feature<Point>[]) {
+      const unit = options.getUnitById(String(member.getId()));
+      if (!unit) continue;
+
+      const representative = selectOrbatLodRepresentative(
+        unit,
+        options.getParents(unit.id),
+        targetEchelon,
+      );
+      if (!representative) continue;
+
+      const key = String(representative.id);
+      const group = groups.get(key) ?? { representative, members: [] };
+      group.members.push(member);
+      groups.set(key, group);
+    }
+
+    const summaries = [...groups.values()].map(({ representative, members }) => {
+      const representativeFeature = options.source.getFeatureById(
+        representative.id,
+      ) as Feature<Point> | null;
+      const representativeCoordinate = representativeFeature
+        ?.getGeometry()
+        ?.getCoordinates();
+      const coordinates = members
+        .map((member) => member.getGeometry()?.getCoordinates())
+        .filter(Boolean) as number[][];
+      const coordinate =
+        representativeCoordinate ??
+        coordinates.reduce(
+          (total, current) => [
+            total[0] + current[0] / coordinates.length,
+            total[1] + current[1] / coordinates.length,
+          ],
+          [0, 0],
+        );
+      const summaryFeature = new Feature<Point>(new Point(coordinate));
+      summaryFeature.setId(`orbat-lod:${targetEchelon}:${representative.id}`);
+      summaryFeature.setProperties({
+        features: members,
+        isUnitLodSummary: true,
+        representativeId: representative.id,
+      });
+      return summaryFeature;
+    });
+
+    summarySource.addFeatures(summaries);
+    return targetEchelon;
+  }
+
+  return { layer, refresh };
 }
