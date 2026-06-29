@@ -77,11 +77,26 @@ function resolveTacticalStore(store: MaybeRef<TacticalStoreLike>): TacticalStore
 }
 
 function isTuple(value: unknown): value is TacticalTuple {
-  return (
-    Array.isArray(value) &&
-    value.length === 2 &&
-    typeof value[0] === "string"
-  );
+  return Array.isArray(value) && value.length === 2 && typeof value[0] === "string";
+}
+
+function normalizeTimedFeatureTuple(tuple: TacticalTuple): TacticalTuple {
+  const [key, value] = tuple;
+  if (!key.startsWith("timed+feature:") || !Array.isArray(value)) {
+    return tuple;
+  }
+
+  return [
+    key,
+    value.map((state) => {
+      if (!state || typeof state !== "object" || typeof state.t !== "string") {
+        return state;
+      }
+
+      const timestamp = Date.parse(state.t);
+      return Number.isFinite(timestamp) ? { ...state, t: timestamp } : state;
+    }),
+  ];
 }
 
 function normalizeSnapshot(value: unknown): TacticalSymbolsSnapshot | null {
@@ -92,7 +107,9 @@ function normalizeSnapshot(value: unknown): TacticalSymbolsSnapshot | null {
   if (snapshot.version !== TACTICAL_SNAPSHOT_VERSION) {
     return null;
   }
-  const tuples = Array.isArray(snapshot.tuples) ? snapshot.tuples.filter(isTuple) : [];
+  const tuples = Array.isArray(snapshot.tuples)
+    ? snapshot.tuples.filter(isTuple).map(normalizeTimedFeatureTuple)
+    : [];
   return {
     version: TACTICAL_SNAPSHOT_VERSION,
     tuples,
