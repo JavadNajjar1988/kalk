@@ -1,5 +1,8 @@
 import { describe, expect, it, vi } from "vitest";
-import { exportTacticalSnapshot } from "./scenarioSnapshot";
+import {
+  exportTacticalSnapshot,
+  getTacticalSnapshotFromMetadata,
+} from "./scenarioSnapshot";
 
 describe("scenarioSnapshot", () => {
   it("does not treat tactical stores with a prototype value method as refs", async () => {
@@ -39,5 +42,36 @@ describe("scenarioSnapshot", () => {
 
     expect(store.tuples).toHaveBeenCalledWith("feature:");
     expect(snapshot.tuples).toEqual([["feature:test", feature]]);
+  });
+
+  it("normalizes legacy ISO tactical timestamps to numbers", () => {
+    const isoTimestamp = "1981-11-29T01:15:00Z";
+    const invalidTimestamp = "not-a-date";
+
+    const snapshot = getTacticalSnapshotFromMetadata({
+      tacticalSymbols: {
+        version: 1,
+        tuples: [
+          [
+            "timed+feature:feature:test",
+            [
+              { t: isoTimestamp, properties: { label: "advance" } },
+              { t: invalidTimestamp, properties: { label: "invalid" } },
+            ],
+          ],
+        ],
+      },
+    });
+
+    expect(snapshot?.tuples[0][1]).toEqual([
+      {
+        t: Date.parse(isoTimestamp),
+        properties: { label: "advance" },
+      },
+      {
+        t: invalidTimestamp,
+        properties: { label: "invalid" },
+      },
+    ]);
   });
 });

@@ -24,8 +24,6 @@ import {
 import { useSymbolSettingsStore } from "@/stores/settingsStore";
 import { computed, ref, type ShallowRef } from "vue";
 import { isLoading } from "@/scenariostore/index";
-import { INTERNAL_NAMES, TIMESTAMP_NAMES } from "@/types/internalModels";
-import dayjs from "dayjs";
 import type {
   RangeRingGroup,
   ScenarioLayer,
@@ -49,6 +47,7 @@ import {
   withTacticalSnapshotInMetadata,
 } from "@/modules/tactical-symbol-map/services/scenarioSnapshot";
 import { DEFAULT_SCENARIO_LAYER_NAME } from "@/modules/scenarioeditor/scenarioFeatureNaming";
+import { stringifyScenarioObject } from "@/scenariostore/scenarioSerialization";
 
 export interface CreateEmptyScenarioOptions {
   id?: string;
@@ -413,22 +412,11 @@ export function useScenarioIO(store: ShallowRef<NewScenarioStore>) {
   }
 
   function stringifyScenario() {
-    return JSON.stringify(toObject(), stringifyReplacer, "  ");
+    return stringifyScenarioObject(toObject(), store.value.state.info.timeZone || "UTC");
   }
 
   function stringifyObject(obj: any) {
-    return JSON.stringify(obj, stringifyReplacer, "  ");
-  }
-
-  function stringifyReplacer(name: string, val: any) {
-    if (val === undefined) return undefined;
-    if (INTERNAL_NAMES.includes(name)) return undefined;
-    if (TIMESTAMP_NAMES.includes(name)) {
-      return dayjs(val)
-        .tz(store.value.state.info.timeZone || "UTC")
-        .format();
-    }
-    return val;
+    return stringifyScenarioObject(obj, store.value.state.info.timeZone || "UTC");
   }
 
   function serializeToObject(): Scenario {
