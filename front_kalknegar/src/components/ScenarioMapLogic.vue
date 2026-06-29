@@ -49,6 +49,8 @@ import createLayerStyles from "@/modules/tactical-symbol-map/components/map/laye
 import createVectorLayers from "@/modules/tactical-symbol-map/components/map/vectorLayers";
 import registerEventHandlers from "@/modules/tactical-symbol-map/components/map/eventHandlers";
 import { ensureScenarioTacticalServices } from "@/modules/tactical-symbol-map/services/scenarioProjectServices";
+import { getPointResolution } from "ol/proj";
+import { scaleLineDistanceForPointResolution } from "@/geo/unitDensitySummary";
 
 const props = defineProps<{ olMap: OLMap }>();
 const emit = defineEmits<{
@@ -79,7 +81,12 @@ const recordingStore = useRecordingStore();
 const playbackStore = usePlaybackStore();
 const { moveUnitEnabled } = storeToRefs(useUnitSettingsStore());
 const { measurementUnit } = storeToRefs(useMeasurementsStore());
-const { unitLayer, unitDensityLayer, drawUnits } = useUnitLayer();
+const {
+  unitLayer,
+  unitDensityLayer,
+  refreshUnitDensityLayer,
+  drawUnits,
+} = useUnitLayer();
 
 const { onScenarioAction } = useSearchActions();
 
@@ -90,6 +97,30 @@ mapRef.value = olMap;
 geoStore.olMap = olMap;
 
 calculateZoomToResolution(olMap.getView());
+
+function refreshUnitDensityLod() {
+  const view = olMap.getView();
+  const resolution = view.getResolution();
+  const center = view.getCenter();
+  if (resolution === undefined || !center) return;
+
+  const pointResolution = getPointResolution(
+    view.getProjection(),
+    resolution,
+    center,
+    "m",
+  );
+  const scaleLineDistance =
+    scaleLineDistanceForPointResolution(pointResolution);
+  const targetEchelon = refreshUnitDensityLayer(scaleLineDistance);
+  unitLayer.setVisible(!targetEchelon);
+}
+
+useOlEvent(
+  olMap
+    .getView()
+    .on(["change:resolution", "change:center"], refreshUnitDensityLod),
+);
 
 const unitLayerGroup = new LayerGroup({
   layers: [unitLayer, unitDensityLayer],
@@ -201,6 +232,7 @@ emit("map-ready", { olMap, featureSelectInteraction, unitSelectInteraction });
 
 drawRangeRings();
 drawUnits();
+refreshUnitDensityLod();
 drawHistory();
 
 loadMapLayers();
@@ -368,6 +400,7 @@ watch(
 
 function redrawUnits() {
   drawUnits();
+  refreshUnitDensityLod();
   drawHistory();
   redrawSelectedUnits();
   drawRangeRings();
@@ -379,6 +412,7 @@ watch([settingsStore, symbolSettings], () => {
   clearUnitStyleCache();
   clearUnitDensityStyleCache();
   drawUnits();
+  refreshUnitDensityLod();
 });
 
 watch(
