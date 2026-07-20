@@ -1,0 +1,261 @@
+/* CSS برای NodeForm */
+
+.node-form {
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  max-width: 600px;
+  width: 100%;
+}
+
+.form-header {
+  background-color: #f8fafc;
+  padding: 20px;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.form-title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.form-body {
+  padding: 20px;
+}
+
+.form-group {
+  margin-bottom: 20px;
+}
+
+.form-label {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #374151;
+}
+
+.required {
+  color: #ef4444;
+}
+
+.form-input,
+.form-select,
+.form-textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 14px;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  background-color: white;
+}
+
+.form-input:focus,
+.form-select:focus,
+.form-textarea:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.form-input.error,
+.form-select.error,
+.form-textarea.error {
+  border-color: #ef4444;
+}
+
+.form-input.error:focus,
+.form-select.error:focus,
+.form-textarea.error:focus {
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+}
+
+.form-textarea {
+  resize: vertical;
+  min-height: 80px;
+}
+
+.coordinates-inputs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.form-error {
+  margin-top: 4px;
+  font-size: 12px;
+  color: #ef4444;
+}
+
+.form-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  padding: 20px;
+  background-color: #f8fafc;
+  border-top: 1px solid #e2e8f0;
+}
+
+.btn {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-width: 100px;
+}
+
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.btn-primary {
+  background-color: #3b82f6;
+  color: white;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background-color: #2563eb;
+}
+
+.btn-primary:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
+}
+
+.btn-secondary {
+  background-color: #6b7280;
+  color: white;
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background-color: #4b5563;
+}
+
+.btn-secondary:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(107, 114, 128, 0.3);
+}
+
+/* حالت‌های مختلف */
+.node-form.compact {
+  max-width: 400px;
+}
+
+.node-form.compact .form-header {
+  padding: 16px;
+}
+
+.node-form.compact .form-body {
+  padding: 16px;
+}
+
+.node-form.compact .form-footer {
+  padding: 16px;
+}
+
+.node-form.large {
+  max-width: 800px;
+}
+
+.node-form.large .form-header {
+  padding: 24px;
+}
+
+.node-form.large .form-body {
+  padding: 24px;
+}
+
+.node-form.large .form-footer {
+  padding: 24px;
+}
+
+/* حالت‌های خاص */
+.node-form.modal {
+  margin: 0;
+  border-radius: 0;
+  height: 100vh;
+  max-width: none;
+  display: flex;
+  flex-direction: column;
+}
+
+.node-form.modal .form-body {
+  flex: 1;
+  overflow-y: auto;
+}
+
+.node-form.sidebar {
+  height: 100vh;
+  border-radius: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.node-form.sidebar .form-body {
+  flex: 1;
+  overflow-y: auto;
+}
+
+/* انیمیشن‌ها */
+.node-form {
+  animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Responsive */
+@media (max-width: 640px) {
+  .coordinates-inputs {
+    grid-template-columns: 1fr;
+  }
+  
+  .form-footer {
+    flex-direction: column;
+  }
+  
+  .btn {
+    width: 100%;
+  }
+}
+
+/* حالت‌های loading */
+.node-form.loading {
+  opacity: 0.7;
+  pointer-events: none;
+}
+
+.node-form.loading::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 32px;
+  height: 32px;
+  border: 3px solid #f3f4f6;
+  border-top: 3px solid #3b82f6;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: translate(-50%, -50%) rotate(0deg); }
+  100% { transform: translate(-50%, -50%) rotate(360deg); }
+}

@@ -1,0 +1,17 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noUnusedLocals": false,
+    "noUnusedParameters": false,
+    "incremental": false,
+    "types": ["vite/client", "node"]
+  },
+  "files": ["src/main.tsx"],
+  "include": [],
+  "exclude": [
+    "src/**/*.test.ts",
+    "src/**/*.test.tsx",
+    "src/**/__tests__/**"
+  ],
+  "references": []
+}

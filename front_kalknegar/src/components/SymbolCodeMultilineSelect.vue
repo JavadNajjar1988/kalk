@@ -1,0 +1,137 @@
+<script setup lang="ts">
+import { computed, useId } from "vue";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { type NullableSymbolItem, type SymbolItem } from "@/types/constants";
+import { type UnitSymbolOptions } from "@/types/scenarioModels";
+import { Label } from "@/components/ui/label";
+import NewMilitarySymbol from "@/components/NewMilitarySymbol.vue";
+import {
+  translateEntity,
+  translateEntityType,
+  translateEntitySubtype,
+} from "@/symbology/translations";
+import { toPersianDigits } from "@/utils/persianNumbers";
+
+interface Props {
+  label?: string;
+  items: NullableSymbolItem[];
+  symbolOptions?: UnitSymbolOptions;
+  placeholder?: string;
+}
+
+const props = defineProps<Props>();
+const controlId = useId();
+
+const selectedValue = defineModel<string | null>({ default: "00" });
+
+function mapSymbolItem(item: NullableSymbolItem) {
+  const translatedEntityValue = translateEntity(item.entity || "");
+  const translatedEntityTypeValue = item.entityType
+    ? translateEntityType(item.entityType)
+    : "";
+  const translatedEntitySubtypeValue = item.entitySubtype
+    ? translateEntitySubtype(item.entitySubtype)
+    : "";
+  const translatedEntity = /[A-Za-z]/.test(translatedEntityValue)
+    ? ""
+    : translatedEntityValue;
+  const translatedEntityType = /[A-Za-z]/.test(translatedEntityTypeValue)
+    ? ""
+    : translatedEntityTypeValue;
+  const translatedEntitySubtype = /[A-Za-z]/.test(translatedEntitySubtypeValue)
+    ? ""
+    : translatedEntitySubtypeValue;
+
+  return {
+    sidc: item.sidc,
+    code: item.code,
+    label:
+      translatedEntitySubtype ||
+      translatedEntityType ||
+      translatedEntity ||
+      `نماد ${toPersianDigits(item.code ?? "00")}`,
+    subLabel: translatedEntitySubtype
+      ? [translatedEntity, translatedEntityType].filter(Boolean).join(" / ")
+      : translatedEntityType
+        ? translatedEntity
+        : "",
+  };
+}
+
+const renderedItems = computed(() => props.items.map(mapSymbolItem));
+
+const selected = computed(() => {
+  const v = (renderedItems.value || []).find((i) => i.code === selectedValue.value);
+  return v ? v : renderedItems.value[0];
+});
+</script>
+<template>
+  <div>
+    <Select v-model="selectedValue">
+      <Label :for="controlId">{{ label }}</Label>
+      <SelectTrigger class="mt-2 w-full" size="lg" :id="controlId">
+        <SelectValue>
+          <div class="flex items-center" v-if="selected">
+            <NewMilitarySymbol
+              aria-hidden="true"
+              class="size-8"
+              :sidc="selected?.sidc || ''"
+              alt=""
+              :size="20"
+              :options="{ ...symbolOptions, outlineWidth: 4 }"
+            />
+            <div class="mr-3 max-w-xs text-right sm:max-w-none">
+              <div
+                v-if="selected?.subLabel"
+                class="text-muted-foreground truncate text-xs"
+              >
+                {{ selected.subLabel }}
+              </div>
+              <div class="mt-0 truncate text-sm">
+                {{ selected?.label }}
+              </div>
+            </div>
+          </div>
+          <template v-else>
+            <span>{{ placeholder }}</span>
+          </template>
+        </SelectValue>
+      </SelectTrigger>
+      <SelectContent>
+        <SelectGroup>
+          <SelectItem
+            v-for="item in renderedItems"
+            :key="item.code ?? undefined"
+            :value="item.code"
+            class="data-[state=checked]:font-semibold"
+            ><div class="flex items-center" v-if="item">
+              <NewMilitarySymbol
+                aria-hidden="true"
+                class="size-8"
+                :sidc="item.sidc || ''"
+                alt=""
+                :size="20"
+                :options="{ ...symbolOptions, outlineWidth: 4 }"
+              />
+              <div class="mr-3 max-w-xs flex-auto text-right sm:max-w-none">
+                <div v-if="item.subLabel" class="text-muted-foreground truncate text-xs">
+                  {{ item.subLabel }}
+                </div>
+                <div class="mt-0 truncate">
+                  {{ item.label }}
+                </div>
+              </div>
+            </div></SelectItem
+          >
+        </SelectGroup>
+      </SelectContent>
+    </Select>
+  </div>
+</template>

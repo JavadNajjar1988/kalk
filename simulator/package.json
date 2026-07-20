@@ -1,0 +1,32 @@
+{
+  "name": "kalk-simulator",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Babylon.js Simulator for Kalk",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -p tsconfig.release.json && vite build",
+    "preview": "vite preview",
+    "type-check": "tsc --noEmit -p tsconfig.release.json"
+  },
+  "dependencies": {
+    "@babylonjs/core": "^6.0.0",
+    "@babylonjs/loaders": "^6.0.0",
+    "@babylonjs/materials": "^6.0.0",
+    "@syncpoint/signs": "^1.1.0",
+    "cesium": "^1.136.0",
+    "jsts": "^2.12.1",
+    "milsymbol": "^2.2.0",
+    "ramda": "^0.32.0",
+    "vite-plugin-cesium": "^1.2.23"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.16",
+    "typescript": "^5.2.2",
+    "vite": "^6.3.5"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
+  }
+}

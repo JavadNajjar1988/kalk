@@ -1,0 +1,200 @@
+{
+  "maps": [],
+  "categories": [
+    {
+      "id": "tactical",
+      "name": "نقشه‌های تاکتیکی",
+      "description": "نقشه‌های عملیاتی و تاکتیکی"
+    },
+    {
+      "id": "topographic",
+      "name": "نقشه‌های توپوگرافی",
+      "description": "نقشه‌های ارتفاعی و زمین‌شناسی"
+    },
+    {
+      "id": "satellite",
+      "name": "تصاویر ماهواره‌ای",
+      "description": "تصاویر ماهواره‌ای و هوایی"
+    },
+    {
+      "id": "nautical",
+      "name": "نقشه‌های دریایی",
+      "description": "نقشه‌های دریایی و ساحلی"
+    },
+    {
+      "id": "aeronautical",
+      "name": "نقشه‌های هوایی",
+      "description": "نقشه‌های ناوبری هوایی"
+    },
+    {
+      "id": "intelligence",
+      "name": "نقشه‌های اطلاعاتی",
+      "description": "نقشه‌های اطلاعاتی و تحلیلی"
+    }
+  ],
+  "fields": [
+    {
+      "id": "mapCode",
+      "name": "کد نقشه",
+      "type": "text",
+      "required": true
+    },
+    {
+      "id": "name",
+      "name": "نام نقشه",
+      "type": "text",
+      "required": true
+    },
+    {
+      "id": "description",
+      "name": "توضیحات",
+      "type": "textarea",
+      "required": false
+    },
+    {
+      "id": "category",
+      "name": "دسته‌بندی",
+      "type": "select",
+      "required": true,
+      "options": []
+    },
+    {
+      "id": "scale",
+      "name": "مقیاس",
+      "type": "text",
+      "required": true
+    },
+    {
+      "id": "coordinate_system",
+      "name": "سیستم مختصات",
+      "type": "select",
+      "required": true,
+      "options": [
+        { "value": "utm", "label": "UTM" },
+        { "value": "geographic", "label": "جغرافیایی (WGS84)" },
+        { "value": "mercator", "label": "مرکاتور" },
+        { "value": "local", "label": "محلی" }
+      ]
+    },
+    {
+      "id": "bounds_north",
+      "name": "حد شمالی",
+      "type": "number",
+      "required": true
+    },
+    {
+      "id": "bounds_south",
+      "name": "حد جنوبی",
+      "type": "number",
+      "required": true
+    },
+    {
+      "id": "bounds_east",
+      "name": "حد شرقی",
+      "type": "number",
+      "required": true
+    },
+    {
+      "id": "bounds_west",
+      "name": "حد غربی",
+      "type": "number",
+      "required": true
+    },
+    {
+      "id": "resolution",
+      "name": "رزولوشن",
+      "type": "text",
+      "required": false
+    },
+    {
+      "id": "file_format",
+      "name": "فرمت فایل",
+      "type": "select",
+      "required": true,
+      "options": [
+        { "value": "geotiff", "label": "GeoTIFF" },
+        { "value": "shapefile", "label": "Shapefile" },
+        { "value": "kml", "label": "KML" },
+        { "value": "gpx", "label": "GPX" },
+        { "value": "png", "label": "PNG" },
+        { "value": "jpg", "label": "JPEG" },
+        { "value": "pdf", "label": "PDF" }
+      ]
+    },
+    {
+      "id": "file_size",
+      "name": "حجم فایل (MB)",
+      "type": "number",
+      "required": false
+    },
+    {
+      "id": "source",
+      "name": "منبع",
+      "type": "text",
+      "required": false
+    },
+    {
+      "id": "creation_date",
+      "name": "تاریخ تولید",
+      "type": "date",
+      "required": true
+    },
+    {
+      "id": "last_updated",
+      "name": "آخرین به‌روزرسانی",
+      "type": "date",
+      "required": false
+    },
+    {
+      "id": "security_classification",
+      "name": "طبقه‌بندی امنیتی",
+      "type": "select",
+      "required": true,
+      "options": [
+        { "value": "public", "label": "عمومی" },
+        { "value": "restricted", "label": "محدود" },
+        { "value": "confidential", "label": "محرمانه" },
+        { "value": "secret", "label": "سری" },
+        { "value": "top_secret", "label": "بسیار سری" }
+      ]
+    },
+    {
+      "id": "access_level",
+      "name": "سطح دسترسی",
+      "type": "select",
+      "required": true,
+      "options": [
+        { "value": "public", "label": "عمومی" },
+        { "value": "internal", "label": "داخلی" },
+        { "value": "restricted", "label": "محدود" },
+        { "value": "classified", "label": "طبقه‌بندی شده" }
+      ]
+    },
+    {
+      "id": "status",
+      "name": "وضعیت",
+      "type": "select",
+      "required": true,
+      "options": [
+        { "value": "active", "label": "فعال" },
+        { "value": "archived", "label": "آرشیو" },
+        { "value": "obsolete", "label": "منسوخ" },
+        { "value": "under_review", "label": "در حال بررسی" }
+      ]
+    }
+  ],
+  "templates": [
+    {
+      "id": "tactical_map_template",
+      "name": "قالب نقشه تاکتیکی",
+      "category": "tactical",
+      "fields": ["mapCode", "name", "description", "category", "scale", "coordinate_system", "bounds_north", "bounds_south", "bounds_east", "bounds_west", "file_format", "source", "creation_date", "security_classification", "access_level", "status"]
+    },
+    {
+      "id": "satellite_image_template",
+      "name": "قالب تصویر ماهواره‌ای",
+      "category": "satellite",
+      "fields": ["mapCode", "name", "description", "category", "resolution", "coordinate_system", "bounds_north", "bounds_south", "bounds_east", "bounds_west", "file_format", "file_size", "source", "creation_date", "last_updated", "security_classification", "access_level", "status"]
+    }
+  ]
+}

@@ -1,0 +1,159 @@
+{
+  "id": "759b4b68-a329-460f-bd9a-67c313685093",
+  "type": "ORBAT-mapper",
+  "version": "1.0.0",
+  "meta": {
+    "createdDate": "2025-09-19T11:10:40Z",
+    "lastModifiedDate": "2025-09-19T11:10:40Z"
+  },
+  "name": "جنگ ایران و اسرائیل (خرداد ۱۴۰۴ / ژوئن ۲۰۲۵)",
+  "startTime": "2025-06-13T18:00:00Z",
+  "timeZone": "Asia/Tehran",
+  "description": "این سناریو درگیری مستقیم کوتاه‌مدت میان ایران و اسرائیل در ژوئن ۲۰۲۵ را مدل‌سازی می‌کند؛ شامل موج‌های موشکی/پهپادی و پاسخ‌های متقابل هوایی/پدافندی، با نقاط کلیدی در ایران و اسرائیل.",
+  "symbologyStandard": "app6",
+  "sides": [
+    {
+      "id": "iran",
+      "name": "ایران",
+      "standardIdentity": "3",
+      "groups": [
+        {
+          "id": "grp-ir-aero",
+          "name": "نیروی هوافضای سپاه و یگان‌های موشکی/پهپادی",
+          "subUnits": [
+            {
+              "id": "irgc-aero-brig",
+              "name": "یگان‌های موشکی/پهپادی (هوافضای سپاه)",
+              "shortName": "هوافضا",
+              "sidc": "10031000181211000000",
+              "subUnits": [],
+              "state": [
+                {
+                  "t": "2025-06-13T18:00:00Z",
+                  "location": [
+                    51.389,
+                    35.689
+                  ]
+                },
+                {
+                  "t": "2025-06-15T00:00:00Z",
+                  "location": [
+                    48.684,
+                    31.318
+                  ]
+                },
+                {
+                  "t": "2025-06-18T00:00:00Z",
+                  "location": [
+                    51.673,
+                    32.654
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "grp-ir-ads",
+          "name": "پدافند هوایی ایران",
+          "subUnits": [
+            {
+              "id": "ir-ads-brig",
+              "name": "تیپ/گروه پدافند هوایی",
+              "shortName": "پدافند",
+              "sidc": "10031000181211000000",
+              "subUnits": [],
+              "state": [
+                {
+                  "t": "2025-06-15T00:00:00Z",
+                  "location": [
+                    51.389,
+                    35.689
+                  ]
+                },
+                {
+                  "t": "2025-06-16T12:00:00Z",
+                  "location": [
+                    51.673,
+                    32.654
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "israel",
+      "name": "اسرائیل",
+      "standardIdentity": "6",
+      "groups": [
+        {
+          "id": "grp-il-iaf",
+          "name": "نیروی هوایی اسرائیل (IAF) و دفاع هوایی",
+          "subUnits": [
+            {
+              "id": "iaf-air-ops",
+              "name": "عملیات هوایی/پدافندی (Iron Shield/Arrow/David's Sling/Patriot)",
+              "shortName": "IAF/AD",
+              "sidc": "10061000181211000000",
+              "subUnits": [],
+              "state": [
+                {
+                  "t": "2025-06-13T18:00:00Z",
+                  "location": [
+                    35.012,
+                    31.208
+                  ]
+                },
+                {
+                  "t": "2025-06-15T00:00:00Z",
+                  "location": [
+                    34.666,
+                    30.776
+                  ]
+                },
+                {
+                  "t": "2025-06-16T12:00:00Z",
+                  "location": [
+                    34.826,
+                    31.839
+                  ]
+                },
+                {
+                  "t": "2025-06-18T00:00:00Z",
+                  "location": [
+                    34.74,
+                    31.935
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "layers": [
+    {
+      "name": "Features",
+      "id": "df60f92f-a2cb-469c-a369-283add5ab456",
+      "features": []
+    }
+  ],
+  "events": [],
+  "mapLayers": [],
+  "equipment": [],
+  "personnel": [],
+  "supplyCategories": [],
+  "settings": {
+    "rangeRingGroups": [],
+    "statuses": [],
+    "supplyClasses": [],
+    "supplyUoMs": [],
+    "map": {
+      "baseMapId": "osm"
+    }
+  }
+}

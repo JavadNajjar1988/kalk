@@ -1,0 +1,415 @@
+{
+  "nodes": [
+    {
+      "id": "military",
+      "name": "نظامی",
+      "level": 1,
+      "description": "مأموریت‌های نظامی و دفاعی",
+      "children": [
+        {
+          "id": "military_strategic",
+          "name": "راهبردی",
+          "level": 2,
+          "parentId": "military",
+          "description": "عملیات در سطح راهبردی و ملی",
+          "children": [
+            {
+              "id": "strategic_offensive",
+              "name": "تهاجمی",
+              "level": 3,
+              "parentId": "military_strategic",
+              "description": "عملیات تهاجمی راهبردی",
+              "children": [
+                {
+                  "id": "str_off_invasion", 
+                  "name": "تهاجم کلان", 
+                  "level": 4, 
+                  "parentId": "strategic_offensive", 
+                  "description": "عملیات تهاجم کلان و اشغال",
+                  "children": [
+                    {"id": "invasion_blitzkrieg", "name": "جنگ برق‌آسا", "level": 5, "parentId": "str_off_invasion", "description": "حملات سریع و گسترده"},
+                    {"id": "invasion_combined_arms", "name": "تهاجم ترکیبی", "level": 5, "parentId": "str_off_invasion", "description": "تهاجم با تمام نیروها"}
+                  ]
+                },
+                {
+                  "id": "str_off_preemptive", 
+                  "name": "پیشدستانه", 
+                  "level": 4, 
+                  "parentId": "strategic_offensive", 
+                  "description": "حملات پیشدستانه و پیشگیرانه",
+                  "children": [
+                    {"id": "preemptive_first_strike", "name": "ضربه اول", "level": 5, "parentId": "str_off_preemptive", "description": "ضربه اول استراتژیک"},
+                    {"id": "preemptive_surgical", "name": "ضربه جراحی", "level": 5, "parentId": "str_off_preemptive", "description": "حملات دقیق به اهداف حیاتی"}
+                  ]
+                },
+                {
+                  "id": "str_off_deterrence_active", 
+                  "name": "بازدارندگی فعال", 
+                  "level": 4, 
+                  "parentId": "strategic_offensive", 
+                  "description": "عملیات بازدارندگی فعال و قدرت‌نمایی",
+                  "children": [
+                    {"id": "deterrence_show_force", "name": "قدرت‌نمایی", "level": 5, "parentId": "str_off_deterrence_active", "description": "عملیات قدرت‌نمایی نظامی"},
+                    {"id": "deterrence_maneuvers", "name": "رزمایش بازدارنده", "level": 5, "parentId": "str_off_deterrence_active", "description": "رزمایش‌های بازدارنده"}
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "strategic_defensive",
+              "name": "تدافعی",
+              "level": 3,
+              "parentId": "military_strategic",
+              "description": "عملیات تدافعی راهبردی",
+              "children": [
+                {
+                  "id": "str_def_homeland", 
+                  "name": "دفاع از سرزمین", 
+                  "level": 4, 
+                  "parentId": "strategic_defensive", 
+                  "description": "دفاع از سرزمین و مرزها",
+                  "children": [
+                    {"id": "homeland_border_defense", "name": "دفاع مرزی", "level": 5, "parentId": "str_def_homeland", "description": "دفاع از مرزهای کشور"},
+                    {"id": "homeland_coastal_defense", "name": "دفاع ساحلی", "level": 5, "parentId": "str_def_homeland", "description": "دفاع از سواحل و آب‌های سرزمینی"}
+                  ]
+                },
+                {
+                  "id": "str_def_deterrence", 
+                  "name": "بازدارندگی", 
+                  "level": 4, 
+                  "parentId": "strategic_defensive", 
+                  "description": "عملیات بازدارندگی راهبردی",
+                  "children": [
+                    {"id": "deterrence_nuclear", "name": "بازدارندگی هسته‌ای", "level": 5, "parentId": "str_def_deterrence", "description": "بازدارندگی هسته‌ای"},
+                    {"id": "deterrence_conventional", "name": "بازدارندگی متعارف", "level": 5, "parentId": "str_def_deterrence", "description": "بازدارندگی با سلاح‌های متعارف"}
+                  ]
+                },
+                {
+                  "id": "str_def_passive", 
+                  "name": "دفاع غیرعامل", 
+                  "level": 4, 
+                  "parentId": "strategic_defensive", 
+                  "description": "پدافند غیرعامل و دفاع منفعل",
+                  "children": [
+                    {"id": "passive_air_defense", "name": "پدافند هوایی غیرعامل", "level": 5, "parentId": "str_def_passive", "description": "پدافند هوایی غیرعامل"},
+                    {"id": "passive_civil_defense", "name": "پدافند غیرنظامی", "level": 5, "parentId": "str_def_passive", "description": "پدافند غیرنظامی و حفاظت از زیرساخت‌ها"}
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "strategic_intelligence",
+              "name": "اطلاعاتی",
+              "level": 3,
+              "parentId": "military_strategic",
+              "description": "عملیات اطلاعاتی و جنگ سایبری در سطح راهبردی",
+              "children": [
+                {
+                  "id": "str_intel_strategic_recon", 
+                  "name": "شناسایی راهبردی", 
+                  "level": 4, 
+                  "parentId": "strategic_intelligence", 
+                  "description": "شناسایی و جمع‌آوری اطلاعات راهبردی",
+                  "children": [
+                    {"id": "strategic_humint", "name": "اطلاعات انسانی", "level": 5, "parentId": "str_intel_strategic_recon", "description": "جمع‌آوری اطلاعات از منابع انسانی"},
+                    {"id": "strategic_sigint", "name": "استراق سمع", "level": 5, "parentId": "str_intel_strategic_recon", "description": "استراق سمع و رهگیری مخابرات"}
+                  ]
+                },
+                {
+                  "id": "str_intel_cyber_warfare", 
+                  "name": "جنگ سایبری", 
+                  "level": 4, 
+                  "parentId": "strategic_intelligence", 
+                  "description": "عملیات سایبری در سطح ملی",
+                  "children": [
+                    {"id": "cyber_offensive", "name": "حمله سایبری", "level": 5, "parentId": "str_intel_cyber_warfare", "description": "حملات سایبری به زیرساخت‌های دشمن"},
+                    {"id": "cyber_defensive", "name": "دفاع سایبری", "level": 5, "parentId": "str_intel_cyber_warfare", "description": "حفاظت از زیرساخت‌های سایبری"}
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "military_operational",
+          "name": "عملیاتی",
+          "level": 2,
+          "parentId": "military",
+          "description": "عملیات در سطح عملیاتی و منطقه‌ای",
+          "children": [
+            {
+              "id": "operational_joint",
+              "name": "مشترک",
+              "level": 3,
+              "parentId": "military_operational",
+              "description": "عملیات مشترک نیروها",
+              "children": [
+                {
+                  "id": "op_joint_combined", 
+                  "name": "ترکیبی", 
+                  "level": 4, 
+                  "parentId": "operational_joint", 
+                  "description": "عملیات ترکیبی نیروهای مختلف",
+                  "children": [
+                    {"id": "combined_air_land", "name": "هوا-زمین", "level": 5, "parentId": "op_joint_combined", "description": "عملیات ترکیبی هوایی-زمینی"},
+                    {"id": "combined_sea_land", "name": "دریا-زمین", "level": 5, "parentId": "op_joint_combined", "description": "عملیات ترکیبی دریایی-زمینی"}
+                  ]
+                },
+                {
+                  "id": "op_joint_coordinated", 
+                  "name": "هماهنگ", 
+                  "level": 4, 
+                  "parentId": "operational_joint", 
+                  "description": "عملیات هماهنگ بین نیروها",
+                  "children": [
+                    {"id": "coordinated_timing", "name": "هماهنگی زمانی", "level": 5, "parentId": "op_joint_coordinated", "description": "هماهنگی در زمان‌بندی عملیات"},
+                    {"id": "coordinated_logistics", "name": "هماهنگی لجستیکی", "level": 5, "parentId": "op_joint_coordinated", "description": "هماهنگی در پشتیبانی لجستیکی"}
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "operational_regional",
+              "name": "منطقه‌ای",
+              "level": 3,
+              "parentId": "military_operational",
+              "description": "عملیات در سطح منطقه‌ای",
+              "children": [
+                {
+                  "id": "regional_theater", 
+                  "name": "تئاتر عملیات", 
+                  "level": 4, 
+                  "parentId": "operational_regional", 
+                  "description": "مدیریت تئاتر عملیات منطقه‌ای",
+                  "children": [
+                    {"id": "theater_command", "name": "فرماندهی تئاتر", "level": 5, "parentId": "regional_theater", "description": "فرماندهی کل تئاتر عملیات"},
+                    {"id": "theater_logistics", "name": "لجستیک تئاتر", "level": 5, "parentId": "regional_theater", "description": "پشتیبانی لجستیکی تئاتر عملیات"}
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "military_tactical",
+          "name": "تاکتیکی",
+          "level": 2,
+          "parentId": "military",
+          "description": "عملیات در سطح تاکتیکی و میدانی",
+          "children": [
+            {
+              "id": "tactical_combat",
+              "name": "رزمی",
+              "level": 3,
+              "parentId": "military_tactical",
+              "description": "عملیات رزمی مستقیم",
+              "children": [
+                {
+                  "id": "tac_combat_assault", 
+                  "name": "یورش", 
+                  "level": 4, 
+                  "parentId": "tactical_combat", 
+                  "description": "عملیات یورش و حمله",
+                  "children": [
+                    {"id": "assault_direct", "name": "یورش مستقیم", "level": 5, "parentId": "tac_combat_assault", "description": "یورش مستقیم به هدف"},
+                    {"id": "assault_flanking", "name": "یورش جناحی", "level": 5, "parentId": "tac_combat_assault", "description": "یورش از طرفین و جناح‌ها"},
+                    {"id": "assault_penetration", "name": "نفوذ و رخنه", "level": 5, "parentId": "tac_combat_assault", "description": "نفوذ به خطوط دشمن"}
+                  ]
+                },
+                {
+                  "id": "tac_combat_defense", 
+                  "name": "دفاع", 
+                  "level": 4, 
+                  "parentId": "tactical_combat", 
+                  "description": "عملیات دفاعی",
+                  "children": [
+                    {"id": "defense_position", "name": "دفاع موضعی", "level": 5, "parentId": "tac_combat_defense", "description": "دفاع از موضع ثابت"},
+                    {"id": "defense_mobile", "name": "دفاع متحرک", "level": 5, "parentId": "tac_combat_defense", "description": "دفاع با واحدهای متحرک"},
+                    {"id": "defense_depth", "name": "دفاع در عمق", "level": 5, "parentId": "tac_combat_defense", "description": "دفاع لایه‌ای و عمقی"}
+                  ]
+                },
+                {
+                  "id": "tac_combat_special", 
+                  "name": "ویژه", 
+                  "level": 4, 
+                  "parentId": "tactical_combat", 
+                  "description": "عملیات ویژه تاکتیکی",
+                  "children": [
+                    {"id": "special_raid", "name": "غارت", "level": 5, "parentId": "tac_combat_special", "description": "عملیات غارت و ضربه سریع"},
+                    {"id": "special_ambush", "name": "کمین", "level": 5, "parentId": "tac_combat_special", "description": "عملیات کمین و غافلگیری"},
+                    {"id": "special_infiltration", "name": "نفوذ", "level": 5, "parentId": "tac_combat_special", "description": "نفوذ مخفیانه"}
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "tactical_support",
+              "name": "پشتیبانی",
+              "level": 3,
+              "parentId": "military_tactical",
+              "description": "عملیات پشتیبانی تاکتیکی",
+              "children": [
+                {
+                  "id": "tac_support_logistics", 
+                  "name": "لجستیکی", 
+                  "level": 4, 
+                  "parentId": "tactical_support", 
+                  "description": "پشتیبانی لجستیکی میدانی",
+                  "children": [
+                    {"id": "logistics_supply", "name": "تأمین", "level": 5, "parentId": "tac_support_logistics", "description": "تأمین مواد و تجهیزات"},
+                    {"id": "logistics_transport", "name": "حمل‌ونقل", "level": 5, "parentId": "tac_support_logistics", "description": "حمل‌ونقل میدانی"}
+                  ]
+                },
+                {
+                  "id": "tac_support_medical", 
+                  "name": "پزشکی", 
+                  "level": 4, 
+                  "parentId": "tactical_support", 
+                  "description": "پشتیبانی پزشکی میدانی",
+                  "children": [
+                    {"id": "medical_evacuation", "name": "تخلیه پزشکی", "level": 5, "parentId": "tac_support_medical", "description": "تخلیه مجروحان"},
+                    {"id": "medical_field_treatment", "name": "درمان میدانی", "level": 5, "parentId": "tac_support_medical", "description": "درمان اولیه در میدان"}
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "tactical_reconnaissance",
+              "name": "شناسایی",
+              "level": 3,
+              "parentId": "military_tactical",
+              "description": "عملیات شناسایی تاکتیکی",
+              "children": [
+                {
+                  "id": "recon_ground", 
+                  "name": "زمینی", 
+                  "level": 4, 
+                  "parentId": "tactical_reconnaissance", 
+                  "description": "شناسایی زمینی",
+                  "children": [
+                    {"id": "ground_patrol", "name": "گشت‌زنی", "level": 5, "parentId": "recon_ground", "description": "گشت‌زنی شناسایی"},
+                    {"id": "ground_observation", "name": "رصد", "level": 5, "parentId": "recon_ground", "description": "رصد و مشاهده"}
+                  ]
+                },
+                {
+                  "id": "recon_aerial", 
+                  "name": "هوایی", 
+                  "level": 4, 
+                  "parentId": "tactical_reconnaissance", 
+                  "description": "شناسایی هوایی",
+                  "children": [
+                    {"id": "aerial_drone", "name": "پهپادی", "level": 5, "parentId": "recon_aerial", "description": "شناسایی با پهپاد"},
+                    {"id": "aerial_manned", "name": "سرنشین‌دار", "level": 5, "parentId": "recon_aerial", "description": "شناسایی با هواپیمای سرنشین‌دار"}
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "security",
+      "name": "امنیتی",
+      "level": 1,
+      "description": "مأموریت‌های امنیتی و انتظامی",
+      "children": [
+        {
+          "id": "security_internal",
+          "name": "داخلی",
+          "level": 2,
+          "parentId": "security",
+          "description": "امنیت داخلی و انتظامی",
+          "children": [
+            {
+              "id": "security_public_order",
+              "name": "نظم عمومی",
+              "level": 3,
+              "parentId": "security_internal",
+              "description": "حفظ نظم و امنیت عمومی",
+              "children": [
+                {"id": "pub_order_crowd", "name": "کنترل جمعیت", "level": 4, "parentId": "security_public_order", "description": "کنترل جمعیت و تجمعات"},
+                {"id": "pub_order_patrol", "name": "گشت‌زنی", "level": 4, "parentId": "security_public_order", "description": "گشت‌زنی و مراقبت عمومی"}
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "humanitarian",
+      "name": "انسان‌دوستانه",
+      "level": 1,
+      "description": "مأموریت‌های انسان‌دوستانه و امدادی",
+      "children": [
+        {
+          "id": "humanitarian_disaster",
+          "name": "بلایای طبیعی",
+          "level": 2,
+          "parentId": "humanitarian",
+          "description": "امداد در بلایای طبیعی",
+          "children": [
+            {
+              "id": "disaster_rescue",
+              "name": "امداد و نجات",
+              "level": 3,
+              "parentId": "humanitarian_disaster",
+              "description": "عملیات امداد و نجات",
+              "children": [
+                {"id": "rescue_search", "name": "جستجو", "level": 4, "parentId": "disaster_rescue", "description": "جستجوی مفقودان"},
+                {"id": "rescue_evacuation", "name": "تخلیه", "level": 4, "parentId": "disaster_rescue", "description": "تخلیه مناطق خطرناک"}
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "levels": [
+    { 
+      "id": "1", 
+      "name": "طبیعت مأموریت", 
+      "englishName": "Mission Nature", 
+      "order": 1, 
+      "isRequired": true, 
+      "isActive": true,
+      "description": "طبیعت و ماهیت کلی مأموریت"
+    },
+    { 
+      "id": "2", 
+      "name": "سطح عملیاتی", 
+      "englishName": "Operational Level", 
+      "order": 2, 
+      "isRequired": true, 
+      "isActive": true,
+      "description": "سطح و دامنه عملیاتی مأموریت"
+    },
+    { 
+      "id": "3", 
+      "name": "نوع عملیات", 
+      "englishName": "Operation Type", 
+      "order": 3, 
+      "isRequired": true, 
+      "isActive": true,
+      "description": "نوع و روش اجرای عملیات"
+    },
+    { 
+      "id": "4", 
+      "name": "تخصص عملیاتی", 
+      "englishName": "Operational Specialty", 
+      "order": 4, 
+      "isRequired": false, 
+      "isActive": true,
+      "description": "تخصص و جزئیات عملیاتی"
+    },
+    { 
+      "id": "5", 
+      "name": "زیر تخصص", 
+      "englishName": "Sub-specialty", 
+      "order": 5, 
+      "isRequired": false, 
+      "isActive": true,
+      "description": "زیر تخصص‌ها و جزئیات تخصصی"
+    }
+  ]
+}

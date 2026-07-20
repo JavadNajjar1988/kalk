@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Model Access Test</title>
+</head>
+<body>
+    <h1>Model Access Test</h1>
+    <p>Testing if the model file is accessible:</p>
+    
+    <h2>Method 1: Direct Link</h2>
+    <a href="/Model/cesium/t-35_heavy_five-turret_tank/scene.gltf" target="_blank">Open GLTF Model File</a>
+    
+    <h2>Method 2: Fetch API Test</h2>
+    <button onclick="testModelAccess()">Test Model Access</button>
+    <div id="result"></div>
+    
+    <h2>Method 3: Image Test (if textures are accessible)</h2>
+    <img src="/Model/cesium/t-35_heavy_five-turret_tank/textures/base_baseColor.png" alt="Texture Test" style="max-width: 200px;" onerror="this.alt='Texture not accessible'">
+    
+    <script>
+        async function testModelAccess() {
+            const resultDiv = document.getElementById('result');
+            try {
+                resultDiv.innerHTML = 'Testing...';
+                const response = await fetch('/Model/cesium/t-35_heavy_five-turret_tank/scene.gltf');
+                if (response.ok) {
+                    const contentType = response.headers.get('content-type');
+                    resultDiv.innerHTML = `
+                        <p style="color: green;">✓ Model file is accessible!</p>
+                        <p>Status: ${response.status} ${response.statusText}</p>
+                        <p>Content-Type: ${contentType}</p>
+                        <p>Content-Length: ${response.headers.get('content-length') || 'Unknown'}</p>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `
+                        <p style="color: red;">✗ Failed to access model file</p>
+                        <p>Status: ${response.status} ${response.statusText}</p>
+                    `;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <p style="color: red;">✗ Error accessing model file:</p>
+                    <p>${error.message}</p>
+                `;
+            }
+        }
+    </script>
+</body>
+</html>

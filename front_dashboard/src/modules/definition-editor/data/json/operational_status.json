@@ -1,0 +1,200 @@
+{
+  "nodes": [
+    {
+      "id": "1",
+      "name": "وضعیت‌های عملیاتی",
+      "level": 1,
+      "parentId": null,
+      "description": "وضعیت‌های مختلف عملیاتی یگان‌ها",
+      "children": [
+        {
+          "id": "1-1",
+          "name": "آماده رزم",
+          "level": 2,
+          "parentId": "1",
+          "description": "یگان آماده برای عملیات رزمی"
+        },
+        {
+          "id": "1-2",
+          "name": "در حال عملیات",
+          "level": 2,
+          "parentId": "1",
+          "description": "یگان در حال انجام عملیات"
+        },
+        {
+          "id": "1-3",
+          "name": "بازسازی",
+          "level": 2,
+          "parentId": "1",
+          "description": "یگان در حال بازسازی و تجدید قوا"
+        },
+        {
+          "id": "1-4",
+          "name": "آموزش",
+          "level": 2,
+          "parentId": "1",
+          "description": "یگان در حال آموزش و تمرین"
+        }
+      ]
+    }
+  ]
+  ,
+  "levels": [
+    {
+      "id": "1",
+      "name": "آماده کامل",
+      "englishName": "Fully Operational",
+      "order": 1,
+      "isRequired": true,
+      "isActive": true,
+      "description": "یگان در حداکثر آمادگی عملیاتی",
+      "icon": "🟢",
+      "readinessLevel": "C1",
+      "percentage": "91-100%",
+      "responseTime": "فوری"
+    },
+    {
+      "id": "2",
+      "name": "آماده عملیاتی",
+      "englishName": "Operationally Ready",
+      "order": 2,
+      "isRequired": true,
+      "isActive": true,
+      "description": "آماده برای انجام مأموریت‌های اصلی",
+      "icon": "🟡",
+      "readinessLevel": "C2",
+      "percentage": "81-90%",
+      "responseTime": "کوتاه‌مدت"
+    },
+    {
+      "id": "3",
+      "name": "آماده محدود",
+      "englishName": "Limited Ready",
+      "order": 3,
+      "isRequired": true,
+      "isActive": true,
+      "description": "قابلیت انجام مأموریت‌های محدود",
+      "icon": "🟠",
+      "readinessLevel": "C3",
+      "percentage": "61-80%",
+      "responseTime": "متوسط"
+    },
+    {
+      "id": "4",
+      "name": "در حال آموزش",
+      "englishName": "In Training",
+      "order": 4,
+      "isRequired": true,
+      "isActive": true,
+      "description": "یگان در دوره آموزش و تمرین",
+      "icon": "📚",
+      "readinessLevel": "T1",
+      "percentage": "41-60%",
+      "responseTime": "طولانی‌مدت"
+    },
+    {
+      "id": "5",
+      "name": "آماده رزمایش",
+      "englishName": "Exercise Ready",
+      "order": 5,
+      "isRequired": true,
+      "isActive": true,
+      "description": "آماده شرکت در رزمایش‌ها",
+      "icon": "🎯",
+      "readinessLevel": "E1",
+      "percentage": "71-90%",
+      "responseTime": "برنامه‌ریزی شده"
+    },
+    {
+      "id": "6",
+      "name": "در انتظار",
+      "englishName": "On Standby",
+      "order": 6,
+      "isRequired": true,
+      "isActive": true,
+      "description": "در حالت انتظار و آماده‌باش",
+      "icon": "⏸️",
+      "readinessLevel": "S1",
+      "percentage": "51-70%",
+      "responseTime": "متغیر"
+    },
+    {
+      "id": "7",
+      "name": "در حال تعمیر",
+      "englishName": "Under Maintenance",
+      "order": 7,
+      "isRequired": true,
+      "isActive": true,
+      "description": "نیاز به تعمیر و نگهداری",
+      "icon": "🔧",
+      "readinessLevel": "M1",
+      "percentage": "21-40%",
+      "responseTime": "پس از تعمیر"
+    },
+    {
+      "id": "8",
+      "name": "در حال بازسازی",
+      "englishName": "Being Reconstituted",
+      "order": 8,
+      "isRequired": true,
+      "isActive": true,
+      "description": "در حال بازسازی و تجدید ساختار",
+      "icon": "🔄",
+      "readinessLevel": "R1",
+      "percentage": "11-30%",
+      "responseTime": "بلندمدت"
+    },
+    {
+      "id": "9",
+      "name": "آسیب‌دیده",
+      "englishName": "Combat Damaged",
+      "order": 9,
+      "isRequired": true,
+      "isActive": true,
+      "description": "دچار آسیب رزمی یا عملیاتی",
+      "icon": "💥",
+      "readinessLevel": "D1",
+      "percentage": "5-20%",
+      "responseTime": "نامشخص"
+    },
+    {
+      "id": "10",
+      "name": "غیرفعال",
+      "englishName": "Non-Operational",
+      "order": 10,
+      "isRequired": true,
+      "isActive": true,
+      "description": "خارج از دور عملیاتی",
+      "icon": "🔴",
+      "readinessLevel": "N1",
+      "percentage": "0-10%",
+      "responseTime": "غیرقابل انجام"
+    },
+    {
+      "id": "11",
+      "name": "درگیر در عملیات",
+      "englishName": "Actively Engaged",
+      "order": 11,
+      "isRequired": true,
+      "isActive": true,
+      "description": "مشغول انجام عملیات فعال",
+      "icon": "⚔️",
+      "readinessLevel": "A1",
+      "percentage": "85-100%",
+      "responseTime": "مشغول"
+    },
+    {
+      "id": "12",
+      "name": "در حال استقرار",
+      "englishName": "Deploying",
+      "order": 12,
+      "isRequired": true,
+      "isActive": true,
+      "description": "در حال جابجایی و استقرار",
+      "icon": "🚛",
+      "readinessLevel": "D2",
+      "percentage": "60-80%",
+      "responseTime": "پس از استقرار"
+    }
+  ]
+}

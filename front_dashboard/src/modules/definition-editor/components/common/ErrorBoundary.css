@@ -1,0 +1,122 @@
+/* CSS برای ErrorBoundary */
+
+.error-boundary {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 200px;
+  padding: 20px;
+  background-color: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+}
+
+.error-boundary-content {
+  text-align: center;
+  max-width: 400px;
+}
+
+.error-boundary-icon {
+  font-size: 48px;
+  margin-bottom: 16px;
+}
+
+.error-boundary-title {
+  font-size: 20px;
+  font-weight: 600;
+  color: #dc2626;
+  margin: 0 0 12px 0;
+}
+
+.error-boundary-message {
+  font-size: 14px;
+  color: #6b7280;
+  margin: 0 0 20px 0;
+  line-height: 1.5;
+}
+
+.error-boundary-details {
+  margin: 16px 0;
+  text-align: left;
+}
+
+.error-boundary-details summary {
+  font-size: 14px;
+  font-weight: 500;
+  color: #374151;
+  cursor: pointer;
+  padding: 8px 0;
+}
+
+.error-boundary-details summary:hover {
+  color: #1f2937;
+}
+
+.error-boundary-stack {
+  background-color: #f3f4f6;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  padding: 12px;
+  font-size: 12px;
+  font-family: 'Courier New', monospace;
+  color: #374151;
+  white-space: pre-wrap;
+  overflow-x: auto;
+  margin-top: 8px;
+}
+
+.error-boundary-retry {
+  background-color: #3b82f6;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 10px 20px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.error-boundary-retry:hover {
+  background-color: #2563eb;
+}
+
+.error-boundary-retry:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
+}
+
+/* حالت‌های مختلف */
+.error-boundary.fullscreen {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 9999;
+  background-color: rgba(254, 242, 242, 0.95);
+}
+
+.error-boundary.inline {
+  min-height: auto;
+  padding: 16px;
+}
+
+.error-boundary.compact {
+  padding: 12px;
+}
+
+.error-boundary.compact .error-boundary-icon {
+  font-size: 32px;
+  margin-bottom: 12px;
+}
+
+.error-boundary.compact .error-boundary-title {
+  font-size: 16px;
+  margin-bottom: 8px;
+}
+
+.error-boundary.compact .error-boundary-message {
+  font-size: 13px;
+  margin-bottom: 16px;
+}

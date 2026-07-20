@@ -1,0 +1,1 @@
+export { convertSmartFieldToCustomField } from './fieldConverter';

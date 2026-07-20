@@ -1,0 +1,252 @@
+{
+  "personnel": [
+    {
+      "id": "person-001",
+      "personalCode": "PER001234",
+      "firstName": "احمد",
+      "lastName": "محمدی",
+      "nationalId": "0123456789",
+      "rank": "سرگرد",
+      "unit": "لشکر ۶۵ نوهد",
+      "position": "فرمانده گردان",
+      "phoneNumber": "09123456789",
+      "email": "a.mohammadi@army.ir",
+      "birthDate": "1985-03-15",
+      "startDate": "2010-09-23",
+      "status": "active",
+      "createdAt": "2024-01-15T08:30:00Z",
+      "updatedAt": "2024-01-15T08:30:00Z"
+    },
+    {
+      "id": "person-002",
+      "personalCode": "PER002456",
+      "firstName": "فاطمه",
+      "lastName": "حسینی",
+      "nationalId": "0987654321",
+      "rank": "ستوان",
+      "unit": "پایگاه هوایی شهید بابایی",
+      "position": "افسر عملیات",
+      "phoneNumber": "09187654321",
+      "email": "f.hosseini@airforce.ir",
+      "birthDate": "1990-07-22",
+      "startDate": "2015-04-10",
+      "status": "active",
+      "createdAt": "2024-01-16T09:15:00Z",
+      "updatedAt": "2024-01-16T09:15:00Z"
+    },
+    {
+      "id": "person-003",
+      "personalCode": "PER003789",
+      "firstName": "علی",
+      "lastName": "احمدی",
+      "nationalId": "1234567890",
+      "rank": "جوان‌یکم",
+      "unit": "نیروی دریایی بندرعباس",
+      "position": "تکنسین رادار",
+      "phoneNumber": "09361234567",
+      "email": "a.ahmadi@navy.ir",
+      "birthDate": "1995-11-08",
+      "startDate": "2018-02-14",
+      "status": "active",
+      "createdAt": "2024-01-17T10:45:00Z",
+      "updatedAt": "2024-01-17T10:45:00Z"
+    },
+    {
+      "id": "person-004",
+      "personalCode": "PER004321",
+      "firstName": "مریم",
+      "lastName": "کریمی",
+      "nationalId": "2468135790",
+      "rank": "گروهبان",
+      "unit": "پادگان امام علی (ع)",
+      "position": "مسئول انبار",
+      "phoneNumber": "09151234567",
+      "email": "m.karimi@army.ir",
+      "birthDate": "1992-01-30",
+      "startDate": "2016-08-20",
+      "status": "leave",
+      "createdAt": "2024-01-18T14:20:00Z",
+      "updatedAt": "2024-01-18T14:20:00Z"
+    },
+    {
+      "id": "person-005",
+      "personalCode": "PER005654",
+      "firstName": "حسن",
+      "lastName": "رضایی",
+      "nationalId": "3691470258",
+      "rank": "سرباز",
+      "unit": "یگان ویژه ناجا",
+      "position": "نیروی عملیاتی",
+      "phoneNumber": "09123334455",
+      "email": "h.rezaei@police.ir",
+      "birthDate": "1998-09-12",
+      "startDate": "2020-06-01",
+      "status": "mission",
+      "createdAt": "2024-01-19T11:30:00Z",
+      "updatedAt": "2024-01-19T11:30:00Z"
+    },
+    {
+      "id": "person-006",
+      "personalCode": "PER006987",
+      "firstName": "زهرا",
+      "lastName": "موسوی",
+      "nationalId": "1472583690",
+      "rank": "ستوان‌دوم",
+      "unit": "پایگاه موشکی شهید طهرانی مقدم",
+      "position": "افسر ارتباطات",
+      "phoneNumber": "09177889900",
+      "email": "z.mousavi@irgc.ir",
+      "birthDate": "1988-12-05",
+      "startDate": "2012-03-18",
+      "status": "active",
+      "createdAt": "2024-01-20T16:45:00Z",
+      "updatedAt": "2024-01-20T16:45:00Z"
+    },
+    {
+      "id": "person-007",
+      "personalCode": "PER007123",
+      "firstName": "محمد",
+      "lastName": "صادقی",
+      "nationalId": "9876543210",
+      "rank": "سرهنگ",
+      "unit": "ستاد کل نیروهای مسلح",
+      "position": "معاون عملیات",
+      "phoneNumber": "09121112233",
+      "email": "m.sadeghi@afagc.ir",
+      "birthDate": "1975-04-18",
+      "startDate": "2000-05-12",
+      "status": "active",
+      "createdAt": "2024-01-21T08:00:00Z",
+      "updatedAt": "2024-01-21T08:00:00Z"
+    },
+    {
+      "id": "person-008",
+      "personalCode": "PER008456",
+      "firstName": "نرگس",
+      "lastName": "جعفری",
+      "nationalId": "5555666677",
+      "rank": "کارشناس",
+      "unit": "اداره کل منابع انسانی",
+      "position": "مسئول آموزش",
+      "phoneNumber": "09199887766",
+      "email": "n.jafari@hr.ir",
+      "birthDate": "1987-06-25",
+      "startDate": "2014-01-08",
+      "status": "inactive",
+      "createdAt": "2024-01-22T13:15:00Z",
+      "updatedAt": "2024-01-22T13:15:00Z"
+    }
+  ],
+  "categories": [
+    {
+      "id": "officers",
+      "name": "افسران",
+      "description": "کادر افسری"
+    },
+    {
+      "id": "enlisted",
+      "name": "درجه‌داران",
+      "description": "کادر درجه‌دار"
+    },
+    {
+      "id": "civilian",
+      "name": "غیرنظامی",
+      "description": "پرسنل غیرنظامی"
+    }
+  ],
+  "fields": [
+    {
+      "id": "personalCode",
+      "name": "کد پرسنلی",
+      "type": "text",
+      "required": true
+    },
+    {
+      "id": "firstName",
+      "name": "نام",
+      "type": "text",
+      "required": true
+    },
+    {
+      "id": "lastName",
+      "name": "نام خانوادگی",
+      "type": "text",
+      "required": true
+    },
+    {
+      "id": "nationalId",
+      "name": "کد ملی",
+      "type": "text",
+      "required": true
+    },
+    {
+      "id": "rank",
+      "name": "درجه",
+      "type": "select",
+      "required": true,
+      "options": []
+    },
+    {
+      "id": "unit",
+      "name": "یگان",
+      "type": "text",
+      "required": true
+    },
+    {
+      "id": "position",
+      "name": "سمت",
+      "type": "text",
+      "required": false
+    },
+    {
+      "id": "phoneNumber",
+      "name": "شماره تماس",
+      "type": "tel",
+      "required": false
+    },
+    {
+      "id": "email",
+      "name": "ایمیل",
+      "type": "email",
+      "required": false
+    },
+    {
+      "id": "birthDate",
+      "name": "تاریخ تولد",
+      "type": "date",
+      "required": false
+    },
+    {
+      "id": "startDate",
+      "name": "تاریخ شروع خدمت",
+      "type": "date",
+      "required": true
+    },
+    {
+      "id": "status",
+      "name": "وضعیت",
+      "type": "select",
+      "required": true,
+      "options": [
+        { "value": "active", "label": "فعال" },
+        { "value": "inactive", "label": "غیرفعال" },
+        { "value": "leave", "label": "مرخصی" },
+        { "value": "mission", "label": "ماموریت" }
+      ]
+    }
+  ],
+  "templates": [
+    {
+      "id": "officer_template",
+      "name": "قالب افسر",
+      "category": "officers",
+      "fields": ["personalCode", "firstName", "lastName", "nationalId", "rank", "unit", "position", "phoneNumber", "email", "birthDate", "startDate", "status"]
+    },
+    {
+      "id": "enlisted_template",
+      "name": "قالب درجه‌دار",
+      "category": "enlisted",
+      "fields": ["personalCode", "firstName", "lastName", "nationalId", "rank", "unit", "phoneNumber", "startDate", "status"]
+    }
+  ]
+}

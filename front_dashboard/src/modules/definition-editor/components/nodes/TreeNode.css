@@ -1,0 +1,237 @@
+/* CSS برای TreeNode */
+
+.tree-node {
+  position: relative;
+}
+
+.tree-node-content {
+  display: flex;
+  align-items: center;
+  padding: 8px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  user-select: none;
+}
+
+.tree-node-content:hover {
+  background-color: #f3f4f6;
+}
+
+.tree-node-content.selected {
+  background-color: #dbeafe;
+  border: 1px solid #3b82f6;
+}
+
+.tree-node-content.highlighted {
+  background-color: #fef3c7;
+  border: 1px solid #f59e0b;
+}
+
+.tree-node-toggle {
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 8px;
+}
+
+.tree-node-toggle-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 12px;
+  color: #6b7280;
+  transition: transform 0.2s ease;
+  padding: 2px;
+  border-radius: 3px;
+}
+
+.tree-node-toggle-btn:hover {
+  background-color: #e5e7eb;
+  color: #374151;
+}
+
+.tree-node-toggle-btn.expanded {
+  transform: rotate(90deg);
+}
+
+.tree-node-toggle-placeholder {
+  width: 20px;
+  height: 20px;
+}
+
+.tree-node-icon {
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 12px;
+  font-size: 16px;
+}
+
+.tree-node-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.tree-node-name {
+  font-size: 14px;
+  font-weight: 500;
+  color: #374151;
+  margin-bottom: 2px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tree-node-description {
+  font-size: 12px;
+  color: #6b7280;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tree-node-actions {
+  display: flex;
+  gap: 4px;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.tree-node-content:hover .tree-node-actions {
+  opacity: 1;
+}
+
+.tree-node-action-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  font-size: 14px;
+  transition: background-color 0.2s ease;
+}
+
+.tree-node-action-btn:hover {
+  background-color: #e5e7eb;
+}
+
+.tree-node-action-btn.edit:hover {
+  background-color: #dbeafe;
+}
+
+.tree-node-action-btn.delete:hover {
+  background-color: #fee2e2;
+}
+
+.tree-node-children {
+  margin-left: 20px;
+  border-left: 1px solid #e5e7eb;
+}
+
+/* Context Menu */
+.tree-node-context-menu {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 1000;
+}
+
+.context-menu-content {
+  position: absolute;
+  background-color: white;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  padding: 4px 0;
+  min-width: 150px;
+  z-index: 1001;
+}
+
+.context-menu-item {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding: 8px 12px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 14px;
+  color: #374151;
+  transition: background-color 0.2s ease;
+}
+
+.context-menu-item:hover {
+  background-color: #f3f4f6;
+}
+
+.context-menu-icon {
+  margin-right: 8px;
+  font-size: 16px;
+}
+
+/* حالت‌های مختلف */
+.tree-node.compact .tree-node-content {
+  padding: 4px 8px;
+}
+
+.tree-node.compact .tree-node-name {
+  font-size: 13px;
+}
+
+.tree-node.compact .tree-node-description {
+  font-size: 11px;
+}
+
+.tree-node.large .tree-node-content {
+  padding: 12px 16px;
+}
+
+.tree-node.large .tree-node-name {
+  font-size: 16px;
+}
+
+.tree-node.large .tree-node-description {
+  font-size: 14px;
+}
+
+/* انیمیشن‌ها */
+.tree-node-children {
+  animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* حالت‌های خاص */
+.tree-node.dragging {
+  opacity: 0.5;
+}
+
+.tree-node.drag-over {
+  border: 2px dashed #3b82f6;
+  background-color: #dbeafe;
+}
+
+.tree-node.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.tree-node.disabled .tree-node-content:hover {
+  background-color: transparent;
+}

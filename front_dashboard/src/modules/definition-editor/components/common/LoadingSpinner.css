@@ -1,0 +1,72 @@
+/* CSS برای LoadingSpinner */
+
+.loading-spinner-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.loading-spinner {
+  border: 3px solid #f3f4f6;
+  border-top: 3px solid #3b82f6;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+.loading-spinner-small {
+  width: 20px;
+  height: 20px;
+  border-width: 2px;
+}
+
+.loading-spinner-medium {
+  width: 32px;
+  height: 32px;
+  border-width: 3px;
+}
+
+.loading-spinner-large {
+  width: 48px;
+  height: 48px;
+  border-width: 4px;
+}
+
+.loading-spinner-text {
+  margin-top: 12px;
+  font-size: 14px;
+  font-weight: 500;
+  text-align: center;
+  color: #6b7280;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* حالت‌های مختلف */
+.loading-spinner-container.overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(255, 255, 255, 0.8);
+  z-index: 1000;
+}
+
+.loading-spinner-container.inline {
+  padding: 10px;
+}
+
+.loading-spinner-container.fullscreen {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(255, 255, 255, 0.9);
+  z-index: 9999;
+}

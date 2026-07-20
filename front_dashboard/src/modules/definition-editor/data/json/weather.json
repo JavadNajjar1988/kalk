@@ -1,0 +1,390 @@
+{
+  "category": {
+    "id": "weather",
+    "name": "آب و هوا",
+    "englishName": "Weather",
+    "description": "تعاریف مرتبط با شرایط آب و هوایی",
+    "icon": "cloud-sun",
+    "color": "#60A5FA",
+    "maxLevels": 6,
+    "isActive": true,
+    "order": 17,
+    "type": "WEATHER"
+  },
+  "levels": [
+    {
+      "id": "1",
+      "name": "دسته‌بندی اصلی آب و هوا",
+      "englishName": "Primary Weather Classification",
+      "order": 1,
+      "isRequired": true,
+      "isActive": true,
+      "description": "سطح اول: دسته‌بندی‌های اصلی شرایط جوی",
+      "icon": "🌤️"
+    },
+    {
+      "id": "2",
+      "name": "زیردسته‌های آب و هوایی",
+      "englishName": "Weather Subcategories",
+      "order": 2,
+      "isRequired": true,
+      "isActive": true,
+      "description": "سطح دوم: تقسیم‌بندی‌های تخصصی هر دسته اصلی",
+      "icon": "⛅"
+    },
+    {
+      "id": "3",
+      "name": "پارامترهای اندازه‌گیری",
+      "englishName": "Measurement Parameters",
+      "order": 3,
+      "isRequired": false,
+      "isActive": true,
+      "description": "سطح سوم: پارامترهای قابل اندازه‌گیری و سنجش",
+      "icon": "📊"
+    },
+    {
+      "id": "4",
+      "name": "مقادیر و محدوده‌ها",
+      "englishName": "Values and Ranges",
+      "order": 4,
+      "isRequired": false,
+      "isActive": true,
+      "description": "سطح چهارم: مقادیر عددی و محدوده‌های مشخص",
+      "icon": "📏"
+    },
+    {
+      "id": "5",
+      "name": "تأثیرات عملیاتی",
+      "englishName": "Operational Impacts",
+      "order": 5,
+      "isRequired": false,
+      "isActive": true,
+      "description": "سطح پنجم: تأثیرات بر عملیات نظامی و تاکتیکی",
+      "icon": "🎯"
+    },
+    {
+      "id": "6",
+      "name": "پاسخ‌های تاکتیکی",
+      "englishName": "Tactical Responses",
+      "order": 6,
+      "isRequired": false,
+      "isActive": true,
+      "description": "سطح ششم: واکنش‌ها و استراتژی‌های مقابله",
+      "icon": "⚡"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "WC1",
+      "name": "شرایط جوی عمومی",
+      "englishName": "General Atmospheric Conditions",
+      "level": 1,
+      "parentId": null,
+      "description": "دسته‌بندی اصلی شرایط آب و هوایی",
+      "children": [
+        {
+          "id": "WC1-1",
+          "name": "آفتابی و صاف",
+          "englishName": "Clear and Sunny",
+          "level": 2,
+          "parentId": "WC1",
+          "description": "شرایط آفتابی با حداقل ابر",
+          "children": [
+            { "id": "WC1-1-1", "name": "دید عالی", "englishName": "High Visibility", "level": 3, "parentId": "WC1-1", "description": "دید بیش از 10 کیلومتر" },
+            { "id": "WC1-1-2", "name": "باد آرام", "englishName": "Light Winds", "level": 3, "parentId": "WC1-1", "description": "سرعت باد زیر 20 کیلومتر در ساعت" },
+            { "id": "WC1-1-3", "name": "فشار جو بالا", "englishName": "High Pressure", "level": 3, "parentId": "WC1-1", "description": "سیستم فشار بالای جوی" }
+          ]
+        },
+        {
+          "id": "WC1-2",
+          "name": "ابری و کدر",
+          "englishName": "Cloudy and Overcast",
+          "level": 2,
+          "parentId": "WC1",
+          "description": "شرایط ابری با پوشش متغیر",
+          "children": [
+            { "id": "WC1-2-1", "name": "ابر نازک", "englishName": "Thin Clouds", "level": 3, "parentId": "WC1-2", "description": "پوشش ابری کمتر از 50 درصد" },
+            { "id": "WC1-2-2", "name": "ابر ضخیم", "englishName": "Dense Clouds", "level": 3, "parentId": "WC1-2", "description": "پوشش ابری بیش از 75 درصد" },
+            { "id": "WC1-2-3", "name": "ابر طوفانی", "englishName": "Storm Clouds", "level": 3, "parentId": "WC1-2", "description": "ابرهای کومولونیمبوس" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "WP1",
+      "name": "بارش و بارندگی",
+      "englishName": "Precipitation Events",
+      "level": 1,
+      "parentId": null,
+      "description": "انواع بارش و بارندگی",
+      "children": [
+        {
+          "id": "WP1-1",
+          "name": "باران",
+          "englishName": "Rain",
+          "level": 2,
+          "parentId": "WP1",
+          "description": "بارش به شکل قطرات آب",
+          "children": [
+            { "id": "WP1-1-1", "name": "باران نرم", "englishName": "Light Rain", "level": 3, "parentId": "WP1-1", "description": "میزان بارش کمتر از 2.5 میلی‌متر در ساعت" },
+            { "id": "WP1-1-2", "name": "باران متوسط", "englishName": "Moderate Rain", "level": 3, "parentId": "WP1-1", "description": "میزان بارش 2.5 تا 10 میلی‌متر در ساعت" },
+            { "id": "WP1-1-3", "name": "باران شدید", "englishName": "Heavy Rain", "level": 3, "parentId": "WP1-1", "description": "میزان بارش بیش از 10 میلی‌متر در ساعت" }
+          ]
+        },
+        {
+          "id": "WP1-2",
+          "name": "برف",
+          "englishName": "Snow",
+          "level": 2,
+          "parentId": "WP1",
+          "description": "بارش به شکل کریستال‌های یخ",
+          "children": [
+            { "id": "WP1-2-1", "name": "برف نرم", "englishName": "Light Snow", "level": 3, "parentId": "WP1-2", "description": "نرخ تجمع کمتر از 2 سانتی‌متر در ساعت" },
+            { "id": "WP1-2-2", "name": "برف متوسط", "englishName": "Moderate Snow", "level": 3, "parentId": "WP1-2", "description": "نرخ تجمع 2 تا 5 سانتی‌متر در ساعت" },
+            { "id": "WP1-2-3", "name": "کولاک", "englishName": "Blizzard", "level": 3, "parentId": "WP1-2", "description": "برف همراه با باد شدید و دید محدود" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "WE1",
+      "name": "تأثیرات عملیاتی",
+      "englishName": "Operational Effects",
+      "level": 1,
+      "parentId": null,
+      "description": "تأثیرات آب و هوا بر عملیات نظامی",
+      "children": [
+        {
+          "id": "WE1-1",
+          "name": "تأثیر بر حرکت",
+          "englishName": "Movement Impact",
+          "level": 2,
+          "parentId": "WE1",
+          "description": "تأثیر بر حرکت نیروها و تجهیزات",
+          "children": [
+            {
+              "id": "WE1-1-1",
+              "name": "بدون محدودیت",
+              "englishName": "No Restriction",
+              "level": 3,
+              "parentId": "WE1-1",
+              "description": "عملیات عادی قابل اجرا",
+              "children": [
+                {
+                  "id": "WE1-1-1-1",
+                  "name": "عملیات روزانه",
+                  "level": 4,
+                  "parentId": "WE1-1-1",
+                  "description": "اجرای برنامه‌های عادی",
+                  "children": [
+                    {
+                      "id": "WE1-1-1-1-1",
+                      "name": "آموزش و تمرین",
+                      "level": 5,
+                      "parentId": "WE1-1-1-1",
+                      "description": "برگزاری تمرینات عادی",
+                      "children": [
+                        {
+                          "id": "WE1-1-1-1-1-1",
+                          "name": "بهینه‌سازی عملیات",
+                          "level": 6,
+                          "parentId": "WE1-1-1-1-1",
+                          "description": "استفاده از شرایط عالی برای آموزش"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "WE1-1-2",
+              "name": "محدودیت جزئی",
+              "englishName": "Partial Restriction",
+              "level": 3,
+              "parentId": "WE1-1",
+              "description": "نیاز به احتیاط بیشتر",
+              "children": [
+                {
+                  "id": "WE1-1-2-1",
+                  "name": "کاهش سرعت",
+                  "level": 4,
+                  "parentId": "WE1-1-2",
+                  "description": "حرکت با سرعت کمتر",
+                  "children": [
+                    {
+                      "id": "WE1-1-2-1-1",
+                      "name": "نظارت مضاعف",
+                      "level": 5,
+                      "parentId": "WE1-1-2-1",
+                      "description": "افزایش تعداد نگهبانان",
+                      "children": [
+                        {
+                          "id": "WE1-1-2-1-1-1",
+                          "name": "گشت‌زنی مرتب",
+                          "level": 6,
+                          "parentId": "WE1-1-2-1-1",
+                          "description": "بازرسی منظم وضعیت آب و هوا"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "WE1-1-3",
+              "name": "محدودیت کامل",
+              "englishName": "Complete Restriction",
+              "level": 3,
+              "parentId": "WE1-1",
+              "description": "توقف کلیه عملیات",
+              "children": [
+                {
+                  "id": "WE1-1-3-1",
+                  "name": "حالت اضطراری",
+                  "level": 4,
+                  "parentId": "WE1-1-3",
+                  "description": "فعال‌سازی پروتکل اضطراری",
+                  "children": [
+                    {
+                      "id": "WE1-1-3-1-1",
+                      "name": "انتقال به پایگاه",
+                      "level": 5,
+                      "parentId": "WE1-1-3-1",
+                      "description": "بازگشت به مراکز امن",
+                      "children": [
+                        {
+                          "id": "WE1-1-3-1-1-1",
+                          "name": "ارتباط مستقیم",
+                          "level": 6,
+                          "parentId": "WE1-1-3-1-1",
+                          "description": "حفظ ارتباط با فرماندهی"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "WE1-2",
+          "name": "تأثیر بر دید",
+          "englishName": "Visibility Impact",
+          "level": 2,
+          "parentId": "WE1",
+          "description": "تأثیر بر دید و مشاهده",
+          "children": [
+            {
+              "id": "WE1-2-1",
+              "name": "دید عالی (+10 km)",
+              "englishName": "Excellent Visibility",
+              "level": 3,
+              "parentId": "WE1-2",
+              "description": "شرایط ایده‌آل برای تشخیص",
+              "children": [
+                {
+                  "id": "WE1-2-1-1",
+                  "name": "عملیات تک تیرانداز",
+                  "level": 4,
+                  "parentId": "WE1-2-1",
+                  "description": "دقت بالا در نشانه‌گیری",
+                  "children": [
+                    {
+                      "id": "WE1-2-1-1-1",
+                      "name": "شناسایی هدف",
+                      "level": 5,
+                      "parentId": "WE1-2-1-1",
+                      "description": "تشخیص دقیق اهداف در مسافه زیاد",
+                      "children": [
+                        {
+                          "id": "WE1-2-1-1-1-1",
+                          "name": "بهینه‌سازی تاکتیکی",
+                          "level": 6,
+                          "parentId": "WE1-2-1-1-1",
+                          "description": "استفاده حداکثر از شرایط مطلوب"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "WE1-2-2",
+              "name": "دید متوسط (1-10 km)",
+              "englishName": "Moderate Visibility",
+              "level": 3,
+              "parentId": "WE1-2",
+              "description": "نیاز به ابزار کمکی",
+              "children": [
+                {
+                  "id": "WE1-2-2-1",
+                  "name": "استفاده از دوربین",
+                  "level": 4,
+                  "parentId": "WE1-2-2",
+                  "description": "بهبود دید با ابزارهای نوری",
+                  "children": [
+                    {
+                      "id": "WE1-2-2-1-1",
+                      "name": "رادار کمکی",
+                      "level": 5,
+                      "parentId": "WE1-2-2-1",
+                      "description": "استفاده از سیستم‌های راداری",
+                      "children": [
+                        {
+                          "id": "WE1-2-2-1-1-1",
+                          "name": "هماهنگی سیستم‌ها",
+                          "level": 6,
+                          "parentId": "WE1-2-2-1-1",
+                          "description": "ترکیب دید و رادار برای دقت بیشتر"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "WE1-2-3",
+              "name": "دید محدود (<1 km)",
+              "englishName": "Poor Visibility",
+              "level": 3,
+              "parentId": "WE1-2",
+              "description": "شرایط خطرناک عملیاتی",
+              "children": [
+                {
+                  "id": "WE1-2-3-1",
+                  "name": "اتکا به سیستم‌های هدایت",
+                  "level": 4,
+                  "parentId": "WE1-2-3",
+                  "description": "استفاده از GPS و ناوبری الکترونیکی",
+                  "children": [
+                    {
+                      "id": "WE1-2-3-1-1",
+                      "name": "پروتکل ایمنی",
+                      "level": 5,
+                      "parentId": "WE1-2-3-1",
+                      "description": "اجرای دقیق رویه‌های ایمنی",
+                      "children": [
+                        {
+                          "id": "WE1-2-3-1-1-1",
+                          "name": "توقف موقت عملیات",
+                          "level": 6,
+                          "parentId": "WE1-2-3-1-1",
+                          "description": "تعطیلی تا بهبود شرایط دید"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

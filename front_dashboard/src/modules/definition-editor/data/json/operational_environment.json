@@ -1,0 +1,199 @@
+{
+  "nodes": [
+    {
+      "id": "1",
+      "name": "محیط‌های عملیاتی",
+      "level": 1,
+      "parentId": null,
+      "description": "انواع محیط‌های عملیاتی مختلف",
+      "children": [
+        {
+          "id": "1-1",
+          "name": "محیط کوهستانی",
+          "level": 2,
+          "parentId": "1",
+          "description": "عملیات در مناطق کوهستانی"
+        },
+        {
+          "id": "1-2",
+          "name": "محیط بیابانی",
+          "level": 2,
+          "parentId": "1",
+          "description": "عملیات در مناطق بیابانی"
+        },
+        {
+          "id": "1-3",
+          "name": "محیط شهری",
+          "level": 2,
+          "parentId": "1",
+          "description": "عملیات در مناطق شهری"
+        },
+        {
+          "id": "1-4",
+          "name": "محیط جنگلی",
+          "level": 2,
+          "parentId": "1",
+          "description": "عملیات در مناطق جنگلی"
+        }
+      ]
+    }
+  ],
+  "levels": [
+    {
+      "id": "1",
+      "name": "محیط زمینی",
+      "englishName": "Terrestrial Environment",
+      "order": 1,
+      "isRequired": true,
+      "isActive": true,
+      "description": "عملیات در محیط‌های زمینی",
+      "icon": "🏠",
+      "terrainType": "GROUND",
+      "difficultyLevel": "VARIABLE",
+      "mobilityFactor": "HIGH"
+    },
+    {
+      "id": "2",
+      "name": "محیط شهری",
+      "englishName": "Urban Environment",
+      "order": 2,
+      "isRequired": true,
+      "isActive": true,
+      "description": "عملیات در مناطق شهری و آباد",
+      "icon": "🏢",
+      "terrainType": "URBAN",
+      "difficultyLevel": "HIGH",
+      "mobilityFactor": "LIMITED"
+    },
+    {
+      "id": "3",
+      "name": "محیط کوهستانی",
+      "englishName": "Mountainous Environment",
+      "order": 3,
+      "isRequired": true,
+      "isActive": true,
+      "description": "عملیات در مناطق کوهستانی و بلند",
+      "icon": "⛰️",
+      "terrainType": "MOUNTAIN",
+      "difficultyLevel": "EXTREME",
+      "mobilityFactor": "VERY_LIMITED"
+    },
+    {
+      "id": "4",
+      "name": "محیط بیابانی",
+      "englishName": "Desert Environment",
+      "order": 4,
+      "isRequired": true,
+      "isActive": true,
+      "description": "عملیات در مناطق بیابانی و خشک",
+      "icon": "🏜️",
+      "terrainType": "DESERT",
+      "difficultyLevel": "HIGH",
+      "mobilityFactor": "MODERATE"
+    },
+    {
+      "id": "5",
+      "name": "محیط جنگلی",
+      "englishName": "Forest Environment",
+      "order": 5,
+      "isRequired": true,
+      "isActive": true,
+      "description": "عملیات در مناطق جنگلی و پوشش متراکم",
+      "icon": "🌲",
+      "terrainType": "FOREST",
+      "difficultyLevel": "HIGH",
+      "mobilityFactor": "LIMITED"
+    },
+    {
+      "id": "6",
+      "name": "محیط دریایی",
+      "englishName": "Maritime Environment",
+      "order": 6,
+      "isRequired": true,
+      "isActive": true,
+      "description": "عملیات دریایی و نیروی دریایی",
+      "icon": "🌊",
+      "terrainType": "MARITIME",
+      "difficultyLevel": "MODERATE",
+      "mobilityFactor": "HIGH"
+    },
+    {
+      "id": "7",
+      "name": "محیط ساحلی",
+      "englishName": "Coastal Environment",
+      "order": 7,
+      "isRequired": true,
+      "isActive": true,
+      "description": "عملیات در مناطق ساحلی و رودخانه‌ای",
+      "icon": "🏖️",
+      "terrainType": "COASTAL",
+      "difficultyLevel": "MODERATE",
+      "mobilityFactor": "MODERATE"
+    },
+    {
+      "id": "8",
+      "name": "محیط هوایی",
+      "englishName": "Aerial Environment",
+      "order": 8,
+      "isRequired": true,
+      "isActive": true,
+      "description": "عملیات هوایی و فضایی",
+      "icon": "✈️",
+      "terrainType": "AERIAL",
+      "difficultyLevel": "MODERATE",
+      "mobilityFactor": "VERY_HIGH"
+    },
+    {
+      "id": "9",
+      "name": "محیط زیرزمینی",
+      "englishName": "Underground Environment",
+      "order": 9,
+      "isRequired": true,
+      "isActive": true,
+      "description": "عملیات در فضاهای زیرزمینی و تونل‌ها",
+      "icon": "🕳️",
+      "terrainType": "UNDERGROUND",
+      "difficultyLevel": "EXTREME",
+      "mobilityFactor": "VERY_LIMITED"
+    },
+    {
+      "id": "10",
+      "name": "محیط آب‌وهوایی سخت",
+      "englishName": "Extreme Weather Environment",
+      "order": 10,
+      "isRequired": true,
+      "isActive": true,
+      "description": "عملیات در شرایط آب‌وهوایی سخت",
+      "icon": "⛈️",
+      "terrainType": "WEATHER_EXTREME",
+      "difficultyLevel": "EXTREME",
+      "mobilityFactor": "LIMITED"
+    },
+    {
+      "id": "11",
+      "name": "محیط سایبری",
+      "englishName": "Cyber Environment",
+      "order": 11,
+      "isRequired": true,
+      "isActive": true,
+      "description": "عملیات سایبری و جنگ الکترونیک",
+      "icon": "💻",
+      "terrainType": "CYBER",
+      "difficultyLevel": "HIGH",
+      "mobilityFactor": "VIRTUAL"
+    },
+    {
+      "id": "12",
+      "name": "محیط آلوده هسته‌ای-شیمیایی-بیولوژیک",
+      "englishName": "NBC/CBRN Environment",
+      "order": 12,
+      "isRequired": true,
+      "isActive": true,
+      "description": "عملیات در محیط آلوده هسته‌ای، شیمیایی یا بیولوژیک",
+      "icon": "☢️",
+      "terrainType": "NBC_CBRN",
+      "difficultyLevel": "EXTREME",
+      "mobilityFactor": "VERY_LIMITED"
+    }
+  ]
+}

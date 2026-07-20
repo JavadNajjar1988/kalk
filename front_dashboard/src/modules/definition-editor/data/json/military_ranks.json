@@ -1,0 +1,833 @@
+{
+  "nodes": [
+    {
+      "id": "iran",
+      "name": "ایران",
+      "level": 1,
+      "parentId": null,
+      "description": "جمهوری اسلامی ایران",
+      "children": [
+        {
+          "id": "1",
+          "name": "فرماندهی کل قوا (رهبری)",
+          "level": 2,
+          "parentId": "iran",
+          "country": "ایران",
+          "natoEquivalent": "Supreme Command",
+          "icon": "supreme_leader",
+          "children": [
+            {
+              "id": "1-1",
+              "name": "رهبر معظم انقلاب",
+              "level": 3,
+              "parentId": "1",
+              "country": "ایران",
+              "natoEquivalent": "Supreme Leader",
+              "icon": "supreme_leader",
+              "description": "فرمانده کل قوای مسلح جمهوری اسلامی ایران"
+            }
+          ]
+        },
+        {
+          "id": "2",
+          "name": "فرماندهان عالی نظامی",
+          "level": 2,
+          "parentId": "iran",
+          "country": "ایران",
+          "natoEquivalent": "High Military Command",
+          "icon": "star",
+          "children": [
+            {
+              "id": "2-1",
+              "name": "ارتشبد",
+              "level": 3,
+              "parentId": "2",
+              "country": "ایران",
+              "natoEquivalent": "OF-10",
+              "icon": "general"
+            },
+            {
+              "id": "2-1-naval",
+              "name": "دریابد",
+              "level": 3,
+              "parentId": "2",
+              "country": "ایران",
+              "natoEquivalent": "OF-10",
+              "icon": "admiral",
+              "branch": "naval"
+            },
+            {
+              "id": "2-2",
+              "name": "سپهبد",
+              "level": 3,
+              "parentId": "2",
+              "country": "ایران",
+              "natoEquivalent": "OF-9",
+              "icon": "general"
+            },
+            {
+              "id": "2-2-naval",
+              "name": "دریاسالار",
+              "level": 3,
+              "parentId": "2",
+              "country": "ایران",
+              "natoEquivalent": "OF-9",
+              "icon": "admiral",
+              "branch": "naval"
+            },
+            {
+              "id": "2-3",
+              "name": "سرلشکر",
+              "level": 3,
+              "parentId": "2",
+              "country": "ایران",
+              "natoEquivalent": "OF-8",
+              "icon": "general"
+            },
+            {
+              "id": "2-3-naval",
+              "name": "دریابان",
+              "level": 3,
+              "parentId": "2",
+              "country": "ایران",
+              "natoEquivalent": "OF-8",
+              "icon": "admiral",
+              "branch": "naval"
+            }
+          ]
+        },
+        {
+          "id": "3",
+          "name": "امیران (ژنرال‌ها)",
+          "level": 2,
+          "parentId": "iran",
+          "country": "ایران",
+          "natoEquivalent": "General Officers",
+          "icon": "general",
+          "children": [
+            {
+              "id": "3-1",
+              "name": "سرتیپ ارشد",
+              "level": 3,
+              "parentId": "4",
+              "country": "ایران",
+              "natoEquivalent": "OF-8",
+              "icon": "senior"
+            },
+            {
+              "id": "3-2",
+              "name": "سرتیپ",
+              "level": 3,
+              "parentId": "4",
+              "country": "ایران",
+              "natoEquivalent": "OF-7",
+              "icon": "senior"
+            },
+            {
+              "id": "3-2-naval",
+              "name": "دریادار",
+              "level": 3,
+              "parentId": "4",
+              "country": "ایران",
+              "natoEquivalent": "OF-7",
+              "icon": "senior_naval",
+              "branch": "naval"
+            },
+            {
+              "id": "3-3",
+              "name": "سرتیپ دوم",
+              "level": 3,
+              "parentId": "4",
+              "country": "ایران",
+              "natoEquivalent": "OF-6",
+              "icon": "senior"
+            },
+            {
+              "id": "3-3-naval",
+              "name": "دریادار دوم",
+              "level": 3,
+              "parentId": "4",
+              "country": "ایران",
+              "natoEquivalent": "OF-6",
+              "icon": "senior_naval",
+              "branch": "naval"
+            }
+          ]
+        },
+        {
+          "id": "4",
+          "name": "افسران عالی‌رتبه",
+          "level": 2,
+          "parentId": "iran",
+          "country": "ایران",
+          "natoEquivalent": "Senior Officers",
+          "icon": "senior",
+          "children": [
+            {
+              "id": "3-1",
+              "name": "سرهنگ",
+              "level": 3,
+              "parentId": "4",
+              "country": "ایران",
+              "natoEquivalent": "OF-5",
+              "icon": "senior"
+            },
+            {
+              "id": "3-1-naval",
+              "name": "ناخدا یکم",
+              "level": 3,
+              "parentId": "4",
+              "country": "ایران",
+              "natoEquivalent": "OF-5",
+              "icon": "naval_officer",
+              "branch": "naval"
+            },
+            {
+              "id": "3-2",
+              "name": "سرهنگ دوم",
+              "level": 3,
+              "parentId": "4",
+              "country": "ایران",
+              "natoEquivalent": "OF-4",
+              "icon": "officer"
+            },
+            {
+              "id": "3-2-naval",
+              "name": "ناخدا دوم",
+              "level": 3,
+              "parentId": "4",
+              "country": "ایران",
+              "natoEquivalent": "OF-4",
+              "icon": "naval_officer",
+              "branch": "naval"
+            }
+          ]
+        },
+        {
+          "id": "4",
+          "name": "افسران ارشد",
+          "level": 2,
+          "parentId": "iran",
+          "country": "ایران",
+          "natoEquivalent": "Officers",
+          "icon": "officer",
+          "children": [
+            {
+              "id": "4-1",
+              "name": "سرگرد",
+              "level": 3,
+              "parentId": "4",
+              "country": "ایران",
+              "natoEquivalent": "OF-3",
+              "icon": "officer"
+            },
+            {
+              "id": "4-1-naval",
+              "name": "ناخدا سوم",
+              "level": 3,
+              "parentId": "4",
+              "country": "ایران",
+              "natoEquivalent": "OF-3",
+              "icon": "naval_officer",
+              "branch": "naval"
+            },
+            {
+              "id": "4-2",
+              "name": "سروان",
+              "level": 3,
+              "parentId": "4",
+              "country": "ایران",
+              "natoEquivalent": "OF-2",
+              "icon": "officer"
+            },
+            {
+              "id": "4-2-naval",
+              "name": "ناوسروان",
+              "level": 3,
+              "parentId": "4",
+              "country": "ایران",
+              "natoEquivalent": "OF-2",
+              "icon": "naval_officer",
+              "branch": "naval"
+            }
+          ]
+        },
+        {
+          "id": "5",
+          "name": "افسران جوان",
+          "level": 2,
+          "parentId": "iran",
+          "country": "ایران",
+          "natoEquivalent": "Junior Officers",
+          "icon": "junior",
+          "children": [
+            {
+              "id": "5-1",
+              "name": "ستوان یکم",
+              "level": 3,
+              "parentId": "5",
+              "country": "ایران",
+              "natoEquivalent": "OF-1c",
+              "icon": "junior"
+            },
+            {
+              "id": "5-1-naval",
+              "name": "ناوبان ۱",
+              "level": 3,
+              "parentId": "5",
+              "country": "ایران",
+              "natoEquivalent": "OF-1c",
+              "icon": "junior_naval",
+              "branch": "naval"
+            },
+            {
+              "id": "5-2",
+              "name": "ستوان دوم",
+              "level": 3,
+              "parentId": "5",
+              "country": "ایران",
+              "natoEquivalent": "OF-1b",
+              "icon": "junior"
+            },
+            {
+              "id": "5-2-naval",
+              "name": "ناوبان ۲",
+              "level": 3,
+              "parentId": "5",
+              "country": "ایران",
+              "natoEquivalent": "OF-1b",
+              "icon": "junior_naval",
+              "branch": "naval"
+            },
+            {
+              "id": "5-3",
+              "name": "ستوان سوم",
+              "level": 3,
+              "parentId": "5",
+              "country": "ایران",
+              "natoEquivalent": "OF-1a",
+              "icon": "junior"
+            },
+            {
+              "id": "5-3-naval",
+              "name": "ناوبان ۳",
+              "level": 3,
+              "parentId": "5",
+              "country": "ایران",
+              "natoEquivalent": "OF-1a",
+              "icon": "junior_naval",
+              "branch": "naval"
+            }
+          ]
+        },
+        {
+          "id": "6",
+          "name": "استواران",
+          "level": 2,
+          "parentId": "iran",
+          "country": "ایران",
+          "natoEquivalent": "Warrant Officers",
+          "icon": "warrant",
+          "children": [
+            {
+              "id": "6-1",
+              "name": "استوار یکم",
+              "level": 3,
+              "parentId": "6",
+              "country": "ایران",
+              "natoEquivalent": "WO-1",
+              "icon": "warrant"
+            },
+            {
+              "id": "6-1-naval",
+              "name": "ناواستوار ۱",
+              "level": 3,
+              "parentId": "6",
+              "country": "ایران",
+              "natoEquivalent": "WO-1",
+              "icon": "naval_warrant",
+              "branch": "naval"
+            },
+            {
+              "id": "6-2",
+              "name": "استوار دوم",
+              "level": 3,
+              "parentId": "6",
+              "country": "ایران",
+              "natoEquivalent": "WO-2",
+              "icon": "warrant"
+            },
+            {
+              "id": "6-2-naval",
+              "name": "ناواستوار ۲",
+              "level": 3,
+              "parentId": "6",
+              "country": "ایران",
+              "natoEquivalent": "WO-2",
+              "icon": "naval_warrant",
+              "branch": "naval"
+            }
+          ]
+        },
+        {
+          "id": "7",
+          "name": "درجه‌داران ارشد",
+          "level": 2,
+          "parentId": "iran",
+          "country": "ایران",
+          "natoEquivalent": "Senior NCOs",
+          "icon": "nco",
+          "children": [
+            {
+              "id": "7-1",
+              "name": "گروهبان یکم",
+              "level": 3,
+              "parentId": "7",
+              "country": "ایران",
+              "natoEquivalent": "OR-6",
+              "icon": "nco"
+            },
+            {
+              "id": "7-1-naval",
+              "name": "مهناوی ۱",
+              "level": 3,
+              "parentId": "7",
+              "country": "ایران",
+              "natoEquivalent": "OR-6",
+              "icon": "naval_nco",
+              "branch": "naval"
+            },
+            {
+              "id": "7-2",
+              "name": "گروهبان دوم",
+              "level": 3,
+              "parentId": "7",
+              "country": "ایران",
+              "natoEquivalent": "OR-5",
+              "icon": "nco"
+            },
+            {
+              "id": "7-2-naval",
+              "name": "مهناوی ۲",
+              "level": 3,
+              "parentId": "7",
+              "country": "ایران",
+              "natoEquivalent": "OR-5",
+              "icon": "naval_nco",
+              "branch": "naval"
+            },
+            {
+              "id": "7-3",
+              "name": "گروهبان سوم",
+              "level": 3,
+              "parentId": "7",
+              "country": "ایران",
+              "natoEquivalent": "OR-4",
+              "icon": "nco"
+            },
+            {
+              "id": "7-3-naval",
+              "name": "مهناوی ۳",
+              "level": 3,
+              "parentId": "7",
+              "country": "ایران",
+              "natoEquivalent": "OR-4",
+              "icon": "naval_nco",
+              "branch": "naval"
+            }
+          ]
+        },
+        {
+          "id": "8",
+          "name": "درجه‌داران جوان",
+          "level": 2,
+          "parentId": "iran",
+          "country": "ایران",
+          "natoEquivalent": "Junior NCOs",
+          "icon": "junior_nco",
+          "children": [
+            {
+              "id": "8-1",
+              "name": "سرجوخه",
+              "level": 3,
+              "parentId": "8",
+              "country": "ایران",
+              "natoEquivalent": "OR-3",
+              "icon": "junior_nco"
+            },
+            {
+              "id": "8-1-naval",
+              "name": "سرناوی",
+              "level": 3,
+              "parentId": "8",
+              "country": "ایران",
+              "natoEquivalent": "OR-3",
+              "icon": "naval_nco",
+              "branch": "naval"
+            }
+          ]
+        },
+        {
+          "id": "9",
+          "name": "سربازان",
+          "level": 2,
+          "parentId": "iran",
+          "country": "ایران",
+          "natoEquivalent": "Privates",
+          "icon": "soldier",
+          "children": [
+            {
+              "id": "9-1",
+              "name": "سرباز یکم",
+              "level": 3,
+              "parentId": "9",
+              "country": "ایران",
+              "natoEquivalent": "OR-2",
+              "icon": "soldier"
+            },
+            {
+              "id": "9-1-naval",
+              "name": "ناوی ۱",
+              "level": 3,
+              "parentId": "9",
+              "country": "ایران",
+              "natoEquivalent": "OR-2",
+              "icon": "naval_soldier",
+              "branch": "naval"
+            },
+            {
+              "id": "9-2",
+              "name": "سرباز دوم",
+              "level": 3,
+              "parentId": "9",
+              "country": "ایران",
+              "natoEquivalent": "OR-1",
+              "icon": "soldier"
+            },
+            {
+              "id": "9-2-naval",
+              "name": "ناوی ۲",
+              "level": 3,
+              "parentId": "9",
+              "country": "ایران",
+              "natoEquivalent": "OR-1",
+              "icon": "naval_soldier",
+              "branch": "naval"
+            },
+            {
+              "id": "9-3",
+              "name": "سرباز",
+              "level": 3,
+              "parentId": "9",
+              "country": "ایران",
+              "natoEquivalent": "OR-0",
+              "icon": "soldier"
+            },
+            {
+              "id": "9-3-naval",
+              "name": "ناوی",
+              "level": 3,
+              "parentId": "9",
+              "country": "ایران",
+              "natoEquivalent": "OR-0",
+              "icon": "naval_soldier",
+              "branch": "naval"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "israel",
+      "name": "اسرائیل",
+      "level": 1,
+      "parentId": null,
+      "description": "نیروهای دفاعی اسرائیل (IDF)",
+      "children": [
+        {
+          "id": "israel-1",
+          "name": "ژنرال‌های ارشد",
+          "level": 2,
+          "parentId": "israel",
+          "country": "اسرائیل",
+          "natoEquivalent": "Senior Generals",
+          "icon": "general",
+          "children": [
+            {
+              "id": "israel-1-1",
+              "name": "رב الوف (فرمانده کل)",
+              "level": 3,
+              "parentId": "israel-1",
+              "country": "اسرائیل",
+              "natoEquivalent": "OF-9",
+              "icon": "general",
+              "description": "فرمانده کل نیروهای دفاعی اسرائیل",
+              "insignia": "رب الوف"
+            }
+          ]
+        },
+        {
+          "id": "israel-2",
+          "name": "ژنرال‌ها",
+          "level": 2,
+          "parentId": "israel",
+          "country": "اسرائیل",
+          "natoEquivalent": "General Officers",
+          "icon": "general",
+          "children": [
+            {
+              "id": "israel-2-1",
+              "name": "الوف (ژنرال)",
+              "level": 3,
+              "parentId": "israel-2",
+              "country": "اسرائیل",
+              "natoEquivalent": "OF-8",
+              "icon": "general",
+              "description": "ژنرال ارشد",
+              "insignia": "الوف"
+            },
+            {
+              "id": "israel-2-2",
+              "name": "تت الوف (سرهنگ ارشد)",
+              "level": 3,
+              "parentId": "israel-2",
+              "country": "اسرائیل",
+              "natoEquivalent": "OF-7",
+              "icon": "senior",
+              "description": "سرهنگ ارشد",
+              "insignia": "تت الوف"
+            }
+          ]
+        },
+        {
+          "id": "israel-3",
+          "name": "افسران ارشد",
+          "level": 2,
+          "parentId": "israel",
+          "country": "اسرائیل",
+          "natoEquivalent": "Senior Officers",
+          "icon": "senior",
+          "children": [
+            {
+              "id": "israel-3-1",
+              "name": "سگان الوف (سرهنگ)",
+              "level": 3,
+              "parentId": "israel-3",
+              "country": "اسرائیل",
+              "natoEquivalent": "OF-5",
+              "icon": "senior",
+              "description": "سرهنگ",
+              "insignia": "سگان الوف"
+            },
+            {
+              "id": "israel-3-2",
+              "name": "راش (سرگرد)",
+              "level": 3,
+              "parentId": "israel-3",
+              "country": "اسرائیل",
+              "natoEquivalent": "OF-4",
+              "icon": "officer",
+              "description": "سرگرد",
+              "insignia": "راش"
+            }
+          ]
+        },
+        {
+          "id": "israel-4",
+          "name": "افسران میانی",
+          "level": 2,
+          "parentId": "israel",
+          "country": "اسرائیل",
+          "natoEquivalent": "Company Officers",
+          "icon": "officer",
+          "children": [
+            {
+              "id": "israel-4-1",
+              "name": "سرن (سروان)",
+              "level": 3,
+              "parentId": "israel-4",
+              "country": "اسرائیل",
+              "natoEquivalent": "OF-3",
+              "icon": "officer",
+              "description": "سروان",
+              "insignia": "سرن"
+            },
+            {
+              "id": "israel-4-2",
+              "name": "سگن (ستوان)",
+              "level": 3,
+              "parentId": "israel-4",
+              "country": "اسرائیل",
+              "natoEquivalent": "OF-2",
+              "icon": "junior",
+              "description": "ستوان",
+              "insignia": "سگن"
+            },
+            {
+              "id": "israel-4-3",
+              "name": "سمل (ستوان دوم)",
+              "level": 3,
+              "parentId": "israel-4",
+              "country": "اسرائیل",
+              "natoEquivalent": "OF-1",
+              "icon": "junior",
+              "description": "ستوان دوم",
+              "insignia": "سمل"
+            }
+          ]
+        },
+        {
+          "id": "israel-5",
+          "name": "درجه‌داران ارشد",
+          "level": 2,
+          "parentId": "israel",
+          "country": "اسرائیل",
+          "natoEquivalent": "Senior NCOs",
+          "icon": "nco",
+          "children": [
+            {
+              "id": "israel-5-1",
+              "name": "راش ساملیم (سرگروهبان)",
+              "level": 3,
+              "parentId": "israel-5",
+              "country": "اسرائیل",
+              "natoEquivalent": "OR-8",
+              "icon": "nco",
+              "description": "سرگروهبان",
+              "insignia": "راش ساملیم"
+            },
+            {
+              "id": "israel-5-2",
+              "name": "ساملیم ریشون (گروهبان اول)",
+              "level": 3,
+              "parentId": "israel-5",
+              "country": "اسرائیل",
+              "natoEquivalent": "OR-7",
+              "icon": "nco",
+              "description": "گروهبان اول",
+              "insignia": "ساملیم ریشون"
+            }
+          ]
+        },
+        {
+          "id": "israel-6",
+          "name": "درجه‌داران",
+          "level": 2,
+          "parentId": "israel",
+          "country": "اسرائیل",
+          "natoEquivalent": "NCOs",
+          "icon": "nco",
+          "children": [
+            {
+              "id": "israel-6-1",
+              "name": "ساملیم (گروهبان)",
+              "level": 3,
+              "parentId": "israel-6",
+              "country": "اسرائیل",
+              "natoEquivalent": "OR-6",
+              "icon": "nco",
+              "description": "گروهبان",
+              "insignia": "ساملیم"
+            },
+            {
+              "id": "israel-6-2",
+              "name": "ساמار (سرجوخه)",
+              "level": 3,
+              "parentId": "israel-6",
+              "country": "اسرائیل",
+              "natoEquivalent": "OR-5",
+              "icon": "junior_nco",
+              "description": "سرجوخه",
+              "insignia": "ساמار"
+            }
+          ]
+        },
+        {
+          "id": "israel-7",
+          "name": "سربازان",
+          "level": 2,
+          "parentId": "israel",
+          "country": "اسرائیل",
+          "natoEquivalent": "Enlisted Personnel",
+          "icon": "soldier",
+          "children": [
+            {
+              "id": "israel-7-1",
+              "name": "راب طوری (سرباز اول)",
+              "level": 3,
+              "parentId": "israel-7",
+              "country": "اسرائیل",
+              "natoEquivalent": "OR-3",
+              "icon": "soldier",
+              "description": "سرباز اول",
+              "insignia": "راب طوری"
+            },
+            {
+              "id": "israel-7-2",
+              "name": "طوری (سرباز)",
+              "level": 3,
+              "parentId": "israel-7",
+              "country": "اسرائیل",
+              "natoEquivalent": "OR-2",
+              "icon": "soldier",
+              "description": "سرباز",
+              "insignia": "طوری"
+            },
+            {
+              "id": "israel-7-3",
+              "name": "طوری مشوحرر (سرباز آزاد)",
+              "level": 3,
+              "parentId": "israel-7",
+              "country": "اسرائیل",
+              "natoEquivalent": "OR-1",
+              "icon": "soldier",
+              "description": "سرباز آزاد",
+              "insignia": "طوری مشوحرر"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "levels": [
+    {
+      "id": "lvl-1",
+      "name": "کشور",
+      "englishName": "Country",
+      "order": 1,
+      "isRequired": true,
+      "isActive": true,
+      "icon": "flag",
+      "natoRank": null,
+      "standardCode": null,
+      "personnelRange": null,
+      "specialty": null
+    },
+    {
+      "id": "lvl-2",
+      "name": "گروه رده‌ای",
+      "englishName": "Rank Group",
+      "order": 2,
+      "isRequired": true,
+      "isActive": true,
+      "icon": "category",
+      "natoRank": "Military Category",
+      "standardCode": null,
+      "personnelRange": null,
+      "specialty": "Military"
+    },
+    {
+      "id": "lvl-3",
+      "name": "رده نظامی",
+      "englishName": "Military Rank",
+      "order": 3,
+      "isRequired": true,
+      "isActive": true,
+      "icon": "rank",
+      "natoRank": "Specific Rank",
+      "standardCode": "NATO Standard",
+      "personnelRange": null,
+      "specialty": "Military"
+    }
+  ]
+}

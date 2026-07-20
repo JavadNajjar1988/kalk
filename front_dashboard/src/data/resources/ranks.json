@@ -1,0 +1,119 @@
+{
+  "ranks": [],
+  "categories": [
+    {
+      "id": "officers",
+      "name": "افسران",
+      "description": "رده‌های افسری"
+    },
+    {
+      "id": "enlisted",
+      "name": "درجه‌داران",
+      "description": "رده‌های درجه‌دار"
+    },
+    {
+      "id": "warrant",
+      "name": "ناجا",
+      "description": "رده‌های ناجا"
+    },
+    {
+      "id": "civilian",
+      "name": "غیرنظامی",
+      "description": "رده‌های غیرنظامی"
+    }
+  ],
+  "fields": [
+    {
+      "id": "rankCode",
+      "name": "کد رده",
+      "type": "text",
+      "required": true
+    },
+    {
+      "id": "name",
+      "name": "نام رده",
+      "type": "text",
+      "required": true
+    },
+    {
+      "id": "shortName",
+      "name": "نام مختصر",
+      "type": "text",
+      "required": false
+    },
+    {
+      "id": "category",
+      "name": "دسته‌بندی",
+      "type": "select",
+      "required": true,
+      "options": []
+    },
+    {
+      "id": "level",
+      "name": "سطح",
+      "type": "number",
+      "required": true
+    },
+    {
+      "id": "insignia",
+      "name": "نشان",
+      "type": "text",
+      "required": false
+    },
+    {
+      "id": "payGrade",
+      "name": "گروه حقوقی",
+      "type": "text",
+      "required": false
+    },
+    {
+      "id": "authority",
+      "name": "اختیارات",
+      "type": "textarea",
+      "required": false
+    },
+    {
+      "id": "responsibilities",
+      "name": "مسئولیت‌ها",
+      "type": "textarea",
+      "required": false
+    },
+    {
+      "id": "promotionRequirements",
+      "name": "شرایط ارتقا",
+      "type": "textarea",
+      "required": false
+    },
+    {
+      "id": "minimumService",
+      "name": "حداقل سابقه خدمت (سال)",
+      "type": "number",
+      "required": false
+    },
+    {
+      "id": "status",
+      "name": "وضعیت",
+      "type": "select",
+      "required": true,
+      "options": [
+        { "value": "active", "label": "فعال" },
+        { "value": "inactive", "label": "غیرفعال" },
+        { "value": "retired", "label": "بازنشسته" }
+      ]
+    }
+  ],
+  "templates": [
+    {
+      "id": "officer_rank_template",
+      "name": "قالب رده افسری",
+      "category": "officers",
+      "fields": ["rankCode", "name", "shortName", "category", "level", "insignia", "payGrade", "authority", "responsibilities", "promotionRequirements", "minimumService", "status"]
+    },
+    {
+      "id": "enlisted_rank_template",
+      "name": "قالب رده درجه‌دار",
+      "category": "enlisted",
+      "fields": ["rankCode", "name", "shortName", "category", "level", "insignia", "payGrade", "responsibilities", "promotionRequirements", "minimumService", "status"]
+    }
+  ]
+}

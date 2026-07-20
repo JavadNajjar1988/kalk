@@ -1,0 +1,12 @@
+{
+  "extends": "./tsconfig.app.json",
+  "files": ["env.d.ts", "src/types/tanstack-extras.d.ts", "src/main.ts"],
+  "include": [],
+  "exclude": [
+    "src/**/*.test.ts",
+    "src/**/*.test.js",
+    "src/**/__tests__/**",
+    "src/**/*TestView.vue",
+    "src/views/ComponentsTestView.vue"
+  ]
+}

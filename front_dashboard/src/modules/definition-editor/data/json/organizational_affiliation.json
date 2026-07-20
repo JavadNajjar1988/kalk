@@ -1,0 +1,800 @@
+{
+  "nodes": [
+    {
+      "id": "iran",
+      "name": "ایران",
+      "level": 1,
+      "parentId": null,
+      "description": "جمهوری اسلامی ایران",
+      "children": [
+        {
+          "id": "1",
+          "name": "ملی (National)",
+          "level": 2,
+          "parentId": "iran",
+          "description": "وابستگی‌های سازمانی ملی و داخلی",
+          "children": [
+            {
+              "id": "1-1",
+              "name": "نیروهای مسلح ملی",
+              "level": 3,
+              "parentId": "1",
+              "description": "نیروهای مسلح ملی و ارتش کشور",
+              "children": [
+                {
+                  "id": "1-1-1",
+                  "name": "ارتش جمهوری اسلامی ایران",
+                  "level": 4,
+                  "parentId": "1-1"
+                },
+                {
+                  "id": "1-1-2",
+                  "name": "سپاه پاسداران انقلاب اسلامی",
+                  "level": 4,
+                  "parentId": "1-1"
+                },
+                {
+                  "id": "1-1-3",
+                  "name": "نیروی انتظامی",
+                  "level": 4,
+                  "parentId": "1-1"
+                },
+                {
+                  "id": "1-1-4",
+                  "name": "بسیج مستضعفین",
+                  "level": 4,
+                  "parentId": "1-1"
+                },
+                {
+                  "id": "1-1-5",
+                  "name": "نیروی هوایی ارتش",
+                  "level": 4,
+                  "parentId": "1-1"
+                },
+                {
+                  "id": "1-1-6",
+                  "name": "نیروی دریایی ارتش",
+                  "level": 4,
+                  "parentId": "1-1"
+                },
+                {
+                  "id": "1-1-7",
+                  "name": "نیروی زمینی ارتش",
+                  "level": 4,
+                  "parentId": "1-1"
+                },
+                {
+                  "id": "1-1-8",
+                  "name": "نیروی هوافضای سپاه",
+                  "level": 4,
+                  "parentId": "1-1"
+                },
+                {
+                  "id": "1-1-9",
+                  "name": "نیروی دریایی سپاه",
+                  "level": 4,
+                  "parentId": "1-1"
+                },
+                {
+                  "id": "1-1-10",
+                  "name": "نیروی زمینی سپاه",
+                  "level": 4,
+                  "parentId": "1-1"
+                }
+              ]
+            },
+            {
+              "id": "1-2",
+              "name": "سازمان‌های دولتی و حکومتی",
+              "level": 3,
+              "parentId": "1",
+              "description": "سازمان‌های دولتی و حکومتی کشور",
+              "children": [
+                {
+                  "id": "1-2-1",
+                  "name": "وزارت کشور",
+                  "level": 4,
+                  "parentId": "1-2"
+                },
+                {
+                  "id": "1-2-2",
+                  "name": "وزارت خارجه",
+                  "level": 4,
+                  "parentId": "1-2"
+                },
+                {
+                  "id": "1-2-3",
+                  "name": "وزارت دفاع و پشتیبانی نیروهای مسلح",
+                  "level": 4,
+                  "parentId": "1-2"
+                },
+                {
+                  "id": "1-2-4",
+                  "name": "وزارت اطلاعات",
+                  "level": 4,
+                  "parentId": "1-2"
+                },
+                {
+                  "id": "1-2-5",
+                  "name": "وزارت دادگستری",
+                  "level": 4,
+                  "parentId": "1-2"
+                },
+                {
+                  "id": "1-2-6",
+                  "name": "وزارت اقتصاد و دارایی",
+                  "level": 4,
+                  "parentId": "1-2"
+                },
+                {
+                  "id": "1-2-7",
+                  "name": "وزارت نفت",
+                  "level": 4,
+                  "parentId": "1-2"
+                },
+                {
+                  "id": "1-2-8",
+                  "name": "وزارت نیرو",
+                  "level": 4,
+                  "parentId": "1-2"
+                },
+                {
+                  "id": "1-2-9",
+                  "name": "وزارت صنعت، معدن و تجارت",
+                  "level": 4,
+                  "parentId": "1-2"
+                },
+                {
+                  "id": "1-2-10",
+                  "name": "وزارت جهاد کشاورزی",
+                  "level": 4,
+                  "parentId": "1-2"
+                },
+                {
+                  "id": "1-2-11",
+                  "name": "وزارت راه و شهرسازی",
+                  "level": 4,
+                  "parentId": "1-2"
+                },
+                {
+                  "id": "1-2-12",
+                  "name": "وزارت بهداشت، درمان و آموزش پزشکی",
+                  "level": 4,
+                  "parentId": "1-2"
+                },
+                {
+                  "id": "1-2-13",
+                  "name": "وزارت آموزش و پرورش",
+                  "level": 4,
+                  "parentId": "1-2"
+                },
+                {
+                  "id": "1-2-14",
+                  "name": "وزارت علوم، تحقیقات و فناوری",
+                  "level": 4,
+                  "parentId": "1-2"
+                },
+                {
+                  "id": "1-2-15",
+                  "name": "وزارت کار، تعاون و رفاه اجتماعی",
+                  "level": 4,
+                  "parentId": "1-2"
+                },
+                {
+                  "id": "1-2-16",
+                  "name": "وزارت فرهنگ و ارشاد اسلامی",
+                  "level": 4,
+                  "parentId": "1-2"
+                },
+                {
+                  "id": "1-2-17",
+                  "name": "وزارت ورزش و جوانان",
+                  "level": 4,
+                  "parentId": "1-2"
+                },
+                {
+                  "id": "1-2-18",
+                  "name": "وزارت میراث فرهنگی، گردشگری و صنایع دستی",
+                  "level": 4,
+                  "parentId": "1-2"
+                },
+                {
+                  "id": "1-2-19",
+                  "name": "وزارت ارتباطات و فناوری اطلاعات",
+                  "level": 4,
+                  "parentId": "1-2"
+                },
+                {
+                  "id": "1-2-20",
+                  "name": "سازمان برنامه و بودجه کشور",
+                  "level": 4,
+                  "parentId": "1-2"
+                },
+                {
+                  "id": "1-2-21",
+                  "name": "سازمان امور مالیاتی کشور",
+                  "level": 4,
+                  "parentId": "1-2"
+                },
+                {
+                  "id": "1-2-22",
+                  "name": "سازمان گمرک",
+                  "level": 4,
+                  "parentId": "1-2"
+                },
+                {
+                  "id": "1-2-23",
+                  "name": "سازمان بازرسی کل کشور",
+                  "level": 4,
+                  "parentId": "1-2"
+                },
+                {
+                  "id": "1-2-24",
+                  "name": "ریاست جمهوری",
+                  "level": 4,
+                  "parentId": "1-2"
+                },
+                {
+                  "id": "1-2-25",
+                  "name": "مجلس شورای اسلامی",
+                  "level": 4,
+                  "parentId": "1-2"
+                },
+                {
+                  "id": "1-2-26",
+                  "name": "شورای نگهبان",
+                  "level": 4,
+                  "parentId": "1-2"
+                },
+                {
+                  "id": "1-2-27",
+                  "name": "مجمع تشخیص مصلحت نظام",
+                  "level": 4,
+                  "parentId": "1-2"
+                },
+                {
+                  "id": "1-2-28",
+                  "name": "قوه قضائیه",
+                  "level": 4,
+                  "parentId": "1-2"
+                },
+                {
+                  "id": "1-2-29",
+                  "name": "دیوان محاسبات کشور",
+                  "level": 4,
+                  "parentId": "1-2"
+                },
+                {
+                  "id": "1-2-30",
+                  "name": "سازمان صدا و سیما",
+                  "level": 4,
+                  "parentId": "1-2"
+                }
+              ]
+            },
+            {
+              "id": "1-3",
+              "name": "سازمان‌های وابسته به دولت",
+              "level": 3,
+              "parentId": "1",
+              "description": "سازمان‌های وابسته به دولت و نهادهای عمومی",
+              "children": [
+                {
+                  "id": "1-3-1",
+                  "name": "بنیاد مستضعفان و جانبازان",
+                  "level": 4,
+                  "parentId": "1-3"
+                },
+                {
+                  "id": "1-3-2",
+                  "name": "بنیاد شهید و امور ایثارگران",
+                  "level": 4,
+                  "parentId": "1-3"
+                },
+                {
+                  "id": "1-3-3",
+                  "name": "کمیته امداد امام خمینی",
+                  "level": 4,
+                  "parentId": "1-3"
+                },
+                {
+                  "id": "1-3-4",
+                  "name": "شرکت ملی نفت ایران",
+                  "level": 4,
+                  "parentId": "1-3"
+                },
+                {
+                  "id": "1-3-5",
+                  "name": "شرکت ملی گاز ایران",
+                  "level": 4,
+                  "parentId": "1-3"
+                },
+                {
+                  "id": "1-3-6",
+                  "name": "بنیاد عدالت و محرومیت‌زدایی",
+                  "level": 4,
+                  "parentId": "1-3"
+                },
+                {
+                  "id": "1-3-7",
+                  "name": "آستان قدس رضوی",
+                  "level": 4,
+                  "parentId": "1-3"
+                },
+                {
+                  "id": "1-3-8",
+                  "name": "بنیاد پانزده خرداد",
+                  "level": 4,
+                  "parentId": "1-3"
+                },
+                {
+                  "id": "1-3-9",
+                  "name": "هلال احمر جمهوری اسلامی ایران",
+                  "level": 4,
+                  "parentId": "1-3"
+                },
+                {
+                  "id": "1-3-10",
+                  "name": "سازمان انرژی اتمی ایران",
+                  "level": 4,
+                  "parentId": "1-3"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "2",
+          "name": "منطقه‌ای (Regional)",
+          "level": 2,
+          "parentId": "iran",
+          "description": "وابستگی‌های سازمانی منطقه‌ای",
+          "children": [
+            {
+              "id": "2-1",
+              "name": "اتحادیه‌های منطقه‌ای",
+              "level": 3,
+              "parentId": "2",
+              "description": "اتحادیه‌های منطقه‌ای کشورها",
+              "children": [
+                {
+                  "id": "2-1-1",
+                  "name": "سازمان همکاری اقتصادی (ECO)",
+                  "level": 4,
+                  "parentId": "2-1"
+                },
+                {
+                  "id": "2-1-2",
+                  "name": "سازمان همکاری شانگهای (SCO)",
+                  "level": 4,
+                  "parentId": "2-1"
+                },
+                {
+                  "id": "2-1-3",
+                  "name": "محور مقاومت",
+                  "level": 4,
+                  "parentId": "2-1"
+                },
+                {
+                  "id": "2-1-4",
+                  "name": "شورای همکاری خلیج فارس (GCC)",
+                  "level": 4,
+                  "parentId": "2-1"
+                },
+                {
+                  "id": "2-1-5",
+                  "name": "اتحاد کشورهای اسلامی (OIC)",
+                  "level": 4,
+                  "parentId": "2-1"
+                },
+                {
+                  "id": "2-1-6",
+                  "name": "ناموردهای منطقه‌ای (NAM)",
+                  "level": 4,
+                  "parentId": "2-1"
+                },
+                {
+                  "id": "2-1-7",
+                  "name": "گروه ۷۷",
+                  "level": 4,
+                  "parentId": "2-1"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "3",
+          "name": "غیررسمی و خصوصی (Private & Non-State)",
+          "level": 2,
+          "parentId": "iran",
+          "description": "وابستگی‌های سازمانی غیررسمی و خصوصی",
+          "children": [
+            {
+              "id": "3-1",
+              "name": "شرکت‌های امنیتی خصوصی",
+              "level": 3,
+              "parentId": "3",
+              "description": "شرکت‌های امنیتی خصوصی",
+              "children": [
+                {
+                  "id": "3-1-1",
+                  "name": "شرکت‌های حفاظتی ایرانی",
+                  "level": 4,
+                  "parentId": "3-1"
+                },
+                {
+                  "id": "3-1-2",
+                  "name": "مؤسسات امنیت صنعتی",
+                  "level": 4,
+                  "parentId": "3-1"
+                }
+              ]
+            },
+            {
+              "id": "3-2",
+              "name": "سازمان‌های غیردولتی",
+              "level": 3,
+              "parentId": "3",
+              "description": "سازمان‌های غیردولتی و بشردوستانه",
+              "children": [
+                {
+                  "id": "3-2-1",
+                  "name": "جمعیت‌های خیریه",
+                  "level": 4,
+                  "parentId": "3-2"
+                },
+                {
+                  "id": "3-2-2",
+                  "name": "تشکل‌های مدنی",
+                  "level": 4,
+                  "parentId": "3-2"
+                },
+                {
+                  "id": "3-2-3",
+                  "name": "کانون‌های فرهنگی",
+                  "level": 4,
+                  "parentId": "3-2"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "israel",
+      "name": "اسرائیل",
+      "level": 1,
+      "parentId": null,
+      "description": "کشور اسرائیل",
+      "children": [
+        {
+          "id": "israel-1",
+          "name": "ملی (National)",
+          "level": 2,
+          "parentId": "israel",
+          "description": "وابستگی‌های سازمانی ملی",
+          "children": [
+            {
+              "id": "israel-1-1",
+              "name": "نیروهای دفاعی اسرائیل (IDF)",
+              "level": 3,
+              "parentId": "israel-1",
+              "description": "نیروهای مسلح اسرائیل",
+              "children": [
+                {
+                  "id": "israel-1-1-1",
+                  "name": "نیروی زمینی (צה״ל יבשה)",
+                  "level": 4,
+                  "parentId": "israel-1-1"
+                },
+                {
+                  "id": "israel-1-1-2",
+                  "name": "نیروی دریایی (חיל הים)",
+                  "level": 4,
+                  "parentId": "israel-1-1"
+                },
+                {
+                  "id": "israel-1-1-3",
+                  "name": "نیروی هوایی (חיל האוויר)",
+                  "level": 4,
+                  "parentId": "israel-1-1"
+                },
+                {
+                  "id": "israel-1-1-4",
+                  "name": "یگان‌های ویژه",
+                  "level": 4,
+                  "parentId": "israel-1-1"
+                },
+                {
+                  "id": "israel-1-1-5",
+                  "name": "اطلاعات نظامی (אמ״ן)",
+                  "level": 4,
+                  "parentId": "israel-1-1"
+                }
+              ]
+            },
+            {
+              "id": "israel-1-2",
+              "name": "سازمان‌های امنیتی و اطلاعاتی",
+              "level": 3,
+              "parentId": "israel-1",
+              "description": "سازمان‌های امنیتی اسرائیل",
+              "children": [
+                {
+                  "id": "israel-1-2-1",
+                  "name": "موساد (המוסד)",
+                  "level": 4,
+                  "parentId": "israel-1-2"
+                },
+                {
+                  "id": "israel-1-2-2",
+                  "name": "شین بت (שב״כ)",
+                  "level": 4,
+                  "parentId": "israel-1-2"
+                },
+                {
+                  "id": "israel-1-2-3",
+                  "name": "پلیس اسرائیل (משטרת ישראל)",
+                  "level": 4,
+                  "parentId": "israel-1-2"
+                }
+              ]
+            },
+            {
+              "id": "israel-1-3",
+              "name": "وزارتخانه‌ها و ادارات دولتی",
+              "level": 3,
+              "parentId": "israel-1",
+              "description": "نهادهای دولتی اسرائیل",
+              "children": [
+                {
+                  "id": "israel-1-3-1",
+                  "name": "وزارت دفاع",
+                  "level": 4,
+                  "parentId": "israel-1-3"
+                },
+                {
+                  "id": "israel-1-3-2",
+                  "name": "وزارت امور خارجه",
+                  "level": 4,
+                  "parentId": "israel-1-3"
+                },
+                {
+                  "id": "israel-1-3-3",
+                  "name": "وزارت امنیت داخلی",
+                  "level": 4,
+                  "parentId": "israel-1-3"
+                },
+                {
+                  "id": "israel-1-3-4",
+                  "name": "وزارت دادگستری",
+                  "level": 4,
+                  "parentId": "israel-1-3"
+                },
+                {
+                  "id": "israel-1-3-5",
+                  "name": "وزارت دارایی",
+                  "level": 4,
+                  "parentId": "israel-1-3"
+                },
+                {
+                  "id": "israel-1-3-6",
+                  "name": "نخست‌وزیری",
+                  "level": 4,
+                  "parentId": "israel-1-3"
+                },
+                {
+                  "id": "israel-1-3-7",
+                  "name": "کنست (הכנסת)",
+                  "level": 4,
+                  "parentId": "israel-1-3"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "israel-2",
+          "name": "بین‌المللی (International)",
+          "level": 2,
+          "parentId": "israel",
+          "description": "وابستگی‌های بین‌المللی",
+          "children": [
+            {
+              "id": "israel-2-1",
+              "name": "اتحادیه‌های نظامی",
+              "level": 3,
+              "parentId": "israel-2",
+              "description": "اتحادیه‌ها و ائتلاف‌های نظامی",
+              "children": [
+                {
+                  "id": "israel-2-1-1",
+                  "name": "ناتو (شراکت برای صلح)",
+                  "level": 4,
+                  "parentId": "israel-2-1"
+                },
+                {
+                  "id": "israel-2-1-2",
+                  "name": "ائتلاف بین‌المللی ضد داعش",
+                  "level": 4,
+                  "parentId": "israel-2-1"
+                },
+                {
+                  "id": "israel-2-1-3",
+                  "name": "معاهدات نظامی دوجانبه با آمریکا",
+                  "level": 4,
+                  "parentId": "israel-2-1"
+                }
+              ]
+            },
+            {
+              "id": "israel-2-2",
+              "name": "سازمان‌های بین‌المللی",
+              "level": 3,
+              "parentId": "israel-2",
+              "description": "عضویت در سازمان‌های بین‌المللی",
+              "children": [
+                {
+                  "id": "israel-2-2-1",
+                  "name": "سازمان ملل متحد",
+                  "level": 4,
+                  "parentId": "israel-2-2"
+                },
+                {
+                  "id": "israel-2-2-2",
+                  "name": "OECD (سازمان همکاری اقتصادی)",
+                  "level": 4,
+                  "parentId": "israel-2-2"
+                },
+                {
+                  "id": "israel-2-2-3",
+                  "name": "اتحادیه اروپا (شراکت)",
+                  "level": 4,
+                  "parentId": "israel-2-2"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "israel-3",
+          "name": "منطقه‌ای (Regional)",
+          "level": 2,
+          "parentId": "israel",
+          "description": "وابستگی‌های منطقه‌ای",
+          "children": [
+            {
+              "id": "israel-3-1",
+              "name": "معاهدات صلح منطقه‌ای",
+              "level": 3,
+              "parentId": "israel-3",
+              "description": "معاهدات صلح و همکاری",
+              "children": [
+                {
+                  "id": "israel-3-1-1",
+                  "name": "معاهده کمپ دیوید (مصر)",
+                  "level": 4,
+                  "parentId": "israel-3-1"
+                },
+                {
+                  "id": "israel-3-1-2",
+                  "name": "معاهده صلح اردن",
+                  "level": 4,
+                  "parentId": "israel-3-1"
+                },
+                {
+                  "id": "israel-3-1-3",
+                  "name": "توافق‌های ابراهیم (امارات، بحرین)",
+                  "level": 4,
+                  "parentId": "israel-3-1"
+                },
+                {
+                  "id": "israel-3-1-4",
+                  "name": "عادی‌سازی روابط (مراکش، سودان)",
+                  "level": 4,
+                  "parentId": "israel-3-1"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "israel-4",
+          "name": "غیررسمی و خصوصی (Private & Non-State)",
+          "level": 2,
+          "parentId": "israel",
+          "description": "وابستگی‌های غیررسمی",
+          "children": [
+            {
+              "id": "israel-4-1",
+              "name": "شرکت‌های امنیتی خصوصی",
+              "level": 3,
+              "parentId": "israel-4",
+              "description": "صنایع دفاعی و امنیتی خصوصی",
+              "children": [
+                {
+                  "id": "israel-4-1-1",
+                  "name": "البیت سیستمز (Elbit Systems)",
+                  "level": 4,
+                  "parentId": "israel-4-1"
+                },
+                {
+                  "id": "israel-4-1-2",
+                  "name": "رافائیل (Rafael)",
+                  "level": 4,
+                  "parentId": "israel-4-1"
+                },
+                {
+                  "id": "israel-4-1-3",
+                  "name": "ایروسپیس ایندستری (IAI)",
+                  "level": 4,
+                  "parentId": "israel-4-1"
+                }
+              ]
+            },
+            {
+              "id": "israel-4-2",
+              "name": "سازمان‌های غیردولتی",
+              "level": 3,
+              "parentId": "israel-4",
+              "description": "NGO ها و تشکل‌های مدنی",
+              "children": [
+                {
+                  "id": "israel-4-2-1",
+                  "name": "سازمان‌های حقوق بشری",
+                  "level": 4,
+                  "parentId": "israel-4-2"
+                },
+                {
+                  "id": "israel-4-2-2",
+                  "name": "موسسات تحقیقاتی",
+                  "level": 4,
+                  "parentId": "israel-4-2"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "levels": [
+    {
+      "id": "1",
+      "name": "کشور",
+      "englishName": "Country",
+      "order": 1,
+      "isRequired": true,
+      "isActive": true
+    },
+    {
+      "id": "2",
+      "name": "نوع وابستگی سازمانی",
+      "englishName": "Organizational Affiliation Type",
+      "order": 2,
+      "isRequired": true,
+      "isActive": true,
+      "description": "طبقه‌بندی اصلی وابستگی سازمان‌ها و نیروها"
+    },
+    {
+      "id": "3",
+      "name": "زیرگروه سازمانی",
+      "englishName": "Organizational Subgroup",
+      "order": 3,
+      "isRequired": false,
+      "isActive": true,
+      "description": "تقسیم‌بندی تخصصی در هر نوع وابستگی"
+    },
+    {
+      "id": "4",
+      "name": "سازمان/نهاد",
+      "englishName": "Organization/Institution",
+      "order": 4,
+      "isRequired": false,
+      "isActive": true,
+      "description": "نام مشخص سازمان یا نهاد"
+    }
+  ]
+}

@@ -1,0 +1,394 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@plugin "@tailwindcss/typography";
+@plugin "@tailwindcss/forms";
+
+/* Persian fonts: IranSans first, then local fallbacks */
+@font-face {
+  font-family: "IranSans";
+  src: local("IRANSansX"),
+       local("IRANSans"),
+       local("Iran Sans"),
+       local("IRANSansWeb"),
+       url("/fonts/Yekan.woff2") format("woff2"),
+       url("/fonts/Yekan.woff") format("woff");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+0600-06FF, U+200C-200F, U+FB50-FDFF, U+FE70-FEFF;
+}
+
+@font-face {
+  font-family: "IranSans";
+  src: local("IRANSansX-Bold"),
+       local("IRANSans Bold"),
+       local("Iran Sans Bold"),
+       local("IRANSansWeb Bold"),
+       url("/fonts/Yekan-Bold.woff2") format("woff2"),
+       url("/fonts/Yekan-Bold.woff") format("woff");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+0600-06FF, U+200C-200F, U+FB50-FDFF, U+FE70-FEFF;
+}
+
+@custom-variant dark (&:is(.dark *));
+
+:root {
+  --background: 210 10% 95%;
+  --foreground: 215 17% 17%;
+  --card: 0 0% 96%;
+  --card-foreground: 215 17% 17%;
+  --popover: 0 0% 96%;
+  --popover-foreground: 215 17% 17%;
+  --primary: 75 41% 44%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 216 8% 44%;
+  --secondary-foreground: 0 0% 100%;
+  --muted: 210 8% 91%;
+  --muted-foreground: 215 14% 38%;
+  --accent: 75 34% 35%;
+  --accent-foreground: 0 0% 100%;
+  --destructive: 0 72% 51%;
+  --destructive-foreground: 0 0% 100%;
+  --border: 210 10% 80%;
+  --input: 210 10% 80%;
+  --ring: 75 41% 44%;
+  --chart-1: 75 41% 44%;
+  --chart-2: 216 8% 44%;
+  --chart-3: 75 34% 35%;
+  --chart-4: 210 8% 91%;
+  --chart-5: 215 17% 17%;
+  --radius: 0.625rem;
+  --sidebar: 210 10% 94%;
+  --sidebar-foreground: 215 17% 17%;
+  --sidebar-primary: 75 41% 44%;
+  --sidebar-primary-foreground: 0 0% 100%;
+  --sidebar-accent: 210 8% 90%;
+  --sidebar-accent-foreground: 215 17% 17%;
+  --sidebar-border: 210 10% 80%;
+  --sidebar-ring: 75 41% 44%;
+  --heading: #111827;
+  --subheading: #1f2937;
+  --mpanel: #f5f5f5;
+  --surface-glass: #f5f5f5;
+  --surface-border: rgba(148, 158, 171, 0.52);
+  --surface-shadow: rgba(17, 24, 39, 0.14);
+  --surface-panel: #f5f5f5;
+  --surface-panel-muted: #ececec;
+}
+.dark {
+  --background: 217 18% 15%;
+  --foreground: 210 20% 90%;
+  --card: 218 17% 18%;
+  --card-foreground: 210 20% 90%;
+  --popover: 218 17% 18%;
+  --popover-foreground: 210 20% 90%;
+  --primary: 75 40% 50%;
+  --primary-foreground: 210 35% 12%;
+  --secondary: 215 12% 45%;
+  --secondary-foreground: 210 20% 94%;
+  --muted: 217 14% 25%;
+  --muted-foreground: 214 16% 72%;
+  --accent: 75 30% 42%;
+  --accent-foreground: 210 20% 95%;
+  --destructive: 0 65% 55%;
+  --destructive-foreground: 210 20% 95%;
+  --border: 217 15% 30%;
+  --input: 217 15% 30%;
+  --ring: 75 40% 50%;
+  --chart-1: 75 40% 50%;
+  --chart-2: 215 12% 45%;
+  --chart-3: 75 30% 42%;
+  --chart-4: 217 14% 25%;
+  --chart-5: 210 20% 90%;
+  --sidebar: 217 18% 16%;
+  --sidebar-foreground: 210 20% 90%;
+  --sidebar-primary: 75 40% 50%;
+  --sidebar-primary-foreground: 210 35% 12%;
+  --sidebar-accent: 217 14% 25%;
+  --sidebar-accent-foreground: 210 20% 90%;
+  --sidebar-border: 217 15% 30%;
+  --sidebar-ring: 75 40% 50%;
+  --heading: var(--color-white);
+  --mpanel: var(--color-slate-700);
+  --surface-glass: rgba(15, 23, 42, 0.92);
+  --surface-border: rgba(100, 116, 139, 0.45);
+  --surface-shadow: rgba(2, 6, 23, 0.45);
+  --surface-panel: #0f172a;
+  --surface-panel-muted: #1e293b;
+}
+@theme {
+  --font-sans: "IranSans", "IRANSansX", "IRANSansWeb", "Iranian Sans", "Tahoma", "Segoe UI", "Arial", sans-serif;
+  --color-army: #4b5320;
+  --color-army2: #a5b646;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-heading: var(--heading);
+  --color-subheading: var(--subheading);
+  --color-mpanel: var(--mpanel);
+
+  --animate-accordion-down: accordion-down 0.2s ease-out;
+  --animate-accordion-up: accordion-up 0.2s ease-out;
+
+  @keyframes accordion-down {
+    from {
+      height: 0;
+    }
+    to {
+      height: var(--reka-accordion-content-height);
+    }
+  }
+  @keyframes accordion-up {
+    from {
+      height: var(--reka-accordion-content-height);
+    }
+    to {
+      height: 0;
+    }
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-family: "IranSans", "IRANSansX", "IRANSansWeb", "Iranian Sans", "Tahoma", "Segoe UI", "Arial", sans-serif;
+    direction: rtl;
+    text-align: right;
+  }
+
+  /* Dashboard theme injected when Vue runs inside the React shell */
+  :root.react-integration-mode,
+  body.react-integration-mode {
+    background-color: #f2f2f2 !important;
+    color-scheme: light;
+    --background: 210 10% 95%;
+    --foreground: 215 17% 17%;
+    --card: 0 0% 96%;
+    --card-foreground: 215 17% 17%;
+    --popover: 0 0% 96%;
+    --popover-foreground: 215 17% 17%;
+    --primary: 75 41% 44%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 216 8% 44%;
+    --secondary-foreground: 0 0% 100%;
+    --muted: 210 8% 91%;
+    --muted-foreground: 215 14% 38%;
+    --accent: 75 34% 35%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 210 10% 80%;
+    --input: 210 10% 80%;
+    --ring: 75 41% 44%;
+    --chart-1: 75 41% 44%;
+    --chart-2: 216 8% 44%;
+    --chart-3: 75 34% 35%;
+    --chart-4: 210 8% 91%;
+    --chart-5: 215 17% 17%;
+    --sidebar: 210 10% 94%;
+    --sidebar-foreground: 215 17% 17%;
+    --sidebar-primary: 75 41% 44%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 210 8% 90%;
+    --sidebar-accent-foreground: 215 17% 17%;
+    --sidebar-border: 210 10% 80%;
+    --sidebar-ring: 75 41% 44%;
+    --heading: #111827;
+    --subheading: #1f2937;
+    --panel: #f5f5f5;
+    --panel-foreground: #1f2933;
+    --mpanel: #f5f5f5;
+    --color-background: #f2f2f2;
+    --color-foreground: #1f2933;
+    --color-card: #f5f5f5;
+    --color-card-foreground: #1f2933;
+    --color-popover: #f5f5f5;
+    --color-popover-foreground: #1f2933;
+    --color-primary: #8da53a;
+    --color-primary-foreground: #ffffff;
+    --color-secondary: #5f6670;
+    --color-secondary-foreground: #ffffff;
+    --color-muted: #ebebeb;
+    --color-muted-foreground: #4d5560;
+    --color-accent: #6f7c33;
+    --color-accent-foreground: #ffffff;
+    --color-destructive: #dc2626;
+    --color-destructive-foreground: #ffffff;
+    --color-border: #c9ced4;
+    --color-input: #c9ced4;
+    --color-ring: #8da53a;
+    --color-sidebar: #f0f0f0;
+    --color-sidebar-foreground: #1f2933;
+    --color-sidebar-primary: #8da53a;
+    --color-sidebar-primary-foreground: #ffffff;
+    --color-sidebar-accent: #e5e7eb;
+    --color-sidebar-accent-foreground: #1f2933;
+    --color-sidebar-border: #c9ced4;
+    --color-sidebar-ring: #8da53a;
+    --surface-glass: #f5f5f5;
+    --surface-border: rgba(148, 158, 171, 0.52);
+    --surface-shadow: rgba(17, 24, 39, 0.14);
+    --surface-panel: #f5f5f5;
+    --surface-panel-muted: #ececec;
+  }
+
+  body.react-integration-mode {
+    background-color: #f2f2f2 !important;
+  }
+
+  body.react-integration-mode #app {
+    background-color: #f2f2f2;
+  }
+
+  button:not(:disabled),
+  [role="button"]:not(:disabled) {
+    cursor: pointer;
+  }
+}
+
+/* Dashboard specific styles */
+.dashboard-layout {
+  @apply min-h-screen bg-background;
+}
+
+.dashboard-header {
+  @apply fixed top-0 left-0 right-0 z-50 border-b;
+  background-color: var(--surface-panel);
+  border-color: color-mix(in srgb, var(--surface-border) 92%, #9ca3af 8%);
+  box-shadow: 0 1px 0 var(--surface-shadow);
+}
+
+.dashboard-sidebar {
+  @apply fixed top-16 right-0 z-40 transition-transform duration-300 ease-in-out;
+}
+
+/*
+  The default border color has changed to `currentcolor` in Tailwind CSS v4,
+  so we've added these compatibility styles to make sure everything still
+  looks the same as it did with Tailwind CSS v3.
+
+  If we ever want to remove these styles, we need to add an explicit border
+  color utility to any element that depends on these defaults.
+*/
+/*@layer base {*/
+/*  *,*/
+/*  ::after,*/
+/*  ::before,*/
+/*  ::backdrop,*/
+/*  ::file-selector-button {*/
+/*    border-color: var(--color-gray-200, currentcolor);*/
+/*  }*/
+/*}*/
+
+@utility btn-group {
+  @apply relative z-0 inline-flex rounded-md shadow-xs;
+
+  & button {
+    @apply relative inline-flex items-center border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 focus:z-10 focus:border-primary focus:ring-1 focus:ring-primary focus:outline-hidden;
+  }
+}
+
+@utility btn-group-btn {
+  @apply relative inline-flex items-center border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 focus:z-10 focus:border-primary focus:ring-1 focus:ring-primary focus:outline-hidden;
+}
+
+@utility kbd-shortcut {
+  @apply mx-0.5 inline-flex items-center rounded border border-gray-200 px-2 font-sans text-sm font-medium text-gray-600;
+}
+
+@utility btn-link {
+  @apply text-sm font-semibold text-primary hover:opacity-80 disabled:opacity-50;
+}
+
+.location-control {
+  @apply absolute bottom-2 left-3 rounded-md border px-2 py-1 text-sm tracking-tighter tabular-nums;
+  background-color: var(--surface-panel);
+  border-color: var(--surface-border);
+  color: var(--color-foreground);
+  box-shadow: 0 1px 2px var(--surface-shadow);
+}
+
+[data-slot="context-menu-content"],
+[data-slot="context-menu-sub-content"] {
+  background-color: var(--surface-panel) !important;
+  background-image: none !important;
+  color: var(--color-foreground) !important;
+  border-color: var(--surface-border) !important;
+  opacity: 1 !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  box-shadow: 0 10px 24px var(--surface-shadow);
+}
+
+.badge {
+  @apply inline-flex items-center rounded-md bg-yellow-50 px-1.5 py-0.5 text-xs font-medium text-yellow-800 ring-1 ring-yellow-600/20 ring-inset;
+}
+
+.muted-badge {
+  @apply inline-flex items-center rounded-md bg-gray-50 px-2 py-1 text-xs font-medium text-gray-600 ring-1 ring-gray-500/10 ring-inset;
+}
+
+::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: rgba(0, 0, 0, 0.5);
+  border-radius: 20px;
+  border: transparent;
+}
+
+@utility container {
+  margin-inline: auto;
+  padding-inline: 2rem;
+}
+
+
+

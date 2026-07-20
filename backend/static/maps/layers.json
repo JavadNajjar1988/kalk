@@ -1,0 +1,35 @@
+{
+  "schema_version": 1,
+  "catalog_version": "53393d0705db30ff3c5351fe09bf5b0345c99919835f2a96727858d03a73e5b9",
+  "layers": [
+    {
+      "id": "mapbox-v1",
+      "title": "mapbox",
+      "category": null,
+      "description": null,
+      "type": "raster-xyz",
+      "source": "xyz",
+      "path": "http://212.33.198.117:5055/map_tile/mapbox/{z}/{x}/{y}",
+      "srs": "EPSG:3857",
+      "minzoom": 0,
+      "maxzoom": 22,
+      "updated": "2026-05-26T04:51:06.342607+00:00",
+      "status": "published",
+      "ui": {
+        "defaultOpacity": 1.0,
+        "visibleByDefault": false,
+        "tags": []
+      },
+      "admin": {
+        "map_id": 4,
+        "version": "v1",
+        "checksum": null,
+        "roles": [
+          "user"
+        ]
+      },
+      "bbox": null,
+      "format": "image/png"
+    }
+  ]
+}

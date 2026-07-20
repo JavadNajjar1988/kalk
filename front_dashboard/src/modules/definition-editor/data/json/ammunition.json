@@ -1,0 +1,256 @@
+{
+  "category": {
+    "id": "ammunition",
+    "name": "مهمات",
+    "englishName": "Ammunition",
+    "description": "طبقه‌بندی انواع مهمات و ملزومات رزمی",
+    "icon": "💣",
+    "color": "#9CA3AF",
+    "maxLevels": 5,
+    "isActive": true,
+    "order": 16,
+    "type": "AMMUNITION"
+  },
+  "levels": [
+    { "id": "1", "name": "رده ۱", "englishName": "Level 1", "order": 1, "isRequired": true, "isActive": true },
+    { "id": "2", "name": "رده ۲", "englishName": "Level 2", "order": 2, "isRequired": true, "isActive": true },
+    { "id": "3", "name": "رده ۳", "englishName": "Level 3", "order": 3, "isRequired": true, "isActive": true }
+  ],
+  "nodes": [
+    {
+      "id": "am-1",
+      "name": "مهمات شلیک",
+      "englishName": "Firing Ammunition",
+      "level": 1,
+      "parentId": null,
+      "order": 1,
+      "children": [
+        {
+          "id": "am-1-1",
+          "name": "گلوله‌ها",
+          "englishName": "Bullets",
+          "level": 2,
+          "parentId": "am-1",
+          "order": 1,
+          "children": [
+            {
+              "id": "am-1-1-1",
+              "name": "گلوله‌های پیستول",
+              "englishName": "Pistol Bullets",
+              "level": 3,
+              "parentId": "am-1-1",
+              "order": 1,
+              "customFields": [
+                { "id": "pf-bullet-name", "name": "نام گلوله", "englishName": "Bullet Name", "type": "text", "isRequired": true, "order": 1 },
+                { "id": "pf-caliber", "name": "کالیبر", "englishName": "Caliber", "type": "select", "isRequired": true, "order": 2, "options": ["9mm", ".45 ACP", ".40 S&W", ".380 ACP", "10mm Auto", ".357 SIG"] },
+                { "id": "pf-effective-range", "name": "برد مؤثر", "englishName": "Effective Range", "type": "number", "isRequired": false, "order": 3, "unit": "m", "validationRules": { "minValue": 0 } },
+                { "id": "pf-ammo-type", "name": "نوع مهمات", "englishName": "Ammunition Type", "type": "select", "isRequired": true, "order": 4, "options": ["Hollow Point", "Full Metal Jacket", "Soft Point", "Jacketed Hollow Point", "Semi-Wadcutter", "Wadcutter"] },
+                { "id": "pf-weight", "name": "وزن", "englishName": "Bullet Weight", "type": "number", "isRequired": false, "order": 5, "unit": "g", "validationRules": { "minValue": 0 } },
+                { "id": "pf-muzzle-velocity", "name": "سرعت اولیه", "englishName": "Muzzle Velocity", "type": "number", "isRequired": false, "order": 6, "unit": "m/s", "validationRules": { "minValue": 0 } },
+                { "id": "pf-core-type", "name": "نوع پوسته", "englishName": "Core/Jacket Type", "type": "select", "isRequired": false, "order": 7, "options": ["Lead Core", "Steel Core", "Copper Jacket", "Bimetal Jacket"] },
+                { "id": "pf-explosive-power", "name": "قدرت انفجار", "englishName": "Explosive Power", "type": "number", "isRequired": false, "order": 8 },
+                { "id": "pf-powder-type", "name": "نوع باروت", "englishName": "Powder Type", "type": "select", "isRequired": false, "order": 9, "options": ["Smokeless Powder", "Black Powder", "Cordite"] },
+                { "id": "pf-chamber-pressure", "name": "فشار شلیک", "englishName": "Chamber Pressure", "type": "number", "isRequired": false, "order": 10, "unit": "PSI", "validationRules": { "minValue": 0 } },
+                { "id": "pf-bullet-length", "name": "طول گلوله", "englishName": "Bullet Length", "type": "number", "isRequired": false, "order": 11, "unit": "mm", "validationRules": { "minValue": 0 } },
+                { "id": "pf-projectile-shape", "name": "نوع پروژکتور", "englishName": "Projectile Shape", "type": "select", "isRequired": false, "order": 12, "options": ["Conical", "Flat", "Round Nose", "Semi-Wadcutter"] },
+                { "id": "pf-damage-profile", "name": "میزان آسیب", "englishName": "Damage Profile", "type": "select", "isRequired": false, "order": 13, "options": ["Soft Tissue", "Armored Targets", "Riot Control", "Training"] },
+                { "id": "pf-thermal-tolerance", "name": "توان حرارتی", "englishName": "Thermal Tolerance", "type": "number", "isRequired": false, "order": 14, "unit": "°C" },
+                { "id": "pf-certifications", "name": "گواهینامه‌ها و استانداردها", "englishName": "Certifications & Standards", "type": "multiselect", "isRequired": false, "order": 15, "options": ["NATO", "C.I.P.", "SAAMI"] }
+              ]
+            },
+            { "id": "am-1-1-2", "name": "گلوله‌های تفنگ", "englishName": "Rifle Bullets", "level": 3, "parentId": "am-1-1", "order": 2 },
+            { "id": "am-1-1-3", "name": "گلوله‌های اسنایپر", "englishName": "Sniper Bullets", "level": 3, "parentId": "am-1-1", "order": 3 }
+          ]
+        },
+        {
+          "id": "am-1-2",
+          "name": "موشک‌ها",
+          "englishName": "Missiles",
+          "level": 2,
+          "parentId": "am-1",
+          "order": 2,
+          "children": [
+            { "id": "am-1-2-1", "name": "موشک‌های بالستیک", "englishName": "Ballistic Missiles", "level": 3, "parentId": "am-1-2", "order": 1 },
+            { "id": "am-1-2-2", "name": "موشک‌های ضد زره", "englishName": "Anti-Tank Missiles", "level": 3, "parentId": "am-1-2", "order": 2 },
+            { "id": "am-1-2-3", "name": "موشک‌های هوایی", "englishName": "Air-to-Air Missiles", "level": 3, "parentId": "am-1-2", "order": 3 }
+          ]
+        },
+        {
+          "id": "am-1-3",
+          "name": "گلوله‌های توپخانه",
+          "englishName": "Artillery Shells",
+          "level": 2,
+          "parentId": "am-1",
+          "order": 3,
+          "children": [
+            { "id": "am-1-3-1", "name": "گلوله‌های استاندارد", "englishName": "Standard Shells", "level": 3, "parentId": "am-1-3", "order": 1 },
+            { "id": "am-1-3-2", "name": "گلوله‌های دودزا", "englishName": "Smoke Shells", "level": 3, "parentId": "am-1-3", "order": 2 },
+            { "id": "am-1-3-3", "name": "گلوله‌های خوشه‌ای", "englishName": "Cluster Shells", "level": 3, "parentId": "am-1-3", "order": 3 }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "am-2",
+      "name": "مهمات ویژه",
+      "englishName": "Special Ammunition",
+      "level": 1,
+      "parentId": null,
+      "order": 2,
+      "children": [
+        {
+          "id": "am-2-1",
+          "name": "نارنجک‌ها",
+          "englishName": "Grenades",
+          "level": 2,
+          "parentId": "am-2",
+          "order": 1,
+          "children": [
+            { "id": "am-2-1-1", "name": "نارنجک‌های دستی", "englishName": "Hand Grenades", "level": 3, "parentId": "am-2-1", "order": 1 },
+            { "id": "am-2-1-2", "name": "نارنجک‌های پرتابی", "englishName": "Rifle Grenades", "level": 3, "parentId": "am-2-1", "order": 2 }
+          ]
+        },
+        {
+          "id": "am-2-2",
+          "name": "مین‌ها",
+          "englishName": "Mines",
+          "level": 2,
+          "parentId": "am-2",
+          "order": 2,
+          "children": [
+            { "id": "am-2-2-1", "name": "مین‌های ضد تانک", "englishName": "Anti-Tank Mines", "level": 3, "parentId": "am-2-2", "order": 1 },
+            { "id": "am-2-2-2", "name": "مین‌های ضد نفر", "englishName": "Anti-Personnel Mines", "level": 3, "parentId": "am-2-2", "order": 2 }
+          ]
+        },
+        {
+          "id": "am-2-3",
+          "name": "مواد منفجره",
+          "englishName": "Explosives",
+          "level": 2,
+          "parentId": "am-2",
+          "order": 3,
+          "children": [
+            { "id": "am-2-3-1", "name": "C4", "englishName": "C4 Explosives", "level": 3, "parentId": "am-2-3", "order": 1 },
+            { "id": "am-2-3-2", "name": "TNT", "englishName": "TNT Explosives", "level": 3, "parentId": "am-2-3", "order": 2 }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "am-3",
+      "name": "مهمات نظامی",
+      "englishName": "Military Ammunition",
+      "level": 1,
+      "parentId": null,
+      "order": 3,
+      "children": [
+        {
+          "id": "am-3-1",
+          "name": "مهمات ضد زره",
+          "englishName": "Anti-Armor Ammunition",
+          "level": 2,
+          "parentId": "am-3",
+          "order": 1,
+          "children": [
+            { "id": "am-3-1-1", "name": "گلوله‌های ضد زره", "englishName": "Anti-Armor Shells", "level": 3, "parentId": "am-3-1", "order": 1 },
+            { "id": "am-3-1-2", "name": "موشک‌های ضد زره", "englishName": "Anti-Tank Missiles", "level": 3, "parentId": "am-3-1", "order": 2 },
+            { "id": "am-3-1-3", "name": "مهمات ضد تانک", "englishName": "Anti-Tank Ammunition", "level": 3, "parentId": "am-3-1", "order": 3 }
+          ]
+        },
+        {
+          "id": "am-3-2",
+          "name": "مهمات هوشمند",
+          "englishName": "Smart Ammunition",
+          "level": 2,
+          "parentId": "am-3",
+          "order": 2,
+          "children": [
+            { "id": "am-3-2-1", "name": "موشک‌های هدایت‌شونده", "englishName": "Guided Missiles", "level": 3, "parentId": "am-3-2", "order": 1 },
+            { "id": "am-3-2-2", "name": "گلوله‌های هدایت‌شونده", "englishName": "Guided Bullets", "level": 3, "parentId": "am-3-2", "order": 2 },
+            { "id": "am-3-2-3", "name": "مهمات انفجاری با قابلیت برنامه‌ریزی", "englishName": "Programmable Explosives", "level": 3, "parentId": "am-3-2", "order": 3 }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "am-4",
+      "name": "مهمات دفاعی",
+      "englishName": "Defensive Ammunition",
+      "level": 1,
+      "parentId": null,
+      "order": 4,
+      "children": [
+        {
+          "id": "am-4-1",
+          "name": "مهمات ضد هوایی",
+          "englishName": "Anti-Aircraft Ammunition",
+          "level": 2,
+          "parentId": "am-4",
+          "order": 1,
+          "children": [
+            { "id": "am-4-1-1", "name": "موشک‌های ضد هوایی", "englishName": "Anti-Air Missiles", "level": 3, "parentId": "am-4-1", "order": 1 },
+            { "id": "am-4-1-2", "name": "گلوله‌های ضد هوایی", "englishName": "Anti-Air Shells", "level": 3, "parentId": "am-4-1", "order": 2 }
+          ]
+        },
+        {
+          "id": "am-4-2",
+          "name": "مهمات ضد نیرو",
+          "englishName": "Anti-Personnel Ammunition",
+          "level": 2,
+          "parentId": "am-4",
+          "order": 2,
+          "children": [
+            { "id": "am-4-2-1", "name": "گلوله‌های ضد نفر", "englishName": "Anti-Personnel Bullets", "level": 3, "parentId": "am-4-2", "order": 1 },
+            { "id": "am-4-2-2", "name": "مهمات ضد شورش", "englishName": "Riot Ammunition", "level": 3, "parentId": "am-4-2", "order": 2 }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "am-5",
+      "name": "مهمات با استفاده ویژه",
+      "englishName": "Special Use Ammunition",
+      "level": 1,
+      "parentId": null,
+      "order": 5,
+      "children": [
+        {
+          "id": "am-5-1",
+          "name": "مهمات شیمیایی",
+          "englishName": "Chemical Ammunition",
+          "level": 2,
+          "parentId": "am-5",
+          "order": 1,
+          "children": [
+            { "id": "am-5-1-1", "name": "گلوله‌های شیمیایی", "englishName": "Chemical Shells", "level": 3, "parentId": "am-5-1", "order": 1 },
+            { "id": "am-5-1-2", "name": "موشک‌های شیمیایی", "englishName": "Chemical Missiles", "level": 3, "parentId": "am-5-1", "order": 2 }
+          ]
+        },
+        {
+          "id": "am-5-2",
+          "name": "مهمات هسته‌ای",
+          "englishName": "Nuclear Ammunition",
+          "level": 2,
+          "parentId": "am-5",
+          "order": 2,
+          "children": [
+            { "id": "am-5-2-1", "name": "گلوله‌های هسته‌ای", "englishName": "Nuclear Shells", "level": 3, "parentId": "am-5-2", "order": 1 },
+            { "id": "am-5-2-2", "name": "موشک‌های هسته‌ای", "englishName": "Nuclear Missiles", "level": 3, "parentId": "am-5-2", "order": 2 }
+          ]
+        },
+        {
+          "id": "am-5-3",
+          "name": "مهمات بیولوژیکی",
+          "englishName": "Biological Ammunition",
+          "level": 2,
+          "parentId": "am-5",
+          "order": 3,
+          "children": [
+            { "id": "am-5-3-1", "name": "گلوله‌های بیولوژیکی", "englishName": "Biological Shells", "level": 3, "parentId": "am-5-3", "order": 1 },
+            { "id": "am-5-3-2", "name": "موشک‌های بیولوژیکی", "englishName": "Biological Missiles", "level": 3, "parentId": "am-5-3", "order": 2 }
+          ]
+        }
+      ]
+    }
+  ]
+}

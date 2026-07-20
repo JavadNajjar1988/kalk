@@ -1,0 +1,15 @@
+**/node_modules
+**/dist
+**/.vite
+**/.turbo
+**/.cache
+**/.next
+**/coverage
+**/*.log
+**/.DS_Store
+.git
+.github
+.cursor
+agent-transcripts
+kalk-offline-bundle
+kalk-offline-bundle.zip

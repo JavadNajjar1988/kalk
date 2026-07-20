@@ -1,0 +1,659 @@
+<script setup lang="ts">
+import {
+  ContextMenu,
+  ContextMenuCheckboxItem,
+  ContextMenuContent,
+  ContextMenuItem,
+  ContextMenuRadioGroup,
+  ContextMenuRadioItem,
+  ContextMenuSeparator,
+  ContextMenuShortcut,
+  ContextMenuSub,
+  ContextMenuSubContent,
+  ContextMenuSubTrigger,
+  ContextMenuTrigger,
+} from "@/components/ui/context-menu";
+
+import {
+  IconClockEnd,
+  IconClockStart,
+  IconContentCopy,
+  IconContentDuplicate,
+  IconContentPaste,
+  IconPause,
+  IconPlay,
+  IconSpeedometer,
+  IconSpeedometerSlow,
+  IconTarget,
+  IconMapMarker as PointIcon,
+  IconTrashCanOutline,
+} from "@iconify-prerendered/vue-mdi";
+import { computed, ref } from "vue";
+import type OLMap from "ol/Map";
+import { useMapSettingsStore } from "@/stores/mapSettingsStore";
+import { getCoordinateFormatFunction } from "@/utils/geoConvert";
+import { toLonLat } from "ol/proj";
+import { storeToRefs } from "pinia";
+import { useNotifications } from "@/composables/notifications";
+import { breakpointsTailwind, useBreakpoints, useClipboard } from "@vueuse/core";
+
+import { useUiStore } from "@/stores/uiStore";
+import { useMeasurementsStore } from "@/stores/geoStore";
+import {
+  getGeometryIcon,
+  type LayerType,
+} from "@/modules/scenarioeditor/featureLayerUtils";
+import { getScenarioFeatureDefaultName } from "@/modules/scenarioeditor/scenarioFeatureNaming";
+import { injectStrict, nanoid } from "@/utils";
+import {
+  activeLayerKey,
+  activeScenarioKey,
+  searchActionsKey,
+} from "@/components/injects";
+import type { NScenarioFeature, NUnit } from "@/types/internalModels";
+import { useSelectedItems } from "@/stores/selectedStore";
+import MilitarySymbol from "@/components/MilitarySymbol.vue";
+import { usePlaybackStore } from "@/stores/playbackStore";
+import { useRecordingStore } from "@/stores/recordingStore";
+import { useTimeFormatStore } from "@/stores/timeFormatStore";
+import type { Position } from "geojson";
+import { useActiveSidc } from "@/composables/mainToolbarData";
+import { useActiveUnitStore } from "@/stores/dragStore";
+import { useMainToolbarStore } from "@/stores/mainToolbarStore.ts";
+import type { ScenarioFeature } from "@/types/scenarioGeoModels.ts";
+import { useServicesStore } from "@/modules/tactical-symbol-map/stores/services.js";
+import { UnitActions } from "@/types/constants";
+import { useUnitActions } from "@/composables/scenarioActions";
+import {
+  copyTacticalTargets,
+  deleteTacticalTargets,
+  duplicateTacticalTargets,
+  getTacticalOperationTargetIds,
+  isTacticalMapFeatureId,
+  pasteTacticalTargets,
+} from "@/components/mapContextMenuTacticalActions";
+import {
+  createOrbatClipboardData,
+  getInternalOrbatClipboardData,
+  getOrbatOperationTargetIds,
+  getSingleOrbatPasteParentId,
+  setInternalOrbatClipboardData,
+} from "@/components/mapContextMenuOrbatActions";
+import { addUnitHierarchy, parseApplicationOrbat } from "@/importexport/convertUtils";
+
+const tm = useTimeFormatStore();
+const mainToolbarStore = useMainToolbarStore();
+const tacticalServicesStore = useServicesStore();
+
+const props = defineProps<{ mapRef?: OLMap }>();
+
+const activeScenario = injectStrict(activeScenarioKey);
+const {
+  store,
+  unitActions,
+  io,
+  geo,
+  helpers: { getUnitById },
+} = activeScenario;
+const { onUnitAction } = useUnitActions({ activeScenario });
+const activeLayerId = injectStrict(activeLayerKey);
+
+const { onScenarioActionHook } = injectStrict(searchActionsKey);
+const breakpoints = useBreakpoints(breakpointsTailwind);
+
+const isMobile = breakpoints.smallerOrEqual("md");
+
+const { coordinateFormat, showLocation, showScaleLine, showDayNightTerminator } =
+  storeToRefs(useMapSettingsStore());
+
+const { measurementUnit } = storeToRefs(useMeasurementsStore());
+const uiSettings = useUiStore();
+
+const { send } = useNotifications();
+const { copy: copyToClipboard } = useClipboard();
+const { activeUnitId, activeFeatureId, selectedUnitIds, selectedFeatureIds } =
+  useSelectedItems();
+const { activeParent } = useActiveUnitStore();
+const playback = usePlaybackStore();
+const recordingStore = useRecordingStore();
+const { isRecordingLocation } = storeToRefs(recordingStore);
+const { sidc, symbolOptions } = useActiveSidc();
+const dropPosition = ref<Position>([0, 0]);
+const pixelPosition = ref<number[] | null>(null);
+const clickedUnits = ref<NUnit[]>([]);
+const clickedFeatures = ref<NScenarioFeature[]>([]);
+const clickedTacticalIds = ref<string[]>([]);
+const selectedTacticalIdsAtOpen = ref<string[]>([]);
+const mapZoomLevel = ref(0);
+
+const formattedPosition = computed(() =>
+  getCoordinateFormatFunction(coordinateFormat.value)(dropPosition.value),
+);
+
+const tacticalOperationTargetIds = computed(() =>
+  getTacticalOperationTargetIds({
+    selectedIds: selectedTacticalIdsAtOpen.value,
+    clickedIds: clickedTacticalIds.value,
+  }),
+);
+const orbatOperationTargetIds = computed(() =>
+  getOrbatOperationTargetIds({
+    selectedIds: [...selectedUnitIds.value],
+    clickedIds: clickedUnits.value.map((unit) => unit.id),
+  }),
+);
+const orbatOperationTargetUnits = computed(() =>
+  orbatOperationTargetIds.value
+    .map((id) => getUnitById(id))
+    .filter((unit): unit is NUnit => Boolean(unit)),
+);
+const operationTargetKind = computed<"orbat" | "tactical" | null>(() => {
+  if (orbatOperationTargetIds.value.length > 0) return "orbat";
+  if (tacticalOperationTargetIds.value.length > 0) return "tactical";
+  return null;
+});
+const operationTargetCount = computed(() =>
+  operationTargetKind.value === "orbat"
+    ? orbatOperationTargetIds.value.length
+    : tacticalOperationTargetIds.value.length,
+);
+const canPasteOrbat = computed(
+  () => getSingleOrbatPasteParentId(orbatOperationTargetIds.value) !== null,
+);
+
+async function onExport() {
+  await onScenarioActionHook.trigger({ action: "exportToImage" });
+}
+
+function onContextMenu(e: MouseEvent) {
+  const { mapRef } = props;
+  if (!mapRef) {
+    console.warn("No map ref");
+    return;
+  }
+  mapZoomLevel.value = mapRef.getView()?.getZoom() ?? 0;
+  clickedUnits.value = [];
+  clickedFeatures.value = [];
+  clickedTacticalIds.value = [];
+  const tacticalServices = tacticalServicesStore.getServices();
+  selectedTacticalIdsAtOpen.value =
+    tacticalServices.selection?.selected?.(isTacticalMapFeatureId) ?? [];
+  pixelPosition.value = mapRef.getEventPixel(e);
+  dropPosition.value = toLonLat(mapRef.getEventCoordinate(e));
+  mapRef.forEachFeatureAtPixel(pixelPosition.value, (feature, layer) => {
+    const layerType = layer?.get("layerType") as LayerType;
+    const featureId = feature.getId();
+    if (layerType === "UNITS") {
+      const unitId = featureId as string;
+      const unit = getUnitById(unitId);
+      unit && clickedUnits.value.push(unit);
+    } else if (layerType === "SCENARIO_FEATURE") {
+      const { feature: scenarioFeature } = geo.getFeatureById(featureId as string);
+      scenarioFeature && clickedFeatures.value.push(scenarioFeature);
+    } else if (isTacticalMapFeatureId(featureId)) {
+      clickedTacticalIds.value.push(featureId);
+    }
+  });
+}
+
+function returnMapProviders(lonLat: Position, zoomLevel: number) {
+  return [
+    {
+      name: "Google Maps",
+      url: `https://www.google.com/maps/@${lonLat[1]},${lonLat[0]},${zoomLevel}z`,
+    },
+    {
+      name: "Google Street View",
+      url:
+        "https://www.google.com/maps/@?api=1&map_action=pano&viewpoint=" +
+        lonLat[1] +
+        "," +
+        lonLat[0],
+    },
+    {
+      name: "Bing Maps",
+      url: `https://www.bing.com/maps?cp=${lonLat[1]}~${lonLat[0]}&lvl=${zoomLevel}`,
+    },
+    {
+      name: "OpenStreetMap",
+      url: `https://www.openstreetmap.org/#map=15/${lonLat[1]}/${lonLat[0]}`,
+    },
+    {
+      name: "Geohack",
+      url: `https://geohack.toolforge.org/geohack.php?params=${lonLat[1]}_N_${lonLat[0]}_E`,
+    },
+  ];
+}
+
+async function onCopy() {
+  await copyToClipboard(formattedPosition.value);
+  send({
+    message: `Copied ${formattedPosition.value} to the clipboard`,
+  });
+}
+
+async function onTacticalCopy() {
+  await copyTacticalTargets(
+    tacticalServicesStore.getServices(),
+    tacticalOperationTargetIds.value,
+  );
+  send({ message: "رونوشت نماد تاکتیکی آماده شد." });
+}
+
+async function onTacticalDuplicate() {
+  await duplicateTacticalTargets(
+    tacticalServicesStore.getServices(),
+    tacticalOperationTargetIds.value,
+  );
+  send({ message: "نماد تاکتیکی تکثیر شد." });
+}
+
+async function onTacticalDelete() {
+  await deleteTacticalTargets(
+    tacticalServicesStore.getServices(),
+    tacticalOperationTargetIds.value,
+  );
+  send({ message: "نماد تاکتیکی حذف شد." });
+}
+
+async function onOrbatCopy() {
+  const clipboardData = createOrbatClipboardData({
+    targetIds: orbatOperationTargetIds.value,
+    state: store.state,
+    stringifyObject: io.stringifyObject,
+  });
+  if (!clipboardData) return;
+
+  setInternalOrbatClipboardData(clipboardData.applicationOrbat);
+  await copyToClipboard(clipboardData.textPlain);
+  send({ message: "رونوشت نماد اوربت آماده شد." });
+}
+
+function onOrbatDuplicate() {
+  onUnitAction(orbatOperationTargetUnits.value, UnitActions.Clone);
+  send({ message: "نماد اوربت تکثیر شد." });
+}
+
+function onOrbatDelete() {
+  onUnitAction(orbatOperationTargetUnits.value, UnitActions.Delete);
+  send({ message: "نماد اوربت حذف شد." });
+}
+
+async function onOrbatPaste() {
+  const parentId = getSingleOrbatPasteParentId(orbatOperationTargetIds.value);
+  const applicationOrbat = getInternalOrbatClipboardData();
+  const pastedOrbat = applicationOrbat ? parseApplicationOrbat(applicationOrbat) : null;
+  if (!parentId || !pastedOrbat?.length) {
+    send({ message: "برای چسباندن، ابتدا یک نماد اوربت را رونوشت کنید." });
+    return;
+  }
+
+  pastedOrbat.forEach((unit) => addUnitHierarchy(unit, parentId, activeScenario));
+  unitActions.getUnitById(parentId)._isOpen = true;
+  send({ message: "نماد اوربت چسبانده شد." });
+}
+
+async function onOperationCopy() {
+  if (operationTargetKind.value === "orbat") {
+    await onOrbatCopy();
+  } else if (operationTargetKind.value === "tactical") {
+    await onTacticalCopy();
+  }
+}
+
+async function onOperationPaste() {
+  if (operationTargetKind.value === "orbat") {
+    await onOrbatPaste();
+  } else if (operationTargetKind.value === "tactical") {
+    await pasteTacticalTargets(tacticalServicesStore.getServices());
+    send({ message: "نماد تاکتیکی چسبانده شد." });
+  }
+}
+
+async function onOperationDuplicate() {
+  if (operationTargetKind.value === "orbat") {
+    onOrbatDuplicate();
+  } else if (operationTargetKind.value === "tactical") {
+    await onTacticalDuplicate();
+  }
+}
+
+async function onOperationDelete() {
+  if (operationTargetKind.value === "orbat") {
+    onOrbatDelete();
+  } else if (operationTargetKind.value === "tactical") {
+    await onTacticalDelete();
+  }
+}
+
+function onUnitSelect(unit: NUnit, event: MouseEvent | PointerEvent | KeyboardEvent) {
+  if (event.shiftKey) {
+    if (selectedUnitIds.value.has(unit.id)) {
+      selectedUnitIds.value.delete(unit.id);
+    } else {
+      selectedUnitIds.value.add(unit.id);
+    }
+  } else {
+    activeUnitId.value = unit.id;
+  }
+}
+
+function onFeatureSelect(
+  feature: NScenarioFeature,
+  event: MouseEvent | PointerEvent | KeyboardEvent,
+) {
+  if (event.shiftKey) {
+    if (selectedFeatureIds.value.has(feature.id)) {
+      selectedFeatureIds.value.delete(feature.id);
+    } else {
+      selectedFeatureIds.value.add(feature.id);
+    }
+  } else {
+    activeFeatureId.value = feature.id;
+  }
+}
+
+function onContextMenuUpdate(open: boolean) {
+  if (!open) {
+    pixelPosition.value = null;
+  }
+}
+
+function onAddUnit() {
+  if (!isRecordingLocation.value) return;
+  store.groupUpdate(() => {
+    if (!activeParent.value || unitActions.isUnitLocked(activeParent.value.id)) return;
+
+    const name = `${(activeParent.value.subUnits?.length ?? 0) + 1}`;
+
+    const unitId = unitActions.createSubordinateUnit(activeParent.value.id, {
+      sidc: sidc.value,
+      name,
+    });
+    unitId && geo.addUnitPosition(unitId, dropPosition.value);
+  });
+}
+
+function onAddPoint() {
+  const activeLayer = geo.getLayerById(activeLayerId.value ?? geo.layers.value[0]?.id);
+  if (!activeLayer) return;
+  const name = getScenarioFeatureDefaultName(
+    "Point",
+    (activeLayer.features.length ?? 0) + 1,
+  );
+
+  const newFeature: ScenarioFeature = {
+    type: "Feature",
+    id: nanoid(),
+    meta: {
+      type: "Point",
+      name,
+    },
+    geometry: {
+      type: "Point",
+      coordinates: dropPosition.value,
+    },
+    style: mainToolbarStore.currentDrawStyle ?? {},
+    properties: {},
+  };
+  geo.addFeature(newFeature, activeLayer.id);
+}
+</script>
+<template>
+  <ContextMenu @update:open="onContextMenuUpdate">
+    <ContextMenuTrigger as-child>
+      <slot :onContextMenu="onContextMenu" />
+      <div
+        v-if="pixelPosition"
+        class="absolute flex items-center justify-center"
+        :style="{ left: pixelPosition[0] + 'px', top: pixelPosition[1] + 'px' }"
+      >
+        <IconTarget class="-mx-1/2 -my-1/2 absolute h-8 w-8 text-yellow-500" />
+      </div>
+    </ContextMenuTrigger>
+    <ContextMenuContent>
+      <ContextMenuItem @select="onCopy()">
+        <IconContentCopy class="mr-2 h-4 w-4" />
+        <span>{{ formattedPosition }}</span></ContextMenuItem
+      >
+      <ContextMenuSeparator />
+      <ContextMenuSub v-if="clickedUnits.length > 0">
+        <ContextMenuSubTrigger inset
+          ><span>واحدها</span>&nbsp;
+          <span class="font-medium text-gray-500"
+            >({{ clickedUnits.length }})</span
+          ></ContextMenuSubTrigger
+        >
+        <ContextMenuSubContent class="max-h-[95vh] overflow-auto">
+          <ContextMenuItem
+            v-for="unit in clickedUnits"
+            :key="unit.id"
+            @select.prevent
+            @click="onUnitSelect(unit, $event)"
+          >
+            <div class="flex items-center">
+              <span class="flex w-7 items-center">
+                <MilitarySymbol
+                  :sidc="unit.sidc"
+                  :options="unitActions.getCombinedSymbolOptions(unit)"
+              /></span>
+              <span :class="[selectedUnitIds.has(unit.id) ? 'font-semibold' : '']">{{
+                unit.name
+              }}</span>
+            </div>
+          </ContextMenuItem>
+        </ContextMenuSubContent>
+      </ContextMenuSub>
+      <ContextMenuSub v-if="clickedFeatures.length > 0">
+        <ContextMenuSubTrigger inset
+          ><span>ویژگی‌ها</span>&nbsp;
+          <span class="font-medium text-gray-500"
+            >({{ clickedFeatures.length }})</span
+          ></ContextMenuSubTrigger
+        >
+        <ContextMenuSubContent class="max-h-[95vh] overflow-auto">
+          <ContextMenuItem
+            v-for="feature in clickedFeatures"
+            :key="feature.id"
+            @select.prevent
+            @click="onFeatureSelect(feature, $event)"
+          >
+            <div class="flex items-center">
+              <component
+                :is="getGeometryIcon(feature)"
+                class="mr-1 h-5 w-5 text-gray-400"
+              />
+              <span
+                :class="[selectedFeatureIds.has(feature.id) ? 'font-semibold' : '']"
+                >{{ feature.meta.name }}</span
+              >
+            </div>
+          </ContextMenuItem>
+        </ContextMenuSubContent>
+      </ContextMenuSub>
+      <ContextMenuSeparator v-if="clickedFeatures.length || clickedUnits.length" />
+      <ContextMenuSub v-if="operationTargetKind">
+        <ContextMenuSubTrigger inset>
+          <span>عملیات</span>&nbsp;
+          <span class="font-medium text-gray-500"
+            >({{ operationTargetCount }})</span
+          >
+        </ContextMenuSubTrigger>
+        <ContextMenuSubContent>
+          <ContextMenuItem @select="onOperationCopy">
+            <IconContentCopy class="mr-2 h-4 w-4" />
+            رونوشت
+          </ContextMenuItem>
+          <ContextMenuItem
+            @select="onOperationPaste"
+            :disabled="operationTargetKind === 'orbat' && !canPasteOrbat"
+          >
+            <IconContentPaste class="mr-2 h-4 w-4" />
+            چسباندن
+          </ContextMenuItem>
+          <ContextMenuItem @select="onOperationDuplicate">
+            <IconContentDuplicate class="mr-2 h-4 w-4" />
+            تکثیر
+          </ContextMenuItem>
+          <ContextMenuItem
+            variant="destructive"
+            @select="onOperationDelete"
+          >
+            <IconTrashCanOutline class="mr-2 h-4 w-4" />
+            حذف
+          </ContextMenuItem>
+        </ContextMenuSubContent>
+      </ContextMenuSub>
+      <ContextMenuSeparator v-if="operationTargetKind" />
+      <ContextMenuSub>
+        <ContextMenuSubTrigger inset><span>افزودن</span></ContextMenuSubTrigger>
+        <ContextMenuSubContent>
+          <ContextMenuItem @select="onAddUnit" :disabled="!isRecordingLocation"
+            ><MilitarySymbol
+              :sidc="sidc"
+              :options="symbolOptions"
+              :size="15"
+              class="w-8"
+            />
+            واحد
+          </ContextMenuItem>
+          <ContextMenuItem @select="onAddPoint"
+            ><PointIcon />نقطه/نشانگر</ContextMenuItem
+          >
+        </ContextMenuSubContent>
+      </ContextMenuSub>
+      <ContextMenuSub>
+        <ContextMenuSubTrigger inset><span>تنظیمات نقشه</span></ContextMenuSubTrigger>
+        <ContextMenuSubContent>
+          <ContextMenuCheckboxItem v-model="showScaleLine" @select.prevent>
+            خط مقیاس
+          </ContextMenuCheckboxItem>
+          <ContextMenuCheckboxItem v-model="showLocation" @select.prevent>
+            موقعیت اشاره‌گر
+          </ContextMenuCheckboxItem>
+          <ContextMenuCheckboxItem v-model="showDayNightTerminator" @select.prevent>
+            خط روز/شب
+          </ContextMenuCheckboxItem>
+          <ContextMenuSub>
+            <ContextMenuSubTrigger inset
+              ><span class="pr-4">واحدهای اندازه‌گیری</span></ContextMenuSubTrigger
+            >
+            <ContextMenuSubContent>
+              <ContextMenuRadioGroup v-model="measurementUnit">
+                <ContextMenuRadioItem value="metric" @select.prevent
+                  >متریک
+                </ContextMenuRadioItem>
+                <ContextMenuRadioItem value="imperial" @select.prevent
+                  >امپریال
+                </ContextMenuRadioItem>
+                <ContextMenuRadioItem value="nautical" @select.prevent
+                  >دریایی
+                </ContextMenuRadioItem>
+              </ContextMenuRadioGroup>
+            </ContextMenuSubContent>
+          </ContextMenuSub>
+          <ContextMenuSub>
+            <ContextMenuSubTrigger inset>فرمت مختصات</ContextMenuSubTrigger>
+            <ContextMenuSubContent>
+              <ContextMenuRadioGroup v-model="coordinateFormat">
+                <ContextMenuRadioItem value="DegreeMinuteSeconds" @select.prevent
+                  >درجه، دقیقه، ثانیه
+                </ContextMenuRadioItem>
+                <ContextMenuRadioItem value="DecimalDegrees" @select.prevent
+                  >درجه اعشاری
+                </ContextMenuRadioItem>
+                <ContextMenuRadioItem value="MGRS" @select.prevent
+                  >MGRS
+                </ContextMenuRadioItem>
+              </ContextMenuRadioGroup>
+            </ContextMenuSubContent>
+          </ContextMenuSub>
+        </ContextMenuSubContent>
+      </ContextMenuSub>
+      <ContextMenuSub>
+        <ContextMenuSubTrigger inset><span>صادرات</span></ContextMenuSubTrigger>
+        <ContextMenuSubContent>
+          <ContextMenuItem @select="onExport()">نقشه به عنوان تصویر</ContextMenuItem>
+        </ContextMenuSubContent>
+      </ContextMenuSub>
+      <ContextMenuSub>
+        <ContextMenuSubTrigger inset><span>پخش</span></ContextMenuSubTrigger>
+        <ContextMenuSubContent>
+          <ContextMenuItem @select.prevent="playback.togglePlayback()">
+            <IconPause v-if="playback.playbackRunning" class="mr-2 h-4 w-4" />
+            <IconPlay v-else class="mr-2 h-4 w-4" />
+            <span>{{ playback.playbackRunning ? "توقف" : "پخش" }}</span>
+            <ContextMenuShortcut>k, alt+p</ContextMenuShortcut>
+          </ContextMenuItem>
+          <ContextMenuItem @select.prevent="playback.increaseSpeed()">
+            <IconSpeedometer class="mr-2 h-4 w-4" />
+            <span>افزایش سرعت</span>
+            <ContextMenuShortcut>&gt;</ContextMenuShortcut>
+          </ContextMenuItem>
+          <ContextMenuItem @select.prevent="playback.decreaseSpeed()">
+            <IconSpeedometerSlow class="mr-2 h-4 w-4" />
+            <span>کاهش سرعت</span>
+            <ContextMenuShortcut>&lt;</ContextMenuShortcut>
+          </ContextMenuItem>
+          <ContextMenuSeparator />
+          <ContextMenuCheckboxItem v-model="playback.playbackLooping" @select.prevent>
+            پخش حلقه‌ای
+          </ContextMenuCheckboxItem>
+
+          <ContextMenuItem
+            inset
+            @select.prevent="playback.addMarker(store.state.currentTime)"
+          >
+            افزودن نشانگر
+            <span class="ml-1"
+              >({{
+                playback.startMarker && playback.endMarker
+                  ? 2
+                  : playback.startMarker || playback.endMarker
+                    ? 1
+                    : 0
+              }}
+              / 2)</span
+            >
+          </ContextMenuItem>
+          <ContextMenuItem
+            inset
+            @select.prevent="playback.clearMarkers()"
+            :disabled="!playback.startMarker && !playback.endMarker"
+          >
+            پاک کردن نشانگرها
+          </ContextMenuItem>
+          <ContextMenuItem v-if="playback.startMarker !== undefined" disabled>
+            <IconClockStart class="mr-2 h-4 w-4" />
+            <span>{{
+              tm.scenarioFormatter.format(playback.startMarker)
+            }}</span></ContextMenuItem
+          >
+          <ContextMenuItem v-if="playback.endMarker !== undefined" disabled>
+            <IconClockEnd class="mr-2 h-4 w-4" />
+            <span>{{
+              tm.scenarioFormatter.format(playback.endMarker)
+            }}</span></ContextMenuItem
+          >
+        </ContextMenuSubContent>
+      </ContextMenuSub>
+     
+      <ContextMenuSeparator />
+      <ContextMenuCheckboxItem v-model="uiSettings.showToolbar" @select.prevent
+        >نوار ابزار نقشه
+      </ContextMenuCheckboxItem>
+      <ContextMenuCheckboxItem v-model="uiSettings.showTimeline" @select.prevent
+        >خط زمان
+      </ContextMenuCheckboxItem>
+      <ContextMenuCheckboxItem
+        v-if="!isMobile"
+        v-model="uiSettings.showLeftPanel"
+        @select.prevent
+        >پنل آرایش نبرد
+      </ContextMenuCheckboxItem>
+      <ContextMenuCheckboxItem v-model="uiSettings.showOrbatBreadcrumbs" @select.prevent>
+        مسیر واحد
+      </ContextMenuCheckboxItem>
+    </ContextMenuContent>
+  </ContextMenu>
+</template>

@@ -1,0 +1,144 @@
+/* OpenLayers CSS imports must precede all style rules. */
+@import 'ol/ol.css';
+
+/* self-host Vazirmatn */
+@font-face {
+  font-family: 'Yekan';
+  src: url('/fonts/Yekan.woff2') format('woff2'),
+       url('/fonts/Yekan.woff') format('woff');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Yekan';
+  src: url('/fonts/Yekan-Bold.woff2') format('woff2'),
+       url('/fonts/Yekan-Bold.woff') format('woff');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Yekan', 'Arial', 'Roboto', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  direction: rtl;
+}
+
+code {
+  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New', monospace;
+}
+
+/* حذف اجبار سراسری فونت برای بهبود عملکرد و احترام به کامپوننت‌ها */
+
+/* بهبود نمایش اعداد فارسی */
+/* self-host later */
+
+/* OpenLayers custom styles */
+.ol-map {
+  width: 100%;
+  height: 100%;
+}
+
+.ol-control {
+  position: absolute;
+  background-color: rgba(255,255,255,0.4);
+  border-radius: 4px;
+  padding: 2px;
+}
+
+.ol-full-screen {
+  top: .5em;
+  right: .5em;
+}
+
+.ol-zoom {
+  top: .5em;
+  left: .5em;
+}
+
+.ol-zoom-in,
+.ol-zoom-out {
+  background-color: rgba(255,255,255,0.8);
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  color: #333;
+  font-size: 18px;
+  font-weight: bold;
+  height: 30px;
+  width: 30px;
+  line-height: 1;
+  margin: 1px;
+  padding: 0;
+  text-align: center;
+  cursor: pointer;
+}
+
+.ol-zoom-in:hover,
+.ol-zoom-out:hover {
+  background-color: rgba(255,255,255,1);
+}
+
+.ol-attribution {
+  bottom: .5em;
+  right: .5em;
+  background-color: rgba(255,255,255,0.8);
+  padding: 2px 4px;
+  border-radius: 4px;
+  font-size: 12px;
+}
+
+.ol-attribution ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ol-attribution li {
+  display: inline;
+  margin-right: 5px;
+}
+
+.ol-attribution a {
+  color: #333;
+  text-decoration: none;
+}
+
+.ol-attribution a:hover {
+  text-decoration: underline;
+}
+
+/* Military Symbol Styles for better visibility */
+.milsymbol {
+  filter: contrast(1.2) brightness(1.1);
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: crisp-edges;
+}
+
+.milsymbol svg {
+  filter: drop-shadow(0 0 1px rgba(255, 255, 255, 0.8));
+}
+
+/* Enhance text visibility in military symbols */
+.milsymbol svg text {
+  font-weight: bold !important;
+  stroke: white !important;
+  stroke-width: 0.5px !important;
+  paint-order: stroke fill !important;
+  font-family: 'Arial', sans-serif !important;
+}
+
+/* Improve echelon indicator visibility */
+.milsymbol svg text[text-anchor="middle"] {
+  font-weight: 900 !important;
+  stroke: white !important;
+  stroke-width: 1px !important;
+  fill: black !important;
+}

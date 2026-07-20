@@ -1,0 +1,270 @@
+{
+  "levels": [
+    {
+      "id": "1",
+      "name": "کشور",
+      "englishName": "Country",
+      "order": 1,
+      "isRequired": true,
+      "isActive": true
+    },
+    {
+      "id": "2", 
+      "name": "نوع عملکرد",
+      "englishName": "Operational Type",
+      "order": 2,
+      "isRequired": true,
+      "isActive": true,
+      "description": "دسته‌بندی کلی واحدها بر اساس نوع عملکرد"
+    },
+    {
+      "id": "3",
+      "name": "تخصص واحد", 
+      "englishName": "Unit Specialization",
+      "order": 3,
+      "isRequired": true,
+      "isActive": true,
+      "description": "تخصص و حوزه فعالیت واحد"
+    },
+    {
+      "id": "4",
+      "name": "زیر تخصص",
+      "englishName": "Sub-specialization", 
+      "order": 4,
+      "isRequired": false,
+      "isActive": true,
+      "description": "تخصص‌های فرعی و جزئی‌تر"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "iran",
+      "name": "ایران", 
+      "level": 1,
+      "parentId": null,
+      "description": "جمهوری اسلامی ایران",
+      "children": [
+        {
+          "id": "operational_combat",
+          "name": "رزمی",
+          "level": 2,
+          "parentId": "iran", 
+          "description": "واحدهای رزمی و تهاجمی",
+          "children": [
+            {
+              "id": "infantry",
+              "name": "پیاده‌نظام",
+              "level": 3,
+              "parentId": "operational_combat",
+              "description": "واحدهای پیاده‌نظام",
+              "children": [
+                {"id": "infantry_regular", "name": "پیاده‌نظام عادی", "level": 4, "parentId": "infantry", "description": "واحدهای پیاده‌نظام استاندارد"},
+                {"id": "infantry_mechanized", "name": "پیاده‌نظام مکانیزه", "level": 4, "parentId": "infantry", "description": "واحدهای پیاده‌نظام با وسایل نقلیه زرهی"},
+                {"id": "infantry_mountain", "name": "پیاده‌نظام کوهستان", "level": 4, "parentId": "infantry", "description": "واحدهای تخصصی جنگ کوهستان"},
+                {"id": "infantry_urban", "name": "پیاده‌نظام شهری", "level": 4, "parentId": "infantry", "description": "واحدهای تخصصی جنگ شهری"}
+              ]
+            },
+            {
+              "id": "armored", 
+              "name": "زرهی",
+              "level": 3,
+              "parentId": "operational_combat",
+              "description": "واحدهای زرهی",
+              "children": [
+                {"id": "main_battle_tanks", "name": "تانک‌های جنگی اصلی", "level": 4, "parentId": "armored", "description": "واحدهای تانک اصلی (ذوالفقار، کرار)"},
+                {"id": "ifv_apc", "name": "ناقلات زرهی", "level": 4, "parentId": "armored", "description": "ناقلات زرهی پیاده‌نظام (بورق، رخش)"},
+                {"id": "armored_reconnaissance", "name": "شناسایی زرهی", "level": 4, "parentId": "armored", "description": "واحدهای شناسایی زرهی"}
+              ]
+            },
+            {
+              "id": "artillery",
+              "name": "توپخانه", 
+              "level": 3,
+              "parentId": "operational_combat",
+              "description": "واحدهای توپخانه",
+              "children": [
+                {"id": "field_artillery", "name": "توپخانه صحرایی", "level": 4, "parentId": "artillery", "description": "توپخانه کششی و خودکششی"},
+                {"id": "rocket_artillery", "name": "توپخانه راکتی", "level": 4, "parentId": "artillery", "description": "سیستم‌های راکت انداز (فجر، زلزال)"},
+                {"id": "self_propelled_artillery", "name": "توپخانه خودکششی", "level": 4, "parentId": "artillery", "description": "توپخانه خودکششی (رعد، هویتزر)"},
+                {"id": "mortar_units", "name": "خمپاره‌انداز", "level": 4, "parentId": "artillery", "description": "واحدهای خمپاره‌انداز سبک و سنگین"}
+              ]
+            },
+            {
+              "id": "air_defense",
+              "name": "دفاع هوایی",
+              "level": 3, 
+              "parentId": "operational_combat",
+              "description": "واحدهای دفاع هوایی",
+              "children": [
+                {"id": "sam_systems", "name": "سامانه‌های موشکی", "level": 4, "parentId": "air_defense", "description": "موشک‌های ضدهوایی (باور، خرداد، ۱۵ خرداد)"},
+                {"id": "anti_aircraft_guns", "name": "توپ‌های ضدهوایی", "level": 4, "parentId": "air_defense", "description": "توپ‌های ضدهوایی و ZU-23"},
+                {"id": "manpads", "name": "موشک‌های دستی", "level": 4, "parentId": "air_defense", "description": "موشک‌های ضدهوایی دستی (میثاق)"},
+                {"id": "radar_systems", "name": "سامانه‌های راداری", "level": 4, "parentId": "air_defense", "description": "رادارهای تشخیص و رهگیری"}
+              ]
+            }
+          ]
+        },
+        {
+          "id": "operational_special",
+          "name": "تخصصی",
+          "level": 2,
+          "parentId": "iran",
+          "description": "واحدهای تخصصی و عملیات ویژه",
+          "children": [
+            {
+              "id": "special_forces",
+              "name": "نیروهای ویژه",
+              "level": 3,
+              "parentId": "operational_special",
+              "description": "واحدهای نیروهای ویژه",
+              "children": [
+                {"id": "army_special_forces", "name": "نیروهای ویژه ارتش", "level": 4, "parentId": "special_forces", "description": "نیروهای ویژه ارتش جمهوری اسلامی ایران"},
+                {"id": "irgc_quds_force", "name": "نیروی قدس سپاه", "level": 4, "parentId": "special_forces", "description": "نیروی قدس سپاه پاسداران"},
+                {"id": "saberin_special_forces", "name": "صابرین", "level": 4, "parentId": "special_forces", "description": "نیروهای ویژه صابرین"},
+                {"id": "naval_commandos", "name": "تکاوران دریایی", "level": 4, "parentId": "special_forces", "description": "تکاوران نیروی دریایی"},
+                {"id": "airborne_units", "name": "هوابرد", "level": 4, "parentId": "special_forces", "description": "واحدهای هوابرد و چتربازان"},
+                {"id": "counter_terrorism", "name": "ضدتروریسم", "level": 4, "parentId": "special_forces", "description": "واحدهای ضدتروریسم و نبرد شهری"}
+              ]
+            },
+            {
+              "id": "intelligence",
+              "name": "اطلاعات",
+              "level": 3,
+              "parentId": "operational_special",
+              "description": "واحدهای اطلاعاتی",
+              "children": [
+                {"id": "military_intelligence", "name": "اطلاعات نظامی", "level": 4, "parentId": "intelligence", "description": "جمع‌آوری اطلاعات نظامی"},
+                {"id": "signal_intelligence", "name": "استراق سمع", "level": 4, "parentId": "intelligence", "description": "استراق سمع و رهگیری مخابرات"},
+                {"id": "electronic_surveillance", "name": "نظارت الکترونیکی", "level": 4, "parentId": "intelligence", "description": "نظارت و جمع‌آوری اطلاعات الکترونیکی"},
+                {"id": "reconnaissance", "name": "شناسایی", "level": 4, "parentId": "intelligence", "description": "واحدهای شناسایی و اکتشاف"},
+                {"id": "counterintelligence", "name": "ضداطلاعات", "level": 4, "parentId": "intelligence", "description": "ضداطلاعات و امنیت اطلاعات"}
+              ]
+            },
+            {
+              "id": "electronic_warfare",
+              "name": "جنگ الکترونیکی",
+              "level": 3,
+              "parentId": "operational_special",
+              "description": "واحدهای جنگ الکترونیکی",
+              "children": [
+                {"id": "electronic_attack", "name": "حمله الکترونیکی", "level": 4, "parentId": "electronic_warfare", "description": "حمله و تداخل الکترونیکی"},
+                {"id": "electronic_protection", "name": "حفاظت الکترونیکی", "level": 4, "parentId": "electronic_warfare", "description": "حفاظت از تجهیزات الکترونیکی"},
+                {"id": "electronic_support", "name": "پشتیبانی الکترونیکی", "level": 4, "parentId": "electronic_warfare", "description": "پشتیبانی و مراقبت الکترونیکی"},
+                {"id": "cyber_warfare", "name": "جنگ سایبری", "level": 4, "parentId": "electronic_warfare", "description": "عملیات سایبری و دفاع سایبری"}
+              ]
+            },
+            {
+              "id": "chemical_biological",
+              "name": "شیمیایی زیستی",
+              "level": 3,
+              "parentId": "operational_special",
+              "description": "واحدهای دفاع شیمیایی و زیستی",
+              "children": [
+                {"id": "cbrn_defense", "name": "دفاع CBRN", "level": 4, "parentId": "chemical_biological", "description": "دفاع شیمیایی، زیستی، رادیولوژیکی و هسته‌ای"},
+                {"id": "decontamination", "name": "ضدعفونی", "level": 4, "parentId": "chemical_biological", "description": "واحدهای ضدعفونی و پاکسازی"},
+                {"id": "detection_identification", "name": "شناسایی مواد", "level": 4, "parentId": "chemical_biological", "description": "شناسایی مواد شیمیایی و زیستی"}
+              ]
+            }
+          ]
+        },
+        {
+          "id": "operational_support",
+          "name": "پشتیبانی",
+          "level": 2,
+          "parentId": "iran",
+          "description": "واحدهای پشتیبانی و خدماتی",
+          "children": [
+            {
+              "id": "logistics",
+              "name": "تدارکات",
+              "level": 3,
+              "parentId": "operational_support",
+              "description": "واحدهای تدارکاتی",
+              "children": [
+                {"id": "supply_management", "name": "مدیریت تأمین", "level": 4, "parentId": "logistics", "description": "مدیریت تأمین و توزیع تجهیزات"},
+                {"id": "transportation", "name": "حمل‌ونقل", "level": 4, "parentId": "logistics", "description": "واحدهای حمل‌ونقل نظامی"},
+                {"id": "fuel_supply", "name": "تأمین سوخت", "level": 4, "parentId": "logistics", "description": "تأمین و توزیع سوخت"},
+                {"id": "food_water_supply", "name": "تأمین غذا و آب", "level": 4, "parentId": "logistics", "description": "تأمین مواد غذایی و آب"},
+                {"id": "warehouse_management", "name": "مدیریت انبار", "level": 4, "parentId": "logistics", "description": "مدیریت انبارها و ذخایر"},
+                {"id": "distribution_centers", "name": "مراکز توزیع", "level": 4, "parentId": "logistics", "description": "مراکز توزیع و پخش"},
+                {"id": "maintenance_logistics", "name": "تدارکات نگهداری", "level": 4, "parentId": "logistics", "description": "تدارکات قطعات و نگهداری"}
+              ]
+            },
+            {
+              "id": "medical",
+              "name": "پزشکی",
+              "level": 3,
+              "parentId": "operational_support",
+              "description": "واحدهای پزشکی",
+              "children": [
+                {"id": "field_hospitals", "name": "بیمارستان صحرایی", "level": 4, "parentId": "medical", "description": "بیمارستان‌های صحرایی و موقت"},
+                {"id": "medical_evacuation", "name": "تخلیه پزشکی", "level": 4, "parentId": "medical", "description": "واحدهای تخلیه و انتقال مجروحین"},
+                {"id": "combat_medics", "name": "امدادگران رزمی", "level": 4, "parentId": "medical", "description": "امدادگران و پزشکان رزمی"},
+                {"id": "medical_supplies", "name": "تأمین پزشکی", "level": 4, "parentId": "medical", "description": "تأمین دارو و تجهیزات پزشکی"},
+                {"id": "psychological_support", "name": "پشتیبانی روانی", "level": 4, "parentId": "medical", "description": "خدمات روانشناسی و مشاوره"},
+                {"id": "veterinary_services", "name": "خدمات دامپزشکی", "level": 4, "parentId": "medical", "description": "مراقبت از حیوانات نظامی"},
+                {"id": "medical_research", "name": "تحقیقات پزشکی", "level": 4, "parentId": "medical", "description": "تحقیقات و توسعه پزشکی نظامی"}
+              ]
+            },
+            {
+              "id": "communications",
+              "name": "مخابرات",
+              "level": 3,
+              "parentId": "operational_support",
+              "description": "واحدهای مخابراتی",
+              "children": [
+                {"id": "radio_communications", "name": "مخابرات رادیویی", "level": 4, "parentId": "communications", "description": "سیستم‌های ارتباط رادیویی"},
+                {"id": "satellite_communications", "name": "مخابرات ماهواره‌ای", "level": 4, "parentId": "communications", "description": "ارتباطات از طریق ماهواره"},
+                {"id": "fiber_optic_networks", "name": "شبکه‌های فیبر نوری", "level": 4, "parentId": "communications", "description": "شبکه‌های ارتباطی فیبر نوری"},
+                {"id": "command_control_systems", "name": "سیستم‌های فرماندهی", "level": 4, "parentId": "communications", "description": "سیستم‌های فرماندهی و کنترل"},
+                {"id": "secure_communications", "name": "مخابرات امن", "level": 4, "parentId": "communications", "description": "سیستم‌های ارتباط رمزنگاری شده"}
+              ]
+            },
+            {
+              "id": "engineering",
+              "name": "مهندسی",
+              "level": 3,
+              "parentId": "operational_support",
+              "description": "واحدهای مهندسی",
+              "children": [
+                {"id": "construction_engineering", "name": "مهندسی ساخت", "level": 4, "parentId": "engineering", "description": "ساخت و احداث تأسیسات نظامی"},
+                {"id": "demolition_engineering", "name": "مهندسی تخریب", "level": 4, "parentId": "engineering", "description": "تخریب و انفجار کنترل‌شده"},
+                {"id": "bridge_engineering", "name": "مهندسی پل", "level": 4, "parentId": "engineering", "description": "ساخت و تخریب پل‌ها"},
+                {"id": "mine_clearance", "name": "مین‌زدایی", "level": 4, "parentId": "engineering", "description": "پاکسازی و مین‌زدایی"},
+                {"id": "field_fortification", "name": "استحکامات صحرایی", "level": 4, "parentId": "engineering", "description": "احداث استحکامات و خندق‌ها"},
+                {"id": "water_engineering", "name": "مهندسی آب", "level": 4, "parentId": "engineering", "description": "تأمین آب و سیستم‌های آبی"}
+              ]
+            },
+            {
+              "id": "maintenance",
+              "name": "نگهداری",
+              "level": 3,
+              "parentId": "operational_support",
+              "description": "واحدهای نگهداری و تعمیر",
+              "children": [
+                {"id": "vehicle_maintenance", "name": "نگهداری خودرو", "level": 4, "parentId": "maintenance", "description": "تعمیر و نگهداری خودروها"},
+                {"id": "weapon_maintenance", "name": "نگهداری تسلیحات", "level": 4, "parentId": "maintenance", "description": "تعمیر و نگهداری سلاح‌ها"},
+                {"id": "electronics_maintenance", "name": "نگهداری الکترونیک", "level": 4, "parentId": "maintenance", "description": "تعمیر تجهیزات الکترونیکی"},
+                {"id": "aircraft_maintenance", "name": "نگهداری هواپیما", "level": 4, "parentId": "maintenance", "description": "تعمیر و نگهداری هواپیماها"},
+                {"id": "facility_maintenance", "name": "نگهداری تأسیسات", "level": 4, "parentId": "maintenance", "description": "نگهداری پایگاه‌ها و تأسیسات"}
+              ]
+            },
+            {
+              "id": "security",
+              "name": "امنیت",
+              "level": 3,
+              "parentId": "operational_support",
+              "description": "واحدهای امنیتی",
+              "children": [
+                {"id": "base_security", "name": "امنیت پایگاه", "level": 4, "parentId": "security", "description": "امنیت پایگاه‌ها و تأسیسات"},
+                {"id": "personnel_security", "name": "امنیت پرسنل", "level": 4, "parentId": "security", "description": "امنیت و حفاظت از پرسنل"},
+                {"id": "convoy_security", "name": "امنیت کاروان", "level": 4, "parentId": "security", "description": "امنیت کاروان‌ها و حمل‌ونقل"},
+                {"id": "information_security", "name": "امنیت اطلاعات", "level": 4, "parentId": "security", "description": "امنیت اطلاعات و سایبری"}
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

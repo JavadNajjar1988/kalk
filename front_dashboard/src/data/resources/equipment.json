@@ -1,0 +1,247 @@
+{
+  "equipment": [
+    {
+      "id": "EQ001",
+      "equipmentCode": "AK-001",
+      "name": "کلاشینکف AK-47",
+      "model": "AK-47",
+      "manufacturer": "کارخانه صنایع دفاعی",
+      "serialNumber": "AK47-2023-001",
+      "type": "سلاح",
+      "category": "weapons",
+      "assignedUnit": "گردان ۱ تکاور",
+      "status": "operational",
+      "condition": "excellent",
+      "location": "انبار اصلی - بخش A",
+      "acquisitionDate": "2023-01-15",
+      "lastMaintenanceDate": "2024-01-10",
+      "nextMaintenanceDate": "2024-07-10",
+      "specifications": "سلاح نیمه‌اتوماتیک، کالیبر ۷.۶۲ میلی‌متر، ظرفیت ۳۰ تیر",
+      "createdAt": "2023-01-15T10:30:00.000Z",
+      "updatedAt": "2024-01-10T14:20:00.000Z"
+    },
+    {
+      "id": "EQ002",
+      "equipmentCode": "VH-001",
+      "name": "خودروی نظامی هامر",
+      "model": "H1",
+      "manufacturer": "AM General",
+      "serialNumber": "HM-2022-045",
+      "type": "وسیله نقلیه",
+      "category": "vehicles",
+      "assignedUnit": "یگان موتوری ۳",
+      "status": "operational",
+      "condition": "good",
+      "location": "پارکینگ مرکزی",
+      "acquisitionDate": "2022-05-20",
+      "lastMaintenanceDate": "2023-12-05",
+      "nextMaintenanceDate": "2024-06-05",
+      "specifications": "خودروی ۴ چرخ محرک، ظرفیت ۴ سرنشین، موتور دیزل",
+      "createdAt": "2022-05-20T09:15:00.000Z",
+      "updatedAt": "2023-12-05T11:30:00.000Z"
+    },
+    {
+      "id": "EQ003",
+      "equipmentCode": "CM-001",
+      "name": "سیستم ارتباطی رادیویی",
+      "model": "RT-320",
+      "manufacturer": "هریس",
+      "serialNumber": "RT320-2023-089",
+      "type": "ارتباطات",
+      "category": "communication",
+      "assignedUnit": "مرکز فرماندهی",
+      "status": "operational",
+      "condition": "excellent",
+      "location": "اتاق ارتباطات",
+      "acquisitionDate": "2023-03-10",
+      "lastMaintenanceDate": "2024-02-01",
+      "nextMaintenanceDate": "2024-08-01",
+      "specifications": "رادیو VHF/UHF، برد ۵۰ کیلومتر، ضد آب",
+      "createdAt": "2023-03-10T12:45:00.000Z",
+      "updatedAt": "2024-02-01T16:10:00.000Z"
+    },
+    {
+      "id": "EQ004",
+      "equipmentCode": "RD-001",
+      "name": "سیستم راداری نظارتی",
+      "model": "AN/TPQ-53",
+      "manufacturer": "لاکهید مارتین",
+      "serialNumber": "TPQ53-2023-012",
+      "type": "الکترونیک",
+      "category": "electronics",
+      "assignedUnit": "واحد نظارت هوایی",
+      "status": "operational",
+      "condition": "excellent",
+      "location": "برج نظارت",
+      "acquisitionDate": "2023-07-22",
+      "lastMaintenanceDate": "2024-01-15",
+      "nextMaintenanceDate": "2024-07-15",
+      "specifications": "راداری ضد توپخانه، برد تشخیص ۶۰ کیلومتر",
+      "createdAt": "2023-07-22T08:20:00.000Z",
+      "updatedAt": "2024-01-15T10:45:00.000Z"
+    },
+    {
+      "id": "EQ005",
+      "equipmentCode": "GN-001",
+      "name": "ژنراتور برق اضطراری",
+      "model": "CAT-3516C",
+      "manufacturer": "کاترپیلار",
+      "serialNumber": "GEN-2022-156",
+      "type": "پشتیبانی",
+      "category": "support",
+      "assignedUnit": "واحد تأمین برق",
+      "status": "maintenance",
+      "condition": "good",
+      "location": "ساختمان فنی",
+      "acquisitionDate": "2022-11-08",
+      "lastMaintenanceDate": "2024-02-20",
+      "nextMaintenanceDate": "2024-08-20",
+      "specifications": "ژنراتور دیزل ۲۰۰۰ کیلووات، مخزن ۵۰۰ لیتری",
+      "createdAt": "2022-11-08T14:30:00.000Z",
+      "updatedAt": "2024-02-20T09:15:00.000Z"
+    },
+    {
+      "id": "EQ006",
+      "equipmentCode": "SN-001",
+      "name": "تک‌تیرانداز درگر",
+      "model": "SVD",
+      "manufacturer": "ایژماش",
+      "serialNumber": "SVD-2023-078",
+      "type": "سلاح",
+      "category": "weapons",
+      "assignedUnit": "تیم تک‌تیراندازان",
+      "status": "operational",
+      "condition": "excellent",
+      "location": "انبار اسلحه ویژه",
+      "acquisitionDate": "2023-04-12",
+      "lastMaintenanceDate": "2024-01-25",
+      "nextMaintenanceDate": "2024-07-25",
+      "specifications": "سلاح تک‌تیرانداز، کالیبر ۷.۶۲×۵۴، دوربین ۱۰ برابر",
+      "createdAt": "2023-04-12T11:20:00.000Z",
+      "updatedAt": "2024-01-25T15:40:00.000Z"
+    }
+  ],
+  "categories": [
+    {
+      "id": "weapons",
+      "name": "تسلیحات",
+      "description": "انواع سلاح‌ها و تجهیزات جنگی"
+    },
+    {
+      "id": "vehicles",
+      "name": "وسایل نقلیه",
+      "description": "خودروها و وسایل نقلیه نظامی"
+    },
+    {
+      "id": "communication",
+      "name": "ارتباطات",
+      "description": "تجهیزات ارتباطی و مخابراتی"
+    },
+    {
+      "id": "electronics",
+      "name": "الکترونیک",
+      "description": "سیستم‌های الکترونیکی و راداری"
+    },
+    {
+      "id": "support",
+      "name": "پشتیبانی",
+      "description": "تجهیزات پشتیبانی و لجستیکی"
+    }
+  ],
+  "fields": [
+    {
+      "id": "equipmentCode",
+      "name": "کد تجهیز",
+      "type": "text",
+      "required": true
+    },
+    {
+      "id": "name",
+      "name": "نام تجهیز",
+      "type": "text",
+      "required": true
+    },
+    {
+      "id": "model",
+      "name": "مدل",
+      "type": "text",
+      "required": false
+    },
+    {
+      "id": "manufacturer",
+      "name": "سازنده",
+      "type": "text",
+      "required": false
+    },
+    {
+      "id": "serialNumber",
+      "name": "شماره سریال",
+      "type": "text",
+      "required": true
+    },
+    {
+      "id": "category",
+      "name": "دسته‌بندی",
+      "type": "select",
+      "required": true,
+      "options": []
+    },
+    {
+      "id": "assignedUnit",
+      "name": "یگان تحویل‌گیرنده",
+      "type": "text",
+      "required": false
+    },
+    {
+      "id": "status",
+      "name": "وضعیت",
+      "type": "select",
+      "required": true,
+      "options": [
+        { "value": "operational", "label": "عملیاتی" },
+        { "value": "maintenance", "label": "تعمیرات" },
+        { "value": "reserved", "label": "ذخیره" },
+        { "value": "damaged", "label": "آسیب‌دیده" },
+        { "value": "decommissioned", "label": "خارج از رده" }
+      ]
+    },
+    {
+      "id": "acquisitionDate",
+      "name": "تاریخ تحویل",
+      "type": "date",
+      "required": true
+    },
+    {
+      "id": "lastMaintenanceDate",
+      "name": "تاریخ آخرین تعمیرات",
+      "type": "date",
+      "required": false
+    },
+    {
+      "id": "nextMaintenanceDate",
+      "name": "تاریخ تعمیرات بعدی",
+      "type": "date",
+      "required": false
+    },
+    {
+      "id": "specifications",
+      "name": "مشخصات فنی",
+      "type": "textarea",
+      "required": false
+    }
+  ],
+  "templates": [
+    {
+      "id": "weapon_template",
+      "name": "قالب تسلیحات",
+      "category": "weapons",
+      "fields": ["equipmentCode", "name", "model", "manufacturer", "serialNumber", "category", "assignedUnit", "status", "acquisitionDate", "specifications"]
+    },
+    {
+      "id": "vehicle_template",
+      "name": "قالب وسایل نقلیه",
+      "category": "vehicles",
+      "fields": ["equipmentCode", "name", "model", "manufacturer", "serialNumber", "category", "assignedUnit", "status", "acquisitionDate", "lastMaintenanceDate", "nextMaintenanceDate"]
+    }
+  ]
+}

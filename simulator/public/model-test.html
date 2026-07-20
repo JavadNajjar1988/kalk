@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Model Test</title>
+</head>
+<body>
+    <h1>Model Access Test</h1>
+    
+    <h2>T-35 Tank Model</h2>
+    <p>Testing if the T-35 tank model file is accessible:</p>
+    <a href="/Model/cesium/t-35_heavy_five-turret_tank/scene.gltf" target="_blank">Open T-35 GLTF Model File</a>
+    
+    <h2>Animated Tank Model</h2>
+    <p>Testing if the animated tank model file is accessible:</p>
+    <a href="/Model/tank_animated/scene.gltf" target="_blank">Open Animated Tank GLTF Model File</a>
+    
+    <h2>Texture Test</h2>
+    <p>Testing if textures are accessible:</p>
+    <img src="/Model/cesium/t-35_heavy_five-turret_tank/textures/base_baseColor.png" alt="T-35 Texture" style="max-width: 200px; border: 1px solid #ccc;" onerror="this.alt='T-35 Texture not accessible'">
+    <br><br>
+    <img src="/Model/tank_animated/textures/Tank_Texture_baseColor.png" alt="Animated Tank Texture" style="max-width: 200px; border: 1px solid #ccc;" onerror="this.alt='Animated Tank Texture not accessible'">
+    
+    <script>
+        // Test model access via fetch
+        async function testModelAccess() {
+            try {
+                const response = await fetch('/Model/cesium/t-35_heavy_five-turret_tank/scene.gltf');
+                if (response.ok) {
+                    console.log('T-35 model file is accessible');
+                } else {
+                    console.error('Failed to access T-35 model file:', response.status);
+                }
+            } catch (error) {
+                console.error('Error accessing T-35 model file:', error);
+            }
+            
+            try {
+                const response = await fetch('/Model/tank_animated/scene.gltf');
+                if (response.ok) {
+                    console.log('Animated tank model file is accessible');
+                } else {
+                    console.error('Failed to access animated tank model file:', response.status);
+                }
+            } catch (error) {
+                console.error('Error accessing animated tank model file:', error);
+            }
+        }
+        
+        // Run test when page loads
+        window.addEventListener('load', testModelAccess);
+    </script>
+</body>
+</html>

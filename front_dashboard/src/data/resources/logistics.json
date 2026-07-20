@@ -1,0 +1,282 @@
+{
+  "logistics": [
+    {
+      "id": "LG001",
+      "itemCode": "FD-001",
+      "name": "برنج ایرانی",
+      "description": "برنج درجه یک مناسب برای تغذیه نیروها",
+      "category": "food",
+      "quantity": 1500,
+      "unit": "kg",
+      "supplier": "شرکت توزیع مواد غذایی",
+      "storageLocation": "انبار غذا - بخش A",
+      "minStock": 300,
+      "maxStock": 3000,
+      "unitPrice": 45000,
+      "totalValue": 67500000,
+      "receivedDate": "2024-01-15",
+      "expiryDate": "2025-01-15",
+      "status": "available",
+      "location": "انبار غذا - بخش A",
+      "createdAt": "2024-01-15T10:30:00.000Z",
+      "updatedAt": "2024-02-10T14:20:00.000Z"
+    },
+    {
+      "id": "LG002",
+      "itemCode": "FL-001",
+      "name": "سوخت گازوئیل",
+      "description": "سوخت گازوئیل برای وسایل نقلیه نظامی",
+      "category": "fuel",
+      "quantity": 5000,
+      "unit": "liter",
+      "supplier": "پالایشگاه شهید تندگویان",
+      "storageLocation": "مخزن سوخت شماره ۱",
+      "minStock": 1000,
+      "maxStock": 10000,
+      "unitPrice": 15000,
+      "totalValue": 75000000,
+      "receivedDate": "2024-02-01",
+      "status": "available",
+      "location": "مخزن سوخت شماره ۱",
+      "createdAt": "2024-02-01T08:15:00.000Z",
+      "updatedAt": "2024-02-20T12:45:00.000Z"
+    },
+    {
+      "id": "LG003",
+      "itemCode": "MD-001",
+      "name": "کیت کمک‌های اولیه",
+      "description": "کیت کمک‌های اولیه برای محیط رزمی",
+      "category": "medical",
+      "quantity": 50,
+      "unit": "pack",
+      "supplier": "شرکت بهتاش طب",
+      "storageLocation": "انبار پزشکی",
+      "minStock": 10,
+      "maxStock": 100,
+      "unitPrice": 250000,
+      "totalValue": 12500000,
+      "receivedDate": "2023-12-10",
+      "expiryDate": "2026-12-10",
+      "status": "available",
+      "location": "انبار پزشکی",
+      "createdAt": "2023-12-10T11:20:00.000Z",
+      "updatedAt": "2024-01-25T15:30:00.000Z"
+    },
+    {
+      "id": "LG004",
+      "itemCode": "CL-001",
+      "name": "یونیفرم نظامی رزمی",
+      "description": "یونیفرم نظامی استاندارد برای عملیات",
+      "category": "clothing",
+      "quantity": 200,
+      "unit": "piece",
+      "supplier": "کارخانه نساجی نظامی",
+      "storageLocation": "انبار پوشاک",
+      "minStock": 30,
+      "maxStock": 500,
+      "unitPrice": 350000,
+      "totalValue": 70000000,
+      "receivedDate": "2024-01-08",
+      "status": "available",
+      "location": "انبار پوشاک",
+      "createdAt": "2024-01-08T09:45:00.000Z",
+      "updatedAt": "2024-02-15T13:10:00.000Z"
+    },
+    {
+      "id": "LG005",
+      "itemCode": "SH-001",
+      "name": "چادر نظامی ۶ نفره",
+      "description": "چادر ضد آب برای ۶ نفر با جک فلزی",
+      "category": "shelter",
+      "quantity": 25,
+      "unit": "piece",
+      "supplier": "کارخانه تجهیزات نظامی",
+      "storageLocation": "انبار تجهیزات",
+      "minStock": 5,
+      "maxStock": 50,
+      "unitPrice": 1200000,
+      "totalValue": 30000000,
+      "receivedDate": "2023-11-20",
+      "status": "low-stock",
+      "location": "انبار تجهیزات",
+      "createdAt": "2023-11-20T14:30:00.000Z",
+      "updatedAt": "2024-02-05T10:20:00.000Z"
+    },
+    {
+      "id": "LG006",
+      "itemCode": "MT-001",
+      "name": "قطعات یدکی موتور",
+      "description": "قطعات یدکی برای خودروهای نظامی",
+      "category": "maintenance",
+      "quantity": 100,
+      "unit": "box",
+      "supplier": "شرکت قطعات یدکی",
+      "storageLocation": "انبار قطعات",
+      "minStock": 20,
+      "maxStock": 200,
+      "unitPrice": 500000,
+      "totalValue": 50000000,
+      "receivedDate": "2024-01-30",
+      "status": "available",
+      "location": "انبار قطعات",
+      "createdAt": "2024-01-30T16:15:00.000Z",
+      "updatedAt": "2024-02-18T11:50:00.000Z"
+    }
+  ],
+  "categories": [
+    {
+      "id": "food",
+      "name": "خوراک",
+      "description": "مواد غذایی و خوراکی"
+    },
+    {
+      "id": "fuel",
+      "name": "سوخت",
+      "description": "انواع سوخت و نفت"
+    },
+    {
+      "id": "medical",
+      "name": "پزشکی",
+      "description": "تجهیزات و لوازم پزشکی"
+    },
+    {
+      "id": "clothing",
+      "name": "پوشاک",
+      "description": "لباس و تجهیزات پوشاک"
+    },
+    {
+      "id": "shelter",
+      "name": "اسکان",
+      "description": "تجهیزات اسکان و سرپناه"
+    },
+    {
+      "id": "maintenance",
+      "name": "تعمیرات",
+      "description": "لوازم و ابزار تعمیرات"
+    }
+  ],
+  "fields": [
+    {
+      "id": "itemCode",
+      "name": "کد کالا",
+      "type": "text",
+      "required": true
+    },
+    {
+      "id": "name",
+      "name": "نام کالا",
+      "type": "text",
+      "required": true
+    },
+    {
+      "id": "description",
+      "name": "توضیحات",
+      "type": "textarea",
+      "required": false
+    },
+    {
+      "id": "category",
+      "name": "دسته‌بندی",
+      "type": "select",
+      "required": true,
+      "options": []
+    },
+    {
+      "id": "quantity",
+      "name": "مقدار",
+      "type": "number",
+      "required": true
+    },
+    {
+      "id": "unit",
+      "name": "واحد",
+      "type": "select",
+      "required": true,
+      "options": [
+        { "value": "kg", "label": "کیلوگرم" },
+        { "value": "liter", "label": "لیتر" },
+        { "value": "piece", "label": "عدد" },
+        { "value": "box", "label": "جعبه" },
+        { "value": "ton", "label": "تن" },
+        { "value": "meter", "label": "متر" },
+        { "value": "pack", "label": "بسته" }
+      ]
+    },
+    {
+      "id": "supplier",
+      "name": "تامین‌کننده",
+      "type": "text",
+      "required": false
+    },
+    {
+      "id": "storageLocation",
+      "name": "محل انبارداری",
+      "type": "text",
+      "required": true
+    },
+    {
+      "id": "minimumStock",
+      "name": "حداقل موجودی",
+      "type": "number",
+      "required": true
+    },
+    {
+      "id": "maximumStock",
+      "name": "حداکثر موجودی",
+      "type": "number",
+      "required": false
+    },
+    {
+      "id": "unitPrice",
+      "name": "قیمت واحد",
+      "type": "number",
+      "required": false
+    },
+    {
+      "id": "receivedDate",
+      "name": "تاریخ تحویل",
+      "type": "date",
+      "required": true
+    },
+    {
+      "id": "expiryDate",
+      "name": "تاریخ انقضا",
+      "type": "date",
+      "required": false
+    },
+    {
+      "id": "status",
+      "name": "وضعیت",
+      "type": "select",
+      "required": true,
+      "options": [
+        { "value": "available", "label": "موجود" },
+        { "value": "allocated", "label": "تخصیص‌یافته" },
+        { "value": "consumed", "label": "مصرف‌شده" },
+        { "value": "expired", "label": "منقضی" },
+        { "value": "damaged", "label": "آسیب‌دیده" },
+        { "value": "low_stock", "label": "کمبود موجودی" }
+      ]
+    }
+  ],
+  "templates": [
+    {
+      "id": "food_template",
+      "name": "قالب خوراک",
+      "category": "food",
+      "fields": ["itemCode", "name", "description", "category", "quantity", "unit", "supplier", "storageLocation", "minimumStock", "receivedDate", "expiryDate", "status"]
+    },
+    {
+      "id": "fuel_template",
+      "name": "قالب سوخت",
+      "category": "fuel",
+      "fields": ["itemCode", "name", "category", "quantity", "unit", "supplier", "storageLocation", "minimumStock", "maximumStock", "unitPrice", "receivedDate", "status"]
+    },
+    {
+      "id": "medical_template",
+      "name": "قالب پزشکی",
+      "category": "medical",
+      "fields": ["itemCode", "name", "description", "category", "quantity", "unit", "supplier", "storageLocation", "minimumStock", "receivedDate", "expiryDate", "status"]
+    }
+  ]
+}

@@ -1,0 +1,235 @@
+import fuzzysort from "fuzzysort";
+import type { NUnit } from "@/types/internalModels";
+import { fuzzyHighlight, groupBy, injectStrict } from "@/utils";
+import { activeScenarioKey } from "@/components/injects";
+import type {
+  ActionSearchResult,
+  EventSearchResult,
+  MapLayerSearchResult,
+  LayerFeatureSearchResult,
+  UnitSearchResult,
+} from "@/components/types";
+import type { ScenarioActions } from "@/types/constants";
+
+export function useScenarioSearch(
+  searchActions?: (query: string) => ActionSearchResult[],
+) {
+  const {
+    unitActions,
+    store: { state },
+    geo,
+    helpers: { getUnitById },
+  } = injectStrict(activeScenarioKey);
+
+  function searchUnits(query: string, limitToPosition = false): UnitSearchResult[] {
+    const q = query.trim();
+    if (!q) return [];
+    const hits = fuzzysort.go(q, unitActions.units.value, {
+      keys: ["name", "shortName"],
+    });
+    return hits
+      .filter((h) => {
+        if (limitToPosition) return getUnitById(h.obj.id)?._state?.location;
+        return true;
+      })
+      .slice(0, 10)
+      .map((u, i) => {
+        const parent = u.obj._pid && ({ ...getUnitById(u.obj._pid) } as NUnit);
+        if (parent) {
+          parent.symbolOptions = unitActions.getCombinedSymbolOptions(parent);
+        }
+        return {
+          name: u.obj.name,
+          sidc: u.obj.sidc,
+          id: u.obj.id,
+          index: i,
+          parent,
+          highlight: u[0] ? fuzzyHighlight(u[0]) : "",
+          score: u.score,
+          category: "واحدها",
+          symbolOptions: unitActions.getCombinedSymbolOptions(u.obj),
+          _state: u.obj._state,
+        } as UnitSearchResult;
+      });
+  }
+
+  function searchLayerFeatures(query: string) {
+    const q = query.trim();
+    if (!q) return [];
+
+    const hits = fuzzysort.go(q, geo.itemsInfo.value, { key: ["name"] });
+
+    return hits.slice(0, 10).map(
+      (u, i) =>
+        ({
+          ...u.obj,
+          highlight: fuzzyHighlight(u),
+          score: u.score,
+          category: "ویژگی‌ها",
+        }) as LayerFeatureSearchResult,
+    );
+  }
+
+  function searchImageLayers(query: string) {
+    const q = query.trim();
+    if (!q) return [];
+
+    const hits = fuzzysort.go(q, geo.mapLayers.value, { key: ["name"] });
+
+    return hits.slice(0, 10).map(
+      (u, i) =>
+        ({
+          ...u.obj,
+          index: i,
+          highlight: fuzzyHighlight(u),
+          score: u.score,
+          category: "لایه‌های نقشه",
+        }) as MapLayerSearchResult,
+    );
+  }
+
+  function searchEvents(query: string) {
+    const q = query.trim();
+    if (!q) return [];
+    const mergedEvents = state.events.map((id) => state.eventMap[id]);
+
+    const hits = fuzzysort.go(q, mergedEvents, { key: ["title"] });
+
+    return hits.slice(0, 10).map(
+      (u, i) =>
+        ({
+          ...u.obj,
+          index: i,
+          name: u.obj.title,
+          highlight: fuzzyHighlight(u),
+          score: u.score,
+          category: "رویدادها",
+        }) as EventSearchResult,
+    );
+  }
+
+  function combineHits(
+    hits: (
+      | UnitSearchResult[]
+      | LayerFeatureSearchResult[]
+      | EventSearchResult[]
+      | MapLayerSearchResult[]
+      | ActionSearchResult[]
+    )[],
+  ) {
+    const combinedHits = hits.sort((a, b) => {
+      const scoreA = a[0]?.score ?? 1000;
+      const scoreB = b[0]?.score ?? 1000;
+      return scoreB - scoreA;
+    });
+    return [...combinedHits.flat()].map((e, index) => ({
+      ...e,
+      index,
+    }));
+  }
+
+  function search(query: string) {
+    const unitHits = searchUnits(query);
+    const featureHits = searchLayerFeatures(query);
+    const imageLayerHits = searchImageLayers(query);
+    const eventHits = searchEvents(query);
+    const actionHits = searchActions ? searchActions(query) : [];
+    const allHits = combineHits([
+      unitHits,
+      featureHits,
+      eventHits,
+      imageLayerHits,
+      actionHits,
+    ]);
+    const numberOfHits =
+      unitHits.length +
+      featureHits.length +
+      eventHits.length +
+      imageLayerHits.length +
+      actionHits.length;
+    return { numberOfHits, groups: groupBy(allHits, "category") };
+  }
+
+  return { search };
+}
+
+interface ActionItem {
+  action: ScenarioActions;
+  label: string;
+  icon?: string;
+}
+
+const actionItems: ActionItem[] = [
+  { action: "browseSymbols", label: "مرور نمادها" },
+  {
+    action: "save",
+    label: "ذخیره سناریو در حافظه محلی",
+    icon: "save",
+  },
+  { action: "loadNew", label: "بارگذاری سناریو", icon: "upload" },
+  { action: "createNew", label: "ایجاد سناریوی جدید", icon: "add" },
+  {
+    action: "exportJson",
+    label: "دانلود سناریو",
+    icon: "download",
+  },
+  {
+    action: "import",
+    label: "وارد کردن داده",
+    icon: "upload",
+  },
+  {
+    action: "export",
+    label: "صادرات داده‌های سناریو",
+    icon: "download",
+  },
+  { action: "addEquipment", label: "افزودن تجهیزات جدید", icon: "add" },
+  { action: "addPersonnel", label: "افزودن دسته پرسنل جدید", icon: "add" },
+  { action: "exportToClipboard", label: "کپی سناریو به کلیپ‌بورد" },
+  { action: "addSide", label: "افزودن طرف", icon: "add" },
+  { action: "addTileJSONLayer", label: "افزودن لایه نقشه TileJSON", icon: "add" },
+  { action: "addXYZLayer", label: "افزودن لایه نقشه XYZ", icon: "add" },
+  { action: "addWMSLayer", label: "افزودن لایه نقشه WMS", icon: "add" },
+  { action: "addImageLayer", label: "افزودن لایه تصویر", icon: "add" },
+  { action: "startPlayback", label: "شروع پخش", icon: "play" },
+  { action: "stopPlayback", label: "توقف پخش", icon: "pause" },
+  { action: "increaseSpeed", label: "افزایش سرعت پخش", icon: "increaseSpeed" },
+  { action: "decreaseSpeed", label: "کاهش سرعت پخش", icon: "decreaseSpeed" },
+];
+
+export function useActionSearch() {
+  function searchActions(query: string) {
+    const q = query.trim();
+    if (!q) return [];
+
+    const hits = fuzzysort.go(q, actionItems, { key: ["label"] });
+
+    return hits.map(
+      (u, i) =>
+        ({
+          ...u.obj,
+          id: i,
+          name: u.obj.label,
+          index: i,
+          highlight: fuzzyHighlight(u),
+          score: u.score,
+          category: "عملیات",
+        }) as ActionSearchResult,
+    );
+  }
+
+  return {
+    searchActions,
+    actionItems: actionItems.map(
+      (a, i): ActionSearchResult => ({
+        ...a,
+        category: "عملیات",
+        index: i,
+        id: i,
+        name: a.label,
+        highlight: "",
+        score: 0,
+      }),
+    ),
+  };
+}

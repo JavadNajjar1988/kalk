@@ -1,0 +1,192 @@
+services:
+  db:
+    image: postgis/postgis:16-3.4@sha256:44126d872ac91993766c341e369c539e8196614321765d36a6f1bab0419a5fa5
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-kalk}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+      POSTGRES_DB: ${POSTGRES_DB:-kalk}
+    ports:
+      - "5432:5432"
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      - kalknet
+
+  api:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    # فقط کد Python زیر app/ را برای reload نگاه کن؛ آپلود mbtiles به static/maps باعث قطع اتصال نشود
+    volumes:
+      - ./backend/static/maps:/app/backend/static/maps
+      # برای استفاده از هارد خارجی (10+ ترابایت):
+      # 1. در فایل .env متغیر EXTERNAL_MAPS_PATH را تنظیم کنید
+      # 2. مثال Windows: EXTERNAL_MAPS_PATH=D:/maps
+      # 3. مثال Linux: EXTERNAL_MAPS_PATH=/mnt/maps
+      # اگر تنظیم نشده باشد، از مسیر محلی استفاده می‌شود
+      - ${EXTERNAL_MAPS_PATH:-./backend/static/maps}:/mnt/external-maps
+    environment:
+      # Secrets must be provided through the local .env file.
+      DB_URL: ${DB_URL:?Set DB_URL in .env}
+      CORS_ORIGINS: ${CORS_ORIGINS:?Set CORS_ORIGINS in .env}
+      DISABLE_AUTH: ${DISABLE_AUTH:-false}
+      JWT_SECRET: ${JWT_SECRET:?Set JWT_SECRET in .env}
+      JWT_ALG: ${JWT_ALG:-HS256}
+      ACCESS_TOKEN_EXPIRE_MINUTES: ${ACCESS_TOKEN_EXPIRE_MINUTES:-60}
+      ADMIN_BOOTSTRAP_PASSWORD: ${ADMIN_BOOTSTRAP_PASSWORD:?Set ADMIN_BOOTSTRAP_PASSWORD in .env}
+      # Optional: LLM service for Excel mapping (OpenAI-compatible)
+      INTERNAL_LLM_BASE_URL: ${INTERNAL_LLM_BASE_URL:-}
+      INTERNAL_LLM_API_KEY: ${INTERNAL_LLM_API_KEY:-}
+      INTERNAL_LLM_MODEL: ${INTERNAL_LLM_MODEL:-gpt-4o-mini}
+      # استفاده از مسیر خارجی یا مسیر محلی
+      # اگر EXTERNAL_MAPS_PATH در .env تنظیم شده باشد، از /mnt/external-maps استفاده می‌شود
+      # در غیر این صورت از backend/static/maps (مسیر محلی) استفاده می‌شود
+      FILESYSTEM_TILE_ROOT: ${FILESYSTEM_TILE_ROOT:-/mnt/external-maps}
+    ports:
+      - "8002:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:8000/api/health || wget -qO- http://localhost:8000/api/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+    networks:
+      - kalknet
+
+  tileserver:
+    image: maptiler/tileserver-gl@sha256:3a9ccdb24820b6814c8119bcc8a4376c39867cb0ffe69d62919ef898b90c2427
+    restart: unless-stopped
+    ports:
+      - "8480:8080"
+    volumes:
+      # مسیر محلی برای mbtiles کوچک (اختیاری)
+      - ./backend/static/maps:/data
+    # TileServer-GL به صورت خودکار تمام فایل‌های .mbtiles در /data را اسکن می‌کند
+    # هیچ command نیاز نیست - فقط باید /data را mount کنیم
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:8080/').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - kalknet
+    depends_on:
+      - api
+
+  # سرور نقشه جداگانه برای داده‌هایب سنگین (10TB+)
+  # این سرور برای نقشه‌های بزرگ روی هارد خارجی طراحی شده است
+  # استفاده: docker compose --profile heavy-maps up -d
+  external-tileserver:
+    image: maptiler/tileserver-gl@sha256:3a9ccdb24820b6814c8119bcc8a4376c39867cb0ffe69d62919ef898b90c2427
+    container_name: kalk-external-tileserver
+    restart: unless-stopped
+    ports:
+      - "8481:8080"  # پورت جداگانه برای سرور نقشه خارجی
+    volumes:
+      # استفاده از هارد خارجی برای نقشه‌های سنگین
+      # اگر EXTERNAL_MAPS_PATH تنظیم شده باشد، از آن استفاده می‌شود
+      # در غیر این صورت از مسیر محلی استفاده می‌شود
+      # TileServer-GL به صورت خودکار تمام فایل‌های .mbtiles را در /data پیدا می‌کند
+      - ${EXTERNAL_MAPS_PATH:-./backend/static/maps}:/data:ro
+    command:
+      - "--mbtiles"
+      - "/data"
+    environment:
+      # تنظیمات بهینه برای داده‌های سنگین
+      - NODE_OPTIONS=--max-old-space-size=4096  # حافظه بیشتر برای پردازش
+    # TileServer-GL بدون command به صورت خودکار تمام .mbtiles در /data را اسکن می‌کند
+    # و یک config.json خودکار ایجاد می‌کند
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:8080/').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    networks:
+      - kalknet
+    profiles:
+      - heavy-maps
+      - external-storage
+    # این سرور مستقل است و نیازی به api ندارد
+    deploy:
+      resources:
+        limits:
+          memory: 8G  # محدودیت حافظه
+        reservations:
+          memory: 2G  # حداقل حافظه
+
+  geoserver:
+    image: kartoza/geoserver@sha256:913eed7f8064ce7d0f3960832bde36183845aa8e3167195c5e38cf2e31022d23
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      - GEOSERVER_ADMIN_PASSWORD=${GEOSERVER_ADMIN_PASSWORD:-}
+    volumes:
+      - geoserver-data:/opt/geoserver_data
+      - ./geoserver-custom:/opt/geoserver_data/www/custom:ro
+    networks:
+      - kalknet
+    profiles:
+      - sdi
+
+  simulator:
+    build:
+      context: ./simulator
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    ports:
+      - "3001:80"
+    networks:
+      - kalknet
+
+  kalknegar:
+    build:
+      context: ./front_kalknegar
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    ports:
+      - "5180:80"
+    depends_on:
+      api:
+        condition: service_healthy
+    networks:
+      - kalknet
+
+  dashboard:
+    build:
+      context: ./front_dashboard
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    ports:
+      - "3000:80"
+    depends_on:
+      api:
+        condition: service_healthy
+      kalknegar:
+        condition: service_healthy
+      simulator:
+        condition: service_healthy
+      tileserver:
+        condition: service_healthy
+    networks:
+      - kalknet
+
+volumes:
+  db-data:
+  geoserver-data:
+
+networks:
+  kalknet:
+

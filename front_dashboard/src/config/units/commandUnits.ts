@@ -1,0 +1,55 @@
+import { UnitType } from '../unitTypes';
+
+// انواع یگان‌های فرماندهی
+export const COMMAND_UNITS: UnitType[] = [
+  {
+    id: 'command_control',
+    name: 'فرماندهی و کنترل',
+    nameEn: 'Command and Control',
+    category: 'فرماندهی',
+    subcategory: 'یگان مأموریتی',
+    sidc: '10031000111111000000',
+    description: 'یگان‌های فرماندهی و کنترل عملیات',
+    capabilities: ['فرماندهی', 'کنترل', 'برنامه‌ریزی', 'هماهنگی'],
+  },
+  {
+    id: 'operations_command',
+    name: 'فرماندهی عملیات',
+    nameEn: 'Operations Command',
+    category: 'فرماندهی',
+    subcategory: 'یگان مأموریتی',
+    sidc: '10031000111211000000',
+    description: 'فرماندهی عملیات رزمی',
+    capabilities: ['فرماندهی عملیات', 'برنامه‌ریزی رزمی', 'کنترل عملیات'],
+  },
+  {
+    id: 'intelligence_command',
+    name: 'فرماندهی اطلاعات',
+    nameEn: 'Intelligence Command',
+    category: 'فرماندهی',
+    subcategory: 'اطلاعات',
+    sidc: '10031000111311000000',
+    description: 'فرماندهی عملیات اطلاعاتی',
+    capabilities: ['جمع‌آوری اطلاعات', 'تحلیل اطلاعات', 'پشتیبانی اطلاعاتی'],
+  },
+  {
+    id: 'logistics_command',
+    name: 'فرماندهی تدارکات',
+    nameEn: 'Logistics Command',
+    category: 'فرماندهی',
+    subcategory: 'تدارکات',
+    sidc: '10031000111411000000',
+    description: 'فرماندهی عملیات تدارکاتی',
+    capabilities: ['فرماندهی تدارکات', 'برنامه‌ریزی لجستیکی', 'کنترل تدارکات'],
+  },
+  {
+    id: 'signal_command',
+    name: 'فرماندهی ارتباطات',
+    nameEn: 'Signal Command',
+    category: 'فرماندهی',
+    subcategory: 'ارتباطات',
+    sidc: '10031000111511000000',
+    description: 'فرماندهی عملیات ارتباطی',
+    capabilities: ['فرماندهی ارتباطات', 'برنامه‌ریزی مخابراتی', 'کنترل شبکه‌ها'],
+  },
+]; 

@@ -1,0 +1,332 @@
+{
+  "category": {
+    "id": "coding_classification",
+    "name": "تعاریف فنی و کدگذاری",
+    "englishName": "Technical Definitions & Coding Classification",
+    "description": "سیستم‌های کدگذاری، استانداردهای فنی، و طبقه‌بندی‌های تخصصی نظامی شامل کلیه استانداردهای بین‌المللی، ملی، و تخصصی",
+    "icon": "💻",
+    "color": "#6366F1",
+    "maxLevels": 5,
+    "isActive": true,
+    "order": 9,
+    "type": "CODING_CLASSIFICATION"
+  },
+  "levels": [
+    {"id": "1", "name": "حوزه کدگذاری", "englishName": "Coding Domain", "order": 1, "isRequired": true, "isActive": true, "description": "حوزه و دامنه کلی سیستم کدگذاری"},
+    {"id": "2", "name": "نوع استاندارد", "englishName": "Standard Type", "order": 2, "isRequired": true, "isActive": true, "description": "نوع و کاربرد استاندارد کدگذاری"},
+    {"id": "3", "name": "سیستم کدگذاری", "englishName": "Coding System", "order": 3, "isRequired": true, "isActive": true, "description": "سیستم و روش کدگذاری"},
+    {"id": "4", "name": "زیرسیستم", "englishName": "Subsystem", "order": 4, "isRequired": false, "isActive": true, "description": "زیرسیستم‌ها و بخش‌های تخصصی"},
+    {"id": "5", "name": "کاربرد تخصصی", "englishName": "Specialized Application", "order": 5, "isRequired": false, "isActive": true, "description": "کاربردهای تخصصی و جزئیات فنی"}
+  ],
+  "nodes": [
+    {
+      "id": "standards_systems",
+      "name": "سیستم‌های استاندارد",
+      "level": 1,
+      "description": "سیستم‌های کدگذاری استاندارد بین‌المللی، ملی، و سازمانی شامل کلیه استانداردهای نظامی، فنی، و تخصصی",
+      "children": [
+        {
+          "id": "international_standards",
+          "name": "استانداردهای بین‌المللی",
+          "level": 2,
+          "parentId": "standards_systems",
+          "description": "استانداردهای بین‌المللی نظامی، فنی، و سازمانی مورد استفاده در حوزه دفاعی",
+          "children": [
+            {
+              "id": "nato_standards",
+              "name": "استانداردهای ناتو",
+              "level": 3,
+              "parentId": "international_standards",
+              "description": "استانداردهای پیمان آتلانتیک شمالی شامل نمادشناسی، لجستیک، و ارتباطات",
+              "children": [
+                {
+                  "id": "app6_symbology",
+                  "name": "APP-6 نمادشناسی",
+                  "level": 4,
+                  "parentId": "nato_standards",
+                  "description": "استاندارد نمادشناسی نظامی APP-6 برای نمایش واحدها، تجهیزات، و فعالیت‌های نظامی",
+                  "children": [
+                    {"id": "app6_land_symbols", "name": "نمادهای زمینی", "level": 5, "parentId": "app6_symbology", "description": "نمادهای نیروهای زمینی شامل پیاده‌نظام، زرهی، توپخانه، و پشتیبانی"},
+                    {"id": "app6_air_symbols", "name": "نمادهای هوایی", "level": 5, "parentId": "app6_symbology", "description": "نمادهای نیروهای هوایی شامل جنگنده، بمب‌افکن، هلیکوپتر، و پدافند هوایی"},
+                    {"id": "app6_sea_symbols", "name": "نمادهای دریایی", "level": 5, "parentId": "app6_symbology", "description": "نمادهای نیروهای دریایی شامل ناو، زیردریایی، و تجهیزات دریایی"},
+                    {"id": "app6_space_symbols", "name": "نمادهای فضایی", "level": 5, "parentId": "app6_symbology", "description": "نمادهای سیستم‌های فضایی و ماهواره‌ای"},
+                    {"id": "app6_cyber_symbols", "name": "نمادهای سایبری", "level": 5, "parentId": "app6_symbology", "description": "نمادهای عملیات سایبری و جنگ الکترونیکی"},
+                    {"id": "app6_logistics_symbols", "name": "نمادهای لجستیکی", "level": 5, "parentId": "app6_symbology", "description": "نمادهای تجهیزات و عملیات لجستیکی"}
+                  ]
+                },
+                {
+                  "id": "nato_stock_numbers",
+                  "name": "NSN کدهای اقلام ناتو",
+                  "level": 4,
+                  "parentId": "nato_standards",
+                  "description": "سیستم شماره‌گذاری اقلام ناتو برای شناسایی یکتا کلیه تجهیزات و قطعات",
+                  "children": [
+                    {"id": "nsn_weapons", "name": "کدهای تسلیحات", "level": 5, "parentId": "nato_stock_numbers", "description": "کدگذاری تسلیحات، اسلحه، و مهمات بر اساس NSN"},
+                    {"id": "nsn_vehicles", "name": "کدهای وسایل نقلیه", "level": 5, "parentId": "nato_stock_numbers", "description": "کدگذاری وسایل نقلیه نظامی، تانک، و ماشین‌آلات"},
+                    {"id": "nsn_electronics", "name": "کدهای الکترونیک", "level": 5, "parentId": "nato_stock_numbers", "description": "کدگذاری تجهیزات الکترونیکی، ارتباطی، و رادار"},
+                    {"id": "nsn_supplies", "name": "کدهای ملزومات", "level": 5, "parentId": "nato_stock_numbers", "description": "کدگذاری ملزومات، لوازم، و قطعات یدکی"},
+                    {"id": "nsn_medical", "name": "کدهای پزشکی", "level": 5, "parentId": "nato_stock_numbers", "description": "کدگذاری تجهیزات و ملزومات پزشکی"},
+                    {"id": "nsn_clothing", "name": "کدهای پوشاک", "level": 5, "parentId": "nato_stock_numbers", "description": "کدگذاری لباس، کلاه، و تجهیزات شخصی"}
+                  ]
+                },
+                {
+                  "id": "stanag_agreements",
+                  "name": "توافقنامه‌های STANAG",
+                  "level": 4,
+                  "parentId": "nato_standards",
+                  "description": "توافقنامه‌های استانداردسازی ناتو برای هماهنگی فنی و عملیاتی",
+                  "children": [
+                    {"id": "stanag_ammo", "name": "استانداردهای مهمات", "level": 5, "parentId": "stanag_agreements", "description": "استانداردهای مهمات، گلوله، و انفجارات"},
+                    {"id": "stanag_fuel", "name": "استانداردهای سوخت", "level": 5, "parentId": "stanag_agreements", "description": "استانداردهای سوخت، روغن، و مواد نفتی"},
+                    {"id": "stanag_communications", "name": "استانداردهای مخابرات", "level": 5, "parentId": "stanag_agreements", "description": "استانداردهای ارتباطات، رادیو، و شبکه"},
+                    {"id": "stanag_logistics", "name": "استانداردهای لجستیک", "level": 5, "parentId": "stanag_agreements", "description": "استانداردهای حمل‌ونقل و تأمین"},
+                    {"id": "stanag_medical", "name": "استانداردهای پزشکی", "level": 5, "parentId": "stanag_agreements", "description": "استانداردهای درمان و تخلیه مجروحان"}
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "us_mil_standards",
+              "name": "استانداردهای نظامی آمریکا",
+              "level": 3,
+              "parentId": "international_standards",
+              "description": "استانداردهای نظامی ایالات متحده آمریکا شامل MIL-STD و DOD-STD",
+              "children": [
+                {
+                  "id": "mil_std_2525",
+                  "name": "MIL-STD-2525 نمادهای نظامی",
+                  "level": 4,
+                  "parentId": "us_mil_standards",
+                  "description": "استاندارد نمادهای نظامی آمریکا برای نمایش واحدها و تجهیزات",
+                  "children": [
+                    {"id": "sidc_codes", "name": "کدهای SIDC", "level": 5, "parentId": "mil_std_2525", "description": "کدهای شناسایی نماد برای طبقه‌بندی واحدها"},
+                    {"id": "battle_dimension", "name": "ابعاد نبرد", "level": 5, "parentId": "mil_std_2525", "description": "طبقه‌بندی ابعاد نبرد: زمین، هوا، دریا، فضا، سایبر"},
+                    {"id": "affiliation_codes", "name": "کدهای وابستگی", "level": 5, "parentId": "mil_std_2525", "description": "کدهای تشخیص دوست، دشمن، خنثی، و ناشناخته"},
+                    {"id": "status_codes", "name": "کدهای وضعیت", "level": 5, "parentId": "mil_std_2525", "description": "کدهای وضعیت عملیاتی واحدها"},
+                    {"id": "modifier_codes", "name": "کدهای اصلاحی", "level": 5, "parentId": "mil_std_2525", "description": "کدهای اصلاحی برای جزئیات اضافی"}
+                  ]
+                },
+                {
+                  "id": "mil_std_188",
+                  "name": "MIL-STD-188 ارتباطات",
+                  "level": 4,
+                  "parentId": "us_mil_standards",
+                  "description": "استانداردهای ارتباطات نظامی شامل رادیو، شبکه، و انتقال داده",
+                  "children": [
+                    {"id": "hf_radio_standards", "name": "استانداردهای رادیو HF", "level": 5, "parentId": "mil_std_188", "description": "استانداردهای رادیو با فرکانس بالا"},
+                    {"id": "vhf_uhf_standards", "name": "استانداردهای VHF/UHF", "level": 5, "parentId": "mil_std_188", "description": "استانداردهای رادیو VHF و UHF"},
+                    {"id": "data_transmission", "name": "انتقال داده", "level": 5, "parentId": "mil_std_188", "description": "پروتکل‌های انتقال داده دیجیتال"},
+                    {"id": "crypto_standards", "name": "استانداردهای رمزنگاری", "level": 5, "parentId": "mil_std_188", "description": "استانداردهای امنیت و رمزنگاری"}
+                  ]
+                },
+                {
+                  "id": "mil_std_1553",
+                  "name": "MIL-STD-1553 گذرگاه داده",
+                  "level": 4,
+                  "parentId": "us_mil_standards",
+                  "description": "استاندارد گذرگاه داده برای سیستم‌های آویونیک و کنترل",
+                  "children": [
+                    {"id": "bus_controller", "name": "کنترلر گذرگاه", "level": 5, "parentId": "mil_std_1553", "description": "مشخصات کنترلر اصلی گذرگاه"},
+                    {"id": "remote_terminals", "name": "ترمینال‌های راه دور", "level": 5, "parentId": "mil_std_1553", "description": "مشخصات ترمینال‌های متصل به گذرگاه"},
+                    {"id": "message_formats", "name": "فرمت‌های پیام", "level": 5, "parentId": "mil_std_1553", "description": "ساختار و فرمت پیام‌های داده"}
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "iso_standards",
+              "name": "استانداردهای ISO",
+              "level": 3,
+              "parentId": "international_standards",
+              "description": "استانداردهای سازمان بین‌المللی استاندارد مرتبط با حوزه دفاعی",
+              "children": [
+                {
+                  "id": "iso_quality",
+                  "name": "استانداردهای کیفیت",
+                  "level": 4,
+                  "parentId": "iso_standards",
+                  "description": "استانداردهای مدیریت کیفیت برای صنایع دفاعی",
+                  "children": [
+                    {"id": "iso_9001", "name": "ISO 9001 مدیریت کیفیت", "level": 5, "parentId": "iso_quality", "description": "سیستم مدیریت کیفیت"},
+                    {"id": "as9100", "name": "AS9100 کیفیت هوافضا", "level": 5, "parentId": "iso_quality", "description": "استاندارد کیفیت صنایع هوافضا و دفاعی"}
+                  ]
+                },
+                {
+                  "id": "iso_security",
+                  "name": "استانداردهای امنیت",
+                  "level": 4,
+                  "parentId": "iso_standards",
+                  "description": "استانداردهای امنیت اطلاعات و سایبری",
+                  "children": [
+                    {"id": "iso_27001", "name": "ISO 27001 امنیت اطلاعات", "level": 5, "parentId": "iso_security", "description": "سیستم مدیریت امنیت اطلاعات"},
+                    {"id": "iso_15408", "name": "ISO 15408 معیارهای مشترک", "level": 5, "parentId": "iso_security", "description": "معیارهای مشترک ارزیابی امنیت IT"}
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "un_standards",
+              "name": "استانداردهای سازمان ملل",
+              "level": 3,
+              "parentId": "international_standards",
+              "description": "استانداردهای سازمان ملل متحد برای حفظ صلح و عملیات انسان‌دوستانه",
+              "children": [
+                {
+                  "id": "un_peacekeeping",
+                  "name": "حفظ صلح سازمان ملل",
+                  "level": 4,
+                  "parentId": "un_standards",
+                  "description": "استانداردها و رویه‌های عملیات حفظ صلح",
+                  "children": [
+                    {"id": "un_mission_codes", "name": "کدهای مأموریت", "level": 5, "parentId": "un_peacekeeping", "description": "کدگذاری مأموریت‌های حفظ صلح"},
+                    {"id": "un_force_symbols", "name": "نمادهای نیروهای صلح", "level": 5, "parentId": "un_peacekeeping", "description": "نمادهای نیروهای حفظ صلح سازمان ملل"},
+                    {"id": "un_roe", "name": "قوانین درگیری", "level": 5, "parentId": "un_peacekeeping", "description": "قوانین و محدودیت‌های درگیری"}
+                  ]
+                },
+                {
+                  "id": "humanitarian_standards",
+                  "name": "استانداردهای انسان‌دوستانه",
+                  "level": 4,
+                  "parentId": "un_standards",
+                  "description": "استانداردهای عملیات کمک‌رسانی و امداد",
+                  "children": [
+                    {"id": "relief_codes", "name": "کدهای امداد", "level": 5, "parentId": "humanitarian_standards", "description": "کدگذاری عملیات امدادرسانی"},
+                    {"id": "disaster_response", "name": "پاسخ بلایا", "level": 5, "parentId": "humanitarian_standards", "description": "کدهای پاسخ به بلایای طبیعی"},
+                    {"id": "refugee_codes", "name": "کدهای پناهندگان", "level": 5, "parentId": "humanitarian_standards", "description": "کدگذاری خدمات پناهندگان"}
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "national_standards",
+          "name": "استانداردهای ملی",
+          "level": 2,
+          "parentId": "standards_systems",
+          "description": "استانداردهای ملی و داخلی کشورهای مختلف در حوزه دفاعی و نظامی",
+          "children": [
+            {
+              "id": "iran_military_standards",
+              "name": "استانداردهای نظامی ایران",
+              "level": 3,
+              "parentId": "national_standards",
+              "description": "استانداردهای نیروهای مسلح جمهوری اسلامی ایران شامل ارتش، سپاه، نیروی انتظامی، و بسیج",
+              "children": [
+                {
+                  "id": "iri_unit_codes",
+                  "name": "کدهای یگانی ایران",
+                  "level": 4,
+                  "parentId": "iran_military_standards",
+                  "description": "سیستم کدگذاری یگان‌ها و واحدهای نظامی ایران",
+                  "children": [
+                    {"id": "artesh_codes", "name": "کدهای ارتش", "level": 5, "parentId": "iri_unit_codes", "description": "کدگذاری یگان‌های ارتش جمهوری اسلامی ایران"},
+                    {"id": "irgc_codes", "name": "کدهای سپاه", "level": 5, "parentId": "iri_unit_codes", "description": "کدگذاری یگان‌های سپاه پاسداران انقلاب اسلامی"},
+                    {"id": "police_codes", "name": "کدهای نیروی انتظامی", "level": 5, "parentId": "iri_unit_codes", "description": "کدگذاری یگان‌های نیروی انتظامی جمهوری اسلامی ایران"},
+                    {"id": "basij_codes", "name": "کدهای بسیج", "level": 5, "parentId": "iri_unit_codes", "description": "کدگذاری یگان‌های سازمان بسیج مستضعفین"},
+                    {"id": "naval_codes", "name": "کدهای نیروی دریایی", "level": 5, "parentId": "iri_unit_codes", "description": "کدگذاری یگان‌های نیروی دریایی ارتش و سپاه"},
+                    {"id": "air_force_codes", "name": "کدهای نیروی هوایی", "level": 5, "parentId": "iri_unit_codes", "description": "کدگذاری یگان‌های نیروی هوایی ارتش و سپاه"}
+                  ]
+                },
+                {
+                  "id": "iri_equipment_codes",
+                  "name": "کدهای تجهیزات ایران",
+                  "level": 4,
+                  "parentId": "iran_military_standards",
+                  "description": "سیستم کدگذاری تجهیزات و سامانه‌های نظامی ایران",
+                  "children": [
+                    {"id": "domestic_weapons", "name": "تسلیحات داخلی", "level": 5, "parentId": "iri_equipment_codes", "description": "کدگذاری تسلیحات و سامانه‌های ساخت داخل"},
+                    {"id": "indigenous_systems", "name": "سامانه‌های بومی", "level": 5, "parentId": "iri_equipment_codes", "description": "کدگذاری سامانه‌های دفاعی بومی و ملی"},
+                    {"id": "missile_systems", "name": "سامانه‌های موشکی", "level": 5, "parentId": "iri_equipment_codes", "description": "کدگذاری موشک‌ها و سامانه‌های موشکی"},
+                    {"id": "radar_systems", "name": "سامانه‌های راداری", "level": 5, "parentId": "iri_equipment_codes", "description": "کدگذاری رادارها و سامانه‌های تشخیص"},
+                    {"id": "communication_systems", "name": "سامانه‌های ارتباطی", "level": 5, "parentId": "iri_equipment_codes", "description": "کدگذاری تجهیزات و شبکه‌های ارتباطی"}
+                  ]
+                },
+                {
+                  "id": "iri_operational_codes",
+                  "name": "کدهای عملیاتی ایران",
+                  "level": 4,
+                  "parentId": "iran_military_standards",
+                  "description": "سیستم کدگذاری عملیات و مأموریت‌های نظامی ایران",
+                  "children": [
+                    {"id": "operation_names", "name": "نامگذاری عملیات", "level": 5, "parentId": "iri_operational_codes", "description": "روش نامگذاری عملیات نظامی و رزمایش‌ها"},
+                    {"id": "exercise_codes", "name": "کدهای رزمایش", "level": 5, "parentId": "iri_operational_codes", "description": "کدگذاری رزمایش‌ها و تمرینات نظامی"},
+                    {"id": "readiness_codes", "name": "کدهای آمادگی", "level": 5, "parentId": "iri_operational_codes", "description": "کدهای سطح آمادگی و هشدار"},
+                    {"id": "command_codes", "name": "کدهای فرماندهی", "level": 5, "parentId": "iri_operational_codes", "description": "کدهای زنجیره فرماندهی و کنترل"}
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "other_national_standards",
+              "name": "استانداردهای ملی سایر کشورها",
+              "level": 3,
+              "parentId": "national_standards",
+              "description": "استانداردهای نظامی کشورهای مختلف",
+              "children": [
+                {
+                  "id": "british_standards",
+                  "name": "استانداردهای بریتانیا",
+                  "level": 4,
+                  "parentId": "other_national_standards",
+                  "description": "استانداردهای دفاعی انگلستان (DEF-STAN)",
+                  "children": [
+                    {"id": "def_stan_codes", "name": "کدهای DEF-STAN", "level": 5, "parentId": "british_standards", "description": "استانداردهای دفاعی بریتانیا"}
+                  ]
+                },
+                {
+                  "id": "russian_standards",
+                  "name": "استانداردهای روسیه",
+                  "level": 4,
+                  "parentId": "other_national_standards",
+                  "description": "استانداردهای نظامی فدراسیون روسیه (ГОСТ)",
+                  "children": [
+                    {"id": "gost_military", "name": "ГОСТ نظامی", "level": 5, "parentId": "russian_standards", "description": "استانداردهای نظامی روسیه"}
+                  ]
+                },
+                {
+                  "id": "chinese_standards",
+                  "name": "استانداردهای چین",
+                  "level": 4,
+                  "parentId": "other_national_standards",
+                  "description": "استانداردهای نظامی جمهوری خلق چین",
+                  "children": [
+                    {"id": "pla_standards", "name": "استانداردهای ارتش خلق", "level": 5, "parentId": "chinese_standards", "description": "استانداردهای ارتش آزادی‌بخش خلق چین"}
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "organizational_standards",
+          "name": "استانداردهای سازمانی",
+          "level": 2,
+          "parentId": "standards_systems",
+          "description": "استانداردهای سازمان‌ها و نهادهای تخصصی دفاعی و امنیتی",
+          "children": [
+            {
+              "id": "ieee_standards",
+              "name": "استانداردهای IEEE",
+              "level": 3,
+              "parentId": "organizational_standards",
+              "description": "استانداردهای مهندسی برق و الکترونیک مرتبط با دفاع",
+              "children": [
+                {
+                  "id": "ieee_radar",
+                  "name": "استانداردهای رادار",
+                  "level": 4,
+                  "parentId": "ieee_standards",
+                  "description": "استانداردهای سیستم‌های راداری و تشخیص",
+                  "children": [
+                    {"id": "radar_frequency", "name": "فرکانس‌های راداری", "level": 5, "parentId": "ieee_radar", "description": "استانداردهای فرکانس رادار"}
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

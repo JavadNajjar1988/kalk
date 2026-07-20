@@ -1,0 +1,390 @@
+/* GeoServer Custom Theme - مشابه تم داشبورد React */
+
+/* فونت Yekan */
+@font-face {
+  font-family: 'Yekan';
+  src: url('data:font/woff2;base64,') format('woff2');
+  font-weight: normal;
+  font-style: normal;
+}
+
+/* متغیرهای رنگ مشابه تم داشبورد */
+:root {
+  --primary-color: #34a853;
+  --primary-dark: #2e8e47;
+  --primary-light: #66bb6a;
+  --secondary-color: #3b475e;
+  --background-dark: #23262d;
+  --background-paper: #2a2e36;
+  --background-elevated: #313540;
+  --text-primary: #bac7e3;
+  --text-secondary: #9aa6c3;
+  --border-color: #383b43;
+  --shadow-color: rgba(0, 0, 0, 0.3);
+  --border-radius: 12px;
+}
+
+/* بدنه اصلی */
+body {
+  font-family: 'Yekan', 'Tahoma', 'Arial', sans-serif !important;
+  direction: rtl !important;
+  background: var(--background-dark) !important;
+  color: var(--text-primary) !important;
+}
+
+/* هدر و نوار بالا */
+.header, .header-options, .header-banner {
+  background: #1e1e1e !important;
+  border-bottom: 1px solid var(--border-color) !important;
+  box-shadow: 0 2px 4px var(--shadow-color) !important;
+}
+
+.header a, .header-options a {
+  color: var(--text-primary) !important;
+}
+
+/* دکمه‌ها */
+.button, .ui-button, input[type="submit"], input[type="button"], button {
+  background: var(--primary-color) !important;
+  color: #ffffff !important;
+  border: none !important;
+  border-radius: var(--border-radius) !important;
+  padding: 8px 16px !important;
+  font-family: 'Yekan', sans-serif !important;
+  font-weight: 500 !important;
+  transition: all 0.3s ease !important;
+  box-shadow: none !important;
+}
+
+.button:hover, .ui-button:hover, input[type="submit"]:hover, 
+input[type="button"]:hover, button:hover {
+  background: var(--primary-dark) !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 4px 12px rgba(52, 168, 83, 0.3) !important;
+}
+
+.button:active, .ui-button:active {
+  transform: translateY(0) !important;
+}
+
+/* لینک‌ها */
+a {
+  color: var(--primary-color) !important;
+  text-decoration: none !important;
+  transition: color 0.2s ease !important;
+}
+
+a:hover {
+  color: var(--primary-light) !important;
+}
+
+/* کارت‌ها و پنل‌ها */
+.panel, .ui-widget-content, .ui-panel {
+  background: var(--background-paper) !important;
+  border: 1px solid var(--border-color) !important;
+  border-radius: var(--border-radius) !important;
+  padding: 16px !important;
+  box-shadow: 0 2px 8px var(--shadow-color) !important;
+  backdrop-filter: blur(20px) !important;
+  transition: all 0.3s ease !important;
+}
+
+.panel:hover, .ui-widget-content:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5) !important;
+}
+
+/* جداول */
+table, .ui-datatable {
+  background: var(--background-paper) !important;
+  border: 1px solid var(--border-color) !important;
+  border-radius: var(--border-radius) !important;
+  overflow: hidden !important;
+}
+
+table th, .ui-datatable th {
+  background: var(--background-elevated) !important;
+  color: var(--text-primary) !important;
+  border-bottom: 2px solid var(--primary-color) !important;
+  padding: 12px !important;
+  font-weight: 600 !important;
+}
+
+table td, .ui-datatable td {
+  background: var(--background-paper) !important;
+  color: var(--text-secondary) !important;
+  border-bottom: 1px solid var(--border-color) !important;
+  padding: 10px 12px !important;
+}
+
+table tr:hover, .ui-datatable tr:hover {
+  background: rgba(52, 168, 83, 0.1) !important;
+}
+
+/* فیلدهای ورودی */
+input[type="text"], input[type="password"], input[type="number"], 
+textarea, select, .ui-inputfield {
+  background: rgba(255, 255, 255, 0.05) !important;
+  border: 1px solid var(--border-color) !important;
+  border-radius: 8px !important;
+  color: var(--text-primary) !important;
+  padding: 8px 12px !important;
+  font-family: 'Yekan', sans-serif !important;
+  transition: all 0.2s ease !important;
+}
+
+input[type="text"]:focus, input[type="password"]:focus, 
+input[type="number"]:focus, textarea:focus, select:focus,
+.ui-inputfield:focus {
+  border-color: var(--primary-color) !important;
+  outline: none !important;
+  box-shadow: 0 0 0 3px rgba(52, 168, 83, 0.2) !important;
+  background: rgba(255, 255, 255, 0.08) !important;
+}
+
+/* منوها */
+.menu, .ui-menu, .ui-menubar {
+  background: var(--background-paper) !important;
+  border: 1px solid var(--border-color) !important;
+  border-radius: var(--border-radius) !important;
+  box-shadow: 0 4px 16px var(--shadow-color) !important;
+}
+
+.menu-item, .ui-menu-item {
+  background: transparent !important;
+  border-radius: 8px !important;
+  margin: 2px 4px !important;
+  transition: all 0.2s ease !important;
+}
+
+.menu-item:hover, .ui-menu-item:hover {
+  background: rgba(52, 168, 83, 0.15) !important;
+}
+
+.menu-item a, .ui-menu-item a {
+  color: var(--text-primary) !important;
+  padding: 8px 12px !important;
+}
+
+/* تب‌ها */
+.ui-tabs, .tabs {
+  background: var(--background-paper) !important;
+  border: 1px solid var(--border-color) !important;
+  border-radius: var(--border-radius) !important;
+}
+
+.ui-tabs-nav {
+  background: var(--background-elevated) !important;
+  border-bottom: 2px solid var(--primary-color) !important;
+}
+
+.ui-tabs-nav li {
+  border-radius: 8px 8px 0 0 !important;
+}
+
+.ui-tabs-nav li a {
+  color: var(--text-secondary) !important;
+  padding: 10px 16px !important;
+}
+
+.ui-tabs-nav li.ui-state-active a {
+  background: var(--primary-color) !important;
+  color: #ffffff !important;
+}
+
+.ui-tabs-nav li:hover a {
+  background: rgba(52, 168, 83, 0.2) !important;
+}
+
+/* پیغام‌های موفقیت و خطا */
+.message, .ui-message {
+  border-radius: var(--border-radius) !important;
+  padding: 12px 16px !important;
+  font-family: 'Yekan', sans-serif !important;
+}
+
+.ui-message-success {
+  background: rgba(52, 168, 83, 0.2) !important;
+  border: 1px solid var(--primary-color) !important;
+  color: var(--primary-light) !important;
+}
+
+.ui-message-error {
+  background: rgba(234, 67, 53, 0.2) !important;
+  border: 1px solid #ea4335 !important;
+  color: #ff6b6b !important;
+}
+
+.ui-message-info {
+  background: rgba(66, 133, 244, 0.2) !important;
+  border: 1px solid #4285f4 !important;
+  color: #64b5f6 !important;
+}
+
+/* اسکرول بار */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--background-elevated);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border-color);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--primary-color);
+}
+
+/* برچسب‌ها */
+label, .ui-outputlabel {
+  color: var(--text-primary) !important;
+  font-family: 'Yekan', sans-serif !important;
+  font-weight: 500 !important;
+}
+
+/* لیست‌ها */
+ul, ol {
+  padding-right: 20px !important;
+}
+
+li {
+  color: var(--text-secondary) !important;
+  margin: 4px 0 !important;
+}
+
+/* عنوان‌ها */
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'Yekan', sans-serif !important;
+  color: var(--text-primary) !important;
+  font-weight: 600 !important;
+}
+
+h1 {
+  font-size: 2rem !important;
+}
+
+h2 {
+  font-size: 1.75rem !important;
+}
+
+h3 {
+  font-size: 1.5rem !important;
+}
+
+/* لوگو و برند */
+.logo, .header-logo {
+  filter: brightness(1.1) !important;
+}
+
+/* جدا کننده */
+hr, .separator {
+  border-color: var(--border-color) !important;
+  border-width: 1px !important;
+}
+
+/* دکمه‌های کوچک */
+.button-small, .ui-button-small {
+  padding: 4px 8px !important;
+  font-size: 0.875rem !important;
+}
+
+/* دکمه‌های بزرگ */
+.button-large, .ui-button-large {
+  padding: 12px 24px !important;
+  font-size: 1rem !important;
+}
+
+/* نمایش ردیف */
+.row, .ui-g {
+  margin: 8px 0 !important;
+}
+
+/* ستون */
+.col, .ui-g-12, .ui-g-6, .ui-g-4 {
+  padding: 4px 8px !important;
+}
+
+/* پانل اطلاعات */
+.info-panel, .ui-panel-titlebar {
+  background: var(--background-elevated) !important;
+  border-bottom: 2px solid var(--primary-color) !important;
+  color: var(--text-primary) !important;
+  font-weight: 600 !important;
+  padding: 12px 16px !important;
+}
+
+/* Overlay و Modal */
+.ui-dialog, .modal {
+  background: var(--background-paper) !important;
+  border: 1px solid var(--border-color) !important;
+  border-radius: var(--border-radius) !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6) !important;
+}
+
+.ui-dialog-titlebar {
+  background: var(--background-elevated) !important;
+  border-bottom: 1px solid var(--border-color) !important;
+  color: var(--text-primary) !important;
+}
+
+/* چک باکس و رادیو */
+input[type="checkbox"], input[type="radio"] {
+  accent-color: var(--primary-color) !important;
+}
+
+/* انتخابگر تاریخ */
+.datepicker, .ui-calendar {
+  background: var(--background-paper) !important;
+  border: 1px solid var(--border-color) !important;
+  border-radius: 8px !important;
+}
+
+/* جدول داده */
+.data-table, .ui-datatable-tablewrapper {
+  background: var(--background-paper) !important;
+}
+
+/* فلش‌ها برای RTL */
+.arrow-right::before {
+  content: '←' !important;
+}
+
+.arrow-left::before {
+  content: '→' !important;
+}
+
+/* انیمیشن‌ها */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.panel, .ui-widget-content {
+  animation: fadeIn 0.3s ease-out;
+}
+
+/* بهبود نمایش در موبایل */
+@media (max-width: 768px) {
+  .panel, .ui-widget-content {
+    padding: 12px !important;
+    border-radius: 8px !important;
+  }
+  
+  .button, .ui-button {
+    padding: 6px 12px !important;
+    font-size: 0.875rem !important;
+  }
+}
+

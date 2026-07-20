@@ -1,0 +1,241 @@
+{
+  "category": {
+    "id": "time_definitions",
+    "name": "تعاریف زمانی",
+    "englishName": "Time Definitions", 
+    "description": "تعاریف زمانی شامل دوره‌ها، سال‌ها، رویدادها و بازه‌های زمانی مختلف",
+    "icon": "⏰",
+    "color": "#8B5CF6",
+    "maxLevels": 5,
+    "isActive": true,
+    "order": 3,
+    "type": "TIME_DEFINITIONS"
+  },
+  "levels": [
+    {"id": "1", "name": "طبیعت زمانی", "englishName": "Time Nature", "order": 1, "isRequired": true, "isActive": true, "description": "طبیعت و ماهیت کلی زمان"},
+    {"id": "2", "name": "مقیاس زمانی", "englishName": "Time Scale", "order": 2, "isRequired": true, "isActive": true, "description": "مقیاس و دامنه زمانی"},
+    {"id": "3", "name": "نوع بازه زمانی", "englishName": "Time Period Type", "order": 3, "isRequired": true, "isActive": true, "description": "نوع و روش تعریف بازه زمانی"},
+    {"id": "4", "name": "تخصص زمانی", "englishName": "Time Specialty", "order": 4, "isRequired": false, "isActive": true, "description": "تخصص و جزئیات زمانی"},
+    {"id": "5", "name": "زیر تخصص", "englishName": "Sub-specialty", "order": 5, "isRequired": false, "isActive": true, "description": "زیر تخصص‌ها و جزئیات بیشتر زمانی"}
+  ],
+  "nodes": [
+    {
+      "id": "operational",
+      "name": "عملیاتی",
+      "level": 1,
+      "description": "زمان‌بندی‌های مرتبط با عملیات نظامی و دفاعی",
+      "children": [
+        {
+          "id": "op_strategic",
+          "name": "راهبردی",
+          "level": 2,
+          "parentId": "operational",
+          "description": "زمان‌بندی‌های راهبردی بلندمدت",
+          "children": [
+            {
+              "id": "strategic_planning",
+              "name": "برنامه‌ریزی راهبردی",
+              "level": 3,
+              "parentId": "op_strategic",
+              "description": "دوره‌های برنامه‌ریزی راهبردی",
+              "children": [
+                {"id": "annual_plan", "name": "برنامه سالانه", "level": 4, "parentId": "strategic_planning", "description": "برنامه‌ریزی سالانه راهبردی", "children": [{"id": "q1_spring", "name": "فصل اول (بهار)", "level": 5, "parentId": "annual_plan", "description": "فصل اول سال - آغاز برنامه‌ها"}, {"id": "q2_summer", "name": "فصل دوم (تابستان)", "level": 5, "parentId": "annual_plan", "description": "فصل دوم - اجرای عملیات"}, {"id": "q3_autumn", "name": "فصل سوم (پاییز)", "level": 5, "parentId": "annual_plan", "description": "فصل سوم - ارزیابی میانی"}, {"id": "q4_winter", "name": "فصل چهارم (زمستان)", "level": 5, "parentId": "annual_plan", "description": "فصل چهارم - ارزیابی نهایی"}]},
+                {"id": "multi_year", "name": "برنامه چندساله", "level": 4, "parentId": "strategic_planning", "description": "برنامه‌ریزی چندساله", "children": [{"id": "five_year", "name": "برنامه پنج‌ساله", "level": 5, "parentId": "multi_year", "description": "برنامه راهبردی پنج‌ساله"}, {"id": "ten_year", "name": "چشم‌انداز ده‌ساله", "level": 5, "parentId": "multi_year", "description": "چشم‌انداز راهبردی ده‌ساله"}]}
+              ]
+            },
+            {
+              "id": "strategic_ops",
+              "name": "عملیات راهبردی",
+              "level": 3,
+              "parentId": "op_strategic",
+              "description": "عملیات راهبردی طولانی‌مدت",
+              "children": [
+                {"id": "campaigns", "name": "کمپین‌های راهبردی", "level": 4, "parentId": "strategic_ops", "description": "کمپین‌های نظامی طولانی‌مدت", "children": [{"id": "campaign_prep", "name": "فاز آماده‌سازی", "level": 5, "parentId": "campaigns", "description": "آماده‌سازی کمپین"}, {"id": "campaign_exec", "name": "فاز اجرا", "level": 5, "parentId": "campaigns", "description": "اجرای کمپین"}, {"id": "campaign_consol", "name": "فاز تحکیم", "level": 5, "parentId": "campaigns", "description": "تحکیم دستاوردها"}]},
+                {"id": "mobilization", "name": "بسیج راهبردی", "level": 4, "parentId": "strategic_ops", "description": "بسیج کلی نیروها", "children": [{"id": "national_mobil", "name": "بسیج ملی", "level": 5, "parentId": "mobilization", "description": "بسیج منابع ملی"}, {"id": "reserve_activ", "name": "فراخوان ذخیره", "level": 5, "parentId": "mobilization", "description": "فراخوان نیروهای ذخیره"}]}
+              ]
+            }
+          ]
+        },
+        {
+          "id": "op_tactical",
+          "name": "تاکتیکی",
+          "level": 2,
+          "parentId": "operational",
+          "description": "زمان‌بندی‌های تاکتیکی کوتاه‌مدت",
+          "children": [
+            {
+              "id": "tactical_missions",
+              "name": "مأموریت‌های تاکتیکی",
+              "level": 3,
+              "parentId": "op_tactical",
+              "description": "زمان‌بندی مأموریت‌های تاکتیکی",
+              "children": [
+                {"id": "assault_ops", "name": "عملیات تهاجمی", "level": 4, "parentId": "tactical_missions", "description": "عملیات تهاجمی میدانی", "children": [{"id": "assault_prep", "name": "آماده‌سازی حمله", "level": 5, "parentId": "assault_ops", "description": "زمان آماده‌سازی حمله"}, {"id": "assault_window", "name": "پنجره حمله", "level": 5, "parentId": "assault_ops", "description": "بازه زمانی بهینه حمله"}, {"id": "exploitation", "name": "بهره‌برداری", "level": 5, "parentId": "assault_ops", "description": "بهره‌برداری از موفقیت"}]},
+                {"id": "defense_ops", "name": "عملیات دفاعی", "level": 4, "parentId": "tactical_missions", "description": "عملیات دفاعی", "children": [{"id": "defense_prep", "name": "آماده‌سازی دفاع", "level": 5, "parentId": "defense_ops", "description": "آماده‌سازی مواضع دفاعی"}, {"id": "engagement_time", "name": "زمان درگیری", "level": 5, "parentId": "defense_ops", "description": "مدت تحمل درگیری"}]},
+                {"id": "recon_ops", "name": "شناسایی تاکتیکی", "level": 4, "parentId": "tactical_missions", "description": "عملیات شناسایی", "children": [{"id": "patrol_duration", "name": "مدت گشت", "level": 5, "parentId": "recon_ops", "description": "مدت گشت‌های شناسایی"}, {"id": "observation_shifts", "name": "شیفت‌های رصد", "level": 5, "parentId": "recon_ops", "description": "شیفت‌بندی پست‌های رصد"}]}
+              ]
+            },
+            {
+              "id": "tactical_support",
+              "name": "پشتیبانی تاکتیکی",
+              "level": 3,
+              "parentId": "op_tactical",
+              "description": "پشتیبانی عملیاتی میدانی",
+              "children": [
+                {"id": "logistics_support", "name": "لجستیک تاکتیکی", "level": 4, "parentId": "tactical_support", "description": "پشتیبانی لجستیکی", "children": [{"id": "ammo_resupply", "name": "تأمین مهمات", "level": 5, "parentId": "logistics_support", "description": "برنامه تأمین مهمات"}, {"id": "fuel_resupply", "name": "تأمین سوخت", "level": 5, "parentId": "logistics_support", "description": "برنامه تأمین سوخت"}, {"id": "food_supply", "name": "تأمین غذا", "level": 5, "parentId": "logistics_support", "description": "توزیع غذا و آب"}]},
+                {"id": "medical_support", "name": "پزشکی تاکتیکی", "level": 4, "parentId": "tactical_support", "description": "پشتیبانی پزشکی", "children": [{"id": "golden_hour", "name": "ساعت طلایی", "level": 5, "parentId": "medical_support", "description": "تخلیه در ساعت اول"}, {"id": "treatment_timeline", "name": "جدول درمان", "level": 5, "parentId": "medical_support", "description": "مراحل درمان میدانی"}]}
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "administrative",
+      "name": "اداری",
+      "level": 1,
+      "description": "زمان‌بندی‌های اداری، آموزشی و سازمانی",
+      "children": [
+        {
+          "id": "admin_routine",
+          "name": "روتین اداری",
+          "level": 2,
+          "parentId": "administrative",
+          "description": "زمان‌بندی‌های روتین اداری",
+          "children": [
+            {
+              "id": "duty_cycles",
+              "name": "چرخه‌های خدمت",
+              "level": 3,
+              "parentId": "admin_routine",
+              "description": "چرخه‌های خدمت و شیفت‌بندی",
+              "children": [
+                {"id": "daily_duties", "name": "وظایف روزانه", "level": 4, "parentId": "duty_cycles", "description": "شیفت‌های روزانه", "children": [{"id": "morning_shift", "name": "شیفت صبح", "level": 5, "parentId": "daily_duties", "description": "شیفت صبح (06:00-14:00)"}, {"id": "evening_shift", "name": "شیفت عصر", "level": 5, "parentId": "daily_duties", "description": "شیفت عصر (14:00-22:00)"}, {"id": "night_shift", "name": "شیفت شب", "level": 5, "parentId": "daily_duties", "description": "شیفت شب (22:00-06:00)"}, {"id": "guard_rotation", "name": "چرخش نگهبانی", "level": 5, "parentId": "daily_duties", "description": "چرخش نگهبانان"}]},
+                {"id": "weekly_duties", "name": "وظایف هفتگی", "level": 4, "parentId": "duty_cycles", "description": "برنامه هفتگی", "children": [{"id": "weekend_duty", "name": "خدمت آخر هفته", "level": 5, "parentId": "weekly_duties", "description": "شیفت‌های تعطیلات"}, {"id": "weekly_inspections", "name": "بازرسی هفتگی", "level": 5, "parentId": "weekly_duties", "description": "بازرسی‌های هفتگی"}]}
+              ]
+            },
+            {
+              "id": "admin_processes",
+              "name": "فرآیندهای اداری",
+              "level": 3,
+              "parentId": "admin_routine",
+              "description": "فرآیندهای اداری مختلف",
+              "children": [
+                {"id": "personnel_admin", "name": "اداره پرسنل", "level": 4, "parentId": "admin_processes", "description": "فرآیندهای پرسنلی", "children": [{"id": "leave_schedules", "name": "برنامه مرخصی", "level": 5, "parentId": "personnel_admin", "description": "تخصیص مرخصی‌ها"}, {"id": "promotion_timeline", "name": "جدول ارتقاء", "level": 5, "parentId": "personnel_admin", "description": "بررسی ارتقاء پرسنل"}]}
+              ]
+            }
+          ]
+        },
+        {
+          "id": "admin_training",
+          "name": "آموزش و تربیت",
+          "level": 2,
+          "parentId": "administrative",
+          "description": "زمان‌بندی‌های آموزشی",
+          "children": [
+            {
+              "id": "training_schedules",
+              "name": "برنامه‌های آموزشی",
+              "level": 3,
+              "parentId": "admin_training",
+              "description": "دوره‌های آموزشی مختلف",
+              "children": [
+                {"id": "basic_training", "name": "آموزش پایه", "level": 4, "parentId": "training_schedules", "description": "دوره‌های پایه", "children": [{"id": "recruit_training", "name": "آموزش سرباز", "level": 5, "parentId": "basic_training", "description": "دوره 8 هفته‌ای سربازان"}, {"id": "nco_basic", "name": "دوره درجه‌داران", "level": 5, "parentId": "basic_training", "description": "آموزش پایه درجه‌داران"}, {"id": "officer_basic", "name": "دوره پایه افسری", "level": 5, "parentId": "basic_training", "description": "آموزش پایه افسران"}]},
+                {"id": "advanced_training", "name": "آموزش پیشرفته", "level": 4, "parentId": "training_schedules", "description": "دوره‌های تخصصی", "children": [{"id": "specialty_schools", "name": "مدارس تخصصی", "level": 5, "parentId": "advanced_training", "description": "دوره‌های تخصصی نظامی"}, {"id": "command_college", "name": "دانشکده فرماندهی", "level": 5, "parentId": "advanced_training", "description": "دوره‌های فرماندهی"}]}
+              ]
+            },
+            {
+              "id": "exercises",
+              "name": "رزمایش و تمرین",
+              "level": 3,
+              "parentId": "admin_training",
+              "description": "رزمایش‌ها و تمرینات",
+              "children": [
+                {"id": "unit_exercises", "name": "رزمایش یگانی", "level": 4, "parentId": "exercises", "description": "رزمایش‌های یگان", "children": [{"id": "company_exercise", "name": "رزمایش گردان", "level": 5, "parentId": "unit_exercises", "description": "رزمایش سطح گردان"}, {"id": "battalion_exercise", "name": "رزمایش تیپ", "level": 5, "parentId": "unit_exercises", "description": "رزمایش سطح تیپ"}]},
+                {"id": "joint_exercises", "name": "رزمایش مشترک", "level": 4, "parentId": "exercises", "description": "رزمایش‌های مشترک", "children": [{"id": "inter_service", "name": "بین نیروهای مسلح", "level": 5, "parentId": "joint_exercises", "description": "رزمایش بین نیروها"}, {"id": "international", "name": "بین‌المللی", "level": 5, "parentId": "joint_exercises", "description": "رزمایش‌های بین‌المللی"}]}
+              ]
+            }
+          ]
+        },
+        {
+          "id": "admin_ceremonial",
+          "name": "تشریفات و مراسم",
+          "level": 2,
+          "parentId": "administrative",
+          "description": "زمان‌بندی مراسم و رویدادها",
+          "children": [
+            {
+              "id": "ceremonial_events",
+              "name": "مراسم و رویدادها",
+              "level": 3,
+              "parentId": "admin_ceremonial",
+              "description": "مراسم نظامی مختلف",
+              "children": [
+                {"id": "national_ceremonies", "name": "مراسم ملی", "level": 4, "parentId": "ceremonial_events", "description": "مراسم و رژه‌های ملی", "children": [{"id": "national_day_parade", "name": "رژه روز ملی", "level": 5, "parentId": "national_ceremonies", "description": "رژه نظامی روز ملی"}, {"id": "independence_ceremony", "name": "مراسم استقلال", "level": 5, "parentId": "national_ceremonies", "description": "مراسم روز استقلال"}]},
+                {"id": "unit_ceremonies", "name": "مراسم یگانی", "level": 4, "parentId": "ceremonial_events", "description": "مراسم داخلی یگان", "children": [{"id": "promotion_ceremony", "name": "مراسم ارتقا", "level": 5, "parentId": "unit_ceremonies", "description": "مراسم ارتقای درجه"}, {"id": "retirement_ceremony", "name": "مراسم بازنشستگی", "level": 5, "parentId": "unit_ceremonies", "description": "مراسم تقدیر از بازنشستگان"}]}
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "emergency",
+      "name": "اضطراری",
+      "level": 1,
+      "description": "زمان‌بندی‌های اضطراری و بحرانی",
+      "children": [
+        {
+          "id": "emergency_response",
+          "name": "پاسخ اضطراری",
+          "level": 2,
+          "parentId": "emergency",
+          "description": "زمان‌بندی پاسخ‌های اضطراری",
+          "children": [
+            {
+              "id": "crisis_response",
+              "name": "پاسخ بحران",
+              "level": 3,
+              "parentId": "emergency_response",
+              "description": "مدیریت بحران و اضطرار",
+              "children": [
+                {"id": "immediate_response", "name": "پاسخ فوری", "level": 4, "parentId": "crisis_response", "description": "اقدامات فوری اولیه", "children": [{"id": "first_hour", "name": "ساعت اول", "level": 5, "parentId": "immediate_response", "description": "اقدامات ساعت اول بحران"}, {"id": "golden_hour_crisis", "name": "ساعت طلایی بحران", "level": 5, "parentId": "immediate_response", "description": "ساعت طلایی نجات و امداد"}, {"id": "first_24_hours", "name": "24 ساعت اول", "level": 5, "parentId": "immediate_response", "description": "عملیات 24 ساعت اول"}]},
+                {"id": "sustained_response", "name": "پاسخ مداوم", "level": 4, "parentId": "crisis_response", "description": "عملیات طولانی‌مدت", "children": [{"id": "continuous_ops", "name": "عملیات مداوم", "level": 5, "parentId": "sustained_response", "description": "عملیات مداوم 24/7"}, {"id": "rotation_schedule", "name": "برنامه چرخش", "level": 5, "parentId": "sustained_response", "description": "چرخش نیروهای امدادی"}]}
+              ]
+            },
+            {
+              "id": "disaster_response",
+              "name": "پاسخ بلایای طبیعی",
+              "level": 3,
+              "parentId": "emergency_response",
+              "description": "پاسخ به بلایای طبیعی",
+              "children": [
+                {"id": "search_rescue", "name": "جستجو و نجات", "level": 4, "parentId": "disaster_response", "description": "عملیات جستجو و نجات", "children": [{"id": "search_timeline", "name": "جدول جستجو", "level": 5, "parentId": "search_rescue", "description": "جدول زمانی جستجوی مفقودان"}, {"id": "rescue_operations", "name": "عملیات نجات", "level": 5, "parentId": "search_rescue", "description": "زمان‌بندی عملیات نجات"}]},
+                {"id": "relief_operations", "name": "عملیات امداد", "level": 4, "parentId": "disaster_response", "description": "امدادرسانی", "children": [{"id": "relief_phases", "name": "فازهای امداد", "level": 5, "parentId": "relief_operations", "description": "فازهای زمانی امدادرسانی"}, {"id": "supply_distribution", "name": "توزیع کمک", "level": 5, "parentId": "relief_operations", "description": "برنامه توزیع کمک‌ها"}]}
+              ]
+            }
+          ]
+        },
+        {
+          "id": "emergency_preparedness",
+          "name": "آمادگی اضطراری",
+          "level": 2,
+          "parentId": "emergency",
+          "description": "برنامه‌ریزی آمادگی اضطراری",
+          "children": [
+            {
+              "id": "alert_systems",
+              "name": "سیستم‌های هشدار",
+              "level": 3,
+              "parentId": "emergency_preparedness",
+              "description": "سیستم‌های هشدار و اطلاع‌رسانی",
+              "children": [
+                {"id": "warning_timelines", "name": "جدول هشدارها", "level": 4, "parentId": "alert_systems", "description": "زمان‌بندی صدور هشدارها", "children": [{"id": "early_warning", "name": "هشدار زودهنگام", "level": 5, "parentId": "warning_timelines", "description": "هشدار زودهنگام طبیعی"}, {"id": "immediate_alert", "name": "هشدار فوری", "level": 5, "parentId": "warning_timelines", "description": "هشدار فوری و اضطراری"}]}
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
