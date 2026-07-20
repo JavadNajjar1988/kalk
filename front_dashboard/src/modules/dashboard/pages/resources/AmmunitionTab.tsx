@@ -423,7 +423,6 @@ const AmmunitionTab: React.FC = () => {
         onClose={handleCloseModal}
         onSave={handleSave}
         ammunition={selectedAmmunition}
-        categories={ammunitionData.categories}
       />
 
       <AmmunitionDeleteConfirmModal

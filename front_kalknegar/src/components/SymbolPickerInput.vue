@@ -1,9 +1,7 @@
 <template>
   <div class="flex">
     <div>
-      <label for="sidc" class="block text-sm font-medium text-gray-700"
-        >کد نماد</label
-      >
+      <label for="sidc" class="block text-sm font-medium text-gray-700">کد نماد</label>
       <div class="mt-1 flex rounded-md shadow-xs">
         <div class="relative flex grow items-stretch focus-within:z-10">
           <input
@@ -42,7 +40,9 @@ interface Props {
 }
 
 const props = defineProps<Props>();
-const emit = defineEmits(["update:modelValue"]);
+const emit = defineEmits<{
+  "update:modelValue": [value: string];
+}>();
 const sidcValue = useVModel(props, "modelValue", emit);
 
 const { getModalSidc } = injectStrict(sidcModalKey);
@@ -52,7 +52,7 @@ const openModal = async () => {
     symbolOptions: props.symbolOptions,
   });
   if (newSidcValue !== undefined) {
-    emit("update:modelValue", newSidcValue);
+    emit("update:modelValue", newSidcValue.sidc);
   }
 };
 </script>

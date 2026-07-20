@@ -275,7 +275,16 @@ const BaseInfoPage: React.FC = () => {
       // ویرایش
       setGeoNodes(prev => prev.map(n =>
         n.id === geoEditNode.id
-          ? { ...n, text: `${geoLabel}: ${geoName}`, data: { ...n.data, name: geoName, customLabel: geoLabel } }
+          ? {
+              ...n,
+              text: `${geoLabel}: ${geoName}`,
+              data: {
+                id: n.data?.id ?? String(n.id),
+                name: geoName,
+                customLabel: geoLabel,
+                children: n.data?.children,
+              },
+            }
           : n
       ));
     } else {
@@ -362,10 +371,9 @@ const BaseInfoPage: React.FC = () => {
         <Tree
           tree={geoNodes}
           rootId={0}
-          render={(node, { depth, isOpen, onToggle, dragHandle }) => (
+          render={(node, { depth, isOpen, onToggle }) => (
             <Box
               sx={{ pl: depth * 2, display: 'flex', alignItems: 'center', gap: 1, cursor: 'grab' }}
-              {...dragHandle}
             >
               <DragIndicatorIcon fontSize="small" color="disabled" />
               {node.droppable && (
@@ -472,7 +480,11 @@ const BaseInfoPage: React.FC = () => {
           >
             <MenuItem value="">بدون والد</MenuItem>
             {data.items.filter(i => i.entityTypeId === selectedType?.id).map(i => (
-              <MenuItem key={i.id} value={i.id}>{i.values[selectedType?.fields[0]?.name] || i.id}</MenuItem>
+              <MenuItem key={i.id} value={i.id}>
+                {selectedType?.fields[0]?.name
+                  ? i.values[selectedType.fields[0].name] || i.id
+                  : i.id}
+              </MenuItem>
             ))}
           </Select>
         </FormControl>
@@ -646,4 +658,4 @@ const BaseInfoPage: React.FC = () => {
   );
 };
 
-export default BaseInfoPage; 
+export default BaseInfoPage;

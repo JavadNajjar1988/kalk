@@ -82,7 +82,7 @@ export function useScenarioExport(options: Partial<UseScenarioExportOptions> = {
           description,
           ...(unit.textAmplifiers ?? {}),
           ...symbolOptions,
-        },
+        } as unknown as MilSymbolProperties,
         { id: options.includeId ? id : undefined },
       );
     });
@@ -222,8 +222,9 @@ export function useScenarioExport(options: Partial<UseScenarioExportOptions> = {
     data["doc.kml"] = new TextEncoder().encode(kmlString);
 
     const zipData = zipSync(data);
+    const zipBuffer = Uint8Array.from(zipData).buffer;
     await saveBlobToLocalFile(
-      new Blob([zipData], {
+      new Blob([zipBuffer], {
         type: "application/vnd.google-earth.kmz",
       }),
       "scenario.kmz",

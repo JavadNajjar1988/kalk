@@ -6,10 +6,10 @@
   "description": "سیستم مدیریت عملیات نظامی ساجد - Frontend",
   "scripts": {
     "dev": "vite",
-    "build": "tsc && vite build",
-    "lint": "eslint . --report-unused-disable-directives --max-warnings 0",
+    "build": "tsc -p tsconfig.release.json && vite build",
+    "lint": "eslint src --ext .js,.jsx,.ts,.tsx --report-unused-disable-directives",
     "preview": "vite preview",
-    "type-check": "tsc --noEmit",
+    "type-check": "tsc --noEmit -p tsconfig.release.json",
     "clean": "rimraf dist",
     "prebuild": "npm run clean",
     "analyze": "npm run build && npx vite-bundle-analyzer dist",
@@ -19,7 +19,8 @@
     "deps-check": "npm outdated",
     "test": "vitest",
     "test:ui": "vitest --ui",
-    "test:run": "vitest run",
+    "test:run": "vitest run src/utils/__tests__/numberUtils.test.ts src/components/scenarios/scenarioDialogAutosave.test.ts",
+    "test:all": "vitest run",
     "test:coverage": "vitest run --coverage",
     "test:watch": "vitest --watch"
   },
@@ -44,9 +45,7 @@
     "@types/ol": "^6.5.3",
     "@types/react-transition-group": "4.4.12",
     "@types/resize-observer-browser": "0.1.11",
-    "@xmldom/xmldom": "0.8.11",
     "@xyflow/react": "12.8.2",
-    "axios": "^1.6.2",
     "country-state-city": "^3.2.1",
     "dagre": "^0.8.5",
     "date-fns": "^2.30.0",
@@ -82,8 +81,7 @@
     "redux-persist": "^6.0.0",
     "stylis": "^4.3.0",
     "stylis-plugin-rtl": "^2.1.1",
-    "three": "0.181.2",
-    "xlsx": "0.18.5"
+    "three": "0.181.2"
   },
   "devDependencies": {
     "@eslint/config-array": "^0.20.1",
@@ -97,7 +95,10 @@
     "@types/react-dom": "^18.2.15",
     "@types/react-window": "^1.8.8",
     "@types/stylis": "^4.2.7",
+    "@typescript-eslint/eslint-plugin": "8.58.1",
+    "@typescript-eslint/parser": "8.58.1",
     "@vitejs/plugin-react": "^4.1.1",
+    "@xmldom/xmldom": "0.8.13",
     "autoprefixer": "^10.4.18",
     "eslint": "^8.57.0",
     "eslint-plugin-react-hooks": "^4.6.0",
@@ -109,10 +110,11 @@
     "prettier": "^3.0.0",
     "rimraf": "^6.0.1",
     "tailwindcss": "^3.4.1",
+    "terser": "5.47.1",
     "typescript": "^5.2.2",
     "vite": "^6.3.5",
     "vite-bundle-analyzer": "^0.7.0",
-    "vitest": "3.2.4"
+    "vitest": "3.2.7"
   },
   "engines": {
     "node": ">=18.0.0",

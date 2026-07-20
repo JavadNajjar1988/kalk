@@ -89,7 +89,7 @@ curl http://localhost:8000/api/health
 # تست لاگین
 curl -X POST http://localhost:8000/api/auth/token \
   -H "Content-Type: application/x-www-form-urlencoded" \
-  -d "username=admin&password=admin123"
+  -d "username=admin&password=<ADMIN_BOOTSTRAP_PASSWORD>"
 ```
 
 ## دسترسی به سیستم
@@ -102,7 +102,7 @@ curl -X POST http://localhost:8000/api/auth/token \
 
 ### اطلاعات لاگین:
 - **Username**: admin
-- **Password**: admin123
+- **Password**: مقدار `ADMIN_BOOTSTRAP_PASSWORD` در فایل `.env`
 
 ## سرویس‌های اختیاری
 

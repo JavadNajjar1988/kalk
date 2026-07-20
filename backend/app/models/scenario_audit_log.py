@@ -4,11 +4,13 @@ from datetime import datetime, timezone
 from typing import Optional
 from uuid import uuid4
 
-from sqlalchemy import DateTime, ForeignKey, String, Text
+from sqlalchemy import JSON, DateTime, ForeignKey, String, Text
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.db.base import Base
+
+JSONType = JSONB().with_variant(JSON(), "sqlite")
 
 
 class ScenarioAuditLog(Base):
@@ -20,7 +22,7 @@ class ScenarioAuditLog(Base):
     )
     actor_user_id: Mapped[Optional[str]] = mapped_column(String(36), nullable=True)
     action: Mapped[str] = mapped_column(String(64), nullable=False)
-    payload_diff: Mapped[Optional[dict]] = mapped_column(JSONB, nullable=True)
+    payload_diff: Mapped[Optional[dict]] = mapped_column(JSONType, nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, default=lambda: datetime.now(timezone.utc)
     )

@@ -12,7 +12,12 @@ import { type NullableSymbolItem, type SymbolItem } from "@/types/constants";
 import { type UnitSymbolOptions } from "@/types/scenarioModels";
 import { Label } from "@/components/ui/label";
 import NewMilitarySymbol from "@/components/NewMilitarySymbol.vue";
-import { translateEntity, translateEntityType, translateEntitySubtype } from "@/symbology/translations";
+import {
+  translateEntity,
+  translateEntityType,
+  translateEntitySubtype,
+} from "@/symbology/translations";
+import { toPersianDigits } from "@/utils/persianNumbers";
 
 interface Props {
   label?: string;
@@ -27,17 +32,34 @@ const controlId = useId();
 const selectedValue = defineModel<string | null>({ default: "00" });
 
 function mapSymbolItem(item: NullableSymbolItem) {
-  const translatedEntity = translateEntity(item.entity || "");
-  const translatedEntityType = item.entityType ? translateEntityType(item.entityType) : "";
-  const translatedEntitySubtype = item.entitySubtype ? translateEntitySubtype(item.entitySubtype) : "";
-  
+  const translatedEntityValue = translateEntity(item.entity || "");
+  const translatedEntityTypeValue = item.entityType
+    ? translateEntityType(item.entityType)
+    : "";
+  const translatedEntitySubtypeValue = item.entitySubtype
+    ? translateEntitySubtype(item.entitySubtype)
+    : "";
+  const translatedEntity = /[A-Za-z]/.test(translatedEntityValue)
+    ? ""
+    : translatedEntityValue;
+  const translatedEntityType = /[A-Za-z]/.test(translatedEntityTypeValue)
+    ? ""
+    : translatedEntityTypeValue;
+  const translatedEntitySubtype = /[A-Za-z]/.test(translatedEntitySubtypeValue)
+    ? ""
+    : translatedEntitySubtypeValue;
+
   return {
     sidc: item.sidc,
     code: item.code,
-    label: translatedEntitySubtype || translatedEntityType || translatedEntity,
-    subLabel: item.entitySubtype
-      ? `${translatedEntity} / ${translatedEntityType}`
-      : item.entityType
+    label:
+      translatedEntitySubtype ||
+      translatedEntityType ||
+      translatedEntity ||
+      `نماد ${toPersianDigits(item.code ?? "00")}`,
+    subLabel: translatedEntitySubtype
+      ? [translatedEntity, translatedEntityType].filter(Boolean).join(" / ")
+      : translatedEntityType
         ? translatedEntity
         : "",
   };
@@ -58,13 +80,14 @@ const selected = computed(() => {
         <SelectValue>
           <div class="flex items-center" v-if="selected">
             <NewMilitarySymbol
+              aria-hidden="true"
               class="size-8"
               :sidc="selected?.sidc || ''"
               alt=""
               :size="20"
               :options="{ ...symbolOptions, outlineWidth: 4 }"
             />
-            <div class="ml-3 max-w-xs text-left sm:max-w-none">
+            <div class="mr-3 max-w-xs text-right sm:max-w-none">
               <div
                 v-if="selected?.subLabel"
                 class="text-muted-foreground truncate text-xs"
@@ -88,19 +111,17 @@ const selected = computed(() => {
             :key="item.code ?? undefined"
             :value="item.code"
             class="data-[state=checked]:font-semibold"
-            ><div class="flex items-center" v-if="selected">
+            ><div class="flex items-center" v-if="item">
               <NewMilitarySymbol
+                aria-hidden="true"
                 class="size-8"
                 :sidc="item.sidc || ''"
                 alt=""
                 :size="20"
                 :options="{ ...symbolOptions, outlineWidth: 4 }"
               />
-              <div class="ml-3 max-w-xs flex-auto text-left sm:max-w-none">
-                <div
-                  v-if="selected?.subLabel"
-                  class="text-muted-foreground truncate text-xs"
-                >
+              <div class="mr-3 max-w-xs flex-auto text-right sm:max-w-none">
+                <div v-if="item.subLabel" class="text-muted-foreground truncate text-xs">
                   {{ item.subLabel }}
                 </div>
                 <div class="mt-0 truncate">

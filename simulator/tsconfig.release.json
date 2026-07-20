@@ -1,0 +1,10 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noUnusedLocals": false,
+    "noUnusedParameters": false
+  },
+  "files": ["src/syncpoint-signs.d.ts", "src/odin-styles.d.ts", "src/main.ts"],
+  "include": [],
+  "exclude": ["src/**/*.test.*", "src/**/__tests__/**"]
+}

@@ -1,5 +1,5 @@
 import fuzzysort from "fuzzysort";
-import { groupBy, htmlTagEscape } from "@/utils";
+import { fuzzyHighlight, groupBy } from "@/utils";
 import { useSymbologyData } from "@/composables/symbolData";
 import { type Ref } from "vue";
 
@@ -46,8 +46,7 @@ export function useSymbologySearch(sidValue: Ref<string>) {
         score: e.score,
         category: "Main icon",
         index: i,
-        highlight:
-          fuzzysort.highlight({ ...rest, target: htmlTagEscape(rest.target) }) || "",
+        highlight: fuzzyHighlight(e),
         sidc: "100" + sidValue.value + e.obj.symbolSet + "0000" + e.obj.code + "0000",
       };
     });
@@ -67,8 +66,7 @@ export function useSymbologySearch(sidValue: Ref<string>) {
         score: e.score * 10,
         category: "Modifier 1",
         index: i,
-        highlight:
-          fuzzysort.highlight({ ...rest, target: htmlTagEscape(rest.target) }) || "",
+        highlight: fuzzyHighlight(e),
         sidc:
           "100" +
           sidValue.value +
@@ -95,8 +93,7 @@ export function useSymbologySearch(sidValue: Ref<string>) {
         score: e.score * 10,
         category: "Modifier 2",
         index: i,
-        highlight:
-          fuzzysort.highlight({ ...rest, target: htmlTagEscape(rest.target) }) || "",
+        highlight: fuzzyHighlight(e),
         sidc:
           "100" +
           sidValue.value +

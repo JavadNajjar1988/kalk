@@ -3,7 +3,8 @@ from typing import Any, Optional
 
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
-from jose import JWTError, jwt
+import jwt
+from jwt import InvalidTokenError
 from passlib.context import CryptContext
 
 from app.core.config import settings
@@ -70,7 +71,7 @@ async def get_current_user(token: str = Depends(oauth2_scheme)) -> dict[str, Any
         logger.info(f"JWT decoded - User: {username}, Roles from token (raw): {roles_raw}, Parsed: {roles}")
         user_id = payload.get("uid")
         return {"username": username, "roles": roles, "user_id": user_id}
-    except JWTError:
+    except InvalidTokenError:
         raise credentials_exception
 
 

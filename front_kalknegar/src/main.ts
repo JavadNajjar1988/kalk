@@ -8,14 +8,19 @@ import App from "./App.vue";
 import { router } from "./router";
 import persianNumberDirectives from "@/utils/persianNumberDirective";
 
-if (!globalThis.Buffer) {
-  globalThis.Buffer = Buffer;
+const runtime = globalThis as typeof globalThis & {
+  Buffer?: typeof Buffer;
+  process?: typeof process;
+};
+
+if (!runtime.Buffer) {
+  runtime.Buffer = Buffer;
 }
-if (!globalThis.process) {
-  globalThis.process = process;
+if (!runtime.process) {
+  runtime.process = process;
 }
-if (typeof globalThis.process.nextTick !== "function") {
-  globalThis.process.nextTick = (cb: (...args: unknown[]) => void, ...args: unknown[]) => {
+if (typeof runtime.process.nextTick !== "function") {
+  runtime.process.nextTick = (cb: (...args: unknown[]) => void, ...args: unknown[]) => {
     queueMicrotask(() => cb(...args));
   };
 }

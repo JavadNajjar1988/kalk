@@ -3,15 +3,31 @@
     v-model="open"
     :dialog-title="dialogTitle"
     @cancel="emit('cancel')"
-    class="max-w-(--breakpoint-lg) md:max-w-(--breakpoint-md)"
+    class="sm:max-w-2xl lg:max-w-4xl"
   >
-    <div class="flex h-full flex-col" @keyup.ctrl.enter="onSubmit">
-      <header class="mt-4 flex h-20 w-full items-center justify-between">
-        <MilitarySymbol :sidc="csidc" :size="34" :options="finalSymbolOptions" />
-        <SymbolCodeViewer :sidc="csidc" @update="updateFromSidcInput" />
+    <div dir="rtl" class="flex h-full flex-col" @keyup.ctrl.enter="onSubmit">
+      <header
+        class="border-border bg-muted/30 mt-3 flex min-h-24 w-full flex-col items-center justify-between gap-3 rounded-xl border p-3 sm:flex-row"
+      >
+        <div class="flex items-center gap-3">
+          <div
+            class="bg-background flex size-16 shrink-0 items-center justify-center rounded-xl border shadow-sm"
+          >
+            <MilitarySymbol :sidc="csidc" :size="40" :options="finalSymbolOptions" />
+          </div>
+          <div>
+            <p class="text-sm font-semibold">پیش‌نمایش نماد</p>
+            <p class="text-muted-foreground mt-1 text-xs">
+              تغییرات شما هم‌زمان در این بخش نمایش داده می‌شود.
+            </p>
+          </div>
+        </div>
+        <div dir="ltr" class="max-w-full overflow-x-auto">
+          <SymbolCodeViewer :sidc="csidc" @update="updateFromSidcInput" />
+        </div>
       </header>
 
-      <TabView class="flex-auto" v-model:current-tab="currentTab">
+      <TabView class="mt-2 flex-auto" v-model:current-tab="currentTab">
         <TabItem
           label="انتخاب"
           v-slot="{ isActive }"
@@ -21,12 +37,12 @@
             <div class="relative">
               <div class="relative">
                 <MagnifyingGlassIcon
-                  class="pointer-events-none absolute top-3.5 left-4 h-5 w-5 text-gray-400"
+                  class="text-muted-foreground pointer-events-none absolute top-3.5 right-4 h-5 w-5"
                   aria-hidden="true"
                 />
                 <ComboboxInput
-                  class="h-12 w-full border-0 bg-transparent pr-4 pl-11 text-gray-900 placeholder:text-gray-400 focus:ring-0 sm:text-sm"
-                  placeholder="جستجو..."
+                  class="border-input bg-background placeholder:text-muted-foreground focus:ring-ring/30 h-12 w-full rounded-lg border pr-11 pl-4 focus:ring-2 sm:text-sm"
+                  placeholder="نام نماد یا تغییردهنده را جستجو کنید..."
                   @change="searchQuery = $event.target.value"
                   ref="searchInputRef"
                   @vue:mounted="doFocus"
@@ -34,11 +50,13 @@
               </div>
               <ComboboxOptions
                 v-if="groupedHits && hitCount > 0"
-                class="absolute z-50 max-h-80 w-full scroll-py-10 scroll-pb-2 space-y-4 overflow-y-auto rounded border border-gray-400 bg-white p-4 pb-2 shadow-lg"
+                class="border-border bg-popover absolute z-50 mt-1 max-h-80 w-full scroll-py-10 space-y-3 overflow-y-auto rounded-xl border p-2 shadow-xl"
               >
-                <li v-for="[source, hits] in groupedHits">
-                  <h2 class="text-xs font-semibold text-gray-900">{{ source }}</h2>
-                  <ul class="-mx-4 mt-2 text-sm font-medium text-gray-700">
+                <li v-for="[source, hits] in groupedHits" :key="source">
+                  <h2 class="text-muted-foreground px-2 text-xs font-semibold">
+                    {{ searchCategoryLabels[source] }}
+                  </h2>
+                  <ul class="mt-1 space-y-1 text-sm font-medium">
                     <ComboboxOption
                       v-for="item in hits"
                       :key="item.sidc"
@@ -48,8 +66,10 @@
                     >
                       <li
                         :class="[
-                          'flex cursor-default items-center px-4 py-2 select-none',
-                          active ? 'bg-army text-white' : 'even:bg-gray-100',
+                          'flex cursor-default items-center rounded-lg px-3 py-2 select-none',
+                          active
+                            ? 'bg-primary text-primary-foreground'
+                            : 'hover:bg-muted',
                         ]"
                       >
                         <div class="relative flex w-12 justify-center">
@@ -65,8 +85,8 @@
                           />
                         </div>
                         <p
-                          class="ml-3 flex-auto truncate"
-                          v-html="item.highlight ? item.highlight : item.text"
+                          class="mr-3 flex-auto truncate"
+                          v-html="visibleSearchHitText(item)"
                         />
                       </li>
                     </ComboboxOption>
@@ -76,7 +96,7 @@
           ></Combobox>
 
           <form
-            class="space-y-4 p-0.5"
+            class="mt-4 space-y-4 p-0.5"
             @submit.prevent="onSubmit"
             v-if="isLoaded"
             @keydown.ctrl.enter.exact="onSubmit"
@@ -173,11 +193,17 @@
           </keep-alive>
         </TabItem>
       </TabView>
-      <div class="flex shrink-0 justify-end space-x-2 pt-4">
-        <SecondaryButton type="button" @click="clearModifiers()" class=""
-          >پاک کردن تغییردهنده‌ها
+      <div
+        class="border-border mt-3 flex shrink-0 flex-col-reverse gap-2 border-t pt-3 sm:flex-row sm:justify-end"
+      >
+        <SecondaryButton
+          v-if="!hideModifiers"
+          type="button"
+          @click="clearModifiers()"
+          class="sm:ml-2"
+          >پاک‌کردن تغییردهنده‌ها
         </SecondaryButton>
-        <PrimaryButton @click="onSubmit()" class="">انتخاب نماد </PrimaryButton>
+        <PrimaryButton @click="onSubmit()">تأیید و انتخاب نماد</PrimaryButton>
       </div>
     </div>
   </NewSimpleModal>
@@ -221,12 +247,15 @@ import {
   type MainIconSearchResult,
   type ModifierOneSearchResult,
   type ModifierTwoSearchResult,
+  type SymbolSearchResult,
   useSymbologySearch,
 } from "@/composables/symbolSearching";
 import { PhMagnifyingGlass as MagnifyingGlassIcon } from "@phosphor-icons/vue";
 import { doFocus } from "@/composables/utils";
 import BaseButton from "@/components/BaseButton.vue";
 import NewSimpleModal from "@/components/NewSimpleModal.vue";
+import { applySymbolSearchSelection } from "@/symbology/symbolSelection";
+import { toPersianDigits } from "@/utils/persianNumbers";
 
 const LegacyConverter = defineAsyncComponent(
   () => import("@/components/LegacyConverter.vue"),
@@ -264,6 +293,18 @@ const currentTab = ref(props.initialTab ?? 0);
 const groupedHits = ref<ReturnType<typeof search>["groups"]>();
 
 const hitCount = ref(0);
+
+const searchCategoryLabels: Record<string, string> = {
+  "Main icon": "نمادهای اصلی",
+  "Modifier 1": "تغییردهندهٔ نوع اول",
+  "Modifier 2": "تغییردهندهٔ نوع دوم",
+};
+
+function visibleSearchHitText(item: SymbolSearchResult) {
+  if (!/[A-Za-z]/.test(item.text)) return item.highlight || item.text;
+  const prefix = item.category === "Main icon" ? "نماد" : "تغییردهنده";
+  return `${prefix} ${toPersianDigits(item.code)}`;
+}
 
 const internalSymbolOptions = ref<UnitSymbolOptions>({
   ...(props.symbolOptions || {}),
@@ -346,15 +387,7 @@ const onSubmit = () => {
 function onSelect(
   hit: MainIconSearchResult | ModifierOneSearchResult | ModifierTwoSearchResult,
 ) {
-  const newSidc = new Sidc(hit.sidc);
-  symbolSetValue.value = newSidc.symbolSet;
-  if (hit.category === "Main icon") {
-    iconValue.value = newSidc.mainIcon;
-  } else if (hit.category === "Modifier 1") {
-    mod1Value.value = newSidc.modifierOne;
-  } else if (hit.category === "Modifier 2") {
-    mod2Value.value = newSidc.modifierTwo;
-  }
+  csidc.value = applySymbolSearchSelection(csidc.value, hit);
 }
 
 function clearModifiers() {

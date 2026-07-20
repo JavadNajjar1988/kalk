@@ -6,7 +6,7 @@ import {
 } from "@/modules/tactical-symbol-map/services/scenarioSnapshot";
 
 type ServicesStoreLike = {
-  projectUUID: string | null;
+  projectUUID: any;
   projectStore: any;
   preferencesStore: any;
   sessionStore: any;

@@ -39,7 +39,7 @@ alembic -c alembic.ini upgrade head
 
 این دستور کاربر ادمین اولیه را نیز ایجاد می‌کند:
 - **Username**: `admin`
-- **Password**: از متغیر محیطی `ADMIN_BOOTSTRAP_PASSWORD` یا پیش‌فرض `admin123`
+- **Password**: مقدار تنظیم‌شده در متغیر محیطی `ADMIN_BOOTSTRAP_PASSWORD`
 - **نکته**: پس از اولین ورود، رمز عبور را تغییر دهید!
 
 ## تست‌ها

@@ -17,7 +17,10 @@ export class BaseApiClient {
 
   protected async request<T>(endpoint: string, options?: RequestInit): Promise<ApiResponse<T>> {
     const token = typeof localStorage !== 'undefined' ? localStorage.getItem('access_token') : null;
-    const authHeader = token ? { Authorization: `Bearer ${token}` } : {};
+    const headers = new Headers(options?.headers);
+    headers.set('Content-Type', 'application/json');
+    headers.set('Accept', 'application/json');
+    if (token) headers.set('Authorization', `Bearer ${token}`);
     
     // Cache-busting برای dev environment
     const isDev = import.meta.env.DEV;
@@ -25,7 +28,7 @@ export class BaseApiClient {
     const fullUrl = `${this.baseUrl}${endpoint}${cacheBuster}`;
     
     const res = await fetch(fullUrl, {
-      headers: { 'Content-Type': 'application/json', Accept: 'application/json', ...authHeader, ...(options?.headers || {}) },
+      headers,
       cache: isDev ? 'no-store' : 'default', // جلوگیری از cache در dev
       ...options,
     });
@@ -45,14 +48,15 @@ export class BaseApiClient {
 
   protected async postForm<T>(endpoint: string, formData: FormData): Promise<ApiResponse<T>> {
     const token = typeof localStorage !== 'undefined' ? localStorage.getItem('access_token') : null;
-    const authHeader = token ? { Authorization: `Bearer ${token}` } : {};
+    const headers = new Headers({ Accept: 'application/json' });
+    if (token) headers.set('Authorization', `Bearer ${token}`);
     const isDev = import.meta.env.DEV;
     const cacheBuster = isDev ? `${endpoint.includes('?') ? '&' : '?'}t=${Date.now()}` : '';
     const fullUrl = `${this.baseUrl}${endpoint}${cacheBuster}`;
 
     const res = await fetch(fullUrl, {
       method: 'POST',
-      headers: { Accept: 'application/json', ...authHeader },
+      headers,
       cache: isDev ? 'no-store' : 'default',
       body: formData,
     });

@@ -843,7 +843,7 @@ export function useUnitManipulations(store: NewScenarioStore) {
         update((s) => {
           function helper(currentUnitId: EntityId, parentId: EntityId) {
             const currentUnit = state.unitMap[currentUnitId]!;
-            const newUnit = {
+            const newUnit: NUnit = {
               ...currentUnit,
               id: nanoid(),
               state: includeState ? cloneUnitState(currentUnit.state ?? []) : [],
@@ -1056,12 +1056,13 @@ export function useUnitManipulations(store: NewScenarioStore) {
     if (!unit) return false;
     if (excludeUnit) {
       return !!(
-        state.sideMap[unit._sid]?.locked || state.sideGroupMap[unit._gid]?.locked
+        state.sideMap[unit._sid]?.locked ||
+        (unit._gid ? state.sideGroupMap[unit._gid]?.locked : false)
       );
     }
     return !!(
       state.sideMap[unit._sid]?.locked ||
-      state.sideGroupMap[unit._gid]?.locked ||
+      (unit._gid ? state.sideGroupMap[unit._gid]?.locked : false) ||
       unit.locked
     );
   }
@@ -1071,7 +1072,8 @@ export function useUnitManipulations(store: NewScenarioStore) {
     if (!unit) return false;
 
     return !!(
-      state.sideMap[unit._sid]?.isHidden || state.sideGroupMap[unit._gid]?.isHidden
+      state.sideMap[unit._sid]?.isHidden ||
+      (unit._gid ? state.sideGroupMap[unit._gid]?.isHidden : false)
     );
   }
 

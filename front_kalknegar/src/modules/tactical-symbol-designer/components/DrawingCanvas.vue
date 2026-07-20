@@ -34,10 +34,10 @@
         <!-- Temporary line for drawing -->
         <line
           v-if="tempLine.startX !== null"
-          :x1="tempLine.startX"
-          :y1="tempLine.startY"
-          :x2="tempLine.endX"
-          :y2="tempLine.endY"
+          :x1="tempLine.startX ?? 0"
+          :y1="tempLine.startY ?? 0"
+          :x2="tempLine.endX ?? 0"
+          :y2="tempLine.endY ?? 0"
           stroke="#10B981"
           stroke-width="2"
           stroke-dasharray="5,5"
@@ -190,8 +190,8 @@ const handleLineModeClick = (x: number, y: number) => {
       // Second point selection - create line
       const newLine: Line = {
         id: Date.now().toString(),
-        startX: tempLine.startX,
-        startY: tempLine.startY,
+        startX: tempLine.startX ?? clickedPoint.x,
+        startY: tempLine.startY ?? clickedPoint.y,
         endX: clickedPoint.x,
         endY: clickedPoint.y
       };
@@ -279,7 +279,7 @@ const generatePolylinePath = () => {
     
     // Add temporary line to current mouse position if available
     if (tempLine.endX !== null) {
-      pathParts.push('L', tempLine.endX, tempLine.endY);
+      pathParts.push('L', tempLine.endX, tempLine.endY ?? 0);
     }
     
     return pathParts.join(' ');

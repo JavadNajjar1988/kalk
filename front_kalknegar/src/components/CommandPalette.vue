@@ -192,8 +192,8 @@ interface ExtendedPhotonSearchResult extends PhotonSearchResult {
 
 const groupedHits = ref<
   | ReturnType<typeof search>["groups"]
-  | Map<"Places", ExtendedPhotonSearchResult[]>
-  | Map<"Actions", ActionSearchResult[]>
+  | Map<"مکان‌ها", ExtendedPhotonSearchResult[]>
+  | Map<"عملیات", ActionSearchResult[]>
 >();
 const mapCenter = ref<number[] | null | undefined>();
 

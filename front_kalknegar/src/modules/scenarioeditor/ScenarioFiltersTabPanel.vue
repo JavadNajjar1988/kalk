@@ -95,7 +95,7 @@ watchEffect(() => {
         const children = sideItem.children || [];
         children.push({
           key: sideGroupKey,
-          label: getSideGroupLabel(unit._gid),
+          label: unit._gid ? getSideGroupLabel(unit._gid) : "",
           sidc: "10031000100000000000",
         });
 

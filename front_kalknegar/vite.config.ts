@@ -11,7 +11,7 @@ export default defineConfig({
     "process.env": {},
   },
   plugins: [vue(), VueDevTools(), tailwindcss()],
-  base: process.env.NODE_ENV === 'development' ? '/kalknegar/' : '/',
+  base: process.env.VITE_BASE_PATH || (process.env.NODE_ENV === 'development' ? '/kalknegar/' : '/'),
   resolve: {
     alias: {
       "@": fileURLToPath(new URL("./src", import.meta.url)),

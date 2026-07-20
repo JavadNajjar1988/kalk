@@ -183,14 +183,14 @@ const orbatSlice = createSlice({
             units[i] = unit;
             return true;
           }
-          if (units[i].subUnits && updateInTree(units[i].subUnits)) {
+          if (units[i].subUnits && updateInTree(units[i].subUnits ?? [])) {
             return true;
           }
         }
         return false;
       };
 
-      updateInTree(group.subUnits);
+      updateInTree(group.subUnits ?? []);
     },
 
     deleteUnit: (state, action: PayloadAction<{ unitId: EntityId; sideId: EntityId; groupId: EntityId }>) => {
@@ -312,4 +312,4 @@ export const selectAllUnits = (state: RootState) => {
   return units;
 };
 
-export default orbatSlice.reducer; 
+export default orbatSlice.reducer;

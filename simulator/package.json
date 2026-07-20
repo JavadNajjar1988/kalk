@@ -5,9 +5,9 @@
   "description": "Babylon.js Simulator for Kalk",
   "scripts": {
     "dev": "vite",
-    "build": "tsc && vite build",
+    "build": "tsc -p tsconfig.release.json && vite build",
     "preview": "vite preview",
-    "type-check": "tsc --noEmit"
+    "type-check": "tsc --noEmit -p tsconfig.release.json"
   },
   "dependencies": {
     "@babylonjs/core": "^6.0.0",

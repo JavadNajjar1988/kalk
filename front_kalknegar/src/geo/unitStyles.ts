@@ -2,6 +2,7 @@ import { Icon, Style } from "ol/style";
 import type { UnitSymbolOptions } from "@/types/scenarioModels";
 import { symbolGenerator } from "@/symbology/milsymbwrapper";
 import type { Symbol as MilSymbol } from "milsymbol";
+import type { SymbolOptions } from "milsymbol";
 import { useSettingsStore, useSymbolSettingsStore } from "@/stores/settingsStore";
 import type { NUnit } from "@/types/internalModels";
 
@@ -49,6 +50,6 @@ export function createUnitStyle(unit: NUnit, symbolOptions: UnitSymbolOptions): 
     ...textAmplifiers,
     ...symbolSettings.symbolOptions,
     ...symbolOptions,
-  });
+  } as SymbolOptions);
   return createMilSymbolStyle(milSymbol);
 }

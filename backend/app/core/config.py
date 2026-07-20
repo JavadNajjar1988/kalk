@@ -26,7 +26,7 @@ class Settings(BaseSettings):
     JWT_SECRET: str = Field(default_factory=lambda: secrets.token_urlsafe(32))
     JWT_ALG: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60
-    ADMIN_BOOTSTRAP_PASSWORD: str = Field(default="admin123", repr=False)
+    ADMIN_BOOTSTRAP_PASSWORD: str = Field(default="", repr=False)
 
     # Security settings
     MAX_LOGIN_ATTEMPTS: int = 5  # Maximum failed login attempts before lockout
@@ -69,4 +69,3 @@ class Settings(BaseSettings):
 
 
 settings = Settings()
-

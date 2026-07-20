@@ -5,6 +5,7 @@ param(
     [switch]$Purge,
     [switch]$SkipCheck,
     [switch]$SkipFrontend,
+    [switch]$DevelopmentFrontends,
     [int]$PortWaitSeconds = 60,
     [string]$EnvFile
 )
@@ -104,7 +105,7 @@ try {
         Write-Warning "Failed to start TileServer: $_"
     }
 
-    if (-not $SkipFrontend) {
+    if ($DevelopmentFrontends -and -not $SkipFrontend) {
         Write-Host "`nStarting front-end dev servers..." -ForegroundColor Cyan
 
         if (-not (Get-Command "node" -ErrorAction SilentlyContinue)) {
@@ -248,8 +249,9 @@ try {
     }
 
     if ($try -gt $maxTries) {
-        Write-Warning "Migration execution failed. API logs:"
+        Write-Error "Migration execution failed. API logs:"
         & docker compose logs --no-color --tail=200 api
+        throw "Database migrations failed; project startup aborted."
     }
 
     Write-Host "`n========================================" -ForegroundColor Cyan

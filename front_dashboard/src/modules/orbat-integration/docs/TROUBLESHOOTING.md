@@ -321,7 +321,7 @@ if (!SecurityValidator.validateSIDC(sidc)) {
 4. Test with debug credentials:
    ```tsx
    // Development only
-   const success = await login({ username: 'admin', password: 'admin123' });
+   const success = await login({ username: 'admin', password: '<ADMIN_BOOTSTRAP_PASSWORD>' });
    ```
 
 ### Issue: Authorization failures

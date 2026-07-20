@@ -12,6 +12,7 @@ import { type NullableSymbolItem } from "@/types/constants";
 import { type UnitSymbolOptions } from "@/types/scenarioModels";
 import { Label } from "@/components/ui/label";
 import NewMilitarySymbol from "@/components/NewMilitarySymbol.vue";
+import { toPersianDigits } from "@/utils/persianNumbers";
 
 interface Props {
   label?: string;
@@ -27,6 +28,13 @@ const selectedValue = defineModel<string | null>({ default: "00" });
 const selected = computed(() =>
   (props.items || []).find((i) => i.code === selectedValue.value),
 );
+
+function displayText(item: NullableSymbolItem | undefined) {
+  if (!item) return "";
+  return /[A-Za-z]/.test(item.text)
+    ? `گزینه ${toPersianDigits(item.code ?? "00")}`
+    : item.text;
+}
 </script>
 <template>
   <div>
@@ -36,6 +44,7 @@ const selected = computed(() =>
         <SelectValue>
           <template v-if="selected"
             ><NewMilitarySymbol
+              aria-hidden="true"
               class="size-8"
               :sidc="selected?.sidc || ''"
               alt=""
@@ -46,7 +55,7 @@ const selected = computed(() =>
                 ...selected?.symbolOptions,
               }"
             />
-            <span class="truncate">{{ selected?.text }}</span>
+            <span class="truncate">{{ displayText(selected) }}</span>
           </template>
           <template v-else>
             <span>{{ placeholder }}</span>
@@ -62,6 +71,7 @@ const selected = computed(() =>
             class="data-[state=checked]:font-semibold"
           >
             <NewMilitarySymbol
+              aria-hidden="true"
               :size="20"
               class="size-8"
               :sidc="item.sidc"
@@ -71,7 +81,7 @@ const selected = computed(() =>
                 ...item.symbolOptions,
               }"
             />
-            {{ item.text }}
+            {{ displayText(item) }}
           </SelectItem>
         </SelectGroup>
       </SelectContent>

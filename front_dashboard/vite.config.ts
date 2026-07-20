@@ -26,7 +26,7 @@ export default defineConfig({
           // Core dependencies
           vendor: ['react', 'react-dom'],
           mui: ['@mui/material', '@mui/icons-material', '@mui/lab', '@mui/x-date-pickers'],
-          utils: ['axios', 'date-fns', 'i18next', 'i18next-browser-languagedetector'],
+          utils: ['date-fns', 'i18next', 'i18next-browser-languagedetector'],
           dnd: ['@dnd-kit/core', '@dnd-kit/sortable', '@dnd-kit/utilities'],
           
           // Redux and state management
@@ -35,34 +35,6 @@ export default defineConfig({
           // Map and geospatial libraries
           maps: ['ol', 'milsymbol'],
           
-          // Field Constructor system components (split for lazy loading)
-          'field-constructor-core': [
-            'src/modules/definition-editor/types/fieldConstructor',
-            'src/modules/definition-editor/utils/universalFieldAdapter',
-            'src/modules/definition-editor/utils/fieldCompatibilityLayer'
-          ],
-          'field-constructor-components': [
-            'src/modules/definition-editor/components/input/ArrayInputComponent',
-            'src/modules/definition-editor/components/input/CompositeInputComponent',
-            'src/modules/definition-editor/components/input/HierarchicalInputComponent'
-          ],
-          'field-constructor-enhancement': [
-            'src/modules/definition-editor/components/enhancement/ArrayFieldManager',
-            'src/modules/definition-editor/components/enhancement/CompositeFieldManager',
-            'src/modules/definition-editor/components/enhancement/HierarchicalFieldManager'
-          ],
-          'field-constructor-migration': [
-            'src/modules/definition-editor/components/migration/MigrationWizard',
-            'src/modules/definition-editor/utils/templateExporter',
-            'src/modules/definition-editor/utils/templateImporter'
-          ],
-          
-          // Performance optimization components
-          'field-optimization': [
-            'src/modules/definition-editor/components/optimization/VirtualizedFieldList',
-            'src/modules/definition-editor/components/optimization/LazyFieldLoader',
-            'src/modules/definition-editor/utils/memoizationUtils'
-          ]
         },
         // Optimize chunk loading
         chunkFileNames: (chunkInfo) => {
@@ -102,12 +74,6 @@ export default defineConfig({
       'react-window',
       'react-window-infinite-loader'
     ],
-    exclude: [
-      // Exclude Field Constructor components from pre-bundling for better lazy loading
-      'src/modules/definition-editor/components/input/ArrayInputComponent',
-      'src/modules/definition-editor/components/input/CompositeInputComponent',
-      'src/modules/definition-editor/components/input/HierarchicalInputComponent'
-    ]
   },
   server: {
     port: 3000,

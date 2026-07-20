@@ -7,13 +7,16 @@ import { test, expect, Page } from '@playwright/test';
 const BASE_URL = process.env.BASE_URL || 'http://localhost:3000';
 const ADMIN_USER = {
   username: 'admin@lindu.test',
-  password: 'admin123'
+  password: process.env.E2E_ADMIN_PASSWORD || ''
 };
 
 class MigrationTestHelper {
   constructor(private page: Page) {}
 
   async login() {
+    if (!ADMIN_USER.password) {
+      throw new Error('E2E_ADMIN_PASSWORD must be set before running migration E2E tests');
+    }
     await this.page.goto(`${BASE_URL}/auth/login`);
     await this.page.fill('[data-testid="username"]', ADMIN_USER.username);
     await this.page.fill('[data-testid="password"]', ADMIN_USER.password);

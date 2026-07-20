@@ -33,8 +33,8 @@ export interface User {
     permissions: string[];
     lastLogin?: string;
     loginCount: number;
-    password: string;
-    passwordLastChanged: string;
+    password?: string;
+    passwordLastChanged?: string;
   };
   createdAt: string;
   updatedAt: string;

@@ -15,7 +15,7 @@ import {
   type SVGElementSelection,
   type UnitNodeInfo,
 } from "./types";
-import ms from "milsymbol";
+import ms, { type Symbol as MilSymbol } from "milsymbol";
 import { sortBy } from "@/utils";
 import { walkTree } from "@/modules/charteditor/orbatchart/utils";
 
@@ -66,7 +66,7 @@ function convertBasicUnitNode2UnitNodeInfo(
   basicUnitNode: BasicUnitNode,
   options: Partial<OrbChartOptions>,
 ): UnitNodeInfo {
-  let symb: ms.Symbol;
+  let symb: MilSymbol;
   const symbolOptions = { size: options.symbolSize, ...basicUnitNode.unit.symbolOptions };
   if (options.symbolGenerator) {
     symb = options.symbolGenerator(basicUnitNode.unit.sidc, symbolOptions);

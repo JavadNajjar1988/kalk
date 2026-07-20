@@ -1,35 +1,38 @@
 <template>
-  <div class="flex px-0.5">
-    <aside class="hidden w-60 flex-none pr-2 md:block">
-      <p class="text-sm leading-7 font-bold text-gray-900">نوع موجودیت</p>
-      <ul class="space-y-1.5 text-sm font-medium text-gray-600">
+  <div dir="rtl" class="flex gap-4 px-0.5">
+    <aside class="border-border hidden w-56 flex-none border-l pl-4 md:block">
+      <p class="text-sm leading-7 font-bold">نوع موجودیت</p>
+      <ul class="text-muted-foreground space-y-1 text-sm font-medium">
         <li
           v-for="[entity, entityIcons] in filteredIconsByEntity"
-          class="hover:text-gray-800"
+          :key="entity"
+          class="hover:text-foreground"
         >
-          <a href="#" type="button" @click="goTo(entityIcons[0].code)">{{ entity }}</a>
+          <a href="#" type="button" @click.prevent="goTo(entityIcons[0].code)">{{
+            entity
+          }}</a>
         </li>
       </ul>
-      <p class="mt-4 text-sm leading-7 font-bold text-gray-900">تغییردهنده‌ها</p>
-      <ul class="space-y-1.5 text-sm font-medium text-gray-600">
-        <li v-if="filteredMod1Items.length" class="hover:text-gray-800">
-          <a href="#" type="button" @click="goTo('mod1')">تغییردهنده ۱</a>
+      <p class="mt-4 text-sm leading-7 font-bold">تغییردهنده‌ها</p>
+      <ul class="text-muted-foreground space-y-1 text-sm font-medium">
+        <li v-if="filteredMod1Items.length" class="hover:text-foreground">
+          <a href="#" type="button" @click.prevent="goTo('mod1')">تغییردهندهٔ نوع اول</a>
         </li>
-        <li v-if="filteredMod2Items.length" class="hover:text-gray-800">
-          <a href="#" type="button" @click="goTo('mod2')">تغییردهنده ۲</a>
+        <li v-if="filteredMod2Items.length" class="hover:text-foreground">
+          <a href="#" type="button" @click.prevent="goTo('mod2')">تغییردهندهٔ نوع دوم</a>
         </li>
       </ul>
     </aside>
     <div class="flex-auto">
       <div class="relative">
         <MagnifyingGlassIcon
-          class="pointer-events-none absolute top-3.5 left-0 h-5 w-5 text-gray-400"
+          class="text-muted-foreground pointer-events-none absolute top-3.5 right-3 h-5 w-5"
           aria-hidden="true"
         />
         <input
           type="text"
-          class="h-12 w-full border-0 bg-transparent pr-4 pl-7 text-gray-900 placeholder:text-gray-400 focus:ring-0 sm:text-sm"
-          placeholder="جستجو مجموعه نماد..."
+          class="border-input bg-background placeholder:text-muted-foreground focus:ring-ring/30 h-12 w-full rounded-lg border pr-10 pl-3 focus:ring-2 sm:text-sm"
+          placeholder="جستجو در نمادهای این مجموعه..."
           @keydown.esc="onEsc"
           v-model="searchQuery"
           ref="inputRef"
@@ -43,82 +46,116 @@
       />
 
       <div class="mt-4 max-h-[40vh] overflow-auto sm:max-h-[50vh]">
-        <div v-for="[entity, entityIcons] in filteredIconsByEntity" class="relative">
+        <div
+          v-for="[entity, entityIcons] in filteredIconsByEntity"
+          :key="entity"
+          class="relative"
+        >
           <h3
-            class="sticky top-0 border-t border-b border-gray-200 bg-gray-50 p-2 px-4 text-sm font-medium text-gray-600"
+            class="border-border bg-muted sticky top-0 z-10 border-y p-2 px-4 text-sm font-medium"
             :id="entity"
           >
             {{ entity }}
           </h3>
-          <div class="mt-4 grid grid-cols-3 gap-x-2 gap-y-4 p-1">
+          <div class="mt-3 grid grid-cols-2 gap-2 p-1 sm:grid-cols-3">
             <button
               type="button"
-              v-for="{ sidc, entity, entityType, entitySubtype, code } in entityIcons"
+              v-for="{
+                sidc,
+                entityLabel,
+                detailLabel,
+                displayLabel,
+                code,
+              } in entityIcons"
               :key="sidc"
               :id="`scode-${code}`"
               @click="iconValue = code"
-              class="flex w-full scroll-m-12 flex-col items-center justify-start rounded border border-transparent p-3 hover:border-gray-500"
+              :aria-label="displayLabel"
+              :aria-pressed="code === iconValue"
+              class="border-border bg-background hover:bg-accent flex min-h-28 w-full scroll-m-12 flex-col items-center justify-start rounded-xl border p-3 transition-colors"
+              :class="code === iconValue ? 'ring-primary bg-primary/5 ring-2' : ''"
             >
-              <MilSymbol :size="symbolSize" :sidc="sidc" :modifiers="symbolOptions" />
+              <MilSymbol
+                aria-hidden="true"
+                :size="symbolSize"
+                :sidc="sidc"
+                :modifiers="symbolOptions"
+              />
               <p
-                v-if="entitySubtype && entityType"
-                class="mt-1 max-w-full truncate overflow-hidden text-center text-sm text-gray-500"
+                v-if="detailLabel"
+                class="text-muted-foreground mt-1 max-w-full truncate overflow-hidden text-center text-xs"
               >
-                {{ entityType }}
+                {{ detailLabel }}
               </p>
               <p
                 class="mt-1 max-w-full overflow-hidden text-center text-sm font-medium break-words"
-                :class="code === iconValue ? 'text-red-900' : 'text-gray-900'"
+                :class="code === iconValue ? 'text-primary' : ''"
               >
-                {{ entitySubtype || entityType || entity }}
+                {{ displayLabel }}
               </p>
             </button>
           </div>
         </div>
         <h3
-          class="sticky top-0 border-t border-b border-gray-200 bg-gray-50 p-2 px-4 text-sm font-medium text-gray-600"
+          v-if="filteredMod1Items.length"
+          class="border-border bg-muted sticky top-0 z-10 border-y p-2 px-4 text-sm font-medium"
         >
-          تغییردهنده ۱
+          تغییردهندهٔ نوع اول
         </h3>
         <div
+          v-if="filteredMod1Items.length"
           id="scode-mod1"
-          class="mt-4 grid scroll-m-12 grid-cols-3 gap-x-2 gap-y-4 p-1"
+          class="mt-3 grid scroll-m-12 grid-cols-2 gap-2 p-1 sm:grid-cols-3"
         >
           <button
             type="button"
             v-for="{ sidc, text, code } in filteredMod1Items"
             :key="sidc"
             @click="mod1Value = code"
-            class="flex w-full flex-col items-center justify-start rounded border border-transparent p-4 hover:border-gray-500"
+            :aria-label="text"
+            :aria-pressed="code === mod1Value"
+            class="border-border bg-background hover:bg-accent flex min-h-24 w-full flex-col items-center justify-start rounded-xl border p-3 transition-colors"
+            :class="code === mod1Value ? 'ring-primary bg-primary/5 ring-2' : ''"
           >
-            <MilSymbol :size="symbolSize" :sidc="sidc" :modifiers="symbolOptions" />
-            <p
-              class="mt-1 max-w-full overflow-hidden text-center text-sm break-words text-gray-900"
-            >
+            <MilSymbol
+              aria-hidden="true"
+              :size="symbolSize"
+              :sidc="sidc"
+              :modifiers="symbolOptions"
+            />
+            <p class="mt-1 max-w-full overflow-hidden text-center text-sm break-words">
               {{ text }}
             </p>
           </button>
         </div>
         <h3
-          class="sticky top-0 border-t border-b border-gray-200 bg-gray-50 p-2 px-4 text-sm font-medium text-gray-600"
+          v-if="filteredMod2Items.length"
+          class="border-border bg-muted sticky top-0 z-10 border-y p-2 px-4 text-sm font-medium"
         >
-          تغییردهنده ۲
+          تغییردهندهٔ نوع دوم
         </h3>
         <div
+          v-if="filteredMod2Items.length"
           id="scode-mod2"
-          class="mt-4 grid scroll-m-12 grid-cols-3 gap-x-2 gap-y-4 p-1"
+          class="mt-3 grid scroll-m-12 grid-cols-2 gap-2 p-1 sm:grid-cols-3"
         >
           <button
             type="button"
             v-for="{ sidc, text, code } in filteredMod2Items"
             :key="sidc"
             @click="mod2Value = code"
-            class="flex w-full flex-col items-center justify-start rounded border border-transparent p-4 hover:border-gray-500"
+            :aria-label="text"
+            :aria-pressed="code === mod2Value"
+            class="border-border bg-background hover:bg-accent flex min-h-24 w-full flex-col items-center justify-start rounded-xl border p-3 transition-colors"
+            :class="code === mod2Value ? 'ring-primary bg-primary/5 ring-2' : ''"
           >
-            <MilSymbol :size="symbolSize" :sidc="sidc" :modifiers="symbolOptions" />
-            <p
-              class="mt-1 max-w-full overflow-hidden text-center text-sm break-words text-gray-900"
-            >
+            <MilSymbol
+              aria-hidden="true"
+              :size="symbolSize"
+              :sidc="sidc"
+              :modifiers="symbolOptions"
+            />
+            <p class="mt-1 max-w-full overflow-hidden text-center text-sm break-words">
               {{ text }}
             </p>
           </button>
@@ -136,6 +173,12 @@ import { useSymbolItems } from "@/composables/symbolData";
 import { type UnitSymbolOptions } from "@/types/scenarioModels";
 import { PhMagnifyingGlass as MagnifyingGlassIcon } from "@phosphor-icons/vue";
 import { breakpointsTailwind, useBreakpoints, useDebounce } from "@vueuse/core";
+import {
+  translateEntity,
+  translateEntitySubtype,
+  translateEntityType,
+} from "@/symbology/translations";
+import { toPersianDigits } from "@/utils/persianNumbers";
 
 interface Props {
   initialSidc: string;
@@ -169,28 +212,89 @@ const emit = defineEmits(["update-sidc"]);
 const breakpoints = useBreakpoints(breakpointsTailwind);
 const isMobile = breakpoints.smallerOrEqual("md");
 
+function visiblePersianLabel(
+  value: string | undefined,
+  translator: (text: string) => string,
+) {
+  if (!value) return "";
+  const translated = translator(value);
+  return /[A-Za-z]/.test(translated) ? "" : translated;
+}
+
+const localizedIcons = computed(() =>
+  icons.value.map((icon) => {
+    const translatedEntity = visiblePersianLabel(icon.entity, translateEntity);
+    const entityLabel = translatedEntity || "سایر نمادها";
+    const entityTypeLabel = visiblePersianLabel(icon.entityType, translateEntityType);
+    const entitySubtypeLabel = visiblePersianLabel(
+      icon.entitySubtype,
+      translateEntitySubtype,
+    );
+    const displayLabel =
+      entitySubtypeLabel ||
+      entityTypeLabel ||
+      translatedEntity ||
+      `نماد ${toPersianDigits(icon.code)}`;
+
+    return {
+      ...icon,
+      entityLabel,
+      entityTypeLabel,
+      entitySubtypeLabel,
+      displayLabel,
+      detailLabel: entitySubtypeLabel && entityTypeLabel ? entityTypeLabel : "",
+    };
+  }),
+);
+
 const filteredIconsByEntity = computed(() => {
-  if (!debouncedQuery.value.trim()) return groupBy(icons.value, "entity");
-  const query = debouncedQuery.value.toLowerCase();
-  const filtered = icons.value.filter((icon) => {
+  if (!debouncedQuery.value.trim()) return groupBy(localizedIcons.value, "entityLabel");
+  const query = debouncedQuery.value.toLocaleLowerCase("fa");
+  const filtered = localizedIcons.value.filter((icon) => {
     return (
+      icon.entityLabel.toLocaleLowerCase("fa").includes(query) ||
+      icon.entityTypeLabel.toLocaleLowerCase("fa").includes(query) ||
+      icon.entitySubtypeLabel.toLocaleLowerCase("fa").includes(query) ||
+      icon.entity.toLowerCase().includes(query) ||
       icon.entityType?.toLowerCase().includes(query) ||
-      icon.entitySubtype?.toLowerCase().includes(query)
+      icon.entitySubtype?.toLowerCase().includes(query) ||
+      icon.code.includes(query)
     );
   });
-  return groupBy(filtered, "entity");
+  return groupBy(filtered, "entityLabel");
 });
 
+function localizeModifierItems(items: typeof mod1Items.value) {
+  return items.map((item) => ({
+    ...item,
+    searchText: item.text,
+    text: /[A-Za-z]/.test(item.text)
+      ? `تغییردهنده ${toPersianDigits(item.code ?? "00")}`
+      : item.text,
+  }));
+}
+
+const localizedMod1Items = computed(() => localizeModifierItems(mod1Items.value));
+const localizedMod2Items = computed(() => localizeModifierItems(mod2Items.value));
+
 const filteredMod1Items = computed(() => {
-  if (!debouncedQuery.value.trim()) return mod1Items.value;
+  if (!debouncedQuery.value.trim()) return localizedMod1Items.value;
   const query = debouncedQuery.value.toLowerCase();
-  return mod1Items.value.filter((item) => item.text.toLowerCase().includes(query));
+  return localizedMod1Items.value.filter(
+    (item) =>
+      item.text.toLowerCase().includes(query) ||
+      item.searchText.toLowerCase().includes(query),
+  );
 });
 
 const filteredMod2Items = computed(() => {
-  if (!debouncedQuery.value.trim()) return mod2Items.value;
+  if (!debouncedQuery.value.trim()) return localizedMod2Items.value;
   const query = debouncedQuery.value.toLowerCase();
-  return mod2Items.value.filter((item) => item.text.toLowerCase().includes(query));
+  return localizedMod2Items.value.filter(
+    (item) =>
+      item.text.toLowerCase().includes(query) ||
+      item.searchText.toLowerCase().includes(query),
+  );
 });
 
 watch([mod1Value, mod2Value, iconValue], (value, oldValue) => {

@@ -107,10 +107,6 @@ const ScenarioEditorWrapper = () =>
   lazyImportWithRetry(() => import("../modules/scenarioeditor/ScenarioEditorWrapper.vue"))();
 const StoryModeView = () => import("../modules/storymode/StoryModeWrapper.vue");
 const OrbatChartView = () => import("../modules/charteditor/OrbatChartViewWrapper.vue");
-const ComponentsTestView = () => import("../views/ComponentsTestView.vue");
-const GeoTestView = () => import("../views/GeoTestView.vue");
-const GridTestView = () => import("@/modules/grid/GridTestView.vue");
-const TanstackGridTestView = () => import("@/modules/grid/TanstackGridTestView.vue");
 const GridEditView = () => import("@/modules/scenarioeditor/GridEditView.vue");
 const ChartEditView = () => import("@/modules/scenarioeditor/ChartEditView.vue");
 const ScenarioEditorMap = () =>
@@ -184,22 +180,6 @@ const routes = [
     beforeEnter: (to, from) => {
       NProgress.start();
     },
-  },
-  {
-    path: "/testcomponents",
-    component: ComponentsTestView,
-  },
-  {
-    path: "/testgeo",
-    component: GeoTestView,
-  },
-  {
-    path: "/testgrid",
-    component: GridTestView,
-  },
-  {
-    path: "/testgrid2",
-    component: TanstackGridTestView,
   },
   {
     path: "/symbol-designer",

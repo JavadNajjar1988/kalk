@@ -77,7 +77,7 @@
                     class="hidden"
                   />
                   <button
-                    @click="$refs.fileInput.click()"
+                    @click="fileInput?.click()"
                     class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
                   >
                     انتخاب فایل SVG
@@ -272,10 +272,10 @@
                   <!-- Temporary line for line/polyline drawing -->
                   <line
                     v-if="tempLine.startX !== null"
-                    :x1="tempLine.startX"
-                    :y1="tempLine.startY"
-                    :x2="tempLine.endX"
-                    :y2="tempLine.endY"
+                    :x1="tempLine.startX ?? 0"
+                    :y1="tempLine.startY ?? 0"
+                    :x2="tempLine.endX ?? 0"
+                    :y2="tempLine.endY ?? 0"
                     :stroke="drawingMode === 'line' ? '#6366F1' : '#10B981'"
                     stroke-width="2"
                     stroke-dasharray="5,5"
@@ -390,6 +390,8 @@
 
 <script setup lang="ts">
 import { ref, computed, watch, onMounted, onUnmounted, reactive } from 'vue';
+
+const fileInput = ref<HTMLInputElement | null>(null);
 import { nanoid } from '@/utils';
 import { useTacticalSymbolStore } from './stores';
 import type { TacticalSymbolDefinition, AnchorPoint, PointLogic } from './types';
@@ -584,8 +586,8 @@ const handleLineModeClick = (x: number, y: number) => {
     // Second point selection - create line
     const newLine: DrawingLine = {
       id: nanoid(),
-      startX: tempLine.startX,
-      startY: tempLine.startY,
+      startX: tempLine.startX ?? clickedPoint.x,
+      startY: tempLine.startY ?? clickedPoint.y,
       endX: clickedPoint.x,
       endY: clickedPoint.y
     };

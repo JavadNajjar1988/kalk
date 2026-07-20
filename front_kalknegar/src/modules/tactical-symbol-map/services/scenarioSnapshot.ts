@@ -54,11 +54,14 @@ interface TacticalStoreLike {
 type MaybeRef<T> = T | { value: T | null | undefined } | null | undefined;
 
 function readMaybeRef<T>(value: MaybeRef<T>): T | null | undefined {
-  return value &&
+  if (
+    value &&
     typeof value === "object" &&
     Object.prototype.hasOwnProperty.call(value, "value")
-    ? value.value
-    : value;
+  ) {
+    return (value as { value: T | null | undefined }).value;
+  }
+  return value as T | null | undefined;
 }
 
 export function isTacticalStoreReady(

@@ -1,6 +1,6 @@
-import { ComponentsOverrides } from '@mui/material/styles/overrides';
+import type { Components } from '@mui/material/styles';
 
-const focusReset: ComponentsOverrides['MuiButton'] & ComponentsOverrides['MuiIconButton'] & ComponentsOverrides['MuiFab'] & ComponentsOverrides['MuiListItemButton'] = {
+const focusReset: Pick<Components, 'MuiButton' | 'MuiIconButton' | 'MuiFab' | 'MuiListItemButton'> = {
   MuiButton: {
     styleOverrides: {
       root: {
@@ -43,4 +43,4 @@ const focusReset: ComponentsOverrides['MuiButton'] & ComponentsOverrides['MuiIco
   },
 };
 
-export default focusReset; 
+export default focusReset;

@@ -57,6 +57,7 @@ export interface NUnit
   _basePid?: EntityId;
   _gid?: EntityId;
   _sid: EntityId;
+  _ikey?: EntityId;
 }
 
 export interface NUnitEquipment extends Omit<UnitEquipment, "name"> {
@@ -200,6 +201,7 @@ export interface NSupplyUoM extends UnitOfMeasure {
 }
 
 export interface NState extends Omit<State, "update" | "diff"> {
+  symbolRotation?: number;
   // an update replaces the current state with the new state
   update?: {
     equipment?: NUpdateUnitEquipment[];

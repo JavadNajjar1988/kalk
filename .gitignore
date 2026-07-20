@@ -34,6 +34,9 @@ yarn-error.log*
 # IDEs
 .vscode/
 .idea/
+.cursor/
+.cursorignore
+.codex-logs/
 *.swp
 *.swo
 *~
@@ -72,7 +75,9 @@ ehthumbs.db
 # Cache
 .cache/
 .parcel-cache/
+.vite/
 .pytest_cache/
+pytest-cache-files-*/
 .coverage
 htmlcov/
 

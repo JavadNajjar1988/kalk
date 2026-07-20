@@ -3,20 +3,16 @@
     <slot :is-active="isActive"></slot>
   </div>
 </template>
-<script>
-export default {
-  name: "TabItem",
-};
-</script>
-
-<script setup>
+<script setup lang="ts">
 import { onBeforeUnmount, ref, watch } from "vue";
 import { tabsProviderKey } from "@/components/types";
 import { injectStrict } from "@/utils/index";
 
-const props = defineProps({
-  label: String,
-});
+defineOptions({ name: "TabItem" });
+defineProps<{ label?: string }>();
+defineSlots<{
+  default(props: { isActive: boolean }): unknown;
+}>();
 
 const index = ref(0);
 const isActive = ref(false);

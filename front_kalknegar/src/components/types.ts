@@ -55,19 +55,19 @@ export interface LayerFeatureSearchResult extends LayerFeatureItem, SearchResult
 }
 
 export interface MapLayerSearchResult extends SearchResult {
-  category: "Map layers";
+  category: "لایه‌های نقشه";
   type: "ImageLayer" | "TileJSONLayer" | "XYZLayer" | "KMLLayer" | "GeoJSONLayer" | "WMSLayer";
 }
 
 export interface EventSearchResult extends SearchResult {
-  category: "Events";
+  category: "رویدادها";
   id: EntityId;
   _type: ScenarioEventType;
   startTime: number;
 }
 
 export interface ActionSearchResult extends SearchResult {
-  category: "Actions";
+  category: "عملیات";
   action: ScenarioActions;
   icon?: string;
 }

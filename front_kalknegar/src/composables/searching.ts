@@ -1,6 +1,6 @@
 import fuzzysort from "fuzzysort";
 import type { NUnit } from "@/types/internalModels";
-import { groupBy, htmlTagEscape, injectStrict } from "@/utils";
+import { fuzzyHighlight, groupBy, injectStrict } from "@/utils";
 import { activeScenarioKey } from "@/components/injects";
 import type {
   ActionSearchResult,
@@ -44,13 +44,7 @@ export function useScenarioSearch(
           id: u.obj.id,
           index: i,
           parent,
-          highlight:
-            u[0] &&
-            fuzzysort.highlight({
-              ...u[0],
-              score: u.score,
-              target: htmlTagEscape(u[0].target),
-            }),
+          highlight: u[0] ? fuzzyHighlight(u[0]) : "",
           score: u.score,
           category: "واحدها",
           symbolOptions: unitActions.getCombinedSymbolOptions(u.obj),
@@ -69,10 +63,7 @@ export function useScenarioSearch(
       (u, i) =>
         ({
           ...u.obj,
-          highlight: fuzzysort.highlight({
-            ...u,
-            target: htmlTagEscape(u.target),
-          }),
+          highlight: fuzzyHighlight(u),
           score: u.score,
           category: "ویژگی‌ها",
         }) as LayerFeatureSearchResult,
@@ -90,10 +81,7 @@ export function useScenarioSearch(
         ({
           ...u.obj,
           index: i,
-          highlight: fuzzysort.highlight({
-            ...u,
-            target: htmlTagEscape(u.target),
-          }),
+          highlight: fuzzyHighlight(u),
           score: u.score,
           category: "لایه‌های نقشه",
         }) as MapLayerSearchResult,
@@ -113,10 +101,7 @@ export function useScenarioSearch(
           ...u.obj,
           index: i,
           name: u.obj.title,
-          highlight: fuzzysort.highlight({
-            ...u,
-            target: htmlTagEscape(u.target),
-          }),
+          highlight: fuzzyHighlight(u),
           score: u.score,
           category: "رویدادها",
         }) as EventSearchResult,
@@ -226,10 +211,7 @@ export function useActionSearch() {
           id: i,
           name: u.obj.label,
           index: i,
-          highlight: fuzzysort.highlight({
-            ...u,
-            target: htmlTagEscape(u.target),
-          }),
+          highlight: fuzzyHighlight(u),
           score: u.score,
           category: "عملیات",
         }) as ActionSearchResult,

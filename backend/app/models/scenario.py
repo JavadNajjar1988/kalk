@@ -3,11 +3,13 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Optional
 
-from sqlalchemy import DateTime, String, Text
+from sqlalchemy import JSON, DateTime, String, Text
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.db.base import Base
+
+JSONType = JSONB().with_variant(JSON(), "sqlite")
 
 
 class Scenario(Base):
@@ -23,6 +25,6 @@ class Scenario(Base):
     archived_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
     created: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     modified: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
-    content: Mapped[Optional[dict]] = mapped_column(JSONB, nullable=True)
+    content: Mapped[Optional[dict]] = mapped_column(JSONType, nullable=True)
 
 

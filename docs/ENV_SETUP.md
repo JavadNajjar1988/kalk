@@ -44,7 +44,7 @@ KEYCLOAK_CLIENT_SECRET=
 TILESERVER_URL=http://127.0.0.1:8480
 
 # تنظیمات Admin
-ADMIN_BOOTSTRAP_PASSWORD=admin123
+ADMIN_BOOTSTRAP_PASSWORD=<strong-random-password>
 ```
 
 ## توضیحات تنظیمات

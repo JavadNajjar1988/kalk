@@ -13,7 +13,8 @@ import {
   MenuItem,
   useTheme,
 } from '@mui/material';
-import type { Scenario, ScenarioStatus } from '@/types';
+import { ScenarioStatus } from '@/types';
+import type { Scenario } from '@/types';
 import {
   buildResourcesFormDialogSx,
   resourcesDialogTitleSx,
@@ -23,10 +24,10 @@ import {
 } from '@/modules/dashboard/pages/resources/resourcesDialogStyles';
 
 const statusOptions: { value: ScenarioStatus; label: string }[] = [
-  { value: 'draft', label: 'پیش‌نویس' },
-  { value: 'active', label: 'فعال' },
-  { value: 'paused', label: 'متوقف' },
-  { value: 'completed', label: 'تکمیل شده' },
+  { value: ScenarioStatus.DRAFT, label: 'پیش‌نویس' },
+  { value: ScenarioStatus.ACTIVE, label: 'فعال' },
+  { value: ScenarioStatus.PAUSED, label: 'متوقف' },
+  { value: ScenarioStatus.COMPLETED, label: 'تکمیل شده' },
 ];
 
 interface ScenarioDialogProps {
@@ -41,7 +42,7 @@ const ScenarioDialog: React.FC<ScenarioDialogProps> = ({ open, onClose, scenario
   const [formData, setFormData] = useState({
     name: '',
     description: '',
-    status: 'draft' as ScenarioStatus,
+    status: ScenarioStatus.DRAFT,
     startTime: '',
     endTime: '',
     objectives: '',
@@ -61,7 +62,7 @@ const ScenarioDialog: React.FC<ScenarioDialogProps> = ({ open, onClose, scenario
       setFormData({
         name: '',
         description: '',
-        status: 'draft',
+        status: ScenarioStatus.DRAFT,
         startTime: '',
         endTime: '',
         objectives: '',
@@ -177,4 +178,4 @@ const ScenarioDialog: React.FC<ScenarioDialogProps> = ({ open, onClose, scenario
   );
 };
 
-export default ScenarioDialog; 
+export default ScenarioDialog;

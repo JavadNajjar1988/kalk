@@ -8,35 +8,20 @@
 // jsts ships CommonJS modules without bundled TypeScript declarations.
 // All deep-path imports are listed in vite.config.ts > optimizeDeps.include
 // so Vite/esbuild pre-bundles them before the dev server starts.
-// @ts-expect-error no types
 import Angle from 'jsts/org/locationtech/jts/algorithm/Angle.js';
-// @ts-expect-error no types
 import Centroid from 'jsts/org/locationtech/jts/algorithm/Centroid.js';
-// @ts-expect-error no types
 import MinimumDiameter from 'jsts/org/locationtech/jts/algorithm/MinimumDiameter.js';
-// @ts-expect-error no types
 import ConvexHull from 'jsts/org/locationtech/jts/algorithm/ConvexHull.js';
-// @ts-expect-error no types
 import Coordinate from 'jsts/org/locationtech/jts/geom/Coordinate.js';
-// @ts-expect-error no types
 import Geometry from 'jsts/org/locationtech/jts/geom/Geometry.js';
-// @ts-expect-error no types
 import GeometryFactory from 'jsts/org/locationtech/jts/geom/GeometryFactory.js';
-// @ts-expect-error no types
 import LineSegment from 'jsts/org/locationtech/jts/geom/LineSegment.js';
-// @ts-expect-error no types
 import Polygon from 'jsts/org/locationtech/jts/geom/Polygon.js';
-// @ts-expect-error no types
 import AffineTransformation from 'jsts/org/locationtech/jts/geom/util/AffineTransformation.js';
-// @ts-expect-error no types
 import LengthIndexedLine from 'jsts/org/locationtech/jts/linearref/LengthIndexedLine.js';
-// @ts-expect-error no types
 import BufferOp from 'jsts/org/locationtech/jts/operation/buffer/BufferOp.js';
-// @ts-expect-error no types
 import BufferParameters from 'jsts/org/locationtech/jts/operation/buffer/BufferParameters.js';
-// @ts-expect-error no types
 import OverlayOp from 'jsts/org/locationtech/jts/operation/overlay/OverlayOp.js';
-// @ts-expect-error no types
 import RelateOp from 'jsts/org/locationtech/jts/operation/relate/RelateOp.js';
 
 const gf = new GeometryFactory();
@@ -48,7 +33,7 @@ export const PI = Math.PI;
 // ---- Coordinate helpers ----
 
 export const coordinate = (...args: any[]): any => {
-  if (args[0] instanceof Geometry) return args[0].getCoordinate();
+  if (args[0] instanceof Geometry) return (args[0] as any).getCoordinate();
   if (Array.isArray(args[0])) return new Coordinate(args[0][0], args[0][1]);
   if (args.length === 2 && typeof args[0] === 'number') return new Coordinate(args[0], args[1]);
   return args[0];

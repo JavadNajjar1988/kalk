@@ -107,7 +107,11 @@
               class="bg-opacity-70 absolute bottom-0 -left-2 h-4 w-4 rounded-full bg-white text-gray-600 transition-all duration-300 group-hover:text-gray-900"
             />
           </PanelSymbolButton>
-          <SymbolPickerPopover :symbol-options="symbolOptions" :add-unit="addUnit" />
+          <SymbolPickerPopover
+            :symbol-options="symbolOptions"
+            :add-unit="addUnit"
+            :disabled="!activeParentId || unitActions.isUnitLocked(activeParentId)"
+          />
         </div>
       </section>
     </nav>

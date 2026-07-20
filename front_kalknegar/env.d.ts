@@ -10,3 +10,15 @@ interface ImportMetaEnv {
 interface ImportMeta {
   readonly env: ImportMetaEnv
 }
+
+declare module "*.vue" {
+  import type { DefineComponent } from "vue"
+  const component: DefineComponent<Record<string, unknown>, Record<string, unknown>, unknown>
+  export default component
+}
+
+declare module "ol-ext/source/DayNight"
+declare module "ol-ext/interaction/Transform"
+declare module "ol-ext/layer/GeoImage"
+declare module "ol-ext/source/GeoImage"
+declare module "process"

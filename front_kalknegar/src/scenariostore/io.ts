@@ -15,6 +15,7 @@ import type {
   UnitOfMeasure,
   UnitStatus,
 } from "@/types/scenarioModels";
+import { ExecutionStatus, ScenarioStatus } from "@/types/scenarioModels";
 import {
   DEFAULT_STORYBOARD_SETTINGS,
   type NewScenarioStore,
@@ -111,7 +112,7 @@ export function createEmptyScenario(options: CreateEmptyScenarioOptions = {}): S
 
     // فیلدهای جدید اضافه شده
     endTime: undefined,
-    status: "draft",
+    status: ScenarioStatus.DRAFT,
     objectives: [],
     phases: [],
     terrainAnalysis: undefined,
@@ -120,7 +121,7 @@ export function createEmptyScenario(options: CreateEmptyScenarioOptions = {}): S
     simulationSettings: undefined,
     currentTime: undefined,
     simulationSpeed: 1.0,
-    executionStatus: "not_started",
+    executionStatus: ExecutionStatus.NOT_STARTED,
     analysisResults: [],
     tags: [],
     metadata: {},

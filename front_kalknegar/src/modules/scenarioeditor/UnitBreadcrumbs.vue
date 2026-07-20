@@ -85,19 +85,21 @@ const breadcrumbItems = computed((): BreadcrumbItemType[] => {
     });
 
     const sideGroups = side.groups.map((group) => getSideGroupById(group));
-    const res = [
+    const res: BreadcrumbItemType[] = [
       {
         name: isMobile.value ? side.name.slice(0, 2) : side.name,
         items: sides.value,
         id: side.id,
         sidc: "",
       },
-      {
-        name: isMobile.value ? sideGroup.name.slice(0, 2) : sideGroup.name,
-        items: sideGroups,
-        id: sideGroup.id,
-        sidc: "",
-      },
+      ...(sideGroup
+        ? [{
+            name: isMobile.value ? sideGroup.name.slice(0, 2) : sideGroup.name,
+            items: sideGroups,
+            id: sideGroup.id,
+            sidc: "",
+          }]
+        : []),
       ...parentsWithItems,
     ];
     if (activeParent.value?.subUnits?.length) {

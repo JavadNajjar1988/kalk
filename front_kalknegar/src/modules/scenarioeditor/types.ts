@@ -48,8 +48,8 @@ export type DetailsPanel =
 export type BreadcrumbItemType = {
   name: string;
   items?: ((NSide | NSideGroup | NUnit) & {
-    symbolOptions: Record<string, any>;
-    sidc: string;
+    symbolOptions?: Record<string, any>;
+    sidc?: string;
     location?: boolean;
   })[];
   id?: EntityId;

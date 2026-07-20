@@ -17,15 +17,10 @@ from app.schemas.auth import Token, LoginRequest
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 logger = logging.getLogger(__name__)
-_default_admin_warning_emitted = False
 
 
 def _get_admin_password() -> str:
-    global _default_admin_warning_emitted
     password = settings.ADMIN_BOOTSTRAP_PASSWORD
-    if password == "admin123" and not _default_admin_warning_emitted:
-        logger.warning("ADMIN_BOOTSTRAP_PASSWORD is using the default value; change it via environment variables.")
-        _default_admin_warning_emitted = True
     if not password:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Admin bootstrap password not configured")
     return password

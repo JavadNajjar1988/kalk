@@ -244,7 +244,10 @@ const resourcesSlice = createSlice({
       const { id, updates } = action.payload;
       const index = state.resources.findIndex(resource => resource.id === id);
       if (index !== -1) {
-        state.resources[index] = { ...state.resources[index], ...updates };
+        state.resources[index] = {
+          ...state.resources[index],
+          ...updates,
+        } as typeof state.resources[number];
         state.stats.recentUpdates++;
       }
     },

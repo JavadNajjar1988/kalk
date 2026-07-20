@@ -15,8 +15,8 @@
               :class="hit.index === currentHitIndex ? 'bg-blue-200' : 'bg-gray-100'"
               @click="onSelect(hit.index)"
             >
-              <SearchUnitHit v-if="hit.category === 'Units'" :unit="hit" />
-              <SearchFeatureHit v-else-if="hit.category === 'Features'" :feature="hit" />
+              <SearchUnitHit v-if="hit.category === 'واحدها'" :unit="hit" />
+              <SearchFeatureHit v-else-if="hit.category === 'ویژگی‌ها'" :feature="hit" />
             </button>
           </li>
         </ul>
@@ -41,9 +41,9 @@ import SearchModalInput from "./SearchModalInput.vue";
 import SearchUnitHit from "./SearchUnitHit.vue";
 import ToggleField from "./ToggleField.vue";
 import type { LayerFeatureSearchResult, UnitSearchResult } from "./types";
-import { groupBy, htmlTagEscape, injectStrict } from "../utils";
+import { fuzzyHighlight, groupBy, injectStrict } from "../utils";
 import SearchFeatureHit from "./SearchFeatureHit.vue";
-import * as fuzzysort from "fuzzysort";
+import fuzzysort from "fuzzysort";
 import { activeScenarioKey } from "@/components/injects";
 import { type NUnit } from "@/types/internalModels";
 
@@ -88,15 +88,9 @@ const unitHits = computed(() => {
         sidc: u.obj.sidc,
         id: u.obj.id,
         parent,
-        highlight:
-          u[0] &&
-          fuzzysort.highlight({
-            ...u[0],
-            score: u.score,
-            target: htmlTagEscape(u[0].target),
-          }),
+        highlight: u[0] ? fuzzyHighlight(u[0]) : "",
         score: u.score,
-        category: "Units",
+        category: "واحدها",
         symbolOptions: unitActions.getCombinedSymbolOptions(u.obj),
       };
     });
@@ -111,12 +105,9 @@ const featureHits = computed(() => {
   currentHitIndex.value = 0;
   return hits.slice(0, 10).map((u, i) => ({
     ...u.obj,
-    highlight: fuzzysort.highlight({
-      ...u,
-      target: htmlTagEscape(u.target),
-    }),
+    highlight: fuzzyHighlight(u),
     score: u.score,
-    category: "Features",
+    category: "ویژگی‌ها",
   }));
 });
 
@@ -154,8 +145,8 @@ function onSelect(index?: number) {
   const i = index === undefined ? currentHitIndex.value : index;
   if (!hits.value.length) return;
   const item = hits.value[i];
-  if (item.category === "Units") emit("select-unit", item.id);
-  if (item.category === "Features") {
+  if (item.category === "واحدها") emit("select-unit", item.id);
+  if (item.category === "ویژگی‌ها") {
     if (item.type === "layer") emit("select-layer", item.id);
     else emit("select-feature", item.id, item._pid);
   }

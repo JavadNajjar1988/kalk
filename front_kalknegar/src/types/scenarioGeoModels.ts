@@ -121,6 +121,10 @@ export interface ScenarioGeoJSONLayer extends ScenarioMapLayerBase {
 export interface ScenarioXYZLayer extends ScenarioMapLayerBase {
   type: "XYZLayer";
   url: string;
+  tileLayerOptions?: {
+    minZoom?: number;
+    maxZoom?: number;
+  };
 }
 
 export interface ScenarioTileJSONLayer extends ScenarioMapLayerBase {

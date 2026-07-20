@@ -24,7 +24,7 @@ export const masterDefinitionTranslations = {
     // فیلدهای فرم
     name: 'نام',
     englishName: 'نام انگلیسی',
-    description: 'توضیحات',
+    fieldDescription: 'توضیحات',
     icon: 'آیکون',
     color: 'رنگ',
     maxLevels: 'حداکثر سطوح',
@@ -144,7 +144,7 @@ export const masterDefinitionTranslations = {
     // Form fields
     name: 'Name',
     englishName: 'English Name',
-    description: 'Description',
+    fieldDescription: 'Description',
     icon: 'Icon',
     color: 'Color',
     maxLevels: 'Max Levels',
@@ -269,7 +269,7 @@ export const masterDefinitionTranslations = {
     // حقول النموذج
     name: 'الاسم',
     englishName: 'الاسم بالإنجليزية',
-    description: 'الوصف',
+    fieldDescription: 'الوصف',
     icon: 'الأيقونة',
     color: 'اللون',
     maxLevels: 'الحد الأقصى للمستويات',

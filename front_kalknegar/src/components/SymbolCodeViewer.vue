@@ -52,7 +52,7 @@ function onSubmit() {
 async function onCopy() {
   await copyToClipboard(props.sidc);
   send({
-    message: `Copied ${props.sidc} to the clipboard`,
+    message: `کد ${props.sidc} در حافظه کپی شد.`,
   });
 }
 </script>
@@ -60,7 +60,7 @@ async function onCopy() {
   <div class="flex items-center">
     <template v-if="!isEditMode">
       <div
-        class="rounded border border-transparent p-1 font-mono text-base text-gray-700 hover:border-gray-200"
+        class="text-foreground hover:border-border rounded border border-transparent p-1 font-mono text-base"
       >
         <span
           v-for="[key, part] in parts"
@@ -69,20 +69,20 @@ async function onCopy() {
           >{{ part }}</span
         >
       </div>
-      <IconButton @click="toggleEditMode()">
+      <IconButton title="ویرایش کد نماد" @click="toggleEditMode()">
         <EditIcon class="h-5 w-5" />
       </IconButton>
-      <IconButton @click="onCopy()">
+      <IconButton title="کپی کد نماد" @click="onCopy()">
         <CopyIcon class="h-5 w-5" />
       </IconButton>
     </template>
     <template v-else>
       <form @submit.prevent="onSubmit" class="ml-2 flex items-end">
         <InputGroup label="کد نماد" v-model="newSidc" autofocus />
-        <IconButton type="submit" class="ml-1">
+        <IconButton title="تأیید کد" type="submit" class="ml-1">
           <IconCheck class="h-5 w-5" />
         </IconButton>
-        <IconButton type="submit" @click="toggleEditMode()">
+        <IconButton title="انصراف" type="button" @click="toggleEditMode()">
           <IconClose class="h-5 w-5" />
         </IconButton>
       </form>

@@ -1,17 +1,17 @@
 services:
   db:
-    image: postgis/postgis:16-3.4
+    image: postgis/postgis:16-3.4@sha256:44126d872ac91993766c341e369c539e8196614321765d36a6f1bab0419a5fa5
     restart: unless-stopped
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: kalk
+      POSTGRES_USER: ${POSTGRES_USER:-kalk}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+      POSTGRES_DB: ${POSTGRES_DB:-kalk}
     ports:
       - "5432:5432"
     volumes:
       - db-data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
       interval: 5s
       timeout: 5s
       retries: 10
@@ -24,20 +24,7 @@ services:
       dockerfile: Dockerfile
     restart: unless-stopped
     # فقط کد Python زیر app/ را برای reload نگاه کن؛ آپلود mbtiles به static/maps باعث قطع اتصال نشود
-    command:
-      [
-        "uvicorn",
-        "app.main:app",
-        "--host",
-        "0.0.0.0",
-        "--port",
-        "8000",
-        "--reload",
-        "--reload-dir",
-        "/app/app",
-      ]
     volumes:
-      - ./backend:/app
       - ./backend/static/maps:/app/backend/static/maps
       # برای استفاده از هارد خارجی (10+ ترابایت):
       # 1. در فایل .env متغیر EXTERNAL_MAPS_PATH را تنظیم کنید
@@ -46,14 +33,14 @@ services:
       # اگر تنظیم نشده باشد، از مسیر محلی استفاده می‌شود
       - ${EXTERNAL_MAPS_PATH:-./backend/static/maps}:/mnt/external-maps
     environment:
-      # Prefer loading from .env via --env-file; fallback to default if not provided
-      DB_URL: ${DB_URL:-postgresql+asyncpg://postgres:postgres@db:5432/kalk}
-      CORS_ORIGINS: '["http://localhost:5173","http://localhost:5174","http://localhost:3000","http://localhost:3001","http://127.0.0.1:5173","http://127.0.0.1:3000","http://127.0.0.1:3001"]'
+      # Secrets must be provided through the local .env file.
+      DB_URL: ${DB_URL:?Set DB_URL in .env}
+      CORS_ORIGINS: ${CORS_ORIGINS:?Set CORS_ORIGINS in .env}
       DISABLE_AUTH: ${DISABLE_AUTH:-false}
-      JWT_SECRET: ${JWT_SECRET:-kalk-dev-local-jwt-secret}
+      JWT_SECRET: ${JWT_SECRET:?Set JWT_SECRET in .env}
       JWT_ALG: ${JWT_ALG:-HS256}
       ACCESS_TOKEN_EXPIRE_MINUTES: ${ACCESS_TOKEN_EXPIRE_MINUTES:-60}
-      ADMIN_BOOTSTRAP_PASSWORD: ${ADMIN_BOOTSTRAP_PASSWORD:-admin123}
+      ADMIN_BOOTSTRAP_PASSWORD: ${ADMIN_BOOTSTRAP_PASSWORD:?Set ADMIN_BOOTSTRAP_PASSWORD in .env}
       # Optional: LLM service for Excel mapping (OpenAI-compatible)
       INTERNAL_LLM_BASE_URL: ${INTERNAL_LLM_BASE_URL:-}
       INTERNAL_LLM_API_KEY: ${INTERNAL_LLM_API_KEY:-}
@@ -77,7 +64,7 @@ services:
       - kalknet
 
   tileserver:
-    image: maptiler/tileserver-gl:latest
+    image: maptiler/tileserver-gl@sha256:3a9ccdb24820b6814c8119bcc8a4376c39867cb0ffe69d62919ef898b90c2427
     restart: unless-stopped
     ports:
       - "8480:8080"
@@ -87,15 +74,13 @@ services:
     # TileServer-GL به صورت خودکار تمام فایل‌های .mbtiles در /data را اسکن می‌کند
     # هیچ command نیاز نیست - فقط باید /data را mount کنیم
     healthcheck:
-      test: ["CMD-SHELL", "curl -sf http://localhost:8080/health || wget -qO- http://localhost:8080/health || exit 1"]
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:8080/').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
       interval: 10s
       timeout: 5s
       retries: 5
       start_period: 10s
     networks:
       - kalknet
-    profiles:
-      - maps
     depends_on:
       - api
 
@@ -103,7 +88,7 @@ services:
   # این سرور برای نقشه‌های بزرگ روی هارد خارجی طراحی شده است
   # استفاده: docker compose --profile heavy-maps up -d
   external-tileserver:
-    image: maptiler/tileserver-gl:latest
+    image: maptiler/tileserver-gl@sha256:3a9ccdb24820b6814c8119bcc8a4376c39867cb0ffe69d62919ef898b90c2427
     container_name: kalk-external-tileserver
     restart: unless-stopped
     ports:
@@ -123,7 +108,7 @@ services:
     # TileServer-GL بدون command به صورت خودکار تمام .mbtiles در /data را اسکن می‌کند
     # و یک config.json خودکار ایجاد می‌کند
     healthcheck:
-      test: ["CMD-SHELL", "curl -sf http://localhost:8080/health || wget -qO- http://localhost:8080/health || exit 1"]
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:8080/').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -142,12 +127,12 @@ services:
           memory: 2G  # حداقل حافظه
 
   geoserver:
-    image: kartoza/geoserver
+    image: kartoza/geoserver@sha256:913eed7f8064ce7d0f3960832bde36183845aa8e3167195c5e38cf2e31022d23
     restart: unless-stopped
     ports:
       - "8080:8080"
     environment:
-      - GEOSERVER_ADMIN_PASSWORD=admin123
+      - GEOSERVER_ADMIN_PASSWORD=${GEOSERVER_ADMIN_PASSWORD:-}
     volumes:
       - geoserver-data:/opt/geoserver_data
       - ./geoserver-custom:/opt/geoserver_data/www/custom:ro
@@ -161,15 +146,40 @@ services:
       context: ./simulator
       dockerfile: Dockerfile
     restart: unless-stopped
-    env_file:
-      - ./simulator/.env
-    environment:
-      VITE_API_URL: ${VITE_API_URL:-http://localhost:8002/api}
     ports:
-      - "3001:3001"
-    volumes:
-      - ./simulator:/app
-      - /app/node_modules
+      - "3001:80"
+    networks:
+      - kalknet
+
+  kalknegar:
+    build:
+      context: ./front_kalknegar
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    ports:
+      - "5180:80"
+    depends_on:
+      api:
+        condition: service_healthy
+    networks:
+      - kalknet
+
+  dashboard:
+    build:
+      context: ./front_dashboard
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    ports:
+      - "3000:80"
+    depends_on:
+      api:
+        condition: service_healthy
+      kalknegar:
+        condition: service_healthy
+      simulator:
+        condition: service_healthy
+      tileserver:
+        condition: service_healthy
     networks:
       - kalknet
 

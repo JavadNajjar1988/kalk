@@ -25,32 +25,49 @@ interface ExtendedSymbolValue extends SymbolValue {
 }
 
 const landIcons: ExtendedSymbolValue[] = [
-  { symbolSet: "10", code: "121100", text: "Infantry" },
-  { symbolSet: "10", code: "121102", text: "Mechanized Infantry" },
-  { symbolSet: "10", code: "121300", text: "Scout" },
-  { symbolSet: "10", code: "130300", text: "Artillery" },
-  { symbolSet: "10", code: "120500", text: "Armor" },
-  { symbolSet: "10", code: "160600", text: "Combat Service Support" },
-  { symbolSet: "10", code: "130100", text: "Air Defense" },
-  { symbolSet: "10", code: "140700", text: "Engineer" },
+  { symbolSet: "10", code: "121100", text: "پیاده‌نظام" },
+  { symbolSet: "10", code: "121102", text: "پیاده‌نظام مکانیزه" },
+  { symbolSet: "10", code: "121300", text: "شناسایی" },
+  { symbolSet: "10", code: "130300", text: "توپخانه" },
+  { symbolSet: "10", code: "120500", text: "زرهی" },
+  { symbolSet: "10", code: "160600", text: "پشتیبانی خدمات رزمی" },
+  { symbolSet: "10", code: "130100", text: "پدافند هوایی" },
+  { symbolSet: "10", code: "140700", text: "مهندسی رزمی" },
 ];
 
 const seaIcons: ExtendedSymbolValue[] = [
-  { symbolSet: "30", code: "110000", text: "Military" },
-  { symbolSet: "30", code: "120100", text: "Carrier" },
-  { symbolSet: "30", code: "120204", text: "Frigate" },
-  { symbolSet: "30", code: "120300", text: "Amphibious Warfare Ship" },
-  { symbolSet: "30", code: "120500", text: "Patrol Boat" },
-  { symbolSet: "35", code: "110100", text: "Submarine" },
-  { symbolSet: "35", code: "130100", text: "Torpedo" },
+  { symbolSet: "30", code: "110000", text: "شناور نظامی" },
+  { symbolSet: "30", code: "120100", text: "ناو هواپیمابر" },
+  { symbolSet: "30", code: "120204", text: "ناوچه" },
+  { symbolSet: "30", code: "120300", text: "شناور آبی‌خاکی" },
+  { symbolSet: "30", code: "120500", text: "قایق گشتی" },
+  { symbolSet: "35", code: "110100", text: "زیردریایی" },
+  { symbolSet: "35", code: "130100", text: "اژدر" },
 ];
 
 const airIcons: ExtendedSymbolValue[] = [
-  { symbolSet: "01", code: "110100", text: "Fixed Wing" },
-  { symbolSet: "01", code: "110104", text: "Fighter" },
-  { symbolSet: "01", code: "110103", text: "Bomber" },
-  { symbolSet: "01", code: "110200", text: "Rotary Wing" },
-  { symbolSet: "02", code: "110000", text: "Missile" },
+  { symbolSet: "01", code: "110100", text: "هواپیمای بال‌ثابت" },
+  { symbolSet: "01", code: "110104", text: "جنگنده" },
+  { symbolSet: "01", code: "110103", text: "بمب‌افکن" },
+  { symbolSet: "01", code: "110200", text: "بالگرد" },
+  { symbolSet: "02", code: "110000", text: "موشک هوایی" },
+];
+
+const equipmentIcons: ExtendedSymbolValue[] = [
+  { symbolSet: "15", code: "110100", text: "تفنگ" },
+  { symbolSet: "15", code: "110200", text: "مسلسل" },
+  { symbolSet: "15", code: "120100", text: "خودروی زرهی" },
+  { symbolSet: "15", code: "120200", text: "تانک" },
+  { symbolSet: "15", code: "130100", text: "هواگرد" },
+  { symbolSet: "15", code: "160200", text: "کامیون" },
+];
+
+const spaceIcons: ExtendedSymbolValue[] = [
+  { symbolSet: "05", code: "110100", text: "وسیلهٔ فضایی" },
+  { symbolSet: "05", code: "110300", text: "فرودگر سیاره‌ای" },
+  { symbolSet: "05", code: "110400", text: "شاتل مداری" },
+  { symbolSet: "05", code: "110600", text: "ماهواره" },
+  { symbolSet: "05", code: "110800", text: "سلاح ضدماهواره" },
 ];
 
 const symbolPage = ref<SymbolPage>("land");
@@ -79,6 +96,10 @@ export function useToolbarUnitSymbolData() {
         return seaIcons.map(mapSymbolCode);
       case "air":
         return airIcons.map(mapSymbolCode);
+      case "equipment":
+        return equipmentIcons.map(mapSymbolCode);
+      case "space":
+        return spaceIcons.map(mapSymbolCode);
     }
     return [];
   });

@@ -54,7 +54,7 @@ const SearchBar: React.FC<SearchBarProps> = ({ value, onChange, onSubmit, onClea
       </IconButton>
       <InputBase
         sx={{ ml: 1, flex: 1, fontSize: '0.95rem' }}
-        placeholder={placeholder || t('layout.searchPlaceholder', 'جستجو در سیستم...')}
+        placeholder={placeholder || t('layout.searchPlaceholder')}
         inputProps={{ 'aria-label': 'search' }}
         value={value}
         onChange={onChange}
@@ -63,4 +63,4 @@ const SearchBar: React.FC<SearchBarProps> = ({ value, onChange, onSubmit, onClea
   );
 };
 
-export default SearchBar; 
+export default SearchBar;

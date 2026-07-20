@@ -33,7 +33,7 @@ depends_on = None
 def upgrade() -> None:
     """
     Create default admin user if it doesn't exist.
-    Default password is from ADMIN_BOOTSTRAP_PASSWORD env var or 'admin123'.
+    The password must be provided through ADMIN_BOOTSTRAP_PASSWORD.
     """
     # Check if admin user already exists
     connection = op.get_bind()
@@ -47,8 +47,10 @@ def upgrade() -> None:
         print("Admin user already exists, skipping creation.")
         return
     
-    # Get admin password from settings (reads from env or defaults to 'admin123')
+    # Get the admin password from environment-backed settings.
     admin_password = settings.ADMIN_BOOTSTRAP_PASSWORD
+    if not admin_password:
+        raise RuntimeError("ADMIN_BOOTSTRAP_PASSWORD must be configured before running migrations")
     
     # Hash the password using the same method as the app
     password_hash = get_password_hash(admin_password)
@@ -93,7 +95,6 @@ def upgrade() -> None:
     )
     print("Default admin user created successfully.")
     print(f"Username: admin")
-    print(f"Password: {admin_password}")
     print("⚠️  Please change the password after first login!")
 
 
