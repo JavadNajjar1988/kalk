@@ -77,7 +77,10 @@ try {
         docker compose build --no-cache
     }
 
-    $composeUpArgs = @("up", "-d")
+    # Always let Compose refresh images from the current Dockerfiles. BuildKit
+    # reuses cached layers, while this prevents stale images from missing new
+    # runtime metadata such as HEALTHCHECK instructions.
+    $composeUpArgs = @("up", "-d", "--build")
     if ($EnvFile) {
         $composeUpArgs = @("--env-file", $EnvFile) + $composeUpArgs
     }
