@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import { computed, nextTick, onUnmounted, ref, watch } from "vue";
+import { getCenter } from "ol/extent";
+import GeoJSON from "ol/format/GeoJSON";
 import type { Edge } from "@atlaskit/pragmatic-drag-and-drop-hitbox/closest-edge";
 import {
   IconEye,
@@ -13,7 +15,13 @@ import { storeToRefs } from "pinia";
 
 import ChevronPanel from "@/components/ChevronPanel.vue";
 import DotsMenu from "@/components/DotsMenu.vue";
+import { activeMapKey } from "@/components/injects";
+import {
+  deleteTacticalTargets,
+  duplicateTacticalTargets,
+} from "@/components/mapContextMenuTacticalActions";
 import type { MenuItemData } from "@/components/types";
+import { injectStrict } from "@/utils";
 import { useServicesStore } from "@/modules/tactical-symbol-map/stores/services.js";
 import {
   buildTacticalLayerItems,
@@ -27,6 +35,7 @@ import {
 import TacticalSymbolLayerListItem from "./TacticalSymbolLayerListItem.vue";
 
 const servicesStore = useServicesStore();
+const mapRef = injectStrict(activeMapKey);
 const serviceRefs = storeToRefs(servicesStore as any) as any;
 const tacticalStoreRef = serviceRefs.store;
 const tacticalSelectionRef = serviceRefs.selection;
@@ -40,9 +49,20 @@ const isOpen = ref(true);
 const editingFeatureId = ref<string | null>(null);
 const editableFeatureName = ref("");
 const selectedTacticalFeatureIds = ref<Set<string>>(new Set());
+const tacticalGeoJson = new GeoJSON({
+  dataProjection: "EPSG:3857",
+  featureProjection: "EPSG:3857",
+});
 
 type TacticalLayerAction = "moveUp" | "moveDown";
-type TacticalFeatureAction = "rename" | "moveUp" | "moveDown";
+type TacticalFeatureAction =
+  | "zoom"
+  | "pan"
+  | "rename"
+  | "moveUp"
+  | "moveDown"
+  | "delete"
+  | "duplicate";
 
 const layerMenuItems: MenuItemData<TacticalLayerAction>[] = [
   { label: "بردن بالا", action: "moveUp" },
@@ -274,6 +294,50 @@ async function moveTacticalFeature(
   await writeFeatureOrder(nextFeatures);
 }
 
+async function getTacticalFeatureGeometry(featureId: string) {
+  const store = getTacticalStore();
+  if (!store || typeof store.values !== "function") return null;
+  const [value] = await store.values([featureId]);
+  if (!value) return null;
+  const parsedFeature = tacticalGeoJson.readFeature(value);
+  const feature = Array.isArray(parsedFeature) ? parsedFeature[0] : parsedFeature;
+  return feature?.getGeometry() ?? null;
+}
+
+async function zoomToTacticalFeature(featureId: string) {
+  const geometry = await getTacticalFeatureGeometry(featureId);
+  if (!geometry || !mapRef.value) return;
+  mapRef.value.getView().fit(geometry.getExtent(), {
+    duration: 500,
+    maxZoom: 15,
+    padding: [80, 80, 80, 80],
+  });
+}
+
+async function panToTacticalFeature(featureId: string) {
+  const geometry = await getTacticalFeatureGeometry(featureId);
+  if (!geometry || !mapRef.value) return;
+  mapRef.value.getView().animate({
+    center: getCenter(geometry.getExtent()),
+    duration: 500,
+  });
+}
+
+async function deleteTacticalFeature(feature: TacticalFeatureItem) {
+  await deleteTacticalTargets(servicesStore.getServices(), [feature.id]);
+  selectedTacticalFeatureIds.value.delete(feature.id);
+  await refreshTacticalLayers();
+}
+
+async function duplicateTacticalFeature(feature: TacticalFeatureItem) {
+  await duplicateTacticalTargets(
+    servicesStore.getServices(),
+    [feature.id],
+    feature.layerId,
+  );
+  await refreshTacticalLayers();
+}
+
 async function onFeatureDrop(
   source: TacticalFeatureItem,
   destination: TacticalFeatureItem,
@@ -292,12 +356,28 @@ async function onFeatureDrop(
 }
 
 function onFeatureAction(feature: TacticalFeatureItem, action: TacticalFeatureAction) {
+  if (action === "zoom") {
+    void zoomToTacticalFeature(feature.id);
+    return;
+  }
+  if (action === "pan") {
+    void panToTacticalFeature(feature.id);
+    return;
+  }
   if (action === "rename") {
     startRename(feature);
     return;
   }
   if (action === "moveUp" || action === "moveDown") {
     void moveTacticalFeature(feature, action);
+    return;
+  }
+  if (action === "delete") {
+    void deleteTacticalFeature(feature);
+    return;
+  }
+  if (action === "duplicate") {
+    void duplicateTacticalFeature(feature);
   }
 }
 </script>

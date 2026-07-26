@@ -277,7 +277,13 @@ try {
     Write-Host ""
     Write-Host "Optional services:" -ForegroundColor Yellow
     Write-Host "  - TileServer:    docker compose --profile maps up -d" -ForegroundColor White
-    Write-Host "    TileServer URL: http://127.0.0.1:8480" -ForegroundColor White
+    $tileServerPort = if ($env:TILESERVER_PORT) { $env:TILESERVER_PORT } else {
+        $configuredPort = Get-Content ".env" -ErrorAction SilentlyContinue |
+            Where-Object { $_ -match '^\s*TILESERVER_PORT\s*=' } |
+            Select-Object -First 1
+        if ($configuredPort) { ($configuredPort -split '=', 2)[1].Trim() } else { "8480" }
+    }
+    Write-Host "    TileServer URL: http://127.0.0.1:$tileServerPort" -ForegroundColor White
     Write-Host ""
 } finally {
     Pop-Location
