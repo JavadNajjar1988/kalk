@@ -10,6 +10,7 @@ from httpx import ASGITransport, AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
 from app.core.config import settings
+from app.core.security import get_current_user
 from app.db.base import Base
 from app.db.session import get_session
 from app.main import app
@@ -28,8 +29,9 @@ async def client(tmp_path):
 
     # ساخت فقط جداول منابع (سایر مدل‌های پروژه روی sqlite قابل ساخت نیستند)
     from app.models.resource import Resource, ResourceMedia  # noqa: F401
+    from app.models.user import User
 
-    tables = [Resource.__table__, ResourceMedia.__table__]
+    tables = [User.__table__, Resource.__table__, ResourceMedia.__table__]
     async with test_engine.begin() as conn:
         await conn.run_sync(lambda sync_conn: Base.metadata.create_all(sync_conn, tables=tables))
 
@@ -37,14 +39,23 @@ async def client(tmp_path):
         async with TestingSessionLocal() as session:
             yield session
 
+    async def _get_test_user():
+        return {
+            "user_id": "test-admin",
+            "username": "test-admin",
+            "roles": ["SUPER_ADMIN"],
+        }
+
     # mounted /api کاربرد override جداگانه دارد
     from starlette.routing import Mount
 
     api_apps = [r.app for r in app.routes if isinstance(r, Mount)]
 
     app.dependency_overrides[get_session] = _get_test_session
+    app.dependency_overrides[get_current_user] = _get_test_user
     for sub in api_apps:
         sub.dependency_overrides[get_session] = _get_test_session
+        sub.dependency_overrides[get_current_user] = _get_test_user
     try:
         async with AsyncClient(
             transport=ASGITransport(app=app), base_url="http://test"
@@ -52,8 +63,10 @@ async def client(tmp_path):
             yield ac
     finally:
         app.dependency_overrides.pop(get_session, None)
+        app.dependency_overrides.pop(get_current_user, None)
         for sub in api_apps:
             sub.dependency_overrides.pop(get_session, None)
+            sub.dependency_overrides.pop(get_current_user, None)
         await test_engine.dispose()
 
 

@@ -26,6 +26,7 @@ from app.services.scenario_import import (
     scenario_import_response_data,
     upsert_scenario_from_import,
 )
+from app.services.notifications import publish_notification
 from pydantic import BaseModel, Field
 import logging
 
@@ -508,6 +509,17 @@ async def create_scenario(
     await db.commit()
     await db.refresh(obj)
     await manager.broadcast("scenarios", {"type": "scenario_created", "data": ScenarioOut.model_validate(obj).model_dump()})
+    await publish_notification(
+        db,
+        event_type="scenario.created",
+        severity="success",
+        title="سناریوی جدید ایجاد شد",
+        message=f"سناریوی «{obj.name}» توسط {user.get('username', 'system')} ایجاد شد.",
+        roles=("SUPER_ADMIN", "COMMANDER", "OPERATOR", "VIEWER"),
+        entity_type="scenario",
+        entity_id=obj.id,
+        action_url=f"/dashboard/scenarios/{obj.id}",
+    )
     return success(ScenarioOut.model_validate(obj).model_dump())
 
 
@@ -531,6 +543,19 @@ async def update_scenario(
     await db.commit()
     await db.refresh(obj)
     await manager.broadcast("scenarios", {"type": "scenario_updated", "data": ScenarioOut.model_validate(obj).model_dump()})
+    if changed_keys:
+        await publish_notification(
+            db,
+            event_type="scenario.updated",
+            severity="info",
+            title="سناریو به‌روزرسانی شد",
+            message=f"سناریوی «{obj.name}» به‌روزرسانی شد.",
+            roles=("SUPER_ADMIN", "COMMANDER", "OPERATOR", "VIEWER"),
+            entity_type="scenario",
+            entity_id=obj.id,
+            action_url=f"/dashboard/scenarios/{obj.id}",
+            details={"fields": sorted(changed_keys)},
+        )
     return success(ScenarioOut.model_validate(obj).model_dump())
 
 
@@ -543,10 +568,22 @@ async def delete_scenario(
     obj = await db.get(Scenario, scenario_id)
     if not obj:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Scenario not found")
-    await _audit(db, scenario_id, user, "delete", {"name": obj.name})
+    scenario_name = obj.name
+    await _audit(db, scenario_id, user, "delete", {"name": scenario_name})
     await db.delete(obj)
     await db.commit()
     await manager.broadcast("scenarios", {"type": "scenario_deleted", "data": {"id": scenario_id}})
+    await publish_notification(
+        db,
+        event_type="scenario.deleted",
+        severity="warning",
+        title="سناریو حذف شد",
+        message=f"سناریوی «{scenario_name}» حذف شد.",
+        roles=("SUPER_ADMIN", "COMMANDER"),
+        entity_type="scenario",
+        entity_id=scenario_id,
+        action_url="/dashboard/scenarios",
+    )
     return success({"id": scenario_id}, message="Deleted")
 
 

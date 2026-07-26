@@ -59,7 +59,7 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { useAppSelector, useAppDispatch } from '@/store';
 import { selectUser } from '@/store/slices/authSlice';
-import { selectScenarios, fetchScenarios } from '@/store/slices/scenariosSlice';
+import { fetchScenarios } from '@/store/slices/scenariosSlice';
 import {
   addNotification,
   selectDashboardModules,
@@ -75,6 +75,7 @@ import FarsiTypography from '@/components/common/FarsiTypography';
 import FarsiNumber from '@/components/common/FarsiNumber';
 import TransformFarsiNumbers from '@/components/common/TransformFarsiNumbers';
 import { useTranslation } from '@/hooks/useTranslation';
+import { dashboardApiService, DashboardSummary } from '@/services/api/dashboardApiService';
 
 // تایپ‌های مورد نیاز برای کارت‌های آماری
 interface StatItem {
@@ -92,17 +93,31 @@ interface DashboardStatsProps {
   showStatAvailableForces: boolean;
   showStatOngoingOperations: boolean;
   showStatSecurityAlerts: boolean;
+  summary: DashboardSummary;
 }
+
+const EMPTY_SUMMARY: DashboardSummary = {
+  generatedAt: '',
+  role: 'VIEWER',
+  visibleCards: ['archived_scenarios', 'available_forces', 'recent_activities'],
+  scenarioStats: { total: 0, active: 0, archived: 0, ready: 0, completed: 0 },
+  forceStats: { total: 0, iranian: 0, foreign: 0 },
+  operationStats: { total: 0, active: 0, ready: 0, completed: 0 },
+  alertStats: { total: 0, failedLogins: 0, lockedAccounts: 0, inactiveAccounts: 0 },
+  resourceStats: { total: 0, byType: {} },
+  activities: [],
+  systemStatus: [],
+  notices: [],
+};
 
 const DashboardStats: React.FC<DashboardStatsProps> = ({
   showStatArchivedScenarios,
   showStatAvailableForces,
   showStatOngoingOperations,
   showStatSecurityAlerts,
+  summary,
 }) => {
   const [expandedCards, setExpandedCards] = useState<Record<string, boolean>>({});
-  const user = useAppSelector(selectUser);
-  const scenarios = useAppSelector(selectScenarios);
   const theme = useTheme();
   const { t } = useTranslation();
   const unifiedAccent = theme.palette.primary.main;
@@ -115,113 +130,38 @@ const DashboardStats: React.FC<DashboardStatsProps> = ({
     }));
   };
 
-  // داده‌های نمونه برای کارت‌های آماری
-  const mockUsers = [
-    { isActive: true, nationality: 'iranian', role: 'admin', lastLogin: new Date() },
-    { isActive: true, nationality: 'iranian', role: 'commander', lastLogin: new Date() },
-    { isActive: false, nationality: 'non-iranian', role: 'operator', lastLogin: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000) },
-    { isActive: true, nationality: 'iranian', role: 'viewer', lastLogin: new Date() },
-    { isActive: true, nationality: 'iranian', role: 'operator', lastLogin: new Date() },
-    { isActive: false, nationality: 'iranian', role: 'viewer', lastLogin: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000) },
-    { isActive: true, nationality: 'non-iranian', role: 'commander', lastLogin: new Date() },
-    { isActive: true, nationality: 'iranian', role: 'operator', lastLogin: new Date() },
-  ];
-
-  // محاسبه آمار سناریوها
-  const scenarioStats = useMemo(() => {
-    const total = scenarios.length;
-    const activeCount = scenarios.filter(s => s.status === 'active').length;
-    const inactiveCount = total - activeCount;
-    const activePercent = total > 0 ? Math.round((activeCount / total) * 100) : 0;
-    const inactivePercent = total > 0 ? 100 - activePercent : 0;
-    
-    return {
-      total,
-      activeCount,
-      inactiveCount,
-      activePercent,
-      inactivePercent
-    };
-  }, [scenarios]);
-
-  // محاسبه آمار نیروها
-  const forceStats = useMemo(() => {
-    const total = mockUsers.length;
-    const iranianCount = mockUsers.filter(u => u.nationality === 'iranian').length;
-    const foreignCount = total - iranianCount;
-    const iranianPercent = total > 0 ? Math.round((iranianCount / total) * 100) : 0;
-    const foreignPercent = total > 0 ? 100 - iranianPercent : 0;
-    
-    return {
-      total,
-      iranianCount,
-      foreignCount,
-      iranianPercent,
-      foreignPercent
-    };
-  }, [mockUsers]);
-
-  // تعریف داده‌های نمونه برای عملیات‌ها
-  const mockOperations = [
-    { role: 'commander', count: 3 },
-    { role: 'operator', count: 4 },
-    { role: 'viewer', count: 1 },
-  ];
-  
-  // محاسبه آمار عملیات‌ها
-  const operationStats = useMemo(() => {
-    const total = mockOperations.reduce((sum, op) => sum + op.count, 0);
-    const commanderCount = mockOperations.find(op => op.role === 'commander')?.count || 0;
-    const operatorCount = mockOperations.find(op => op.role === 'operator')?.count || 0;
-    const viewerCount = mockOperations.find(op => op.role === 'viewer')?.count || 0;
-    
-    return {
-      total,
-      commanderCount,
-      operatorCount,
-      viewerCount
-    };
-  }, [mockOperations]);
-  
-  // تعریف داده‌های نمونه برای هشدارهای امنیتی
-  const mockAlerts = [
-    { id: '1', severity: 'critical', timestamp: '2024-07-29T10:30:00Z', acknowledged: false },
-    { id: '2', severity: 'high', timestamp: '2024-07-29T09:15:00Z', acknowledged: false },
-    { id: '3', severity: 'high', timestamp: '2024-07-28T14:00:00Z', acknowledged: true },
-    { id: '4', severity: 'medium', timestamp: '2024-07-28T22:05:00Z', acknowledged: true },
-    { id: '5', severity: 'low', timestamp: '2024-07-29T11:00:00Z', acknowledged: false },
-  ];
-  
-  // محاسبه آمار هشدارهای امنیتی
-  const alertStats = useMemo(() => {
-    const now = new Date();
-    const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    const startOfWeek = new Date(now.getFullYear(), now.getMonth(), now.getDate() - now.getDay());
-    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-    
-    const todayCount = mockAlerts.filter(alert => 
-      new Date(alert.timestamp) >= startOfDay
-    ).length;
-    
-    const weekCount = mockAlerts.filter(alert => 
-      new Date(alert.timestamp) >= startOfWeek
-    ).length;
-    
-    const monthCount = mockAlerts.filter(alert => 
-      new Date(alert.timestamp) >= startOfMonth
-    ).length;
-    
-    const total = mockAlerts.length;
-    const todayPercent = total > 0 ? Math.round((todayCount / total) * 100) : 0;
-    
-    return {
-      total,
-      todayCount,
-      weekCount,
-      monthCount,
-      todayPercent
-    };
-  }, [mockAlerts]);
+  const scenarioStats = {
+    total: summary.scenarioStats.total,
+    activeCount: summary.scenarioStats.active,
+    inactiveCount: summary.scenarioStats.archived,
+    activePercent: summary.scenarioStats.total
+      ? Math.round(summary.scenarioStats.active / summary.scenarioStats.total * 100) : 0,
+    inactivePercent: summary.scenarioStats.total
+      ? Math.round(summary.scenarioStats.archived / summary.scenarioStats.total * 100) : 0,
+  };
+  const forceStats = {
+    total: summary.forceStats.total,
+    iranianCount: summary.forceStats.iranian,
+    foreignCount: summary.forceStats.foreign,
+    iranianPercent: summary.forceStats.total
+      ? Math.round(summary.forceStats.iranian / summary.forceStats.total * 100) : 0,
+    foreignPercent: summary.forceStats.total
+      ? Math.round(summary.forceStats.foreign / summary.forceStats.total * 100) : 0,
+  };
+  const operationStats = {
+    total: summary.operationStats.total,
+    commanderCount: summary.operationStats.active,
+    operatorCount: summary.operationStats.ready,
+    viewerCount: summary.operationStats.completed,
+  };
+  const alertStats = {
+    total: summary.alertStats.total,
+    todayCount: summary.alertStats.failedLogins,
+    weekCount: summary.alertStats.lockedAccounts,
+    monthCount: summary.alertStats.inactiveAccounts,
+    todayPercent: summary.alertStats.total
+      ? Math.round(summary.alertStats.failedLogins / summary.alertStats.total * 100) : 0,
+  };
 
   const stats: StatItem[] = [];
 
@@ -1155,7 +1095,7 @@ const HomePage: React.FC = () => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
   const user = useAppSelector(selectUser);
-  const scenarios = useAppSelector(selectScenarios);
+  const [summary, setSummary] = useState<DashboardSummary>(EMPTY_SUMMARY);
   const rawHeaderSettings = useAppSelector(selectHeaderSettings) as HeaderSettings | undefined;
   const rawDashboardModules = useAppSelector(selectDashboardModules) as DashboardModulesSettings | undefined;
   const headerSettings: HeaderSettings = rawHeaderSettings || {
@@ -1218,17 +1158,15 @@ const HomePage: React.FC = () => {
     }
   `;
 
-  const handleRefreshActivities = () => {
+  const loadSummary = async () => {
     setActivitiesLoading(true);
-    // فرض می‌کنیم که یک تابع fetchRecentActivities وجود داره که داده‌های جدید رو می‌گیره
-    // این تابع باید از یک API یا store واقعی داده بگیره
-    setTimeout(() => {
-      // اینجا باید داده‌های جدید رو از API یا store بگیریم
-      // برای مثال:
-      // dispatch(fetchRecentActivities());
+    try {
+      setSummary(await dashboardApiService.getSummary());
+    } finally {
       setActivitiesLoading(false);
-    }, 1000);
+    }
   };
+  const handleRefreshActivities = () => { void loadSummary(); };
   const handleSettingsOpen = (event: React.MouseEvent<HTMLElement>) => {
     setSettingsAnchorEl(event.currentTarget);
   };
@@ -1539,6 +1477,12 @@ const HomePage: React.FC = () => {
     }
   }, [dispatch, user, rawHeaderSettings, t]);
 
+  useEffect(() => {
+    void loadSummary();
+    const timer = window.setInterval(() => void loadSummary(), 30_000);
+    return () => window.clearInterval(timer);
+  }, [user?.id]);
+
   // فعالیت‌های اخیر بر اساس نقش کاربر
   const recentActivities = useMemo(() => {
     // فرض می‌کنیم که allActivities از یک API یا store واقعی گرفته میشه
@@ -1556,7 +1500,7 @@ const HomePage: React.FC = () => {
     };
     
     // داده‌های نمونه برای allActivities
-    const allActivities: Activity[] = [
+    const legacyActivities: Activity[] = [
       {
         id: 1,
         title: t('dashboard.activities.newScenario'),
@@ -1612,6 +1556,18 @@ const HomePage: React.FC = () => {
         roles: ['admin', 'commander'],
       },
     ];
+    void legacyActivities;
+    const allActivities: Activity[] = summary.activities.map((activity, index) => ({
+      id: index + 1,
+      title: activity.title,
+      description: activity.description,
+      time: new Date(activity.occurredAt).toLocaleString('fa-IR'),
+      avatar: activity.kind === 'scenario' ? <AssignmentIcon /> :
+        activity.kind === 'user' ? <Group /> : <PeopleIcon />,
+      color: activity.kind === 'scenario' ? '#1976d2' :
+        activity.kind === 'user' ? '#9c27b0' : '#2e7d32',
+      roles: ['admin', 'commander', 'operator', 'viewer'],
+    }));
     
     // اگر showArchived true باشد، همه فعالیت‌ها نمایش داده می‌شوند
     // در غیر این صورت، فقط فعالیت‌های آرشیو نشده نمایش داده می‌شوند
@@ -1621,7 +1577,7 @@ const HomePage: React.FC = () => {
     
     // فیلتر فعالیت‌ها بر اساس نقش کاربر
     return filteredActivities.filter(activity => user && activity.roles.includes(user.role));
-  }, [user, archivedActivities, showArchived, t]);
+  }, [user, archivedActivities, showArchived, t, summary.activities]);
 
   // دسترسی سریع بر اساس نقش کاربر
   const quickActions = useMemo(() => {
@@ -1668,22 +1624,19 @@ const HomePage: React.FC = () => {
   }, [navigate, user, t]);
 
   // اطلاعات وضعیت سیستم (فقط برای مدیر)
-  const systemStatus = [
-    { name: 'CPU', value: 35, color: 'primary' },
-    { name: 'RAM', value: 65, color: 'warning' },
-    { name: t('dashboard.systemStatus.disk'), value: 42, color: 'info' },
-    { name: t('dashboard.systemStatus.network'), value: 28, color: 'primary' },
-  ];
+  const systemStatus = summary.systemStatus;
 
+  const isVisible = (key: DashboardSummary['visibleCards'][number]) =>
+    summary.visibleCards.includes(key);
   const showStatsSection =
-    dashboardModules.showStatArchivedScenarios ||
-    dashboardModules.showStatAvailableForces ||
-    dashboardModules.showStatOngoingOperations ||
-    dashboardModules.showStatSecurityAlerts;
+    (dashboardModules.showStatArchivedScenarios && isVisible('archived_scenarios')) ||
+    (dashboardModules.showStatAvailableForces && isVisible('available_forces')) ||
+    (dashboardModules.showStatOngoingOperations && isVisible('ongoing_operations')) ||
+    (dashboardModules.showStatSecurityAlerts && isVisible('security_alerts'));
   const showQuickAccessSection = dashboardModules.showQuickAccess && quickActions.length > 0;
-  const showSystemStatusSection = dashboardModules.showSystemStatus && user?.role === 'admin';
+  const showSystemStatusSection = dashboardModules.showSystemStatus && isVisible('system_status');
   const showImportantNoticesSection =
-    dashboardModules.showImportantNotices && (user?.role === 'admin' || user?.role === 'commander');
+    dashboardModules.showImportantNotices && isVisible('important_notices');
   const showRightColumn = showQuickAccessSection || showSystemStatusSection || showImportantNoticesSection;
   const unifiedAccent = theme.palette.primary.main;
   const unifiedPanelSurface = `linear-gradient(135deg, ${alpha(unifiedAccent, 0.07)}, ${alpha(unifiedAccent, 0.04)})`;
@@ -1870,17 +1823,18 @@ const HomePage: React.FC = () => {
       {/* آمار */}
       {showStatsSection && (
         <DashboardStats
-          showStatArchivedScenarios={dashboardModules.showStatArchivedScenarios}
-          showStatAvailableForces={dashboardModules.showStatAvailableForces}
-          showStatOngoingOperations={dashboardModules.showStatOngoingOperations}
-          showStatSecurityAlerts={dashboardModules.showStatSecurityAlerts}
+          showStatArchivedScenarios={dashboardModules.showStatArchivedScenarios && isVisible('archived_scenarios')}
+          showStatAvailableForces={dashboardModules.showStatAvailableForces && isVisible('available_forces')}
+          showStatOngoingOperations={dashboardModules.showStatOngoingOperations && isVisible('ongoing_operations')}
+          showStatSecurityAlerts={dashboardModules.showStatSecurityAlerts && isVisible('security_alerts')}
+          summary={summary}
         />
       )}
 
-      {(dashboardModules.showRecentActivities || showRightColumn) && (
+      {((dashboardModules.showRecentActivities && isVisible('recent_activities')) || showRightColumn) && (
       <Grid container spacing={3}>
         {/* فعالیت‌های اخیر */}
-        {dashboardModules.showRecentActivities && (
+        {dashboardModules.showRecentActivities && isVisible('recent_activities') && (
         <Grid item xs={12} md={showRightColumn ? 8 : 12}>
           <Paper
             sx={{
@@ -2007,7 +1961,7 @@ const HomePage: React.FC = () => {
 
         {/* دسترسی سریع و وضعیت سیستم */}
         {showRightColumn && (
-        <Grid item xs={12} md={dashboardModules.showRecentActivities ? 4 : 12}>
+        <Grid item xs={12} md={dashboardModules.showRecentActivities && isVisible('recent_activities') ? 4 : 12}>
           {showQuickAccessSection && (
             <Paper
               sx={{
@@ -2107,15 +2061,15 @@ const HomePage: React.FC = () => {
                 </FarsiTypography>
               </Box>
               <Box sx={{ p: 2 }}>
-                <Alert severity="warning" sx={{ mb: 2 }}>
-                  <FarsiTypography variant="body2">{t('dashboard.alerts.securityThreat')}</FarsiTypography>
-                </Alert>
-                <Alert severity="info" sx={{ mb: 2 }}>
-                  <FarsiTypography variant="body2">{t('dashboard.alerts.systemUpdate')}</FarsiTypography>
-                </Alert>
-                <Alert severity="success">
-                  <FarsiTypography variant="body2">{t('dashboard.alerts.trainingSuccess')}</FarsiTypography>
-                </Alert>
+                {summary.notices.map((notice, index) => (
+                  <Alert
+                    key={`${notice.severity}-${index}`}
+                    severity={notice.severity}
+                    sx={{ mb: index < summary.notices.length - 1 ? 2 : 0 }}
+                  >
+                    <FarsiTypography variant="body2">{notice.message}</FarsiTypography>
+                  </Alert>
+                ))}
               </Box>
             </Paper>
           )}

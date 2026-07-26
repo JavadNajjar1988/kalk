@@ -1076,6 +1076,7 @@ const ScenariosPage: React.FC = () => {
   };
 
   const canEdit = user?.role === 'admin' || user?.role === 'commander';
+  const canDelete = user?.role === 'admin';
 
   const resetImportState = () => {
     setImportError(null);
@@ -2014,6 +2015,7 @@ const ScenariosPage: React.FC = () => {
           </MenuItem>
 
           <MenuItem
+            disabled={!canEdit}
             onClick={async () => {
               if (menuScenario) {
                 try {
@@ -2043,7 +2045,7 @@ const ScenariosPage: React.FC = () => {
               }
               handleMenuClose();
             }}
-            disabled={Boolean(
+            disabled={!canDelete || Boolean(
               menuScenario && isBuiltinDemoScenario(menuScenario)
             )}
             sx={{ color: 'error.main' }}

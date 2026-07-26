@@ -28,7 +28,7 @@ router = APIRouter(prefix="/users", tags=["users"])
 
 # Canonical UI roles for user management filters/forms.
 # Keep these visible even if no user currently has one of them.
-DEFAULT_SYSTEM_ROLES = ["مدیر سیستم", "فرمانده", "ناظر مهمان"]
+DEFAULT_SYSTEM_ROLES = ["مدیر سیستم", "فرمانده", "اپراتور", "ناظر مهمان"]
 
 # Canonical access levels for user management.
 # These are always exposed to the UI even if no user currently has them.
@@ -134,6 +134,7 @@ def _derive_internal_roles(system_role: Optional[str]) -> str:
         "مدیر سیستم": "SUPER_ADMIN",
         "سوپر ادمین": "SUPER_ADMIN",
         "فرمانده": "COMMANDER",
+        "اپراتور": "OPERATOR",
         "ناظر مهمان": "VIEWER",
         "مهمان": "VIEWER",
     }

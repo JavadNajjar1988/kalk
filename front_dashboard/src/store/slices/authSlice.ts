@@ -11,7 +11,77 @@ export interface User {
   unit: string;
   avatar?: string;
   permissions?: string[];
+  userCode?: string;
+  roleTitle?: string;
+  accessLevel?: string;
+  email?: string;
+  mobile?: string[];
+  position?: string;
+  lastLogin?: string;
+  loginCount?: number;
+  isActive?: boolean;
 }
+
+interface AuthProfileResponse {
+  success: boolean;
+  data: {
+    id: string;
+    username: string;
+    userCode?: string;
+    roles: string[];
+    name: string;
+    roleTitle?: string;
+    accessLevel?: string;
+    permissions?: string[];
+    rank?: string;
+    unit?: string;
+    position?: string;
+    email?: string;
+    mobile?: string[];
+    avatar?: string;
+    lastLogin?: string;
+    loginCount?: number;
+    isActive?: boolean;
+  };
+}
+
+const mapBackendRolesToUiRole = (roles: unknown): User['role'] => {
+  const roleList = Array.isArray(roles) ? roles.map((role) => String(role).toUpperCase()) : [];
+  if (roleList.includes('SUPER_ADMIN') || roleList.includes('ADMIN')) return 'admin';
+  if (roleList.includes('COMMANDER')) return 'commander';
+  if (roleList.includes('OPERATOR')) return 'operator';
+  return 'viewer';
+};
+
+const profileToUser = (profile: AuthProfileResponse['data']): User => ({
+  id: profile.id,
+  username: profile.username,
+  name: profile.name || profile.username,
+  role: mapBackendRolesToUiRole(profile.roles),
+  rank: profile.rank || profile.position || '',
+  unit: profile.unit || '',
+  avatar: profile.avatar,
+  permissions: profile.permissions || [],
+  userCode: profile.userCode,
+  roleTitle: profile.roleTitle,
+  accessLevel: profile.accessLevel,
+  email: profile.email,
+  mobile: profile.mobile || [],
+  position: profile.position,
+  lastLogin: profile.lastLogin,
+  loginCount: profile.loginCount || 0,
+  isActive: profile.isActive,
+});
+
+const loadProfile = async (token: string): Promise<User> => {
+  const response = await fetch('/api/auth/me', {
+    headers: { Authorization: `Bearer ${token}` },
+    cache: 'no-store',
+  });
+  if (!response.ok) throw new Error('خطا در دریافت اطلاعات کاربر');
+  const payload = await response.json() as AuthProfileResponse;
+  return profileToUser(payload.data);
+};
 
 interface AuthState {
   user: User | null;
@@ -62,16 +132,7 @@ export const loginUser = createAsyncThunk(
       // Decode JWT to get user info (basic decode without verification for now)
       const payload = JSON.parse(atob(access_token.split('.')[1]));
 
-      const mapBackendRolesToUiRole = (roles: unknown): User['role'] => {
-        const roleList = Array.isArray(roles) ? roles.map(String) : [];
-        // Backend roles currently look like: SUPER_ADMIN / COMMANDER / VIEWER
-        if (roleList.includes('SUPER_ADMIN') || roleList.includes('ADMIN')) return 'admin';
-        if (roleList.includes('COMMANDER')) return 'commander';
-        if (roleList.includes('VIEWER')) return 'viewer';
-        return 'operator';
-      };
-      
-      const user: User = {
+      const fallbackUser: User = {
         id: payload.uid || '1',
         username: payload.sub || credentials.username,
         name: payload.sub === 'admin' ? 'مدیر سیستم' : 'اپراتور سیستم',
@@ -79,12 +140,27 @@ export const loginUser = createAsyncThunk(
         rank: payload.sub === 'admin' ? 'سرهنگ' : 'ستوان',
         unit: payload.sub === 'admin' ? 'فرماندهی کل' : 'مرکز عملیات',
       };
-      
-      return user;
+      return await loadProfile(access_token).catch(() => fallbackUser);
     } catch (error: any) {
       return rejectWithValue(error.message || 'خطا در ورود');
     }
   }
+);
+
+export const fetchCurrentUserProfile = createAsyncThunk(
+  'auth/fetchCurrentUserProfile',
+  async (_, { rejectWithValue }) => {
+    const token = localStorage.getItem('access_token');
+    if (!token) return rejectWithValue({ token: null, message: 'نشست کاربری یافت نشد' });
+    try {
+      return { token, user: await loadProfile(token) };
+    } catch (error: any) {
+      return rejectWithValue({
+        token,
+        message: error.message || 'خطا در دریافت اطلاعات کاربر',
+      });
+    }
+  },
 );
 
 // Auth slice
@@ -137,14 +213,6 @@ const authSlice = createSlice({
       try {
         const payload = JSON.parse(atob(token.split('.')[1]));
 
-        const mapBackendRolesToUiRole = (roles: unknown): User['role'] => {
-          const roleList = Array.isArray(roles) ? roles.map(String) : [];
-          if (roleList.includes('SUPER_ADMIN') || roleList.includes('ADMIN')) return 'admin';
-          if (roleList.includes('COMMANDER')) return 'commander';
-          if (roleList.includes('VIEWER')) return 'viewer';
-          return 'operator';
-        };
-
         const now = Math.floor(Date.now() / 1000);
         // Check if token is not expired
         if (payload.exp && payload.exp > now) {
@@ -191,6 +259,22 @@ const authSlice = createSlice({
         state.isAuthenticated = false;
         state.user = null;
         state.error = action.payload as string;
+      })
+      .addCase(fetchCurrentUserProfile.fulfilled, (state, action) => {
+        if (localStorage.getItem('access_token') === action.payload.token) {
+          state.user = action.payload.user;
+          state.isAuthenticated = true;
+        }
+      })
+      .addCase(fetchCurrentUserProfile.rejected, (state, action) => {
+        const payload = action.payload as { token: string | null; message: string } | undefined;
+        if (
+          state.isAuthenticated
+          && payload?.token
+          && localStorage.getItem('access_token') === payload.token
+        ) {
+          state.error = payload.message;
+        }
       });
   },
 });

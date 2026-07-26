@@ -3,12 +3,13 @@ import { Routes, Route, Navigate, useRoutes } from 'react-router-dom';
 import { ThemeProvider, CssBaseline, Box, CircularProgress } from '@mui/material';
 import { useAppSelector, useAppDispatch } from './store';
 import { selectTheme, setLanguage } from './store/slices/uiSlice';
-import { selectIsAuthenticated, rehydrateUser } from './store/slices/authSlice';
+import { fetchCurrentUserProfile, selectIsAuthenticated, rehydrateUser } from './store/slices/authSlice';
 import { createAppTheme } from './theme';
 import { ErrorFallback } from './components/common/ErrorFallback';
 import { ErrorBoundary } from 'react-error-boundary';
 import MainLayout from './components/layout/MainLayout';
 import ProtectedRoute from './components/common/ProtectedRoute';
+import RoleGuard from './components/common/RoleGuard';
 import TransformFarsiNumbers from './components/common/TransformFarsiNumbers';
 import NewSplashScreen from './components/common/NewSplashScreen';
 import KalknegarRedirect from './components/common/KalknegarRedirect';
@@ -70,7 +71,9 @@ const AppRoutes: React.FC = () => {
       path: '/kalknegar/*',
       element: (
         <ProtectedRoute>
-          <KalknegarRedirect />
+          <RoleGuard feature="kalknegar.access">
+            <KalknegarRedirect />
+          </RoleGuard>
         </ProtectedRoute>
       ),
     },
@@ -116,6 +119,12 @@ const App: React.FC = () => {
   useEffect(() => {
     dispatch(rehydrateUser());
   }, [dispatch]);
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      void dispatch(fetchCurrentUserProfile());
+    }
+  }, [dispatch, isAuthenticated]);
 
   // اضافه کردن useEffect برای مشاهده تغییرات زبان و تم
   useEffect(() => {

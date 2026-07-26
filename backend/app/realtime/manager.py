@@ -9,8 +9,10 @@ class ConnectionManager:
     def __init__(self) -> None:
         self.active_connections: Dict[str, List[WebSocket]] = {}
 
-    async def connect(self, room: str, websocket: WebSocket) -> None:
-        await websocket.accept()
+    async def connect(
+        self, room: str, websocket: WebSocket, subprotocol: str | None = None
+    ) -> None:
+        await websocket.accept(subprotocol=subprotocol)
         self.active_connections.setdefault(room, []).append(websocket)
 
     def disconnect(self, room: str, websocket: WebSocket) -> None:

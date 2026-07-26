@@ -3,7 +3,7 @@ import uuid
 import logging
 from typing import Optional
 
-from fastapi import APIRouter, Depends, HTTPException, status, Request
+from fastapi import APIRouter, Depends, HTTPException, status, Request, Response
 from fastapi.security import OAuth2PasswordRequestForm
 
 from app.core.config import settings
@@ -77,12 +77,17 @@ async def _handle_failed_login(db: DbSession, user: Optional[User], username: st
 
 async def _handle_successful_login(db: DbSession, user: User, client_ip: str) -> None:
     """Handle successful login - reset failed attempts"""
-    if user.failed_login_count > 0 or user.locked_until:
-        user.failed_login_count = 0
-        user.locked_until = None
-        user.last_login_attempt = datetime.now(timezone.utc)
-        await db.commit()
-        logger.info(f"Successful login for {user.username} from {client_ip}. Failed attempts reset.")
+    now = datetime.now(timezone.utc)
+    system_info = dict(user.system_info or {})
+    system_info["lastLogin"] = now.isoformat()
+    system_info["loginCount"] = int(system_info.get("loginCount") or 0) + 1
+    user.system_info = system_info
+    user.failed_login_count = 0
+    user.locked_until = None
+    user.last_login_attempt = now
+    user.updated_at = now
+    await db.commit()
+    logger.info(f"Successful login for {user.username} from {client_ip}. Account state updated.")
 
 
 async def _authenticate_user(
@@ -241,12 +246,47 @@ async def login_json(payload: LoginRequest, db: DbSession, request: Request):
 
 
 @router.get("/me", response_model=dict)
-async def get_current_user_info(current_user: dict = Depends(get_current_user)):
-    """
-    Endpoint تست برای بررسی نقش‌های کاربر فعلی
-    """
+async def get_current_user_info(
+    db: DbSession,
+    response: Response,
+    current_user: dict = Depends(get_current_user),
+):
+    response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate"
+    response.headers["Pragma"] = "no-cache"
+    response.headers["Vary"] = "Authorization"
+
+    user_id = current_user.get("user_id")
+    stmt = (
+        select(User).where(User.id == str(user_id))
+        if user_id
+        else select(User).where(User.username == current_user.get("username"))
+    )
+    user = (await db.execute(stmt.limit(1))).scalar_one_or_none()
+    if not user:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+
+    personal = dict(user.personal_info or {})
+    contact = dict(user.contact_info or {})
+    professional = dict(user.professional_info or {})
+    system = dict(user.system_info or {})
+    details = professional.get("details") or {}
     return success({
-        "username": current_user.get("username"),
-        "roles": current_user.get("roles", []),
-        "roles_type": str(type(current_user.get("roles", []))),
+        "id": user.id,
+        "username": user.username,
+        "userCode": user.user_code,
+        "roles": [role.strip() for role in (user.roles or "").split(",") if role.strip()],
+        "name": personal.get("fullName") or user.username,
+        "nameEn": personal.get("fullNameEn"),
+        "email": contact.get("email"),
+        "mobile": contact.get("mobile") or [],
+        "roleTitle": system.get("role"),
+        "accessLevel": system.get("accessLevel"),
+        "permissions": system.get("permissions") or [],
+        "lastLogin": system.get("lastLogin"),
+        "loginCount": system.get("loginCount") or 0,
+        "rank": details.get("rank") or details.get("position") or "",
+        "unit": details.get("unit") or details.get("department") or "",
+        "position": details.get("position") or details.get("occupation") or "",
+        "avatar": personal.get("avatar"),
+        "isActive": user.is_active,
     })

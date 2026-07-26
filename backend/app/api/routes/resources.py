@@ -14,6 +14,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.response import success
+from app.core.security import require_roles
 from app.db.session import get_session
 from app.models.resource import Resource, ResourceMedia
 from app.schemas.resource import (
@@ -28,6 +29,7 @@ from app.schemas.resource import (
     ResourceSearchResult,
     ResourceUpdate,
 )
+from app.services.notifications import publish_notification
 
 
 router = APIRouter(prefix="/resources", tags=["resources"])
@@ -180,7 +182,7 @@ async def get_resource(resource_id: str, session: AsyncSession = Depends(get_ses
     return success(_resource_to_response(item).model_dump(mode="json"))
 
 
-@router.post("", status_code=status.HTTP_201_CREATED)
+@router.post("", status_code=status.HTTP_201_CREATED, dependencies=[Depends(require_roles("SUPER_ADMIN", "COMMANDER", "OPERATOR"))])
 async def create_resource(payload: ResourceCreate, session: AsyncSession = Depends(get_session)):
     _validate_type(payload.type)
 
@@ -206,10 +208,21 @@ async def create_resource(payload: ResourceCreate, session: AsyncSession = Depen
     except SQLAlchemyError as e:
         await session.rollback()
         raise HTTPException(status_code=500, detail=f"خطای پایگاه داده: {e}")
+    await publish_notification(
+        session,
+        event_type="resource.created",
+        severity="success",
+        title="منبع جدید ثبت شد",
+        message=f"منبع «{item.name}» در گروه {item.type} ثبت شد.",
+        roles=("SUPER_ADMIN", "COMMANDER", "OPERATOR"),
+        entity_type="resource",
+        entity_id=item.id,
+        action_url="/dashboard/resources",
+    )
     return success(_resource_to_response(item).model_dump(mode="json"))
 
 
-@router.put("/{resource_id}")
+@router.put("/{resource_id}", dependencies=[Depends(require_roles("SUPER_ADMIN", "COMMANDER", "OPERATOR"))])
 async def update_resource(
     resource_id: str,
     payload: ResourceUpdate,
@@ -232,10 +245,21 @@ async def update_resource(
     except SQLAlchemyError as e:
         await session.rollback()
         raise HTTPException(status_code=500, detail=f"خطای پایگاه داده: {e}")
+    await publish_notification(
+        session,
+        event_type="resource.updated",
+        severity="info",
+        title="منبع به‌روزرسانی شد",
+        message=f"اطلاعات منبع «{item.name}» به‌روزرسانی شد.",
+        roles=("SUPER_ADMIN", "COMMANDER", "OPERATOR"),
+        entity_type="resource",
+        entity_id=item.id,
+        action_url="/dashboard/resources",
+    )
     return success(_resource_to_response(item).model_dump(mode="json"))
 
 
-@router.delete("/{resource_id}")
+@router.delete("/{resource_id}", dependencies=[Depends(require_roles("SUPER_ADMIN", "COMMANDER", "OPERATOR"))])
 async def delete_resource(resource_id: str, session: AsyncSession = Depends(get_session)):
     res = await session.execute(select(Resource).where(Resource.id == resource_id))
     item = res.scalar_one_or_none()
@@ -243,6 +267,7 @@ async def delete_resource(resource_id: str, session: AsyncSession = Depends(get_
         raise HTTPException(status_code=404, detail="منبع یافت نشد")
 
     media_files = list(item.media_files or [])
+    resource_name = item.name
 
     await session.execute(sa_delete(Resource).where(Resource.id == resource_id))
     await session.commit()
@@ -255,10 +280,22 @@ async def delete_resource(resource_id: str, session: AsyncSession = Depends(get_
         except Exception:
             pass
 
+    await publish_notification(
+        session,
+        event_type="resource.deleted",
+        severity="warning",
+        title="منبع حذف شد",
+        message=f"منبع «{resource_name}» حذف شد.",
+        roles=("SUPER_ADMIN", "COMMANDER", "OPERATOR"),
+        entity_type="resource",
+        entity_id=resource_id,
+        action_url="/dashboard/resources",
+    )
+
     return success({"id": resource_id}, message="منبع حذف شد")
 
 
-@router.post("/bulk-import")
+@router.post("/bulk-import", dependencies=[Depends(require_roles("SUPER_ADMIN", "COMMANDER", "OPERATOR"))])
 async def bulk_import_resources(
     payload: ResourceBulkImportRequest,
     session: AsyncSession = Depends(get_session),
@@ -325,7 +362,7 @@ async def bulk_import_resources(
 # ---- Media endpoints ---------------------------------------------------------
 
 
-@router.post("/media/upload")
+@router.post("/media/upload", dependencies=[Depends(require_roles("SUPER_ADMIN", "COMMANDER", "OPERATOR"))])
 async def upload_media(
     file: UploadFile = File(...),
     resource_id: Optional[str] = Form(default=None),
@@ -438,7 +475,7 @@ async def download_media(media_id: str, session: AsyncSession = Depends(get_sess
     )
 
 
-@router.put("/media/{media_id}")
+@router.put("/media/{media_id}", dependencies=[Depends(require_roles("SUPER_ADMIN", "COMMANDER", "OPERATOR"))])
 async def update_media(
     media_id: str,
     payload: ResourceMediaUpdate,
@@ -469,7 +506,7 @@ async def update_media(
     return success(_media_to_response(media).model_dump(mode="json"))
 
 
-@router.delete("/media/{media_id}")
+@router.delete("/media/{media_id}", dependencies=[Depends(require_roles("SUPER_ADMIN", "COMMANDER", "OPERATOR"))])
 async def delete_media(media_id: str, session: AsyncSession = Depends(get_session)):
     res = await session.execute(
         select(ResourceMedia).where(ResourceMedia.id == media_id)

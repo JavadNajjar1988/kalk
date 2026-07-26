@@ -34,6 +34,7 @@ interface UsersCardViewProps {
   onDelete: (user: User) => void;
   onView: (user: User) => void;
   onQuickAction: (user: User) => void;
+  canManage?: boolean;
 }
 
 const UsersCardView: React.FC<UsersCardViewProps> = ({
@@ -42,6 +43,7 @@ const UsersCardView: React.FC<UsersCardViewProps> = ({
   onDelete,
   onView,
   onQuickAction,
+  canManage = true,
 }) => {
   const theme = useTheme();
 
@@ -219,7 +221,7 @@ const UsersCardView: React.FC<UsersCardViewProps> = ({
                   </IconButton>
                 </Tooltip>
                 
-                <Tooltip title="ویرایش">
+                {canManage && <Tooltip title="ویرایش">
                   <IconButton 
                     size="small" 
                     onClick={() => onEdit(user)}
@@ -227,10 +229,10 @@ const UsersCardView: React.FC<UsersCardViewProps> = ({
                   >
                     <EditIcon fontSize="small" />
                   </IconButton>
-                </Tooltip>
+                </Tooltip>}
               </Box>
               
-              <Box sx={{ display: 'flex', gap: 0.5 }}>
+              {canManage && <Box sx={{ display: 'flex', gap: 0.5 }}>
                 <Tooltip title="تغییرات فوری">
                   <IconButton 
                     size="small" 
@@ -256,7 +258,7 @@ const UsersCardView: React.FC<UsersCardViewProps> = ({
                     <DeleteIcon fontSize="small" />
                   </IconButton>
                 </Tooltip>
-              </Box>
+              </Box>}
             </CardActions>
           </Card>
         </Grid>

@@ -1,3 +1,6 @@
+import asyncio
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
@@ -27,10 +30,31 @@ from app.api.routes import dashboard_header as dashboard_header_routes
 from app.api.routes import data_import as data_import_routes
 from app.api.routes import resources as resources_routes
 from app.api.routes import tile_roots as tile_roots_routes
+from app.api.routes import dashboard as dashboard_routes
+from app.api.routes import notifications as notifications_routes
+from app.services.system_notification_monitor import notification_monitor_loop
+
+
+@asynccontextmanager
+async def lifespan(_: FastAPI):
+    monitor_task = asyncio.create_task(notification_monitor_loop())
+    try:
+        yield
+    finally:
+        monitor_task.cancel()
+        try:
+            await monitor_task
+        except asyncio.CancelledError:
+            pass
 
 
 def create_app() -> FastAPI:
-    app = FastAPI(title=settings.APP_NAME, version=settings.VERSION, default_response_class=ORJSONResponse)
+    app = FastAPI(
+        title=settings.APP_NAME,
+        version=settings.VERSION,
+        default_response_class=ORJSONResponse,
+        lifespan=lifespan,
+    )
 
     # CORS
     app.add_middleware(
@@ -111,6 +135,8 @@ def create_app() -> FastAPI:
     api.include_router(data_import_routes.router)
     api.include_router(resources_routes.router)
     api.include_router(tile_roots_routes.router)
+    api.include_router(dashboard_routes.router)
+    api.include_router(notifications_routes.router)
 
     return app
 

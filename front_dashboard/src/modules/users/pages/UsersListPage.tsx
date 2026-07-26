@@ -48,6 +48,7 @@ import {
   resourcesDialogActionsSx,
   resourcesOutlinedCancelButtonSx,
 } from '@/modules/dashboard/pages/resources/resourcesDialogStyles';
+import { canAccessFeature } from '@/security/roleAccess';
 
 const UsersListPage: React.FC = () => {
   const dispatch = useAppDispatch();
@@ -102,6 +103,8 @@ const UsersListPage: React.FC = () => {
     error,
     pagination,
   } = useAppSelector((state) => state.users);
+  const currentUser = useAppSelector((state) => state.auth.user);
+  const canManageUsers = canAccessFeature(currentUser?.role, 'users.manage');
 
   const [searchTerm, setSearchTerm] = useState(filters.search || '');
   const [showAddModal, setShowAddModal] = useState(false);
@@ -153,6 +156,7 @@ const UsersListPage: React.FC = () => {
   };
 
   const handleAddUser = () => {
+    if (!canManageUsers) return;
     setShowAddModal(true);
   };
 
@@ -163,11 +167,13 @@ const UsersListPage: React.FC = () => {
   };
 
   const handleEdit = (user: User) => {
+    if (!canManageUsers) return;
     setSelectedUser(user);
     setShowEditModal(true);
   };
 
   const handleDelete = (user: User) => {
+    if (!canManageUsers) return;
     setSelectedUser(user);
     setShowDeleteModal(true);
   };
@@ -178,6 +184,7 @@ const UsersListPage: React.FC = () => {
   };
 
   const handleQuickAction = (user: User) => {
+    if (!canManageUsers) return;
     setSelectedUserForQuickActions(user);
     setShowQuickActionsModal(true);
   };
@@ -352,7 +359,7 @@ const UsersListPage: React.FC = () => {
             </ToggleButton>
           </ToggleButtonGroup>
           
-          <Button
+          {canManageUsers && <Button
             variant="contained"
             startIcon={<AddIcon />}
             onClick={handleAddUser}
@@ -363,7 +370,7 @@ const UsersListPage: React.FC = () => {
             }}
           >
             افزودن کاربر جدید
-          </Button>
+          </Button>}
         </Box>
       </Box>
 
@@ -516,6 +523,7 @@ const UsersListPage: React.FC = () => {
                 onDelete={handleDelete}
                 onView={handleView}
                 onQuickAction={handleQuickAction}
+                canManage={canManageUsers}
               />
             ) : (
               <UsersCardView
@@ -524,6 +532,7 @@ const UsersListPage: React.FC = () => {
                 onDelete={handleDelete}
                 onView={handleView}
                 onQuickAction={handleQuickAction}
+                canManage={canManageUsers}
               />
             )}
           </Box>
@@ -531,7 +540,7 @@ const UsersListPage: React.FC = () => {
       )}
 
       {/* Floating Action Button for Mobile */}
-      <Fab
+      {canManageUsers && <Fab
         color="primary"
         aria-label="add user"
         onClick={handleAddUser}
@@ -543,10 +552,10 @@ const UsersListPage: React.FC = () => {
         }}
       >
         <AddIcon />
-      </Fab>
+      </Fab>}
 
       <Dialog
-        open={showAddModal}
+        open={showAddModal && canManageUsers}
         onClose={() => setShowAddModal(false)}
         maxWidth="md"
         fullWidth

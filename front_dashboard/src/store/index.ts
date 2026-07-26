@@ -14,6 +14,7 @@ import orbatSlice from './slices/orbatSlice';
 import tabularResourcesSlice from './slices/tabularResourcesSlice';
 import usersSlice from '../modules/users/store/usersSlice';
 import resourcesModuleSlice from '../modules/resources/store/resourcesSlice';
+import serverNotificationsSlice from './slices/serverNotificationsSlice';
 
 // Root reducer
 const rootReducer = combineReducers({
@@ -26,14 +27,16 @@ const rootReducer = combineReducers({
 	tabularResources: tabularResourcesSlice,
 	users: usersSlice,
 	resourcesModule: resourcesModuleSlice,
+	serverNotifications: serverNotificationsSlice,
 });
 
-// Persist config - تنها چیزی که persist میشه auth و تنظیمات تم
+// Authentication is rebuilt from the active token; persisting it can revive a
+// previous user's profile after logout or an account switch.
 const persistConfig = {
-	key: 'sajed-root',
+	key: 'sajed-root-v3',
 	storage,
-	whitelist: ['auth', 'ui'], // auth و ui persist میشوند
-	version: 2,
+	whitelist: ['ui'],
+	version: 3,
 };
 
 const persistedReducer = persistReducer(persistConfig, rootReducer);

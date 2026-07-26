@@ -24,6 +24,7 @@ import {
   DialogTitle,
   DialogContent,
   Button,
+  Chip,
 } from '@mui/material';
 import {
   Menu as MenuIcon,
@@ -39,22 +40,28 @@ import {
   Assignment,
   KeyboardBackspace,
   UploadFile,
+  ManageAccounts,
 } from '@mui/icons-material';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAppSelector, useAppDispatch } from '@/store';
 import { selectUser, logout } from '@/store/slices/authSlice';
-import { 
-  selectNotifications, 
+import {
   selectLayout,
   selectSidePanel,
   toggleSidebar,
   toggleSidePanel,
-  selectUnreadNotifications,
 } from '@/store/slices/uiSlice';
+import {
+  fetchServerNotifications,
+  markServerNotificationRead,
+  selectServerNotifications,
+  selectUnreadServerNotifications,
+} from '@/store/slices/serverNotificationsSlice';
 import SidePanel from './SidePanel';
 import PersianDateTime from '@/components/common/PersianDateTime';
 import { useTranslation } from '@/hooks/useTranslation';
 import SearchBar from '@/components/common/SearchBar';
+import { canAccessFeature } from '@/security/roleAccess';
 import {
   resourcesMenuPaperSx,
   resourcesDialogTitleSx,
@@ -77,8 +84,8 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
   const { t } = useTranslation();
   
   const user = useAppSelector(selectUser);
-  const notifications = useAppSelector(selectNotifications);
-  const unreadNotifications = useAppSelector(selectUnreadNotifications);
+  const notifications = useAppSelector(selectServerNotifications);
+  const unreadNotifications = useAppSelector(selectUnreadServerNotifications);
   const layout = useAppSelector(selectLayout);
   const sidePanel = useAppSelector(selectSidePanel);
   const [notificationsMenuAnchor, setNotificationsMenuAnchor] = useState<null | HTMLElement>(null);
@@ -98,6 +105,43 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
       dateTime: !layout.sidebarCollapsed
     });
   }, []);
+
+  useEffect(() => {
+    if (!user) return;
+    void dispatch(fetchServerNotifications(false));
+    const refreshTimer = window.setInterval(
+      () => void dispatch(fetchServerNotifications(false)),
+      30_000,
+    );
+    const token = localStorage.getItem('access_token');
+    if (!token) return () => window.clearInterval(refreshTimer);
+
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    let socket: WebSocket | null = null;
+    let reconnectTimer: number | null = null;
+    let stopped = false;
+    const connect = () => {
+      socket = new WebSocket(
+        `${protocol}//${window.location.host}/api/ws/notifications`,
+        ['access-token', token],
+      );
+      socket.onmessage = () => void dispatch(fetchServerNotifications(false));
+      socket.onclose = () => {
+        if (!stopped) reconnectTimer = window.setTimeout(connect, 3_000);
+      };
+    };
+    connect();
+    const pingTimer = window.setInterval(() => {
+      if (socket?.readyState === WebSocket.OPEN) socket.send('ping');
+    }, 25_000);
+    return () => {
+      stopped = true;
+      window.clearInterval(refreshTimer);
+      window.clearInterval(pingTimer);
+      if (reconnectTimer !== null) window.clearTimeout(reconnectTimer);
+      socket?.close();
+    };
+  }, [dispatch, user?.id]);
 
   // مدیریت انیمیشن باز و بسته شدن المان‌های منو با استفاده از یک state واحد
   useEffect(() => {
@@ -134,40 +178,42 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
       label: t('menu.dashboard'), 
       icon: <Dashboard />, 
       path: '/dashboard',
-      roles: ['admin', 'commander', 'operator', 'viewer']
+      feature: 'dashboard.view' as const,
     },
     { 
       id: 'scenarios', 
       label: 'مدیریت سناریوها', 
       icon: <Assignment />, 
       path: '/dashboard/scenarios',
-      roles: ['admin', 'commander', 'operator', 'viewer']
+      feature: 'scenarios.view' as const,
     },
     { 
       id: 'users', 
       label: 'مدیریت کاربران', 
       icon: <People />, 
       path: '/dashboard/users',
-      roles: ['admin', 'commander', 'operator', 'viewer']
+      feature: 'users.view' as const,
     },
     { 
       id: 'resources-module', 
       label: 'مدیریت منابع', 
       icon: <AccountBox />, 
       path: '/dashboard/resources',
-      roles: ['admin', 'commander', 'operator', 'viewer']
+      feature: 'resources.view' as const,
     },
     {
       id: 'data-management',
       label: 'مدیریت داده',
       icon: <UploadFile />,
       path: '/dashboard/data-management',
-      roles: ['admin', 'commander'],
+      feature: 'data.manage' as const,
     },
   ];
 
-  const currentRole = user?.role || 'operator';
-  const filteredMenuItems = menuItems.filter(item => item.roles.includes(currentRole));
+  const currentRole = user?.role || 'viewer';
+  const filteredMenuItems = menuItems.filter(item => canAccessFeature(currentRole, item.feature));
+  const canManageSettings = canAccessFeature(currentRole, 'settings.manage');
+  const canViewUsers = canAccessFeature(currentRole, 'users.view');
   const visibleMenuItems = filteredMenuItems.length > 0
     ? filteredMenuItems
     : menuItems.filter(item => item.id === 'home');
@@ -188,6 +234,13 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
     setProfileMenuAnchor(null);
   };
 
+  const handleOpenManagedProfile = () => {
+    handleProfileMenuClose();
+    if (user?.id && canViewUsers) {
+      navigate(`/dashboard/users/${user.id}`);
+    }
+  };
+
   const handleLogout = () => {
     dispatch(logout());
     localStorage.removeItem('user');
@@ -195,7 +248,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
     handleProfileMenuClose();
   };
 
-  const handleMenuItemClick = (path: string, itemId: string) => {
+  const handleMenuItemClick = (path: string) => {
     navigate(path);
   };
 
@@ -366,7 +419,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
             </Tooltip>
 
             {/* تنظیمات */}
-            <Tooltip title={t('layout.settingsTooltip')}>
+            {canManageSettings && <Tooltip title={t('layout.settingsTooltip')}>
               <IconButton
                 onClick={handleSettingsClick}
                 sx={{ 
@@ -378,35 +431,56 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
               >
                 <SettingsIcon fontSize="small" />
               </IconButton>
-            </Tooltip>
+            </Tooltip>}
 
             {/* پروفایل کاربر */}
-            <Tooltip title={user?.name || t('layout.userProfileTooltip')}>
-              <IconButton
+            <Tooltip title="اطلاعات حساب کاربری">
+              <Button
                 onClick={handleProfileClick}
                 sx={{
-                  p: 0,
-                  ml: 1.5,
-                  borderRadius: '50%',
+                  minWidth: { xs: 40, sm: 156 },
+                  height: 44,
+                  p: { xs: 0, sm: '4px 8px' },
+                  ml: 1,
+                  color: 'text.primary',
+                  justifyContent: 'flex-start',
+                  borderRadius: 1,
                   transition: 'all 0.2s ease',
                   '&:hover': {
-                    transform: 'scale(1.05)',
+                    bgcolor: alpha(theme.palette.primary.main, 0.08),
                   }
                 }}
               >
                 <Avatar
                   src={user?.avatar}
                   sx={{
-                    width: 36,
-                    height: 36,
+                    width: 34,
+                    height: 34,
                     bgcolor: 'primary.main',
                     fontSize: '14px',
                     fontWeight: 600,
+                    flexShrink: 0,
                   }}
                 >
                   {user?.name?.charAt(0) || 'ک'}
                 </Avatar>
-              </IconButton>
+                <Box
+                  sx={{
+                    display: { xs: 'none', sm: 'block' },
+                    minWidth: 0,
+                    ml: 1,
+                    textAlign: 'left',
+                    lineHeight: 1.2,
+                  }}
+                >
+                  <Typography variant="body2" noWrap sx={{ maxWidth: 104, fontWeight: 700 }}>
+                    {user?.name || user?.username}
+                  </Typography>
+                  <Typography variant="caption" noWrap color="text.secondary" sx={{ display: 'block', maxWidth: 104 }}>
+                    {user?.roleTitle || user?.role}
+                  </Typography>
+                </Box>
+              </Button>
             </Tooltip>
           </Box>
         </Toolbar>
@@ -460,6 +534,9 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
             <MenuItem
               key={notification.id}
               onClick={() => {
+                if (!notification.read) {
+                  void dispatch(markServerNotificationRead(notification.id));
+                }
                 setNotifDialogData(notification);
                 setNotifDialogOpen(true);
                 handleNotificationsMenuClose();
@@ -499,7 +576,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
                 </Typography>
               </Box>
               <Typography variant="caption" color="text.secondary" sx={{ minWidth: 54, textAlign: 'left', fontSize: '0.75rem' }}>
-                {notification.timestamp}
+                {new Date(notification.createdAt).toLocaleDateString('fa-IR')}
               </Typography>
             </MenuItem>
             );
@@ -549,16 +626,61 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
                 {user?.name || 'کاربر'}
               </Typography>
               <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.8rem' }}>
-                {user?.username}@sajed.mil
+                {user?.email || `${user?.username}@sajed.mil`}
               </Typography>
-              <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.75rem' }}>
-                {user?.rank} - {user?.unit}
+              <Chip
+                size="small"
+                label={user?.roleTitle || user?.role}
+                color="primary"
+                variant="outlined"
+                sx={{ mt: 0.75, maxWidth: '100%' }}
+              />
+            </Box>
+          </Box>
+          <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1, mt: 2 }}>
+            <Box sx={{ minWidth: 0 }}>
+              <Typography variant="caption" color="text.secondary">کد کاربری</Typography>
+              <Typography variant="body2" noWrap sx={{ fontWeight: 600 }}>
+                {user?.userCode || 'ثبت نشده'}
+              </Typography>
+            </Box>
+            <Box sx={{ minWidth: 0 }}>
+              <Typography variant="caption" color="text.secondary">سطح دسترسی</Typography>
+              <Typography variant="body2" noWrap sx={{ fontWeight: 600 }}>
+                {user?.accessLevel || 'ثبت نشده'}
+              </Typography>
+            </Box>
+            <Box sx={{ minWidth: 0 }}>
+              <Typography variant="caption" color="text.secondary">سمت / درجه</Typography>
+              <Typography variant="body2" noWrap sx={{ fontWeight: 600 }}>
+                {user?.rank || user?.position || 'ثبت نشده'}
+              </Typography>
+            </Box>
+            <Box sx={{ minWidth: 0 }}>
+              <Typography variant="caption" color="text.secondary">یگان</Typography>
+              <Typography variant="body2" noWrap sx={{ fontWeight: 600 }}>
+                {user?.unit || 'ثبت نشده'}
               </Typography>
             </Box>
           </Box>
+          {user?.lastLogin && (
+            <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1.5 }}>
+              آخرین ورود: {new Date(user.lastLogin).toLocaleString('fa-IR')}
+            </Typography>
+          )}
         </Box>
 
-        {/* منوی عملیات - حذف شده طبق درخواست */}
+        {canViewUsers && (
+          <MenuItem onClick={handleOpenManagedProfile}>
+            <ListItemIcon>
+              <ManageAccounts fontSize="small" color="primary" />
+            </ListItemIcon>
+            <ListItemText
+              primary="مشاهده در مدیریت کاربران"
+              secondary="نمایش و ویرایش رکورد کامل این حساب"
+            />
+          </MenuItem>
+        )}
 
         <Box sx={{ ...resourcesDialogActionsSx(theme), mt: 1, py: 1, px: 0, gap: 0 }}>
           <MenuItem 
@@ -594,7 +716,9 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
             {notifDialogData?.message}
           </Typography>
           <Typography variant="caption" color="text.secondary">
-            {notifDialogData?.timestamp}
+            {notifDialogData?.createdAt
+              ? new Date(notifDialogData.createdAt).toLocaleString('fa-IR')
+              : ''}
           </Typography>
         </DialogContent>
       </Dialog>
@@ -628,7 +752,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
               <ListItemButton
                 onClick={(e) => {
                   e.stopPropagation();
-                  handleMenuItemClick(item.path, item.id);
+                  handleMenuItemClick(item.path);
                 }}
                 selected={isActiveRoute(item.path)}
                 sx={{

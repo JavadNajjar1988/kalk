@@ -37,25 +37,22 @@ import {
   Archive as ArchiveIcon,
 } from '@mui/icons-material';
 import { useAppSelector, useAppDispatch } from '@/store';
-import { 
-  selectNotifications, 
-  selectUnreadNotifications, 
-  selectArchivedNotifications,
-  selectActiveNotifications,
-  selectNotificationStats,
-  archiveNotification,
-  archiveNotifications,
-  unarchiveNotification,
-  unarchiveNotifications,
-  toggleNotificationStar,
-  starNotifications,
-  unstarNotifications,
-  markNotificationAsRead,
-  markAllNotificationsAsRead,
-  showSuccessNotification,
-  showErrorNotification,
-  removeDuplicateNotifications
-} from '@/store/slices/uiSlice';
+import {
+  archiveServerNotification,
+  archiveServerNotifications,
+  fetchServerNotifications,
+  markAllServerNotificationsRead,
+  markServerNotificationRead,
+  refreshServerNotifications,
+  selectArchivedServerNotifications,
+  selectServerNotifications,
+  selectServerNotificationStats,
+  selectUnreadServerNotifications,
+  starServerNotification,
+  starServerNotifications,
+  unarchiveServerNotification,
+  unarchiveServerNotifications,
+} from '@/store/slices/serverNotificationsSlice';
 
 const getNotificationIcon = (type: string) => {
   switch (type) {
@@ -112,11 +109,11 @@ const sortOptions = [
 
 const NotificationsPage: React.FC = () => {
   const dispatch = useAppDispatch();
-  const notifications = useAppSelector(selectNotifications);
-  const unreadNotifications = useAppSelector(selectUnreadNotifications);
-  const archivedNotifications = useAppSelector(selectArchivedNotifications);
-  const activeNotifications = useAppSelector(selectActiveNotifications);
-  const stats = useAppSelector(selectNotificationStats);
+  const notifications = useAppSelector(selectServerNotifications);
+  const unreadNotifications = useAppSelector(selectUnreadServerNotifications);
+  const archivedNotifications = useAppSelector(selectArchivedServerNotifications);
+  const activeNotifications = notifications;
+  const stats = useAppSelector(selectServerNotificationStats);
   
   const [selected, setSelected] = useState<any | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -127,15 +124,16 @@ const NotificationsPage: React.FC = () => {
   const [refreshing, setRefreshing] = useState(false);
   const [showArchived, setShowArchived] = useState(false);
 
-  // پاک کردن notifications تکراری هنگام بارگذاری صفحه
   useEffect(() => {
-    dispatch(removeDuplicateNotifications());
+    void dispatch(fetchServerNotifications(false));
+    void dispatch(fetchServerNotifications(true));
   }, [dispatch]);
 
-  // شبیه‌سازی رفرش دیتا
-  const handleRefresh = () => {
+  const handleRefresh = async () => {
     setRefreshing(true);
-    setTimeout(() => setRefreshing(false), 800);
+    await dispatch(refreshServerNotifications());
+    await dispatch(fetchServerNotifications(true));
+    setRefreshing(false);
   };
 
   const handleOpen = (notif: any) => {
@@ -143,8 +141,7 @@ const NotificationsPage: React.FC = () => {
     setDrawerOpen(true);
     // علامت‌گذاری خودکار به عنوان خوانده‌شده
     if (!notif.read) {
-      dispatch(markNotificationAsRead(notif.id));
-      dispatch(showSuccessNotification('اعلان به عنوان خوانده‌شده علامت‌گذاری شد'));
+      void dispatch(markServerNotificationRead(notif.id));
     }
   };
   const handleClose = () => {
@@ -152,8 +149,8 @@ const NotificationsPage: React.FC = () => {
     setSelected(null);
   };
   const handleToggleStar = (id: string) => {
-    dispatch(toggleNotificationStar(id));
-    dispatch(showSuccessNotification('وضعیت ستاره‌دار تغییر کرد'));
+    const item = [...activeNotifications, ...archivedNotifications].find((value) => value.id === id);
+    void dispatch(starServerNotification({ id, starred: !item?.starred }));
   };
   const handleCheck = (id: string) => {
     setChecked((prev) => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]);
@@ -164,30 +161,25 @@ const NotificationsPage: React.FC = () => {
   };
   // عملیات آرشیو
   const handleArchiveSingle = (id: string) => {
-    dispatch(archiveNotification(id));
-    dispatch(showSuccessNotification('اعلان آرشیو شد'));
+    void dispatch(archiveServerNotification(id));
   };
   
   
   const handleArchiveAll = () => {
     const allIds = filtered.map(n => n.id);
     if (allIds.length === 0) {
-      dispatch(showErrorNotification('اعلانی برای آرشیو وجود ندارد'));
       return;
     }
-    dispatch(archiveNotifications(allIds));
-    dispatch(showSuccessNotification(`${allIds.length} اعلان آرشیو شد`));
+    void dispatch(archiveServerNotifications(allIds));
   };
   
   
   const handleUnarchiveAll = () => {
     const allIds = filtered.map(n => n.id);
     if (allIds.length === 0) {
-      dispatch(showErrorNotification('اعلانی برای بازگردانی وجود ندارد'));
       return;
     }
-    dispatch(unarchiveNotifications(allIds));
-    dispatch(showSuccessNotification(`${allIds.length} اعلان از آرشیو بازگردانده شد`));
+    void dispatch(unarchiveServerNotifications(allIds));
   };
   
   
@@ -195,7 +187,6 @@ const NotificationsPage: React.FC = () => {
   const handleToggleStarAll = () => {
     const allIds = filtered.map(n => n.id);
     if (allIds.length === 0) {
-      dispatch(showErrorNotification('اعلانی برای ستاره‌دار کردن وجود ندارد'));
       return;
     }
     
@@ -204,44 +195,35 @@ const NotificationsPage: React.FC = () => {
     
     if (hasStarred) {
       // اگر حداقل یک اعلان ستاره‌دار است، همه را لغو ستاره‌دار کن
-      dispatch(unstarNotifications(allIds));
-      dispatch(showSuccessNotification(`${allIds.length} اعلان از ستاره‌دار خارج شد`));
+      void dispatch(starServerNotifications({ ids: allIds, starred: false }));
     } else {
       // اگر هیچ اعلانی ستاره‌دار نیست، همه را ستاره‌دار کن
-      dispatch(starNotifications(allIds));
-      dispatch(showSuccessNotification(`${allIds.length} اعلان ستاره‌دار شد`));
+      void dispatch(starServerNotifications({ ids: allIds, starred: true }));
     }
   };
 
   // عملیات خوانده شدن
   const handleMarkReadSelected = () => {
     if (checked.length === 0) {
-      dispatch(showErrorNotification('ابتدا اعلان‌هایی را انتخاب کنید'));
       return;
     }
     checked.forEach(id => {
-      dispatch(markNotificationAsRead(id));
+      void dispatch(markServerNotificationRead(id));
     });
-    dispatch(showSuccessNotification(`${checked.length} اعلان به عنوان خوانده‌شده علامت‌گذاری شد`));
     setChecked([]);
   };
 
   const handleMarkReadAll = () => {
     const allIds = filtered.map(n => n.id);
     if (allIds.length === 0) {
-      dispatch(showErrorNotification('اعلانی برای علامت‌گذاری وجود ندارد'));
       return;
     }
-    allIds.forEach(id => {
-      dispatch(markNotificationAsRead(id));
-    });
-    dispatch(showSuccessNotification(`${allIds.length} اعلان به عنوان خوانده‌شده علامت‌گذاری شد`));
+    void dispatch(markAllServerNotificationsRead());
   };
 
   // خوانده شدن تکی
   const handleMarkReadSingle = (id: string) => {
-    dispatch(markNotificationAsRead(id));
-    dispatch(showSuccessNotification('اعلان به عنوان خوانده‌شده علامت‌گذاری شد'));
+    void dispatch(markServerNotificationRead(id));
   };
 
   // فیلتر و جستجو و مرتب‌سازی
@@ -697,4 +679,4 @@ const NotificationsPage: React.FC = () => {
   );
 };
 
-export default NotificationsPage; 
+export default NotificationsPage;

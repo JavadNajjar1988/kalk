@@ -1,6 +1,6 @@
 /* global clients */
 // Service Worker برای PWA سیستم ساجد
-const CACHE_NAME = 'sajed-v1.0.0';
+const CACHE_NAME = 'sajed-v1.1.0';
 const urlsToCache = [
   '/',
   '/manifest.json',
@@ -10,6 +10,7 @@ const urlsToCache = [
 
 // نصب Service Worker
 self.addEventListener('install', (event) => {
+  self.skipWaiting();
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then((cache) => {
@@ -38,22 +39,37 @@ self.addEventListener('activate', (event) => {
             return caches.delete(cacheName);
           }
         })
-      );
+      ).then(() => clients.claim());
     })
   );
 });
 
 // پاسخ به درخواست‌ها
 self.addEventListener('fetch', (event) => {
+  const request = event.request;
+  const url = new URL(request.url);
+
+  // API responses are user/session specific and must never enter the PWA cache.
+  if (request.method !== 'GET' || url.pathname.startsWith('/api/')) {
+    event.respondWith(fetch(request));
+    return;
+  }
+
+  // Always prefer the current application shell for navigations.
+  if (request.mode === 'navigate') {
+    event.respondWith(fetch(request).catch(() => caches.match('/')));
+    return;
+  }
+
   event.respondWith(
-    caches.match(event.request)
+    caches.match(request)
       .then((response) => {
         // بازگرداندن از کش اگر موجود باشد
         if (response) {
           return response;
         }
 
-        return fetch(event.request).then(
+        return fetch(request).then(
           (response) => {
             // بررسی اینکه آیا پاسخ معتبر است
             if (!response || response.status !== 200 || response.type !== 'basic') {
@@ -61,7 +77,7 @@ self.addEventListener('fetch', (event) => {
             }
 
             // بررسی scheme برای جلوگیری از خطای chrome-extension
-            if (event.request.url.startsWith('chrome-extension://')) {
+            if (request.url.startsWith('chrome-extension://')) {
               return response;
             }
 
@@ -71,9 +87,9 @@ self.addEventListener('fetch', (event) => {
             caches.open(CACHE_NAME)
               .then((cache) => {
                 try {
-                  cache.put(event.request, responseToCache);
+                  cache.put(request, responseToCache);
                 } catch (error) {
-                  console.warn('Cannot cache request:', event.request.url, error);
+                  console.warn('Cannot cache request:', request.url, error);
                 }
               });
 
@@ -129,4 +145,4 @@ self.addEventListener('notificationclick', (event) => {
       clients.openWindow('/')
     );
   }
-}); 
+});

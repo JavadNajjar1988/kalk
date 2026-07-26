@@ -32,6 +32,7 @@ interface UsersTableViewProps {
   onDelete: (user: User) => void;
   onView: (user: User) => void;
   onQuickAction: (user: User) => void;
+  canManage?: boolean;
 }
 
 const UsersTableView: React.FC<UsersTableViewProps> = ({
@@ -40,6 +41,7 @@ const UsersTableView: React.FC<UsersTableViewProps> = ({
   onDelete,
   onView,
   onQuickAction,
+  canManage = true,
 }) => {
   const theme = useTheme();
 
@@ -219,7 +221,7 @@ const UsersTableView: React.FC<UsersTableViewProps> = ({
                     </IconButton>
                   </Tooltip>
                   
-                  <Tooltip title="ویرایش">
+                  {canManage && <Tooltip title="ویرایش">
                     <IconButton 
                       size="small" 
                       onClick={() => onEdit(user)}
@@ -227,9 +229,9 @@ const UsersTableView: React.FC<UsersTableViewProps> = ({
                     >
                       <EditIcon fontSize="small" />
                     </IconButton>
-                  </Tooltip>
+                  </Tooltip>}
                   
-                  <Tooltip title="تغییرات فوری">
+                  {canManage && <Tooltip title="تغییرات فوری">
                     <IconButton 
                       size="small" 
                       onClick={() => onQuickAction(user)}
@@ -237,9 +239,9 @@ const UsersTableView: React.FC<UsersTableViewProps> = ({
                     >
                       <QuickActionIcon fontSize="small" />
                     </IconButton>
-                  </Tooltip>
+                  </Tooltip>}
                   
-                  <Tooltip title="حذف">
+                  {canManage && <Tooltip title="حذف">
                     <IconButton 
                       size="small" 
                       onClick={() => onDelete(user)}
@@ -247,7 +249,7 @@ const UsersTableView: React.FC<UsersTableViewProps> = ({
                     >
                       <DeleteIcon fontSize="small" />
                     </IconButton>
-                  </Tooltip>
+                  </Tooltip>}
                 </Box>
               </TableCell>
             </TableRow>

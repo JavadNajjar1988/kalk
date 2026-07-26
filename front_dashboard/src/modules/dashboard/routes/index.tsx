@@ -14,8 +14,13 @@ import ScenarioDetailPage from '../pages/ScenarioDetailPage';
 import ResourcesPage from '../pages/ResourcesPage';
 import DataManagementPage from '../pages/DataManagementPage';
 import UsersRoutes from '../../users/routes';
+import RoleGuard from '@/components/common/RoleGuard';
+import type { RoleFeature } from '@/security/roleAccess';
 
- 
+const guarded = (element: React.ReactNode, feature: RoleFeature) => (
+  <RoleGuard feature={feature}>{element}</RoleGuard>
+);
+
 const DashboardRoutes: React.FC = () => {
   return (
     <Routes>
@@ -26,19 +31,19 @@ const DashboardRoutes: React.FC = () => {
       }>
         <Route index element={<HomePage />} />
         <Route path="alerts" element={<AlertsPage />} />
-        <Route path="base-info" element={<BaseInfoPage />} />
+        <Route path="base-info" element={guarded(<BaseInfoPage />, 'baseInfo.manage')} />
         <Route path="help" element={<HelpPage />} />
         <Route path="notifications" element={<NotificationsPage />} />
         <Route path="search" element={<SearchPage />} />
-        <Route path="settings" element={<SettingsPage />} />
+        <Route path="settings" element={guarded(<SettingsPage />, 'settings.manage')} />
         <Route path="scenarios">
-          <Route index element={<ScenariosPage />} />
-          <Route path=":id" element={<ScenarioDetailPage />} />
+          <Route index element={guarded(<ScenariosPage />, 'scenarios.view')} />
+          <Route path=":id" element={guarded(<ScenarioDetailPage />, 'scenarios.view')} />
         </Route>
-        <Route path="resources" element={<ResourcesPage />} />
-        <Route path="data-management" element={<DataManagementPage />} />
+        <Route path="resources" element={guarded(<ResourcesPage />, 'resources.view')} />
+        <Route path="data-management" element={guarded(<DataManagementPage />, 'data.manage')} />
 
-        <Route path="users/*" element={<UsersRoutes />} />
+        <Route path="users/*" element={guarded(<UsersRoutes />, 'users.view')} />
         
         {/* روت‌های تست */}
         

@@ -18,3 +18,4 @@ python-multipart==0.0.32
 openpyxl==3.1.5
 pyshp==3.1.4
 pyproj==3.7.2
+psutil==7.2.2
