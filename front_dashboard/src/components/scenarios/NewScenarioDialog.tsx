@@ -87,7 +87,7 @@ interface SideData {
   }>;
 }
 
-const steps = ['اطلاعات پایه', 'زمان و محدوده', 'آرایش نبرد', 'مرور نهایی'];
+const steps = ['مشخصات و زمان', 'آرایش نیروها', 'بازبینی و ثبت'];
 
 function generateScenarioCode(): string {
   const now = new Date();
@@ -285,11 +285,10 @@ const NewScenarioDialog: React.FC<NewScenarioDialogProps> = ({
   ]);
 
   const validateStep = (step: number): string => {
-    if (step === 0 && !formData.name.trim()) {
-      return 'نام سناریو الزامی است.';
-    }
-
-    if (step === 1) {
+    if (step === 0) {
+      if (!formData.name.trim()) {
+        return 'نام سناریو الزامی است.';
+      }
       try {
         scenarioDateTimeToIso(
           formData.year,
@@ -304,7 +303,7 @@ const NewScenarioDialog: React.FC<NewScenarioDialogProps> = ({
       }
     }
 
-    if (step === 2 && !noInitialOrbat) {
+    if (step === 1 && !noInitialOrbat) {
       if (sides.length === 0) {
         return 'برای آرایش نبرد اولیه حداقل یک طرف اضافه کنید.';
       }
@@ -477,21 +476,21 @@ const NewScenarioDialog: React.FC<NewScenarioDialogProps> = ({
       case 0:
         return (
           <Box sx={{ mt: 2 }}>
-            <Box sx={{ mb: 3, display: 'flex', alignItems: 'center', gap: 2 }}>
-              <Avatar sx={{ bgcolor: 'primary.main', width: 40, height: 40 }}>
-                <Typography variant="h6">1</Typography>
+            <Box sx={{ mb: 2, display: 'flex', alignItems: 'center', gap: 1.5 }}>
+              <Avatar sx={{ bgcolor: 'primary.main', width: 34, height: 34 }}>
+                <Typography variant="subtitle1" fontWeight={700}>1</Typography>
               </Avatar>
               <Box>
                 <Typography variant="h6" fontWeight="bold">
-                  اطلاعات پایه سناریو
+                  مشخصات و زمان‌بندی سناریو
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
-                  لطفا اطلاعات سناریو را کامل وارد نمایید.
+                  اطلاعات اصلی، استاندارد نمادها و زمان شروع را یکجا تنظیم کنید.
                 </Typography>
               </Box>
             </Box>
 
-            <Grid container spacing={3}>
+            <Grid container spacing={2}>
               <Grid item xs={12} md={8}>
                 <TextField
                   fullWidth
@@ -529,7 +528,7 @@ const NewScenarioDialog: React.FC<NewScenarioDialogProps> = ({
               </Grid>
 
               <Grid item xs={12}>
-                <Divider sx={{ my: 2 }}>نمادشناسی</Divider>
+                <Divider sx={{ my: 1 }}>استاندارد نمادشناسی</Divider>
                 <FormControl component="fieldset">
                   <RadioGroup
                     row
@@ -543,7 +542,8 @@ const NewScenarioDialog: React.FC<NewScenarioDialogProps> = ({
                   >
                     <Paper
                       sx={{
-                        p: 2,
+                        py: 0.5,
+                        px: 1.5,
                         mr: 2,
                         border: formData.symbologyStandard === 'app6' ? 2 : 1,
                         borderColor:
@@ -580,7 +580,8 @@ const NewScenarioDialog: React.FC<NewScenarioDialogProps> = ({
                     </Paper>
                     <Paper
                       sx={{
-                        p: 2,
+                        py: 0.5,
+                        px: 1.5,
                         border: formData.symbologyStandard === '2525' ? 2 : 1,
                         borderColor:
                           formData.symbologyStandard === '2525'
@@ -619,11 +620,127 @@ const NewScenarioDialog: React.FC<NewScenarioDialogProps> = ({
               </Grid>
 
               <Grid item xs={12}>
+                <Divider sx={{ my: 1 }}>زمان شروع</Divider>
+              </Grid>
+              <Grid item xs={12} md={4}>
+                <TextField
+                  fullWidth
+                  label="منطقه زمانی"
+                  value={formData.timeZone}
+                  onChange={e =>
+                    setFormData(prev => ({ ...prev, timeZone: e.target.value }))
+                  }
+                  placeholder="UTC"
+                  error={!isValidTimeZone(formData.timeZone.trim())}
+                  helperText="مانند UTC یا Asia/Tehran"
+                />
+              </Grid>
+              <Grid item xs={6} sm={4} md={2}>
+                <TextField
+                  fullWidth
+                  label="سال"
+                  type="number"
+                  value={formData.year}
+                  onChange={e =>
+                    setFormData(prev => ({
+                      ...prev,
+                      year: parseInt(e.target.value) || 0,
+                    }))
+                  }
+                />
+              </Grid>
+              <Grid item xs={3} sm={2} md={1}>
+                <TextField
+                  fullWidth
+                  label="ماه"
+                  type="number"
+                  value={formData.month}
+                  onChange={e =>
+                    setFormData(prev => ({
+                      ...prev,
+                      month: parseInt(e.target.value) || 0,
+                    }))
+                  }
+                  inputProps={{ min: 1, max: 12 }}
+                />
+              </Grid>
+              <Grid item xs={3} sm={2} md={1}>
+                <TextField
+                  fullWidth
+                  label="روز"
+                  type="number"
+                  value={formData.day}
+                  onChange={e =>
+                    setFormData(prev => ({
+                      ...prev,
+                      day: parseInt(e.target.value) || 0,
+                    }))
+                  }
+                  inputProps={{ min: 1, max: 31 }}
+                />
+              </Grid>
+              <Grid item xs={6} sm={2} md={2}>
+                <TextField
+                  fullWidth
+                  label="ساعت"
+                  type="number"
+                  value={formData.hour}
+                  onChange={e =>
+                    setFormData(prev => ({
+                      ...prev,
+                      hour: parseInt(e.target.value) || 0,
+                    }))
+                  }
+                  inputProps={{ min: 0, max: 23 }}
+                />
+              </Grid>
+              <Grid item xs={6} sm={2} md={2}>
+                <TextField
+                  fullWidth
+                  label="دقیقه"
+                  type="number"
+                  value={formData.minute}
+                  onChange={e =>
+                    setFormData(prev => ({
+                      ...prev,
+                      minute: parseInt(e.target.value) || 0,
+                    }))
+                  }
+                  inputProps={{ min: 0, max: 59 }}
+                />
+              </Grid>
+              <Grid item xs={12}>
+                <Alert
+                  severity="info"
+                  icon={false}
+                  sx={{ py: 0.25, '& .MuiAlert-message': { py: 0.5 } }}
+                >
+                  شروع سناریو:{' '}
+                  <strong>
+                    {new Date(
+                      formData.year,
+                      formData.month - 1,
+                      formData.day,
+                      formData.hour,
+                      formData.minute
+                    ).toLocaleString('fa-IR', {
+                      year: 'numeric',
+                      month: 'long',
+                      day: 'numeric',
+                      hour: '2-digit',
+                      minute: '2-digit',
+                    })}
+                  </strong>
+                  {' — '}محدوده جغرافیایی و شرایط محیطی در نقشه سناریو تنظیم می‌شوند.
+                </Alert>
+              </Grid>
+
+              <Grid item xs={12}>
                 <TextField
                   fullWidth
                   label="توضیحات"
                   multiline
-                  rows={3}
+                  rows={2}
                   value={formData.description}
                   onChange={e =>
                     setFormData(prev => ({
@@ -638,12 +755,12 @@ const NewScenarioDialog: React.FC<NewScenarioDialogProps> = ({
           </Box>
         );
 
-      case 2:
+      case 1:
         return (
-          <Box sx={{ mt: 2 }}>
-            <Box sx={{ mb: 3, display: 'flex', alignItems: 'center', gap: 2 }}>
-              <Avatar sx={{ bgcolor: 'primary.main', width: 40, height: 40 }}>
-                <Typography variant="h6">3</Typography>
+          <Box sx={{ mt: 1 }}>
+            <Box sx={{ mb: 2, display: 'flex', alignItems: 'center', gap: 1.5 }}>
+              <Avatar sx={{ bgcolor: 'primary.main', width: 34, height: 34 }}>
+                <Typography variant="subtitle1" fontWeight={700}>2</Typography>
               </Avatar>
               <Box>
                 <Typography variant="h6" fontWeight="bold">
@@ -1221,159 +1338,16 @@ const NewScenarioDialog: React.FC<NewScenarioDialogProps> = ({
           </Box>
         );
 
-      case 1:
+      case 2:
         return (
-          <Box sx={{ mt: 2 }}>
-            <Box sx={{ mb: 3, display: 'flex', alignItems: 'center', gap: 2 }}>
-              <Avatar sx={{ bgcolor: 'primary.main', width: 40, height: 40 }}>
-                <Typography variant="h6">2</Typography>
+          <Box sx={{ mt: 1 }}>
+            <Box sx={{ mb: 2, display: 'flex', alignItems: 'center', gap: 1.5 }}>
+              <Avatar sx={{ bgcolor: 'primary.main', width: 34, height: 34 }}>
+                <Typography variant="subtitle1" fontWeight={700}>3</Typography>
               </Avatar>
               <Box>
                 <Typography variant="h6" fontWeight="bold">
-                  زمان شروع سناریو
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  زمان شروع و منطقه زمانی را انتخاب کنید.
-                </Typography>
-              </Box>
-            </Box>
-
-            <Alert severity="info" sx={{ mb: 3 }}>
-              محدوده جغرافیایی روی نقشه و شرایط جوی و وضعیت متغیر زمین روی
-              تایم‌لاین سناریو تنظیم می‌شوند.
-            </Alert>
-
-            <Grid container spacing={3}>
-              <Grid item xs={12}>
-                <TextField
-                  fullWidth
-                  label="منطقه زمانی"
-                  value={formData.timeZone}
-                  onChange={e =>
-                    setFormData(prev => ({ ...prev, timeZone: e.target.value }))
-                  }
-                  placeholder="UTC"
-                  error={!isValidTimeZone(formData.timeZone.trim())}
-                  helperText="نمونه: UTC یا Asia/Tehran"
-                />
-              </Grid>
-              <Grid item xs={4}>
-                <TextField
-                  fullWidth
-                  label="سال"
-                  type="number"
-                  value={formData.year}
-                  onChange={e =>
-                    setFormData(prev => ({
-                      ...prev,
-                      year: parseInt(e.target.value) || 0,
-                    }))
-                  }
-                />
-              </Grid>
-              <Grid item xs={4}>
-                <TextField
-                  fullWidth
-                  label="ماه"
-                  type="number"
-                  value={formData.month}
-                  onChange={e =>
-                    setFormData(prev => ({
-                      ...prev,
-                      month: parseInt(e.target.value) || 0,
-                    }))
-                  }
-                />
-              </Grid>
-              <Grid item xs={4}>
-                <TextField
-                  fullWidth
-                  label="روز"
-                  type="number"
-                  value={formData.day}
-                  onChange={e =>
-                    setFormData(prev => ({
-                      ...prev,
-                      day: parseInt(e.target.value) || 0,
-                    }))
-                  }
-                />
-              </Grid>
-              <Grid item xs={6}>
-                <TextField
-                  fullWidth
-                  label="ساعت"
-                  type="number"
-                  value={formData.hour}
-                  onChange={e =>
-                    setFormData(prev => ({
-                      ...prev,
-                      hour: parseInt(e.target.value) || 0,
-                    }))
-                  }
-                  inputProps={{ min: 0, max: 23 }}
-                />
-              </Grid>
-              <Grid item xs={6}>
-                <TextField
-                  fullWidth
-                  label="دقیقه"
-                  type="number"
-                  value={formData.minute}
-                  onChange={e =>
-                    setFormData(prev => ({
-                      ...prev,
-                      minute: parseInt(e.target.value) || 0,
-                    }))
-                  }
-                  inputProps={{ min: 0, max: 59 }}
-                />
-              </Grid>
-              <Grid item xs={12}>
-                <Paper
-                  sx={{
-                    p: 3,
-                    bgcolor: alpha(theme.palette.primary.main, 0.1),
-                    border: `1px solid ${alpha(theme.palette.primary.main, 0.2)}`,
-                    borderRadius: 2,
-                  }}
-                >
-                  <Typography
-                    variant="body1"
-                    align="center"
-                    fontWeight="bold"
-                    color="primary.main"
-                  >
-                    {new Date(
-                      formData.year,
-                      formData.month - 1,
-                      formData.day,
-                      formData.hour,
-                      formData.minute
-                    ).toLocaleString('fa-IR', {
-                      year: 'numeric',
-                      month: 'long',
-                      day: 'numeric',
-                      hour: '2-digit',
-                      minute: '2-digit',
-                    })}
-                  </Typography>
-                </Paper>
-              </Grid>
-            </Grid>
-          </Box>
-        );
-
-      case 3:
-        return (
-          <Box sx={{ mt: 2 }}>
-            <Box sx={{ mb: 3, display: 'flex', alignItems: 'center', gap: 2 }}>
-              <Avatar sx={{ bgcolor: 'primary.main', width: 40, height: 40 }}>
-                <Typography variant="h6">4</Typography>
-              </Avatar>
-              <Box>
-                <Typography variant="h6" fontWeight="bold">
-                  مرور نهایی
+                  بازبینی و ثبت
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
                   خلاصه‌ای از تنظیمات سناریو را بررسی کنید و در صورت نیاز
@@ -1635,7 +1609,23 @@ const NewScenarioDialog: React.FC<NewScenarioDialogProps> = ({
         buildResourcesFormDialogSx(theme),
         {
           '& .MuiDialog-paper': {
-            maxHeight: '90vh',
+            maxHeight: '94vh',
+          },
+          '& .MuiInputBase-root:not(.MuiInputBase-multiline)': {
+            minHeight: 42,
+          },
+          '& .MuiInputBase-input': {
+            py: 1.15,
+          },
+          '& .MuiFormHelperText-root': {
+            mt: 0.5,
+            mx: 0,
+          },
+          '& .MuiAccordionSummary-root': {
+            minHeight: 44,
+          },
+          '& .MuiAccordionSummary-content': {
+            my: 1,
           },
         },
       ]}
@@ -1658,7 +1648,16 @@ const NewScenarioDialog: React.FC<NewScenarioDialogProps> = ({
       </DialogTitle>
 
       <DialogContent dividers sx={resourcesDialogContentDividersSx(theme)}>
-        <Stepper activeStep={activeStep} sx={{ mb: 4, mt: 1 }}>
+        <Stepper
+          activeStep={activeStep}
+          sx={{
+            mb: 2,
+            mt: 0.5,
+            px: { xs: 0, sm: 2 },
+            '& .MuiStepLabel-label': { fontSize: '0.78rem', mt: 0.5 },
+            '& .MuiStepIcon-root': { fontSize: 26 },
+          }}
+        >
           {steps.map(label => (
             <Step key={label}>
               <StepLabel>{label}</StepLabel>
@@ -1731,7 +1730,7 @@ const NewScenarioDialog: React.FC<NewScenarioDialogProps> = ({
           <Button
             onClick={handleBack}
             disabled={isSubmitting}
-            startIcon={<ArrowBack />}
+            startIcon={<ArrowForward />}
             variant="outlined"
             color="inherit"
             sx={resourcesOutlinedCancelButtonSx(theme)}
@@ -1745,7 +1744,7 @@ const NewScenarioDialog: React.FC<NewScenarioDialogProps> = ({
             color="primary"
             onClick={handleNext}
             disabled={isSubmitting}
-            endIcon={<ArrowForward />}
+            endIcon={<ArrowBack />}
             sx={{ borderRadius: 2, px: 3 }}
           >
             مرحله بعد
