@@ -67,5 +67,12 @@ class Settings(BaseSettings):
                 return False
         return v
 
+    @field_validator("JWT_SECRET")
+    @classmethod
+    def _validate_jwt_secret(cls, value: str) -> str:
+        if len(value.encode("utf-8")) < 32:
+            raise ValueError("JWT_SECRET must contain at least 32 bytes")
+        return value
+
 
 settings = Settings()

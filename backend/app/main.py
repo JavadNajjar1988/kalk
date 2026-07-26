@@ -7,6 +7,7 @@ from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.responses import ORJSONResponse
 import time
 import logging
+from uuid import uuid4
 
 from app.core.config import settings
 from app.core.response import (
@@ -79,7 +80,11 @@ def create_app() -> FastAPI:
     @app.middleware("http")
     async def log_requests(request: Request, call_next):
         start = time.perf_counter()
+        supplied_request_id = request.headers.get("X-Request-ID", "")
+        request_id = supplied_request_id if 0 < len(supplied_request_id) <= 64 else str(uuid4())
+        request.state.request_id = request_id
         response = await call_next(request)
+        response.headers["X-Request-ID"] = request_id
         duration_ms = (time.perf_counter() - start) * 1000
         logger.info(
             "%s",
@@ -88,6 +93,7 @@ def create_app() -> FastAPI:
                 "path": request.url.path,
                 "status": response.status_code,
                 "duration_ms": round(duration_ms, 2),
+                "request_id": request_id,
             },
         )
         return response

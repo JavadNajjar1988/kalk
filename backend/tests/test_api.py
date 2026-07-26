@@ -144,3 +144,119 @@ async def test_import_scenario_upsert():
 
         await ac.delete(f"{settings.API_PREFIX}/scenarios/{scenario_id}", headers=headers)
 
+
+@pytest.mark.asyncio
+async def test_user_lifecycle_revokes_sessions_and_preserves_audit_history():
+    async with AsyncClient(transport=asgi_transport, base_url="http://test") as ac:
+        login_response = await ac.post(
+            f"{settings.API_PREFIX}/auth/token",
+            data={"username": "admin", "password": TEST_ADMIN_PASSWORD},
+        )
+        assert login_response.status_code == 200
+        admin_headers = {"Authorization": f"Bearer {login_response.json()['access_token']}"}
+
+        payload = {
+            "username": "lifecycle.viewer",
+            "userCode": "USR-LIFECYCLE",
+            "personalInfo": {
+                "fullName": "کاربر چرخه عمر",
+                "nationality": "ایرانی",
+                "gender": "مرد",
+            },
+            "contactInfo": {"mobile": ["09120000000"], "email": "lifecycle@example.test"},
+            "professionalInfo": {"status": "غیرنظامی", "details": {}},
+            "systemInfo": {
+                "role": "ناظر مهمان",
+                "accessLevel": "سطح 1 - دسترسی کامل",
+                "permissions": ["مدیریت کاربران"],
+                "password": "Lifecycle9!",
+            },
+            "isActive": True,
+        }
+        create_response = await ac.post(
+            f"{settings.API_PREFIX}/users",
+            json=payload,
+            headers={**admin_headers, "X-Request-ID": "test-user-create"},
+        )
+        assert create_response.status_code == 201
+        created = create_response.json()["data"]["user"]
+        assert created["version"] == 1
+        assert created["systemInfo"]["accessLevel"] == "سطح 4 - دسترسی مهمان"
+        user_id = created["id"]
+
+        user_login = await ac.post(
+            f"{settings.API_PREFIX}/auth/token",
+            data={"username": "lifecycle.viewer", "password": "Lifecycle9!"},
+        )
+        assert user_login.status_code == 200
+        old_user_headers = {"Authorization": f"Bearer {user_login.json()['access_token']}"}
+
+        current_response = await ac.get(f"{settings.API_PREFIX}/users/{user_id}", headers=admin_headers)
+        assert current_response.status_code == 200
+        assert current_response.json()["data"]["version"] == 2
+
+        update_response = await ac.patch(
+            f"{settings.API_PREFIX}/users/{user_id}",
+            json={
+                "expectedVersion": 2,
+                "systemInfo": {"role": "اپراتور"},
+            },
+            headers={**admin_headers, "X-Request-ID": "test-user-role-change"},
+        )
+        assert update_response.status_code == 200
+        updated = update_response.json()["data"]
+        assert updated["version"] == 3
+        assert updated["systemInfo"]["role"] == "اپراتور"
+
+        revoked_response = await ac.get(
+            f"{settings.API_PREFIX}/auth/me",
+            headers=old_user_headers,
+        )
+        assert revoked_response.status_code == 401
+
+        stale_response = await ac.patch(
+            f"{settings.API_PREFIX}/users/{user_id}",
+            json={"expectedVersion": 2, "personalInfo": {"fullName": "ویرایش قدیمی"}},
+            headers=admin_headers,
+        )
+        assert stale_response.status_code == 409
+
+        archive_response = await ac.delete(
+            f"{settings.API_PREFIX}/users/{user_id}?expectedVersion=3",
+            headers={**admin_headers, "X-Request-ID": "test-user-archive"},
+        )
+        assert archive_response.status_code == 200
+        assert archive_response.json()["data"]["version"] == 4
+
+        users_response = await ac.get(f"{settings.API_PREFIX}/users", headers=admin_headers)
+        assert all(item["id"] != user_id for item in users_response.json()["data"]["items"])
+
+        archived_response = await ac.get(f"{settings.API_PREFIX}/users/archived", headers=admin_headers)
+        archived = next(item for item in archived_response.json()["data"] if item["id"] == user_id)
+        assert archived["deletedAt"] is not None
+        assert archived["version"] == 4
+
+        restore_response = await ac.post(
+            f"{settings.API_PREFIX}/users/{user_id}/restore?expectedVersion=4",
+            headers={**admin_headers, "X-Request-ID": "test-user-restore"},
+        )
+        assert restore_response.status_code == 200
+        restored = restore_response.json()["data"]
+        assert restored["deletedAt"] is None
+        assert restored["version"] == 5
+
+        audit_response = await ac.get(
+            f"{settings.API_PREFIX}/users/audit-logs?targetUserId={user_id}",
+            headers=admin_headers,
+        )
+        assert audit_response.status_code == 200
+        actions = {item["action"] for item in audit_response.json()["data"]}
+        assert {"user_created", "login_succeeded", "user_updated", "user_archived", "user_restored"} <= actions
+        assert any(item["requestId"] == "test-user-role-change" for item in audit_response.json()["data"])
+
+        cleanup_response = await ac.delete(
+            f"{settings.API_PREFIX}/users/{user_id}?expectedVersion=5",
+            headers=admin_headers,
+        )
+        assert cleanup_response.status_code == 200
+

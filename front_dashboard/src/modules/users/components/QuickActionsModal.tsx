@@ -133,7 +133,7 @@ const QuickActionsModal: React.FC<QuickActionsModalProps> = ({
 
   useEffect(() => {
     if (!user) return;
-    const profile = getRoleProfile(user.systemInfo.role);
+    const profile = getRoleProfile(user.systemInfo.role, roles);
     setAccessData({
       newRole: profile.role,
       newAccessLevel: profile.accessLevel,
@@ -479,7 +479,7 @@ const renderAccessLevelForm = () => (
           value={accessData.newRole}
 
           onChange={(e) => {
-            const profile = getRoleProfile(e.target.value);
+            const profile = getRoleProfile(e.target.value, roles);
             setAccessData({
               newRole: profile.role,
               newAccessLevel: profile.accessLevel,

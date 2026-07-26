@@ -62,6 +62,7 @@ class UserCreate(UserBase):
 
 
 class UserUpdate(BaseModel):
+    expectedVersion: int = Field(..., ge=1)
     userCode: Optional[str] = Field(default=None, min_length=3, max_length=64)
     personalInfo: Optional[dict[str, Any]] = None
     contactInfo: Optional[dict[str, Any]] = None
@@ -75,6 +76,8 @@ class UserOut(UserBase):
 
     id: str
     username: str
+    version: int
+    deletedAt: Optional[datetime] = None
     createdAt: datetime
     updatedAt: datetime
 
@@ -93,5 +96,6 @@ class UserListResponse(BaseModel):
 
 class QuickActionPayload(BaseModel):
     userId: str
+    expectedVersion: int = Field(..., ge=1)
     action: Literal["toggleActive", "changePassword", "updateAccessLevel"]
     data: dict[str, Any] | None = None

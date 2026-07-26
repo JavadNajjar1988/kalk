@@ -4,3 +4,4 @@ export { default as QuickActionsModal } from './QuickActionsModal';
 export { default as UserDetailsModal } from './UserDetailsModal';
 export { default as EditUserModal } from './EditUserModal';
 export { default as DeleteConfirmationModal } from './DeleteConfirmationModal';
+export { default as UserGovernanceDialog } from './UserGovernanceDialog';

@@ -29,9 +29,28 @@ export const ROLE_PROFILES: RoleProfile[] = [
   },
 ];
 
-export const getRoleProfile = (role?: string): RoleProfile =>
-  ROLE_PROFILES.find((profile) => profile.role === role)
-  ?? ROLE_PROFILES[ROLE_PROFILES.length - 1];
+type ServerRoleProfile = {
+  role?: string;
+  name?: string;
+  accessLevel?: string;
+  permissions?: string[];
+};
+
+export const getRoleProfile = (
+  role?: string,
+  serverProfiles?: ServerRoleProfile[],
+): RoleProfile => {
+  const serverProfile = serverProfiles?.find((profile) => (profile.role || profile.name) === role);
+  if (serverProfile?.accessLevel && serverProfile.permissions) {
+    return {
+      role: serverProfile.role || serverProfile.name || role || 'ناظر مهمان',
+      accessLevel: serverProfile.accessLevel,
+      permissions: serverProfile.permissions,
+    };
+  }
+  return ROLE_PROFILES.find((profile) => profile.role === role)
+    ?? ROLE_PROFILES[ROLE_PROFILES.length - 1];
+};
 
 export const getAccessLevelNumber = (accessLevel?: string): number | null => {
   const match = accessLevel?.match(/(?:سطح|level)\s*([1-4])/i);

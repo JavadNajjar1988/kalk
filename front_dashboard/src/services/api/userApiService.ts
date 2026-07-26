@@ -10,6 +10,22 @@ import type {
 interface LookupItem {
   id: string;
   name: string;
+  accessLevel?: string;
+  permissions?: string[];
+  internalRole?: string;
+}
+
+export interface UserAuditLog {
+  id: string;
+  targetUserId: string;
+  actorUserId?: string;
+  actorUsername?: string;
+  action: string;
+  before?: Partial<User>;
+  after?: Partial<User>;
+  clientIp?: string;
+  requestId?: string;
+  createdAt: string;
 }
 
 interface UsersListApiData {
@@ -51,8 +67,9 @@ export class UserApiService extends BaseApiClient {
       name: item.name,
       englishName: item.name,
       description: '',
-      accessLevel: '',
-      permissions: [],
+      accessLevel: item.accessLevel || '',
+      permissions: item.permissions || [],
+      internalRole: item.internalRole,
     }));
   }
 
@@ -92,7 +109,7 @@ export class UserApiService extends BaseApiClient {
     return handleApiResponse(response);
   }
 
-  async createUser(userData: Omit<User, 'id' | 'createdAt' | 'updatedAt'> & { username?: string }): Promise<{
+  async createUser(userData: Omit<User, 'id' | 'createdAt' | 'updatedAt' | 'version' | 'deletedAt'> & { username?: string }): Promise<{
     user: User;
     temporaryPassword?: string;
   }> {
@@ -100,18 +117,44 @@ export class UserApiService extends BaseApiClient {
     return handleApiResponse(response);
   }
 
-  async updateUser(id: string, userData: Partial<User>): Promise<User> {
-    const response = await this.patch<User>(`/users/${id}`, userData);
+  async updateUser(id: string, userData: Partial<User>, expectedVersion: number): Promise<User> {
+    const response = await this.patch<User>(`/users/${id}`, {
+      ...userData,
+      expectedVersion,
+    });
     return handleApiResponse(response);
   }
 
-  async deleteUser(id: string): Promise<{ id: string }> {
-    const response = await this.delete<{ id: string }>(`/users/${id}`);
+  async deleteUser(id: string, expectedVersion: number): Promise<{ id: string; version: number }> {
+    const response = await this.delete<{ id: string; version: number }>(
+      `/users/${id}?expectedVersion=${expectedVersion}`,
+    );
     return handleApiResponse(response);
   }
 
-  async performQuickAction(userId: string, payload: QuickActionPayload): Promise<User> {
-    const response = await this.post<User>(`/users/${userId}/actions`, payload);
+  async performQuickAction(userId: string, payload: QuickActionPayload, expectedVersion: number): Promise<User> {
+    const response = await this.post<User>(`/users/${userId}/actions`, {
+      ...payload,
+      expectedVersion,
+    });
+    return handleApiResponse(response);
+  }
+
+  async getArchivedUsers(): Promise<User[]> {
+    const response = await this.get<User[]>('/users/archived');
+    return handleApiResponse(response);
+  }
+
+  async restoreUser(id: string, expectedVersion: number): Promise<User> {
+    const response = await this.post<User>(`/users/${id}/restore?expectedVersion=${expectedVersion}`);
+    return handleApiResponse(response);
+  }
+
+  async getAuditLogs(targetUserId?: string): Promise<UserAuditLog[]> {
+    const response = await this.get<UserAuditLog[]>('/users/audit-logs', {
+      ...(targetUserId ? { targetUserId } : {}),
+      limit: '100',
+    });
     return handleApiResponse(response);
   }
 }

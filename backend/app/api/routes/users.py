@@ -6,15 +6,25 @@ from datetime import datetime, timezone
 from typing import Any, Dict, Iterable, List, Optional
 from uuid import uuid4
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 from sqlalchemy import func, or_, select
 from sqlalchemy.exc import IntegrityError
 
 from app.core.response import success
 from app.core.security import get_password_hash, require_roles
 from app.core.password_policy import validate_password
+from app.core.user_policy import (
+    DEFAULT_ACCESS_LEVELS,
+    DEFAULT_SYSTEM_ROLES,
+    ROLE_PROFILES,
+    canonical_role,
+    derive_internal_role,
+    normalize_system_access,
+    role_lookup_items,
+)
 from app.deps import DbSession
 from app.models.user import User
+from app.models.user_audit_log import UserAuditLog
 from app.schemas.user import (
     QuickActionPayload,
     UserCreate,
@@ -26,62 +36,12 @@ from app.schemas.user import (
 # دسترسی: لیست و مشاهده برای SUPER_ADMIN و COMMANDER؛ ایجاد/ویرایش/حذف فقط SUPER_ADMIN
 router = APIRouter(prefix="/users", tags=["users"])
 
-# Canonical UI roles for user management filters/forms.
-# Keep these visible even if no user currently has one of them.
-DEFAULT_SYSTEM_ROLES = ["مدیر سیستم", "فرمانده", "اپراتور", "ناظر مهمان"]
-
-# Canonical access levels for user management.
-# These are always exposed to the UI even if no user currently has them.
-DEFAULT_ACCESS_LEVELS = [
-    "سطح 1 - دسترسی کامل",
-    "سطح 2 - دسترسی عملیاتی",
-    "سطح 3 - دسترسی محدود",
-    "سطح 4 - دسترسی مهمان",
-]
-
-ROLE_PROFILES: Dict[str, Dict[str, Any]] = {
-    "مدیر سیستم": {
-        "internalRole": "SUPER_ADMIN",
-        "accessLevel": "سطح 1 - دسترسی کامل",
-        "permissions": ["مدیریت کاربران", "مدیریت سناریوها", "مدیریت منابع", "تنظیمات سامانه"],
-    },
-    "فرمانده": {
-        "internalRole": "COMMANDER",
-        "accessLevel": "سطح 2 - دسترسی عملیاتی",
-        "permissions": ["مشاهده کاربران", "مدیریت سناریوها", "مدیریت منابع", "مدیریت داده"],
-    },
-    "اپراتور": {
-        "internalRole": "OPERATOR",
-        "accessLevel": "سطح 3 - دسترسی محدود",
-        "permissions": ["مشاهده داشبورد", "مشاهده سناریوها", "مدیریت منابع"],
-    },
-    "ناظر مهمان": {
-        "internalRole": "VIEWER",
-        "accessLevel": "سطح 4 - دسترسی مهمان",
-        "permissions": ["مشاهده داشبورد", "مشاهده سناریوها", "مشاهده منابع"],
-    },
-}
-
-ROLE_ALIASES = {
-    "سوپر ادمین": "مدیر سیستم",
-    "مهمان": "ناظر مهمان",
-}
 ALLOWED_AVATARS = {f"avatar-{index}" for index in range(1, 13)}
 
 
-def _canonical_role(role: Optional[str]) -> str:
-    canonical = ROLE_ALIASES.get((role or "").strip(), (role or "").strip())
-    return canonical if canonical in ROLE_PROFILES else "ناظر مهمان"
-
-
-def _normalize_system_access(system_info: Dict[str, Any]) -> Dict[str, Any]:
-    normalized = dict(system_info)
-    role = _canonical_role(normalized.get("role"))
-    profile = ROLE_PROFILES[role]
-    normalized["role"] = role
-    normalized["accessLevel"] = profile["accessLevel"]
-    normalized["permissions"] = list(profile["permissions"])
-    return normalized
+_canonical_role = canonical_role
+_normalize_system_access = normalize_system_access
+_derive_internal_roles = derive_internal_role
 
 
 def _validate_avatar(personal_info: Dict[str, Any]) -> None:
@@ -142,11 +102,11 @@ def _serialize_user(user: User) -> Dict[str, Any]:
     system_info.setdefault("permissions", [])
     system_info.setdefault("loginCount", 0)
     
-    personal_info = user.personal_info or {}
+    personal_info = dict(user.personal_info or {})
     personal_info.setdefault("fullName", "نامشخص")
     personal_info.setdefault("nationality", "نامشخص")
     
-    contact_info = user.contact_info or {}
+    contact_info = dict(user.contact_info or {})
     contact_info.setdefault("mobile", [])
 
     return {
@@ -158,6 +118,8 @@ def _serialize_user(user: User) -> Dict[str, Any]:
         "professionalInfo": user.professional_info or {},
         "systemInfo": system_info,
         "isActive": user.is_active,
+        "version": user.version,
+        "deletedAt": user.deleted_at.isoformat() if user.deleted_at else None,
         "createdAt": user.created_at.isoformat() if user.created_at else None,
         "updatedAt": user.updated_at.isoformat() if user.updated_at else None,
     }
@@ -178,13 +140,10 @@ async def _ensure_unique(db: DbSession, username: str, user_code: str, exclude_u
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="نام کاربری یا کد کاربری تکراری است")
 
 
-def _derive_internal_roles(system_role: Optional[str]) -> str:
-    return str(ROLE_PROFILES[_canonical_role(system_role)]["internalRole"])
-
-
 async def _active_admin_count(db: DbSession, exclude_user_id: Optional[str] = None) -> int:
     stmt = select(func.count()).select_from(User).where(
         User.is_active.is_(True),
+        User.deleted_at.is_(None),
         User.roles.like("%SUPER_ADMIN%"),
     )
     if exclude_user_id:
@@ -222,6 +181,42 @@ async def _protect_admin_continuity(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="حداقل یک مدیر سیستم فعال باید در سامانه باقی بماند",
         )
+
+
+def _assert_version(user: User, expected_version: int) -> None:
+    if user.version != expected_version:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="اطلاعات کاربر توسط عملیات دیگری تغییر کرده است؛ صفحه را تازه‌سازی کنید",
+        )
+
+
+def _request_ip(request: Request) -> Optional[str]:
+    return request.client.host if request.client else None
+
+
+def _add_audit_log(
+    db: DbSession,
+    request: Request,
+    actor: dict[str, Any],
+    user: User,
+    action: str,
+    *,
+    before: Optional[Dict[str, Any]],
+    after: Optional[Dict[str, Any]],
+) -> None:
+    db.add(
+        UserAuditLog(
+            target_user_id=user.id,
+            actor_user_id=actor.get("user_id"),
+            actor_username=actor.get("username"),
+            action=action,
+            before_state=before,
+            after_state=after,
+            client_ip=_request_ip(request),
+            request_id=getattr(request.state, "request_id", None),
+        )
+    )
 
 
 def _filters(
@@ -291,7 +286,10 @@ async def list_users(
     page: int = Query(default=1, ge=1),
     pageSize: int = Query(default=10, ge=1, le=100),
 ) -> dict[str, Any]:
-    conditions = _filters(search, role, accessLevel, status, isActive, nationality, gender)
+    conditions = [
+        User.deleted_at.is_(None),
+        *_filters(search, role, accessLevel, status, isActive, nationality, gender),
+    ]
     stmt = (
         select(User)
         .where(*conditions)
@@ -305,33 +303,81 @@ async def list_users(
     count_stmt = select(func.count()).select_from(User).where(*conditions)
     total = (await db.execute(count_stmt)).scalar_one()
 
-    roles_stmt = select(func.distinct(User.system_info["role"].astext))
-    access_stmt = select(func.distinct(User.system_info["accessLevel"].astext))
+    access_stmt = select(func.distinct(User.system_info["accessLevel"].astext)).where(User.deleted_at.is_(None))
 
-    role_values = (await db.execute(roles_stmt)).scalars().all()
-    role_values = [*DEFAULT_SYSTEM_ROLES, *[v for v in role_values if v and v not in DEFAULT_SYSTEM_ROLES]]
     access_values = (await db.execute(access_stmt)).scalars().all()
     access_values = [*DEFAULT_ACCESS_LEVELS, *[v for v in access_values if v and v not in DEFAULT_ACCESS_LEVELS]]
 
     payload = {
         "items": [_serialize_user(user) for user in users],
         "total": total,
-        "roles": _build_lookup(role_values),
+        "roles": role_lookup_items(),
         "accessLevels": _build_lookup(access_values),
     }
     return success(payload)
 
 
+@router.get("/policy", response_model=dict, dependencies=[Depends(require_roles("SUPER_ADMIN", "COMMANDER"))])
+async def get_user_policy() -> dict[str, Any]:
+    return success({"roles": role_lookup_items(), "accessLevels": DEFAULT_ACCESS_LEVELS})
+
+
+@router.get("/archived", response_model=dict)
+async def list_archived_users(
+    db: DbSession,
+    actor: dict = Depends(require_roles("SUPER_ADMIN")),
+) -> dict[str, Any]:
+    result = await db.execute(
+        select(User).where(User.deleted_at.is_not(None)).order_by(User.deleted_at.desc())
+    )
+    return success([_serialize_user(user) for user in result.scalars().all()])
+
+
+@router.get("/audit-logs", response_model=dict)
+async def list_user_audit_logs(
+    db: DbSession,
+    targetUserId: Optional[str] = Query(default=None),
+    limit: int = Query(default=100, ge=1, le=500),
+    actor: dict = Depends(require_roles("SUPER_ADMIN")),
+) -> dict[str, Any]:
+    stmt = select(UserAuditLog)
+    if targetUserId:
+        stmt = stmt.where(UserAuditLog.target_user_id == targetUserId)
+    logs = (await db.execute(stmt.order_by(UserAuditLog.created_at.desc()).limit(limit))).scalars().all()
+    return success([
+        {
+            "id": item.id,
+            "targetUserId": item.target_user_id,
+            "actorUserId": item.actor_user_id,
+            "actorUsername": item.actor_username,
+            "action": item.action,
+            "before": item.before_state,
+            "after": item.after_state,
+            "clientIp": item.client_ip,
+            "requestId": item.request_id,
+            "createdAt": item.created_at.isoformat(),
+        }
+        for item in logs
+    ])
+
+
 @router.get("/{user_id}", response_model=dict, dependencies=[Depends(require_roles("SUPER_ADMIN", "COMMANDER"))])
 async def get_user(user_id: str, db: DbSession) -> dict[str, Any]:
-    user = await db.get(User, user_id)
+    user = (
+        await db.execute(select(User).where(User.id == user_id, User.deleted_at.is_(None)))
+    ).scalar_one_or_none()
     if not user:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="کاربر یافت نشد")
     return success(_serialize_user(user))
 
 
-@router.post("", status_code=status.HTTP_201_CREATED, response_model=dict, dependencies=[Depends(require_roles("SUPER_ADMIN"))])
-async def create_user(payload: UserCreate, db: DbSession) -> dict[str, Any]:
+@router.post("", status_code=status.HTTP_201_CREATED, response_model=dict)
+async def create_user(
+    payload: UserCreate,
+    db: DbSession,
+    request: Request,
+    actor: dict = Depends(require_roles("SUPER_ADMIN")),
+) -> dict[str, Any]:
     nested = _prepare_nested_payload(payload)
     username = payload.username or _generate_username(nested["personal_info"], payload.userCode)
     user_code = payload.userCode or _generate_user_code()
@@ -355,10 +401,22 @@ async def create_user(payload: UserCreate, db: DbSession) -> dict[str, Any]:
         professional_info=nested["professional_info"],
         system_info=nested["system_info"],
         is_active=payload.isActive,
+        token_version=0,
+        version=1,
     )
 
     db.add(user)
     try:
+        await db.flush()
+        _add_audit_log(
+            db,
+            request,
+            actor,
+            user,
+            "user_created",
+            before=None,
+            after=_serialize_user(user),
+        )
         await db.commit()
     except IntegrityError as exc:
         await db.rollback()
@@ -380,13 +438,23 @@ async def update_user(
     user_id: str,
     payload: UserUpdate,
     db: DbSession,
+    request: Request,
     actor: dict = Depends(require_roles("SUPER_ADMIN")),
 ) -> dict[str, Any]:
-    user = await db.get(User, user_id)
+    user = (
+        await db.execute(
+            select(User)
+            .where(User.id == user_id, User.deleted_at.is_(None))
+            .with_for_update()
+        )
+    ).scalar_one_or_none()
     if not user:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="کاربر یافت نشد")
 
     data = payload.model_dump(exclude_unset=True)
+    expected_version = int(data.pop("expectedVersion"))
+    _assert_version(user, expected_version)
+    before = _serialize_user(user)
     system_updates = dict(data.get("systemInfo") or {})
     await _protect_admin_continuity(
         db,
@@ -411,6 +479,7 @@ async def update_user(
     if "professionalInfo" in data and data["professionalInfo"]:
         user.professional_info = {**(user.professional_info or {}), **data["professionalInfo"]}
 
+    revoke_sessions = data.get("isActive") is False
     if system_updates:
         new_password = system_updates.pop("password", None)
         if new_password:
@@ -419,13 +488,29 @@ async def update_user(
                 raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=error_msg)
             user.password_hash = get_password_hash(new_password)
             system_updates["passwordLastChanged"] = datetime.now(timezone.utc).isoformat()
+            revoke_sessions = True
+        previous_role = (user.system_info or {}).get("role")
         user.system_info = _normalize_system_access({**(user.system_info or {}), **system_updates})
         user.roles = _derive_internal_roles(user.system_info.get("role"))
+        revoke_sessions = revoke_sessions or user.system_info.get("role") != previous_role
 
     if data.get("isActive") is not None:
+        revoke_sessions = revoke_sessions or user.is_active != data["isActive"]
         user.is_active = data["isActive"]
 
+    if revoke_sessions:
+        user.token_version += 1
+    user.version += 1
     user.updated_at = datetime.now(timezone.utc)
+    _add_audit_log(
+        db,
+        request,
+        actor,
+        user,
+        "user_updated",
+        before=before,
+        after=_serialize_user(user),
+    )
     await db.commit()
     await db.refresh(user)
     return success(_serialize_user(user))
@@ -435,20 +520,81 @@ async def update_user(
 async def delete_user(
     user_id: str,
     db: DbSession,
+    request: Request,
+    expectedVersion: int = Query(..., ge=1),
     actor: dict = Depends(require_roles("SUPER_ADMIN")),
 ) -> dict[str, Any]:
-    user = await db.get(User, user_id)
+    user = (
+        await db.execute(
+            select(User)
+            .where(User.id == user_id, User.deleted_at.is_(None))
+            .with_for_update()
+        )
+    ).scalar_one_or_none()
     if not user:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="کاربر یافت نشد")
+    _assert_version(user, expectedVersion)
+    before = _serialize_user(user)
     await _protect_admin_continuity(
         db,
         user,
         actor_id=actor.get("user_id"),
         deleting=True,
     )
-    await db.delete(user)
+    user.deleted_at = datetime.now(timezone.utc)
+    user.is_active = False
+    user.token_version += 1
+    user.version += 1
+    user.updated_at = datetime.now(timezone.utc)
+    _add_audit_log(
+        db,
+        request,
+        actor,
+        user,
+        "user_archived",
+        before=before,
+        after=_serialize_user(user),
+    )
     await db.commit()
-    return success({"id": user_id}, message="کاربر حذف شد")
+    return success({"id": user_id, "version": user.version}, message="کاربر به آرشیو منتقل شد")
+
+
+@router.post("/{user_id}/restore", response_model=dict)
+async def restore_user(
+    user_id: str,
+    db: DbSession,
+    request: Request,
+    expectedVersion: int = Query(..., ge=1),
+    actor: dict = Depends(require_roles("SUPER_ADMIN")),
+) -> dict[str, Any]:
+    user = (
+        await db.execute(
+            select(User)
+            .where(User.id == user_id, User.deleted_at.is_not(None))
+            .with_for_update()
+        )
+    ).scalar_one_or_none()
+    if not user:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="کاربر آرشیوشده یافت نشد")
+    _assert_version(user, expectedVersion)
+    before = _serialize_user(user)
+    user.deleted_at = None
+    user.is_active = True
+    user.token_version += 1
+    user.version += 1
+    user.updated_at = datetime.now(timezone.utc)
+    _add_audit_log(
+        db,
+        request,
+        actor,
+        user,
+        "user_restored",
+        before=before,
+        after=_serialize_user(user),
+    )
+    await db.commit()
+    await db.refresh(user)
+    return success(_serialize_user(user), message="کاربر از آرشیو بازیابی شد")
 
 
 @router.post("/{user_id}/actions", response_model=dict)
@@ -456,11 +602,22 @@ async def perform_quick_action(
     user_id: str,
     payload: QuickActionPayload,
     db: DbSession,
+    request: Request,
     actor: dict = Depends(require_roles("SUPER_ADMIN")),
 ) -> dict[str, Any]:
-    user = await db.get(User, user_id)
+    user = (
+        await db.execute(
+            select(User)
+            .where(User.id == user_id, User.deleted_at.is_(None))
+            .with_for_update()
+        )
+    ).scalar_one_or_none()
     if not user:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="کاربر یافت نشد")
+    if payload.userId != user_id:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="شناسه کاربر در درخواست ناسازگار است")
+    _assert_version(user, payload.expectedVersion)
+    before = _serialize_user(user)
 
     action = payload.action
     data = payload.data or {}
@@ -508,7 +665,18 @@ async def perform_quick_action(
     else:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="نوع عملیات پشتیبانی نمی‌شود")
 
+    user.token_version += 1
+    user.version += 1
     user.updated_at = datetime.now(timezone.utc)
+    _add_audit_log(
+        db,
+        request,
+        actor,
+        user,
+        f"quick_action_{action}",
+        before=before,
+        after=_serialize_user(user),
+    )
     await db.commit()
     await db.refresh(user)
     return success(_serialize_user(user))

@@ -13,6 +13,7 @@ from app.core.response import success
 from app.deps import DbSession
 from sqlalchemy import select
 from app.models.user import User
+from app.models.user_audit_log import UserAuditLog
 from app.schemas.auth import AvatarUpdateRequest, Token, LoginRequest
 
 router = APIRouter(prefix="/auth", tags=["auth"])
@@ -47,13 +48,24 @@ async def _check_account_lockout(user: User) -> None:
             )
 
 
-async def _handle_failed_login(db: DbSession, user: Optional[User], username: str, client_ip: str) -> None:
+async def _handle_failed_login(
+    db: DbSession,
+    user: Optional[User],
+    username: str,
+    client_ip: str,
+    request: Request,
+) -> None:
     """Handle failed login attempt"""
     now = datetime.now(timezone.utc)
     
     if user:
+        before = {
+            "failedLoginCount": user.failed_login_count,
+            "lockedUntil": user.locked_until.isoformat() if user.locked_until else None,
+        }
         user.failed_login_count += 1
         user.last_login_attempt = now
+        user.version += 1
         
         # Lock account if max attempts reached
         if user.failed_login_count >= settings.MAX_LOGIN_ATTEMPTS:
@@ -70,23 +82,51 @@ async def _handle_failed_login(db: DbSession, user: Optional[User], username: st
                 f"{remaining_attempts} attempts remaining before lockout."
             )
         
+        db.add(
+            UserAuditLog(
+                target_user_id=user.id,
+                actor_username=username,
+                action="account_locked" if user.locked_until else "login_failed",
+                before_state=before,
+                after_state={
+                    "failedLoginCount": user.failed_login_count,
+                    "lockedUntil": user.locked_until.isoformat() if user.locked_until else None,
+                },
+                client_ip=client_ip,
+                request_id=getattr(request.state, "request_id", None),
+            )
+        )
         await db.commit()
     else:
         # User doesn't exist - log but don't reveal this
         logger.warning(f"Failed login attempt for non-existent user: {username} from {client_ip}")
 
 
-async def _handle_successful_login(db: DbSession, user: User, client_ip: str) -> None:
+async def _handle_successful_login(db: DbSession, user: User, client_ip: str, request: Request) -> None:
     """Handle successful login - reset failed attempts"""
     now = datetime.now(timezone.utc)
     system_info = dict(user.system_info or {})
     system_info["lastLogin"] = now.isoformat()
     system_info["loginCount"] = int(system_info.get("loginCount") or 0) + 1
+    previous_login_count = int((user.system_info or {}).get("loginCount") or 0)
     user.system_info = system_info
     user.failed_login_count = 0
     user.locked_until = None
     user.last_login_attempt = now
     user.updated_at = now
+    user.version += 1
+    db.add(
+        UserAuditLog(
+            target_user_id=user.id,
+            actor_user_id=user.id,
+            actor_username=user.username,
+            action="login_succeeded",
+            before_state={"loginCount": previous_login_count},
+            after_state={"loginCount": system_info["loginCount"], "lastLogin": system_info["lastLogin"]},
+            client_ip=client_ip,
+            request_id=getattr(request.state, "request_id", None),
+        )
+    )
     await db.commit()
     logger.info(f"Successful login for {user.username} from {client_ip}. Account state updated.")
 
@@ -116,7 +156,13 @@ async def _authenticate_user(
         )
     
     # Get user from database
-    result = await db.execute(select(User).where(User.username == username, User.is_active == True))
+    result = await db.execute(
+        select(User).where(
+            User.username == username,
+            User.is_active.is_(True),
+            User.deleted_at.is_(None),
+        )
+    )
     user = result.scalar_one_or_none()
     
     # Check account lockout
@@ -125,14 +171,14 @@ async def _authenticate_user(
     
     # Verify password
     if not user or not verify_password(password, user.password_hash):
-        await _handle_failed_login(db, user, username, client_ip)
+        await _handle_failed_login(db, user, username, client_ip, request)
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="نام کاربری یا رمز عبور اشتباه است"
         )
     
     # Successful login
-    await _handle_successful_login(db, user, client_ip)
+    await _handle_successful_login(db, user, client_ip, request)
     logger.info(f"Successful login for user: {user.username} from {client_ip}")
     
     return user
@@ -189,7 +235,8 @@ async def login(
     logger.info(f"Login successful - User: {user.username}, Roles from DB: '{roles_str}', Parsed: {roles}")
     access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = create_access_token(
-        data={"sub": user.username, "roles": roles, "uid": user.id}, expires_delta=access_token_expires
+        data={"sub": user.username, "roles": roles, "uid": user.id, "ver": user.token_version},
+        expires_delta=access_token_expires,
     )
     return Token(access_token=access_token)
 
@@ -241,7 +288,8 @@ async def login_json(payload: LoginRequest, db: DbSession, request: Request):
     logger.info(f"Login successful - User: {user.username}, Roles from DB: '{roles_str}', Parsed: {roles}")
     access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = create_access_token(
-        data={"sub": user.username, "roles": roles, "uid": user.id}, expires_delta=access_token_expires
+        data={"sub": user.username, "roles": roles, "uid": user.id, "ver": user.token_version},
+        expires_delta=access_token_expires,
     )
     return Token(access_token=access_token)
 
@@ -297,6 +345,7 @@ async def get_current_user_info(
 async def update_current_user_avatar(
     payload: AvatarUpdateRequest,
     db: DbSession,
+    request: Request,
     response: Response,
     current_user: dict = Depends(get_current_user),
 ):
@@ -312,10 +361,11 @@ async def update_current_user_avatar(
         if user_id
         else select(User).where(User.username == current_user.get("username"))
     )
-    user = (await db.execute(stmt.limit(1))).scalar_one_or_none()
+    user = (await db.execute(stmt.limit(1).with_for_update())).scalar_one_or_none()
     if not user:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="کاربر یافت نشد")
 
+    before_avatar = (user.personal_info or {}).get("avatar")
     personal_info = dict(user.personal_info or {})
     if payload.avatar is None:
         personal_info.pop("avatar", None)
@@ -323,8 +373,21 @@ async def update_current_user_avatar(
         personal_info["avatar"] = payload.avatar
     user.personal_info = personal_info
     user.updated_at = datetime.now(timezone.utc)
+    user.version += 1
+    db.add(
+        UserAuditLog(
+            target_user_id=user.id,
+            actor_user_id=user.id,
+            actor_username=user.username,
+            action="avatar_updated",
+            before_state={"avatar": before_avatar},
+            after_state={"avatar": payload.avatar},
+            client_ip=_get_client_ip(request),
+            request_id=getattr(request.state, "request_id", None),
+        )
+    )
     await db.commit()
 
     response.headers["Cache-Control"] = "no-store"
     response.headers["Vary"] = "Authorization"
-    return success({"avatar": payload.avatar})
+    return success({"avatar": payload.avatar, "version": user.version})

@@ -33,6 +33,8 @@ dist-ssr
 # Build outputs
 build/
 coverage/
+test-results/
+playwright-report/
 
 # Cache
 .cache/
@@ -93,4 +95,4 @@ ehthumbs.db
 .perf/
 
 # Bundle analyzer
-bundle-analyzer-report.html 
+bundle-analyzer-report.html

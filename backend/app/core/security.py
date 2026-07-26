@@ -6,8 +6,12 @@ from fastapi.security import OAuth2PasswordBearer
 import jwt
 from jwt import InvalidTokenError
 from passlib.context import CryptContext
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
+from app.db.session import get_session
+from app.models.user import User
 import logging
 
 logger = logging.getLogger(__name__)
@@ -35,7 +39,10 @@ def decode_access_token(token: str) -> dict[str, Any]:
     return jwt.decode(token, settings.JWT_SECRET, algorithms=[settings.JWT_ALG])
 
 
-async def get_current_user(token: str = Depends(oauth2_scheme)) -> dict[str, Any]:
+async def get_current_user(
+    token: str = Depends(oauth2_scheme),
+    db: AsyncSession = Depends(get_session),
+) -> dict[str, Any]:
     # در حالت غیرفعال بودن احراز هویت، کاربر فرضی admin با تمام نقش‌ها برمی‌گردد.
     if settings.DISABLE_AUTH:
         return {
@@ -54,23 +61,31 @@ async def get_current_user(token: str = Depends(oauth2_scheme)) -> dict[str, Any
     try:
         payload = decode_access_token(token)
         username: str | None = payload.get("sub")
-        roles_raw = payload.get("roles", [])
-        
-        # Handle both list and string formats
-        if isinstance(roles_raw, str):
-            # If roles is a string, split by comma
-            roles = [r.strip() for r in roles_raw.split(",") if r.strip()]
-        elif isinstance(roles_raw, list):
-            roles = [str(r).strip() for r in roles_raw if r]
-        else:
-            roles = []
-            
-        if username is None:
-            raise credentials_exception
-        # Logging برای debugging
-        logger.info(f"JWT decoded - User: {username}, Roles from token (raw): {roles_raw}, Parsed: {roles}")
         user_id = payload.get("uid")
-        return {"username": username, "roles": roles, "user_id": user_id}
+        token_version = payload.get("ver")
+        if username is None or user_id is None or token_version is None:
+            raise credentials_exception
+
+        result = await db.execute(
+            select(User).where(
+                User.id == str(user_id),
+                User.username == username,
+                User.is_active.is_(True),
+                User.deleted_at.is_(None),
+            )
+        )
+        db_user = result.scalar_one_or_none()
+        if not db_user or int(token_version) != db_user.token_version:
+            raise credentials_exception
+
+        roles = [role.strip() for role in (db_user.roles or "").split(",") if role.strip()]
+        logger.info("Authenticated user %s with current database roles %s", username, roles)
+        return {
+            "username": db_user.username,
+            "roles": roles,
+            "user_id": db_user.id,
+            "token_version": db_user.token_version,
+        }
     except InvalidTokenError:
         raise credentials_exception
 

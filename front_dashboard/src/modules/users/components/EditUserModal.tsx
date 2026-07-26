@@ -113,7 +113,7 @@ const EditUserModal: React.FC<EditUserModalProps> = ({
   };
 
   const handleRoleChange = (role: string) => {
-    const profile = getRoleProfile(role);
+    const profile = getRoleProfile(role, roles);
     handleChange('systemInfo', {
       ...(formData.systemInfo || user.systemInfo),
       role: profile.role,

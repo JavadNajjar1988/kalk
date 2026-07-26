@@ -36,12 +36,13 @@ import {
   Clear as ClearIcon,
   TableView as TableViewIcon,
   ViewModule as CardViewIcon,
+  AdminPanelSettings as GovernanceIcon,
 } from '@mui/icons-material';
 import { useAppDispatch, useAppSelector } from '@/store';
 import { fetchUsers, setFilters, clearFilters, setPagination, clearError, createUser, setViewMode, updateUser, deleteUser, performQuickAction } from '../store/usersSlice';
 import type { User, UserFilters, QuickActionPayload } from '../types';
 import { useTranslation } from '@/hooks/useTranslation';
-import { UsersTableView, UsersCardView, QuickActionsModal, UserDetailsModal, EditUserModal, DeleteConfirmationModal } from '../components';
+import { UsersTableView, UsersCardView, QuickActionsModal, UserDetailsModal, EditUserModal, DeleteConfirmationModal, UserGovernanceDialog } from '../components';
 import {
   buildResourcesFormDialogSx,
   resourcesDialogTitleSx,
@@ -118,6 +119,7 @@ const UsersListPage: React.FC = () => {
   const [showViewModal, setShowViewModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [showGovernanceModal, setShowGovernanceModal] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [tempPasswordInfo, setTempPasswordInfo] = useState<{
     username: string;
@@ -214,7 +216,7 @@ const UsersListPage: React.FC = () => {
             ? { occupation: 'نامشخص' }
             : { businessType: 'کسب و کار آزاد', expertise: 'عمومی' };
 
-      const userData: Omit<User, 'id' | 'createdAt' | 'updatedAt'> = {
+      const userData: Omit<User, 'id' | 'createdAt' | 'updatedAt' | 'version' | 'deletedAt'> = {
         userCode,
         personalInfo: {
           fullName: newUserForm.fullName || 'کاربر جدید',
@@ -235,7 +237,7 @@ const UsersListPage: React.FC = () => {
         systemInfo: {
           role: newUserForm.role,
           accessLevel: newUserForm.accessLevel,
-          permissions: getRoleProfile(newUserForm.role).permissions,
+          permissions: getRoleProfile(newUserForm.role, roles).permissions,
           loginCount: 0,
         },
         isActive: true,
@@ -373,6 +375,14 @@ const UsersListPage: React.FC = () => {
             </ToggleButton>
           </ToggleButtonGroup>
           
+          {canManageUsers && <Button
+            variant="outlined"
+            startIcon={<GovernanceIcon />}
+            onClick={() => setShowGovernanceModal(true)}
+          >
+            حاکمیت کاربران
+          </Button>}
+
           {canManageUsers && <Button
             variant="contained"
             startIcon={<AddIcon />}
@@ -579,6 +589,12 @@ const UsersListPage: React.FC = () => {
         <AddIcon />
       </Fab>}
 
+      <UserGovernanceDialog
+        open={showGovernanceModal && canManageUsers}
+        onClose={() => setShowGovernanceModal(false)}
+        onRestored={() => void dispatch(fetchUsers())}
+      />
+
       <Dialog
         open={showAddModal && canManageUsers}
         onClose={() => setShowAddModal(false)}
@@ -750,7 +766,7 @@ const UsersListPage: React.FC = () => {
                       label="نقش سیستمی"
                       onChange={(e) =>
                         setNewUserForm((prev) => {
-                          const profile = getRoleProfile(e.target.value as string);
+                          const profile = getRoleProfile(e.target.value as string, roles);
                           return {
                             ...prev,
                             role: profile.role,

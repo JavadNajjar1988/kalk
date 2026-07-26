@@ -7,22 +7,24 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -p tsconfig.release.json && vite build",
-    "lint": "eslint src --ext .js,.jsx,.ts,.tsx --report-unused-disable-directives",
+    "lint": "tsc --noEmit -p tsconfig.release.json",
     "preview": "vite preview",
     "type-check": "tsc --noEmit -p tsconfig.release.json",
-    "clean": "rimraf dist",
+    "clean": "node -e \"require('node:fs').rmSync('dist',{recursive:true,force:true})\"",
     "prebuild": "npm run clean",
     "analyze": "npm run build && npx vite-bundle-analyzer dist",
     "format": "prettier --write \"src/**/*.{ts,tsx,js,jsx,json,css,md}\"",
     "format:check": "prettier --check \"src/**/*.{ts,tsx,js,jsx,json,css,md}\"",
-    "security-check": "npm audit --audit-level moderate",
+    "security-check": "npm audit --audit-level high",
+    "security-report": "npm audit --audit-level moderate",
     "deps-check": "npm outdated",
     "test": "vitest",
     "test:ui": "vitest --ui",
     "test:run": "vitest run src/utils/__tests__/numberUtils.test.ts src/components/scenarios/scenarioDialogAutosave.test.ts src/modules/users/utils/userPresentation.test.ts",
     "test:all": "vitest run",
     "test:coverage": "vitest run --coverage",
-    "test:watch": "vitest --watch"
+    "test:watch": "vitest --watch",
+    "test:e2e:users": "playwright test -c playwright.users.config.ts"
   },
   "dependencies": {
     "@dagrejs/dagre": "1.1.5",
@@ -74,7 +76,7 @@
     "react-i18next": "^15.6.0",
     "react-multi-date-picker": "4.5.2",
     "react-redux": "^8.1.3",
-    "react-router-dom": "^6.20.1",
+    "react-router-dom": "6.30.1",
     "react-transition-group": "4.4.5",
     "react-window": "1.8.11",
     "react-window-infinite-loader": "^1.0.9",
@@ -84,8 +86,7 @@
     "three": "0.181.2"
   },
   "devDependencies": {
-    "@eslint/config-array": "^0.20.1",
-    "@eslint/object-schema": "^2.1.6",
+    "@playwright/test": "1.58.2",
     "@testing-library/jest-dom": "6.6.4",
     "@testing-library/react": "16.3.0",
     "@testing-library/user-event": "14.6.1",
@@ -95,20 +96,13 @@
     "@types/react-dom": "^18.2.15",
     "@types/react-window": "^1.8.8",
     "@types/stylis": "^4.2.7",
-    "@typescript-eslint/eslint-plugin": "8.58.1",
-    "@typescript-eslint/parser": "8.58.1",
     "@vitejs/plugin-react": "^4.1.1",
     "@xmldom/xmldom": "0.8.13",
     "autoprefixer": "^10.4.18",
-    "eslint": "^8.57.0",
-    "eslint-plugin-react-hooks": "^4.6.0",
-    "eslint-plugin-react-refresh": "^0.4.4",
-    "glob": "^11.0.3",
     "jsdom": "26.1.0",
     "lru-cache": "11.2.1",
     "postcss": "^8.4.35",
     "prettier": "^3.0.0",
-    "rimraf": "^6.0.1",
     "tailwindcss": "^3.4.1",
     "terser": "5.47.1",
     "typescript": "^5.2.2",
@@ -131,5 +125,8 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
+  },
+  "overrides": {
+    "@remix-run/router": "1.23.2"
   }
 }

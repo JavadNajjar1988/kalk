@@ -57,7 +57,7 @@ export const fetchUserById = createAsyncThunk<
 
 export const createUser = createAsyncThunk<
   { user: User; temporaryPassword?: string },
-  Omit<User, 'id' | 'createdAt' | 'updatedAt'> & { username?: string },
+  Omit<User, 'id' | 'createdAt' | 'updatedAt' | 'version' | 'deletedAt'> & { username?: string },
   { rejectValue: string }
 >('users/createUser', async (userData, { rejectWithValue }) => {
   try {
@@ -71,9 +71,12 @@ export const updateUser = createAsyncThunk<
   User,
   { id: string; userData: Partial<User> },
   { rejectValue: string }
->('users/updateUser', async ({ id, userData }, { rejectWithValue }) => {
+>('users/updateUser', async ({ id, userData }, { getState, rejectWithValue }) => {
   try {
-    return await userApiService.updateUser(id, userData);
+    const state = getState() as RootState;
+    const current = state.users.users.find((user) => user.id === id) || state.users.selectedUser;
+    if (!current || current.id !== id) throw new Error('نسخه فعلی کاربر در دسترس نیست؛ صفحه را تازه‌سازی کنید');
+    return await userApiService.updateUser(id, userData, current.version);
   } catch (error: any) {
     return rejectWithValue(error?.message || 'خطا در بروزرسانی کاربر');
   }
@@ -83,9 +86,12 @@ export const deleteUser = createAsyncThunk<
   string,
   string,
   { rejectValue: string }
->('users/deleteUser', async (id, { rejectWithValue }) => {
+>('users/deleteUser', async (id, { getState, rejectWithValue }) => {
   try {
-    await userApiService.deleteUser(id);
+    const state = getState() as RootState;
+    const current = state.users.users.find((user) => user.id === id) || state.users.selectedUser;
+    if (!current || current.id !== id) throw new Error('نسخه فعلی کاربر در دسترس نیست؛ صفحه را تازه‌سازی کنید');
+    await userApiService.deleteUser(id, current.version);
     return id;
   } catch (error: any) {
     return rejectWithValue(error?.message || 'خطا در حذف کاربر');
@@ -97,9 +103,12 @@ export const performQuickAction = createAsyncThunk<
   User,
   QuickActionPayload,
   { rejectValue: string }
->('users/performQuickAction', async (payload, { rejectWithValue }) => {
+>('users/performQuickAction', async (payload, { getState, rejectWithValue }) => {
   try {
-    return await userApiService.performQuickAction(payload.userId, payload);
+    const state = getState() as RootState;
+    const current = state.users.users.find((user) => user.id === payload.userId) || state.users.selectedUser;
+    if (!current || current.id !== payload.userId) throw new Error('نسخه فعلی کاربر در دسترس نیست؛ صفحه را تازه‌سازی کنید');
+    return await userApiService.performQuickAction(payload.userId, payload, current.version);
   } catch (error: any) {
     return rejectWithValue(error?.message || 'خطا در انجام عملیات');
   }

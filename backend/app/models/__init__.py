@@ -7,5 +7,6 @@ from .resource import Resource, ResourceMedia
 from .scenario_audit_log import ScenarioAuditLog
 from .scenario_intro_view import ScenarioIntroView
 from .user import User
+from .user_audit_log import UserAuditLog
 
 

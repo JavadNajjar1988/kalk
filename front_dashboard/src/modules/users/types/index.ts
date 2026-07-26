@@ -39,6 +39,8 @@ export interface User {
   };
   createdAt: string;
   updatedAt: string;
+  version: number;
+  deletedAt?: string | null;
   isActive: boolean;
 }
 
@@ -70,6 +72,7 @@ export interface Role {
   description?: string;
   accessLevel?: string;
   permissions?: string[];
+  internalRole?: string;
 }
 
 export interface AccessLevel {
