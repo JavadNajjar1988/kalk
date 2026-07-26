@@ -17,8 +17,6 @@ import {
   Groups as GroupsIcon,
   Map as MapIcon,
   Inventory as EquipmentIcon,
-  ExploreOff as AmmunitionIcon,
-  LocalShipping as LogisticsIcon,
   WorkspacePremium as RanksIcon,
 } from '@mui/icons-material';
 import { useLocation, useNavigate } from 'react-router-dom';
@@ -27,8 +25,6 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import {
   PersonnelTab,
   EquipmentTab,
-  AmmunitionTab,
-  LogisticsTab,
   RanksTab,
   MapsTab
 } from './resources';
@@ -120,10 +116,8 @@ const ResourcesPage: React.FC = () => {
     const tabMap: { [key: string]: number } = {
       'personnel': 0,
       'equipment': 1, 
-      'ammunition': 2,
-      'logistics': 3,
-      'ranks': 4,
-      'maps': 5
+      'ranks': 2,
+      'maps': 3
     };
     return tabMap[tab || 'personnel'] || 0;
   };
@@ -132,7 +126,7 @@ const ResourcesPage: React.FC = () => {
   
   // بروزرسانی URL وقتی تب تغییر میکند
   useEffect(() => {
-    const tabNames = ['personnel', 'equipment', 'ammunition', 'logistics', 'ranks', 'maps'];
+    const tabNames = ['personnel', 'equipment', 'ranks', 'maps'];
     const newURL = `${location.pathname}?tab=${tabNames[value]}`;
     navigate(newURL, { replace: true });
   }, [value, location.pathname, navigate]);
@@ -150,8 +144,6 @@ const ResourcesPage: React.FC = () => {
   const tabs = [
     { label: t('resources.tabs.personnel'), icon: <GroupsIcon /> },
     { label: t('resources.tabs.equipment'), icon: <EquipmentIcon /> },
-    { label: t('resources.tabs.ammunition'), icon: <AmmunitionIcon /> },
-    { label: t('resources.tabs.logistics'), icon: <LogisticsIcon /> },
     { label: t('resources.tabs.ranks'), icon: <RanksIcon /> },
     { label: t('resources.tabs.maps'), icon: <MapIcon /> },
   ];
@@ -252,15 +244,9 @@ const ResourcesPage: React.FC = () => {
               <EquipmentTab />
             </TabPanel>
             <TabPanel value={value} index={2}>
-              <AmmunitionTab />
-            </TabPanel>
-            <TabPanel value={value} index={3}>
-              <LogisticsTab />
-            </TabPanel>
-            <TabPanel value={value} index={4}>
               <RanksTab />
             </TabPanel>
-            <TabPanel value={value} index={5}>
+            <TabPanel value={value} index={3}>
               <MapsTab />
             </TabPanel>
           </Box>

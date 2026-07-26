@@ -57,14 +57,15 @@ export async function pasteTacticalTargets(services: TacticalServices) {
 export async function duplicateTacticalTargets(
   services: TacticalServices,
   targetIds: string[],
+  destinationLayerId?: string,
 ) {
   if (!targetIds.length) return;
 
   const store = requireTacticalStore(services);
   const keys = await store.collectKeys(targetIds, ["tags", "link", "style"]);
   const entries = await store.tuples(keys);
-  const defaultLayerId = await store.defaultLayerId();
-  const clonedTuples: [string, unknown][] = await clone(defaultLayerId, entries);
+  const targetLayerId = destinationLayerId ?? (await store.defaultLayerId());
+  const clonedTuples: [string, unknown][] = await clone(targetLayerId, entries);
   await store.insert(clonedTuples);
 
   const clonedIds = clonedTuples.map(([key]) => key).filter(isTacticalMapFeatureId);

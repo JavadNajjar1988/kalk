@@ -67,7 +67,7 @@ services:
     image: maptiler/tileserver-gl@sha256:3a9ccdb24820b6814c8119bcc8a4376c39867cb0ffe69d62919ef898b90c2427
     restart: unless-stopped
     ports:
-      - "8480:8080"
+      - "${TILESERVER_PORT:-8480}:8080"
     volumes:
       # مسیر محلی برای mbtiles کوچک (اختیاری)
       - ./backend/static/maps:/data

@@ -29,7 +29,14 @@ import {
 } from "./tacticalLayerItems";
 import { idle, type ItemState } from "@/types/draggables";
 
-type TacticalFeatureAction = "rename" | "moveUp" | "moveDown";
+type TacticalFeatureAction =
+  | "zoom"
+  | "pan"
+  | "rename"
+  | "moveUp"
+  | "moveDown"
+  | "delete"
+  | "duplicate";
 
 const props = defineProps<{
   feature: TacticalFeatureItem;
@@ -49,9 +56,13 @@ const emit = defineEmits<{
 }>();
 
 const featureMenuItems: MenuItemData<TacticalFeatureAction>[] = [
+  { label: "بزرگ‌نمایی به", action: "zoom" },
+  { label: "حرکت به", action: "pan" },
   { label: "تغییر نام", action: "rename" },
   { label: "حرکت به بالا", action: "moveUp" },
   { label: "حرکت به پایین", action: "moveDown" },
+  { label: "حذف", action: "delete" },
+  { label: "تکرار", action: "duplicate" },
 ];
 
 const elRef = ref<HTMLElement | null>(null);
