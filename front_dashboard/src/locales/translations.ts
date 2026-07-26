@@ -385,6 +385,7 @@ export const translations = {
       // منو
       menu: {
         viewDetails: 'مشاهده جزئیات',
+        changeStatus: 'تغییر وضعیت',
         edit: 'ویرایش',
         delete: 'حذف'
       },
@@ -471,6 +472,8 @@ export const translations = {
         createError: 'خطا در ایجاد سناریو',
         updateSuccess: 'سناریو با موفقیت به‌روزرسانی شد',
         updateError: 'خطا در به‌روزرسانی سناریو',
+        statusChangeSuccess: 'وضعیت سناریو با موفقیت تغییر کرد',
+        statusChangeError: 'خطا در تغییر وضعیت سناریو',
         deleteSuccess: 'سناریو با موفقیت حذف شد',
         deleteError: 'خطا در حذف سناریو',
         deleteDemoNotAllowed: 'حذف سناریوهای نمونه امکان‌پذیر نیست'
@@ -996,6 +999,7 @@ export const translations = {
         active: 'Active',
         paused: 'Paused',
         completed: 'Completed',
+        archived: 'Archived',
       },
       stats: {
         total: 'Total Scenarios',
@@ -1036,8 +1040,17 @@ export const translations = {
       },
       menu: {
         viewDetails: 'View Details',
+        changeStatus: 'Change status',
         edit: 'Edit',
         delete: 'Delete',
+      },
+      actions: {
+        archive: 'Archive',
+        restore: 'Restore',
+        archiveSuccess: 'Scenario archived',
+        archiveError: 'Error archiving scenario',
+        restoreSuccess: 'Scenario restored',
+        restoreError: 'Error restoring scenario',
       },
       deleteDialog: {
         title: 'Delete Scenario',
@@ -1078,6 +1091,8 @@ export const translations = {
         createError: 'Error creating scenario',
         updateSuccess: 'Scenario updated successfully',
         updateError: 'Error updating scenario',
+        statusChangeSuccess: 'Scenario status changed successfully',
+        statusChangeError: 'Error changing scenario status',
         deleteSuccess: 'Scenario deleted successfully',
         deleteError: 'Error deleting scenario',
         deleteDemoNotAllowed: 'Demo scenarios cannot be deleted',
@@ -1410,6 +1425,7 @@ export const translations = {
         active: 'نشط',
         paused: 'متوقف مؤقتاً',
         completed: 'مكتمل',
+        archived: 'مؤرشف',
       },
       stats: {
         total: 'إجمالي السيناريوهات',
@@ -1450,8 +1466,17 @@ export const translations = {
       },
       menu: {
         viewDetails: 'عرض التفاصيل',
+        changeStatus: 'تغيير الحالة',
         edit: 'تعديل',
         delete: 'حذف',
+      },
+      actions: {
+        archive: 'أرشفة',
+        restore: 'استعادة',
+        archiveSuccess: 'تمت أرشفة السيناريو',
+        archiveError: 'خطأ في أرشفة السيناريو',
+        restoreSuccess: 'تمت استعادة السيناريو',
+        restoreError: 'خطأ في استعادة السيناريو',
       },
       deleteDialog: {
         title: 'حذف السيناريو',
@@ -1465,6 +1490,8 @@ export const translations = {
         createError: 'خطأ في إنشاء السيناريو',
         updateSuccess: 'تم تحديث السيناريو بنجاح',
         updateError: 'خطأ في تحديث السيناريو',
+        statusChangeSuccess: 'تم تغيير حالة السيناريو بنجاح',
+        statusChangeError: 'خطأ في تغيير حالة السيناريو',
         deleteSuccess: 'تم حذف السيناريو بنجاح',
         deleteError: 'خطأ في حذف السيناريو',
         deleteDemoNotAllowed: 'لا يمكن حذف السيناريوهات التجريبية',

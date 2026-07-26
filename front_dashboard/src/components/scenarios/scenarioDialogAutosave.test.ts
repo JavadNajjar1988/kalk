@@ -30,7 +30,6 @@ describe('buildScenarioDialogPayload', () => {
       sides: [
         { name: 'Blue', standardIdentity: '3', symbolOptions: {}, units: [] },
       ],
-      weather: { sky: 'clear' },
       imageUrl: '/uploads/scenario.png',
     });
 
@@ -40,5 +39,6 @@ describe('buildScenarioDialogPayload', () => {
     expect(payload.image).toBe('/uploads/scenario.png');
     expect((payload.metadata as any).sides).toHaveLength(1);
     expect((payload.metadata as any).boundingBox).toEqual([1, 2, 3, 4]);
+    expect(payload.metadata).not.toHaveProperty('weather');
   });
 });

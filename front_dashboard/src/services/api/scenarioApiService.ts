@@ -17,7 +17,7 @@ export interface ScenarioFormData {
  * تبدیل داده‌های فرم داشبورد به یک سناریوی سازگار با ORBAT-mapper
  * این ساختار در فیلد `content` در بک‌اند ذخیره می‌شود تا مستقیماً توسط کالک‌نگار قابل لود باشد.
  */
-function transformFormToScenario(formData: ScenarioFormData): any {
+export function transformFormToScenario(formData: ScenarioFormData): any {
   const nowIso = new Date().toISOString();
 
   // شناسه موقت برای سناریو؛ شناسه نهایی از طرف بک‌اند (UUID) برمی‌گردد
@@ -33,7 +33,9 @@ function transformFormToScenario(formData: ScenarioFormData): any {
   let startTime: number;
   if (formData.startTime) {
     const date = new Date(formData.startTime);
-    startTime = isNaN(date.getTime()) ? new Date().setHours(12, 0, 0, 0) : date.getTime();
+    startTime = isNaN(date.getTime())
+      ? new Date().setHours(12, 0, 0, 0)
+      : date.getTime();
   } else {
     startTime = new Date().setHours(12, 0, 0, 0);
   }
@@ -71,14 +73,14 @@ function transformFormToScenario(formData: ScenarioFormData): any {
     symbologyStandard: symbologyStandard,
 
     // وضعیت و اهداف (هم در داشبورد و هم در کالک‌نگار به کار می‌آیند)
-    status: 'draft',
+    status: formData.status || 'draft',
     objectives: formData.objectives || [],
 
     // تصویر سناریو
     image: image,
 
-    // مجموعه‌های اصلی ORBAT – در ابتدا خالی هستند و در ادیتور نقشه پر می‌شوند
-    sides: [],
+    // آرایش اولیه انتخاب‌شده در فرم؛ در صورت انتخاب «افزودن بعداً» خالی است
+    sides: Array.isArray(metadata.sides) ? metadata.sides : [],
     events: [],
     // حداقل یک لایه خالی برای features
     layers: [{ id: defaultLayerId, name: 'Features', features: [] }],
@@ -120,7 +122,7 @@ function transformFormToScenario(formData: ScenarioFormData): any {
     simulationSpeed: 1.0,
     executionStatus: 'not_started',
     analysisResults: [],
-    tags: [],
+    tags: Array.isArray(metadata.tags) ? metadata.tags : [],
     metadata: {
       source: 'dashboard',
       // حفظ تصویر در metadata هم برای سازگاری
@@ -162,7 +164,12 @@ export class ScenarioApiService extends BaseApiClient {
   }
 
   private mapScenarioOutToEnhanced(apiItem: any): EnhancedScenario {
-    if (apiItem && typeof apiItem === 'object' && 'content' in apiItem && apiItem.content) {
+    if (
+      apiItem &&
+      typeof apiItem === 'object' &&
+      'content' in apiItem &&
+      apiItem.content
+    ) {
       const base = apiItem.content;
       return {
         ...base,
@@ -171,7 +178,8 @@ export class ScenarioApiService extends BaseApiClient {
         description: apiItem.description ?? base.description,
         // اضافه کردن image از apiItem یا base
         image: apiItem.image ?? base.image,
-        intro_video_url: apiItem.intro_video_url ?? (base as any).intro_video_url,
+        intro_video_url:
+          apiItem.intro_video_url ?? (base as any).intro_video_url,
         intro_title: apiItem.intro_title ?? (base as any).intro_title,
         intro_summary: apiItem.intro_summary ?? (base as any).intro_summary,
         archived_at: apiItem.archived_at ?? null,
@@ -186,13 +194,14 @@ export class ScenarioApiService extends BaseApiClient {
     return apiItem as EnhancedScenario;
   }
 
-
   // GET /api/scenarios
   async getScenarios(query?: ScenarioQuery): Promise<EnhancedScenario[]> {
     try {
       const response = await this.get<any[]>('/scenarios', query);
       const data = handleApiResponse(response);
-      return (Array.isArray(data) ? data : []).map((i) => this.mapScenarioOutToEnhanced(i));
+      return (Array.isArray(data) ? data : []).map(i =>
+        this.mapScenarioOutToEnhanced(i)
+      );
     } catch (error) {
       console.error('Failed to fetch scenarios:', error);
       throw error;
@@ -203,7 +212,7 @@ export class ScenarioApiService extends BaseApiClient {
   async getScenarioById(id: string): Promise<EnhancedScenario> {
     try {
       console.log(`ScenarioApiService: Fetching scenario ${id}`);
-      
+
       const response = await this.get<any>(`/scenarios/${id}`);
       const data = handleApiResponse(response);
       return this.mapScenarioOutToEnhanced(data);
@@ -228,9 +237,15 @@ export class ScenarioApiService extends BaseApiClient {
   }
 
   // PUT /api/scenarios/:id
-  async updateScenario(id: string, updates: Partial<EnhancedScenario>): Promise<EnhancedScenario> {
+  async updateScenario(
+    id: string,
+    updates: Partial<EnhancedScenario>
+  ): Promise<EnhancedScenario> {
     try {
-      const payload = this.buildScenarioPayload({ ...(updates as any), id } as EnhancedScenario);
+      const payload = this.buildScenarioPayload({
+        ...(updates as any),
+        id,
+      } as EnhancedScenario);
       const response = await this.put<any>(`/scenarios/${id}`, payload);
       const data = handleApiResponse(response);
       return this.mapScenarioOutToEnhanced(data);
@@ -241,9 +256,17 @@ export class ScenarioApiService extends BaseApiClient {
   }
 
   // PATCH /api/scenarios/:id (for partial updates)
-  async patchScenario(id: string, updates: Partial<EnhancedScenario>): Promise<EnhancedScenario> {
+  async patchScenario(
+    id: string,
+    updates: Partial<EnhancedScenario>
+  ): Promise<EnhancedScenario> {
     try {
-      const payload = { ...this.buildScenarioPayload({ ...(updates as any), id } as EnhancedScenario) };
+      const payload = {
+        ...this.buildScenarioPayload({
+          ...(updates as any),
+          id,
+        } as EnhancedScenario),
+      };
       const response = await this.patch<any>(`/scenarios/${id}`, payload);
       const data = handleApiResponse(response);
       return this.mapScenarioOutToEnhanced(data);
@@ -278,7 +301,10 @@ export class ScenarioApiService extends BaseApiClient {
   }
 
   // Create a full scenario on the server from a demo scenario definition
-  async duplicateDemoScenario(demoId: string, newName?: string): Promise<EnhancedScenario> {
+  async duplicateDemoScenario(
+    demoId: string,
+    newName?: string
+  ): Promise<EnhancedScenario> {
     try {
       const demoScenario = await this.getDemoScenario(demoId);
 
@@ -312,12 +338,13 @@ export class ScenarioApiService extends BaseApiClient {
   }
 
   // POST /api/scenarios/import
-  async importScenario(file: File): Promise<EnhancedScenario & { importAction?: 'created' | 'updated' }> {
+  async importScenario(
+    file: File
+  ): Promise<EnhancedScenario & { importAction?: 'created' | 'updated' }> {
     try {
-      const response = await this.uploadFile<EnhancedScenario & { importAction?: 'created' | 'updated' }>(
-        '/scenarios/import',
-        file,
-      );
+      const response = await this.uploadFile<
+        EnhancedScenario & { importAction?: 'created' | 'updated' }
+      >('/scenarios/import', file);
       const data = handleApiResponse(response);
       return this.mapScenarioOutToEnhanced(data);
     } catch (error) {
@@ -327,9 +354,14 @@ export class ScenarioApiService extends BaseApiClient {
   }
 
   // POST /api/scenarios/images
-  async uploadScenarioImage(file: File): Promise<{ filename: string; url: string }> {
+  async uploadScenarioImage(
+    file: File
+  ): Promise<{ filename: string; url: string }> {
     try {
-      const response = await this.uploadFile<{ filename: string; url: string }>('/scenarios/images', file);
+      const response = await this.uploadFile<{ filename: string; url: string }>(
+        '/scenarios/images',
+        file
+      );
       return handleApiResponse(response);
     } catch (error) {
       console.error('Failed to upload scenario image:', error);
@@ -338,11 +370,13 @@ export class ScenarioApiService extends BaseApiClient {
   }
 
   /** ویدئوی اینترو کالک‌نگار (mp4 / webm) */
-  async uploadScenarioIntroVideo(file: File): Promise<{ filename: string; url: string }> {
+  async uploadScenarioIntroVideo(
+    file: File
+  ): Promise<{ filename: string; url: string }> {
     try {
       const response = await this.uploadFile<{ filename: string; url: string }>(
         '/scenarios/intro-videos',
-        file,
+        file
       );
       return handleApiResponse(response);
     } catch (error) {
@@ -352,7 +386,10 @@ export class ScenarioApiService extends BaseApiClient {
   }
 
   // GET /api/scenarios/:id/export
-  async exportScenario(id: string, options?: ExportOptions): Promise<{ url: string; filename: string }> {
+  async exportScenario(
+    id: string,
+    options?: ExportOptions
+  ): Promise<{ url: string; filename: string }> {
     try {
       const response = await this.get<{ url: string; filename: string }>(
         `/scenarios/${id}/export`,
@@ -372,10 +409,11 @@ export class ScenarioApiService extends BaseApiClient {
       const jsonData = JSON.stringify(scenario, null, 2);
       const blob = new Blob([jsonData], { type: 'application/json' });
       const url = URL.createObjectURL(blob);
-      
+
       const link = document.createElement('a');
       link.href = url;
-      link.download = filename || `${scenario.name.replace(/[^a-zA-Z0-9]/g, '_')}.json`;
+      link.download =
+        filename || `${scenario.name.replace(/[^a-zA-Z0-9]/g, '_')}.json`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -416,7 +454,10 @@ export class ScenarioApiService extends BaseApiClient {
   }
 
   // Duplicate scenario (uses backend endpoint)
-  async duplicateScenario(id: string, newName?: string): Promise<EnhancedScenario> {
+  async duplicateScenario(
+    id: string,
+    newName?: string
+  ): Promise<EnhancedScenario> {
     try {
       const body: Record<string, any> = {};
       if (newName) body.new_name = newName;
@@ -456,7 +497,10 @@ export class ScenarioApiService extends BaseApiClient {
   // Get audit history
   async getScenarioHistory(id: string, limit = 50, offset = 0): Promise<any[]> {
     try {
-      const response = await this.get<any[]>(`/scenarios/${id}/history`, { limit, offset });
+      const response = await this.get<any[]>(`/scenarios/${id}/history`, {
+        limit,
+        offset,
+      });
       return handleApiResponse(response) || [];
     } catch (error) {
       console.error(`Failed to fetch scenario history ${id}:`, error);
@@ -469,7 +513,7 @@ export class ScenarioApiService extends BaseApiClient {
     try {
       const response = await this.post<Record<string, any>>(
         `/scenarios/${id}/unity-launch`,
-        {},
+        {}
       );
       return handleApiResponse(response);
     } catch (error) {

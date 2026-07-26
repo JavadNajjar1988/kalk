@@ -12,6 +12,7 @@ import {
 } from '@/types';
 import { scenarioApiService, ScenarioFormData } from '@/services/api/scenarioApiService';
 import { ApiClientError } from '@/services/api/baseApiClient';
+import type { ScenarioQuery } from '@/services/api/types';
 
 
 // وضعیت اولیه
@@ -41,9 +42,9 @@ const MOCK_API_DELAY = 500;
 // Thunks - Updated to use API service
 export const fetchScenarios = createAsyncThunk(
   'scenarios/fetchScenarios',
-  async (_, { rejectWithValue }) => {
+  async (query: ScenarioQuery | undefined, { rejectWithValue }) => {
     try {
-      const scenarios = await scenarioApiService.getScenarios();
+      const scenarios = await scenarioApiService.getScenarios(query);
       return scenarios;
     } catch (error: any) {
       const message = error instanceof ApiClientError 

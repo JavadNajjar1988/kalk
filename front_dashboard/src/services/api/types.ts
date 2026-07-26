@@ -27,6 +27,7 @@ export interface PaginatedResponse<T> {
 export interface ScenarioQuery {
   search?: string;
   status?: string[];
+  include_archived?: boolean;
   startDate?: string;
   endDate?: string;
   page?: number;

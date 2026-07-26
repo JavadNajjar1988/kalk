@@ -1,4 +1,5 @@
 import type { Scenario } from '@/types';
+import { scenarioDateTimeToIso } from './scenarioDateTime';
 
 export type ScenarioDialogPayload = Partial<Scenario> & {
   image?: string;
@@ -29,7 +30,6 @@ export interface ScenarioDialogPayloadInput {
   };
   noInitialOrbat: boolean;
   sides: unknown[];
-  weather: unknown;
   imageUrl?: string;
 }
 
@@ -38,16 +38,16 @@ export function buildScenarioDialogPayload({
   formData,
   noInitialOrbat,
   sides,
-  weather,
   imageUrl,
 }: ScenarioDialogPayloadInput): ScenarioDialogPayload {
-  const startTime = new Date(
+  const startTime = scenarioDateTimeToIso(
     formData.year,
-    formData.month - 1,
+    formData.month,
     formData.day,
     formData.hour,
-    formData.minute
-  ).toISOString();
+    formData.minute,
+    formData.timeZone.trim()
+  );
 
   let boundingBox: number[] | undefined;
   if (formData.bboxText.trim().length > 0) {
@@ -75,7 +75,6 @@ export function buildScenarioDialogPayload({
       symbologyStandard: formData.symbologyStandard,
       timeZone: formData.timeZone,
       tags: formData.tags.filter(tag => tag.trim()),
-      weather,
       sides: noInitialOrbat ? [] : sides,
       boundingBox,
       image: imageUrl,

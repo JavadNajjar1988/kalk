@@ -31,6 +31,8 @@ import {
   InputAdornment,
   Menu,
   MenuItem,
+  Divider,
+  ListSubheader,
   Fab,
   Tooltip,
   LinearProgress,
@@ -69,6 +71,8 @@ import {
   Info,
   ContentCopy,
   CloudUpload,
+  Archive,
+  Unarchive,
 } from '@mui/icons-material';
 import { alpha, createTheme } from '@mui/material/styles';
 import { useAppDispatch, useAppSelector } from '@/store';
@@ -77,6 +81,8 @@ import {
   createScenario,
   updateScenario,
   deleteScenario,
+  archiveScenario,
+  restoreScenario,
   selectScenarios,
   selectScenariosLoading,
   selectScenariosError,
@@ -89,7 +95,7 @@ import {
 import type { Scenario } from '@/types';
 import { ScenarioStatus } from '@/types';
 import { useTranslation } from '@/hooks/useTranslation';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import NewScenarioDialog from '@/components/scenarios/NewScenarioDialog';
 import { scenarioApiService } from '@/services/api/scenarioApiService';
 import KalknegarLaunchDialog from '@/components/common/KalknegarLaunchDialog';
@@ -140,6 +146,9 @@ const getStatusOptions = (
     color: 'info',
   },
 ];
+
+const isScenarioArchived = (scenario: Scenario) =>
+  Boolean((scenario as Scenario & { archived_at?: string | null }).archived_at);
 
 // کامپوننت آمار سناریوها
 const ScenarioStats: React.FC<{ scenarios: Scenario[] }> = ({ scenarios }) => {
@@ -666,6 +675,7 @@ const ScenariosPage: React.FC = () => {
   const loading = useAppSelector(selectScenariosLoading);
   const error = useAppSelector(selectScenariosError);
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
 
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<ScenarioStatus | 'all'>(
@@ -677,6 +687,9 @@ const ScenariosPage: React.FC = () => {
   >();
   const [menuAnchor, setMenuAnchor] = useState<null | HTMLElement>(null);
   const [menuScenario, setMenuScenario] = useState<Scenario | null>(null);
+  const [scenarioActionLoading, setScenarioActionLoading] = useState<
+    string | null
+  >(null);
   const [scenarioToDelete, setScenarioToDelete] = useState<Scenario | null>(
     null
   );
@@ -712,8 +725,18 @@ const ScenariosPage: React.FC = () => {
 
   // بارگذاری اولیه
   useEffect(() => {
-    dispatch(fetchScenarios());
+    dispatch(fetchScenarios({ include_archived: true }));
   }, [dispatch]);
+
+  useEffect(() => {
+    if (searchParams.get('create') !== '1') return;
+
+    setSelectedScenario(undefined);
+    setDialogOpen(true);
+    const nextParams = new URLSearchParams(searchParams);
+    nextParams.delete('create');
+    setSearchParams(nextParams, { replace: true });
+  }, [searchParams, setSearchParams]);
 
   // افزودن سناریوهای demo به سناریوهای سرور
   const allScenarios: Scenario[] = [...DEMO_SCENARIOS, ...scenarios];
@@ -723,8 +746,12 @@ const ScenariosPage: React.FC = () => {
     const matchesSearch =
       scenario.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       scenario.description.toLowerCase().includes(searchTerm.toLowerCase());
+    const isArchived = isScenarioArchived(scenario);
     const matchesStatus =
-      statusFilter === 'all' || scenario.status === statusFilter;
+      statusFilter === ScenarioStatus.ARCHIVED
+        ? isArchived
+        : !isArchived &&
+          (statusFilter === 'all' || scenario.status === statusFilter);
 
     return matchesSearch && matchesStatus;
   });
@@ -745,7 +772,7 @@ const ScenariosPage: React.FC = () => {
       // اضافه کردن metadata کامل
       metadata: (scenarioData as any)?.metadata || {},
     };
-    dispatch(createScenario(formData))
+    return dispatch(createScenario(formData))
       .unwrap()
       .then(() => {
         setDialogOpen(false);
@@ -753,10 +780,11 @@ const ScenariosPage: React.FC = () => {
           showSuccessNotification(t('scenarios.notifications.createSuccess'))
         );
       })
-      .catch(() => {
+      .catch(error => {
         dispatch(
           showErrorNotification(t('scenarios.notifications.createError'))
         );
+        throw error;
       });
   };
 
@@ -777,27 +805,29 @@ const ScenariosPage: React.FC = () => {
             (scenarioData as any)?.metadata?.image,
           metadata: (scenarioData as any)?.metadata || {},
         };
-        dispatch(createScenario(formData))
+        return dispatch(createScenario(formData))
           .unwrap()
           .then(() => {
             setDialogOpen(false);
             setSelectedScenario(undefined);
-            dispatch(fetchScenarios());
+            dispatch(fetchScenarios({ include_archived: true }));
             dispatch(
               showSuccessNotification(
                 t('scenarios.notifications.createSuccess')
               )
             );
           })
-          .catch(() => {
+          .catch(error => {
             dispatch(
               showErrorNotification(t('scenarios.notifications.createError'))
             );
+            throw error;
           });
-        return;
       }
 
-      dispatch(updateScenario({ id: scenarioData.id, updates: scenarioData }))
+      return dispatch(
+        updateScenario({ id: scenarioData.id, updates: scenarioData })
+      )
         .unwrap()
         .then(() => {
           setDialogOpen(false);
@@ -806,12 +836,14 @@ const ScenariosPage: React.FC = () => {
             showSuccessNotification(t('scenarios.notifications.updateSuccess'))
           );
         })
-        .catch(() => {
+        .catch(error => {
           dispatch(
             showErrorNotification(t('scenarios.notifications.updateError'))
           );
+          throw error;
         });
     }
+    return Promise.reject(new Error('شناسه سناریو برای ویرایش موجود نیست.'));
   };
 
   const handleAutosaveScenario = useCallback(
@@ -848,7 +880,7 @@ const ScenariosPage: React.FC = () => {
           setDeleteConfirmOpen(false);
           setScenarioToDelete(null);
           // Refresh the scenarios list after successful deletion
-          dispatch(fetchScenarios());
+          dispatch(fetchScenarios({ include_archived: true }));
           dispatch(
             showSuccessNotification(t('scenarios.notifications.deleteSuccess'))
           );
@@ -876,14 +908,89 @@ const ScenariosPage: React.FC = () => {
     setMenuScenario(null);
   };
 
+  const handleQuickStatusChange = async (
+    scenario: Scenario,
+    status: ScenarioStatus
+  ) => {
+    if (
+      !canEdit ||
+      isBuiltinDemoScenario(scenario) ||
+      scenario.status === status ||
+      status === ScenarioStatus.ARCHIVED
+    ) {
+      return;
+    }
+
+    setScenarioActionLoading(scenario.id);
+    try {
+      await dispatch(
+        updateScenario({
+          id: scenario.id,
+          updates: { ...scenario, status },
+        })
+      ).unwrap();
+      dispatch(
+        showSuccessNotification(t('scenarios.notifications.statusChangeSuccess'))
+      );
+    } catch (statusChangeError) {
+      console.error('Scenario status update failed:', statusChangeError);
+      dispatch(
+        showErrorNotification(t('scenarios.notifications.statusChangeError'))
+      );
+    } finally {
+      setScenarioActionLoading(null);
+    }
+  };
+
+  const handleArchiveToggle = async (scenario: Scenario) => {
+    if (!canEdit || isBuiltinDemoScenario(scenario)) return;
+
+    const isArchived = isScenarioArchived(scenario);
+    setScenarioActionLoading(scenario.id);
+    try {
+      if (isArchived) {
+        await dispatch(restoreScenario(scenario.id)).unwrap();
+        dispatch(
+          showSuccessNotification(t('scenarios.actions.restoreSuccess'))
+        );
+      } else {
+        await dispatch(archiveScenario(scenario.id)).unwrap();
+        dispatch(
+          showSuccessNotification(t('scenarios.actions.archiveSuccess'))
+        );
+      }
+    } catch (archiveError) {
+      console.error('Scenario archive action failed:', archiveError);
+      dispatch(
+        showErrorNotification(
+          t(
+            isArchived
+              ? 'scenarios.actions.restoreError'
+              : 'scenarios.actions.archiveError'
+          )
+        )
+      );
+    } finally {
+      setScenarioActionLoading(null);
+    }
+  };
+
   // دریافت رنگ وضعیت
-  const getStatusChip = (status: ScenarioStatus) => {
-    const statusOption = statusOptions.find(opt => opt.value === status);
+  const getStatusChip = (scenario: Scenario) => {
+    const isArchived = isScenarioArchived(scenario);
+    const statusOption = statusOptions.find(
+      opt => opt.value === scenario.status
+    );
     return (
       <Chip
-        label={statusOption?.label || status}
-        color={statusOption?.color || 'default'}
+        label={
+          isArchived
+            ? t('scenarios.status.archived')
+            : statusOption?.label || scenario.status
+        }
+        color={isArchived ? 'warning' : statusOption?.color || 'default'}
         size="small"
+        variant={isArchived ? 'outlined' : 'filled'}
       />
     );
   };
@@ -1067,7 +1174,7 @@ const ScenariosPage: React.FC = () => {
       }
 
       // بارگذاری مجدد لیست سناریوها
-      dispatch(fetchScenarios());
+      dispatch(fetchScenarios({ include_archived: true }));
       dispatch(showSuccessNotification('سناریو با موفقیت کپی شد.'));
     } catch (error) {
       console.error('Failed to duplicate scenario', error);
@@ -1194,7 +1301,7 @@ const ScenariosPage: React.FC = () => {
 
     try {
       const result = await scenarioApiService.importScenario(selectedFile);
-      dispatch(fetchScenarios());
+      dispatch(fetchScenarios({ include_archived: true }));
       const successMessage =
         result.importAction === 'updated'
           ? 'سناریوی موجود با موفقیت به‌روزرسانی شد.'
@@ -1296,6 +1403,9 @@ const ScenariosPage: React.FC = () => {
                     {option.label}
                   </MenuItem>
                 ))}
+                <MenuItem value={ScenarioStatus.ARCHIVED}>
+                  {t('scenarios.status.archived')}
+                </MenuItem>
               </Select>
             </FormControl>
 
@@ -1463,14 +1573,18 @@ const ScenariosPage: React.FC = () => {
                           <Box sx={{ mb: 2 }}>
                             <Chip
                               label={
-                                statusOptions.find(
-                                  opt => opt.value === scenario.status
-                                )?.label || scenario.status
+                                isScenarioArchived(scenario)
+                                  ? t('scenarios.status.archived')
+                                  : statusOptions.find(
+                                      opt => opt.value === scenario.status
+                                    )?.label || scenario.status
                               }
                               color={
-                                statusOptions.find(
-                                  opt => opt.value === scenario.status
-                                )?.color || 'default'
+                                isScenarioArchived(scenario)
+                                  ? 'warning'
+                                  : statusOptions.find(
+                                      opt => opt.value === scenario.status
+                                    )?.color || 'default'
                               }
                               size="small"
                               sx={{
@@ -1736,7 +1850,7 @@ const ScenariosPage: React.FC = () => {
                         </Box>
                       </TableCell>
 
-                      <TableCell>{getStatusChip(scenario.status)}</TableCell>
+                      <TableCell>{getStatusChip(scenario)}</TableCell>
 
                       <TableCell>
                         <TransformFarsiNumbers>
@@ -1893,8 +2007,9 @@ const ScenariosPage: React.FC = () => {
 
             {selectedFileInfo?.existingScenarioName && (
               <Alert severity="warning" sx={{ mt: 2 }}>
-                سناریوی «{selectedFileInfo.existingScenarioName}» از قبل در سیستم وجود
-                دارد. با بارگذاری این فایل، محتوای سناریوی موجود جایگزین می‌شود.
+                سناریوی «{selectedFileInfo.existingScenarioName}» از قبل در
+                سیستم وجود دارد. با بارگذاری این فایل، محتوای سناریوی موجود
+                جایگزین می‌شود.
               </Alert>
             )}
 
@@ -1916,7 +2031,9 @@ const ScenariosPage: React.FC = () => {
             </Button>
             <Button
               variant="contained"
-              color={selectedFileInfo?.existingScenarioName ? 'warning' : 'primary'}
+              color={
+                selectedFileInfo?.existingScenarioName ? 'warning' : 'primary'
+              }
               onClick={handleImportScenarioFile}
               disabled={!selectedFile || importing}
               sx={{ borderRadius: 2, px: 3 }}
@@ -1945,9 +2062,13 @@ const ScenariosPage: React.FC = () => {
               سناریوی «{selectedFileInfo?.existingScenarioName}» از قبل در سیستم
               ثبت شده است.
             </Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ lineHeight: 1.8 }}>
-              آیا می‌خواهید این سناریو با محتوای فایل انتخاب‌شده به‌روزرسانی شود؟
-              داده‌های فعلی سناریو با محتوای فایل جایگزین می‌شوند.
+            <Typography
+              variant="body2"
+              color="text.secondary"
+              sx={{ lineHeight: 1.8 }}
+            >
+              آیا می‌خواهید این سناریو با محتوای فایل انتخاب‌شده به‌روزرسانی
+              شود؟ داده‌های فعلی سناریو با محتوای فایل جایگزین می‌شوند.
             </Typography>
           </DialogContent>
           <DialogActions sx={resourcesDialogActionsSx(theme)}>
@@ -1977,6 +2098,7 @@ const ScenariosPage: React.FC = () => {
           anchorEl={menuAnchor}
           open={Boolean(menuAnchor)}
           onClose={handleMenuClose}
+          MenuListProps={{ 'aria-label': t('scenarios.table.actions') }}
         >
           <MenuItem
             onClick={() => {
@@ -2024,7 +2146,7 @@ const ScenariosPage: React.FC = () => {
                     '@/services/api/scenarioApiService'
                   );
                   await scenarioApiService.duplicateScenario(menuScenario.id);
-                  dispatch(fetchScenarios()); // Refresh list
+                  dispatch(fetchScenarios({ include_archived: true })); // Refresh list
                   dispatch(showSuccessNotification('سناریو با موفقیت کپی شد'));
                 } catch (error) {
                   dispatch(showErrorNotification('خطا در کپی سناریو'));
@@ -2036,6 +2158,60 @@ const ScenariosPage: React.FC = () => {
             <ContentCopy sx={{ mr: 1 }} />
             کپی
           </MenuItem>
+
+          {canEdit && menuScenario && !isBuiltinDemoScenario(menuScenario) && (
+            <>
+              <Divider />
+              <ListSubheader disableSticky>
+                {t('scenarios.menu.changeStatus')}
+              </ListSubheader>
+              {statusOptions.map(option => (
+                <MenuItem
+                  key={option.value}
+                  selected={
+                    !isScenarioArchived(menuScenario) &&
+                    menuScenario.status === option.value
+                  }
+                  disabled={
+                    isScenarioArchived(menuScenario) ||
+                    menuScenario.status === option.value ||
+                    scenarioActionLoading === menuScenario.id
+                  }
+                  onClick={() => {
+                    const scenario = menuScenario;
+                    handleMenuClose();
+                    void handleQuickStatusChange(scenario, option.value);
+                  }}
+                  sx={{ pl: 4 }}
+                >
+                  {option.label}
+                </MenuItem>
+              ))}
+              <Divider />
+              <MenuItem
+                disabled={scenarioActionLoading === menuScenario.id}
+                onClick={() => {
+                  const scenario = menuScenario;
+                  handleMenuClose();
+                  void handleArchiveToggle(scenario);
+                }}
+                sx={{
+                  color: isScenarioArchived(menuScenario)
+                    ? 'info.main'
+                    : 'warning.main',
+                }}
+              >
+                {isScenarioArchived(menuScenario) ? (
+                  <Unarchive sx={{ mr: 1 }} />
+                ) : (
+                  <Archive sx={{ mr: 1 }} />
+                )}
+                {isScenarioArchived(menuScenario)
+                  ? t('scenarios.actions.restore')
+                  : t('scenarios.actions.archive')}
+              </MenuItem>
+            </>
+          )}
 
           <MenuItem
             onClick={() => {

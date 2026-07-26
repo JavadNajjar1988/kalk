@@ -28,6 +28,10 @@ import {
   TableRow,
   TableCell,
   TableContainer,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
 } from '@mui/material';
 import { 
   Edit, 
@@ -77,7 +81,14 @@ import {
   exportScenarioJson,
   updateScenario,
 } from '@/store/slices/scenariosSlice';
-import { EnhancedScenario, ExecutionStatus, PhaseStatus, EnvironmentalFactorType, AnalysisType } from '@/types';
+import {
+  EnhancedScenario,
+  ExecutionStatus,
+  PhaseStatus,
+  EnvironmentalFactorType,
+  AnalysisType,
+  EnvironmentalCondition,
+} from '@/types';
 import ScenarioDialog from '@/components/common/ScenarioDialog';
 import { showSuccessNotification, showErrorNotification } from '@/store/slices/uiSlice';
 import ScenarioIntroSettingsPanel from '@/modules/dashboard/components/ScenarioIntroSettingsPanel';
@@ -300,35 +311,318 @@ const ScenarioPhasesManager: React.FC<{ scenario: EnhancedScenario }> = ({ scena
 };
 
 // ---------- Environment tab ----------
-const EnvironmentalConditionsManager: React.FC<{ scenario: EnhancedScenario }> = ({ scenario }) => {
-  const { t } = useTranslation();
+const ENVIRONMENTAL_TYPE_LABELS: Record<EnvironmentalFactorType, string> = {
+  [EnvironmentalFactorType.WEATHER]: 'وضعیت جوی',
+  [EnvironmentalFactorType.VISIBILITY]: 'دید',
+  [EnvironmentalFactorType.TEMPERATURE]: 'دما',
+  [EnvironmentalFactorType.PRECIPITATION]: 'بارش',
+  [EnvironmentalFactorType.WIND]: 'باد',
+  [EnvironmentalFactorType.TIME_OF_DAY]: 'وضعیت روشنایی',
+  [EnvironmentalFactorType.SEASON]: 'فصل',
+  [EnvironmentalFactorType.TERRAIN_CONDITION]: 'وضعیت متغیر زمین',
+};
+
+const toDateTimeLocal = (value?: string) => {
+  if (!value) return '';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return '';
+  const offset = date.getTimezoneOffset() * 60_000;
+  return new Date(date.getTime() - offset).toISOString().slice(0, 16);
+};
+
+const EnvironmentalConditionsManager: React.FC<{
+  scenario: EnhancedScenario;
+}> = ({ scenario }) => {
+  const dispatch = useAppDispatch();
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [formError, setFormError] = useState('');
+  const [form, setForm] = useState({
+    type: EnvironmentalFactorType.WEATHER,
+    startTime: toDateTimeLocal(scenario.startTime),
+    endTime: '',
+    value: 0,
+    description: '',
+  });
+
+  const conditions = scenario.environmentalConditions || [];
+
+  const openCreateDialog = () => {
+    setEditingId(null);
+    setForm({
+      type: EnvironmentalFactorType.WEATHER,
+      startTime: toDateTimeLocal(scenario.startTime),
+      endTime: '',
+      value: 0,
+      description: '',
+    });
+    setFormError('');
+    setDialogOpen(true);
+  };
+
+  const openEditDialog = (condition: EnvironmentalCondition) => {
+    setEditingId(condition.id);
+    setForm({
+      type: condition.type,
+      startTime: toDateTimeLocal(condition.startTime),
+      endTime: toDateTimeLocal(condition.endTime),
+      value: condition.value,
+      description: condition.description || '',
+    });
+    setFormError('');
+    setDialogOpen(true);
+  };
+
+  const persistConditions = async (nextConditions: EnvironmentalCondition[]) => {
+    await dispatch(
+      updateScenario({
+        id: scenario.id,
+        updates: {
+          ...scenario,
+          environmentalConditions: nextConditions,
+        },
+      })
+    ).unwrap();
+    await dispatch(fetchScenarioById(scenario.id));
+  };
+
+  const handleSave = async () => {
+    const start = new Date(form.startTime);
+    const end = form.endTime ? new Date(form.endTime) : undefined;
+    if (!form.startTime || Number.isNaN(start.getTime())) {
+      setFormError('زمان شروع شرایط محیطی معتبر نیست.');
+      return;
+    }
+    if (end && (Number.isNaN(end.getTime()) || end <= start)) {
+      setFormError('زمان پایان باید بعد از زمان شروع باشد.');
+      return;
+    }
+
+    const condition: EnvironmentalCondition = {
+      id: editingId || crypto.randomUUID(),
+      type: form.type,
+      startTime: start.toISOString(),
+      endTime: end?.toISOString(),
+      value: Number(form.value),
+      description: form.description.trim() || undefined,
+    };
+    const nextConditions = editingId
+      ? conditions.map(item => (item.id === editingId ? condition : item))
+      : [...conditions, condition];
+
+    setSaving(true);
+    setFormError('');
+    try {
+      await persistConditions(nextConditions);
+      setDialogOpen(false);
+      dispatch(showSuccessNotification('شرایط محیطی روی خط زمانی ذخیره شد.'));
+    } catch {
+      setFormError('ذخیره شرایط محیطی انجام نشد.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleDelete = async (conditionId: string) => {
+    try {
+      await persistConditions(
+        conditions.filter(condition => condition.id !== conditionId)
+      );
+      dispatch(showSuccessNotification('شرایط محیطی حذف شد.'));
+    } catch {
+      dispatch(showErrorNotification('حذف شرایط محیطی انجام نشد.'));
+    }
+  };
+
   return (
     <Box>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
-        <Typography variant="h6">{t('scenarios.environmental.title')}</Typography>
-        <Button variant="outlined" startIcon={<Add />} size="small">{t('scenarios.environmental.addCondition')}</Button>
+        <Box>
+          <Typography variant="h6">خط زمانی شرایط محیطی</Typography>
+          <Typography variant="body2" color="text.secondary">
+            آب‌وهوا و وضعیت متغیر زمین به‌صورت بازه زمانی ثبت می‌شوند.
+          </Typography>
+        </Box>
+        <Button
+          variant="outlined"
+          startIcon={<Add />}
+          size="small"
+          onClick={openCreateDialog}
+        >
+          افزودن شرایط
+        </Button>
       </Box>
-      {!scenario.environmentalConditions || scenario.environmentalConditions.length === 0 ? (
-        <Alert severity="info" sx={{ mb: 2 }}>{t('scenarios.environmental.noConditions')}</Alert>
+
+      {conditions.length === 0 ? (
+        <Alert severity="info" sx={{ mb: 2 }}>
+          هنوز شرایط محیطی زمان‌مندی برای این سناریو ثبت نشده است.
+        </Alert>
       ) : (
         <Grid container spacing={2}>
-          {scenario.environmentalConditions.map(cond => (
-            <Grid item xs={12} sm={6} md={4} key={cond.id}>
-              <Card>
-                <CardHeader
-                  title={t(`scenarios.environmental.types.${cond.type}`)}
-                  subheader={`${new Date(cond.startTime).toLocaleString('fa-IR')} تا ${cond.endTime ? new Date(cond.endTime).toLocaleString('fa-IR') : t('scenarios.environmental.ongoing')}`}
-                  action={<IconButton size="small"><Edit fontSize="small" /></IconButton>}
-                />
-                <CardContent>
-                  <Typography variant="body2" paragraph>{cond.description}</Typography>
-                  <Typography variant="body2" color="text.secondary">{t('scenarios.environmental.value')}: {cond.value}</Typography>
-                </CardContent>
-              </Card>
-            </Grid>
-          ))}
+          {[...conditions]
+            .sort(
+              (first, second) =>
+                new Date(first.startTime).getTime() -
+                new Date(second.startTime).getTime()
+            )
+            .map(condition => (
+              <Grid item xs={12} sm={6} md={4} key={condition.id}>
+                <Card>
+                  <CardHeader
+                    title={ENVIRONMENTAL_TYPE_LABELS[condition.type]}
+                    subheader={`${new Date(condition.startTime).toLocaleString(
+                      'fa-IR'
+                    )} تا ${
+                      condition.endTime
+                        ? new Date(condition.endTime).toLocaleString('fa-IR')
+                        : 'ادامه‌دار'
+                    }`}
+                    action={
+                      <Box>
+                        <IconButton
+                          size="small"
+                          onClick={() => openEditDialog(condition)}
+                          aria-label="ویرایش شرایط"
+                        >
+                          <Edit fontSize="small" />
+                        </IconButton>
+                        <IconButton
+                          size="small"
+                          color="error"
+                          onClick={() => handleDelete(condition.id)}
+                          aria-label="حذف شرایط"
+                        >
+                          <Delete fontSize="small" />
+                        </IconButton>
+                      </Box>
+                    }
+                  />
+                  <CardContent>
+                    {condition.description && (
+                      <Typography variant="body2" paragraph>
+                        {condition.description}
+                      </Typography>
+                    )}
+                    <Typography variant="body2" color="text.secondary">
+                      مقدار: {condition.value}
+                    </Typography>
+                  </CardContent>
+                </Card>
+              </Grid>
+            ))}
         </Grid>
       )}
+
+      <Dialog
+        open={dialogOpen}
+        onClose={() => !saving && setDialogOpen(false)}
+        fullWidth
+        maxWidth="sm"
+      >
+        <DialogTitle>
+          {editingId ? 'ویرایش شرایط محیطی' : 'افزودن شرایط محیطی'}
+        </DialogTitle>
+        <DialogContent dividers>
+          {formError && (
+            <Alert severity="error" sx={{ mb: 2 }}>
+              {formError}
+            </Alert>
+          )}
+          <Grid container spacing={2} sx={{ mt: 0 }}>
+            <Grid item xs={12}>
+              <FormControl fullWidth>
+                <InputLabel>نوع شرایط</InputLabel>
+                <Select
+                  value={form.type}
+                  label="نوع شرایط"
+                  onChange={event =>
+                    setForm(previous => ({
+                      ...previous,
+                      type: event.target.value as EnvironmentalFactorType,
+                    }))
+                  }
+                >
+                  {Object.values(EnvironmentalFactorType).map(type => (
+                    <MenuItem key={type} value={type}>
+                      {ENVIRONMENTAL_TYPE_LABELS[type]}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <TextField
+                fullWidth
+                label="زمان شروع"
+                type="datetime-local"
+                value={form.startTime}
+                onChange={event =>
+                  setForm(previous => ({
+                    ...previous,
+                    startTime: event.target.value,
+                  }))
+                }
+                InputLabelProps={{ shrink: true }}
+                required
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <TextField
+                fullWidth
+                label="زمان پایان"
+                type="datetime-local"
+                value={form.endTime}
+                onChange={event =>
+                  setForm(previous => ({
+                    ...previous,
+                    endTime: event.target.value,
+                  }))
+                }
+                InputLabelProps={{ shrink: true }}
+                helperText="برای وضعیت ادامه‌دار خالی بگذارید"
+              />
+            </Grid>
+            <Grid item xs={12}>
+              <TextField
+                fullWidth
+                type="number"
+                label="مقدار"
+                value={form.value}
+                onChange={event =>
+                  setForm(previous => ({
+                    ...previous,
+                    value: Number(event.target.value),
+                  }))
+                }
+              />
+            </Grid>
+            <Grid item xs={12}>
+              <TextField
+                fullWidth
+                multiline
+                rows={3}
+                label="توضیحات"
+                value={form.description}
+                onChange={event =>
+                  setForm(previous => ({
+                    ...previous,
+                    description: event.target.value,
+                  }))
+                }
+              />
+            </Grid>
+          </Grid>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setDialogOpen(false)} disabled={saving}>
+            انصراف
+          </Button>
+          <Button variant="contained" onClick={handleSave} disabled={saving}>
+            {saving ? 'در حال ذخیره...' : 'ذخیره روی خط زمانی'}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 };
@@ -803,8 +1097,10 @@ const ScenarioDetailPage: React.FC = () => {
           <ScenarioHistoryTab scenarioId={scenario.id} />
         </TabPanel>
 
-        {/* Timeline – managed in KalkNegar */}
+        {/* Timeline */}
         <TabPanel value={tabValue} index={5}>
+          <EnvironmentalConditionsManager scenario={scenario} />
+          <Divider sx={{ my: 4 }} />
           <ManagedInKalkNegar scenarioId={scenario.id} />
         </TabPanel>
 
