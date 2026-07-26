@@ -315,9 +315,7 @@ Store.prototype.delete = async function (arg) {
  */
 Store.prototype.hide = async function (ids, active) {
   if (active !== undefined) return
-  const keys = await this.collectKeys(ids)
-  const operations = keys.map(key => L.putOp(ID.hiddenId(key), true))
-  this.batch(this.jsonDB, operations)
+  return this.setFlag(ids, ID.hiddenId, true)
 }
 
 
@@ -327,9 +325,7 @@ Store.prototype.hide = async function (ids, active) {
  */
 Store.prototype.show = async function (ids, active) {
   if (active !== undefined) return
-  const keys = await this.collectKeys(ids)
-  const operations = keys.map(key => L.delOp(ID.hiddenId(key)))
-  this.batch(this.jsonDB, operations)
+  return this.setFlag(ids, ID.hiddenId, false)
 }
 
 
@@ -339,9 +335,7 @@ Store.prototype.show = async function (ids, active) {
  */
 Store.prototype.lock = async function (ids, active) {
   if (active !== undefined) return
-  const keys = await this.collectKeys(ids)
-  const operations = keys.map(key => L.putOp(ID.lockedId(key), true))
-  this.batch(this.jsonDB, operations)
+  return this.setFlag(ids, ID.lockedId, true)
 }
 
 
@@ -351,9 +345,7 @@ Store.prototype.lock = async function (ids, active) {
  */
 Store.prototype.unlock = async function (ids, active) {
   if (active !== undefined) return
-  const keys = await this.collectKeys(ids)
-  const operations = keys.map(key => L.delOp(ID.lockedId(key)))
-  this.batch(this.jsonDB, operations)
+  return this.setFlag(ids, ID.lockedId, false)
 }
 
 /**
@@ -362,9 +354,7 @@ Store.prototype.unlock = async function (ids, active) {
  */
 Store.prototype.restrict = async function (ids, active) {
   if (active !== undefined) return
-  const keys = await this.collectKeys(ids)
-  const operations = keys.map(key => L.putOp(ID.restrictedId(key), true))
-  this.batch(this.jsonDB, operations)
+  return this.setFlag(ids, ID.restrictedId, true)
 }
 
 /**
@@ -373,9 +363,22 @@ Store.prototype.restrict = async function (ids, active) {
  */
 Store.prototype.permit = async function (ids, active) {
   if (active !== undefined) return
-  const keys = await this.collectKeys(ids)
-  const operations = keys.map(key => L.delOp(ID.restrictedId(key)))
-  this.batch(this.jsonDB, operations)
+  return this.setFlag(ids, ID.restrictedId, false)
+}
+
+Store.prototype.setFlag = async function (ids, flagId, enabled) {
+  const keys = (await this.collectKeys(ids)).map(flagId)
+  if (enabled) {
+    const oldValues = await this.jsonDB.getMany(keys)
+    const newValues = keys.map(() => true)
+    return this.undo.apply(
+      this.updateCommand(this.jsonDB, keys, newValues, oldValues)
+    )
+  }
+
+  const tuples = await L.tuples(this.jsonDB, keys)
+  if (!tuples.length) return
+  return this.undo.apply(this.deleteCommand(this.jsonDB, tuples))
 }
 
 

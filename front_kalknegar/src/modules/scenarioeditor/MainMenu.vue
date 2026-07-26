@@ -24,6 +24,7 @@ import { breakpointsTailwind, useBreakpoints } from "@vueuse/core";
 import { injectStrict } from "@/utils";
 import { activeScenarioKey } from "@/components/injects";
 import { Bars3Icon } from "@heroicons/vue/24/outline";
+import { useUnifiedUndoRedo } from "@/modules/scenarioeditor/useUnifiedUndoRedo";
 
 const breakpoints = useBreakpoints(breakpointsTailwind);
 const isMobile = breakpoints.smallerOrEqual("md");
@@ -33,9 +34,8 @@ const emit = defineEmits<{
   uiAction: [value: UiAction];
 }>();
 
-const {
-  store: { undo, redo, canRedo, canUndo },
-} = injectStrict(activeScenarioKey);
+const { store: scenarioStore } = injectStrict(activeScenarioKey);
+const { undo, redo, canRedo, canUndo } = useUnifiedUndoRedo(scenarioStore);
 
 const route = useRoute();
 const uiSettings = useUiStore();

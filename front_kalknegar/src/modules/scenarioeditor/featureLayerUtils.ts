@@ -328,7 +328,7 @@ export function useScenarioLayerSync(olLayers: Collection<VectorLayer<any>>) {
     eventKeys.push(
       l.on("change:visible", (event) => {
         const isVisible = l.getVisible();
-        geo.updateLayer(l.get("id"), { isHidden: !isVisible }, { undoable: false });
+        geo.updateLayer(l.get("id"), { isHidden: !isVisible });
       }),
     );
   }

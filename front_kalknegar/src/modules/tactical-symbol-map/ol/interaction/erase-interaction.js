@@ -17,6 +17,7 @@ import {
   toFadeBaseLine
 } from '../style/fadeZones'
 import { extractFadeZoneGeometry } from '../style/_applyFadeZones'
+import { mergeSpatialCut } from '../style/spatialCuts'
 
 const ORIGINATOR_ID = uuid()
 
@@ -26,8 +27,20 @@ const FADE_OPACITY = 0.15
 const DEFAULT_BRUSH_SIZE = 3
 const MIN_STROKE = 0.004
 
-const ERASABLE_FADE = new Set(['LineString', 'MultiLineString', 'Polygon', 'MultiPolygon', 'MultiPoint'])
-const ERASABLE_CUT = new Set(['LineString', 'MultiLineString', 'Polygon', 'MultiPolygon', 'MultiPoint'])
+const ERASABLE_FADE = new Set([
+  'LineString',
+  'MultiLineString',
+  'Polygon',
+  'MultiPolygon',
+  'MultiPoint'
+])
+const ERASABLE_CUT = new Set([
+  'LineString',
+  'MultiLineString',
+  'Polygon',
+  'MultiPolygon',
+  'MultiPoint'
+])
 
 const normalizeBrushSize = value => {
   const next = Number(value)
@@ -35,17 +48,18 @@ const normalizeBrushSize = value => {
   return Math.max(1, Math.min(5, Math.round(next)))
 }
 
-const brushSpan = brushSize => 0.01 + normalizeBrushSize(brushSize) * 0.005
-
 const brushCursorRadius = brushSize => 5 + normalizeBrushSize(brushSize) * 2
+const maximumBrushHalfSpan = brushSize =>
+  (0.01 + normalizeBrushSize(brushSize) * 0.005) / 2
 
-const brushCursorStyle = brushSize => new style.Style({
-  image: new style.Circle({
-    radius: brushCursorRadius(brushSize),
-    stroke: new style.Stroke({ color: 'rgba(255,80,80,0.9)', width: 2 }),
-    fill: new style.Fill({ color: 'rgba(255,80,80,0.15)' })
+const brushCursorStyle = brushSize =>
+  new style.Style({
+    image: new style.Circle({
+      radius: brushCursorRadius(brushSize),
+      stroke: new style.Stroke({ color: 'rgba(255,80,80,0.9)', width: 2 }),
+      fill: new style.Fill({ color: 'rgba(255,80,80,0.15)' })
+    })
   })
-})
 
 const lineSegments = coordinates => {
   if (!Array.isArray(coordinates) || coordinates.length < 2) return []
@@ -79,9 +93,23 @@ const eraseSegments = geometry => {
   }
 }
 
-const writeEraseIndex = feature => {
+const renderedEraseSegments = (feature, resolution) => {
+  const styleFunction = feature?.getStyleFunction?.()
+  if (!styleFunction) return []
+
+  return flattenStyleLike(styleFunction(feature, resolution)).flatMap(styleEntry => {
+    const geometryFunction = styleEntry?.getGeometryFunction?.()
+    const geometry = geometryFunction ? geometryFunction(feature) : null
+    return eraseSegments(geometry)
+  })
+}
+
+const writeEraseIndex = (feature, resolution) => {
   const rbush = new RBush()
-  const segments = eraseSegments(feature.getGeometry())
+  const renderedSegments = renderedEraseSegments(feature, resolution)
+  const segments = renderedSegments.length
+    ? renderedSegments
+    : eraseSegments(feature.getGeometry())
   if (!segments.length) return rbush
 
   rbush.load(
@@ -91,13 +119,14 @@ const writeEraseIndex = feature => {
   return rbush
 }
 
-const previewStroke = mode => new style.Style({
-  stroke: new style.Stroke({
-    color: mode === 'cut' ? 'rgba(255,60,60,0.9)' : 'rgba(255,160,60,0.85)',
-    width: 4,
-    lineDash: [8, 6]
+const previewStroke = mode =>
+  new style.Style({
+    stroke: new style.Stroke({
+      color: mode === 'cut' ? 'rgba(255,60,60,0.9)' : 'rgba(255,160,60,0.85)',
+      width: 4,
+      lineDash: [8, 6]
+    })
   })
-})
 
 const flattenStyleLike = styles => {
   if (!styles) return []
@@ -159,12 +188,27 @@ const isErasable = (feature, brushMode) => {
   return brushMode === 'cut' ? ERASABLE_CUT.has(type) : ERASABLE_FADE.has(type)
 }
 
-const expandBrush = (minT, maxT, t, size) => {
-  const half = brushSpan(size) / 2
-  return [
-    Math.max(0, Math.min(minT, t - half)),
-    Math.min(1, Math.max(maxT, t + half))
-  ]
+const brushHalfSpan = (feature, map, size) => {
+  const geometry = feature?.getGeometry?.()
+  const baseLine = geometry ? toFadeBaseLine(TS.read(geometry)) : null
+  const length = baseLine?.getLength?.() ?? 0
+  const resolution = map.getView()?.getResolution?.() ?? 1
+  if (!Number.isFinite(length) || length <= 0) return 0
+  const pixelBasedSpan = (resolution * brushCursorRadius(size)) / length
+  return Math.min(maximumBrushHalfSpan(size), pixelBasedSpan)
+}
+
+const brushMapRadius = (feature, map, size) => {
+  const geometry = feature?.getGeometry?.()
+  const baseLine = geometry ? toFadeBaseLine(TS.read(geometry)) : null
+  const length = baseLine?.getLength?.() ?? 0
+  if (!Number.isFinite(length) || length <= 0) return 0
+  return brushHalfSpan(feature, map, size) * length
+}
+
+const expandBrush = (feature, map, minT, maxT, t, size) => {
+  const half = brushHalfSpan(feature, map, size)
+  return [Math.max(0, Math.min(minT, t - half)), Math.min(1, Math.max(maxT, t + half))]
 }
 
 const upsertTimedState = (states, next) => {
@@ -198,6 +242,10 @@ export default options => {
   let brushSize = DEFAULT_BRUSH_SIZE
   let lastAppliedFrom = null
   let lastAppliedTo = null
+  let cutTargets = new Map()
+  let cutEventSerial = 0
+  let cutGestureSerial = 0
+  let cutGestureId = null
 
   const overlaySource = new VectorSource({ useSpatialIndex: false })
   const overlayLayer = new VectorLayer({
@@ -234,12 +282,9 @@ export default options => {
     const baseLine = toFadeBaseLine(jts)
     if (!baseLine) return
 
-    const sub = renderedFadePreviewGeometry(
-      feature,
-      map.getView()?.getResolution?.(),
-      from,
-      to
-    ) || extractSubLine(TS.lengthIndexedLine(baseLine), from, to)
+    const sub =
+      renderedFadePreviewGeometry(feature, map.getView()?.getResolution?.(), from, to) ||
+      extractSubLine(TS.lengthIndexedLine(baseLine), from, to)
     if (!sub) return
 
     const olPreview = TS.write(sub)
@@ -262,14 +307,21 @@ export default options => {
     brushTo = null
     lastAppliedFrom = null
     lastAppliedTo = null
+    cutTargets = new Map()
+    cutEventSerial = 0
+    cutGestureId = null
     clearOverlay()
   }
 
   const pickOnFeature = (feature, event) => {
-    const rbush = writeEraseIndex(feature)
-    const pick = pointerPick({
-      pixelTolerance: Math.max(hitTolerance, brushCursorRadius(brushSize))
-    }, rbush, event).pick()
+    const rbush = writeEraseIndex(feature, map.getView()?.getResolution?.())
+    const pick = pointerPick(
+      {
+        pixelTolerance: Math.max(hitTolerance, brushCursorRadius(brushSize))
+      },
+      rbush,
+      event
+    ).pick()
     if (!pick.coordinate) return null
     const coordinate = pick.segment?.vertices
       ? closestOnSegment(event.coordinate, pick.segment.vertices)
@@ -279,12 +331,15 @@ export default options => {
     return { coordinate, t }
   }
 
-  const findFeatureAt = event => {
+  const findFeaturesAt = event => {
     const candidates = []
+    const seen = new Set()
     map.forEachFeatureAtPixel(
       event.pixel,
       (feature, layer) => {
-        if (layer?.get('selectable') && isErasable(feature, mode)) {
+        const id = feature?.getId?.() ?? feature
+        if (layer?.get('selectable') && isErasable(feature, mode) && !seen.has(id)) {
+          seen.add(id)
           candidates.push(feature)
         }
       },
@@ -294,18 +349,13 @@ export default options => {
       }
     )
 
-    if (!candidates.length) return null
-
-    let best = null
-    for (const feature of candidates) {
+    return candidates.flatMap(feature => {
       const pick = pickOnFeature(feature, event)
-      if (pick) {
-        best = { feature, ...pick }
-        break
-      }
-    }
-    return best
+      return pick ? [{ feature, ...pick }] : []
+    })
   }
+
+  const findFeatureAt = event => findFeaturesAt(event)[0] ?? null
 
   const getScenarioTime = () => {
     if (typeof options.getScenarioTime === 'function') {
@@ -313,9 +363,7 @@ export default options => {
       if (typeof t === 'number' && Number.isFinite(t)) return t
     }
     const t = store.value?.(scenarioTimeKey, Number.MIN_SAFE_INTEGER)
-    return typeof t === 'number' && Number.isFinite(t)
-      ? t
-      : Number.MIN_SAFE_INTEGER
+    return typeof t === 'number' && Number.isFinite(t) ? t : Number.MIN_SAFE_INTEGER
   }
 
   const getPlaybackRange = () => {
@@ -359,11 +407,7 @@ export default options => {
     })
     feature.set('fadeZones', fadeZones)
     if (isTimedRecording()) {
-      persistTimedState(
-        feature,
-        { properties: { fadeZones } },
-        { properties: {} }
-      )
+      persistTimedState(feature, { properties: { fadeZones } }, { properties: {} })
       feature.commit?.()
       return
     }
@@ -382,6 +426,40 @@ export default options => {
     persistFade(feature, from, to, 0)
   }
 
+  const persistSpatialCut = (feature, coordinates) => {
+    if (!coordinates.length || !cutGestureId) return
+    const key = feature.getId()
+    const fadeZones = (feature.get('fadeZones') || []).filter(
+      zone => Number(zone?.opacity) > 0
+    )
+    const spatialCuts = mergeSpatialCut(feature.get('spatialCuts'), {
+      coordinates,
+      radius: brushMapRadius(feature, map, brushSize),
+      gesture: `${cutGestureId}:${key}`
+    })
+    feature.set('spatialCuts', spatialCuts)
+    if (fadeZones.length) feature.set('fadeZones', fadeZones)
+    else feature.unset('fadeZones', true)
+    if (isTimedRecording()) {
+      persistTimedState(
+        feature,
+        { properties: { spatialCuts, fadeZones: fadeZones.length ? fadeZones : undefined } },
+        { properties: {} }
+      )
+      feature.commit?.()
+      return
+    }
+    store.update([key], value => ({
+      ...value,
+      properties: {
+        ...value.properties,
+        fadeZones: fadeZones.length ? fadeZones : undefined,
+        spatialCuts
+      }
+    }))
+    feature.commit?.()
+  }
+
   const applyBrushRange = (feature, from, to, { preview = false } = {}) => {
     if (to - from < MIN_STROKE) return
     if (preview) {
@@ -393,13 +471,34 @@ export default options => {
     emitter.emit('ui/erase/applied', { from, to, mode })
   }
 
+  const applyCutHits = hits => {
+    cutEventSerial += 1
+    hits.forEach(hit => {
+      const id = hit.feature.getId()
+      const previous = cutTargets.get(id)
+      const isContinuous = previous?.eventSerial === cutEventSerial - 1
+      const coordinates = isContinuous
+        ? [previous.coordinate, hit.coordinate]
+        : [hit.coordinate]
+
+      persistSpatialCut(hit.feature, coordinates)
+      emitter.emit('ui/erase/applied', { mode: 'cut' })
+      cutTargets.set(id, {
+        feature: hit.feature,
+        coordinate: hit.coordinate,
+        eventSerial: cutEventSerial
+      })
+    })
+  }
+
   const extendBrush = (feature, t) => {
-    const [from, to] = expandBrush(brushFrom, brushTo, t, brushSize)
+    const [from, to] = expandBrush(feature, map, brushFrom, brushTo, t, brushSize)
     brushFrom = from
     brushTo = to
 
     if (mode === 'fade') {
-      const grown = lastAppliedFrom === null ||
+      const grown =
+        lastAppliedFrom === null ||
         from < lastAppliedFrom - 0.001 ||
         to > lastAppliedTo + 0.001
       if (grown) {
@@ -415,7 +514,7 @@ export default options => {
 
   const interaction = new Interaction({ handleEvent })
 
-  function handleEvent (event) {
+  function handleEvent(event) {
     if (!interaction.getActive()) return true
 
     if (event.type === 'pointermove' && !brushing) {
@@ -425,8 +524,10 @@ export default options => {
     }
 
     if (event.type === 'pointerdown' && event.originalEvent?.buttons === 1) {
-      const hit = findFeatureAt(event)
-      if (!hit) return true
+      const hits =
+        mode === 'cut' ? findFeaturesAt(event) : [findFeatureAt(event)].filter(Boolean)
+      if (!hits.length) return true
+      const hit = hits[0]
 
       event.stopPropagation()
       brushing = true
@@ -435,7 +536,10 @@ export default options => {
       brushTo = hit.t
       lastAppliedFrom = null
       lastAppliedTo = null
-      extendBrush(hit.feature, hit.t)
+      if (mode === 'cut') {
+        cutGestureId = `${ORIGINATOR_ID}:${++cutGestureSerial}`
+        applyCutHits(hits)
+      } else extendBrush(hit.feature, hit.t)
       showBrushCursor(hit.coordinate)
       return false
     }
@@ -448,6 +552,14 @@ export default options => {
 
     if (isBrushingMove) {
       event.stopPropagation()
+      if (mode === 'cut') {
+        const hits = findFeaturesAt(event)
+        if (hits.length) {
+          applyCutHits(hits)
+          showBrushCursor(hits[0].coordinate)
+        }
+        return false
+      }
       const pick = pickOnFeature(brushFeature, event)
       if (pick) {
         extendBrush(brushFeature, pick.t)
@@ -458,9 +570,6 @@ export default options => {
 
     if (event.type === 'pointerup' && brushing && brushFeature) {
       event.stopPropagation()
-      if (mode === 'cut' && brushFrom !== null && brushTo !== null) {
-        applyBrushRange(brushFeature, brushFrom, brushTo)
-      }
       resetBrush()
       return false
     }

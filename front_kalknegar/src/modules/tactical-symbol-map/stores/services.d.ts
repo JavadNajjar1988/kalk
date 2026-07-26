@@ -17,6 +17,8 @@ export declare const useServicesStore: StoreDefinition<
         selection: Ref<any>;
         osdDriver: Ref<any>;
         ipcRenderer: Ref<any>;
+        clipboard: Ref<any>;
+        undo: Ref<any>;
         initialize: () => Promise<{
             projectStore: any;
             preferencesStore: any;
@@ -35,6 +37,8 @@ export declare const useServicesStore: StoreDefinition<
             selection: any;
             osdDriver: any;
             ipcRenderer: any;
+            clipboard: any;
+            undo: any;
         };
     }
 >;

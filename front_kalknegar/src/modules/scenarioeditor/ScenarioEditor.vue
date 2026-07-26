@@ -302,6 +302,7 @@ import RecordingState from "@/components/RecordingState.vue";
 import { useMapSettingsStore } from "@/stores/mapSettingsStore";
 import { useTimeFormatterProvider } from "@/stores/timeFormatStore";
 import { buildScenarioSaveDotClass, buildScenarioSaveStatus } from "./scenarioSaveStatus";
+import { useUnifiedUndoRedo } from "./useUnifiedUndoRedo";
 
 const props = defineProps<{ activeScenario: TScenario }>();
 
@@ -353,7 +354,10 @@ provide(searchActionsKey, {
   onScenarioActionHook,
 });
 
-const { state, undo, redo, canRedo, canUndo } = props.activeScenario.store;
+const { state } = props.activeScenario.store;
+const { undo, redo, canRedo, canUndo } = useUnifiedUndoRedo(
+  props.activeScenario.store,
+);
 
 const {
   unitActions,

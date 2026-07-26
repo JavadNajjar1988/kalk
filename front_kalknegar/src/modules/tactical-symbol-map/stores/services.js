@@ -22,6 +22,7 @@ export const useServicesStore = defineStore('services', () => {
   const osdDriver = ref(null)
   const ipcRenderer = ref(null)
   const clipboard = ref(null)
+  const undo = ref(null)
   
   // Initialize services
   const initialize = async () => {
@@ -68,7 +69,8 @@ export const useServicesStore = defineStore('services', () => {
       selection: selection.value,
       osdDriver: osdDriver.value,
       ipcRenderer: ipcRenderer.value,
-      clipboard: clipboard.value
+      clipboard: clipboard.value,
+      undo: undo.value
   })
   
   return {
@@ -84,6 +86,7 @@ export const useServicesStore = defineStore('services', () => {
     osdDriver,
     ipcRenderer,
     clipboard,
+    undo,
     initialize,
     getServices
   }

@@ -19,14 +19,31 @@ export const normalizeFadeZones = zones => {
     .filter(z => z.to - z.from >= MIN_ZONE)
 }
 
-export const mergeFadeZone = (zones, zone) =>
-  normalizeFadeZones([...(zones || []), zone])
+export const mergeFadeZone = (zones, zone) => {
+  const normalized = normalizeFadeZones([...(zones || []), zone]).sort(
+    (a, b) => a.from - b.from || a.to - b.to
+  )
+  const merged = []
+
+  for (const current of normalized) {
+    const previous = merged[merged.length - 1]
+    if (
+      previous &&
+      previous.opacity === current.opacity &&
+      current.from <= previous.to + Number.EPSILON
+    ) {
+      previous.to = Math.max(previous.to, current.to)
+    } else {
+      merged.push({ ...current })
+    }
+  }
+
+  return merged
+}
 
 export const opacityAt = (t, zones) => {
   const matches = (zones || []).filter(z => t >= z.from && t <= z.to)
-  return matches.length
-    ? Math.min(...matches.map(z => z.opacity))
-    : 1
+  return matches.length ? Math.min(...matches.map(z => z.opacity)) : 1
 }
 
 /**
@@ -61,15 +78,12 @@ const asLineString = geometry =>
     : geometry
 
 const isLinealType = type =>
-  type === 'LineString' ||
-  type === 'LinearRing' ||
-  type === 'MultiLineString'
+  type === 'LineString' || type === 'LinearRing' || type === 'MultiLineString'
 
 const polygonRings = polygon => {
   const rings = [polygon.getExteriorRing()]
-  const count = typeof polygon.getNumInteriorRing === 'function'
-    ? polygon.getNumInteriorRing()
-    : 0
+  const count =
+    typeof polygon.getNumInteriorRing === 'function' ? polygon.getNumInteriorRing() : 0
 
   for (let i = 0; i < count; i++) {
     rings.push(polygon.getInteriorRingN(i))
@@ -96,7 +110,9 @@ export const toFadeBaseLines = geometry => {
   if (type === 'Polygon') return polygonRings(geometry).map(asLineString)
 
   if (type === 'MultiPolygon') {
-    return TS.geometries(geometry).flatMap(polygon => polygonRings(polygon).map(asLineString))
+    return TS.geometries(geometry).flatMap(polygon =>
+      polygonRings(polygon).map(asLineString)
+    )
   }
 
   if (type === 'GeometryCollection') {
@@ -118,9 +134,10 @@ export const positionOnBaseLine = (indexedLine, coordinate) => {
   const end = indexedLine.getEndIndex()
   if (!end) return 0
 
-  const coord = coordinate instanceof Coordinate
-    ? coordinate
-    : new Coordinate(coordinate[0], coordinate[1])
+  const coord =
+    coordinate instanceof Coordinate
+      ? coordinate
+      : new Coordinate(coordinate[0], coordinate[1])
 
   const index = indexedLine.indexOf(coord)
   return Math.max(0, Math.min(1, index / end))
@@ -263,9 +280,7 @@ export const cutLineGeometry = (olGeometry, from, to) => {
     const parts = TS.geometries(jts)
     const lineParts = parts.flatMap(part => {
       const partType = geometryType(part)
-      return isLinealType(partType)
-        ? toFadeBaseLines(part)
-        : []
+      return isLinealType(partType) ? toFadeBaseLines(part) : []
     })
     const otherParts = parts.filter(part => !isLinealType(geometryType(part)))
     const remaining = extractLineParts(lineParts, from, to)
