@@ -100,7 +100,6 @@ const UsersListPage: React.FC = () => {
   const {
     users,
     roles,
-    accessLevels,
     filters,
     viewMode,
     isLoading,
@@ -875,7 +874,6 @@ const UsersListPage: React.FC = () => {
         onClose={() => setShowQuickActionsModal(false)}
         onAction={handleQuickActionExecute}
         roles={roles}
-        accessLevels={accessLevels}
       />
 
       {/* User Details Modal */}

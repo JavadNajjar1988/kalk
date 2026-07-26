@@ -19,7 +19,7 @@
     "deps-check": "npm outdated",
     "test": "vitest",
     "test:ui": "vitest --ui",
-    "test:run": "vitest run src/utils/__tests__/numberUtils.test.ts src/components/scenarios/scenarioDialogAutosave.test.ts",
+    "test:run": "vitest run src/utils/__tests__/numberUtils.test.ts src/components/scenarios/scenarioDialogAutosave.test.ts src/modules/users/utils/userPresentation.test.ts",
     "test:all": "vitest run",
     "test:coverage": "vitest run --coverage",
     "test:watch": "vitest --watch"
