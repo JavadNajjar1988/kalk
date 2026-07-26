@@ -47,7 +47,6 @@ interface QuickActionsModalProps {
   onClose: () => void;
   onAction: (payload: QuickActionPayload) => Promise<void>;
   roles: Array<{ id: string; name: string; }>;
-  accessLevels: Array<{ id: string; name: string; }>;
 }
 
 type ActionType = 'changePassword' | 'updateAccessLevel' | 'toggleActive' | null;
@@ -58,7 +57,6 @@ const QuickActionsModal: React.FC<QuickActionsModalProps> = ({
   onClose,
   onAction,
   roles,
-  accessLevels,
 }) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
