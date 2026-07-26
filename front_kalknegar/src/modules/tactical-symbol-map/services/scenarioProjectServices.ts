@@ -18,6 +18,7 @@ type ServicesStoreLike = {
   osdDriver: any;
   ipcRenderer: any;
   clipboard?: any;
+  undo?: any;
   getServices: () => any;
 };
 
@@ -39,7 +40,8 @@ function hasReadyServices(services: any): boolean {
       services?.selection &&
       services?.osdDriver &&
       services?.ipcRenderer &&
-      services?.clipboard,
+      services?.clipboard &&
+      services?.undo,
   );
 }
 
@@ -124,6 +126,9 @@ export async function ensureScenarioTacticalServices({
     (servicesStore as any).clipboard =
       writeMaybeRef((servicesStore as any).clipboard, projectServices.clipboard) ??
       (servicesStore as any).clipboard;
+    (servicesStore as any).undo =
+      writeMaybeRef((servicesStore as any).undo, projectServices.undo) ??
+      (servicesStore as any).undo;
 
     return projectServices;
   })();

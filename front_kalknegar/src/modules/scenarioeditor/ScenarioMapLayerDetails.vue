@@ -49,7 +49,7 @@ const selectedTab = ref(0);
 
 const opacity = computed({
   get: () => mapLayer.value?.opacity,
-  set: (v) => updateLayer({ opacity: v }, { undoable: false, debounce: false }),
+  set: (v) => updateLayer({ opacity: v }, { undoable: true, debounce: false }),
 });
 
 watch(

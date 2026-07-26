@@ -15,12 +15,18 @@ describe("useImmerStore", () => {
     );
 
     expect(store.changeCounter.value).toBe(1);
+    const sequence = store.undoSequence.value;
+    expect(sequence).toBeGreaterThan(0);
 
     store.undo();
     expect(store.changeCounter.value).toBe(2);
+    expect(store.undoSequence.value).toBe(0);
+    expect(store.redoSequence.value).toBe(sequence);
 
     store.redo();
     expect(store.changeCounter.value).toBe(3);
+    expect(store.undoSequence.value).toBe(sequence);
+    expect(store.redoSequence.value).toBe(0);
   });
 
   it("marks external changes dirty without adding undo history", () => {

@@ -3,6 +3,7 @@
  * These are simplified versions for the MVP
  */
 import Emitter from '../shared/emitter.js'
+import { nextUndoSequence } from '../../../utils/undoSequence'
 
 /**
  * Mock OSDDriver - minimal implementation for web
@@ -44,33 +45,78 @@ MockUndo.prototype = Object.create(Emitter.prototype)
 MockUndo.prototype.constructor = MockUndo
 
 MockUndo.prototype.canUndo = function() {
-  return false
+  return this.undoStack.length > 0
 }
 
 MockUndo.prototype.canRedo = function() {
-  return false
+  return this.redoStack.length > 0
 }
 
-MockUndo.prototype.undo = function() {
-  // Undo not implemented in MVP
+MockUndo.prototype.undoSequence = function() {
+  return this.undoStack[this.undoStack.length - 1]?.historySequence ?? 0
 }
 
-MockUndo.prototype.redo = function() {
-  // Redo not implemented in MVP
+MockUndo.prototype.redoSequence = function() {
+  return this.redoStack[this.redoStack.length - 1]?.historySequence ?? 0
 }
 
-MockUndo.prototype.push = function(command) {
-  // Just execute the command without storing for undo
+const executeInverse = async command => {
+  if (!command?.inverse) return
+  const inverseCommand = await command.inverse()
+  if (inverseCommand?.apply) await inverseCommand.apply()
+}
+
+MockUndo.prototype.undo = async function() {
+  const command = this.undoStack.pop()
+  if (!command) return false
+
+  await executeInverse(command)
+  this.redoStack.push(command)
+  this.emit('changed')
+  return true
+}
+
+MockUndo.prototype.redo = async function() {
+  const command = this.redoStack.pop()
+  if (!command) return false
+
+  await command.apply?.()
+  this.undoStack.push(command)
+  this.emit('changed')
+  return true
+}
+
+MockUndo.prototype.push = async function(command) {
   if (command && command.execute) {
-    command.execute()
+    await command.execute()
+    command.historySequence = nextUndoSequence()
+    this.undoStack.push(command)
+    this.redoStack = []
+    this.emit('changed')
   }
 }
 
 MockUndo.prototype.apply = async function(command) {
-  // Just execute the command without storing for undo
-  if (command && command.apply) {
-    await command.apply()
+  if (!command?.apply) return
+
+  await command.apply()
+  command.historySequence = nextUndoSequence()
+  const previous = this.undoStack[this.undoStack.length - 1]
+  if (
+    command.collapsible &&
+    command.id !== undefined &&
+    previous?.collapsible &&
+    previous.id === command.id
+  ) {
+    this.undoStack[this.undoStack.length - 1] = {
+      ...command,
+      inverse: previous.inverse
+    }
+  } else {
+    this.undoStack.push(command)
   }
+  this.redoStack = []
+  this.emit('changed')
 }
 
 MockUndo.prototype.command = function(apply, inverse, options) {
@@ -87,9 +133,8 @@ MockUndo.prototype.composite = function(commands) {
       }
     },
     inverse: async () => {
-      // Reverse order for inverse
       for (const cmd of [...commands].reverse()) {
-        if (cmd && cmd.inverse) await cmd.inverse()
+        await executeInverse(cmd)
       }
     }
   }

@@ -8,6 +8,7 @@ import _rewrite from './_rewrite'
 import _evalSync from './_evalSync'
 import _clip from './_clip'
 import _applyFadeZones from './_applyFadeZones'
+import _applySpatialCuts, { normalizeSpatialCuts } from './spatialCuts'
 import { normalizeFadeZones } from './fadeZones'
 
 const EMPTY_OBJECT = {}
@@ -32,14 +33,17 @@ export default specifics => $ => {
   specifics($)
 
   $.fadeZones = $.properties.map(p => normalizeFadeZones(p?.fadeZones))
+  $.spatialCuts = $.properties.map(p => normalizeSpatialCuts(p?.spatialCuts))
   if (!$.fadeBaseGeometry) {
     $.fadeBaseGeometry = $.jtsSmoothenedGeometry || $.jtsGeometry
   }
 
+  $.cutShape = Signal.link(_applySpatialCuts, [$.shape, $.spatialCuts, $.read])
+
   $.styles = Signal.link(
     (...styles) => styles.reduce(R.concat),
     [
-      $.shape,
+      $.cutShape,
       $.labels,
       $.selection
     ]
