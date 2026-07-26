@@ -67,13 +67,17 @@ export class UserApiService extends BaseApiClient {
     }));
   }
 
-  async getUsers(filters?: UserFilters): Promise<{
+  async getUsers(filters?: UserFilters, page = 1, pageSize = 10): Promise<{
     users: User[];
     total: number;
     roles: Role[];
     accessLevels: AccessLevel[];
   }> {
-    const response = await this.get<UsersListApiData>('/users', this.buildFilters(filters));
+    const response = await this.get<UsersListApiData>('/users', {
+      ...(this.buildFilters(filters) || {}),
+      page: String(page),
+      pageSize: String(pageSize),
+    });
     const data = handleApiResponse(response);
     return {
       users: data.items ?? [],

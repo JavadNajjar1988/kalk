@@ -25,6 +25,7 @@ import {
   Chip,
   useTheme,
   ThemeProvider,
+  Pagination,
 } from '@mui/material';
 import { alpha, createTheme } from '@mui/material/styles';
 import {
@@ -49,6 +50,9 @@ import {
   resourcesOutlinedCancelButtonSx,
 } from '@/modules/dashboard/pages/resources/resourcesDialogStyles';
 import { canAccessFeature } from '@/security/roleAccess';
+import { updateUser as updateAuthenticatedUser } from '@/store/slices/authSlice';
+import AvatarPicker from '../components/AvatarPicker';
+import { getAccessLevelColor, getRoleProfile } from '../utils/userPresentation';
 
 const UsersListPage: React.FC = () => {
   const dispatch = useAppDispatch();
@@ -127,7 +131,8 @@ const UsersListPage: React.FC = () => {
     gender: 'مرد' as 'مرد' | 'زن',
     nationality: 'ایرانی' as 'ایرانی' | 'غیرایرانی' | 'تبعه مضاعف',
     mobile: '',
-    role: 'مهمان',
+    avatar: undefined as string | undefined,
+    role: 'ناظر مهمان',
     accessLevel: 'سطح 4 - دسترسی مهمان',
     status: 'آزاد' as 'آزاد' | 'نظامی' | 'غیرنظامی',
   });
@@ -191,7 +196,7 @@ const UsersListPage: React.FC = () => {
 
   const handleQuickActionExecute = async (payload: QuickActionPayload) => {
     try {
-      await dispatch(performQuickAction(payload));
+      await dispatch(performQuickAction(payload)).unwrap();
       setShowQuickActionsModal(false);
       setSelectedUserForQuickActions(null);
     } catch (error) {
@@ -214,6 +219,7 @@ const UsersListPage: React.FC = () => {
         userCode,
         personalInfo: {
           fullName: newUserForm.fullName || 'کاربر جدید',
+          avatar: newUserForm.avatar,
           fatherName: '',
           nationalId: newUserForm.nationalId || `${Date.now().toString().slice(-10)}`,
           nationality: newUserForm.nationality,
@@ -230,7 +236,7 @@ const UsersListPage: React.FC = () => {
         systemInfo: {
           role: newUserForm.role,
           accessLevel: newUserForm.accessLevel,
-          permissions: ['مشاهده محدود'],
+          permissions: getRoleProfile(newUserForm.role).permissions,
           loginCount: 0,
         },
         isActive: true,
@@ -246,7 +252,8 @@ const UsersListPage: React.FC = () => {
           gender: 'مرد',
           nationality: 'ایرانی',
           mobile: '',
-          role: 'مهمان',
+          avatar: undefined,
+          role: 'ناظر مهمان',
           accessLevel: 'سطح 4 - دسترسی مهمان',
           status: 'آزاد',
         });
@@ -277,7 +284,13 @@ const UsersListPage: React.FC = () => {
   // Handle edit user
   const handleSaveEditUser = async (user: User, updatedData: Partial<User>) => {
     try {
-      await dispatch(updateUser({ id: user.id, userData: updatedData }));
+      const updatedUser = await dispatch(updateUser({ id: user.id, userData: updatedData })).unwrap();
+      if (currentUser?.id === updatedUser.id) {
+        dispatch(updateAuthenticatedUser({
+          name: updatedUser.personalInfo.fullName,
+          avatar: updatedUser.personalInfo.avatar,
+        }));
+      }
       setShowEditModal(false);
       setSelectedUser(null);
     } catch (error) {
@@ -288,7 +301,7 @@ const UsersListPage: React.FC = () => {
   // Handle delete user
   const handleConfirmDelete = async (user: User) => {
     try {
-      await dispatch(deleteUser(user.id));
+      await dispatch(deleteUser(user.id)).unwrap();
       setShowDeleteModal(false);
       setSelectedUser(null);
     } catch (error) {
@@ -304,17 +317,14 @@ const UsersListPage: React.FC = () => {
     setSelectedUser(null);
   };
 
-  if (error) {
-    const isForbidden =
-      typeof error === 'string' &&
-      (error.toLowerCase().includes('permission') || error.toLowerCase().includes('insufficient'));
-    const message = isForbidden
-      ? 'دسترسی غیرمجاز. مشاهده لیست کاربران فقط برای مدیر سیستم و فرمانده امکان‌پذیر است.'
-      : error;
+  const isForbidden =
+    typeof error === 'string'
+    && (error.toLowerCase().includes('permission') || error.toLowerCase().includes('insufficient'));
+  if (error && isForbidden) {
     return (
       <Box p={3}>
         <Alert severity="error" onClose={() => dispatch(clearError())}>
-          {message}
+          دسترسی غیرمجاز. مشاهده لیست کاربران فقط برای مدیر سیستم و فرمانده امکان‌پذیر است.
         </Alert>
       </Box>
     );
@@ -333,6 +343,11 @@ const UsersListPage: React.FC = () => {
           },
         }}
       >
+      {error && (
+        <Alert severity="error" onClose={() => dispatch(clearError())} sx={{ mb: 2 }}>
+          {error}
+        </Alert>
+      )}
       {/* Header */}
       <Box sx={{ mb: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <Typography variant="h4" component="h1" fontWeight={600}>
@@ -536,6 +551,17 @@ const UsersListPage: React.FC = () => {
               />
             )}
           </Box>
+          {pagination.total > pagination.pageSize && (
+            <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2 }}>
+              <Pagination
+                page={pagination.page}
+                count={Math.ceil(pagination.total / pagination.pageSize)}
+                onChange={handlePageChange}
+                color="primary"
+                shape="rounded"
+              />
+            </Box>
+          )}
         </>
       )}
 
@@ -697,6 +723,22 @@ const UsersListPage: React.FC = () => {
 
             {/* اطلاعات سیستمی */}
             <Grid item xs={12}>
+              <Box
+                sx={{
+                  p: 2,
+                  borderRadius: 2,
+                  border: `1px solid ${alpha(getAccessLevelColor(theme, newUserForm.accessLevel), 0.3)}`,
+                  bgcolor: alpha(getAccessLevelColor(theme, newUserForm.accessLevel), 0.04),
+                }}
+              >
+                <AvatarPicker
+                  value={newUserForm.avatar}
+                  accessLevel={newUserForm.accessLevel}
+                  onChange={(avatar) => setNewUserForm((prev) => ({ ...prev, avatar }))}
+                />
+              </Box>
+            </Grid>
+            <Grid item xs={12}>
               <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 1 }}>
                 اطلاعات سیستمی
               </Typography>
@@ -708,10 +750,14 @@ const UsersListPage: React.FC = () => {
                       value={newUserForm.role}
                       label="نقش سیستمی"
                       onChange={(e) =>
-                        setNewUserForm((prev) => ({
-                          ...prev,
-                          role: e.target.value as string,
-                        }))
+                        setNewUserForm((prev) => {
+                          const profile = getRoleProfile(e.target.value as string);
+                          return {
+                            ...prev,
+                            role: profile.role,
+                            accessLevel: profile.accessLevel,
+                          };
+                        })
                       }
                     >
                       {roles.map((role) => (
@@ -723,25 +769,19 @@ const UsersListPage: React.FC = () => {
                   </FormControl>
                 </Grid>
                 <Grid item xs={12} md={6}>
-                  <FormControl fullWidth>
-                    <InputLabel>سطح دسترسی</InputLabel>
-                    <Select
-                      value={newUserForm.accessLevel}
-                      label="سطح دسترسی"
-                      onChange={(e) =>
-                        setNewUserForm((prev) => ({
-                          ...prev,
-                          accessLevel: e.target.value as string,
-                        }))
-                      }
-                    >
-                      {accessLevels.map((level) => (
-                        <MenuItem key={level.id} value={level.name}>
-                          {level.name}
-                        </MenuItem>
-                      ))}
-                    </Select>
-                  </FormControl>
+                  <TextField
+                    fullWidth
+                    label="سطح دسترسی"
+                    value={newUserForm.accessLevel}
+                    InputProps={{ readOnly: true }}
+                    helperText="براساس نقش به‌صورت خودکار تعیین می‌شود."
+                    sx={{
+                      '& .MuiInputBase-input': {
+                        color: getAccessLevelColor(theme, newUserForm.accessLevel),
+                        fontWeight: 700,
+                      },
+                    }}
+                  />
                 </Grid>
                 <Grid item xs={12}>
                   <Typography variant="caption" color="text.secondary">

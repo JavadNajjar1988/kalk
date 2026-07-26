@@ -14,6 +14,7 @@ import {
   Box,
   Typography,
   useTheme,
+  alpha,
 } from '@mui/material';
 import {
   Edit as EditIcon,
@@ -25,6 +26,8 @@ import {
 } from '@mui/icons-material';
 import { User } from '../types';
 import FarsiNumber from '@/components/common/FarsiNumber';
+import { resolveAvatarSrc } from '../utils/avatarOptions';
+import { getAccessLevelColor, getUserInitials } from '../utils/userPresentation';
 
 interface UsersTableViewProps {
   users: User[];
@@ -47,31 +50,6 @@ const UsersTableView: React.FC<UsersTableViewProps> = ({
 
   const getStatusColor = (isActive: boolean) => {
     return isActive ? 'success' : 'error';
-  };
-
-  const getAccessLevelColor = (accessLevel: string | undefined) => {
-    if (!accessLevel || typeof accessLevel !== 'string') {
-      return theme.palette.grey[500];
-    }
-    if (accessLevel.includes('سطح 1')) return theme.palette.error.main;
-    if (accessLevel.includes('سطح 2')) return theme.palette.warning.main;
-    if (accessLevel.includes('سطح 3')) return theme.palette.info.main;
-    if (accessLevel.includes('سطح 4')) return theme.palette.success.main;
-    return theme.palette.grey[500];
-  };
-
-  const getRoleColor = (role: string | undefined) => {
-    if (!role || typeof role !== 'string') {
-      return theme.palette.grey[500];
-    }
-    switch (role) {
-      case 'مدیر سیستم': return theme.palette.error.main;
-      case 'سرپرست': return theme.palette.warning.main;
-      case 'اپراتور': return theme.palette.info.main;
-      case 'تحلیلگر': return theme.palette.success.main;
-      case 'مهمان': return theme.palette.grey[500];
-      default: return theme.palette.primary.main;
-    }
   };
 
   return (
@@ -114,13 +92,17 @@ const UsersTableView: React.FC<UsersTableViewProps> = ({
           </TableRow>
         </TableHead>
         <TableBody>
-          {users.filter(Boolean).map((user, index) => (
-            <TableRow 
+          {users.filter(Boolean).map((user, index) => {
+            const accessColor = getAccessLevelColor(theme, user.systemInfo?.accessLevel);
+            return (
+            <TableRow
               key={user.id}
               hover
               sx={{
+                borderRight: `4px solid ${accessColor}`,
+                bgcolor: alpha(accessColor, 0.025),
                 '&:hover': {
-                  bgcolor: theme.palette.action.hover,
+                  bgcolor: alpha(accessColor, 0.08),
                 },
                 opacity: user.isActive ? 1 : 0.6,
               }}
@@ -134,14 +116,15 @@ const UsersTableView: React.FC<UsersTableViewProps> = ({
               <TableCell>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                   <Avatar 
+                    src={resolveAvatarSrc(user.personalInfo?.avatar)}
                     sx={{ 
                       width: 32, 
                       height: 32, 
-                      bgcolor: getRoleColor(user.systemInfo.role),
+                      bgcolor: accessColor,
                       fontSize: '0.875rem'
                     }}
                   >
-                    {user.userCode.slice(0, 2)}
+                    {getUserInitials(user.personalInfo?.fullName, user.userCode.slice(0, 2))}
                   </Avatar>
                   <Typography variant="body2" fontWeight={500}>
                     {user.userCode}
@@ -176,8 +159,8 @@ const UsersTableView: React.FC<UsersTableViewProps> = ({
                   label={user.systemInfo.role || 'نامشخص'}
                   size="small"
                   sx={{
-                    bgcolor: getRoleColor(user.systemInfo.role),
-                    color: theme.palette.getContrastText(getRoleColor(user.systemInfo.role)),
+                    bgcolor: accessColor,
+                    color: theme.palette.getContrastText(accessColor),
                     fontWeight: 500,
                   }}
                 />
@@ -190,8 +173,9 @@ const UsersTableView: React.FC<UsersTableViewProps> = ({
                   size="small"
                   variant="outlined"
                   sx={{
-                    borderColor: getAccessLevelColor(user.systemInfo.accessLevel),
-                    color: getAccessLevelColor(user.systemInfo.accessLevel),
+                    borderColor: accessColor,
+                    color: accessColor,
+                    bgcolor: alpha(accessColor, 0.06),
                     fontWeight: 500,
                   }}
                 />
@@ -253,7 +237,7 @@ const UsersTableView: React.FC<UsersTableViewProps> = ({
                 </Box>
               </TableCell>
             </TableRow>
-          ))}
+          )})}
         </TableBody>
       </Table>
     </TableContainer>

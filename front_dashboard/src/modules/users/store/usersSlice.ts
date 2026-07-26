@@ -35,8 +35,8 @@ export const fetchUsers = createAsyncThunk<
   { state: RootState; rejectValue: string }
 >('users/fetchUsers', async (_: void, { getState, rejectWithValue }) => {
   try {
-    const { filters } = (getState() as RootState).users;
-    const response = await userApiService.getUsers(filters);
+    const { filters, pagination } = (getState() as RootState).users;
+    const response = await userApiService.getUsers(filters, pagination.page, pagination.pageSize);
     return response;
   } catch (error: any) {
     return rejectWithValue(error?.message || 'خطا در بارگذاری کاربران');
@@ -115,9 +115,11 @@ const usersSlice = createSlice({
     },
     setFilters: (state, action: PayloadAction<UserFilters>) => {
       state.filters = { ...state.filters, ...action.payload };
+      state.pagination.page = 1;
     },
     clearFilters: (state) => {
       state.filters = {};
+      state.pagination.page = 1;
     },
     setViewMode: (state, action: PayloadAction<ViewMode>) => {
       state.viewMode = action.payload;

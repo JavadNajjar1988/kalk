@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Any, Literal, Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class SocialNetwork(BaseModel):
@@ -13,6 +13,7 @@ class SocialNetwork(BaseModel):
 
 class PersonalInfo(BaseModel):
     fullName: str = Field(..., min_length=1, max_length=200)
+    avatar: Optional[str] = Field(default=None, max_length=32)
     fullNameEn: Optional[str] = Field(default=None, max_length=200)
     fatherName: Optional[str] = Field(default=None, max_length=200)
     nationalId: Optional[str] = Field(default=None, max_length=50)
@@ -70,13 +71,12 @@ class UserUpdate(BaseModel):
 
 
 class UserOut(UserBase):
+    model_config = ConfigDict(from_attributes=True)
+
     id: str
     username: str
     createdAt: datetime
     updatedAt: datetime
-
-    class Config:
-        from_attributes = True
 
 
 class LookupItem(BaseModel):

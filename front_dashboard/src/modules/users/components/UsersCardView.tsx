@@ -27,6 +27,8 @@ import {
 } from '@mui/icons-material';
 import { User } from '../types';
 import FarsiNumber from '@/components/common/FarsiNumber';
+import { resolveAvatarSrc } from '../utils/avatarOptions';
+import { getAccessLevelColor, getUserInitials } from '../utils/userPresentation';
 
 interface UsersCardViewProps {
   users: User[];
@@ -51,31 +53,6 @@ const UsersCardView: React.FC<UsersCardViewProps> = ({
     return isActive ? 'success' : 'error';
   };
 
-  const getAccessLevelColor = (accessLevel: string | undefined) => {
-    if (!accessLevel || typeof accessLevel !== 'string') {
-      return theme.palette.grey[500];
-    }
-    if (accessLevel.includes('سطح 1')) return theme.palette.error.main;
-    if (accessLevel.includes('سطح 2')) return theme.palette.warning.main;
-    if (accessLevel.includes('سطح 3')) return theme.palette.info.main;
-    if (accessLevel.includes('سطح 4')) return theme.palette.success.main;
-    return theme.palette.grey[500];
-  };
-
-  const getRoleColor = (role: string | undefined) => {
-    if (!role || typeof role !== 'string') {
-      return theme.palette.grey[500];
-    }
-    switch (role) {
-      case 'مدیر سیستم': return theme.palette.error.main;
-      case 'سرپرست': return theme.palette.warning.main;
-      case 'اپراتور': return theme.palette.info.main;
-      case 'تحلیلگر': return theme.palette.success.main;
-      case 'مهمان': return theme.palette.grey[500];
-      default: return theme.palette.primary.main;
-    }
-  };
-
   const getCardBackgroundColor = (isActive: boolean) => {
     return isActive 
       ? theme.palette.background.paper
@@ -84,7 +61,9 @@ const UsersCardView: React.FC<UsersCardViewProps> = ({
 
   return (
     <Grid container spacing={3}>
-      {users.map((user) => (
+      {users.map((user) => {
+        const accessColor = getAccessLevelColor(theme, user.systemInfo?.accessLevel);
+        return (
         <Grid item xs={12} sm={6} md={4} lg={3} key={user.id}>
           <Card
             sx={{
@@ -92,7 +71,8 @@ const UsersCardView: React.FC<UsersCardViewProps> = ({
               display: 'flex',
               flexDirection: 'column',
               bgcolor: getCardBackgroundColor(user.isActive),
-              border: user.isActive ? 'none' : `2px dashed ${theme.palette.grey[300]}`,
+              border: `${user.isActive ? 1 : 2}px ${user.isActive ? 'solid' : 'dashed'} ${alpha(accessColor, user.isActive ? 0.45 : 0.3)}`,
+              borderTop: `4px solid ${accessColor}`,
               transition: 'all 0.3s ease',
               '&:hover': {
                 transform: 'translateY(-4px)',
@@ -105,16 +85,17 @@ const UsersCardView: React.FC<UsersCardViewProps> = ({
               {/* Header با آواتار و وضعیت */}
               <Box sx={{ display: 'flex', alignItems: 'flex-start', mb: 2 }}>
                 <Avatar
+                  src={resolveAvatarSrc(user.personalInfo?.avatar)}
                   sx={{
                     width: 56,
                     height: 56,
-                    bgcolor: getRoleColor(user.systemInfo.role),
+                    bgcolor: accessColor,
                     fontSize: '1.25rem',
                     fontWeight: 'bold',
                     mr: 2,
                   }}
                 >
-                  {(user.personalInfo?.fullName || 'نامشخص').split(' ').map(n => n[0]).join('')}
+                  {getUserInitials(user.personalInfo?.fullName)}
                 </Avatar>
                 
                 <Box sx={{ flex: 1 }}>
@@ -181,8 +162,8 @@ const UsersCardView: React.FC<UsersCardViewProps> = ({
                   label={user.systemInfo?.role || 'نامشخص'}
                   size="small"
                   sx={{
-                    bgcolor: getRoleColor(user.systemInfo?.role),
-                    color: theme.palette.getContrastText(getRoleColor(user.systemInfo?.role)),
+                    bgcolor: accessColor,
+                    color: theme.palette.getContrastText(accessColor),
                     fontWeight: 500,
                     mb: 1,
                   }}
@@ -196,8 +177,9 @@ const UsersCardView: React.FC<UsersCardViewProps> = ({
                   size="small"
                   variant="outlined"
                   sx={{
-                    borderColor: getAccessLevelColor(user.systemInfo?.accessLevel),
-                    color: getAccessLevelColor(user.systemInfo?.accessLevel),
+                    borderColor: accessColor,
+                    color: accessColor,
+                    bgcolor: alpha(accessColor, 0.06),
                     fontWeight: 500,
                   }}
                 />
@@ -262,7 +244,7 @@ const UsersCardView: React.FC<UsersCardViewProps> = ({
             </CardActions>
           </Card>
         </Grid>
-      ))}
+      )})}
     </Grid>
   );
 };

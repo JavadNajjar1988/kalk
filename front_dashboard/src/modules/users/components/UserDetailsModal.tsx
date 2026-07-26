@@ -17,7 +17,6 @@ import {
 import { alpha } from '@mui/material/styles';
 import {
   buildResourcesFormDialogSx,
-  getResourcesDialogAccent,
   resourcesDialogContentDividersSx,
   resourcesDialogActionsSx,
   resourcesOutlinedCancelButtonSx,
@@ -35,6 +34,8 @@ import {
 } from '@mui/icons-material';
 import { User } from '../types';
 import FarsiNumber from '@/components/common/FarsiNumber';
+import { resolveAvatarSrc } from '../utils/avatarOptions';
+import { getAccessLevelColor, getUserInitials } from '../utils/userPresentation';
 
 interface UserDetailsModalProps {
   user: User | null;
@@ -48,7 +49,7 @@ const UserDetailsModal: React.FC<UserDetailsModalProps> = ({
   onClose,
 }) => {
   const theme = useTheme();
-  const accent = getResourcesDialogAccent(theme);
+  const accent = getAccessLevelColor(theme, user?.systemInfo?.accessLevel);
 
   const cardSurfaceSx = {
     borderRadius: 3,
@@ -73,36 +74,9 @@ const UserDetailsModal: React.FC<UserDetailsModalProps> = ({
 
   const displayFullName =
     (user.personalInfo?.fullName || user.personalInfo?.fullNameEn || user.username || user.userCode || 'کاربر').trim();
-  const initials =
-    displayFullName
-      .split(/\s+/)
-      .filter(Boolean)
-      .map(part => part[0])
-      .join('') ||
-    displayFullName.slice(0, 2) ||
-    '؟';
+  const initials = getUserInitials(displayFullName, '؟');
   const mobileNumbers = Array.isArray(user.contactInfo?.mobile) ? user.contactInfo.mobile : [];
   const permissions = Array.isArray(user.systemInfo?.permissions) ? user.systemInfo.permissions : [];
-
-  const getRoleColor = (role: string) => {
-    switch (role) {
-      case 'مدیر سیستم': return theme.palette.error.main;
-      case 'سرپرست': return theme.palette.warning.main;
-      case 'اپراتور': return theme.palette.info.main;
-      case 'تحلیلگر': return theme.palette.success.main;
-      case 'مهمان': return theme.palette.grey[500];
-      default: return theme.palette.primary.main;
-    }
-  };
-
-  const getAccessLevelColor = (accessLevel?: string) => {
-    if (!accessLevel) return theme.palette.grey[500];
-    if (accessLevel.includes('سطح 1')) return theme.palette.error.main;
-    if (accessLevel.includes('سطح 2')) return theme.palette.warning.main;
-    if (accessLevel.includes('سطح 3')) return theme.palette.info.main;
-    if (accessLevel.includes('سطح 4')) return theme.palette.success.main;
-    return theme.palette.grey[500];
-  };
 
   return (
     <Dialog
@@ -171,14 +145,15 @@ const UserDetailsModal: React.FC<UserDetailsModalProps> = ({
             }}
           >
             <Avatar
+              src={resolveAvatarSrc(user.personalInfo?.avatar)}
               sx={{
                 width: 90,
                 height: 90,
-                bgcolor: getRoleColor(user.systemInfo.role),
+                bgcolor: accent,
                 fontSize: '2.2rem',
                 fontWeight: 'bold',
                 border: '3px solid rgba(255, 255, 255, 0.82)',
-                boxShadow: `0 12px 30px ${alpha(getRoleColor(user.systemInfo.role), 0.35)}`,
+                boxShadow: `0 12px 30px ${alpha(accent, 0.35)}`,
               }}
             >
               {initials}
@@ -373,8 +348,8 @@ const UserDetailsModal: React.FC<UserDetailsModalProps> = ({
                     size="small"
                     sx={{
                       mt: 0.5,
-                      bgcolor: getRoleColor(user.systemInfo.role),
-                      color: theme.palette.getContrastText(getRoleColor(user.systemInfo.role)),
+                      bgcolor: accent,
+                      color: theme.palette.getContrastText(accent),
                     }}
                   />
                 </Box>
@@ -387,8 +362,8 @@ const UserDetailsModal: React.FC<UserDetailsModalProps> = ({
                     variant="outlined"
                     sx={{
                       mt: 0.5,
-                      borderColor: getAccessLevelColor(user.systemInfo.accessLevel),
-                      color: getAccessLevelColor(user.systemInfo.accessLevel),
+                      borderColor: accent,
+                      color: accent,
                     }}
                   />
                 </Box>

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Dialog,
   DialogTitle,
@@ -39,6 +39,7 @@ import {
   Close as CloseIcon,
 } from '@mui/icons-material';
 import { User, QuickActionPayload, PasswordChangeData, AccessLevelChangeData } from '../types';
+import { getRoleProfile } from '../utils/userPresentation';
 
 interface QuickActionsModalProps {
   user: User | null;
@@ -131,6 +132,16 @@ const QuickActionsModal: React.FC<QuickActionsModalProps> = ({
     newRole: user?.systemInfo.role || '',
     newPermissions: user?.systemInfo.permissions || [],
   });
+
+  useEffect(() => {
+    if (!user) return;
+    const profile = getRoleProfile(user.systemInfo.role);
+    setAccessData({
+      newRole: profile.role,
+      newAccessLevel: profile.accessLevel,
+      newPermissions: profile.permissions,
+    });
+  }, [user?.id, user?.systemInfo.role]);
 
   const getAccessLevelDescription = (level: string): string => {
     if (!level) return '';
@@ -469,7 +480,14 @@ const renderAccessLevelForm = () => (
 
           value={accessData.newRole}
 
-          onChange={(e) => setAccessData(prev => ({ ...prev, newRole: e.target.value }))}
+          onChange={(e) => {
+            const profile = getRoleProfile(e.target.value);
+            setAccessData({
+              newRole: profile.role,
+              newAccessLevel: profile.accessLevel,
+              newPermissions: profile.permissions,
+            });
+          }}
 
           label="نقش کاربری"
 
@@ -491,33 +509,14 @@ const renderAccessLevelForm = () => (
 
 
 
-      <FormControl fullWidth sx={inputStyle}>
-
-        <InputLabel>سطح دسترسی</InputLabel>
-
-        <Select
-
-          value={accessData.newAccessLevel}
-
-          onChange={(e) => setAccessData(prev => ({ ...prev, newAccessLevel: e.target.value }))}
-
-          label="سطح دسترسی"
-
-        >
-
-          {accessLevels.map((level) => (
-
-            <MenuItem key={level.id} value={level.name}>
-
-              {level.name}
-
-            </MenuItem>
-
-          ))}
-
-        </Select>
-
-      </FormControl>
+      <TextField
+        fullWidth
+        label="سطح دسترسی"
+        value={accessData.newAccessLevel}
+        InputProps={{ readOnly: true }}
+        helperText="سطح دسترسی و مجوزها از نقش انتخاب‌شده تعیین می‌شوند."
+        sx={inputStyle}
+      />
 
       {accessData.newAccessLevel && (
         <Alert

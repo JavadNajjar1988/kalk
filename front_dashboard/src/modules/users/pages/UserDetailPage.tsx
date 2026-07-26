@@ -17,7 +17,9 @@ import {
   MenuItem,
   ListItemIcon,
   ListItemText,
+  useTheme,
 } from '@mui/material';
+import { alpha } from '@mui/material/styles';
 import {
   ArrowBack as ArrowBackIcon,
   Edit as EditIcon,
@@ -35,14 +37,21 @@ import { fetchUserById, deleteUser, updateUser, clearError } from '../store/user
 import type { User } from '../types';
 import { useTranslation } from '@/hooks/useTranslation';
 import EditUserModal from '../components/EditUserModal';
+import { updateUser as updateAuthenticatedUser } from '@/store/slices/authSlice';
+import { canAccessFeature } from '@/security/roleAccess';
+import { resolveAvatarSrc } from '../utils/avatarOptions';
+import { getAccessLevelColor, getUserInitials } from '../utils/userPresentation';
 
 const UserDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
+  const theme = useTheme();
   const { t } = useTranslation();
 
   const { selectedUser, isLoading, error } = useAppSelector((state) => state.users);
+  const currentUser = useAppSelector((state) => state.auth.user);
+  const canManageUsers = canAccessFeature(currentUser?.role, 'users.manage');
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [showEditModal, setShowEditModal] = useState(false);
 
@@ -116,6 +125,7 @@ const UserDetailPage: React.FC = () => {
       </Box>
     );
   }
+  const accessColor = getAccessLevelColor(theme, selectedUser.systemInfo?.accessLevel);
 
   return (
     <Box sx={{ p: 3 }}>
@@ -129,7 +139,7 @@ const UserDetailPage: React.FC = () => {
             جزئیات کاربر
           </Typography>
         </Box>
-        <Box>
+        {canManageUsers && <Box>
           <IconButton onClick={handleMenuOpen}>
             <MoreVertIcon />
           </IconButton>
@@ -151,25 +161,26 @@ const UserDetailPage: React.FC = () => {
               <ListItemText primary="حذف" />
             </MenuItem>
           </Menu>
-        </Box>
+        </Box>}
       </Box>
 
       <Grid container spacing={3}>
         {/* Profile Card */}
         <Grid item xs={12} md={4}>
-          <Card sx={{ borderRadius: 2, textAlign: 'center' }}>
+          <Card sx={{ borderRadius: 2, textAlign: 'center', borderTop: `4px solid ${accessColor}`, bgcolor: alpha(accessColor, 0.025) }}>
             <CardContent sx={{ p: 4 }}>
               <Avatar
+                src={resolveAvatarSrc(selectedUser.personalInfo?.avatar)}
                 sx={{
                   width: 120,
                   height: 120,
                   mx: 'auto',
                   mb: 2,
                   fontSize: '3rem',
-                  bgcolor: 'primary.main',
+                  bgcolor: accessColor,
                 }}
               >
-                {(selectedUser.personalInfo?.fullName || '؟').charAt(0)}
+                {getUserInitials(selectedUser.personalInfo?.fullName, '؟')}
               </Avatar>
               <Typography variant="h5" fontWeight={600} sx={{ mb: 1 }}>
                 {selectedUser.personalInfo?.fullName || 'نامشخص'}
@@ -413,17 +424,23 @@ const UserDetailPage: React.FC = () => {
       </Grid>
 
       {/* Edit User Modal */}
-      <EditUserModal
+      {canManageUsers && <EditUserModal
         user={selectedUser}
         open={showEditModal}
         onClose={() => setShowEditModal(false)}
         onSave={async (user, updatedData) => {
-          await dispatch(updateUser({ id: user.id, userData: updatedData }));
+          const updatedUser = await dispatch(updateUser({ id: user.id, userData: updatedData })).unwrap();
+          if (currentUser?.id === updatedUser.id) {
+            dispatch(updateAuthenticatedUser({
+              name: updatedUser.personalInfo.fullName,
+              avatar: updatedUser.personalInfo.avatar,
+            }));
+          }
           setShowEditModal(false);
           await dispatch(fetchUserById(user.id));
         }}
         isSaving={isLoading}
-      />
+      />}
     </Box>
   );
 };

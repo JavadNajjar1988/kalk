@@ -21,7 +21,6 @@ import {
 import { alpha } from '@mui/material/styles';
 import {
   buildResourcesFormDialogSx,
-  getResourcesDialogAccent,
   resourcesDialogContentDividersSx,
   resourcesDialogActionsSx,
   resourcesOutlinedCancelButtonSx,
@@ -33,6 +32,9 @@ import {
 } from '@mui/icons-material';
 import { User } from '../types';
 import { useAppSelector } from '@/store';
+import AvatarPicker from './AvatarPicker';
+import { resolveAvatarSrc } from '../utils/avatarOptions';
+import { getAccessLevelColor, getRoleProfile, getUserInitials } from '../utils/userPresentation';
 
 interface EditUserModalProps {
   user: User | null;
@@ -50,9 +52,9 @@ const EditUserModal: React.FC<EditUserModalProps> = ({
   isSaving = false,
 }) => {
   const theme = useTheme();
-  const accent = getResourcesDialogAccent(theme);
-  const { accessLevels } = useAppSelector((state) => state.users);
+  const { roles } = useAppSelector((state) => state.users);
   const [formData, setFormData] = useState<Partial<User>>({});
+  const accent = getAccessLevelColor(theme, formData.systemInfo?.accessLevel || user?.systemInfo?.accessLevel);
 
   const getAccessLevelDescription = (level: string): string => {
     if (!level) return '';
@@ -86,14 +88,7 @@ const EditUserModal: React.FC<EditUserModalProps> = ({
 
   const displayFullName =
     (user.personalInfo?.fullName || user.personalInfo?.fullNameEn || user.username || user.userCode || 'کاربر').trim();
-  const initials =
-    displayFullName
-      .split(/\s+/)
-      .filter(Boolean)
-      .map(part => part[0])
-      .join('') ||
-    displayFullName.slice(0, 2) ||
-    '؟';
+  const initials = getUserInitials(displayFullName, '؟');
 
   const handleChange = (field: string, value: any) => {
     const keys = field.split('.');
@@ -117,16 +112,16 @@ const EditUserModal: React.FC<EditUserModalProps> = ({
     onSave(user, formData);
   };
 
-  const getRoleColor = (role: string) => {
-    switch (role) {
-      case 'مدیر سیستم': return theme.palette.error.main;
-      case 'سرپرست': return theme.palette.warning.main;
-      case 'اپراتور': return theme.palette.info.main;
-      case 'تحلیلگر': return theme.palette.success.main;
-      case 'مهمان': return theme.palette.grey[500];
-      default: return theme.palette.primary.main;
-    }
+  const handleRoleChange = (role: string) => {
+    const profile = getRoleProfile(role);
+    handleChange('systemInfo', {
+      ...(formData.systemInfo || user.systemInfo),
+      role: profile.role,
+      accessLevel: profile.accessLevel,
+      permissions: profile.permissions,
+    });
   };
+  const accessColor = getAccessLevelColor(theme, formData.systemInfo?.accessLevel || user.systemInfo.accessLevel);
 
   return (
     <Dialog
@@ -145,10 +140,11 @@ const EditUserModal: React.FC<EditUserModalProps> = ({
         {/* Header با آواتار */}
         <Box sx={{ display: 'flex', alignItems: 'center', mb: 3, p: 2, bgcolor: theme.palette.grey[50], borderRadius: 2 }}>
           <Avatar
+            src={resolveAvatarSrc(formData.personalInfo?.avatar)}
             sx={{
               width: 60,
               height: 60,
-              bgcolor: getRoleColor(user.systemInfo.role),
+              bgcolor: accessColor,
               fontSize: '1.5rem',
               fontWeight: 'bold',
               mr: 2,
@@ -168,6 +164,16 @@ const EditUserModal: React.FC<EditUserModalProps> = ({
         </Box>
 
         <Grid container spacing={3}>
+          <Grid item xs={12}>
+            <Box sx={{ p: 2, border: `1px solid ${alpha(accessColor, 0.25)}`, borderRadius: 2, bgcolor: alpha(accessColor, 0.04) }}>
+              <AvatarPicker
+                value={formData.personalInfo?.avatar}
+                accessLevel={formData.systemInfo?.accessLevel}
+                onChange={(avatar) => handleChange('personalInfo.avatar', avatar)}
+                disabled={isSaving}
+              />
+            </Box>
+          </Grid>
           {/* اطلاعات شخصی */}
           <Grid item xs={12}>
             <Typography variant="h6" sx={{ mb: 2 }}>
@@ -311,31 +317,28 @@ const EditUserModal: React.FC<EditUserModalProps> = ({
               <InputLabel>نقش سیستمی</InputLabel>
               <Select
                 value={formData.systemInfo?.role || ''}
-                onChange={(e) => handleChange('systemInfo.role', e.target.value)}
+                onChange={(e) => handleRoleChange(e.target.value)}
                 label="نقش سیستمی"
               >
-                <MenuItem value="مدیر سیستم">سوپر ادمین</MenuItem>
-                <MenuItem value="فرمانده">فرمانده</MenuItem>
-                <MenuItem value="ناظر مهمان">ناظر مهمان</MenuItem>
+                {roles.map((role) => (
+                  <MenuItem key={role.id} value={role.name}>{role.name}</MenuItem>
+                ))}
               </Select>
             </FormControl>
           </Grid>
 
           <Grid item xs={12} md={6}>
-            <FormControl fullWidth>
-              <InputLabel>سطح دسترسی</InputLabel>
-              <Select
-                value={formData.systemInfo?.accessLevel || ''}
-                onChange={(e) => handleChange('systemInfo.accessLevel', e.target.value)}
-                label="سطح دسترسی"
-              >
-                {accessLevels.map((level) => (
-                  <MenuItem key={level.id} value={level.name}>
-                    {level.name}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
+            <TextField
+              fullWidth
+              label="سطح دسترسی"
+              value={formData.systemInfo?.accessLevel || ''}
+              InputProps={{ readOnly: true }}
+              helperText="سطح دسترسی و مجوزها از نقش انتخاب‌شده تعیین می‌شوند."
+              sx={{
+                '& .MuiOutlinedInput-notchedOutline': { borderColor: alpha(accessColor, 0.55) },
+                '& .MuiInputBase-input': { color: accessColor, fontWeight: 700 },
+              }}
+            />
           </Grid>
           <Grid item xs={12}>
             {formData.systemInfo?.accessLevel && (

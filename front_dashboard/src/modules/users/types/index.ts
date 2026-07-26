@@ -6,6 +6,7 @@ export interface User {
   userCode: string; // کد کاربری
   personalInfo: {
     fullName: string;
+    avatar?: string;
     fullNameEn?: string;
     fatherName: string;
     nationalId: string;

@@ -13,10 +13,11 @@ from app.core.response import success
 from app.deps import DbSession
 from sqlalchemy import select
 from app.models.user import User
-from app.schemas.auth import Token, LoginRequest
+from app.schemas.auth import AvatarUpdateRequest, Token, LoginRequest
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 logger = logging.getLogger(__name__)
+ALLOWED_AVATARS = {f"avatar-{index}" for index in range(1, 13)}
 
 
 def _get_admin_password() -> str:
@@ -290,3 +291,40 @@ async def get_current_user_info(
         "avatar": personal.get("avatar"),
         "isActive": user.is_active,
     })
+
+
+@router.patch("/me/avatar", response_model=dict)
+async def update_current_user_avatar(
+    payload: AvatarUpdateRequest,
+    db: DbSession,
+    response: Response,
+    current_user: dict = Depends(get_current_user),
+):
+    if payload.avatar is not None and payload.avatar not in ALLOWED_AVATARS:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="آواتار انتخاب‌شده معتبر نیست",
+        )
+
+    user_id = current_user.get("user_id")
+    stmt = (
+        select(User).where(User.id == str(user_id))
+        if user_id
+        else select(User).where(User.username == current_user.get("username"))
+    )
+    user = (await db.execute(stmt.limit(1))).scalar_one_or_none()
+    if not user:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="کاربر یافت نشد")
+
+    personal_info = dict(user.personal_info or {})
+    if payload.avatar is None:
+        personal_info.pop("avatar", None)
+    else:
+        personal_info["avatar"] = payload.avatar
+    user.personal_info = personal_info
+    user.updated_at = datetime.now(timezone.utc)
+    await db.commit()
+
+    response.headers["Cache-Control"] = "no-store"
+    response.headers["Vary"] = "Authorization"
+    return success({"avatar": payload.avatar})

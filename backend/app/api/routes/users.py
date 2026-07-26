@@ -39,6 +39,56 @@ DEFAULT_ACCESS_LEVELS = [
     "سطح 4 - دسترسی مهمان",
 ]
 
+ROLE_PROFILES: Dict[str, Dict[str, Any]] = {
+    "مدیر سیستم": {
+        "internalRole": "SUPER_ADMIN",
+        "accessLevel": "سطح 1 - دسترسی کامل",
+        "permissions": ["مدیریت کاربران", "مدیریت سناریوها", "مدیریت منابع", "تنظیمات سامانه"],
+    },
+    "فرمانده": {
+        "internalRole": "COMMANDER",
+        "accessLevel": "سطح 2 - دسترسی عملیاتی",
+        "permissions": ["مشاهده کاربران", "مدیریت سناریوها", "مدیریت منابع", "مدیریت داده"],
+    },
+    "اپراتور": {
+        "internalRole": "OPERATOR",
+        "accessLevel": "سطح 3 - دسترسی محدود",
+        "permissions": ["مشاهده داشبورد", "مشاهده سناریوها", "مدیریت منابع"],
+    },
+    "ناظر مهمان": {
+        "internalRole": "VIEWER",
+        "accessLevel": "سطح 4 - دسترسی مهمان",
+        "permissions": ["مشاهده داشبورد", "مشاهده سناریوها", "مشاهده منابع"],
+    },
+}
+
+ROLE_ALIASES = {
+    "سوپر ادمین": "مدیر سیستم",
+    "مهمان": "ناظر مهمان",
+}
+ALLOWED_AVATARS = {f"avatar-{index}" for index in range(1, 13)}
+
+
+def _canonical_role(role: Optional[str]) -> str:
+    canonical = ROLE_ALIASES.get((role or "").strip(), (role or "").strip())
+    return canonical if canonical in ROLE_PROFILES else "ناظر مهمان"
+
+
+def _normalize_system_access(system_info: Dict[str, Any]) -> Dict[str, Any]:
+    normalized = dict(system_info)
+    role = _canonical_role(normalized.get("role"))
+    profile = ROLE_PROFILES[role]
+    normalized["role"] = role
+    normalized["accessLevel"] = profile["accessLevel"]
+    normalized["permissions"] = list(profile["permissions"])
+    return normalized
+
+
+def _validate_avatar(personal_info: Dict[str, Any]) -> None:
+    avatar = personal_info.get("avatar")
+    if avatar is not None and avatar not in ALLOWED_AVATARS:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="آواتار انتخاب‌شده معتبر نیست")
+
 
 def _slugify(value: str) -> str:
     normalized = value.strip().lower()
@@ -65,13 +115,14 @@ def _generate_username(personal_info: Dict[str, Any], fallback: str = "") -> str
 
 def _prepare_nested_payload(payload: UserCreate) -> Dict[str, Any]:
     personal_info = payload.personalInfo.model_dump(exclude_none=True)
+    _validate_avatar(personal_info)
     contact_info = payload.contactInfo.model_dump(exclude_none=True)
     professional_info = payload.professionalInfo.model_dump(exclude_none=True)
     system_info = payload.systemInfo.model_dump(exclude_none=True, exclude={"password"})
 
     system_info.setdefault("loginCount", 0)
-    system_info.setdefault("permissions", [])
     system_info.setdefault("passwordLastChanged", datetime.now(timezone.utc).isoformat())
+    system_info = _normalize_system_access(system_info)
 
     return {
         "personal_info": personal_info,
@@ -128,17 +179,49 @@ async def _ensure_unique(db: DbSession, username: str, user_code: str, exclude_u
 
 
 def _derive_internal_roles(system_role: Optional[str]) -> str:
-    if not system_role:
-        return "VIEWER"
-    mapping = {
-        "مدیر سیستم": "SUPER_ADMIN",
-        "سوپر ادمین": "SUPER_ADMIN",
-        "فرمانده": "COMMANDER",
-        "اپراتور": "OPERATOR",
-        "ناظر مهمان": "VIEWER",
-        "مهمان": "VIEWER",
-    }
-    return mapping.get(system_role, "VIEWER")
+    return str(ROLE_PROFILES[_canonical_role(system_role)]["internalRole"])
+
+
+async def _active_admin_count(db: DbSession, exclude_user_id: Optional[str] = None) -> int:
+    stmt = select(func.count()).select_from(User).where(
+        User.is_active.is_(True),
+        User.roles.like("%SUPER_ADMIN%"),
+    )
+    if exclude_user_id:
+        stmt = stmt.where(User.id != exclude_user_id)
+    return int((await db.execute(stmt)).scalar_one())
+
+
+async def _protect_admin_continuity(
+    db: DbSession,
+    user: User,
+    *,
+    actor_id: Optional[str],
+    next_active: Optional[bool] = None,
+    next_role: Optional[str] = None,
+    deleting: bool = False,
+) -> None:
+    if actor_id and user.id == actor_id:
+        if deleting:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="حساب جاری قابل حذف نیست")
+        if next_active is False:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="حساب جاری قابل غیرفعال‌سازی نیست")
+        if next_role and _derive_internal_roles(next_role) != "SUPER_ADMIN":
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="نقش حساب جاری قابل تنزل نیست")
+
+    removes_admin = (
+        "SUPER_ADMIN" in (user.roles or "")
+        and (
+            deleting
+            or next_active is False
+            or (next_role is not None and _derive_internal_roles(next_role) != "SUPER_ADMIN")
+        )
+    )
+    if removes_admin and await _active_admin_count(db, exclude_user_id=user.id) == 0:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="حداقل یک مدیر سیستم فعال باید در سامانه باقی بماند",
+        )
 
 
 def _filters(
@@ -205,9 +288,17 @@ async def list_users(
     isActive: Optional[bool] = Query(default=None),
     nationality: Optional[str] = Query(default=None),
     gender: Optional[str] = Query(default=None),
+    page: int = Query(default=1, ge=1),
+    pageSize: int = Query(default=10, ge=1, le=100),
 ) -> dict[str, Any]:
     conditions = _filters(search, role, accessLevel, status, isActive, nationality, gender)
-    stmt = select(User).where(*conditions).order_by(User.created_at.desc())
+    stmt = (
+        select(User)
+        .where(*conditions)
+        .order_by(User.created_at.desc())
+        .offset((page - 1) * pageSize)
+        .limit(pageSize)
+    )
     result = await db.execute(stmt)
     users = result.scalars().all()
 
@@ -284,13 +375,26 @@ async def create_user(payload: UserCreate, db: DbSession) -> dict[str, Any]:
     )
 
 
-@router.patch("/{user_id}", response_model=dict, dependencies=[Depends(require_roles("SUPER_ADMIN"))])
-async def update_user(user_id: str, payload: UserUpdate, db: DbSession) -> dict[str, Any]:
+@router.patch("/{user_id}", response_model=dict)
+async def update_user(
+    user_id: str,
+    payload: UserUpdate,
+    db: DbSession,
+    actor: dict = Depends(require_roles("SUPER_ADMIN")),
+) -> dict[str, Any]:
     user = await db.get(User, user_id)
     if not user:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="کاربر یافت نشد")
 
     data = payload.model_dump(exclude_unset=True)
+    system_updates = dict(data.get("systemInfo") or {})
+    await _protect_admin_continuity(
+        db,
+        user,
+        actor_id=actor.get("user_id"),
+        next_active=data.get("isActive"),
+        next_role=system_updates.get("role"),
+    )
 
     if "userCode" in data:
         user_code = data["userCode"]
@@ -298,6 +402,7 @@ async def update_user(user_id: str, payload: UserUpdate, db: DbSession) -> dict[
         user.user_code = user_code
 
     if "personalInfo" in data and data["personalInfo"]:
+        _validate_avatar(data["personalInfo"])
         user.personal_info = {**(user.personal_info or {}), **data["personalInfo"]}
 
     if "contactInfo" in data and data["contactInfo"]:
@@ -306,8 +411,7 @@ async def update_user(user_id: str, payload: UserUpdate, db: DbSession) -> dict[
     if "professionalInfo" in data and data["professionalInfo"]:
         user.professional_info = {**(user.professional_info or {}), **data["professionalInfo"]}
 
-    if "systemInfo" in data and data["systemInfo"]:
-        system_updates = data["systemInfo"].copy()
+    if system_updates:
         new_password = system_updates.pop("password", None)
         if new_password:
             is_valid, error_msg = validate_password(new_password)
@@ -315,9 +419,8 @@ async def update_user(user_id: str, payload: UserUpdate, db: DbSession) -> dict[
                 raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=error_msg)
             user.password_hash = get_password_hash(new_password)
             system_updates["passwordLastChanged"] = datetime.now(timezone.utc).isoformat()
-        user.system_info = {**(user.system_info or {}), **system_updates}
-        if system_updates.get("role"):
-            user.roles = _derive_internal_roles(system_updates["role"])
+        user.system_info = _normalize_system_access({**(user.system_info or {}), **system_updates})
+        user.roles = _derive_internal_roles(user.system_info.get("role"))
 
     if data.get("isActive") is not None:
         user.is_active = data["isActive"]
@@ -328,18 +431,33 @@ async def update_user(user_id: str, payload: UserUpdate, db: DbSession) -> dict[
     return success(_serialize_user(user))
 
 
-@router.delete("/{user_id}", response_model=dict, dependencies=[Depends(require_roles("SUPER_ADMIN"))])
-async def delete_user(user_id: str, db: DbSession) -> dict[str, Any]:
+@router.delete("/{user_id}", response_model=dict)
+async def delete_user(
+    user_id: str,
+    db: DbSession,
+    actor: dict = Depends(require_roles("SUPER_ADMIN")),
+) -> dict[str, Any]:
     user = await db.get(User, user_id)
     if not user:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="کاربر یافت نشد")
+    await _protect_admin_continuity(
+        db,
+        user,
+        actor_id=actor.get("user_id"),
+        deleting=True,
+    )
     await db.delete(user)
     await db.commit()
     return success({"id": user_id}, message="کاربر حذف شد")
 
 
-@router.post("/{user_id}/actions", response_model=dict, dependencies=[Depends(require_roles("SUPER_ADMIN"))])
-async def perform_quick_action(user_id: str, payload: QuickActionPayload, db: DbSession) -> dict[str, Any]:
+@router.post("/{user_id}/actions", response_model=dict)
+async def perform_quick_action(
+    user_id: str,
+    payload: QuickActionPayload,
+    db: DbSession,
+    actor: dict = Depends(require_roles("SUPER_ADMIN")),
+) -> dict[str, Any]:
     user = await db.get(User, user_id)
     if not user:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="کاربر یافت نشد")
@@ -351,6 +469,12 @@ async def perform_quick_action(user_id: str, payload: QuickActionPayload, db: Db
         target_state = data.get("isActive")
         if target_state is None:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="وضعیت جدید مشخص نشده است")
+        await _protect_admin_continuity(
+            db,
+            user,
+            actor_id=actor.get("user_id"),
+            next_active=bool(target_state),
+        )
         user.is_active = bool(target_state)
 
     elif action == "changePassword":
@@ -367,18 +491,19 @@ async def perform_quick_action(user_id: str, payload: QuickActionPayload, db: Db
 
     elif action == "updateAccessLevel":
         new_role = data.get("newRole")
-        new_access = data.get("newAccessLevel")
-        new_permissions = data.get("newPermissions")
-        system_info = user.system_info or {}
+        if not new_role:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="نقش جدید مشخص نشده است")
+        await _protect_admin_continuity(
+            db,
+            user,
+            actor_id=actor.get("user_id"),
+            next_role=new_role,
+        )
+        system_info = dict(user.system_info or {})
 
-        if new_role:
-            system_info["role"] = new_role
-            user.roles = _derive_internal_roles(new_role)
-        if new_access:
-            system_info["accessLevel"] = new_access
-        if new_permissions is not None:
-            system_info["permissions"] = new_permissions
-        user.system_info = system_info
+        system_info["role"] = new_role
+        user.system_info = _normalize_system_access(system_info)
+        user.roles = _derive_internal_roles(user.system_info["role"])
 
     else:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="نوع عملیات پشتیبانی نمی‌شود")

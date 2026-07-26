@@ -11,3 +11,7 @@ class LoginRequest(BaseModel):
     password: str
 
 
+class AvatarUpdateRequest(BaseModel):
+    avatar: str | None = None
+
+

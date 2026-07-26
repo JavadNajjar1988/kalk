@@ -23,8 +23,10 @@ import {
   Dialog,
   DialogTitle,
   DialogContent,
+  DialogActions,
   Button,
   Chip,
+  Alert,
 } from '@mui/material';
 import {
   Menu as MenuIcon,
@@ -41,10 +43,11 @@ import {
   KeyboardBackspace,
   UploadFile,
   ManageAccounts,
+  AddAPhoto,
 } from '@mui/icons-material';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAppSelector, useAppDispatch } from '@/store';
-import { selectUser, logout } from '@/store/slices/authSlice';
+import { selectUser, logout, updateUser } from '@/store/slices/authSlice';
 import {
   selectLayout,
   selectSidePanel,
@@ -62,6 +65,9 @@ import PersianDateTime from '@/components/common/PersianDateTime';
 import { useTranslation } from '@/hooks/useTranslation';
 import SearchBar from '@/components/common/SearchBar';
 import { canAccessFeature } from '@/security/roleAccess';
+import AvatarPicker from '@/modules/users/components/AvatarPicker';
+import { resolveAvatarSrc } from '@/modules/users/utils/avatarOptions';
+import { getAccessLevelColor } from '@/modules/users/utils/userPresentation';
 import {
   resourcesMenuPaperSx,
   resourcesDialogTitleSx,
@@ -88,11 +94,16 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
   const unreadNotifications = useAppSelector(selectUnreadServerNotifications);
   const layout = useAppSelector(selectLayout);
   const sidePanel = useAppSelector(selectSidePanel);
+  const userAccessColor = getAccessLevelColor(theme, user?.accessLevel);
   const [notificationsMenuAnchor, setNotificationsMenuAnchor] = useState<null | HTMLElement>(null);
   const [profileMenuAnchor, setProfileMenuAnchor] = useState<null | HTMLElement>(null);
   const [searchValue, setSearchValue] = useState('');
   const [notifDialogOpen, setNotifDialogOpen] = useState(false);
   const [notifDialogData, setNotifDialogData] = useState<any>(null);
+  const [avatarDialogOpen, setAvatarDialogOpen] = useState(false);
+  const [selectedAvatar, setSelectedAvatar] = useState<string | undefined>();
+  const [avatarSaving, setAvatarSaving] = useState(false);
+  const [avatarError, setAvatarError] = useState<string | null>(null);
   // حذف stateهای جداگانه و استفاده از یک state واحد برای مدیریت نمایش المان‌ها
   const [sidebarElementsVisible, setSidebarElementsVisible] = useState({
     labels: !layout.sidebarCollapsed,
@@ -238,6 +249,41 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
     handleProfileMenuClose();
     if (user?.id && canViewUsers) {
       navigate(`/dashboard/users/${user.id}`);
+    }
+  };
+
+  const handleOpenAvatarPicker = () => {
+    setSelectedAvatar(user?.avatar);
+    setAvatarError(null);
+    setAvatarDialogOpen(true);
+    handleProfileMenuClose();
+  };
+
+  const handleSaveAvatar = async () => {
+    const token = localStorage.getItem('access_token');
+    if (!token) return;
+    setAvatarSaving(true);
+    setAvatarError(null);
+    try {
+      const response = await fetch('/api/auth/me/avatar', {
+        method: 'PATCH',
+        cache: 'no-store',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ avatar: selectedAvatar || null }),
+      });
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        throw new Error(payload?.detail || payload?.message || 'ذخیره آواتار انجام نشد');
+      }
+      dispatch(updateUser({ avatar: selectedAvatar }));
+      setAvatarDialogOpen(false);
+    } catch (error) {
+      setAvatarError(error instanceof Error ? error.message : 'ذخیره آواتار انجام نشد');
+    } finally {
+      setAvatarSaving(false);
     }
   };
 
@@ -452,11 +498,11 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
                 }}
               >
                 <Avatar
-                  src={user?.avatar}
+                  src={resolveAvatarSrc(user?.avatar)}
                   sx={{
                     width: 34,
                     height: 34,
-                    bgcolor: 'primary.main',
+                    bgcolor: userAccessColor,
                     fontSize: '14px',
                     fontWeight: 600,
                     flexShrink: 0,
@@ -610,11 +656,11 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
         <Box sx={{ p: 2.5, ...resourcesDialogTitleSx(theme) }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
             <Avatar
-              src={user?.avatar}
+              src={resolveAvatarSrc(user?.avatar)}
               sx={{
                 width: 48,
                 height: 48,
-                bgcolor: theme.palette.primary.main,
+                bgcolor: userAccessColor,
                 fontSize: '1.2rem',
                 fontWeight: 600,
               }}
@@ -622,7 +668,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
               {user?.name?.charAt(0) || user?.username?.charAt(0) || 'ک'}
             </Avatar>
             <Box sx={{ flex: 1, minWidth: 0 }}>
-              <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 0.5, color: 'primary.main' }}>
+              <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 0.5, color: userAccessColor }}>
                 {user?.name || 'کاربر'}
               </Typography>
               <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.8rem' }}>
@@ -631,9 +677,8 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
               <Chip
                 size="small"
                 label={user?.roleTitle || user?.role}
-                color="primary"
                 variant="outlined"
-                sx={{ mt: 0.75, maxWidth: '100%' }}
+                sx={{ mt: 0.75, maxWidth: '100%', color: userAccessColor, borderColor: userAccessColor }}
               />
             </Box>
           </Box>
@@ -682,6 +727,16 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
           </MenuItem>
         )}
 
+        <MenuItem onClick={handleOpenAvatarPicker}>
+          <ListItemIcon>
+            <AddAPhoto fontSize="small" color="primary" />
+          </ListItemIcon>
+          <ListItemText
+            primary="انتخاب آواتار"
+            secondary="تغییر تصویر پروفایل این حساب"
+          />
+        </MenuItem>
+
         <Box sx={{ ...resourcesDialogActionsSx(theme), mt: 1, py: 1, px: 0, gap: 0 }}>
           <MenuItem 
             onClick={handleLogout}
@@ -699,6 +754,27 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
           </MenuItem>
         </Box>
       </Menu>
+
+      <Dialog open={avatarDialogOpen} onClose={() => !avatarSaving && setAvatarDialogOpen(false)} maxWidth="sm" fullWidth>
+        <DialogTitle sx={{ fontWeight: 700 }}>آواتار پروفایل</DialogTitle>
+        <DialogContent dividers>
+          {avatarError && <Alert severity="error" sx={{ mb: 2 }}>{avatarError}</Alert>}
+          <AvatarPicker
+            value={selectedAvatar}
+            accessLevel={user?.accessLevel}
+            onChange={setSelectedAvatar}
+            disabled={avatarSaving}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button color="inherit" onClick={() => setAvatarDialogOpen(false)} disabled={avatarSaving}>
+            انصراف
+          </Button>
+          <Button variant="contained" onClick={handleSaveAvatar} disabled={avatarSaving}>
+            ذخیره
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       {/* Dialog نمایش جزئیات اعلان */}
       <Dialog open={notifDialogOpen} onClose={() => setNotifDialogOpen(false)} maxWidth="xs" fullWidth>
