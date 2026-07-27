@@ -22,7 +22,14 @@ import {
   type ReinforcedStatus,
   type SymbologyStandard,
 } from "@/types/scenarioModels";
-import { translateEntity, translateModifier, translateEntityType, translateEntitySubtype, translateSymbolSet } from "@/symbology/translations";
+import {
+  registerStandardSymbologyTranslations,
+  translateEntity,
+  translateModifier,
+  translateEntityType,
+  translateEntitySubtype,
+  translateSymbolSet,
+} from "@/symbology/translations";
 
 const symbology = shallowRef<SymbolSetMap | undefined>();
 const isLoaded = ref(false);
@@ -47,8 +54,12 @@ const searchSymbolRef = computed(() => {
         const { entity, entityType, entitySubtype } = e;
         const translatedEntity = translateEntity(entity);
         const translatedEntityType = entityType ? translateEntityType(entityType) : "";
-        const translatedEntitySubtype = entitySubtype ? translateEntitySubtype(entitySubtype) : "";
-        const text = [translatedEntity, translatedEntityType, translatedEntitySubtype].filter((e) => e).join(" - ");
+        const translatedEntitySubtype = entitySubtype
+          ? translateEntitySubtype(entitySubtype)
+          : "";
+        const text = [translatedEntity, translatedEntityType, translatedEntitySubtype]
+          .filter((e) => e)
+          .join(" - ");
         return {
           ...e,
           text: text.replaceAll("/", " / "),
@@ -114,7 +125,15 @@ export function useSymbologyData() {
       symbology.value = app6d;
       currentSymbologyStandard.value = "app6";
     } else {
-      const { ms2525d } = await import("../symbology/standards/milstd2525");
+      const [{ ms2525d }, { app6d }] = await Promise.all([
+        import("../symbology/standards/milstd2525"),
+        import("../symbology/standards/app6d"),
+      ]);
+
+      // APP-6D در پروژه نام‌های فارسی دارد. نام فیلدهای هم‌کد را به‌عنوان
+      // فرهنگ ترجمهٔ MIL-STD-2525D ثبت می‌کنیم تا کل کتابخانه نام واقعی داشته باشد.
+      registerStandardSymbologyTranslations(ms2525d, app6d);
+
       symbology.value = ms2525d;
       currentSymbologyStandard.value = "2525";
     }
@@ -224,8 +243,12 @@ export function useSymbolItems(sidc: Ref<string>, reinforcedReduced?: Reinforced
       mis = mis.filter((v) => v.geometry === "Point");
     return mis.map((mi) => {
       const translatedEntity = translateEntity(mi.entity);
-      const translatedEntityType = mi.entityType ? translateEntityType(mi.entityType) : "";
-      const translatedEntitySubtype = mi.entitySubtype ? translateEntitySubtype(mi.entitySubtype) : "";
+      const translatedEntityType = mi.entityType
+        ? translateEntityType(mi.entityType)
+        : "";
+      const translatedEntitySubtype = mi.entitySubtype
+        ? translateEntitySubtype(mi.entitySubtype)
+        : "";
       let text = translatedEntity;
       if (translatedEntityType) text += " - " + translatedEntityType;
       if (translatedEntitySubtype) text += " - " + translatedEntitySubtype;

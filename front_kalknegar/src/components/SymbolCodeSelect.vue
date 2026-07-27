@@ -12,7 +12,6 @@ import { type NullableSymbolItem } from "@/types/constants";
 import { type UnitSymbolOptions } from "@/types/scenarioModels";
 import { Label } from "@/components/ui/label";
 import NewMilitarySymbol from "@/components/NewMilitarySymbol.vue";
-import { toPersianDigits } from "@/utils/persianNumbers";
 
 interface Props {
   label?: string;
@@ -30,10 +29,7 @@ const selected = computed(() =>
 );
 
 function displayText(item: NullableSymbolItem | undefined) {
-  if (!item) return "";
-  return /[A-Za-z]/.test(item.text)
-    ? `گزینه ${toPersianDigits(item.code ?? "00")}`
-    : item.text;
+  return item?.text || "";
 }
 </script>
 <template>

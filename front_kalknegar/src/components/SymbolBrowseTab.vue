@@ -178,7 +178,6 @@ import {
   translateEntitySubtype,
   translateEntityType,
 } from "@/symbology/translations";
-import { toPersianDigits } from "@/utils/persianNumbers";
 
 interface Props {
   initialSidc: string;
@@ -217,8 +216,7 @@ function visiblePersianLabel(
   translator: (text: string) => string,
 ) {
   if (!value) return "";
-  const translated = translator(value);
-  return /[A-Za-z]/.test(translated) ? "" : translated;
+  return translator(value);
 }
 
 const localizedIcons = computed(() =>
@@ -231,10 +229,7 @@ const localizedIcons = computed(() =>
       translateEntitySubtype,
     );
     const displayLabel =
-      entitySubtypeLabel ||
-      entityTypeLabel ||
-      translatedEntity ||
-      `نماد ${toPersianDigits(icon.code)}`;
+      entitySubtypeLabel || entityTypeLabel || translatedEntity || "نماد نامشخص";
 
     return {
       ...icon,
@@ -268,9 +263,7 @@ function localizeModifierItems(items: typeof mod1Items.value) {
   return items.map((item) => ({
     ...item,
     searchText: item.text,
-    text: /[A-Za-z]/.test(item.text)
-      ? `تغییردهنده ${toPersianDigits(item.code ?? "00")}`
-      : item.text,
+    text: item.text,
   }));
 }
 
