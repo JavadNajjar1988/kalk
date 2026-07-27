@@ -17,7 +17,6 @@ import {
   translateEntityType,
   translateEntitySubtype,
 } from "@/symbology/translations";
-import { toPersianDigits } from "@/utils/persianNumbers";
 
 interface Props {
   label?: string;
@@ -39,15 +38,9 @@ function mapSymbolItem(item: NullableSymbolItem) {
   const translatedEntitySubtypeValue = item.entitySubtype
     ? translateEntitySubtype(item.entitySubtype)
     : "";
-  const translatedEntity = /[A-Za-z]/.test(translatedEntityValue)
-    ? ""
-    : translatedEntityValue;
-  const translatedEntityType = /[A-Za-z]/.test(translatedEntityTypeValue)
-    ? ""
-    : translatedEntityTypeValue;
-  const translatedEntitySubtype = /[A-Za-z]/.test(translatedEntitySubtypeValue)
-    ? ""
-    : translatedEntitySubtypeValue;
+  const translatedEntity = translatedEntityValue;
+  const translatedEntityType = translatedEntityTypeValue;
+  const translatedEntitySubtype = translatedEntitySubtypeValue;
 
   return {
     sidc: item.sidc,
@@ -56,7 +49,7 @@ function mapSymbolItem(item: NullableSymbolItem) {
       translatedEntitySubtype ||
       translatedEntityType ||
       translatedEntity ||
-      `نماد ${toPersianDigits(item.code ?? "00")}`,
+      "نماد نامشخص",
     subLabel: translatedEntitySubtype
       ? [translatedEntity, translatedEntityType].filter(Boolean).join(" / ")
       : translatedEntityType

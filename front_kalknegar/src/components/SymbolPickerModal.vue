@@ -255,7 +255,6 @@ import { doFocus } from "@/composables/utils";
 import BaseButton from "@/components/BaseButton.vue";
 import NewSimpleModal from "@/components/NewSimpleModal.vue";
 import { applySymbolSearchSelection } from "@/symbology/symbolSelection";
-import { toPersianDigits } from "@/utils/persianNumbers";
 
 const LegacyConverter = defineAsyncComponent(
   () => import("@/components/LegacyConverter.vue"),
@@ -301,9 +300,7 @@ const searchCategoryLabels: Record<string, string> = {
 };
 
 function visibleSearchHitText(item: SymbolSearchResult) {
-  if (!/[A-Za-z]/.test(item.text)) return item.highlight || item.text;
-  const prefix = item.category === "Main icon" ? "نماد" : "تغییردهنده";
-  return `${prefix} ${toPersianDigits(item.code)}`;
+  return item.highlight || item.text;
 }
 
 const internalSymbolOptions = ref<UnitSymbolOptions>({

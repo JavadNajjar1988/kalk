@@ -73,7 +73,10 @@ const spaceIcons: ExtendedSymbolValue[] = [
 const symbolPage = ref<SymbolPage>("land");
 const currentSid = ref<SidValue | string>(SID.Friend);
 const currentEchelon = ref("16");
-const customIcon = ref<SymbolValue>({ code: "10031000141211000000", text: "Infantry" });
+const customIcon = ref<SymbolValue>({
+  code: "10031000141211000000",
+  text: "پیاده‌نظام",
+});
 const activeSidc = ref("10031000141211000000");
 
 export function useToolbarUnitSymbolData() {
@@ -140,7 +143,7 @@ export function useToolbarUnitSymbolData() {
         values = towedArrayValues;
         break;
       default:
-        values = [{ code: "00", text: "Unspecified" }];
+        values = [{ code: "00", text: "نامشخص" }];
     }
     return values.map(({ code, text }): SymbolItem => {
       return {
