@@ -26,25 +26,18 @@ import {
 
 import type { User } from '../types';
 import { userApiService, type UserAuditLog } from '@/services/api/userApiService';
+import {
+  getUserAuditActionLabel,
+  getUserAuditActorLabel,
+} from '../utils/userAuditPresentation';
 
-interface UserGovernanceDialogProps {
+interface UserRecordsDialogProps {
   open: boolean;
   onClose: () => void;
   onRestored: () => void;
 }
 
-const ACTION_LABELS: Record<string, string> = {
-  user_created: 'ایجاد کاربر',
-  user_updated: 'ویرایش کاربر',
-  user_archived: 'انتقال به آرشیو',
-  user_restored: 'بازیابی کاربر',
-  avatar_updated: 'تغییر آواتار',
-  quick_action_toggleActive: 'تغییر وضعیت فعالیت',
-  quick_action_changePassword: 'تغییر رمز عبور',
-  quick_action_updateAccessLevel: 'تغییر نقش و دسترسی',
-};
-
-const UserGovernanceDialog: React.FC<UserGovernanceDialogProps> = ({
+const UserRecordsDialog: React.FC<UserRecordsDialogProps> = ({
   open,
   onClose,
   onRestored,
@@ -67,7 +60,7 @@ const UserGovernanceDialog: React.FC<UserGovernanceDialogProps> = ({
       setArchivedUsers(archived);
       setAuditLogs(logs);
     } catch (loadError) {
-      setError(loadError instanceof Error ? loadError.message : 'بارگذاری اطلاعات حاکمیتی ناموفق بود');
+      setError(loadError instanceof Error ? loadError.message : 'بارگذاری بایگانی و سوابق کاربران ناموفق بود');
     } finally {
       setIsLoading(false);
     }
@@ -94,7 +87,7 @@ const UserGovernanceDialog: React.FC<UserGovernanceDialogProps> = ({
   return (
     <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
       <DialogTitle sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <Typography component="div" variant="h6">حاکمیت و سوابق کاربران</Typography>
+        <Typography component="div" variant="h6">بایگانی و سوابق کاربران</Typography>
         <Tooltip title="بستن">
           <IconButton onClick={onClose} aria-label="بستن">
             <CloseIcon />
@@ -102,7 +95,7 @@ const UserGovernanceDialog: React.FC<UserGovernanceDialogProps> = ({
         </Tooltip>
       </DialogTitle>
       <Tabs value={tab} onChange={(_, value) => setTab(value)} variant="fullWidth">
-        <Tab icon={<ArchiveIcon />} iconPosition="start" label={`آرشیو (${archivedUsers.length})`} />
+        <Tab icon={<ArchiveIcon />} iconPosition="start" label={`بایگانی (${archivedUsers.length})`} />
         <Tab icon={<HistoryIcon />} iconPosition="start" label="سوابق تغییرات" />
       </Tabs>
       <DialogContent dividers sx={{ minHeight: 360 }}>
@@ -135,34 +128,34 @@ const UserGovernanceDialog: React.FC<UserGovernanceDialogProps> = ({
                 >
                   <ListItemText
                     primary={user.personalInfo.fullName}
-                    secondary={`${user.userCode} | ${user.systemInfo.role} | حذف در ${new Date(user.deletedAt || '').toLocaleString('fa-IR')}`}
+                    secondary={`${user.userCode} | ${user.systemInfo.role} | بایگانی در ${new Date(user.deletedAt || '').toLocaleString('fa-IR')}`}
                   />
                 </ListItem>
               ))}
             </List>
           ) : (
             <Typography color="text.secondary" textAlign="center" sx={{ mt: 12 }}>
-              کاربر آرشیوشده‌ای وجود ندارد
+              کاربر بایگانی‌شده‌ای وجود ندارد
             </Typography>
           )
         ) : (
           <List disablePadding>
             {auditLogs.map((log) => {
               const userName =
+                log.targetDisplayName ||
                 log.after?.personalInfo?.fullName ||
                 log.before?.personalInfo?.fullName ||
-                log.targetUserId;
+                'کاربر سامانه';
               return (
                 <ListItem key={log.id} divider alignItems="flex-start">
                   <ListItemText
-                    primary={`${ACTION_LABELS[log.action] || log.action} | ${userName}`}
+                    primary={`${getUserAuditActionLabel(log.action)} | ${userName}`}
                     secondary={
                       <>
                         <Typography component="span" variant="body2" color="text.secondary">
-                          عامل: {log.actorUsername || 'سیستم'} | {new Date(log.createdAt).toLocaleString('fa-IR')}
-                        </Typography>
-                        <Typography component="div" variant="caption" color="text.disabled">
-                          Request ID: {log.requestId || '-'}
+                          انجام‌دهنده: {getUserAuditActorLabel(log.actorDisplayName, log.actorUsername)}
+                          {' | '}
+                          {new Date(log.createdAt).toLocaleString('fa-IR')}
                         </Typography>
                       </>
                     }
@@ -181,4 +174,4 @@ const UserGovernanceDialog: React.FC<UserGovernanceDialogProps> = ({
   );
 };
 
-export default UserGovernanceDialog;
+export default UserRecordsDialog;

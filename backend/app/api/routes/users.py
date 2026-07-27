@@ -344,12 +344,43 @@ async def list_user_audit_logs(
     if targetUserId:
         stmt = stmt.where(UserAuditLog.target_user_id == targetUserId)
     logs = (await db.execute(stmt.order_by(UserAuditLog.created_at.desc()).limit(limit))).scalars().all()
+
+    related_user_ids = {
+        user_id
+        for item in logs
+        for user_id in (item.target_user_id, item.actor_user_id)
+        if user_id
+    }
+    users_by_id: dict[str, User] = {}
+    if related_user_ids:
+        related_users = (
+            await db.execute(select(User).where(User.id.in_(related_user_ids)))
+        ).scalars().all()
+        users_by_id = {user.id: user for user in related_users}
+
+    def display_name(user_id: Optional[str]) -> Optional[str]:
+        user = users_by_id.get(user_id or "")
+        if not user:
+            return None
+        return (user.personal_info or {}).get("fullName") or user.username
+
     return success([
         {
             "id": item.id,
             "targetUserId": item.target_user_id,
+            "targetDisplayName": display_name(item.target_user_id),
             "actorUserId": item.actor_user_id,
             "actorUsername": item.actor_username,
+            "actorDisplayName": (
+                display_name(item.actor_user_id)
+                or (
+                    display_name(item.target_user_id)
+                    if item.actor_username
+                    and users_by_id.get(item.target_user_id)
+                    and item.actor_username == users_by_id[item.target_user_id].username
+                    else None
+                )
+            ),
             "action": item.action,
             "before": item.before_state,
             "after": item.after_state,

@@ -18,8 +18,10 @@ interface LookupItem {
 export interface UserAuditLog {
   id: string;
   targetUserId: string;
+  targetDisplayName?: string;
   actorUserId?: string;
   actorUsername?: string;
+  actorDisplayName?: string;
   action: string;
   before?: Partial<User>;
   after?: Partial<User>;

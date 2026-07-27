@@ -36,13 +36,13 @@ import {
   Clear as ClearIcon,
   TableView as TableViewIcon,
   ViewModule as CardViewIcon,
-  AdminPanelSettings as GovernanceIcon,
+  ManageHistory as UserRecordsIcon,
 } from '@mui/icons-material';
 import { useAppDispatch, useAppSelector } from '@/store';
 import { fetchUsers, setFilters, clearFilters, setPagination, clearError, createUser, setViewMode, updateUser, deleteUser, performQuickAction } from '../store/usersSlice';
 import type { User, UserFilters, QuickActionPayload } from '../types';
 import { useTranslation } from '@/hooks/useTranslation';
-import { UsersTableView, UsersCardView, QuickActionsModal, UserDetailsModal, EditUserModal, DeleteConfirmationModal, UserGovernanceDialog } from '../components';
+import { UsersTableView, UsersCardView, QuickActionsModal, UserDetailsModal, EditUserModal, DeleteConfirmationModal, UserRecordsDialog } from '../components';
 import {
   buildResourcesFormDialogSx,
   resourcesDialogTitleSx,
@@ -119,7 +119,7 @@ const UsersListPage: React.FC = () => {
   const [showViewModal, setShowViewModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [showGovernanceModal, setShowGovernanceModal] = useState(false);
+  const [showUserRecordsModal, setShowUserRecordsModal] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [tempPasswordInfo, setTempPasswordInfo] = useState<{
     username: string;
@@ -377,10 +377,10 @@ const UsersListPage: React.FC = () => {
           
           {canManageUsers && <Button
             variant="outlined"
-            startIcon={<GovernanceIcon />}
-            onClick={() => setShowGovernanceModal(true)}
+            startIcon={<UserRecordsIcon />}
+            onClick={() => setShowUserRecordsModal(true)}
           >
-            حاکمیت کاربران
+            بایگانی و سوابق کاربران
           </Button>}
 
           {canManageUsers && <Button
@@ -589,9 +589,9 @@ const UsersListPage: React.FC = () => {
         <AddIcon />
       </Fab>}
 
-      <UserGovernanceDialog
-        open={showGovernanceModal && canManageUsers}
-        onClose={() => setShowGovernanceModal(false)}
+      <UserRecordsDialog
+        open={showUserRecordsModal && canManageUsers}
+        onClose={() => setShowUserRecordsModal(false)}
         onRestored={() => void dispatch(fetchUsers())}
       />
 
