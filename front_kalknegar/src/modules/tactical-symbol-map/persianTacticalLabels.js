@@ -124,7 +124,68 @@ export const tacticalWordTranslations = {
   flooding: 'آب‌گرفتگی', contamination: 'آلودگی', leak: 'نشت',
   damaged: 'آسیب‌دیده', impaired: 'مختل', destroyed: 'منهدم',
   blocked: 'مسدود', commander: 'فرمانده', injured: 'مجروح',
-  killed: 'کشته', missing: 'مفقود', permanent: 'دائمی', temporary: 'موقت'
+  killed: 'کشته', missing: 'مفقود', permanent: 'دائمی', temporary: 'موقت',
+  blue: 'آبی', purple: 'بنفش', emergency: 'اضطراری', management: 'مدیریت',
+  infrastructure: 'زیرساخت', agriculture: 'کشاورزی', agricultural: 'کشاورزی',
+  food: 'غذا', laboratory: 'آزمایشگاه', animal: 'حیوان', feedlot: 'دامداری',
+  commercial: 'تجاری', distribution: 'توزیع', center: 'مرکز', farm: 'مزرعه',
+  ranch: 'دامداری', production: 'تولید', retail: 'خرده‌فروشی', grain: 'غلات',
+  storage: 'ذخیره‌سازی', finance: 'مالی', insurance: 'بیمه', bank: 'بانک',
+  chemical: 'شیمیایی', plant: 'کارخانه', facilities: 'تأسیسات',
+  public: 'عمومی', transportation: 'حمل‌ونقل', medical: 'پزشکی',
+  operations: 'عملیات', operation: 'عملیات', service: 'خدمات',
+  incident: 'حادثه', natural: 'طبیعی', events: 'رویدادها',
+  tactical: 'تاکتیکی', graphics: 'گرافیک‌ها', areas: 'مناطق',
+  airspace: 'حریم هوایی', coordination: 'هماهنگی', circular: 'دایره‌ای',
+  rectangular: 'مستطیلی', irregular: 'نامنظم', 'build-up': 'تجمع',
+  free: 'آزاد', no: 'ممنوع', responsibility: 'مسئولیت',
+  friendly: 'خودی', series: 'سری', boundary: 'مرز', boundaries: 'مرزها',
+  adult: 'بزرگسال', adults: 'بزرگسالان', day: 'روز', days: 'روزها',
+  care: 'مراقبت', banking: 'بانکداری', atm: 'خودپرداز', bullion: 'شمش',
+  federal: 'فدرال', reserve: 'ذخیره', financial: 'مالی', exchange: 'تبادل',
+  services: 'خدمات', other: 'سایر', firearms: 'سلاح‌ها',
+  manufacturer: 'تولیدکننده', hazardous: 'خطرناک', landfill: 'محل دفن زباله',
+  pharmaceutical: 'دارویی', contaminated: 'آلوده', inventory: 'انبار',
+  college: 'دانشکده', university: 'دانشگاه', generation: 'تولید',
+  propane: 'پروپان', military: 'نظامی', armory: 'اسلحه‌خانه',
+  post: 'پست', enclosed: 'محصور', recreational: 'تفریحی',
+  institution: 'مؤسسه', special: 'ویژه', needs: 'نیازها',
+  bus: 'اتوبوس', rest: 'استراحت', stop: 'ایستگاه', toll: 'عوارضی',
+  valve: 'شیر', discharge: 'تخلیه', outfall: 'خروجی', well: 'چاه',
+  pumping: 'پمپاژ', intake: 'ورودی', hot: 'داغ', spot: 'نقطه',
+  'non-residential': 'غیرمسکونی', origin: 'مبدأ', wild: 'طبیعی',
+  agent: 'عامل', organic: 'آلی', peroxide: 'پراکسید', oxidizer: 'اکسیدکننده',
+  combustible: 'قابل‌احتراق', department: 'اداره', staging: 'آماده‌سازی',
+  hydrant: 'شیر آتش‌نشانی', law: 'قانون', enforcement: 'اجرای قانون',
+  shelter: 'پناهگاه', geological: 'زمین‌شناسی', geologic: 'زمین‌شناسی',
+  aftershock: 'پس‌لرزه', epicenter: 'مرکز زلزله', volcanic: 'آتشفشانی',
+  tsunami: 'سونامی', infestation: 'هجوم آفات', insect: 'حشره',
+  microbial: 'میکروبی', reptile: 'خزنده', rodent: 'جونده',
+  planned: 'برنامه‌ریزی‌شده', anticipated: 'پیش‌بینی‌شده',
+  present: 'حاضر', friend: 'دوست', hostile: 'دشمن', neutral: 'خنثی'
+}
+
+export const tacticalPhraseTranslations = {
+  'Civil Aircraft - Lighter Than Air': 'هواگرد غیرنظامی - سبک‌تر از هوا',
+  'Civil Aircraft - Fixed Wing': 'هواگرد غیرنظامی - بال ثابت',
+  'Civil Aircraft': 'هواگرد غیرنظامی',
+  'Fixed Wing Aircraft': 'هواگرد بال ثابت',
+  'Air Track': 'رد هوایی',
+  'Ground Track': 'رد زمینی',
+  'Sea Surface Track': 'رد سطحی دریایی',
+  'Fixed Wing': 'بال ثابت',
+  'Lighter Than Air': 'سبک‌تر از هوا',
+  'Blue Kill Box': 'محدوده انهدام آبی',
+  'Purple Kill Box': 'محدوده انهدام بنفش',
+  'Kill Box': 'محدوده انهدام',
+  'BKB': 'بی‌کی‌بی',
+  'PKB': 'پی‌کی‌بی',
+  'Tactical Graphics': 'گرافیک‌های تاکتیکی',
+  'Fire Support': 'پشتیبانی آتش',
+  'Command and Control': 'فرماندهی و کنترل',
+  'Command & Control': 'فرماندهی و کنترل',
+  'Emergency Management Symbols': 'نمادهای مدیریت اضطراری',
+  'Warfighting Symbols': 'نمادهای رزم'
 }
 
 const acronymLetters = {
@@ -176,7 +237,13 @@ function transliterateWord(word) {
 export function ensurePersianTacticalLabel(value) {
   if (!value) return value
 
-  return value.replace(/[A-Za-z]+(?:-[A-Za-z]+)*/g, word => {
+  const translatedPhrases = Object.entries(tacticalPhraseTranslations)
+    .sort(([a], [b]) => b.length - a.length)
+    .reduce((label, [phrase, translation]) => {
+      return label.replace(new RegExp(phrase.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi'), translation)
+    }, value)
+
+  return translatedPhrases.replace(/[A-Za-z]+(?:-[A-Za-z]+)*/g, word => {
     return tacticalWordTranslations[word.toLowerCase()] || transliterateWord(word)
   })
 }

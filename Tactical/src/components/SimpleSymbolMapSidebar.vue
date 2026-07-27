@@ -51,6 +51,7 @@ import { defaultState } from './sidebar/state.js'
 import { matcher, preventDefault } from './events.js'
 import * as R from 'ramda'
 import * as ID from '../ids.js'
+import { ensurePersianTacticalLabel } from '../persianTacticalLabels.js'
 // Use Ramda's equals for deep equality check
 const isEqual = (a, b) => JSON.stringify(a) === JSON.stringify(b)
 import FilterInput from './sidebar/FilterInput.vue'
@@ -141,6 +142,12 @@ const onFocus = () => {
 
 // Category name translation to Persian
 const categoryTranslations = {
+  // MIL-STD-2525 warfighting hierarchy
+  'Warfighting Symbols': 'نمادهای رزم',
+  'Tactical Graphics': 'گرافیک‌های تاکتیکی',
+  'Fire Support': 'پشتیبانی آتش',
+  'Command and Control and General Maneuver': 'فرماندهی، کنترل و مانور عمومی',
+
   // Military dimensions
   'Air': 'هوایی',
   'Ground': 'زمینی',
@@ -359,7 +366,7 @@ const groupedEntries = computed(() => {
     }
     
     // Translate category to Persian
-    const persianCategory = translateCategory(category)
+    const persianCategory = ensurePersianTacticalLabel(translateCategory(category))
     
     if (!groups[persianCategory]) {
       groups[persianCategory] = []
@@ -548,14 +555,14 @@ const translateEntry = (entry) => {
   
   // Translate title
   if (translated.title) {
-    translated.title = translateText(translated.title)
+    translated.title = ensurePersianTacticalLabel(translateText(translated.title))
   }
   
   // Translate description
   if (translated.description) {
     translated.description = translated.description
       .split(' • ')
-      .map(part => translateText(part.trim()))
+      .map(part => ensurePersianTacticalLabel(translateText(part.trim())))
       .join(' • ')
   }
   
@@ -565,9 +572,9 @@ const translateEntry = (entry) => {
     const translatedTags = tags.map(tag => {
       const parts = tag.split(':')
       if (parts.length >= 2) {
-        const variant = parts[0]
         const label = parts[1]
-        const translatedLabel = tagLabelTranslations[label] || label
+        const translatedLabel = tagLabelTranslations[label]
+          || ensurePersianTacticalLabel(translateText(label.replaceAll('_', ' ')))
         parts[1] = translatedLabel
         return parts.join(':')
       }

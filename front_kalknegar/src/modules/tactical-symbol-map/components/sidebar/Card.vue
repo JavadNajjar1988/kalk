@@ -14,7 +14,7 @@
       <div class="header e3de-row">
         <Title
           :id="id"
-          :value="title"
+          :value="displayTitle"
           :editing="editing"
           :highlight="highlight"
         />
@@ -35,7 +35,7 @@
       <template v-if="hasBody">
         <hr />
         <div class="body e3de-row">
-          <span v-if="description" class="e3de-description">{{ description }}</span>
+          <span v-if="displayDescription" class="e3de-description">{{ displayDescription }}</span>
           <div v-if="svg" class="avatar" v-html="svg"></div>
         </div>
       </template>
@@ -60,6 +60,7 @@ import Title from './Title.vue'
 import Icon from '../Icon.vue'
 import * as mdi from '@mdi/js'
 import { TAG } from './tags.js'
+import { ensurePersianTacticalLabel } from '../../persianTacticalLabels.js'
 import './Card.css'
 
 const props = defineProps({
@@ -136,7 +137,21 @@ const canRename = computed(() => {
 })
 
 const hasBody = computed(() => {
-  return !!(props.svg || props.description)
+  return !!(props.svg || displayDescription.value)
+})
+
+const isTacticalSymbol = computed(() => ID.scope(props.id) === ID.SYMBOL)
+
+const displayTitle = computed(() => {
+  return isTacticalSymbol.value
+    ? ensurePersianTacticalLabel(props.title)
+    : props.title
+})
+
+const displayDescription = computed(() => {
+  return isTacticalSymbol.value
+    ? ensurePersianTacticalLabel(props.description)
+    : props.description
 })
 
 const tagSpecs = computed(() => {
@@ -156,7 +171,9 @@ const tagProps = (spec) => {
   return {
     id: props.id,
     spec,
-    label,
+    label: isTacticalSymbol.value
+      ? ensurePersianTacticalLabel(label)
+      : label,
     action,
     path,
     removable

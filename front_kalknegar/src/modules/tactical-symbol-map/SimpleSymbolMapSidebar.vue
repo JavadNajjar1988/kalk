@@ -153,7 +153,8 @@ const onFocus = () => {
 
 const findEntryById = (id) => {
   if (!id) return null
-  return state.entries.find((entry) => entry.id === id) || null
+  const entry = state.entries.find((entry) => entry.id === id)
+  return entry ? translateEntry(entry) : null
 }
 
 const handleSymbolDoubleClick = (id) => {
@@ -607,8 +608,23 @@ const symbolTranslations = {
 // Tag label translations
 const tagLabelTranslations = {
   'SYMBOL': 'نماد',
-  'EMS': 'EMS',
+  'AIR': 'هوایی',
+  'C2': 'فرماندهی و کنترل',
+  'CS': 'پشتیبانی رزمی',
+  'CSS': 'پشتیبانی خدمات رزمی',
+  'EMS': 'مدیریت اضطراری',
+  'LAND': 'زمینی',
+  'MARITIME': 'دریایی',
+  'SIGINT': 'اطلاعات سیگنال',
+  'SO': 'عملیات ویژه',
+  'SOF': 'نیروهای عملیات ویژه',
+  'SPACE': 'فضایی',
+  'SUBSURFACE': 'زیرسطحی',
+  'SURFACE': 'سطحی',
+  'TASK': 'وظیفه',
+  'UNIT': 'یگان',
   'INSTALLATION': 'تأسیسات',
+  'EQUIPMENT': 'تجهیزات',
   'ACTIVITY': 'فعالیت',
   'FIRE': 'آتش',
   'CONTROL': 'کنترل',
@@ -644,9 +660,9 @@ const translateEntry = (entry) => {
     const translatedTags = tags.map(tag => {
       const parts = tag.split(':')
       if (parts.length >= 2) {
-        const variant = parts[0]
         const label = parts[1]
-        const translatedLabel = tagLabelTranslations[label] || label
+        const translatedLabel = tagLabelTranslations[label]
+          || ensurePersianTacticalLabel(translateText(label.replaceAll('_', ' ')))
         parts[1] = translatedLabel
         return parts.join(':')
       }
@@ -751,6 +767,16 @@ const translateText = (text) => {
   return trimmedText
 }
 
+const normalizePersianSearch = (value) => String(value || '')
+  .normalize('NFKC')
+  .toLocaleLowerCase('fa')
+  .replace(/[يى]/g, 'ی')
+  .replace(/ك/g, 'ک')
+  .replace(/ۀ/g, 'ه')
+  .replace(/[\u064b-\u065f\u0670\u200c\u200d]/g, '')
+  .replace(/\s+/g, ' ')
+  .trim()
+
 // Effects
 onMounted(() => {
   // Always start symbol sidebar from symbol scope so the full list is visible.
@@ -821,8 +847,12 @@ onMounted(() => {
 
       const safeHistory = Array.isArray(history) && history.length ? history : symbolRootHistory
       const safeScope = R.last(safeHistory)?.scope || `@${ID.SYMBOL}`
-      const safeFilter = typeof filter === 'string' ? filter : ''
-      const terms = `${safeScope} ${safeFilter}`.trim()
+      const safeFilter = typeof filter === 'string' ? filter.trim() : ''
+      const isPersianFilter = /[\u0600-\u06ff]/.test(safeFilter)
+      // The source index contains the original MIL-STD English hierarchy.
+      // For a Persian query, retrieve the current symbol scope and filter
+      // against the exact localized strings rendered by this component.
+      const terms = `${safeScope} ${isPersianFilter ? '' : safeFilter}`.trim()
       const options = { force: force || false }
 
       // Updated search/filter must clear any selection
@@ -831,7 +861,29 @@ onMounted(() => {
       }
 
       const queryDisposable = await svcs.searchIndex.query(terms, options, (entries) => {
-        dispatch({ type: 'entries', entries })
+        if (!isPersianFilter) {
+          dispatch({ type: 'entries', entries })
+          return
+        }
+
+        const normalizedFilter = normalizePersianSearch(safeFilter)
+        const filteredEntries = entries.filter(entry => {
+          const translated = translateEntry(entry)
+          const category = entry.description
+            ?.split(' • ')
+            .map(part => ensurePersianTacticalLabel(translateCategory(part)))
+            .join(' ')
+          const searchableText = [
+            translated.title,
+            translated.description,
+            translated.tags,
+            category
+          ].filter(Boolean).join(' ')
+
+          return normalizePersianSearch(searchableText).includes(normalizedFilter)
+        })
+
+        dispatch({ type: 'entries', entries: filteredEntries })
       })
 
       lastSearch.value = { ...search.value }

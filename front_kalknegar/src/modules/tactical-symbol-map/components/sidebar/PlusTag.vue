@@ -5,7 +5,7 @@
     @click="handleClick"
   >
     <TagIcon :path="mdi.mdiPlus" />
-    add tag
+    افزودن برچسب
   </span>
   <input
     v-else
