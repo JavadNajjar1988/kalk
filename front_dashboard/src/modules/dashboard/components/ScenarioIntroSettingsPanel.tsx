@@ -23,9 +23,13 @@ const MAX_VIDEO_BYTES = 50 * 1024 * 1024;
 
 interface ScenarioIntroSettingsPanelProps {
   scenario: EnhancedScenario;
+  readOnly?: boolean;
 }
 
-const ScenarioIntroSettingsPanel: React.FC<ScenarioIntroSettingsPanelProps> = ({ scenario }) => {
+const ScenarioIntroSettingsPanel: React.FC<ScenarioIntroSettingsPanelProps> = ({
+  scenario,
+  readOnly = false,
+}) => {
   const { t } = useTranslation();
   const dispatch = useAppDispatch();
   const [title, setTitle] = useState(scenario.intro_title ?? '');
@@ -98,11 +102,18 @@ const ScenarioIntroSettingsPanel: React.FC<ScenarioIntroSettingsPanelProps> = ({
       </Typography>
 
       <Alert severity="info" sx={{ mb: 2 }}>
-        {t('scenarios.intro.hint')}
+        {readOnly
+          ? 'اطلاعات اینترو فقط قابل مشاهده است؛ ویرایش آن به دسترسی مدیریت سناریو نیاز دارد.'
+          : t('scenarios.intro.hint')}
       </Alert>
 
       <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, maxWidth: 720 }}>
-        <Button variant="outlined" component="label" startIcon={<CloudUpload />} disabled={uploading}>
+        <Button
+          variant="outlined"
+          component="label"
+          startIcon={<CloudUpload />}
+          disabled={uploading || readOnly}
+        >
           {t('scenarios.intro.uploadButton')}
           <input type="file" accept=".mp4,.webm,video/mp4,video/webm" hidden onChange={handlePickVideo} />
         </Button>
@@ -115,6 +126,7 @@ const ScenarioIntroSettingsPanel: React.FC<ScenarioIntroSettingsPanelProps> = ({
           fullWidth
           size="small"
           helperText={t('scenarios.intro.videoUrlHelper')}
+          InputProps={{ readOnly }}
         />
 
         <TextField
@@ -123,6 +135,7 @@ const ScenarioIntroSettingsPanel: React.FC<ScenarioIntroSettingsPanelProps> = ({
           onChange={(e) => setTitle(e.target.value)}
           fullWidth
           size="small"
+          InputProps={{ readOnly }}
         />
 
         <TextField
@@ -133,8 +146,10 @@ const ScenarioIntroSettingsPanel: React.FC<ScenarioIntroSettingsPanelProps> = ({
           multiline
           minRows={4}
           helperText={t('scenarios.intro.summaryHelper')}
+          InputProps={{ readOnly }}
         />
 
+        {!readOnly && (
         <Box>
           <Button
             variant="contained"
@@ -145,6 +160,7 @@ const ScenarioIntroSettingsPanel: React.FC<ScenarioIntroSettingsPanelProps> = ({
             {t('scenarios.intro.saveButton')}
           </Button>
         </Box>
+        )}
       </Box>
     </Box>
   );

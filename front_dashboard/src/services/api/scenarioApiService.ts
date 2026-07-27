@@ -163,7 +163,7 @@ export class ScenarioApiService extends BaseApiClient {
     } as any;
   }
 
-  private mapScenarioOutToEnhanced(apiItem: any): EnhancedScenario {
+  mapScenarioOutToEnhanced(apiItem: any): EnhancedScenario {
     if (
       apiItem &&
       typeof apiItem === 'object' &&
@@ -183,6 +183,8 @@ export class ScenarioApiService extends BaseApiClient {
         intro_title: apiItem.intro_title ?? (base as any).intro_title,
         intro_summary: apiItem.intro_summary ?? (base as any).intro_summary,
         archived_at: apiItem.archived_at ?? null,
+        createdAt: apiItem.created ?? base.createdAt,
+        updatedAt: apiItem.modified ?? base.updatedAt,
         importAction: apiItem.importAction,
         // اگر image در metadata نباشد، آن را اضافه می‌کنیم
         metadata: {
@@ -242,10 +244,19 @@ export class ScenarioApiService extends BaseApiClient {
     updates: Partial<EnhancedScenario>
   ): Promise<EnhancedScenario> {
     try {
-      const payload = this.buildScenarioPayload({
-        ...(updates as any),
+      // The backend stores the complete editor model in `content`. Always merge
+      // partial UI updates with the latest server copy before replacing it.
+      const current = await this.getScenarioById(id);
+      const merged = {
+        ...current,
+        ...updates,
         id,
-      } as EnhancedScenario);
+        metadata: {
+          ...(current.metadata || {}),
+          ...((updates as any).metadata || {}),
+        },
+      } as EnhancedScenario;
+      const payload = this.buildScenarioPayload(merged);
       const response = await this.put<any>(`/scenarios/${id}`, payload);
       const data = handleApiResponse(response);
       return this.mapScenarioOutToEnhanced(data);

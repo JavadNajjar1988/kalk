@@ -93,6 +93,11 @@ import ScenarioDialog from '@/components/common/ScenarioDialog';
 import { showSuccessNotification, showErrorNotification } from '@/store/slices/uiSlice';
 import ScenarioIntroSettingsPanel from '@/modules/dashboard/components/ScenarioIntroSettingsPanel';
 import { scenarioApiService } from '@/services/api/scenarioApiService';
+import { selectUser } from '@/store/slices/authSlice';
+import { canAccessFeature } from '@/security/roleAccess';
+
+const EXECUTION_API_AVAILABLE = false;
+const ANALYSIS_API_AVAILABLE = false;
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -117,7 +122,10 @@ function TabPanel(props: TabPanelProps) {
 }
 
 // ---------- Managed-in-KalkNegar placeholder ----------
-const ManagedInKalkNegar: React.FC<{ scenarioId?: string }> = ({ scenarioId }) => {
+const ManagedInKalkNegar: React.FC<{
+  scenarioId?: string;
+  canLaunch: boolean;
+}> = ({ scenarioId, canLaunch }) => {
   const { t } = useTranslation();
   const kalknegarUrl = scenarioId
     ? `/kalknegar/scenario/${scenarioId}?integration=react`
@@ -132,15 +140,21 @@ const ManagedInKalkNegar: React.FC<{ scenarioId?: string }> = ({ scenarioId }) =
       <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
         {t('scenarios.managedInKalknegar.description')}
       </Typography>
-      <Button
-        variant="contained"
-        startIcon={<OpenInNew />}
-        href={kalknegarUrl}
-        target="_blank"
-        rel="noopener"
-      >
-        {t('scenarios.managedInKalknegar.launchButton')}
-      </Button>
+      {canLaunch ? (
+        <Button
+          variant="contained"
+          startIcon={<OpenInNew />}
+          href={kalknegarUrl}
+          target="_blank"
+          rel="noopener"
+        >
+          {t('scenarios.managedInKalknegar.launchButton')}
+        </Button>
+      ) : (
+        <Button variant="contained" startIcon={<OpenInNew />} disabled>
+          نیازمند دسترسی کالک‌نگار
+        </Button>
+      )}
     </Box>
   );
 };
@@ -168,6 +182,11 @@ const ScenarioAnalysis: React.FC<{ scenario: EnhancedScenario }> = ({ scenario }
   return (
     <Box>
       <Typography variant="h6" gutterBottom>{t('scenarios.analysis.title')}</Typography>
+      {!ANALYSIS_API_AVAILABLE && (
+        <Alert severity="info" sx={{ mb: 2 }}>
+          تحلیل عملیاتی هنوز به سرویس محاسباتی متصل نشده و اجرای آن غیرفعال است.
+        </Alert>
+      )}
       <Grid container spacing={3}>
         <Grid item xs={12} md={4}>
           <Card>
@@ -189,7 +208,7 @@ const ScenarioAnalysis: React.FC<{ scenario: EnhancedScenario }> = ({ scenario }
                   variant="contained"
                   color="primary"
                   onClick={handleAnalyzeScenario}
-                  disabled={analyzing}
+                  disabled={analyzing || !ANALYSIS_API_AVAILABLE}
                   startIcon={analyzing ? undefined : <BarChart />}
                   sx={{ mt: 2 }}
                 >
@@ -269,7 +288,12 @@ const ScenarioPhasesManager: React.FC<{ scenario: EnhancedScenario }> = ({ scena
     <Box>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
         <Typography variant="h6">{t('scenarios.phases.title')}</Typography>
-        <Button variant="outlined" startIcon={<Add />} size="small">{t('scenarios.phases.addPhase')}</Button>
+        <Chip
+          label="ویرایش مراحل در کالک‌نگار"
+          color="info"
+          variant="outlined"
+          size="small"
+        />
       </Box>
       {!scenario.phases || scenario.phases.length === 0 ? (
         <Alert severity="info" sx={{ mb: 2 }}>{t('scenarios.phases.noPhases')}</Alert>
@@ -284,7 +308,6 @@ const ScenarioPhasesManager: React.FC<{ scenario: EnhancedScenario }> = ({ scena
                 action={
                   <Box>
                     <Chip label={t(`scenarios.phases.status.${phase.status}`)} color={getStatusColor(phase.status)} size="small" sx={{ mr: 1 }} />
-                    <IconButton size="small"><Edit fontSize="small" /></IconButton>
                   </Box>
                 }
               />
@@ -332,7 +355,8 @@ const toDateTimeLocal = (value?: string) => {
 
 const EnvironmentalConditionsManager: React.FC<{
   scenario: EnhancedScenario;
-}> = ({ scenario }) => {
+  canManage: boolean;
+}> = ({ scenario, canManage }) => {
   const dispatch = useAppDispatch();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -444,14 +468,16 @@ const EnvironmentalConditionsManager: React.FC<{
             آب‌وهوا و وضعیت متغیر زمین به‌صورت بازه زمانی ثبت می‌شوند.
           </Typography>
         </Box>
-        <Button
-          variant="outlined"
-          startIcon={<Add />}
-          size="small"
-          onClick={openCreateDialog}
-        >
-          افزودن شرایط
-        </Button>
+        {canManage && (
+          <Button
+            variant="outlined"
+            startIcon={<Add />}
+            size="small"
+            onClick={openCreateDialog}
+          >
+            افزودن شرایط
+          </Button>
+        )}
       </Box>
 
       {conditions.length === 0 ? (
@@ -478,7 +504,7 @@ const EnvironmentalConditionsManager: React.FC<{
                         ? new Date(condition.endTime).toLocaleString('fa-IR')
                         : 'ادامه‌دار'
                     }`}
-                    action={
+                    action={canManage ? (
                       <Box>
                         <IconButton
                           size="small"
@@ -496,7 +522,7 @@ const EnvironmentalConditionsManager: React.FC<{
                           <Delete fontSize="small" />
                         </IconButton>
                       </Box>
-                    }
+                    ) : undefined}
                   />
                   <CardContent>
                     {condition.description && (
@@ -632,15 +658,17 @@ const ScenarioHistoryTab: React.FC<{ scenarioId: string }> = ({ scenarioId }) =>
   const { t } = useTranslation();
   const [logs, setLogs] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
     (async () => {
       try {
+        setLoadError(false);
         const data = await scenarioApiService.getScenarioHistory(scenarioId);
         if (!cancelled) setLogs(data);
       } catch {
-        // silent
+        if (!cancelled) setLoadError(true);
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -649,6 +677,14 @@ const ScenarioHistoryTab: React.FC<{ scenarioId: string }> = ({ scenarioId }) =>
   }, [scenarioId]);
 
   if (loading) return <LinearProgress />;
+
+  if (loadError) {
+    return (
+      <Alert severity="error">
+        دریافت تاریخچهٔ تغییرات سناریو انجام نشد.
+      </Alert>
+    );
+  }
 
   if (logs.length === 0) {
     return (
@@ -716,6 +752,7 @@ const ScenarioDetailPage: React.FC = () => {
   const isLoading = useAppSelector(selectScenariosLoading);
   const error = useAppSelector(selectScenariosError);
   const simulationStatus = useAppSelector(selectSimulationStatus);
+  const user = useAppSelector(selectUser);
   
   const [tabValue, setTabValue] = useState(0);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
@@ -725,6 +762,12 @@ const ScenarioDetailPage: React.FC = () => {
   const [actionLoading, setActionLoading] = useState(false);
   
   const isArchived = !!scenario?.archived_at;
+  const canManage = canAccessFeature(user?.role, 'scenarios.manage');
+  const canDelete = canAccessFeature(user?.role, 'scenarios.delete');
+  const canLaunchKalknegar = canAccessFeature(
+    user?.role,
+    'kalknegar.access'
+  );
   
   useEffect(() => {
     if (id) dispatch(fetchScenarioById(id));
@@ -905,9 +948,11 @@ const ScenarioDetailPage: React.FC = () => {
       {/* Archived banner */}
       {isArchived && (
         <Alert severity="warning" sx={{ mb: 2 }} action={
-          <Button color="inherit" size="small" onClick={handleRestore} disabled={actionLoading}>
-            {t('scenarios.actions.restore')}
-          </Button>
+          canManage ? (
+            <Button color="inherit" size="small" onClick={handleRestore} disabled={actionLoading}>
+              {t('scenarios.actions.restore')}
+            </Button>
+          ) : undefined
         }>
           {t('scenarios.archiveDialog.message', { name: scenario.name })}
         </Alert>
@@ -939,6 +984,7 @@ const ScenarioDetailPage: React.FC = () => {
           </Box>
           
           <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+            {canLaunchKalknegar && (
             <Tooltip title={t('scenarios.actions.launch')}>
               <Button
                 variant="contained"
@@ -952,6 +998,7 @@ const ScenarioDetailPage: React.FC = () => {
                 {t('scenarios.actions.launch')}
               </Button>
             </Tooltip>
+            )}
           </Box>
         </Box>
         
@@ -993,21 +1040,22 @@ const ScenarioDetailPage: React.FC = () => {
       {/* Admin actions toolbar */}
       <Paper sx={{ mb: 3 }}>
         <Toolbar variant="dense" sx={{ gap: 1, flexWrap: 'wrap' }}>
-          {/* Execution */}
+          {/* Execution is visible for operational context, but cannot be
+              triggered until a real backend service is connected. */}
           <Tooltip title={getExecutionControlText()}>
             <Button
               startIcon={getExecutionControlIcon()}
               onClick={handleExecutionControl}
               variant="contained"
               color={simulationStatus === ExecutionStatus.RUNNING ? 'secondary' : 'primary'}
-              disabled={simulationStatus === ExecutionStatus.TERMINATED}
+              disabled={!EXECUTION_API_AVAILABLE || !canManage}
               size="small"
             >
               {getExecutionControlText()}
             </Button>
           </Tooltip>
           
-          {(simulationStatus === ExecutionStatus.RUNNING || simulationStatus === ExecutionStatus.PAUSED) && (
+          {EXECUTION_API_AVAILABLE && canManage && (simulationStatus === ExecutionStatus.RUNNING || simulationStatus === ExecutionStatus.PAUSED) && (
             <Tooltip title={t('scenarios.execution.stop')}>
               <Button startIcon={<Stop />} onClick={handleStopExecution} variant="outlined" color="error" size="small">
                 {t('scenarios.execution.stop')}
@@ -1017,11 +1065,13 @@ const ScenarioDetailPage: React.FC = () => {
           
           <Box sx={{ flexGrow: 1 }} />
 
+          {canManage && (
           <Tooltip title={t('scenarios.actions.duplicate')}>
             <Button startIcon={<ContentCopy />} onClick={handleDuplicate} variant="outlined" size="small" disabled={actionLoading}>
               {t('scenarios.actions.duplicate')}
             </Button>
           </Tooltip>
+          )}
 
           <Tooltip title={t('scenarios.actions.export')}>
             <Button startIcon={<CloudDownload />} onClick={handleExport} variant="outlined" size="small" disabled={actionLoading}>
@@ -1029,7 +1079,7 @@ const ScenarioDetailPage: React.FC = () => {
             </Button>
           </Tooltip>
 
-          {isArchived ? (
+          {canManage && (isArchived ? (
             <Tooltip title={t('scenarios.actions.restore')}>
               <Button startIcon={<Unarchive />} onClick={handleRestore} variant="outlined" color="info" size="small" disabled={actionLoading}>
                 {t('scenarios.actions.restore')}
@@ -1041,19 +1091,23 @@ const ScenarioDetailPage: React.FC = () => {
                 {t('scenarios.actions.archive')}
               </Button>
             </Tooltip>
-          )}
+          ))}
 
+          {canManage && (
           <Tooltip title={t('common.edit')}>
             <IconButton onClick={() => setEditDialogOpen(true)} size="small">
               <Edit />
             </IconButton>
           </Tooltip>
+          )}
 
+          {canDelete && (
           <Tooltip title={t('common.delete')}>
             <IconButton onClick={() => setDeleteConfirmOpen(true)} color="error" size="small">
               <Delete />
             </IconButton>
           </Tooltip>
+          )}
         </Toolbar>
       </Paper>
       
@@ -1079,7 +1133,7 @@ const ScenarioDetailPage: React.FC = () => {
         
         {/* Environment */}
         <TabPanel value={tabValue} index={1}>
-          <EnvironmentalConditionsManager scenario={scenario} />
+          <EnvironmentalConditionsManager scenario={scenario} canManage={canManage} />
         </TabPanel>
         
         {/* Analysis */}
@@ -1089,7 +1143,7 @@ const ScenarioDetailPage: React.FC = () => {
         
         {/* Intro */}
         <TabPanel value={tabValue} index={3}>
-          <ScenarioIntroSettingsPanel scenario={scenario} />
+          <ScenarioIntroSettingsPanel scenario={scenario} readOnly={!canManage} />
         </TabPanel>
         
         {/* History */}
@@ -1099,19 +1153,19 @@ const ScenarioDetailPage: React.FC = () => {
 
         {/* Timeline */}
         <TabPanel value={tabValue} index={5}>
-          <EnvironmentalConditionsManager scenario={scenario} />
+          <EnvironmentalConditionsManager scenario={scenario} canManage={canManage} />
           <Divider sx={{ my: 4 }} />
-          <ManagedInKalkNegar scenarioId={scenario.id} />
+          <ManagedInKalkNegar scenarioId={scenario.id} canLaunch={canLaunchKalknegar} />
         </TabPanel>
 
         {/* Map – managed in KalkNegar */}
         <TabPanel value={tabValue} index={6}>
-          <ManagedInKalkNegar scenarioId={scenario.id} />
+          <ManagedInKalkNegar scenarioId={scenario.id} canLaunch={canLaunchKalknegar} />
         </TabPanel>
 
         {/* Units – managed in KalkNegar */}
         <TabPanel value={tabValue} index={7}>
-          <ManagedInKalkNegar scenarioId={scenario.id} />
+          <ManagedInKalkNegar scenarioId={scenario.id} canLaunch={canLaunchKalknegar} />
         </TabPanel>
       </Box>
       

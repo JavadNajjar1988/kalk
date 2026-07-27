@@ -10,6 +10,7 @@ from starlette.routing import Mount
 
 TEST_ADMIN_PASSWORD = "Test-only-admin-password-2026"
 os.environ.setdefault("ADMIN_BOOTSTRAP_PASSWORD", TEST_ADMIN_PASSWORD)
+os.environ["DISABLE_AUTH"] = "false"
 
 from app.main import app
 from app.core.config import settings
@@ -90,14 +91,20 @@ async def test_auth_and_crud_scenarios():
         created = resp.json()["data"]
         scn_id = created["id"]
 
-        # list
-        resp = await ac.get(f"{settings.API_PREFIX}/scenarios")
+        # list/detail are authenticated read operations
+        unauthenticated = await ac.get(f"{settings.API_PREFIX}/scenarios")
+        assert unauthenticated.status_code == 401
+
+        resp = await ac.get(f"{settings.API_PREFIX}/scenarios", headers=headers)
         assert resp.status_code == 200
         items = resp.json()["data"]
         assert any(i["id"] == scn_id for i in items)
 
         # get
-        resp = await ac.get(f"{settings.API_PREFIX}/scenarios/{scn_id}")
+        unauthenticated = await ac.get(f"{settings.API_PREFIX}/scenarios/{scn_id}")
+        assert unauthenticated.status_code == 401
+
+        resp = await ac.get(f"{settings.API_PREFIX}/scenarios/{scn_id}", headers=headers)
         assert resp.status_code == 200
 
         # update

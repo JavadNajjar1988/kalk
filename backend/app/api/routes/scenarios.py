@@ -89,7 +89,11 @@ async def _resolve_user_id(db: AsyncSession, user: dict) -> str:
     return row
 
 
-@router.get("", response_model=dict)
+@router.get(
+    "",
+    response_model=dict,
+    dependencies=[Depends(get_current_user)],
+)
 async def list_scenarios(db: DbSession, include_archived: bool = False):
     stmt = select(Scenario)
     if not include_archived:
@@ -454,7 +458,11 @@ async def record_scenario_intro_view(
     return success({"scenario_id": scenario_id, "recorded": True})
 
 
-@router.get("/{scenario_id}", response_model=dict)
+@router.get(
+    "/{scenario_id}",
+    response_model=dict,
+    dependencies=[Depends(get_current_user)],
+)
 async def get_scenario(scenario_id: str, db: DbSession):
     obj = await db.get(Scenario, scenario_id)
     if not obj:
@@ -685,6 +693,7 @@ async def duplicate_scenario(
 @router.get(
     "/{scenario_id}/export",
     response_model=dict,
+    dependencies=[Depends(get_current_user)],
 )
 async def export_scenario(scenario_id: str, db: DbSession):
     obj = await db.get(Scenario, scenario_id)
@@ -712,7 +721,11 @@ class AuditLogOut(BaseModel):
         from_attributes = True
 
 
-@router.get("/{scenario_id}/history", response_model=dict)
+@router.get(
+    "/{scenario_id}/history",
+    response_model=dict,
+    dependencies=[Depends(get_current_user)],
+)
 async def get_scenario_history(
     scenario_id: str,
     db: DbSession,
