@@ -3,32 +3,15 @@ import GeoJSON from "ol/format/GeoJSON";
 import Point from "ol/geom/Point";
 import Polygon from "ol/geom/Polygon";
 import MultiPolygon from "ol/geom/MultiPolygon";
+import type SimpleGeometry from "ol/geom/SimpleGeometry";
+import { getCenter } from "ol/extent";
 import VectorLayer from "ol/layer/Vector";
 import VectorSource from "ol/source/Vector";
 import { Fill, Icon, Stroke, Style, Text } from "ol/style";
 import type { EnvironmentalCondition } from "@/types/scenarioModels";
 import { isEnvironmentalConditionActive } from "@/scenariostore/environment";
 import { symbolGenerator } from "@/symbology/milsymbwrapper";
-
-const COLORS: Record<EnvironmentalCondition["kind"], string> = {
-  precipitation: "#0284c7",
-  fog: "#64748b",
-  visibility: "#7c3aed",
-  wind: "#0891b2",
-  temperature: "#dc2626",
-  surface_condition: "#92400e",
-  cloud_cover: "#475569",
-};
-
-const LABELS: Record<EnvironmentalCondition["kind"], string> = {
-  precipitation: "بارش",
-  fog: "مه",
-  visibility: "دید",
-  wind: "باد",
-  temperature: "دما",
-  surface_condition: "زمین",
-  cloud_cover: "ابر",
-};
+import { presetForCondition } from "./environmentPresets";
 
 function iconSource(condition: EnvironmentalCondition) {
   if (!condition.metocSidc) return undefined;
@@ -40,9 +23,12 @@ function iconSource(condition: EnvironmentalCondition) {
   }
 }
 
-function markerCoordinate(geometry: Polygon | MultiPolygon) {
+function markerCoordinate(geometry: SimpleGeometry) {
   if (geometry instanceof Polygon) return geometry.getInteriorPoint().getCoordinates();
-  return geometry.getInteriorPoints().getFirstCoordinate();
+  if (geometry instanceof MultiPolygon) {
+    return geometry.getInteriorPoints().getFirstCoordinate();
+  }
+  return getCenter(geometry.getExtent());
 }
 
 export function createEnvironmentMapLayer() {
@@ -53,7 +39,8 @@ export function createEnvironmentMapLayer() {
     properties: { title: "شرایط محیطی", environmentalOverlay: true },
     style: (feature) => {
       const condition = feature.get("condition") as EnvironmentalCondition;
-      const color = COLORS[condition.kind];
+      const preset = presetForCondition(condition.kind, condition.parameters);
+      const color = preset.color;
       if (feature.getGeometry() instanceof Point) {
         const src = iconSource(condition);
         return new Style({
@@ -63,7 +50,7 @@ export function createEnvironmentMapLayer() {
           text: src
             ? undefined
             : new Text({
-                text: LABELS[condition.kind],
+                text: preset.label,
                 fill: new Fill({ color: "#fff" }),
                 backgroundFill: new Fill({ color }),
                 padding: [3, 5, 3, 5],
@@ -92,14 +79,16 @@ export function createEnvironmentMapLayer() {
           dataProjection: "EPSG:4326",
           featureProjection: projection,
         });
-        if (!(geometry instanceof Polygon || geometry instanceof MultiPolygon)) return;
+        if (!("getExtent" in geometry)) return;
         source.addFeature(new Feature({ geometry, condition }));
-        source.addFeature(
-          new Feature({
-            geometry: new Point(markerCoordinate(geometry)),
-            condition,
-          }),
-        );
+        if (!(geometry instanceof Point)) {
+          source.addFeature(
+            new Feature({
+              geometry: new Point(markerCoordinate(geometry as SimpleGeometry)),
+              condition,
+            }),
+          );
+        }
       });
   }
 

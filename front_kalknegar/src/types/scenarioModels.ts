@@ -436,25 +436,31 @@ export type EnvironmentalKind =
   | "temperature"
   | "fog"
   | "surface_condition"
-  | "cloud_cover";
+  | "cloud_cover"
+  | "thunderstorm"
+  | "dust_storm"
+  | "blizzard"
+  | "humidity"
+  | "pressure"
+  | "smoke"
+  | "fire"
+  | "illumination"
+  | "flood"
+  | "soil_bearing"
+  | "slope"
+  | "roughness"
+  | "vegetation"
+  | "road_condition"
+  | "bridge_condition"
+  | "water_crossing"
+  | "elevation";
 
 export type EnvironmentalScope = "global" | "area";
 
-export type EnvironmentalParameters =
-  | {
-      mode: "rain" | "snow" | "hail";
-      intensity: number;
-      rateMmPerHour?: number;
-    }
-  | { rangeMeters: number }
-  | { speedMps: number; directionDeg: number; gustMps?: number }
-  | { celsius: number }
-  | { intensity: number; visibilityMeters?: number }
-  | {
-      condition: "dry" | "wet" | "muddy" | "icy" | "flooded" | "snow_covered";
-      intensity?: number;
-    }
-  | { coverage: number };
+export type EnvironmentalParameters = Record<
+  string,
+  string | number | boolean | undefined
+>;
 
 /**
  * Time-bound METOC/environmental state authored in Kalknegar.

@@ -15,7 +15,16 @@ export interface SimulatorEnvironmentalCondition {
   value?: number;
 }
 
-type EffectMode = 'none' | 'rain' | 'snow' | 'fog';
+type EffectMode =
+  | 'none'
+  | 'rain'
+  | 'snow'
+  | 'fog'
+  | 'dust'
+  | 'smoke'
+  | 'fire'
+  | 'thunderstorm'
+  | 'night';
 
 function asEpoch(value: string | number | undefined, fallback: number) {
   if (value === undefined) return fallback;
@@ -40,8 +49,37 @@ function pointInRing(point: [number, number], ring: number[][]) {
 export function geometryContainsPoint(
   geometry: SimulatorEnvironmentalCondition['geometry'],
   point: [number, number],
+  radiusMeters = 1000,
 ) {
   if (!geometry) return false;
+  const tolerance = Math.max(radiusMeters, 1) / 111_320;
+  if (geometry.type === 'Point') {
+    const [x, y] = geometry.coordinates as [number, number];
+    return Math.hypot(point[0] - x, point[1] - y) <= tolerance;
+  }
+  if (geometry.type === 'LineString') {
+    const coordinates = geometry.coordinates as number[][];
+    return coordinates.slice(1).some((current, index) => {
+      const previous = coordinates[index];
+      const dx = current[0] - previous[0];
+      const dy = current[1] - previous[1];
+      const lengthSquared = dx * dx + dy * dy || 1;
+      const ratio = Math.max(
+        0,
+        Math.min(
+          1,
+          ((point[0] - previous[0]) * dx + (point[1] - previous[1]) * dy) /
+            lengthSquared,
+        ),
+      );
+      return (
+        Math.hypot(
+          point[0] - (previous[0] + ratio * dx),
+          point[1] - (previous[1] + ratio * dy),
+        ) <= tolerance
+      );
+    });
+  }
   const polygonContains = (polygon: number[][][]) =>
     polygon.length > 0 &&
     pointInRing(point, polygon[0]) &&
@@ -66,7 +104,15 @@ export function resolveSimulatorEnvironment(
       if (!active) return false;
       return (
         condition.scope !== 'area' ||
-        geometryContainsPoint(condition.geometry, point)
+        geometryContainsPoint(
+          condition.geometry,
+          point,
+          Number(
+            condition.parameters?.radiusMeters ??
+              condition.parameters?.corridorWidthMeters ??
+              1000,
+          ),
+        )
       );
     })
     .sort((first, second) => {
@@ -137,17 +183,41 @@ export class EnvironmentEffectController {
     const fog = resolved.find(
       condition => (condition.kind ?? condition.type) === 'fog',
     );
+    const special = resolved.find(condition =>
+      ['thunderstorm', 'dust_storm', 'blizzard', 'smoke', 'fire'].includes(
+        condition.kind ?? condition.type ?? '',
+      ),
+    );
+    const illumination = resolved.find(
+      condition => (condition.kind ?? condition.type) === 'illumination',
+    );
     const precipitationMode = precipitation?.parameters?.mode;
-    const nextMode: EffectMode = precipitation
+    const specialKind = special?.kind ?? special?.type;
+    const nextMode: EffectMode =
+      specialKind === 'thunderstorm'
+        ? 'thunderstorm'
+        : specialKind === 'dust_storm'
+          ? 'dust'
+          : specialKind === 'blizzard'
+            ? 'snow'
+            : specialKind === 'smoke'
+              ? 'smoke'
+              : specialKind === 'fire'
+                ? 'fire'
+                : precipitation
       ? precipitationMode === 'snow'
         ? 'snow'
         : 'rain'
       : fog
         ? 'fog'
+        : illumination?.parameters?.phase === 'night'
+          ? 'night'
         : 'none';
     const rawIntensity =
+      special?.parameters?.intensity ??
       precipitation?.parameters?.intensity ??
       fog?.parameters?.intensity ??
+      (illumination ? Math.max(0.15, 1 - Number(illumination.parameters?.lux ?? 10) / 100) : undefined) ??
       precipitation?.value ??
       fog?.value ??
       0;
@@ -164,13 +234,27 @@ export class EnvironmentEffectController {
     const width = this.canvas.clientWidth;
     const height = this.canvas.clientHeight;
     this.context.clearRect(0, 0, width, height);
-    if (this.mode === 'fog') {
+    if (['fog', 'dust', 'smoke', 'fire', 'night'].includes(this.mode)) {
       const gradient = this.context.createLinearGradient(0, 0, 0, height);
-      gradient.addColorStop(0, `rgba(220, 230, 235, ${0.12 + this.intensity * 0.2})`);
-      gradient.addColorStop(1, `rgba(190, 205, 215, ${0.2 + this.intensity * 0.35})`);
+      const tint =
+        this.mode === 'dust'
+          ? ['176, 132, 73', '120, 83, 45']
+          : this.mode === 'smoke'
+            ? ['95, 95, 100', '45, 45, 50']
+            : this.mode === 'fire'
+              ? ['125, 80, 55', '55, 45, 45']
+              : this.mode === 'night'
+                ? ['5, 15, 40', '1, 5, 20']
+                : ['220, 230, 235', '190, 205, 215'];
+      gradient.addColorStop(0, `rgba(${tint[0]}, ${0.12 + this.intensity * 0.2})`);
+      gradient.addColorStop(1, `rgba(${tint[1]}, ${0.2 + this.intensity * 0.35})`);
       this.context.fillStyle = gradient;
       this.context.fillRect(0, 0, width, height);
-    } else if (this.mode === 'rain' || this.mode === 'snow') {
+    } else if (
+      this.mode === 'rain' ||
+      this.mode === 'snow' ||
+      this.mode === 'thunderstorm'
+    ) {
       const target = Math.round((this.mode === 'snow' ? 110 : 180) * this.intensity);
       while (this.drops.length < target) {
         this.drops.push({
@@ -202,6 +286,10 @@ export class EnvironmentEffectController {
           drop.y = -drop.length;
         }
       });
+      if (this.mode === 'thunderstorm' && Math.random() < 0.012 * this.intensity) {
+        this.context.fillStyle = `rgba(235, 245, 255, ${0.25 + this.intensity * 0.35})`;
+        this.context.fillRect(0, 0, width, height);
+      }
     }
     this.animationFrame = requestAnimationFrame(this.render);
   };

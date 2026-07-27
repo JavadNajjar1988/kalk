@@ -24,6 +24,23 @@ export const DEFAULT_METOC_SIDC: Record<EnvironmentalKind, string | undefined> =
   fog: "W-S-WSFGSO",
   surface_condition: undefined,
   cloud_cover: undefined,
+  thunderstorm: "W-S-WSTMH-",
+  dust_storm: "W-S-WSDSLM",
+  blizzard: undefined,
+  humidity: undefined,
+  pressure: undefined,
+  smoke: undefined,
+  fire: undefined,
+  illumination: undefined,
+  flood: undefined,
+  soil_bearing: undefined,
+  slope: undefined,
+  roughness: undefined,
+  vegetation: undefined,
+  road_condition: undefined,
+  bridge_condition: undefined,
+  water_crossing: undefined,
+  elevation: undefined,
 };
 
 export function normalizeEnvironmentalCondition(

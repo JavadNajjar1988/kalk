@@ -580,6 +580,50 @@ const ENVIRONMENTAL_KIND_LABELS: Record<string, string> = {
   fog: 'مه',
   surface_condition: 'وضعیت زمین',
   cloud_cover: 'پوشش ابر',
+  thunderstorm: 'رعدوبرق',
+  dust_storm: 'گردوغبار',
+  blizzard: 'کولاک',
+  humidity: 'رطوبت',
+  pressure: 'فشار هوا',
+  smoke: 'دود',
+  fire: 'آتش‌سوزی',
+  illumination: 'روشنایی',
+  flood: 'آب‌گرفتگی/سیلاب',
+  soil_bearing: 'تحمل خاک',
+  slope: 'شیب',
+  roughness: 'ناهمواری',
+  vegetation: 'پوشش گیاهی',
+  road_condition: 'وضعیت جاده',
+  bridge_condition: 'وضعیت پل',
+  water_crossing: 'گذرگاه آبی',
+  elevation: 'ارتفاع',
+};
+
+const ENVIRONMENTAL_KIND_ICONS: Record<string, string> = {
+  precipitation: '🌧️',
+  visibility: '👁️',
+  wind: '💨',
+  temperature: '🌡️',
+  fog: '🌫️',
+  surface_condition: '🏜️',
+  cloud_cover: '☁️',
+  thunderstorm: '🌩️',
+  dust_storm: '🌪️',
+  blizzard: '🌬️',
+  humidity: '💧',
+  pressure: '🧭',
+  smoke: '💨',
+  fire: '🔥',
+  illumination: '🌙',
+  flood: '🌊',
+  soil_bearing: '⚖️',
+  slope: '📐',
+  roughness: '⛰️',
+  vegetation: '🌳',
+  road_condition: '🛣️',
+  bridge_condition: '🌉',
+  water_crossing: '🚙',
+  elevation: '🏔️',
 };
 
 const environmentLabel = (condition: EnvironmentalCondition) =>
@@ -600,7 +644,11 @@ const environmentValue = (condition: EnvironmentalCondition) => {
   if (parameters.celsius !== undefined) return `${parameters.celsius} °C`;
   if (parameters.condition) return parameters.condition;
   if (parameters.coverage !== undefined) return `پوشش ${parameters.coverage}`;
-  return `شدت ${parameters.intensity ?? '—'}`;
+  return Object.entries(parameters)
+    .filter(([, value]) => value !== undefined)
+    .slice(0, 3)
+    .map(([key, value]) => `${key}: ${value}`)
+    .join(' · ');
 };
 
 const EnvironmentalConditionsManager: React.FC<{
@@ -635,7 +683,7 @@ const EnvironmentalConditionsManager: React.FC<{
               <Grid item xs={12} sm={6} md={4} key={condition.id}>
                 <Card>
                   <CardHeader
-                    title={condition.name || environmentLabel(condition)}
+                    title={`${ENVIRONMENTAL_KIND_ICONS[condition.kind || ''] || '🌐'} ${condition.name || environmentLabel(condition)}`}
                     subheader={`${new Date(condition.startTime).toLocaleString(
                       'fa-IR'
                     )} تا ${

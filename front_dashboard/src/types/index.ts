@@ -364,7 +364,24 @@ export interface EnvironmentalCondition {
     | 'temperature'
     | 'fog'
     | 'surface_condition'
-    | 'cloud_cover';
+    | 'cloud_cover'
+    | 'thunderstorm'
+    | 'dust_storm'
+    | 'blizzard'
+    | 'humidity'
+    | 'pressure'
+    | 'smoke'
+    | 'fire'
+    | 'illumination'
+    | 'flood'
+    | 'soil_bearing'
+    | 'slope'
+    | 'roughness'
+    | 'vegetation'
+    | 'road_condition'
+    | 'bridge_condition'
+    | 'water_crossing'
+    | 'elevation';
   scope?: 'global' | 'area';
   startTime: string | number;
   endTime?: string | number;

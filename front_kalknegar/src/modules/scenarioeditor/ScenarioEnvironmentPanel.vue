@@ -33,15 +33,17 @@ const editingId = ref<string>();
 const formOpen = ref(false);
 const drawing = ref(false);
 
-const KIND_OPTIONS: Array<{ value: EnvironmentalKind; label: string }> = [
-  { value: "precipitation", label: "بارش" },
-  { value: "fog", label: "مه" },
-  { value: "visibility", label: "محدوده دید" },
-  { value: "wind", label: "باد" },
-  { value: "temperature", label: "دما" },
-  { value: "surface_condition", label: "وضعیت زمین" },
-  { value: "cloud_cover", label: "پوشش ابر" },
-];
+const activeCategory = ref<EnvironmentPreset["category"]>("atmosphere");
+const selectedPresetId = ref("rain");
+const parameterValues = reactive<EnvironmentalParameters>({});
+const selectedPreset = computed(
+  () =>
+    ENVIRONMENT_PRESETS.find((preset) => preset.id === selectedPresetId.value) ??
+    ENVIRONMENT_PRESETS[0],
+);
+const visiblePresets = computed(() =>
+  ENVIRONMENT_PRESETS.filter((preset) => preset.category === activeCategory.value),
+);
 
 const form = reactive({
   name: "",
@@ -49,15 +51,11 @@ const form = reactive({
   scope: "global" as EnvironmentalScope,
   startTime: "",
   endTime: "",
-  intensity: 0.6,
-  secondaryValue: 10,
-  direction: 0,
-  mode: "rain",
-  surface: "wet",
   priority: 0,
   enabled: true,
   description: "",
   geometry: undefined as EnvironmentalCondition["geometry"],
+  geometryMode: "Polygon" as "Polygon" | "LineString" | "Point",
 });
 
 function toLocalInput(value?: number) {
@@ -82,93 +80,36 @@ function resetForm(condition?: EnvironmentalCondition) {
   form.enabled = condition?.enabled ?? true;
   form.description = condition?.description ?? "";
   form.geometry = condition?.geometry;
-  form.mode =
-    condition?.kind === "precipitation" && "mode" in condition.parameters
-      ? condition.parameters.mode
-      : "rain";
-  form.surface =
-    condition?.kind === "surface_condition" && "condition" in condition.parameters
-      ? condition.parameters.condition
-      : "wet";
-  form.intensity =
-    condition?.parameters && "intensity" in condition.parameters
-      ? condition.parameters.intensity ?? 0.6
-      : condition?.parameters && "coverage" in condition.parameters
-        ? condition.parameters.coverage
-        : 0.6;
-  form.secondaryValue =
-    condition?.kind === "visibility" && "rangeMeters" in condition.parameters
-      ? condition.parameters.rangeMeters
-      : condition?.kind === "temperature" && "celsius" in condition.parameters
-        ? condition.parameters.celsius
-        : condition?.kind === "wind" && "speedMps" in condition.parameters
-          ? condition.parameters.speedMps
-          : 10;
-  form.direction =
-    condition?.kind === "wind" && "directionDeg" in condition.parameters
-      ? condition.parameters.directionDeg
-      : 0;
+  form.geometryMode =
+    condition?.geometry?.type === "LineString" || condition?.geometry?.type === "Point"
+      ? condition.geometry.type
+      : "Polygon";
+  const preset = condition
+    ? presetForCondition(condition.kind, condition.parameters)
+    : ENVIRONMENT_PRESETS[0];
+  selectedPresetId.value = preset.id;
+  activeCategory.value = preset.category;
+  Object.keys(parameterValues).forEach((key) => delete parameterValues[key]);
+  Object.assign(parameterValues, condition?.parameters ?? preset.parameters);
   formOpen.value = true;
 }
 
 function buildParameters(): EnvironmentalParameters {
-  switch (form.kind) {
-    case "precipitation":
-      return {
-        mode: form.mode as "rain" | "snow" | "hail",
-        intensity: Number(form.intensity),
-      };
-    case "visibility":
-      return { rangeMeters: Number(form.secondaryValue) };
-    case "wind":
-      return {
-        speedMps: Number(form.secondaryValue),
-        directionDeg: Number(form.direction),
-      };
-    case "temperature":
-      return { celsius: Number(form.secondaryValue) };
-    case "fog":
-      return { intensity: Number(form.intensity) };
-    case "surface_condition":
-      return {
-        condition: form.surface as
-          | "dry"
-          | "wet"
-          | "muddy"
-          | "icy"
-          | "flooded"
-          | "snow_covered",
-        intensity: Number(form.intensity),
-      };
-    default:
-      return { coverage: Number(form.intensity) };
-  }
+  return { ...parameterValues };
 }
 
 function choosePreset(preset: EnvironmentPreset) {
+  selectedPresetId.value = preset.id;
   form.kind = preset.kind;
-  if ("mode" in preset.parameters) {
-    form.mode = preset.parameters.mode;
-    form.intensity = preset.parameters.intensity;
-  } else if ("condition" in preset.parameters) {
-    form.surface = preset.parameters.condition;
-    form.intensity = preset.parameters.intensity ?? 0.6;
-  } else if ("rangeMeters" in preset.parameters) {
-    form.secondaryValue = preset.parameters.rangeMeters;
-  } else if ("speedMps" in preset.parameters) {
-    form.secondaryValue = preset.parameters.speedMps;
-    form.direction = preset.parameters.directionDeg;
-  } else if ("celsius" in preset.parameters) {
-    form.secondaryValue = preset.parameters.celsius;
-  } else if ("coverage" in preset.parameters) {
-    form.intensity = preset.parameters.coverage;
-  } else {
-    form.intensity = preset.parameters.intensity;
+  if (!form.name || ENVIRONMENT_PRESETS.some((item) => item.label === form.name)) {
+    form.name = preset.label;
   }
+  Object.keys(parameterValues).forEach((key) => delete parameterValues[key]);
+  Object.assign(parameterValues, preset.parameters);
 }
 
 function isPresetSelected(preset: EnvironmentPreset) {
-  return presetForCondition(form.kind, buildParameters()).id === preset.id;
+  return selectedPresetId.value === preset.id;
 }
 
 function save() {
@@ -189,12 +130,7 @@ function save() {
     priority: Number(form.priority),
     enabled: form.enabled,
     description: form.description.trim() || undefined,
-    metocSidc:
-      form.kind === "precipitation" && form.mode === "snow"
-        ? "W-S-WSS-LI"
-        : form.kind === "precipitation" && form.mode === "hail"
-          ? "W-S-WSGRL-"
-          : DEFAULT_METOC_SIDC[form.kind],
+    metocSidc: selectedPreset.value.metocSidc ?? DEFAULT_METOC_SIDC[form.kind],
   };
   if (editingId.value) scenario.environment.updateCondition(editingId.value, payload);
   else scenario.environment.addCondition(payload);
@@ -226,7 +162,7 @@ function drawArea() {
     }),
   });
   map.addLayer(drawLayer);
-  drawInteraction = new Draw({ source, type: "Polygon" });
+  drawInteraction = new Draw({ source, type: form.geometryMode });
   map.addInteraction(drawInteraction);
   drawing.value = true;
   drawInteraction.once("drawend", (event) => {
@@ -239,14 +175,15 @@ function drawArea() {
 }
 
 function parameterSummary(condition: EnvironmentalCondition) {
-  const params = condition.parameters;
-  if ("mode" in params) return `${params.mode} · شدت ${params.intensity}`;
-  if ("rangeMeters" in params) return `${params.rangeMeters} متر`;
-  if ("speedMps" in params) return `${params.speedMps} m/s · ${params.directionDeg}°`;
-  if ("celsius" in params) return `${params.celsius} °C`;
-  if ("condition" in params) return `${params.condition}`;
-  if ("coverage" in params) return `پوشش ${params.coverage}`;
-  return `شدت ${params.intensity}`;
+  const preset = conditionPreset(condition);
+  return preset.fields
+    .slice(0, 2)
+    .map((field) => {
+      const raw = condition.parameters[field.key];
+      const option = field.options?.find((item) => item.value === raw);
+      return `${field.label}: ${option?.label ?? raw ?? "—"}${field.unit ? ` ${field.unit}` : ""}`;
+    })
+    .join(" · ");
 }
 
 function metocSvg(condition: EnvironmentalCondition) {
@@ -297,7 +234,7 @@ onUnmounted(stopDrawing);
         <span v-if="condition.metocSidc" class="h-12 w-12 shrink-0 rounded-lg bg-white/80 p-1 shadow-sm" v-html="metocSvg(condition)" />
         <span v-else class="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-white/80 text-3xl shadow-sm dark:bg-slate-800">{{ conditionPreset(condition).emoji }}</span>
         <div class="min-w-0 flex-1">
-          <div class="font-medium">{{ condition.name || KIND_OPTIONS.find(item => item.value === condition.kind)?.label }}</div>
+          <div class="font-medium">{{ condition.name || conditionPreset(condition).label }}</div>
           <div class="text-muted-foreground text-xs">
             {{ new Date(Number(condition.startTime)).toLocaleString("fa-IR") }}
             تا
@@ -316,9 +253,14 @@ onUnmounted(stopDrawing);
     <form v-if="formOpen" class="space-y-3 rounded border bg-slate-50 p-3 dark:bg-slate-900" @submit.prevent="save">
       <div>
         <div class="mb-1 text-xs font-medium">انتخاب وضعیت محیطی</div>
+        <div class="mb-2 flex rounded-lg bg-slate-200/70 p-1 dark:bg-slate-800">
+          <button type="button" class="flex-1 rounded px-2 py-1 text-xs" :class="{ 'bg-white shadow dark:bg-slate-700': activeCategory === 'atmosphere' }" @click="activeCategory = 'atmosphere'">جو و هوا</button>
+          <button type="button" class="flex-1 rounded px-2 py-1 text-xs" :class="{ 'bg-white shadow dark:bg-slate-700': activeCategory === 'terrain' }" @click="activeCategory = 'terrain'">زمین</button>
+          <button type="button" class="flex-1 rounded px-2 py-1 text-xs" :class="{ 'bg-white shadow dark:bg-slate-700': activeCategory === 'infrastructure' }" @click="activeCategory = 'infrastructure'">راه و زیرساخت</button>
+        </div>
         <div class="grid grid-cols-3 gap-1 sm:grid-cols-5">
           <button
-            v-for="preset in ENVIRONMENT_PRESETS"
+            v-for="preset in visiblePresets"
             :key="preset.id"
             type="button"
             class="flex min-h-16 flex-col items-center justify-center rounded-lg border p-1 text-[11px] transition"
@@ -340,22 +282,33 @@ onUnmounted(stopDrawing);
         </label>
         <label class="text-xs">شروع<input v-model="form.startTime" required type="datetime-local" class="mt-1 w-full rounded border bg-transparent p-2" /></label>
         <label class="text-xs">پایان<input v-model="form.endTime" type="datetime-local" class="mt-1 w-full rounded border bg-transparent p-2" /></label>
-        <label v-if="['precipitation','fog','surface_condition','cloud_cover'].includes(form.kind)" class="text-xs">شدت (۰ تا ۱)<input v-model.number="form.intensity" type="number" min="0" max="1" step="0.1" class="mt-1 w-full rounded border bg-transparent p-2" /></label>
-        <label v-if="form.kind === 'precipitation'" class="text-xs">نوع بارش
-          <select v-model="form.mode" class="mt-1 w-full rounded border bg-transparent p-2"><option value="rain">باران</option><option value="snow">برف</option><option value="hail">تگرگ</option></select>
+        <label v-for="field in selectedPreset.fields" :key="field.key" class="text-xs">
+          {{ field.label }} <span v-if="field.unit" class="text-muted-foreground">({{ field.unit }})</span>
+          <select v-if="field.type === 'select'" v-model="parameterValues[field.key]" class="mt-1 w-full rounded border bg-transparent p-2">
+            <option v-for="option in field.options" :key="option.value" :value="option.value">{{ option.label }}</option>
+          </select>
+          <input
+            v-else
+            v-model.number="parameterValues[field.key]"
+            type="number"
+            :min="field.min"
+            :max="field.max"
+            :step="field.step ?? 'any'"
+            class="mt-1 w-full rounded border bg-transparent p-2"
+          />
         </label>
-        <label v-if="form.kind === 'surface_condition'" class="text-xs">وضعیت زمین
-          <select v-model="form.surface" class="mt-1 w-full rounded border bg-transparent p-2"><option value="dry">خشک</option><option value="wet">خیس</option><option value="muddy">گل‌آلود</option><option value="icy">یخ‌زده</option><option value="flooded">آب‌گرفته</option><option value="snow_covered">برفی</option></select>
-        </label>
-        <label v-if="['visibility','wind','temperature'].includes(form.kind)" class="text-xs">
-          {{ form.kind === "visibility" ? "برد دید (متر)" : form.kind === "wind" ? "سرعت (m/s)" : "دما (°C)" }}
-          <input v-model.number="form.secondaryValue" type="number" class="mt-1 w-full rounded border bg-transparent p-2" />
-        </label>
-        <label v-if="form.kind === 'wind'" class="text-xs">جهت (درجه)<input v-model.number="form.direction" type="number" min="0" max="359" class="mt-1 w-full rounded border bg-transparent p-2" /></label>
         <label class="text-xs">اولویت<input v-model.number="form.priority" type="number" class="mt-1 w-full rounded border bg-transparent p-2" /></label>
       </div>
+      <label v-if="form.scope === 'area'" class="block text-xs">
+        نوع هندسه
+        <select v-model="form.geometryMode" class="mt-1 w-full rounded border bg-transparent p-2">
+          <option value="Polygon">محدوده چندضلعی</option>
+          <option value="LineString">مسیر یا محور</option>
+          <option value="Point">نقطه</option>
+        </select>
+      </label>
       <button v-if="form.scope === 'area'" type="button" class="w-full rounded border border-sky-500 p-2 text-sky-700" @click="drawArea">
-        {{ drawing ? "روی نقشه چندضلعی را کامل کنید…" : form.geometry ? "ترسیم مجدد محدوده" : "ترسیم محدوده روی نقشه" }}
+        {{ drawing ? "ترسیم را روی نقشه کامل کنید…" : form.geometry ? "ترسیم مجدد مکان" : "ترسیم روی نقشه" }}
       </button>
       <textarea v-model="form.description" rows="2" placeholder="توضیحات" class="w-full rounded border bg-transparent p-2" />
       <div class="flex justify-end gap-2">
