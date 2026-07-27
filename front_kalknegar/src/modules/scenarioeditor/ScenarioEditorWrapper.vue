@@ -40,6 +40,28 @@ const servicesStore = useServicesStore();
 const introModalOpen = ref(false);
 const introStatus = ref<ScenarioIntroStatus | null>(null);
 
+async function prewarmTacticalServices() {
+  const loadedState = scenario.value?.store?.state;
+  const scenarioId = String(loadedState?.id || props.scenarioId);
+  const { ensureScenarioTacticalServices } = await import(
+    "@/modules/tactical-symbol-map/services/scenarioProjectServices"
+  );
+  await ensureScenarioTacticalServices({
+    scenarioId,
+    metadata: loadedState?.metadata,
+    servicesStore,
+  });
+}
+
+function startTacticalPrewarm() {
+  void prewarmTacticalServices().catch((error) => {
+    console.error(
+      "[ScenarioEditorWrapper] Failed to prewarm tactical services:",
+      error,
+    );
+  });
+}
+
 function resolveIntroVideoUrl(url: string | null | undefined): string {
   if (!url?.trim()) return "";
   const u = url.trim();
@@ -207,6 +229,7 @@ watch(
       const demoId = newScenarioId.replace("demo-", "");
       if (demoId !== currentDemo) {
         await scenario.value.io.loadDemoScenario(demoId);
+        startTacticalPrewarm();
         selectedItems.clear();
         selectedItems.showScenarioInfo.value = true;
       }
@@ -300,6 +323,7 @@ watch(
 
           if (scn.type === "ORBAT-mapper") {
             scenario.value.io.loadFromObject(scn as any);
+            startTacticalPrewarm();
             await applyPublishedCatalogMapLayers();
             selectedItems.clear();
             selectedItems.showScenarioInfo.value = true;

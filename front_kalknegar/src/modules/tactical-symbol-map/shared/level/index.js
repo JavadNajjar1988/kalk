@@ -81,10 +81,15 @@ export const delOp = key => ({ type: 'del', key })
  */
 export const read = (stream, decode) => new Promise((resolve, reject) => {
   const acc = []
+  const done = () => resolve(acc)
   stream
     .on('data', data => acc.push(decode(data)))
     .on('error', reject)
-    .on('close', () => resolve(acc))
+    // Browser-backed Level streams finish with `end`; some older adapters only
+    // emit `close`. Supporting both prevents IndexedDB bootstrap from waiting
+    // for the fallback timeout after all records have already been read.
+    .on('end', done)
+    .on('close', done)
 })
 
 export const Decoders = {
@@ -174,10 +179,12 @@ export const values = (db, arg, defaultValue) => Array.isArray(arg)
  * existsKey :: levelup -> String -> Boolean
  */
 export const existsKey = (db, prefix) => new Promise((resolve, reject) => {
+  const done = () => resolve(false)
   db.createReadStream({ keys: true, values: false, limit: 1, ...prefix })
     .on('data', () => resolve(true))
     .on('error', reject)
-    .on('close', () => resolve(false))
+    .on('end', done)
+    .on('close', done)
 })
 
 /**
