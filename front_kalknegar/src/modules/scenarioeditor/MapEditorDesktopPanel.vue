@@ -22,6 +22,8 @@
               v-for="tab in [
                 'آرایش نبرد',
                 'رویدادها',
+                'فازها',
+                'شرایط محیطی',
                 'استوری‌بورد',
                 'لایه‌ها',
                 'تنظیمات',
@@ -52,6 +54,12 @@
             <ScenarioEventsPanel @event-click="onEventClick" />
           </TabPanel>
           <TabPanel class="p-2 pb-6">
+            <ScenarioPhasesPanel />
+          </TabPanel>
+          <TabPanel class="p-2 pb-6">
+            <ScenarioEnvironmentPanel />
+          </TabPanel>
+          <TabPanel class="p-2 pb-6">
             <StoryboardPanel />
           </TabPanel>
           <TabPanel class="p-2 pb-6"><ScenarioLayersTabPanel /></TabPanel>
@@ -73,6 +81,8 @@
 <script setup lang="ts">
 import { Tab, TabGroup, TabList, TabPanel, TabPanels } from "@headlessui/vue";
 import ScenarioEventsPanel from "@/modules/scenarioeditor/ScenarioEventsPanel.vue";
+import ScenarioPhasesPanel from "@/modules/scenarioeditor/ScenarioPhasesPanel.vue";
+import ScenarioEnvironmentPanel from "@/modules/scenarioeditor/ScenarioEnvironmentPanel.vue";
 import StoryboardPanel from "@/modules/scenarioeditor/StoryboardPanel.vue";
 import OrbatPanel from "@/modules/scenarioeditor/OrbatPanel.vue";
 import CloseButton from "@/components/CloseButton.vue";

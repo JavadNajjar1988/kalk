@@ -51,6 +51,9 @@ const formattedEventTime = computed(() => {
 const media = computed(() => {
   return scenarioEvent.value?.media?.[0];
 });
+const eventPhase = computed(() =>
+  store.state.phases.find((phase) => phase.id === scenarioEvent.value?.phaseId),
+);
 
 const tabList = computed(() => (ui.debugMode ? ["جزئیات", "اشکال‌زدایی"] : ["جزئیات"]));
 
@@ -140,6 +143,9 @@ const onFormSubmit = (eventUpdate: ScenarioEventUpdate) => {
           class="mt-4"
         />
         <div v-else class="mt-4">
+          <DescriptionItem v-if="eventPhase" label="فاز سناریو" class="mb-3">
+            {{ eventPhase.name }}
+          </DescriptionItem>
           <div v-if="scenarioEvent.description">
             <div class="prose prose-sm dark:prose-invert" v-html="hDescription"></div>
           </div>

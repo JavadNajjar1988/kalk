@@ -82,6 +82,7 @@ export function transformFormToScenario(formData: ScenarioFormData): any {
     // آرایش اولیه انتخاب‌شده در فرم؛ در صورت انتخاب «افزودن بعداً» خالی است
     sides: Array.isArray(metadata.sides) ? metadata.sides : [],
     events: [],
+    phases: [],
     // حداقل یک لایه خالی برای features
     layers: [{ id: defaultLayerId, name: 'Features', features: [] }],
     mapLayers: [],

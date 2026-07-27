@@ -85,7 +85,12 @@ export type ScenarioFeatureActions =
   | "duplicate"
   | "removeMedia";
 
-export type ScenarioEventAction = "delete" | "changeTime" | "editMeta" | "editMedia" | "changeType";
+export type ScenarioEventAction =
+  | "delete"
+  | "changeTime"
+  | "editMeta"
+  | "editMedia"
+  | "changeType";
 
 export const EventTypes = {
   Generic: "generic",
@@ -183,5 +188,9 @@ export type StateAction = (typeof stateActions)[number];
 
 export const TAB_ORBAT = 0;
 export const TAB_EVENTS = 1;
-export const TAB_LAYERS = 2;
-export const TAB_SCENARIO_SETTINGS = 3;
+export const TAB_PHASES = 2;
+export const TAB_ENVIRONMENT = 3;
+export const TAB_STORYBOARD = 4;
+export const TAB_LAYERS = 5;
+export const TAB_SCENARIO_SETTINGS = 6;
+export const TAB_FILTERS = 7;

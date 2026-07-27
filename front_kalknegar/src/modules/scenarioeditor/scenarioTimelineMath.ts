@@ -1,5 +1,6 @@
 import { MS_PER_DAY } from "@/utils/time";
 import { type NScenarioEvent } from "@/types/internalModels";
+import type { EnvironmentalCondition, ScenarioPhase } from "@/types/scenarioModels";
 
 export type TimelineAction = "zoomIn" | "zoomOut" | "addScenarioEvent";
 
@@ -11,6 +12,18 @@ export interface EventWithX {
 export interface BinWithX {
   x: number;
   count: number;
+}
+
+export interface PhaseWithX {
+  x: number;
+  width: number;
+  phase: ScenarioPhase;
+}
+
+export interface EnvironmentWithX {
+  x: number;
+  width: number;
+  condition: EnvironmentalCondition;
 }
 
 export interface TacticalTimelineMarker {
@@ -38,6 +51,8 @@ export interface TimelineRenderInputs {
   events: NScenarioEvent[];
   histogram: HistogramBin[];
   tacticalMarkers?: TacticalTimelineMarker[];
+  phases?: ScenarioPhase[];
+  environmentalConditions?: EnvironmentalCondition[];
   minTimestamp: number;
   maxTimestamp: number;
   majorWidth: number;
@@ -48,6 +63,8 @@ export interface TimelineRenderOutputs {
   eventsWithX: EventWithX[];
   binsWithX: BinWithX[];
   tacticalMarkersWithX: TacticalMarkerWithX[];
+  phasesWithX: PhaseWithX[];
+  environmentWithX: EnvironmentWithX[];
 }
 
 export function getMsPerPixel(majorWidth: number) {
@@ -109,6 +126,80 @@ export function mapHistogramToX({
     }));
 }
 
+export function mapPhasesToX({
+  phases = [],
+  minTimestamp,
+  maxTimestamp,
+  majorWidth,
+  tzOffsetMinutes,
+}: TimelineRenderInputs) {
+  const pxPerMs = majorWidth / MS_PER_DAY;
+  const offsetMs = tzOffsetMinutes * 60 * 1000;
+
+  return phases
+    .filter((phase) => {
+      const start = Number(phase.startTime);
+      const end = phase.endTime === undefined ? maxTimestamp : Number(phase.endTime);
+      return (
+        Number.isFinite(start) &&
+        Number.isFinite(end) &&
+        end > start &&
+        start <= maxTimestamp &&
+        end >= minTimestamp
+      );
+    })
+    .map((phase) => {
+      const start = Math.max(Number(phase.startTime), minTimestamp);
+      const end = Math.min(
+        phase.endTime === undefined ? maxTimestamp : Number(phase.endTime),
+        maxTimestamp,
+      );
+      return {
+        x: (start - minTimestamp + offsetMs) * pxPerMs,
+        width: Math.max((end - start) * pxPerMs, 3),
+        phase,
+      };
+    });
+}
+
+export function mapEnvironmentToX({
+  environmentalConditions = [],
+  minTimestamp,
+  maxTimestamp,
+  majorWidth,
+  tzOffsetMinutes,
+}: TimelineRenderInputs) {
+  const pxPerMs = majorWidth / MS_PER_DAY;
+  const offsetMs = tzOffsetMinutes * 60 * 1000;
+  return environmentalConditions
+    .filter((condition) => {
+      const start = Number(condition.startTime);
+      const end =
+        condition.endTime === undefined ? maxTimestamp : Number(condition.endTime);
+      return (
+        Number.isFinite(start) &&
+        Number.isFinite(end) &&
+        end > start &&
+        start <= maxTimestamp &&
+        end >= minTimestamp
+      );
+    })
+    .map((condition) => {
+      const start = Math.max(Number(condition.startTime), minTimestamp);
+      const end = Math.min(
+        condition.endTime === undefined
+          ? maxTimestamp
+          : Number(condition.endTime),
+        maxTimestamp,
+      );
+      return {
+        x: (start - minTimestamp + offsetMs) * pxPerMs,
+        width: Math.max((end - start) * pxPerMs, 3),
+        condition,
+      };
+    });
+}
+
 export function collectTacticalTimelineMarkers(
   timedFeatureTuples: Array<[string, unknown]>,
 ): TacticalTimelineMarker[] {
@@ -158,5 +249,7 @@ export function buildTimelineRenderData(
       ...inputs,
       tacticalMarkers: inputs.tacticalMarkers ?? [],
     }),
+    phasesWithX: mapPhasesToX(inputs),
+    environmentWithX: mapEnvironmentToX(inputs),
   };
 }

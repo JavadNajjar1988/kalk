@@ -1,7 +1,12 @@
 import { defineStore } from "pinia";
 import type { SimpleStyleSpec } from "@/geo/simplestyle";
 
-export type ToolbarType = "measurements" | "draw" | "track" | "tactical";
+export type ToolbarType =
+  | "measurements"
+  | "draw"
+  | "track"
+  | "tactical"
+  | "environment";
 
 export const useMainToolbarStore = defineStore("mainToolbar", {
   state: () => ({

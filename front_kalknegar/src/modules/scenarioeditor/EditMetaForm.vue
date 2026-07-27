@@ -7,6 +7,8 @@ import { klona } from "klona";
 import type { NScenarioEvent, NScenarioFeature, NUnit } from "@/types/internalModels";
 import ResourcePicker from "./ResourcePicker.vue";
 import type { ResourceSearchResultDto } from "@/services/api/resourceApiService";
+import { activeScenarioKey } from "@/components/injects";
+import { injectStrict } from "@/utils";
 
 const SimpleMarkdownInput = defineAsyncComponent(
   () => import("@/components/SimpleMarkdownInput.vue"),
@@ -25,6 +27,7 @@ type ItemMetaForm = {
   /** ارجاع به منبع داخلی (resource.id) به‌جای لینک خارجی خام. */
   linkedResourceId?: string;
   linkedResourceLabel?: string;
+  phaseId?: string;
 };
 
 const form = ref<Partial<ItemMetaForm>>({
@@ -36,7 +39,13 @@ const form = ref<Partial<ItemMetaForm>>({
   subTitle: "",
   linkedResourceId: undefined,
   linkedResourceLabel: undefined,
+  phaseId: undefined,
 });
+
+const { store } = injectStrict(activeScenarioKey);
+const scenarioPhases = computed(() =>
+  [...store.state.phases].sort((a, b) => (a.order ?? 0) - (b.order ?? 0)),
+);
 
 const isScenarioFeatureType = (
   item: NUnit | NScenarioFeature | NScenarioEvent,
@@ -74,8 +83,7 @@ watch(
         description: item?.meta?.description ?? "",
         externalUrl: item?.meta?.externalUrl ?? "",
         linkedResourceId: (item?.meta as any)?.linkedResourceId ?? undefined,
-        linkedResourceLabel:
-          (item?.meta as any)?.linkedResourceLabel ?? undefined,
+        linkedResourceLabel: (item?.meta as any)?.linkedResourceLabel ?? undefined,
       };
     } else if (isUnitType(item)) {
       form.value = {
@@ -94,6 +102,7 @@ watch(
         externalUrl: item?.externalUrl ?? "",
         linkedResourceId: (item as any)?.linkedResourceId ?? undefined,
         linkedResourceLabel: (item as any)?.linkedResourceLabel ?? undefined,
+        phaseId: item.phaseId ?? undefined,
       };
     }
   },
@@ -138,6 +147,22 @@ const onFormSubmit = () => {
       description="از نحو نوشتار markdown برای قالب‌بندی استفاده کنید"
     />
 
+    <label v-if="isScenarioEvent" class="block space-y-1 text-sm">
+      <span>فاز سناریو</span>
+      <select
+        v-model="form.phaseId"
+        class="bg-background w-full rounded-md border px-3 py-2"
+      >
+        <option :value="undefined">بدون فاز</option>
+        <option v-for="phase in scenarioPhases" :key="phase.id" :value="phase.id">
+          {{ phase.name }}
+        </option>
+      </select>
+      <span class="text-muted-foreground block text-xs">
+        برای دسته‌بندی رویداد در بازه عملیاتی مربوطه استفاده می‌شود.
+      </span>
+    </label>
+
     <div class="space-y-2">
       <label class="text-sm">منبع پیوست‌شده</label>
       <div v-if="form.linkedResourceId" class="flex items-center gap-2 text-sm">
@@ -152,12 +177,7 @@ const onFormSubmit = () => {
           حذف ارجاع
         </button>
       </div>
-      <Button
-        type="button"
-        size="sm"
-        variant="outline"
-        @click="openPicker"
-      >
+      <Button type="button" size="sm" variant="outline" @click="openPicker">
         {{ form.linkedResourceId ? "تغییر منبع" : "انتخاب از مدیریت منابع" }}
       </Button>
       <p class="text-muted-foreground text-xs">

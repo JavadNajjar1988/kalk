@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { 
-  Box, 
+import {
+  Box,
   Tab,
   Tabs,
   Paper,
@@ -33,12 +33,9 @@ import {
   Select,
   MenuItem,
 } from '@mui/material';
-import { 
-  Edit, 
-  Delete, 
-  PlayArrow, 
-  Pause, 
-  Stop, 
+import {
+  Edit,
+  Delete,
   Timeline,
   Map as MapIcon,
   BarChart,
@@ -62,17 +59,12 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from '@/hooks/useTranslation';
 import { useAppDispatch, useAppSelector } from '@/store';
 import TransformFarsiNumbers from '@/components/common/TransformFarsiNumbers';
-import { 
-  fetchScenarioById, 
-  selectCurrentScenario, 
-  selectScenariosLoading, 
+import {
+  fetchScenarioById,
+  selectCurrentScenario,
+  selectScenariosLoading,
   selectScenariosError,
-  startScenarioExecution,
-  pauseScenarioExecution,
-  resumeScenarioExecution,
-  stopScenarioExecution,
   analyzeScenario,
-  selectSimulationStatus,
   selectLastAnalysisResult,
   deleteScenario,
   archiveScenario,
@@ -83,20 +75,22 @@ import {
 } from '@/store/slices/scenariosSlice';
 import {
   EnhancedScenario,
-  ExecutionStatus,
+  ScenarioStatus,
   PhaseStatus,
   EnvironmentalFactorType,
   AnalysisType,
   EnvironmentalCondition,
 } from '@/types';
 import ScenarioDialog from '@/components/common/ScenarioDialog';
-import { showSuccessNotification, showErrorNotification } from '@/store/slices/uiSlice';
+import {
+  showSuccessNotification,
+  showErrorNotification,
+} from '@/store/slices/uiSlice';
 import ScenarioIntroSettingsPanel from '@/modules/dashboard/components/ScenarioIntroSettingsPanel';
 import { scenarioApiService } from '@/services/api/scenarioApiService';
 import { selectUser } from '@/store/slices/authSlice';
 import { canAccessFeature } from '@/security/roleAccess';
 
-const EXECUTION_API_AVAILABLE = false;
 const ANALYSIS_API_AVAILABLE = false;
 
 interface TabPanelProps {
@@ -160,17 +154,23 @@ const ManagedInKalkNegar: React.FC<{
 };
 
 // ---------- Analysis tab ----------
-const ScenarioAnalysis: React.FC<{ scenario: EnhancedScenario }> = ({ scenario }) => {
+const ScenarioAnalysis: React.FC<{ scenario: EnhancedScenario }> = ({
+  scenario,
+}) => {
   const { t } = useTranslation();
   const dispatch = useAppDispatch();
   const lastResult = useAppSelector(selectLastAnalysisResult);
-  const [analysisType, setAnalysisType] = useState<AnalysisType>(AnalysisType.FORCE_RATIO);
+  const [analysisType, setAnalysisType] = useState<AnalysisType>(
+    AnalysisType.FORCE_RATIO
+  );
   const [analyzing, setAnalyzing] = useState(false);
 
   const handleAnalyzeScenario = async () => {
     setAnalyzing(true);
     try {
-      await dispatch(analyzeScenario({ id: scenario.id, analysisType })).unwrap();
+      await dispatch(
+        analyzeScenario({ id: scenario.id, analysisType })
+      ).unwrap();
       dispatch(showSuccessNotification(t('scenarios.analysis.success')));
     } catch {
       dispatch(showErrorNotification(t('scenarios.analysis.error')));
@@ -181,7 +181,9 @@ const ScenarioAnalysis: React.FC<{ scenario: EnhancedScenario }> = ({ scenario }
 
   return (
     <Box>
-      <Typography variant="h6" gutterBottom>{t('scenarios.analysis.title')}</Typography>
+      <Typography variant="h6" gutterBottom>
+        {t('scenarios.analysis.title')}
+      </Typography>
       {!ANALYSIS_API_AVAILABLE && (
         <Alert severity="info" sx={{ mb: 2 }}>
           تحلیل عملیاتی هنوز به سرویس محاسباتی متصل نشده و اجرای آن غیرفعال است.
@@ -212,7 +214,11 @@ const ScenarioAnalysis: React.FC<{ scenario: EnhancedScenario }> = ({ scenario }
                   startIcon={analyzing ? undefined : <BarChart />}
                   sx={{ mt: 2 }}
                 >
-                  {analyzing ? <LinearProgress style={{ width: '100%' }} /> : t('scenarios.analysis.runButton')}
+                  {analyzing ? (
+                    <LinearProgress style={{ width: '100%' }} />
+                  ) : (
+                    t('scenarios.analysis.runButton')
+                  )}
                 </Button>
               </Box>
             </CardContent>
@@ -222,44 +228,87 @@ const ScenarioAnalysis: React.FC<{ scenario: EnhancedScenario }> = ({ scenario }
           <Card>
             <CardHeader
               title={t('scenarios.analysis.resultsTitle')}
-              subheader={lastResult ? new Date(lastResult.timestamp).toLocaleString('fa-IR') : ''}
+              subheader={
+                lastResult
+                  ? new Date(lastResult.timestamp).toLocaleString('fa-IR')
+                  : ''
+              }
             />
             <CardContent>
               {!lastResult ? (
                 <Box sx={{ textAlign: 'center', py: 4 }}>
-                  <Typography color="text.secondary">{t('scenarios.analysis.noResults')}</Typography>
+                  <Typography color="text.secondary">
+                    {t('scenarios.analysis.noResults')}
+                  </Typography>
                 </Box>
               ) : (
                 <Box>
-                  <Typography variant="subtitle1" gutterBottom>{t('scenarios.analysis.chartTitle')}</Typography>
-                  <Box sx={{ height: 200, bgcolor: 'background.default', mb: 2, p: 2 }}>
+                  <Typography variant="subtitle1" gutterBottom>
+                    {t('scenarios.analysis.chartTitle')}
+                  </Typography>
+                  <Box
+                    sx={{
+                      height: 200,
+                      bgcolor: 'background.default',
+                      mb: 2,
+                      p: 2,
+                    }}
+                  >
                     <pre>{JSON.stringify(lastResult.data.chart, null, 2)}</pre>
                   </Box>
-                  <Typography variant="subtitle1" gutterBottom>{t('scenarios.analysis.statisticsTitle')}</Typography>
+                  <Typography variant="subtitle1" gutterBottom>
+                    {t('scenarios.analysis.statisticsTitle')}
+                  </Typography>
                   <Grid container spacing={2} sx={{ mb: 3 }}>
                     <Grid item xs={4}>
-                      <Typography variant="body2" color="text.secondary">{t('scenarios.analysis.effectiveness')}</Typography>
-                      <Typography variant="h6"><TransformFarsiNumbers>{lastResult.data.statistics.effectiveness.toFixed(1)}%</TransformFarsiNumbers></Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        {t('scenarios.analysis.effectiveness')}
+                      </Typography>
+                      <Typography variant="h6">
+                        <TransformFarsiNumbers>
+                          {lastResult.data.statistics.effectiveness.toFixed(1)}%
+                        </TransformFarsiNumbers>
+                      </Typography>
                     </Grid>
                     <Grid item xs={4}>
-                      <Typography variant="body2" color="text.secondary">{t('scenarios.analysis.probability')}</Typography>
-                      <Typography variant="h6"><TransformFarsiNumbers>{lastResult.data.statistics.probability.toFixed(1)}%</TransformFarsiNumbers></Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        {t('scenarios.analysis.probability')}
+                      </Typography>
+                      <Typography variant="h6">
+                        <TransformFarsiNumbers>
+                          {lastResult.data.statistics.probability.toFixed(1)}%
+                        </TransformFarsiNumbers>
+                      </Typography>
                     </Grid>
                     <Grid item xs={4}>
-                      <Typography variant="body2" color="text.secondary">{t('scenarios.analysis.risk')}</Typography>
-                      <Typography variant="h6"><TransformFarsiNumbers>{lastResult.data.statistics.risk.toFixed(1)}%</TransformFarsiNumbers></Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        {t('scenarios.analysis.risk')}
+                      </Typography>
+                      <Typography variant="h6">
+                        <TransformFarsiNumbers>
+                          {lastResult.data.statistics.risk.toFixed(1)}%
+                        </TransformFarsiNumbers>
+                      </Typography>
                     </Grid>
                   </Grid>
-                  <Typography variant="subtitle1" gutterBottom>{t('scenarios.analysis.conclusionsTitle')}</Typography>
+                  <Typography variant="subtitle1" gutterBottom>
+                    {t('scenarios.analysis.conclusionsTitle')}
+                  </Typography>
                   <Box sx={{ mb: 2 }}>
                     {lastResult.conclusions?.map((c: string, i: number) => (
-                      <Typography key={i} variant="body2" paragraph>• {c}</Typography>
+                      <Typography key={i} variant="body2" paragraph>
+                        • {c}
+                      </Typography>
                     ))}
                   </Box>
-                  <Typography variant="subtitle1" gutterBottom>{t('scenarios.analysis.recommendationsTitle')}</Typography>
+                  <Typography variant="subtitle1" gutterBottom>
+                    {t('scenarios.analysis.recommendationsTitle')}
+                  </Typography>
                   <Box>
                     {lastResult.recommendations?.map((r: string, i: number) => (
-                      <Typography key={i} variant="body2" paragraph>• {r}</Typography>
+                      <Typography key={i} variant="body2" paragraph>
+                        • {r}
+                      </Typography>
                     ))}
                   </Box>
                 </Box>
@@ -273,61 +322,239 @@ const ScenarioAnalysis: React.FC<{ scenario: EnhancedScenario }> = ({ scenario }
 };
 
 // ---------- Phases tab ----------
-const ScenarioPhasesManager: React.FC<{ scenario: EnhancedScenario }> = ({ scenario }) => {
+const ScenarioPhasesManager: React.FC<{
+  scenario: EnhancedScenario;
+  canLaunch: boolean;
+}> = ({ scenario, canLaunch }) => {
   const { t } = useTranslation();
+  const phases = [...(scenario.phases || [])].sort(
+    (a, b) => (a.order || 0) - (b.order || 0)
+  );
+  const phaseIds = new Set(phases.map(phase => phase.id));
+  const events = scenario.events || [];
+  const assignedEvents = events.filter(
+    event => event.phaseId && phaseIds.has(event.phaseId)
+  );
+  const orphanedEvents = events.filter(
+    event => event.phaseId && !phaseIds.has(event.phaseId)
+  );
+  const unassignedEvents = events.filter(event => !event.phaseId);
+  const timeIssues: string[] = [];
+  const chronologicalPhases = [...phases].sort(
+    (a, b) =>
+      new Date(a.startTime).getTime() - new Date(b.startTime).getTime()
+  );
+
+  chronologicalPhases.forEach((phase, index) => {
+    const start = new Date(phase.startTime).getTime();
+    const end = phase.endTime ? new Date(phase.endTime).getTime() : undefined;
+    if (
+      !Number.isFinite(start) ||
+      (end !== undefined && (!Number.isFinite(end) || end <= start))
+    ) {
+      timeIssues.push(`بازه زمانی فاز «${phase.name}» معتبر نیست.`);
+    }
+    for (let previousIndex = 0; previousIndex < index; previousIndex += 1) {
+      const previous = chronologicalPhases[previousIndex];
+      if (previous.endTime) {
+        const previousEnd = new Date(previous.endTime).getTime();
+        if (
+          Number.isFinite(previousEnd) &&
+          Number.isFinite(start) &&
+          start < previousEnd
+        ) {
+          timeIssues.push(
+            `فاز «${phase.name}» با «${previous.name}» هم‌پوشانی زمانی دارد.`
+          );
+        }
+      }
+    }
+  });
+
+  const kalknegarUrl = `/kalknegar/scenario/${scenario.id}?integration=react`;
   const getStatusColor = (status: PhaseStatus) => {
     switch (status) {
-      case PhaseStatus.COMPLETED: return 'primary';
-      case PhaseStatus.IN_PROGRESS: return 'primary';
-      case PhaseStatus.FAILED: return 'error';
-      case PhaseStatus.CANCELLED: return 'warning';
-      default: return 'default';
+      case PhaseStatus.COMPLETED:
+        return 'primary';
+      case PhaseStatus.IN_PROGRESS:
+        return 'primary';
+      case PhaseStatus.FAILED:
+        return 'error';
+      case PhaseStatus.CANCELLED:
+        return 'warning';
+      default:
+        return 'default';
     }
   };
   return (
     <Box>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
-        <Typography variant="h6">{t('scenarios.phases.title')}</Typography>
-        <Chip
-          label="ویرایش مراحل در کالک‌نگار"
-          color="info"
-          variant="outlined"
-          size="small"
-        />
+      <Box
+        sx={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          gap: 2,
+          mb: 2,
+        }}
+      >
+        <Box>
+          <Typography variant="h6">مرور فازهای سناریو</Typography>
+          <Typography variant="body2" color="text.secondary">
+            تعریف و ویرایش فازها در کالک‌نگار انجام می‌شود؛ این بخش برای کنترل و
+            بررسی است.
+          </Typography>
+        </Box>
+        {canLaunch && (
+          <Button
+            component="a"
+            href={kalknegarUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            variant="outlined"
+            size="small"
+            endIcon={<OpenInNew />}
+          >
+            ویرایش در کالک‌نگار
+          </Button>
+        )}
       </Box>
-      {!scenario.phases || scenario.phases.length === 0 ? (
-        <Alert severity="info" sx={{ mb: 2 }}>{t('scenarios.phases.noPhases')}</Alert>
+
+      <Grid container spacing={2} sx={{ mb: 2 }}>
+        <Grid item xs={6} md={3}>
+          <Paper variant="outlined" sx={{ p: 2 }}>
+            <Typography variant="caption" color="text.secondary">
+              تعداد فازها
+            </Typography>
+            <Typography variant="h6">
+              <TransformFarsiNumbers>{phases.length}</TransformFarsiNumbers>
+            </Typography>
+          </Paper>
+        </Grid>
+        <Grid item xs={6} md={3}>
+          <Paper variant="outlined" sx={{ p: 2 }}>
+            <Typography variant="caption" color="text.secondary">
+              رویدادهای متصل
+            </Typography>
+            <Typography variant="h6">
+              <TransformFarsiNumbers>
+                {assignedEvents.length}
+              </TransformFarsiNumbers>
+            </Typography>
+          </Paper>
+        </Grid>
+        <Grid item xs={6} md={3}>
+          <Paper variant="outlined" sx={{ p: 2 }}>
+            <Typography variant="caption" color="text.secondary">
+              رویدادهای بدون فاز
+            </Typography>
+            <Typography variant="h6">
+              <TransformFarsiNumbers>
+                {unassignedEvents.length}
+              </TransformFarsiNumbers>
+            </Typography>
+          </Paper>
+        </Grid>
+        <Grid item xs={6} md={3}>
+          <Paper variant="outlined" sx={{ p: 2 }}>
+            <Typography variant="caption" color="text.secondary">
+              ناسازگاری‌ها
+            </Typography>
+            <Typography
+              variant="h6"
+              color={
+                timeIssues.length || orphanedEvents.length
+                  ? 'error.main'
+                  : 'text.primary'
+              }
+            >
+              <TransformFarsiNumbers>
+                {timeIssues.length + orphanedEvents.length}
+              </TransformFarsiNumbers>
+            </Typography>
+          </Paper>
+        </Grid>
+      </Grid>
+
+      {timeIssues.length > 0 && (
+        <Alert severity="warning" sx={{ mb: 2 }}>
+          {timeIssues.map(issue => (
+            <Typography key={issue} variant="body2">
+              • {issue}
+            </Typography>
+          ))}
+        </Alert>
+      )}
+      {orphanedEvents.length > 0 && (
+        <Alert severity="error" sx={{ mb: 2 }}>
+          <TransformFarsiNumbers>{orphanedEvents.length}</TransformFarsiNumbers>{' '}
+          رویداد به فازی متصل است که دیگر وجود ندارد.
+        </Alert>
+      )}
+
+      {phases.length === 0 ? (
+        <Alert severity="info" sx={{ mb: 2 }}>
+          هنوز فازی تعریف نشده است. برای ساخت فاز وارد کالک‌نگار شوید.
+        </Alert>
       ) : (
-        [...scenario.phases]
-          .sort((a, b) => (a.order || 0) - (b.order || 0))
-          .map(phase => (
+        phases.map(phase => {
+          const phaseEventCount = events.filter(
+            event => event.phaseId === phase.id
+          ).length;
+          return (
             <Card key={phase.id} sx={{ mb: 2 }}>
               <CardHeader
                 title={phase.name}
                 subheader={`${new Date(phase.startTime).toLocaleString('fa-IR')} تا ${phase.endTime ? new Date(phase.endTime).toLocaleString('fa-IR') : t('scenarios.phases.noEndTime')}`}
                 action={
-                  <Box>
-                    <Chip label={t(`scenarios.phases.status.${phase.status}`)} color={getStatusColor(phase.status)} size="small" sx={{ mr: 1 }} />
+                  <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+                    <Chip
+                      label={`${phaseEventCount.toLocaleString('fa-IR')} رویداد`}
+                      variant="outlined"
+                      size="small"
+                    />
+                    <Chip
+                      label={t(`scenarios.phases.status.${phase.status}`)}
+                      color={getStatusColor(phase.status)}
+                      size="small"
+                      sx={{ mr: 1 }}
+                    />
                   </Box>
                 }
               />
               <CardContent>
-                <Typography variant="body2" color="text.secondary" paragraph>{phase.description}</Typography>
-                <Typography variant="subtitle2" gutterBottom>{t('scenarios.phases.objectives')}:</Typography>
+                <Typography variant="body2" color="text.secondary" paragraph>
+                  {phase.description}
+                </Typography>
+                <Typography variant="subtitle2" gutterBottom>
+                  {t('scenarios.phases.objectives')}:
+                </Typography>
                 <Box sx={{ ml: 2, mb: 2 }}>
-                  {phase.objectives.map((o, i) => <Typography key={i} variant="body2">• {o}</Typography>)}
+                  {phase.objectives.map((o, i) => (
+                    <Typography key={i} variant="body2">
+                      • {o}
+                    </Typography>
+                  ))}
                 </Box>
-                <Typography variant="subtitle2" gutterBottom>{t('scenarios.phases.tasks')} ({phase.tasks.length}):</Typography>
+                <Typography variant="subtitle2" gutterBottom>
+                  {t('scenarios.phases.tasks')} ({phase.tasks.length}):
+                </Typography>
                 <Box sx={{ ml: 2 }}>
                   {phase.tasks.length === 0 ? (
-                    <Typography variant="body2" color="text.secondary">{t('scenarios.phases.noTasks')}</Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      {t('scenarios.phases.noTasks')}
+                    </Typography>
                   ) : (
-                    phase.tasks.map((task, i) => <Typography key={i} variant="body2">• {task.description}</Typography>)
+                    phase.tasks.map((task, i) => (
+                      <Typography key={i} variant="body2">
+                        • {task.description}
+                      </Typography>
+                    ))
                   )}
                 </Box>
               </CardContent>
             </Card>
-          ))
+          );
+        })
       )}
     </Box>
   );
@@ -345,139 +572,51 @@ const ENVIRONMENTAL_TYPE_LABELS: Record<EnvironmentalFactorType, string> = {
   [EnvironmentalFactorType.TERRAIN_CONDITION]: 'وضعیت متغیر زمین',
 };
 
-const toDateTimeLocal = (value?: string) => {
-  if (!value) return '';
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return '';
-  const offset = date.getTimezoneOffset() * 60_000;
-  return new Date(date.getTime() - offset).toISOString().slice(0, 16);
+const ENVIRONMENTAL_KIND_LABELS: Record<string, string> = {
+  precipitation: 'بارش',
+  visibility: 'دید',
+  wind: 'باد',
+  temperature: 'دما',
+  fog: 'مه',
+  surface_condition: 'وضعیت زمین',
+  cloud_cover: 'پوشش ابر',
+};
+
+const environmentLabel = (condition: EnvironmentalCondition) =>
+  condition.kind
+    ? ENVIRONMENTAL_KIND_LABELS[condition.kind] || condition.kind
+    : condition.type
+      ? ENVIRONMENTAL_TYPE_LABELS[condition.type]
+      : 'شرایط محیطی';
+
+const environmentValue = (condition: EnvironmentalCondition) => {
+  const parameters = condition.parameters;
+  if (!parameters) return condition.value ?? '—';
+  if (parameters.mode)
+    return `${parameters.mode} · شدت ${parameters.intensity ?? '—'}`;
+  if (parameters.rangeMeters) return `${parameters.rangeMeters} متر`;
+  if (parameters.speedMps)
+    return `${parameters.speedMps} m/s · ${parameters.directionDeg ?? 0}°`;
+  if (parameters.celsius !== undefined) return `${parameters.celsius} °C`;
+  if (parameters.condition) return parameters.condition;
+  if (parameters.coverage !== undefined) return `پوشش ${parameters.coverage}`;
+  return `شدت ${parameters.intensity ?? '—'}`;
 };
 
 const EnvironmentalConditionsManager: React.FC<{
   scenario: EnhancedScenario;
-  canManage: boolean;
-}> = ({ scenario, canManage }) => {
-  const dispatch = useAppDispatch();
-  const [dialogOpen, setDialogOpen] = useState(false);
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [saving, setSaving] = useState(false);
-  const [formError, setFormError] = useState('');
-  const [form, setForm] = useState({
-    type: EnvironmentalFactorType.WEATHER,
-    startTime: toDateTimeLocal(scenario.startTime),
-    endTime: '',
-    value: 0,
-    description: '',
-  });
-
+}> = ({ scenario }) => {
   const conditions = scenario.environmentalConditions || [];
-
-  const openCreateDialog = () => {
-    setEditingId(null);
-    setForm({
-      type: EnvironmentalFactorType.WEATHER,
-      startTime: toDateTimeLocal(scenario.startTime),
-      endTime: '',
-      value: 0,
-      description: '',
-    });
-    setFormError('');
-    setDialogOpen(true);
-  };
-
-  const openEditDialog = (condition: EnvironmentalCondition) => {
-    setEditingId(condition.id);
-    setForm({
-      type: condition.type,
-      startTime: toDateTimeLocal(condition.startTime),
-      endTime: toDateTimeLocal(condition.endTime),
-      value: condition.value,
-      description: condition.description || '',
-    });
-    setFormError('');
-    setDialogOpen(true);
-  };
-
-  const persistConditions = async (nextConditions: EnvironmentalCondition[]) => {
-    await dispatch(
-      updateScenario({
-        id: scenario.id,
-        updates: {
-          ...scenario,
-          environmentalConditions: nextConditions,
-        },
-      })
-    ).unwrap();
-    await dispatch(fetchScenarioById(scenario.id));
-  };
-
-  const handleSave = async () => {
-    const start = new Date(form.startTime);
-    const end = form.endTime ? new Date(form.endTime) : undefined;
-    if (!form.startTime || Number.isNaN(start.getTime())) {
-      setFormError('زمان شروع شرایط محیطی معتبر نیست.');
-      return;
-    }
-    if (end && (Number.isNaN(end.getTime()) || end <= start)) {
-      setFormError('زمان پایان باید بعد از زمان شروع باشد.');
-      return;
-    }
-
-    const condition: EnvironmentalCondition = {
-      id: editingId || crypto.randomUUID(),
-      type: form.type,
-      startTime: start.toISOString(),
-      endTime: end?.toISOString(),
-      value: Number(form.value),
-      description: form.description.trim() || undefined,
-    };
-    const nextConditions = editingId
-      ? conditions.map(item => (item.id === editingId ? condition : item))
-      : [...conditions, condition];
-
-    setSaving(true);
-    setFormError('');
-    try {
-      await persistConditions(nextConditions);
-      setDialogOpen(false);
-      dispatch(showSuccessNotification('شرایط محیطی روی خط زمانی ذخیره شد.'));
-    } catch {
-      setFormError('ذخیره شرایط محیطی انجام نشد.');
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const handleDelete = async (conditionId: string) => {
-    try {
-      await persistConditions(
-        conditions.filter(condition => condition.id !== conditionId)
-      );
-      dispatch(showSuccessNotification('شرایط محیطی حذف شد.'));
-    } catch {
-      dispatch(showErrorNotification('حذف شرایط محیطی انجام نشد.'));
-    }
-  };
 
   return (
     <Box>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
         <Box>
-          <Typography variant="h6">خط زمانی شرایط محیطی</Typography>
+          <Typography variant="h6">مرور شرایط محیطی</Typography>
           <Typography variant="body2" color="text.secondary">
-            آب‌وهوا و وضعیت متغیر زمین به‌صورت بازه زمانی ثبت می‌شوند.
+            این اطلاعات در کالک‌نگار روی نقشه و خط زمانی تعریف می‌شوند و اینجا فقط قابل مرور هستند.
           </Typography>
         </Box>
-        {canManage && (
-          <Button
-            variant="outlined"
-            startIcon={<Add />}
-            size="small"
-            onClick={openCreateDialog}
-          >
-            افزودن شرایط
-          </Button>
-        )}
       </Box>
 
       {conditions.length === 0 ? (
@@ -496,7 +635,7 @@ const EnvironmentalConditionsManager: React.FC<{
               <Grid item xs={12} sm={6} md={4} key={condition.id}>
                 <Card>
                   <CardHeader
-                    title={ENVIRONMENTAL_TYPE_LABELS[condition.type]}
+                    title={condition.name || environmentLabel(condition)}
                     subheader={`${new Date(condition.startTime).toLocaleString(
                       'fa-IR'
                     )} تا ${
@@ -504,25 +643,6 @@ const EnvironmentalConditionsManager: React.FC<{
                         ? new Date(condition.endTime).toLocaleString('fa-IR')
                         : 'ادامه‌دار'
                     }`}
-                    action={canManage ? (
-                      <Box>
-                        <IconButton
-                          size="small"
-                          onClick={() => openEditDialog(condition)}
-                          aria-label="ویرایش شرایط"
-                        >
-                          <Edit fontSize="small" />
-                        </IconButton>
-                        <IconButton
-                          size="small"
-                          color="error"
-                          onClick={() => handleDelete(condition.id)}
-                          aria-label="حذف شرایط"
-                        >
-                          <Delete fontSize="small" />
-                        </IconButton>
-                      </Box>
-                    ) : undefined}
                   />
                   <CardContent>
                     {condition.description && (
@@ -531,8 +651,14 @@ const EnvironmentalConditionsManager: React.FC<{
                       </Typography>
                     )}
                     <Typography variant="body2" color="text.secondary">
-                      مقدار: {condition.value}
+                      {environmentValue(condition)} ·{' '}
+                      {condition.scope === 'area' ? 'محدوده‌ای' : 'سراسری'}
                     </Typography>
+                    {condition.scope === 'area' && !condition.geometry && (
+                      <Alert severity="warning" sx={{ mt: 1 }}>
+                        محدوده این وضعیت روی نقشه ثبت نشده است.
+                      </Alert>
+                    )}
                   </CardContent>
                 </Card>
               </Grid>
@@ -540,121 +666,14 @@ const EnvironmentalConditionsManager: React.FC<{
         </Grid>
       )}
 
-      <Dialog
-        open={dialogOpen}
-        onClose={() => !saving && setDialogOpen(false)}
-        fullWidth
-        maxWidth="sm"
-      >
-        <DialogTitle>
-          {editingId ? 'ویرایش شرایط محیطی' : 'افزودن شرایط محیطی'}
-        </DialogTitle>
-        <DialogContent dividers>
-          {formError && (
-            <Alert severity="error" sx={{ mb: 2 }}>
-              {formError}
-            </Alert>
-          )}
-          <Grid container spacing={2} sx={{ mt: 0 }}>
-            <Grid item xs={12}>
-              <FormControl fullWidth>
-                <InputLabel>نوع شرایط</InputLabel>
-                <Select
-                  value={form.type}
-                  label="نوع شرایط"
-                  onChange={event =>
-                    setForm(previous => ({
-                      ...previous,
-                      type: event.target.value as EnvironmentalFactorType,
-                    }))
-                  }
-                >
-                  {Object.values(EnvironmentalFactorType).map(type => (
-                    <MenuItem key={type} value={type}>
-                      {ENVIRONMENTAL_TYPE_LABELS[type]}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
-                label="زمان شروع"
-                type="datetime-local"
-                value={form.startTime}
-                onChange={event =>
-                  setForm(previous => ({
-                    ...previous,
-                    startTime: event.target.value,
-                  }))
-                }
-                InputLabelProps={{ shrink: true }}
-                required
-              />
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
-                label="زمان پایان"
-                type="datetime-local"
-                value={form.endTime}
-                onChange={event =>
-                  setForm(previous => ({
-                    ...previous,
-                    endTime: event.target.value,
-                  }))
-                }
-                InputLabelProps={{ shrink: true }}
-                helperText="برای وضعیت ادامه‌دار خالی بگذارید"
-              />
-            </Grid>
-            <Grid item xs={12}>
-              <TextField
-                fullWidth
-                type="number"
-                label="مقدار"
-                value={form.value}
-                onChange={event =>
-                  setForm(previous => ({
-                    ...previous,
-                    value: Number(event.target.value),
-                  }))
-                }
-              />
-            </Grid>
-            <Grid item xs={12}>
-              <TextField
-                fullWidth
-                multiline
-                rows={3}
-                label="توضیحات"
-                value={form.description}
-                onChange={event =>
-                  setForm(previous => ({
-                    ...previous,
-                    description: event.target.value,
-                  }))
-                }
-              />
-            </Grid>
-          </Grid>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setDialogOpen(false)} disabled={saving}>
-            انصراف
-          </Button>
-          <Button variant="contained" onClick={handleSave} disabled={saving}>
-            {saving ? 'در حال ذخیره...' : 'ذخیره روی خط زمانی'}
-          </Button>
-        </DialogActions>
-      </Dialog>
     </Box>
   );
 };
 
 // ---------- History tab ----------
-const ScenarioHistoryTab: React.FC<{ scenarioId: string }> = ({ scenarioId }) => {
+const ScenarioHistoryTab: React.FC<{ scenarioId: string }> = ({
+  scenarioId,
+}) => {
   const { t } = useTranslation();
   const [logs, setLogs] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -673,16 +692,16 @@ const ScenarioHistoryTab: React.FC<{ scenarioId: string }> = ({ scenarioId }) =>
         if (!cancelled) setLoading(false);
       }
     })();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [scenarioId]);
 
   if (loading) return <LinearProgress />;
 
   if (loadError) {
     return (
-      <Alert severity="error">
-        دریافت تاریخچهٔ تغییرات سناریو انجام نشد.
-      </Alert>
+      <Alert severity="error">دریافت تاریخچهٔ تغییرات سناریو انجام نشد.</Alert>
     );
   }
 
@@ -690,14 +709,18 @@ const ScenarioHistoryTab: React.FC<{ scenarioId: string }> = ({ scenarioId }) =>
     return (
       <Box sx={{ textAlign: 'center', py: 6 }}>
         <History sx={{ fontSize: 48, color: 'text.secondary', mb: 2 }} />
-        <Typography color="text.secondary">{t('scenarios.history.noHistory')}</Typography>
+        <Typography color="text.secondary">
+          {t('scenarios.history.noHistory')}
+        </Typography>
       </Box>
     );
   }
 
   return (
     <Box>
-      <Typography variant="h6" gutterBottom>{t('scenarios.history.title')}</Typography>
+      <Typography variant="h6" gutterBottom>
+        {t('scenarios.history.title')}
+      </Typography>
       <TableContainer component={Paper} variant="outlined">
         <Table size="small">
           <TableHead>
@@ -713,24 +736,38 @@ const ScenarioHistoryTab: React.FC<{ scenarioId: string }> = ({ scenarioId }) =>
               <TableRow key={log.id}>
                 <TableCell>
                   <Chip
-                    label={t(`scenarios.history.actions.${log.action}`) || log.action}
+                    label={
+                      t(`scenarios.history.actions.${log.action}`) || log.action
+                    }
                     size="small"
                     color={
-                      log.action === 'delete' ? 'error' :
-                      log.action === 'archive' ? 'warning' :
-                      log.action === 'create' ? 'success' : 'default'
+                      log.action === 'delete'
+                        ? 'error'
+                        : log.action === 'archive'
+                          ? 'warning'
+                          : log.action === 'create'
+                            ? 'success'
+                            : 'default'
                     }
                     variant="outlined"
                   />
                 </TableCell>
                 <TableCell>{log.actor_user_id || '—'}</TableCell>
-                <TableCell>{new Date(log.created_at).toLocaleString('fa-IR')}</TableCell>
+                <TableCell>
+                  {new Date(log.created_at).toLocaleString('fa-IR')}
+                </TableCell>
                 <TableCell>
                   {log.payload_diff ? (
-                    <Typography variant="caption" component="code" sx={{ whiteSpace: 'pre-wrap' }}>
+                    <Typography
+                      variant="caption"
+                      component="code"
+                      sx={{ whiteSpace: 'pre-wrap' }}
+                    >
                       {JSON.stringify(log.payload_diff, null, 1)}
                     </Typography>
-                  ) : '—'}
+                  ) : (
+                    '—'
+                  )}
                 </TableCell>
               </TableRow>
             ))}
@@ -747,32 +784,28 @@ const ScenarioDetailPage: React.FC = () => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
   const { t } = useTranslation();
-  
+
   const scenario = useAppSelector(selectCurrentScenario);
   const isLoading = useAppSelector(selectScenariosLoading);
   const error = useAppSelector(selectScenariosError);
-  const simulationStatus = useAppSelector(selectSimulationStatus);
   const user = useAppSelector(selectUser);
-  
+
   const [tabValue, setTabValue] = useState(0);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [deleteConfirmText, setDeleteConfirmText] = useState('');
   const [archiveConfirmOpen, setArchiveConfirmOpen] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
-  
+
   const isArchived = !!scenario?.archived_at;
   const canManage = canAccessFeature(user?.role, 'scenarios.manage');
   const canDelete = canAccessFeature(user?.role, 'scenarios.delete');
-  const canLaunchKalknegar = canAccessFeature(
-    user?.role,
-    'kalknegar.access'
-  );
-  
+  const canLaunchKalknegar = canAccessFeature(user?.role, 'kalknegar.access');
+
   useEffect(() => {
     if (id) dispatch(fetchScenarioById(id));
   }, [dispatch, id]);
-  
+
   const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
     setTabValue(newValue);
   };
@@ -829,8 +862,12 @@ const ScenarioDetailPage: React.FC = () => {
     if (!scenario) return;
     setActionLoading(true);
     try {
-      const result = await dispatch(duplicateScenario({ id: scenario.id })).unwrap();
-      dispatch(showSuccessNotification(t('scenarios.actions.duplicateSuccess')));
+      const result = await dispatch(
+        duplicateScenario({ id: scenario.id })
+      ).unwrap();
+      dispatch(
+        showSuccessNotification(t('scenarios.actions.duplicateSuccess'))
+      );
       navigate(`/dashboard/scenarios/${result.id}`);
     } catch {
       dispatch(showErrorNotification(t('scenarios.actions.duplicateError')));
@@ -852,65 +889,26 @@ const ScenarioDetailPage: React.FC = () => {
     }
   }, [scenario, dispatch, t]);
 
-  const handleEditSave = useCallback(async (updatedScenario: any) => {
-    if (!scenario) return;
-    try {
-      await dispatch(updateScenario({ id: scenario.id, updates: updatedScenario })).unwrap();
-      dispatch(showSuccessNotification(t('scenarios.notifications.updateSuccess')));
-    } catch {
-      dispatch(showErrorNotification(t('scenarios.notifications.updateError')));
-    }
-    setEditDialogOpen(false);
-  }, [scenario, dispatch, t]);
-
-  // ---------- Execution control ----------
-  const handleExecutionControl = async () => {
-    if (!scenario) return;
-    try {
-      switch (simulationStatus) {
-        case ExecutionStatus.NOT_STARTED:
-        case ExecutionStatus.COMPLETED:
-        case ExecutionStatus.TERMINATED:
-          await dispatch(startScenarioExecution(scenario.id)).unwrap();
-          dispatch(showSuccessNotification(t('scenarios.execution.startSuccess')));
-          break;
-        case ExecutionStatus.RUNNING:
-          await dispatch(pauseScenarioExecution(scenario.id)).unwrap();
-          dispatch(showSuccessNotification(t('scenarios.execution.pauseSuccess')));
-          break;
-        case ExecutionStatus.PAUSED:
-          await dispatch(resumeScenarioExecution(scenario.id)).unwrap();
-          dispatch(showSuccessNotification(t('scenarios.execution.resumeSuccess')));
-          break;
+  const handleEditSave = useCallback(
+    async (updatedScenario: any) => {
+      if (!scenario) return;
+      try {
+        await dispatch(
+          updateScenario({ id: scenario.id, updates: updatedScenario })
+        ).unwrap();
+        dispatch(
+          showSuccessNotification(t('scenarios.notifications.updateSuccess'))
+        );
+      } catch {
+        dispatch(
+          showErrorNotification(t('scenarios.notifications.updateError'))
+        );
       }
-    } catch {
-      dispatch(showErrorNotification(t('scenarios.execution.error')));
-    }
-  };
-  
-  const handleStopExecution = async () => {
-    if (!scenario) return;
-    try {
-      await dispatch(stopScenarioExecution(scenario.id)).unwrap();
-      dispatch(showSuccessNotification(t('scenarios.execution.stopSuccess')));
-    } catch {
-      dispatch(showErrorNotification(t('scenarios.execution.stopError')));
-    }
-  };
-  
-  const getExecutionControlIcon = () => {
-    if (simulationStatus === ExecutionStatus.RUNNING) return <Pause />;
-    return <PlayArrow />;
-  };
-  
-  const getExecutionControlText = () => {
-    switch (simulationStatus) {
-      case ExecutionStatus.RUNNING: return t('scenarios.execution.pause');
-      case ExecutionStatus.PAUSED: return t('scenarios.execution.resume');
-      default: return t('scenarios.execution.start');
-    }
-  };
-  
+      setEditDialogOpen(false);
+    },
+    [scenario, dispatch, t]
+  );
+
   // ---------- Loading / Error / NotFound ----------
   if (isLoading) {
     return (
@@ -920,72 +918,130 @@ const ScenarioDetailPage: React.FC = () => {
       </Box>
     );
   }
-  
+
   if (error) {
     return (
       <Box sx={{ p: 3 }}>
         <Alert severity="error">{error}</Alert>
-        <Button startIcon={<ArrowBack />} onClick={() => navigate('/dashboard/scenarios')} sx={{ mt: 2 }}>
+        <Button
+          startIcon={<ArrowBack />}
+          onClick={() => navigate('/dashboard/scenarios')}
+          sx={{ mt: 2 }}
+        >
           {t('scenarios.backToList')}
         </Button>
       </Box>
     );
   }
-  
+
   if (!scenario) {
     return (
       <Box sx={{ p: 3 }}>
         <Alert severity="warning">{t('scenarios.notFound')}</Alert>
-        <Button startIcon={<ArrowBack />} onClick={() => navigate('/dashboard/scenarios')} sx={{ mt: 2 }}>
+        <Button
+          startIcon={<ArrowBack />}
+          onClick={() => navigate('/dashboard/scenarios')}
+          sx={{ mt: 2 }}
+        >
           {t('scenarios.backToList')}
         </Button>
       </Box>
     );
   }
-  
+
+  const scenarioStatus = scenario.status || ScenarioStatus.DRAFT;
+
   return (
-    <Box sx={{ p: 4 }}>
+    <Box sx={{ p: { xs: 2, md: 3 } }}>
       {/* Archived banner */}
       {isArchived && (
-        <Alert severity="warning" sx={{ mb: 2 }} action={
-          canManage ? (
-            <Button color="inherit" size="small" onClick={handleRestore} disabled={actionLoading}>
-              {t('scenarios.actions.restore')}
-            </Button>
-          ) : undefined
-        }>
+        <Alert
+          severity="warning"
+          sx={{ mb: 2 }}
+          action={
+            canManage ? (
+              <Button
+                color="inherit"
+                size="small"
+                onClick={handleRestore}
+                disabled={actionLoading}
+              >
+                {t('scenarios.actions.restore')}
+              </Button>
+            ) : undefined
+          }
+        >
           {t('scenarios.archiveDialog.message', { name: scenario.name })}
         </Alert>
       )}
 
-      {/* Header */}
-      <Box sx={{ mb: 3 }}>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <IconButton onClick={() => navigate('/dashboard/scenarios')} size="small">
-              <ArrowBack />
-            </IconButton>
-            <Typography variant="h4" sx={{ fontWeight: 700 }}>
-              {scenario.name}
-            </Typography>
-            {scenario.status && (
-              <Chip 
-                label={t(`scenarios.status.${scenario.status}`)}
+      {/* Compact scenario summary */}
+      <Paper
+        variant="outlined"
+        sx={{ p: { xs: 2, md: 2.5 }, mb: 2, borderRadius: 3 }}
+      >
+        <Box
+          sx={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'flex-start',
+            gap: 2,
+            flexWrap: 'wrap',
+          }}
+        >
+          <Box sx={{ minWidth: 0 }}>
+            <Box
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 1,
+                flexWrap: 'wrap',
+              }}
+            >
+              <Tooltip title={t('scenarios.backToList')}>
+                <IconButton
+                  onClick={() => navigate('/dashboard/scenarios')}
+                  size="small"
+                >
+                  <ArrowBack />
+                </IconButton>
+              </Tooltip>
+              <Typography variant="h4" sx={{ fontWeight: 700 }}>
+                {scenario.name}
+              </Typography>
+              <Chip
+                label={t(`scenarios.status.${scenarioStatus}`)}
                 color={
-                  scenario.status === 'active' ? 'primary' :
-                  scenario.status === 'paused' ? 'warning' :
-                  scenario.status === 'completed' ? 'info' : 'default'
+                  scenarioStatus === ScenarioStatus.ACTIVE
+                    ? 'primary'
+                    : scenarioStatus === ScenarioStatus.PAUSED
+                      ? 'warning'
+                      : scenarioStatus === ScenarioStatus.COMPLETED
+                        ? 'info'
+                        : 'default'
                 }
                 size="small"
-                sx={{ ml: 2 }}
               />
-            )}
-            {isArchived && <Chip label={t('scenarios.actions.archive')} color="warning" size="small" variant="outlined" />}
+              {isArchived && (
+                <Chip
+                  label={t('scenarios.status.archived')}
+                  color="warning"
+                  size="small"
+                  variant="outlined"
+                />
+              )}
+            </Box>
+            <Typography
+              variant="body2"
+              color="text.secondary"
+              sx={{ mt: 1, mr: 5, maxWidth: 900 }}
+            >
+              {scenario.description || 'برای این سناریو توضیحاتی ثبت نشده است.'}
+            </Typography>
           </Box>
-          
-          <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
-            {canLaunchKalknegar && (
-            <Tooltip title={t('scenarios.actions.launch')}>
+
+          {canLaunchKalknegar && (
+            <Tooltip title="باز کردن نقشه، یگان‌ها و جزئیات عملیاتی در کالک‌نگار">
               <Button
                 variant="contained"
                 color="primary"
@@ -998,154 +1054,280 @@ const ScenarioDetailPage: React.FC = () => {
                 {t('scenarios.actions.launch')}
               </Button>
             </Tooltip>
-            )}
-          </Box>
-        </Box>
-        
-        <Typography variant="body1" color="text.secondary" paragraph>
-          {scenario.description}
-        </Typography>
-        
-        <Grid container spacing={2} sx={{ mb: 2 }}>
-          <Grid item xs={12} sm={6} md={3}>
-            <Typography variant="body2" color="text.secondary">{t('scenarios.detail.startTime')}:</Typography>
-            <Typography variant="body1">{scenario.startTime ? new Date(scenario.startTime).toLocaleString('fa-IR') : '-'}</Typography>
-          </Grid>
-          <Grid item xs={12} sm={6} md={3}>
-            <Typography variant="body2" color="text.secondary">{t('scenarios.detail.endTime')}:</Typography>
-            <Typography variant="body1">{scenario.endTime ? new Date(scenario.endTime).toLocaleString('fa-IR') : '-'}</Typography>
-          </Grid>
-          <Grid item xs={12} sm={6} md={3}>
-            <Typography variant="body2" color="text.secondary">{t('scenarios.detail.created')}:</Typography>
-            <Typography variant="body1">{scenario.createdAt ? new Date(scenario.createdAt).toLocaleDateString('fa-IR') : '-'}</Typography>
-          </Grid>
-          <Grid item xs={12} sm={6} md={3}>
-            <Typography variant="body2" color="text.secondary">{t('scenarios.detail.lastModified')}:</Typography>
-            <Typography variant="body1">{scenario.updatedAt ? new Date(scenario.updatedAt).toLocaleDateString('fa-IR') : '-'}</Typography>
-          </Grid>
-        </Grid>
-        
-        <Box sx={{ mt: 1 }}>
-          <Typography variant="body2" color="text.secondary">{t('scenarios.detail.objectives')}:</Typography>
-          <Box sx={{ mt: 0.5, mb: 2 }}>
-            {scenario.objectives && scenario.objectives.length > 0 ? (
-              scenario.objectives.map((obj, i) => <Chip key={i} label={obj} size="small" sx={{ mr: 1, mb: 1 }} />)
-            ) : (
-              <Typography variant="body2" color="text.secondary">{t('scenarios.detail.noObjectives')}</Typography>
-            )}
-          </Box>
-        </Box>
-      </Box>
-      
-      {/* Admin actions toolbar */}
-      <Paper sx={{ mb: 3 }}>
-        <Toolbar variant="dense" sx={{ gap: 1, flexWrap: 'wrap' }}>
-          {/* Execution is visible for operational context, but cannot be
-              triggered until a real backend service is connected. */}
-          <Tooltip title={getExecutionControlText()}>
-            <Button
-              startIcon={getExecutionControlIcon()}
-              onClick={handleExecutionControl}
-              variant="contained"
-              color={simulationStatus === ExecutionStatus.RUNNING ? 'secondary' : 'primary'}
-              disabled={!EXECUTION_API_AVAILABLE || !canManage}
-              size="small"
-            >
-              {getExecutionControlText()}
-            </Button>
-          </Tooltip>
-          
-          {EXECUTION_API_AVAILABLE && canManage && (simulationStatus === ExecutionStatus.RUNNING || simulationStatus === ExecutionStatus.PAUSED) && (
-            <Tooltip title={t('scenarios.execution.stop')}>
-              <Button startIcon={<Stop />} onClick={handleStopExecution} variant="outlined" color="error" size="small">
-                {t('scenarios.execution.stop')}
-              </Button>
-            </Tooltip>
           )}
-          
-          <Box sx={{ flexGrow: 1 }} />
+        </Box>
 
-          {canManage && (
-          <Tooltip title={t('scenarios.actions.duplicate')}>
-            <Button startIcon={<ContentCopy />} onClick={handleDuplicate} variant="outlined" size="small" disabled={actionLoading}>
-              {t('scenarios.actions.duplicate')}
-            </Button>
-          </Tooltip>
-          )}
+        <Divider sx={{ my: 2 }} />
 
-          <Tooltip title={t('scenarios.actions.export')}>
-            <Button startIcon={<CloudDownload />} onClick={handleExport} variant="outlined" size="small" disabled={actionLoading}>
-              {t('scenarios.actions.export')}
-            </Button>
-          </Tooltip>
-
-          {canManage && (isArchived ? (
-            <Tooltip title={t('scenarios.actions.restore')}>
-              <Button startIcon={<Unarchive />} onClick={handleRestore} variant="outlined" color="info" size="small" disabled={actionLoading}>
-                {t('scenarios.actions.restore')}
-              </Button>
-            </Tooltip>
-          ) : (
-            <Tooltip title={t('scenarios.actions.archive')}>
-              <Button startIcon={<Archive />} onClick={() => setArchiveConfirmOpen(true)} variant="outlined" color="warning" size="small" disabled={actionLoading}>
-                {t('scenarios.actions.archive')}
-              </Button>
-            </Tooltip>
+        <Grid container spacing={1.5}>
+          {[
+            {
+              label: t('scenarios.detail.startTime'),
+              value: scenario.startTime
+                ? new Date(scenario.startTime).toLocaleString('fa-IR')
+                : 'تعریف نشده',
+            },
+            {
+              label: t('scenarios.detail.endTime'),
+              value: scenario.endTime
+                ? new Date(scenario.endTime).toLocaleString('fa-IR')
+                : 'تعریف نشده',
+            },
+            {
+              label: t('scenarios.detail.created'),
+              value: scenario.createdAt
+                ? new Date(scenario.createdAt).toLocaleDateString('fa-IR')
+                : 'نامشخص',
+            },
+            {
+              label: t('scenarios.detail.lastModified'),
+              value: scenario.updatedAt
+                ? new Date(scenario.updatedAt).toLocaleDateString('fa-IR')
+                : 'نامشخص',
+            },
+          ].map(item => (
+            <Grid item xs={12} sm={6} md={3} key={item.label}>
+              <Box
+                sx={{
+                  p: 1.5,
+                  height: '100%',
+                  bgcolor: 'action.hover',
+                  borderRadius: 2,
+                }}
+              >
+                <Typography variant="caption" color="text.secondary">
+                  {item.label}
+                </Typography>
+                <Typography variant="body2" sx={{ mt: 0.5, fontWeight: 600 }}>
+                  <TransformFarsiNumbers>{item.value}</TransformFarsiNumbers>
+                </Typography>
+              </Box>
+            </Grid>
           ))}
+        </Grid>
 
-          {canManage && (
-          <Tooltip title={t('common.edit')}>
-            <IconButton onClick={() => setEditDialogOpen(true)} size="small">
-              <Edit />
-            </IconButton>
-          </Tooltip>
+        <Box sx={{ mt: 2 }}>
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: 1,
+              mb: 1,
+            }}
+          >
+            <Typography variant="subtitle2">
+              {t('scenarios.detail.objectives')}
+            </Typography>
+            {canManage &&
+              (!scenario.objectives || scenario.objectives.length === 0) && (
+                <Button
+                  size="small"
+                  startIcon={<Add />}
+                  onClick={() => setEditDialogOpen(true)}
+                >
+                  افزودن هدف
+                </Button>
+              )}
+          </Box>
+          {scenario.objectives && scenario.objectives.length > 0 ? (
+            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+              {scenario.objectives.map((objective, index) => (
+                <Chip
+                  key={`${objective}-${index}`}
+                  label={objective}
+                  size="small"
+                />
+              ))}
+            </Box>
+          ) : (
+            <Typography variant="body2" color="text.secondary">
+              {t('scenarios.detail.noObjectives')}
+            </Typography>
           )}
+        </Box>
+      </Paper>
 
-          {canDelete && (
-          <Tooltip title={t('common.delete')}>
-            <IconButton onClick={() => setDeleteConfirmOpen(true)} color="error" size="small">
-              <Delete />
-            </IconButton>
-          </Tooltip>
-          )}
+      {/* Scenario actions */}
+      <Paper variant="outlined" sx={{ mb: 3, borderRadius: 3 }}>
+        <Toolbar
+          variant="dense"
+          sx={{
+            gap: 1,
+            py: 1,
+            justifyContent: 'space-between',
+            flexWrap: 'wrap',
+          }}
+        >
+          <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
+            عملیات سناریو
+          </Typography>
+          <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+            {canManage && (
+              <Tooltip title="ساخت یک سناریوی جدید با محتوای سناریوی فعلی">
+                <Button
+                  startIcon={<ContentCopy />}
+                  onClick={handleDuplicate}
+                  variant="outlined"
+                  size="small"
+                  disabled={actionLoading}
+                >
+                  {t('scenarios.actions.duplicate')}
+                </Button>
+              </Tooltip>
+            )}
+
+            <Tooltip title="دانلود نسخه پشتیبان و قابل انتقال سناریو">
+              <Button
+                startIcon={<CloudDownload />}
+                onClick={handleExport}
+                variant="outlined"
+                size="small"
+                disabled={actionLoading}
+              >
+                {t('scenarios.actions.export')}
+              </Button>
+            </Tooltip>
+
+            {canManage &&
+              (isArchived ? (
+                <Tooltip title="بازگرداندن سناریو به فهرست سناریوهای فعال">
+                  <Button
+                    startIcon={<Unarchive />}
+                    onClick={handleRestore}
+                    variant="outlined"
+                    color="info"
+                    size="small"
+                    disabled={actionLoading}
+                  >
+                    {t('scenarios.actions.restore')}
+                  </Button>
+                </Tooltip>
+              ) : (
+                <Tooltip title="انتقال به فیلتر «آرشیوشده» بدون حذف اطلاعات">
+                  <Button
+                    startIcon={<Archive />}
+                    onClick={() => setArchiveConfirmOpen(true)}
+                    variant="outlined"
+                    color="warning"
+                    size="small"
+                    disabled={actionLoading}
+                  >
+                    {t('scenarios.actions.archive')}
+                  </Button>
+                </Tooltip>
+              ))}
+
+            {canManage && (
+              <Tooltip title="ویرایش نام، وضعیت، زمان‌ها، توضیحات و اهداف">
+                <Button
+                  startIcon={<Edit />}
+                  onClick={() => setEditDialogOpen(true)}
+                  variant="outlined"
+                  size="small"
+                >
+                  {t('common.edit')}
+                </Button>
+              </Tooltip>
+            )}
+
+            {canDelete && (
+              <Tooltip title="حذف دائمی سناریو و اطلاعات وابسته">
+                <Button
+                  startIcon={<Delete />}
+                  onClick={() => setDeleteConfirmOpen(true)}
+                  color="error"
+                  variant="outlined"
+                  size="small"
+                >
+                  {t('common.delete')}
+                </Button>
+              </Tooltip>
+            )}
+          </Box>
         </Toolbar>
       </Paper>
-      
+
       {/* Tabs */}
       <Box sx={{ width: '100%' }}>
         <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
-          <Tabs value={tabValue} onChange={handleTabChange} variant="scrollable" scrollButtons="auto">
-            <Tab icon={<Schedule />} iconPosition="start" label={t('scenarios.tabs.phases')} />
-            <Tab icon={<Terrain />} iconPosition="start" label={t('scenarios.tabs.environment')} />
-            <Tab icon={<BarChart />} iconPosition="start" label={t('scenarios.tabs.analysis')} />
-            <Tab icon={<Movie />} iconPosition="start" label={t('scenarios.tabs.intro')} />
-            <Tab icon={<History />} iconPosition="start" label={t('scenarios.tabs.history')} />
-            <Tab icon={<Timeline />} iconPosition="start" label={t('scenarios.tabs.timeline')} />
-            <Tab icon={<MapIcon />} iconPosition="start" label={t('scenarios.tabs.map')} />
-            <Tab icon={<Groups />} iconPosition="start" label={t('scenarios.tabs.units')} />
+          <Tabs
+            value={tabValue}
+            onChange={handleTabChange}
+            variant="scrollable"
+            scrollButtons="auto"
+          >
+            <Tab
+              icon={<Schedule />}
+              iconPosition="start"
+              label={t('scenarios.tabs.phases')}
+            />
+            <Tab
+              icon={<Terrain />}
+              iconPosition="start"
+              label={t('scenarios.tabs.environment')}
+            />
+            <Tab
+              icon={<BarChart />}
+              iconPosition="start"
+              label={t('scenarios.tabs.analysis')}
+            />
+            <Tab
+              icon={<Movie />}
+              iconPosition="start"
+              label={t('scenarios.tabs.intro')}
+            />
+            <Tab
+              icon={<History />}
+              iconPosition="start"
+              label={t('scenarios.tabs.history')}
+            />
+            <Tab
+              icon={<Timeline />}
+              iconPosition="start"
+              label={t('scenarios.tabs.timeline')}
+            />
+            <Tab
+              icon={<MapIcon />}
+              iconPosition="start"
+              label={t('scenarios.tabs.map')}
+            />
+            <Tab
+              icon={<Groups />}
+              iconPosition="start"
+              label={t('scenarios.tabs.units')}
+            />
           </Tabs>
         </Box>
-        
+
         {/* Phases */}
         <TabPanel value={tabValue} index={0}>
-          <ScenarioPhasesManager scenario={scenario} />
+          <ScenarioPhasesManager
+            scenario={scenario}
+            canLaunch={canLaunchKalknegar}
+          />
         </TabPanel>
-        
+
         {/* Environment */}
         <TabPanel value={tabValue} index={1}>
-          <EnvironmentalConditionsManager scenario={scenario} canManage={canManage} />
+          <EnvironmentalConditionsManager
+            scenario={scenario}
+          />
         </TabPanel>
-        
+
         {/* Analysis */}
         <TabPanel value={tabValue} index={2}>
           <ScenarioAnalysis scenario={scenario} />
         </TabPanel>
-        
+
         {/* Intro */}
         <TabPanel value={tabValue} index={3}>
-          <ScenarioIntroSettingsPanel scenario={scenario} readOnly={!canManage} />
+          <ScenarioIntroSettingsPanel
+            scenario={scenario}
+            readOnly={!canManage}
+          />
         </TabPanel>
-        
+
         {/* History */}
         <TabPanel value={tabValue} index={4}>
           <ScenarioHistoryTab scenarioId={scenario.id} />
@@ -1153,22 +1335,29 @@ const ScenarioDetailPage: React.FC = () => {
 
         {/* Timeline */}
         <TabPanel value={tabValue} index={5}>
-          <EnvironmentalConditionsManager scenario={scenario} canManage={canManage} />
-          <Divider sx={{ my: 4 }} />
-          <ManagedInKalkNegar scenarioId={scenario.id} canLaunch={canLaunchKalknegar} />
+          <ManagedInKalkNegar
+            scenarioId={scenario.id}
+            canLaunch={canLaunchKalknegar}
+          />
         </TabPanel>
 
         {/* Map – managed in KalkNegar */}
         <TabPanel value={tabValue} index={6}>
-          <ManagedInKalkNegar scenarioId={scenario.id} canLaunch={canLaunchKalknegar} />
+          <ManagedInKalkNegar
+            scenarioId={scenario.id}
+            canLaunch={canLaunchKalknegar}
+          />
         </TabPanel>
 
         {/* Units – managed in KalkNegar */}
         <TabPanel value={tabValue} index={7}>
-          <ManagedInKalkNegar scenarioId={scenario.id} canLaunch={canLaunchKalknegar} />
+          <ManagedInKalkNegar
+            scenarioId={scenario.id}
+            canLaunch={canLaunchKalknegar}
+          />
         </TabPanel>
       </Box>
-      
+
       {/* Edit dialog */}
       <ScenarioDialog
         open={editDialogOpen}
@@ -1176,31 +1365,44 @@ const ScenarioDetailPage: React.FC = () => {
         scenario={scenario}
         onSave={handleEditSave}
       />
-      
+
       {/* Delete confirm dialog (strong confirmation) */}
-      <Dialog open={deleteConfirmOpen} onClose={() => { setDeleteConfirmOpen(false); setDeleteConfirmText(''); }}>
+      <Dialog
+        open={deleteConfirmOpen}
+        onClose={() => {
+          setDeleteConfirmOpen(false);
+          setDeleteConfirmText('');
+        }}
+      >
         <DialogTitle>{t('scenarios.deleteDialog.title')}</DialogTitle>
         <DialogContent>
           <Typography sx={{ mb: 2 }}>
             {t('scenarios.deleteDialog.message', { name: scenario.name })}
           </Typography>
-          <Alert severity="error" sx={{ mb: 2 }}>{t('scenarios.deleteDialog.warning')}</Alert>
+          <Alert severity="error" sx={{ mb: 2 }}>
+            {t('scenarios.deleteDialog.warning')}
+          </Alert>
           <TextField
             fullWidth
             label={t('scenarios.deleteDialog.typeToConfirm')}
             value={deleteConfirmText}
-            onChange={(e) => setDeleteConfirmText(e.target.value)}
+            onChange={e => setDeleteConfirmText(e.target.value)}
             size="small"
             placeholder={scenario.name}
           />
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => { setDeleteConfirmOpen(false); setDeleteConfirmText(''); }}>
+          <Button
+            onClick={() => {
+              setDeleteConfirmOpen(false);
+              setDeleteConfirmText('');
+            }}
+          >
             {t('scenarios.deleteDialog.cancelButton')}
           </Button>
-          <Button 
+          <Button
             onClick={handleDelete}
-            color="error" 
+            color="error"
             variant="contained"
             disabled={deleteConfirmText !== scenario.name || actionLoading}
           >
@@ -1210,16 +1412,30 @@ const ScenarioDetailPage: React.FC = () => {
       </Dialog>
 
       {/* Archive confirm dialog */}
-      <Dialog open={archiveConfirmOpen} onClose={() => setArchiveConfirmOpen(false)}>
+      <Dialog
+        open={archiveConfirmOpen}
+        onClose={() => setArchiveConfirmOpen(false)}
+      >
         <DialogTitle>{t('scenarios.archiveDialog.title')}</DialogTitle>
         <DialogContent>
           <Typography>
             {t('scenarios.archiveDialog.message', { name: scenario.name })}
           </Typography>
+          <Alert severity="info" sx={{ mt: 2 }}>
+            اطلاعات حذف نمی‌شود. برای مشاهده یا بازیابی، در صفحه مدیریت سناریوها
+            فیلتر وضعیت را روی «آرشیوشده» قرار دهید.
+          </Alert>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setArchiveConfirmOpen(false)}>{t('scenarios.deleteDialog.cancelButton')}</Button>
-          <Button onClick={handleArchive} color="warning" variant="contained" disabled={actionLoading}>
+          <Button onClick={() => setArchiveConfirmOpen(false)}>
+            {t('scenarios.deleteDialog.cancelButton')}
+          </Button>
+          <Button
+            onClick={handleArchive}
+            color="warning"
+            variant="contained"
+            disabled={actionLoading}
+          >
             {t('scenarios.archiveDialog.confirmButton')}
           </Button>
         </DialogActions>

@@ -2,6 +2,7 @@ import { Engine, Scene, ArcRotateCamera, HemisphericLight, Vector3, Color3, Colo
 import '@babylonjs/core/Helpers/sceneHelpers';
 import { CoordinateConverter } from './coordinateConverter';
 import * as Cesium from 'cesium';
+import { EnvironmentEffectController } from './environmentController';
 
 // Timeline debug build tag (helps confirm newest bundle is loaded)
 console.warn('[Timeline] debug build loaded', { tag: 'timeline-hour-ticks-2026-04-08-2' });
@@ -106,6 +107,7 @@ const timelineZoomOutButton =
 
 // Get main container
 const mainContainer = document.getElementById('mainContainer');
+let environmentEffectController: EnvironmentEffectController | null = null;
 
 // Function to hide splash screen and show containers
 function hideSplashScreen() {
@@ -941,6 +943,17 @@ function stopTimelineNowLabelTicker() {
 }
 
 function handleTimelineClockTick() {
+  if (environmentEffectController && cesiumViewer) {
+    const cameraPosition = (cesiumViewer as any).camera?.positionCartographic;
+    const currentMs = getCurrentClockMs();
+    if (cameraPosition && currentMs !== null) {
+      environmentEffectController.update(
+        currentMs,
+        Cesium.Math.toDegrees(cameraPosition.longitude),
+        Cesium.Math.toDegrees(cameraPosition.latitude),
+      );
+    }
+  }
   if (!currentTimelineBounds) return;
 
   const currentMs = getCurrentClockMs();
@@ -1564,6 +1577,16 @@ async function initializeCesium() {
         currentCountryOverviewName = countryOverview.name;
         console.log(`✅ Origin set to scenario center: ${originLon}, ${originLat}`);
         showCountryOverview(countryOverview, true);
+        const environmentHost = document.getElementById('mainContainer');
+        const environmentalConditions =
+          scenarios[0]?.content?.environmentalConditions ?? [];
+        environmentEffectController?.dispose();
+        if (environmentHost && Array.isArray(environmentalConditions)) {
+          environmentEffectController = new EnvironmentEffectController(
+            environmentHost,
+            environmentalConditions,
+          );
+        }
       }
 
       const scenarioSymbols = await import('./scenarioSymbols');

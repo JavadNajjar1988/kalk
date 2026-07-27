@@ -1,0 +1,107 @@
+import Feature from "ol/Feature";
+import GeoJSON from "ol/format/GeoJSON";
+import Point from "ol/geom/Point";
+import Polygon from "ol/geom/Polygon";
+import MultiPolygon from "ol/geom/MultiPolygon";
+import VectorLayer from "ol/layer/Vector";
+import VectorSource from "ol/source/Vector";
+import { Fill, Icon, Stroke, Style, Text } from "ol/style";
+import type { EnvironmentalCondition } from "@/types/scenarioModels";
+import { isEnvironmentalConditionActive } from "@/scenariostore/environment";
+import { symbolGenerator } from "@/symbology/milsymbwrapper";
+
+const COLORS: Record<EnvironmentalCondition["kind"], string> = {
+  precipitation: "#0284c7",
+  fog: "#64748b",
+  visibility: "#7c3aed",
+  wind: "#0891b2",
+  temperature: "#dc2626",
+  surface_condition: "#92400e",
+  cloud_cover: "#475569",
+};
+
+const LABELS: Record<EnvironmentalCondition["kind"], string> = {
+  precipitation: "بارش",
+  fog: "مه",
+  visibility: "دید",
+  wind: "باد",
+  temperature: "دما",
+  surface_condition: "زمین",
+  cloud_cover: "ابر",
+};
+
+function iconSource(condition: EnvironmentalCondition) {
+  if (!condition.metocSidc) return undefined;
+  try {
+    const svg = symbolGenerator(condition.metocSidc, { size: 30 }).asSVG();
+    return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
+  } catch {
+    return undefined;
+  }
+}
+
+function markerCoordinate(geometry: Polygon | MultiPolygon) {
+  if (geometry instanceof Polygon) return geometry.getInteriorPoint().getCoordinates();
+  return geometry.getInteriorPoints().getFirstCoordinate();
+}
+
+export function createEnvironmentMapLayer() {
+  const source = new VectorSource();
+  const layer = new VectorLayer({
+    source,
+    zIndex: 35,
+    properties: { title: "شرایط محیطی", environmentalOverlay: true },
+    style: (feature) => {
+      const condition = feature.get("condition") as EnvironmentalCondition;
+      const color = COLORS[condition.kind];
+      if (feature.getGeometry() instanceof Point) {
+        const src = iconSource(condition);
+        return new Style({
+          image: src
+            ? new Icon({ src, anchor: [0.5, 0.5], scale: 0.9 })
+            : undefined,
+          text: src
+            ? undefined
+            : new Text({
+                text: LABELS[condition.kind],
+                fill: new Fill({ color: "#fff" }),
+                backgroundFill: new Fill({ color }),
+                padding: [3, 5, 3, 5],
+              }),
+        });
+      }
+      return new Style({
+        fill: new Fill({ color: `${color}30` }),
+        stroke: new Stroke({ color, width: 2, lineDash: [8, 5] }),
+      });
+    },
+  });
+  const format = new GeoJSON();
+
+  function refresh(conditions: EnvironmentalCondition[], timestamp: number, projection: string) {
+    source.clear();
+    conditions
+      .filter(
+        (condition) =>
+          condition.scope === "area" &&
+          condition.geometry &&
+          isEnvironmentalConditionActive(condition, timestamp),
+      )
+      .forEach((condition) => {
+        const geometry = format.readGeometry(condition.geometry!, {
+          dataProjection: "EPSG:4326",
+          featureProjection: projection,
+        });
+        if (!(geometry instanceof Polygon || geometry instanceof MultiPolygon)) return;
+        source.addFeature(new Feature({ geometry, condition }));
+        source.addFeature(
+          new Feature({
+            geometry: new Point(markerCoordinate(geometry)),
+            condition,
+          }),
+        );
+      });
+  }
+
+  return { layer, refresh };
+}

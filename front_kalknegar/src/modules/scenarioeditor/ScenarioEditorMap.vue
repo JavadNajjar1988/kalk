@@ -155,6 +155,10 @@
             class="absolute bottom-14 sm:bottom-16"
             v-if="ui.showToolbar && toolbarStore.currentToolbar === 'tactical'"
           />
+          <MapEditorEnvironmentToolbar
+            class="absolute bottom-14 sm:bottom-16"
+            v-if="ui.showToolbar && toolbarStore.currentToolbar === 'environment'"
+          />
         </footer>
       </div>
       <MapEditorDesktopPanel
@@ -233,6 +237,7 @@ import ScenarioInfoPanel from "@/modules/scenarioeditor/ScenarioInfoPanel.vue";
 import ScenarioTimeline from "@/modules/scenarioeditor/ScenarioTimeline.vue";
 import MapEditorUnitTrackToolbar from "@/modules/scenarioeditor/MapEditorUnitTrackToolbar.vue";
 import MapEditorTacticalToolbar from "@/modules/scenarioeditor/MapEditorTacticalToolbar.vue";
+import MapEditorEnvironmentToolbar from "@/modules/scenarioeditor/MapEditorEnvironmentToolbar.vue";
 import { storeToRefs } from "pinia";
 import { usePlaybackStore } from "@/stores/playbackStore";
 import UnitBreadcrumbs from "@/modules/scenarioeditor/UnitBreadcrumbs.vue";
@@ -241,6 +246,7 @@ import { useStoryboard } from "@/scenariostore/storyboard";
 import { useGeoStore } from "@/stores/geoStore";
 import type { StoryboardShowMode } from "@/types/scenarioModels";
 import { advanceScenarioPlaybackTime } from "@/modules/scenarioeditor/scenarioPlayback";
+import { createEnvironmentMapLayer } from "@/modules/scenarioeditor/environmentMapLayer";
 
 const emit = defineEmits(["showExport", "showLoad", "show-settings"]);
 const activeScenario = injectStrict(activeScenarioKey);
@@ -296,6 +302,7 @@ const storyboard = useStoryboard(activeScenario.store, {
 const rtlPanels = true;
 
 const mapRef = shallowRef<OLMap>();
+const environmentMapLayer = createEnvironmentMapLayer();
 const featureSelectInteractionRef = shallowRef<Select>();
 provide(activeMapKey, mapRef as ShallowRef<OLMap>);
 provide(
@@ -316,6 +323,12 @@ function onMapReady({
 }) {
   mapRef.value = olMap;
   featureSelectInteractionRef.value = featureSelectInteraction;
+  olMap.addLayer(environmentMapLayer.layer);
+  environmentMapLayer.refresh(
+    state.environmentalConditions,
+    state.currentTime,
+    olMap.getView().getProjection().getCode(),
+  );
 }
 
 const {
@@ -355,7 +368,22 @@ watch([showLeftPanel, orbatPanelWidth, showDetailsPanel, detailsWidth, isMobile]
   });
 });
 
+watch(
+  [() => state.environmentalConditions, () => state.currentTime],
+  () => {
+    const map = mapRef.value;
+    if (!map) return;
+    environmentMapLayer.refresh(
+      state.environmentalConditions,
+      state.currentTime,
+      map.getView().getProjection().getCode(),
+    );
+  },
+  { deep: true },
+);
+
 onUnmounted(() => {
+  mapRef.value?.removeLayer(environmentMapLayer.layer);
   activeUnitStore.clearActiveUnit();
   playback.playbackRunning = false;
 });

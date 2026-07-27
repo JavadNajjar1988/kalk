@@ -1957,6 +1957,12 @@ export function getScenarioTimeBounds(
     if (Array.isArray(content?.events)) {
       content.events.forEach((event: ScenarioEventLike) => consider(parseScenarioTimeToEpochMs(event?.startTime)));
     }
+    if (Array.isArray(content?.environmentalConditions)) {
+      content.environmentalConditions.forEach((condition: any) => {
+        consider(parseScenarioTimeToEpochMs(condition?.startTime));
+        consider(parseScenarioTimeToEpochMs(condition?.endTime));
+      });
+    }
 
     const units = getScenarioUnits(content as ScenarioContentLike);
     units.forEach((unit) => {

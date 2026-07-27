@@ -23,7 +23,9 @@ import {
   toLocalX,
   type BinWithX,
   type EventWithX,
+  type EnvironmentWithX,
   type HistogramBin,
+  type PhaseWithX,
   type TacticalMarkerWithX,
   type TacticalTimelineMarker,
   type TimelineAction,
@@ -87,6 +89,8 @@ const eventsWithX = ref<EventWithX[]>([]);
 const binsWithX = ref<BinWithX[]>([]);
 const tacticalMarkers = ref<TacticalTimelineMarker[]>([]);
 const tacticalMarkersWithX = ref<TacticalMarkerWithX[]>([]);
+const phasesWithX = ref<PhaseWithX[]>([]);
+const environmentWithX = ref<EnvironmentWithX[]>([]);
 const centerTimeStamp = ref(0);
 const xOffset = ref(0);
 const draggedDiff = ref(0);
@@ -293,12 +297,16 @@ function onWheel(e: WheelEvent) {
 const events = computed(() => {
   return store.state.events.map((id) => store.state.eventMap[id]);
 });
+const phases = computed(() => store.state.phases);
+const environmentalConditions = computed(() => store.state.environmentalConditions);
 
 function updateEvents(minDate: Date, maxDate: Date) {
   const renderInputs: TimelineRenderInputs = {
     events: events.value,
     histogram,
     tacticalMarkers: tacticalMarkers.value,
+    phases: phases.value,
+    environmentalConditions: environmentalConditions.value,
     minTimestamp: +minDate,
     maxTimestamp: +maxDate,
     majorWidth: majorWidth.value,
@@ -308,11 +316,14 @@ function updateEvents(minDate: Date, maxDate: Date) {
     eventsWithX: renderEvents,
     binsWithX: renderBins,
     tacticalMarkersWithX: renderTacticalMarkers,
-  } =
-    buildTimelineRenderData(renderInputs);
+    phasesWithX: renderPhases,
+    environmentWithX: renderEnvironment,
+  } = buildTimelineRenderData(renderInputs);
   eventsWithX.value = renderEvents;
   binsWithX.value = renderBins;
   tacticalMarkersWithX.value = renderTacticalMarkers;
+  phasesWithX.value = renderPhases;
+  environmentWithX.value = renderEnvironment;
 }
 
 let activeTacticalStore: any = null;
@@ -374,7 +385,7 @@ onUnmounted(() => {
   detachTacticalStoreListener();
 });
 
-watch(events, () => {
+watch([events, phases, environmentalConditions], () => {
   if (!width.value) return;
   if (isDragging.value) return;
   recomputeTimelineLayout(store.state.currentTime);
@@ -448,7 +459,9 @@ function onContextMenuAction(action: string) {
       @mouseleave="showHoverMarker = false"
       @contextmenu="onContextMenuOpen($event, onContextMenu)"
     >
-      <div class="timeline-indicator-strip flex h-3.5 items-center justify-center overflow-clip">
+      <div
+        class="timeline-indicator-strip flex h-3.5 items-center justify-center overflow-clip"
+      >
         <IconTriangleDown class="h-4 w-4 scale-x-150 transform text-red-900" />
       </div>
 
@@ -458,11 +471,35 @@ function onContextMenuAction(action: string) {
         :style="`transform:translate(${totalXOffset}px)`"
       >
         <div class="flex justify-center">
-          <div class="relative h-4 flex-none text-center" :style="`width: ${timelineWidth}px`">
+          <div
+            class="relative h-14 flex-none text-center"
+            :style="`width: ${timelineWidth}px`"
+          >
+            <div
+              v-for="{ x, width: environmentWidth, condition } in environmentWithX"
+              :key="`environment-${condition.id}`"
+              data-testid="environment-timeline-band"
+              class="absolute top-0 h-4 overflow-hidden rounded-sm border border-sky-700/40 bg-sky-500/25 px-1 text-[10px] leading-4 text-sky-950 dark:text-sky-100"
+              :class="{ 'opacity-40': condition.enabled === false }"
+              :style="`left: ${x}px; width: ${environmentWidth}px;`"
+              :title="`شرایط محیطی: ${condition.name || condition.kind}`"
+            >
+              <span v-if="environmentWidth > 48">{{ condition.name || condition.kind }}</span>
+            </div>
+            <div
+              v-for="{ x, width: phaseWidth, phase } in phasesWithX"
+              :key="`phase-${phase.id}`"
+              data-testid="scenario-phase-band"
+              class="absolute top-5 h-4 overflow-hidden rounded-sm border border-emerald-700/40 bg-emerald-500/25 px-1 text-[10px] leading-4 text-emerald-950 dark:text-emerald-100"
+              :style="`left: ${x}px; width: ${phaseWidth}px;`"
+              :title="`فاز: ${phase.name}`"
+            >
+              <span v-if="phaseWidth > 48">{{ phase.name }}</span>
+            </div>
             <div
               v-for="{ x, count } in binsWithX"
               :key="x"
-              class="absolute top-1 h-2 w-4 rounded border border-gray-500"
+              class="absolute top-11 h-2 w-4 rounded border border-gray-500"
               :style="`left: ${x}px; width: ${Math.max(
                 majorWidth / 24,
                 8,
@@ -475,7 +512,7 @@ function onContextMenuAction(action: string) {
               type="button"
               :key="event.id"
               data-testid="scenario-event-marker"
-              class="absolute h-4 w-4 -translate-x-1/2 rounded-full border border-gray-500 bg-amber-500 hover:bg-red-900"
+              class="absolute top-10 h-4 w-4 -translate-x-1/2 rounded-full border border-gray-500 bg-amber-500 hover:bg-red-900"
               :style="`left: ${x}px;`"
               @mousemove.stop
               :title="event.title"
@@ -485,7 +522,7 @@ function onContextMenuAction(action: string) {
               v-for="{ x, count } in tacticalMarkersWithX"
               :key="`tactical-${x}-${count}`"
               data-testid="tactical-timeline-marker"
-              class="absolute top-0.5 h-3 w-3 -translate-x-1/2 rounded-full border border-blue-800 bg-blue-500 shadow-sm shadow-blue-900/30"
+              class="absolute top-10 h-3 w-3 -translate-x-1/2 rounded-full border border-blue-800 bg-blue-500 shadow-sm shadow-blue-900/30"
               :style="`left: ${x}px;`"
               @mousemove.stop
               :title="
@@ -498,7 +535,10 @@ function onContextMenuAction(action: string) {
         </div>
 
         <div class="flex justify-center">
-          <div class="relative flex-none text-center" :style="`width: ${timelineWidth}px`"></div>
+          <div
+            class="relative flex-none text-center"
+            :style="`width: ${timelineWidth}px`"
+          ></div>
         </div>
 
         <div class="timeline-major-row flex justify-center">

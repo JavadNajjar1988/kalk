@@ -40,6 +40,8 @@
             v-for="tab in [
               'آرایش نبرد',
               'رویدادها',
+              'فازها',
+              'شرایط محیطی',
               'استوری‌بورد',
               'لایه‌ها',
               'تنظیمات',
@@ -69,6 +71,12 @@
         </TabPanel>
         <TabPanel class="p-4 pb-10">
           <ScenarioEventsPanel />
+        </TabPanel>
+        <TabPanel class="p-4 pb-10">
+          <ScenarioPhasesPanel />
+        </TabPanel>
+        <TabPanel class="p-4 pb-10">
+          <ScenarioEnvironmentPanel />
         </TabPanel>
         <TabPanel class="p-4 pb-10">
           <StoryboardPanel />
@@ -116,6 +124,8 @@
 import { Tab, TabGroup, TabList, TabPanel, TabPanels } from "@headlessui/vue";
 import { IconChevronDoubleUp } from "@iconify-prerendered/vue-mdi";
 import ScenarioEventsPanel from "@/modules/scenarioeditor/ScenarioEventsPanel.vue";
+import ScenarioPhasesPanel from "@/modules/scenarioeditor/ScenarioPhasesPanel.vue";
+import ScenarioEnvironmentPanel from "@/modules/scenarioeditor/ScenarioEnvironmentPanel.vue";
 import StoryboardPanel from "@/modules/scenarioeditor/StoryboardPanel.vue";
 import ScenarioInfoPanel from "@/modules/scenarioeditor/ScenarioInfoPanel.vue";
 import ScenarioFeatureDetails from "@/modules/scenarioeditor/ScenarioFeatureDetails.vue";

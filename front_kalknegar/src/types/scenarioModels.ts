@@ -249,6 +249,8 @@ export interface ScenarioEventDescription {
  */
 export interface ScenarioEvent extends ScenarioEventDescription {
   startTime: ScenarioTime;
+  /** Optional phase this event belongs to. */
+  phaseId?: EntityId;
   uiActions?: UIAction[];
   id?: string;
   _type?: "unit" | "scenario";
@@ -427,6 +429,60 @@ export interface ScenarioPhase {
   order?: number;
 }
 
+export type EnvironmentalKind =
+  | "precipitation"
+  | "visibility"
+  | "wind"
+  | "temperature"
+  | "fog"
+  | "surface_condition"
+  | "cloud_cover";
+
+export type EnvironmentalScope = "global" | "area";
+
+export type EnvironmentalParameters =
+  | {
+      mode: "rain" | "snow" | "hail";
+      intensity: number;
+      rateMmPerHour?: number;
+    }
+  | { rangeMeters: number }
+  | { speedMps: number; directionDeg: number; gustMps?: number }
+  | { celsius: number }
+  | { intensity: number; visibilityMeters?: number }
+  | {
+      condition: "dry" | "wet" | "muddy" | "icy" | "flooded" | "snow_covered";
+      intensity?: number;
+    }
+  | { coverage: number };
+
+/**
+ * Time-bound METOC/environmental state authored in Kalknegar.
+ * Legacy fields remain optional so older dashboard scenarios can be opened and
+ * saved without losing their environmental data.
+ */
+export interface EnvironmentalCondition {
+  id: string;
+  name?: string;
+  kind: EnvironmentalKind;
+  scope: EnvironmentalScope;
+  startTime: ScenarioTime;
+  endTime?: ScenarioTime;
+  parameters: EnvironmentalParameters;
+  geometry?: Geometry;
+  transition?: {
+    fadeInSeconds?: number;
+    fadeOutSeconds?: number;
+  };
+  priority?: number;
+  enabled?: boolean;
+  description?: string;
+  metocSidc?: string;
+  type?: string;
+  value?: number;
+  affectedArea?: GeoArea;
+}
+
 export interface PhaseTask {
   id: string;
   description: string;
@@ -439,27 +495,27 @@ export interface PhaseTask {
 }
 
 export enum PhaseStatus {
-  PLANNED = 'planned',
-  IN_PROGRESS = 'in_progress',
-  COMPLETED = 'completed',
-  FAILED = 'failed',
-  CANCELLED = 'cancelled'
+  PLANNED = "planned",
+  IN_PROGRESS = "in_progress",
+  COMPLETED = "completed",
+  FAILED = "failed",
+  CANCELLED = "cancelled",
 }
 
 export enum TaskStatus {
-  PENDING = 'pending',
-  ASSIGNED = 'assigned',
-  IN_PROGRESS = 'in_progress',
-  COMPLETED = 'completed',
-  FAILED = 'failed'
+  PENDING = "pending",
+  ASSIGNED = "assigned",
+  IN_PROGRESS = "in_progress",
+  COMPLETED = "completed",
+  FAILED = "failed",
 }
 
 export enum ScenarioStatus {
-  DRAFT = 'draft',
-  ACTIVE = 'active',
-  PAUSED = 'paused',
-  COMPLETED = 'completed',
-  ARCHIVED = 'archived'
+  DRAFT = "draft",
+  ACTIVE = "active",
+  PAUSED = "paused",
+  COMPLETED = "completed",
+  ARCHIVED = "archived",
 }
 
 export interface TerrainAnalysis {
@@ -490,9 +546,9 @@ export interface Obstacle {
 }
 
 export enum ObstacleType {
-  NATURAL = 'natural',
-  ARTIFICIAL = 'artificial',
-  REINFORCED = 'reinforced'
+  NATURAL = "natural",
+  ARTIFICIAL = "artificial",
+  REINFORCED = "reinforced",
 }
 
 export interface AvenueOfApproach {
@@ -505,10 +561,10 @@ export interface AvenueOfApproach {
 }
 
 export enum VehicleType {
-  INFANTRY = 'infantry',
-  WHEELED = 'wheeled',
-  TRACKED = 'tracked',
-  AIRCRAFT = 'aircraft'
+  INFANTRY = "infantry",
+  WHEELED = "wheeled",
+  TRACKED = "tracked",
+  AIRCRAFT = "aircraft",
 }
 
 export interface CoverConcealmentArea {
@@ -528,7 +584,7 @@ export interface ObservationPoint {
 }
 
 export interface GeoArea {
-  type: 'polygon' | 'circle' | 'rectangle';
+  type: "polygon" | "circle" | "rectangle";
   coordinates: Position[];
   radius?: number; // برای دایره
   width?: number; // برای مستطیل
@@ -536,10 +592,10 @@ export interface GeoArea {
 }
 
 export enum SignificanceLevel {
-  LOW = 'low',
-  MEDIUM = 'medium',
-  HIGH = 'high',
-  CRITICAL = 'critical'
+  LOW = "low",
+  MEDIUM = "medium",
+  HIGH = "high",
+  CRITICAL = "critical",
 }
 
 export interface BattleInformation {
@@ -558,7 +614,7 @@ export interface Engagement {
   location: GeoArea | Position;
   involvedUnits: {
     unitId: string;
-    side: 'attacker' | 'defender' | 'neutral';
+    side: "attacker" | "defender" | "neutral";
   }[];
   outcome?: EngagementOutcome;
   description?: string;
@@ -567,13 +623,13 @@ export interface Engagement {
 }
 
 export enum EngagementType {
-  DIRECT_FIRE = 'direct_fire',
-  INDIRECT_FIRE = 'indirect_fire',
-  AIR_STRIKE = 'air_strike',
-  AMBUSH = 'ambush',
-  MEETING_ENGAGEMENT = 'meeting_engagement',
-  RECONNAISSANCE = 'reconnaissance',
-  PATROL = 'patrol'
+  DIRECT_FIRE = "direct_fire",
+  INDIRECT_FIRE = "indirect_fire",
+  AIR_STRIKE = "air_strike",
+  AMBUSH = "ambush",
+  MEETING_ENGAGEMENT = "meeting_engagement",
+  RECONNAISSANCE = "reconnaissance",
+  PATROL = "patrol",
 }
 
 export interface EngagementOutcome {
@@ -612,20 +668,20 @@ export interface IntelligenceReport {
 }
 
 export enum IntelligenceSource {
-  HUMAN = 'human',
-  SIGNAL = 'signal',
-  IMAGERY = 'imagery',
-  OPEN_SOURCE = 'open_source',
-  MEASUREMENT = 'measurement'
+  HUMAN = "human",
+  SIGNAL = "signal",
+  IMAGERY = "imagery",
+  OPEN_SOURCE = "open_source",
+  MEASUREMENT = "measurement",
 }
 
 export enum ReliabilityLevel {
-  CONFIRMED = 'confirmed',
-  PROBABLE = 'probable',
-  POSSIBLE = 'possible',
-  DOUBTFUL = 'doubtful',
-  IMPROBABLE = 'improbable',
-  UNCONFIRMED = 'unconfirmed'
+  CONFIRMED = "confirmed",
+  PROBABLE = "probable",
+  POSSIBLE = "possible",
+  DOUBTFUL = "doubtful",
+  IMPROBABLE = "improbable",
+  UNCONFIRMED = "unconfirmed",
 }
 
 export interface SupplyStatus {
@@ -642,10 +698,10 @@ export interface SupplyStatus {
 }
 
 export enum SupplyPriority {
-  ROUTINE = 'routine',
-  PRIORITY = 'priority',
-  IMMEDIATE = 'immediate',
-  EMERGENCY = 'emergency'
+  ROUTINE = "routine",
+  PRIORITY = "priority",
+  IMMEDIATE = "immediate",
+  EMERGENCY = "emergency",
 }
 
 export interface CommandNode {
@@ -658,10 +714,10 @@ export interface CommandNode {
 }
 
 export enum CommandRole {
-  COMMANDER = 'commander',
-  DEPUTY = 'deputy',
-  STAFF_OFFICER = 'staff_officer',
-  LIAISON = 'liaison'
+  COMMANDER = "commander",
+  DEPUTY = "deputy",
+  STAFF_OFFICER = "staff_officer",
+  LIAISON = "liaison",
 }
 
 export interface CommunicationChannel {
@@ -672,11 +728,11 @@ export interface CommunicationChannel {
 }
 
 export enum CommunicationType {
-  RADIO = 'radio',
-  SATELLITE = 'satellite',
-  FIELD_PHONE = 'field_phone',
-  MESSENGER = 'messenger',
-  VISUAL_SIGNAL = 'visual_signal'
+  RADIO = "radio",
+  SATELLITE = "satellite",
+  FIELD_PHONE = "field_phone",
+  MESSENGER = "messenger",
+  VISUAL_SIGNAL = "visual_signal",
 }
 
 export interface SimulationSettings {
@@ -691,18 +747,18 @@ export interface SimulationSettings {
 }
 
 export enum AccuracyLevel {
-  LOW = 'low',
-  MEDIUM = 'medium',
-  HIGH = 'high',
-  ULTRA = 'ultra'
+  LOW = "low",
+  MEDIUM = "medium",
+  HIGH = "high",
+  ULTRA = "ultra",
 }
 
 export enum ExecutionStatus {
-  NOT_STARTED = 'not_started',
-  RUNNING = 'running',
-  PAUSED = 'paused',
-  COMPLETED = 'completed',
-  TERMINATED = 'terminated'
+  NOT_STARTED = "not_started",
+  RUNNING = "running",
+  PAUSED = "paused",
+  COMPLETED = "completed",
+  TERMINATED = "terminated",
 }
 
 export interface AnalysisResult {
@@ -715,12 +771,12 @@ export interface AnalysisResult {
 }
 
 export enum AnalysisType {
-  FORCE_RATIO = 'force_ratio',
-  CASUALTY_PREDICTION = 'casualty_prediction',
-  MISSION_SUCCESS = 'mission_success',
-  TERRAIN_ADVANTAGE = 'terrain_advantage',
-  SUPPLY_EFFICIENCY = 'supply_efficiency',
-  COMMAND_EFFECTIVENESS = 'command_effectiveness'
+  FORCE_RATIO = "force_ratio",
+  CASUALTY_PREDICTION = "casualty_prediction",
+  MISSION_SUCCESS = "mission_success",
+  TERRAIN_ADVANTAGE = "terrain_advantage",
+  SUPPLY_EFFICIENCY = "supply_efficiency",
+  COMMAND_EFFECTIVENESS = "command_effectiveness",
 }
 
 export interface Scenario extends ScenarioInfo {
@@ -738,12 +794,13 @@ export interface Scenario extends ScenarioInfo {
   unitTemplates?: Unit[];
   settings?: ScenarioSettings;
   storyboard?: Storyboard;
-  
+
   // فیلدهای جدید اضافه شده
   endTime?: ScenarioTime;
   status?: ScenarioStatus;
   objectives?: string[];
   phases?: ScenarioPhase[];
+  environmentalConditions?: EnvironmentalCondition[];
   terrainAnalysis?: TerrainAnalysis;
   battleInformation?: BattleInformation;
   commandStructure?: CommandNode[];
@@ -754,7 +811,7 @@ export interface Scenario extends ScenarioInfo {
   analysisResults?: AnalysisResult[];
   tags?: string[];
   metadata?: Record<string, any>;
-  
+
   // فیلد تصویر برای API
   image?: string;
 }

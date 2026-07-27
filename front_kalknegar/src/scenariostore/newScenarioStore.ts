@@ -1,11 +1,13 @@
 import { useImmerStore } from "@/composables/immerStore";
 import type {
   EquipmentData,
+  EnvironmentalCondition,
   MapSettings,
   PersonnelData,
   Scenario,
   ScenarioInfo,
   ScenarioMetadata,
+  ScenarioPhase,
   Side,
   SideGroup,
   State,
@@ -51,6 +53,7 @@ import type {
 } from "@/types/scenarioGeoModels";
 import { DEFAULT_BASEMAP_ID } from "@/config/constants";
 import { upgradeScenarioIfNecessary } from "@/scenariostore/upgrade";
+import { normalizeEnvironmentalCondition } from "@/scenariostore/environment";
 
 export interface ScenarioState {
   id: EntityId;
@@ -68,6 +71,8 @@ export interface ScenarioState {
   mapLayerMap: Record<FeatureId, ScenarioMapLayer>;
   info: ScenarioInfo;
   events: EntityId[];
+  phases: ScenarioPhase[];
+  environmentalConditions: EnvironmentalCondition[];
   equipmentMap: Record<string, NEquipmentData>;
   personnelMap: Record<string, NPersonnelData>;
   supplyCategoryMap: Record<string, NSupplyCategory>;
@@ -118,8 +123,7 @@ export function normalizeStoryboard(storyboard?: Storyboard): Storyboard {
     scenes: (storyboard?.scenes ?? []).map((scene: StoryboardScene) => ({
       ...scene,
       id: scene.id ?? nanoid(),
-      startTime:
-        scene.startTime !== undefined ? +dayjs(scene.startTime) : undefined,
+      startTime: scene.startTime !== undefined ? +dayjs(scene.startTime) : undefined,
     })),
   };
 }
@@ -150,6 +154,28 @@ export function prepareScenario(newScenario: Scenario): ScenarioState {
   const tempSupplyClassIdMap: Record<string, string> = {};
   const tempSupplyUomIdMap: Record<string, string> = {};
   const scenario = upgradeScenarioIfNecessary(newScenario);
+  const phases: ScenarioPhase[] = (scenario.phases ?? [])
+    .map((phase, index) => ({
+      ...klona(phase),
+      id: phase.id || nanoid(),
+      startTime: +dayjs(phase.startTime),
+      endTime: phase.endTime !== undefined ? +dayjs(phase.endTime) : undefined,
+      objectives: phase.objectives ?? [],
+      tasks: phase.tasks ?? [],
+      order: phase.order ?? index,
+    }))
+    .sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+  const environmentalConditions: EnvironmentalCondition[] = (
+    scenario.environmentalConditions ?? []
+  ).map((condition) =>
+    normalizeEnvironmentalCondition({
+      ...klona(condition),
+      id: condition.id || nanoid(),
+      startTime: +dayjs(condition.startTime),
+      endTime:
+        condition.endTime !== undefined ? +dayjs(condition.endTime) : undefined,
+    }),
+  );
 
   const scenarioId = scenario.id ?? nanoid();
   const mapSettings: MapSettings = scenario.settings?.map ?? {
@@ -492,6 +518,8 @@ export function prepareScenario(newScenario: Scenario): ScenarioState {
     sideMap,
     sideGroupMap,
     events,
+    phases,
+    environmentalConditions,
     equipmentMap,
     personnelMap,
     supplyCategoryMap,
@@ -539,7 +567,14 @@ export type ActionLabel =
   | "deleteMapLayer"
   | "updateMapLayer"
   | "moveMapLayer"
-  | "clearUnitState";
+  | "clearUnitState"
+  | "addPhase"
+  | "updatePhase"
+  | "deletePhase"
+  | "movePhase"
+  | "addEnvironmentalCondition"
+  | "updateEnvironmentalCondition"
+  | "deleteEnvironmentalCondition";
 
 export function useNewScenarioStore(data: Scenario) {
   const inputState = prepareScenario(data);

@@ -88,6 +88,14 @@
             aria-hidden="true"
           />
         </MainToolbarButton>
+        <MainToolbarButton
+          title="ترسیم شرایط محیطی و هواشناسی"
+          :active="store.currentToolbar === 'environment'"
+          @click="store.toggleToolbar('environment')"
+          class="toolbar-icon-button environment-button"
+        >
+          <WeatherIcon class="size-6 transition-all duration-300" />
+        </MainToolbarButton>
         <div class="h-7 border-r-2 border-slate-200 sm:mx-1 dark:border-slate-600" />
         <div class="mr-2 flex items-center">
           <EchelonPickerPopover
@@ -375,6 +383,7 @@ import {
   PhEraser as TacticalEditIcon,
   PhGauge as SpeedControlIcon,
   PhRepeat as EventLoopIcon,
+  PhCloudSun as WeatherIcon,
 } from "@phosphor-icons/vue";
 import { useRouter } from "vue-router";
 import { SIMPLE_TACTICAL_MAP_ROUTE } from "@/router/names";
