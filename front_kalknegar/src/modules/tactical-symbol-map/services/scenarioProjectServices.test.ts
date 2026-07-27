@@ -82,4 +82,35 @@ describe("ensureScenarioTacticalServices", () => {
     expect(secondResult).toBe(services);
     expect(servicesStore.store).toBe(services.store);
   });
+
+  it("publishes map services before the search index finishes bootstrapping", async () => {
+    const servicesStore = createServicesStore();
+    const services = createReadyServices("staged");
+    let finishBootstrap!: () => void;
+    const bootstrapFinished = new Promise<void>((resolve) => {
+      finishBootstrap = resolve;
+    });
+
+    initializeProjectServices.mockImplementation(async (_projectUUID, options) => {
+      await options.onCoreReady(services);
+      await bootstrapFinished;
+      return services;
+    });
+
+    const initialization = ensureScenarioTacticalServices({
+      scenarioId: "scenario-staged",
+      servicesStore,
+    });
+
+    await vi.waitFor(() => {
+      expect(servicesStore.store).toBe(services.store);
+    });
+    expect(servicesStore.featureStore).toBe(services.featureStore);
+    expect(servicesStore.searchIndex).toBeNull();
+
+    finishBootstrap();
+    await initialization;
+
+    expect(servicesStore.searchIndex).toBe(services.searchIndex);
+  });
 });

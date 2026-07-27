@@ -71,7 +71,7 @@ function onAddUnit(sidc: string) {
     </PopoverTrigger>
     <PopoverContent
       dir="rtl"
-      class="w-[min(26rem,calc(100vw-1rem))] overflow-hidden rounded-2xl p-0"
+      class="w-[min(26rem,calc(100vw-1rem))] overflow-hidden rounded-2xl !bg-background p-0"
       align="center"
       side="top"
       :sideOffset="10"

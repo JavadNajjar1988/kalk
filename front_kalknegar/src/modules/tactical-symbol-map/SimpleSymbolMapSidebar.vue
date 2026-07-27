@@ -56,6 +56,11 @@ import { defaultState } from './components/sidebar/state.js'
 import { matcher, preventDefault } from './components/events.js'
 import * as R from 'ramda'
 import * as ID from './ids.js'
+import { translateEntity } from '../../symbology/translations'
+import {
+  ensurePersianTacticalLabel,
+  tacticalWordTranslations
+} from './persianTacticalLabels.js'
 // Use Ramda's equals for deep equality check
 const isEqual = (a, b) => JSON.stringify(a) === JSON.stringify(b)
 import FilterInput from './components/sidebar/FilterInput.vue'
@@ -158,6 +163,39 @@ const handleSymbolDoubleClick = (id) => {
 
 // Category name translation to Persian
 const categoryTranslations = {
+  // MIL-STD-2525 warfighting hierarchy
+  'Warfighting Symbols': 'نمادهای رزم',
+  'Air Incident': 'حادثه هوایی',
+  'Air Track': 'رد هوایی',
+  'Civil Disturbance Incident': 'حادثه ناآرامی مدنی',
+  'Combat Service Support': 'پشتیبانی خدمات رزمی',
+  'Command and Control and General Maneuver': 'فرماندهی، کنترل و مانور عمومی',
+  'Criminal Activity Incident': 'حادثه فعالیت مجرمانه',
+  'Educational Facilities Infrastructure': 'زیرساخت تأسیسات آموزشی',
+  'Energy Facilities Infrastructure': 'زیرساخت تأسیسات انرژی',
+  'Generic / Unspecified': 'عمومی / نامشخص',
+  'Government Site Infrastructure': 'زیرساخت مراکز دولتی',
+  'Ground Track': 'رد زمینی',
+  'Ground Track Equipment': 'تجهیزات رد زمینی',
+  'Individual Leader': 'رهبر فردی',
+  'Individual Targeted': 'فرد هدف‌گیری‌شده',
+  'Individual Terrorist': 'فرد تروریست',
+  'Marine Incident': 'حادثه دریایی',
+  'Military Infrastructure': 'زیرساخت نظامی',
+  'Postal Service Infrastructure': 'زیرساخت خدمات پستی',
+  'Psychological Operations (PSYOP)': 'عملیات روانی',
+  'Public Venues Infrastructure': 'زیرساخت اماکن عمومی',
+  'Rail Incident': 'حادثه ریلی',
+  'Rape': 'تجاوز جنسی',
+  'Rape Attempted': 'اقدام به تجاوز جنسی',
+  'Sea Surface Track': 'رد سطحی دریایی',
+  'Space Track': 'رد فضایی',
+  'Special Operations Forces (SOF) Unit': 'یگان نیروهای عملیات ویژه',
+  'Subsurface Track': 'رد زیرسطحی',
+  'Telecommunications Infrastructure': 'زیرساخت مخابرات',
+  'Vehicle Incident': 'حادثه وسیله نقلیه',
+  'Water Supply Infrastructure': 'زیرساخت تأمین آب',
+
   // Military dimensions
   'Air': 'هوایی',
   'Ground': 'زمینی',
@@ -376,7 +414,7 @@ const groupedEntries = computed(() => {
     }
     
     // Translate category to Persian
-    const persianCategory = translateCategory(category)
+    const persianCategory = ensurePersianTacticalLabel(translateCategory(category))
     
     if (!groups[persianCategory]) {
       groups[persianCategory] = []
@@ -439,6 +477,8 @@ const toggleCategory = (categoryName) => {
 
 // Comprehensive word dictionary for symbol translation
 const wordDictionary = {
+  ...tacticalWordTranslations,
+
   // Common words
   'Area': 'منطقه', 'Areas': 'مناطق',
   'Coordination': 'هماهنگی', 'Coordinate': 'هماهنگ',
@@ -587,14 +627,14 @@ const translateEntry = (entry) => {
   
   // Translate title
   if (translated.title) {
-    translated.title = translateText(translated.title)
+    translated.title = ensurePersianTacticalLabel(translateText(translated.title))
   }
   
   // Translate description
   if (translated.description) {
     translated.description = translated.description
       .split(' • ')
-      .map(part => translateText(part.trim()))
+      .map(part => ensurePersianTacticalLabel(translateText(part.trim())))
       .join(' • ')
   }
   
@@ -625,6 +665,13 @@ const translateText = (text) => {
   }
   
   const trimmedText = text.trim()
+
+  // Reuse the centralized MIL-STD Persian glossary before applying the
+  // sidebar's word-by-word fallback.
+  const entityTranslation = translateEntity(trimmedText)
+  if (entityTranslation !== trimmedText) {
+    return entityTranslation
+  }
   
   // Check exact match in symbol translations first
   if (symbolTranslations[trimmedText]) {

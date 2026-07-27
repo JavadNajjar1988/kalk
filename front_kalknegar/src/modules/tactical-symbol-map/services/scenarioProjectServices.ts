@@ -81,54 +81,55 @@ export async function ensureScenarioTacticalServices({
   }
 
   const initialization = (async () => {
-    const projectServices = await initializeProjectServices(projectUUID);
     const snapshot = getTacticalSnapshotFromMetadata(metadata);
-    if (snapshot) {
-      await importTacticalSnapshot(projectServices.store, snapshot);
-    }
+    const hydratedStores = new WeakSet<object>();
 
-    // Write into servicesStore so map-layer bootstrapping can observe readiness.
-    (servicesStore as any).projectUUID =
-      writeMaybeRef((servicesStore as any).projectUUID, projectUUID) ??
-      (servicesStore as any).projectUUID;
-    (servicesStore as any).projectStore =
-      writeMaybeRef((servicesStore as any).projectStore, projectServices.projectStore) ??
-      (servicesStore as any).projectStore;
-    (servicesStore as any).preferencesStore =
-      writeMaybeRef(
-        (servicesStore as any).preferencesStore,
-        projectServices.preferencesStore,
-      ) ?? (servicesStore as any).preferencesStore;
-    (servicesStore as any).sessionStore =
-      writeMaybeRef((servicesStore as any).sessionStore, projectServices.sessionStore) ??
-      (servicesStore as any).sessionStore;
-    (servicesStore as any).emitter =
-      writeMaybeRef((servicesStore as any).emitter, projectServices.emitter) ??
-      (servicesStore as any).emitter;
-    (servicesStore as any).store =
-      writeMaybeRef((servicesStore as any).store, projectServices.store) ??
-      (servicesStore as any).store;
-    (servicesStore as any).featureStore =
-      writeMaybeRef((servicesStore as any).featureStore, projectServices.featureStore) ??
-      (servicesStore as any).featureStore;
-    (servicesStore as any).searchIndex =
-      writeMaybeRef((servicesStore as any).searchIndex, projectServices.searchIndex) ??
-      (servicesStore as any).searchIndex;
-    (servicesStore as any).selection =
-      writeMaybeRef((servicesStore as any).selection, projectServices.selection) ??
-      (servicesStore as any).selection;
-    (servicesStore as any).osdDriver =
-      writeMaybeRef((servicesStore as any).osdDriver, projectServices.osdDriver) ??
-      (servicesStore as any).osdDriver;
-    (servicesStore as any).ipcRenderer =
-      writeMaybeRef((servicesStore as any).ipcRenderer, projectServices.ipcRenderer) ??
-      (servicesStore as any).ipcRenderer;
-    (servicesStore as any).clipboard =
-      writeMaybeRef((servicesStore as any).clipboard, projectServices.clipboard) ??
-      (servicesStore as any).clipboard;
-    (servicesStore as any).undo =
-      writeMaybeRef((servicesStore as any).undo, projectServices.undo) ??
-      (servicesStore as any).undo;
+    const hydrateSnapshot = async (projectServices: any) => {
+      const tacticalStore = projectServices?.store;
+      if (!snapshot || !tacticalStore || hydratedStores.has(tacticalStore)) {
+        return;
+      }
+      await importTacticalSnapshot(tacticalStore, snapshot);
+      hydratedStores.add(tacticalStore);
+    };
+
+    const writeService = (key: keyof ServicesStoreLike, value: any) => {
+      if (value === undefined) return;
+      (servicesStore as any)[key] =
+        writeMaybeRef((servicesStore as any)[key], value) ??
+        (servicesStore as any)[key];
+    };
+
+    const publishServices = (projectServices: any, includeSearchIndex: boolean) => {
+      writeService("projectUUID", projectUUID);
+      writeService("projectStore", projectServices.projectStore);
+      writeService("preferencesStore", projectServices.preferencesStore);
+      writeService("sessionStore", projectServices.sessionStore);
+      writeService("emitter", projectServices.emitter);
+      writeService("store", projectServices.store);
+      writeService("featureStore", projectServices.featureStore);
+      if (includeSearchIndex) {
+        writeService("searchIndex", projectServices.searchIndex);
+      }
+      writeService("selection", projectServices.selection);
+      writeService("osdDriver", projectServices.osdDriver);
+      writeService("ipcRenderer", projectServices.ipcRenderer);
+      writeService("clipboard", projectServices.clipboard);
+      writeService("undo", projectServices.undo);
+    };
+
+    const projectServices = await initializeProjectServices(projectUUID, {
+      onCoreReady: async (coreServices: any) => {
+        await hydrateSnapshot(coreServices);
+        // Publish only what map rendering needs. The symbol search index is
+        // published after its full bootstrap completes below.
+        publishServices(coreServices, false);
+      },
+    });
+
+    // Mock/legacy initializers may not invoke onCoreReady.
+    await hydrateSnapshot(projectServices);
+    publishServices(projectServices, true);
 
     return projectServices;
   })();

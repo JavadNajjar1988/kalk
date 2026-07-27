@@ -41,7 +41,7 @@ function createProjectDb(projectUUID, { persistent }) {
   return L.leveldb()
 }
 
-async function initializeProjectServicesWithDb(projectUUID, { persistent }) {
+async function initializeProjectServicesWithDb(projectUUID, { persistent, onCoreReady }) {
   console.log('projectServices.js: Initializing services for project:', projectUUID, {
     persistent
   })
@@ -115,6 +115,11 @@ async function initializeProjectServicesWithDb(projectUUID, { persistent }) {
       'default-style': 'LOADED',
     })
 
+    // Map rendering only needs the core stores and the scenario snapshot.
+    // Let the caller publish those before the comparatively expensive symbol
+    // catalog migration and search-index bootstrap complete.
+    await onCoreReady?.(services)
+
     console.log('projectServices.js: Bootstrapping schema...')
     await schema.bootstrap()
     console.log('projectServices.js: Schema bootstrapped')
@@ -148,10 +153,13 @@ async function initializeProjectServicesWithDb(projectUUID, { persistent }) {
   }
 }
 
-export async function initializeProjectServices(projectUUID) {
+export async function initializeProjectServices(projectUUID, options = {}) {
   try {
     return await Promise.race([
-      initializeProjectServicesWithDb(projectUUID, { persistent: true }),
+      initializeProjectServicesWithDb(projectUUID, {
+        persistent: true,
+        onCoreReady: options.onCoreReady,
+      }),
       timeoutAfter(
         PERSISTENT_BOOTSTRAP_TIMEOUT_MS,
         `Persistent tactical services bootstrap timed out after ${PERSISTENT_BOOTSTRAP_TIMEOUT_MS}ms`,
@@ -162,6 +170,9 @@ export async function initializeProjectServices(projectUUID) {
       'projectServices.js: Falling back to in-memory tactical services.',
       error,
     )
-    return initializeProjectServicesWithDb(projectUUID, { persistent: false })
+    return initializeProjectServicesWithDb(projectUUID, {
+      persistent: false,
+      onCoreReady: options.onCoreReady,
+    })
   }
 }

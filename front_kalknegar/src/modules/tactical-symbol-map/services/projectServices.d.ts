@@ -1,4 +1,9 @@
-export declare function initializeProjectServices(projectUUID: string): Promise<{
+export declare function initializeProjectServices(
+    projectUUID: string,
+    options?: {
+        onCoreReady?: (services: any) => void | Promise<void>;
+    },
+): Promise<{
     emitter: any;
     projectStore: any;
     preferencesStore: any;
