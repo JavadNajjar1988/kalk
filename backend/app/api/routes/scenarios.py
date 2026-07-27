@@ -33,6 +33,37 @@ import logging
 logger = logging.getLogger(__name__)
 
 
+def _normalize_scenario_datetime(value: object, field_name: str) -> datetime | None:
+    if value is None:
+        return None
+    try:
+        if isinstance(value, bool):
+            raise ValueError
+        if isinstance(value, (int, float)):
+            # ORBAT stores Unix time in milliseconds. Accept seconds as well for API compatibility.
+            timestamp = float(value)
+            if abs(timestamp) >= 100_000_000_000:
+                timestamp /= 1000
+            return datetime.fromtimestamp(timestamp, tz=timezone.utc)
+        if isinstance(value, str):
+            parsed = datetime.fromisoformat(value.strip().replace("Z", "+00:00"))
+            if parsed.tzinfo is None or parsed.utcoffset() is None:
+                raise ValueError
+            return parsed.astimezone(timezone.utc)
+    except (OverflowError, OSError, TypeError, ValueError):
+        pass
+    raise HTTPException(
+        status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+        detail=f"{field_name} must be an ISO 8601 date with timezone or a Unix timestamp",
+    )
+
+
+def _schedule_from_content(content: object, key: str) -> datetime | None:
+    if not isinstance(content, dict) or key not in content:
+        return None
+    return _normalize_scenario_datetime(content.get(key), key)
+
+
 async def _audit(db: AsyncSession, scenario_id: str, actor: dict, action: str, diff: dict | None = None):
     user_id: str | None = actor.get("user_id") or None
     db.add(
@@ -509,6 +540,8 @@ async def create_scenario(
         description=payload.description,
         image=payload.image,
         content=getattr(payload, "content", None),
+        start_time=payload.start_time or _schedule_from_content(payload.content, "startTime"),
+        end_time=payload.end_time or _schedule_from_content(payload.content, "endTime"),
         created=now,
         modified=now,
     )
@@ -542,6 +575,12 @@ async def update_scenario(
     if not obj:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Scenario not found")
     data = payload.model_dump(exclude_unset=True)
+    if "content" in data:
+        content = data["content"]
+        if "start_time" not in data and isinstance(content, dict) and "startTime" in content:
+            data["start_time"] = _schedule_from_content(content, "startTime")
+        if "end_time" not in data and isinstance(content, dict) and "endTime" in content:
+            data["end_time"] = _schedule_from_content(content, "endTime")
     changed_keys = {k for k, v in data.items() if getattr(obj, k, None) != v}
     for k, v in data.items():
         setattr(obj, k, v)

@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { isValidTimeZone, scenarioDateTimeToIso } from './scenarioDateTime';
+import {
+  gregorianToPersianDate,
+  isValidTimeZone,
+  persianToGregorianDate,
+  scenarioDateTimeToIso,
+} from './scenarioDateTime';
 
 describe('scenarioDateTimeToIso', () => {
   it('keeps UTC wall-clock values in UTC', () => {
@@ -17,5 +22,18 @@ describe('scenarioDateTimeToIso', () => {
   it('rejects invalid dates and time zones', () => {
     expect(() => scenarioDateTimeToIso(2026, 2, 30, 0, 0, 'UTC')).toThrow();
     expect(isValidTimeZone('Invalid/Zone')).toBe(false);
+  });
+
+  it('converts between Persian display dates and Gregorian storage dates', () => {
+    expect(gregorianToPersianDate({ year: 2026, month: 7, day: 26 })).toEqual({
+      year: 1405,
+      month: 5,
+      day: 4,
+    });
+    expect(persianToGregorianDate({ year: 1405, month: 5, day: 4 })).toEqual({
+      year: 2026,
+      month: 7,
+      day: 26,
+    });
   });
 });

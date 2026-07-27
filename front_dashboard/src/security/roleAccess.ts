@@ -29,6 +29,16 @@ const ACCESS: Record<RoleFeature, AppRole[]> = {
   'kalknegar.access': ['admin', 'commander', 'operator'],
 };
 
+export const SIDEBAR_FEATURES = {
+  home: 'dashboard.view',
+  scenarios: 'scenarios.view',
+  users: 'users.manage',
+  resources: 'resources.view',
+  dataManagement: 'data.manage',
+} as const satisfies Record<string, RoleFeature>;
+
+export type SidebarItemId = keyof typeof SIDEBAR_FEATURES;
+
 export const normalizeRole = (role?: string | null): AppRole => {
   const value = (role || '').trim().toLowerCase().replace('-', '_');
   if (value === 'admin' || value === 'super_admin') return 'admin';
@@ -41,3 +51,8 @@ export const canAccessFeature = (
   role: string | null | undefined,
   feature: RoleFeature,
 ): boolean => ACCESS[feature].includes(normalizeRole(role));
+
+export const canAccessSidebarItem = (
+  role: string | null | undefined,
+  itemId: SidebarItemId,
+): boolean => canAccessFeature(role, SIDEBAR_FEATURES[itemId]);

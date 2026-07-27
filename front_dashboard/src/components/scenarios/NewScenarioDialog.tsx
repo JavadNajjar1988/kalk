@@ -28,8 +28,6 @@ import {
   Accordion,
   AccordionSummary,
   AccordionDetails,
-  RadioGroup,
-  Radio,
   alpha,
   useTheme,
   Alert,
@@ -62,9 +60,10 @@ import {
   buildScenarioDialogPayload,
   type ScenarioDialogPayload,
 } from './scenarioDialogAutosave';
-import { isValidTimeZone, scenarioDateTimeToIso } from './scenarioDateTime';
+import { scenarioDateTimeToIso } from './scenarioDateTime';
 import { useAppSelector } from '@/store';
 import { selectUser } from '@/store/slices/authSlice';
+import PersianDatePickerField from './PersianDatePickerField';
 
 interface NewScenarioDialogProps {
   open: boolean;
@@ -87,7 +86,7 @@ interface SideData {
   }>;
 }
 
-const steps = ['مشخصات و زمان', 'آرایش نیروها', 'بازبینی و ثبت'];
+const steps = ['مشخصات و آرایش نبرد', 'بازبینی و ثبت'];
 
 function generateScenarioCode(): string {
   const now = new Date();
@@ -124,7 +123,7 @@ const NewScenarioDialog: React.FC<NewScenarioDialogProps> = ({
     purpose: '',
     bboxText: '',
     symbologyStandard: 'app6' as 'app6' | '2525',
-    timeZone: 'UTC',
+    timeZone: 'Asia/Tehran',
     year: new Date().getFullYear(),
     month: new Date().getMonth() + 1,
     day: new Date().getDate(),
@@ -218,7 +217,7 @@ const NewScenarioDialog: React.FC<NewScenarioDialogProps> = ({
           purpose: '',
           bboxText: '',
           symbologyStandard: 'app6',
-          timeZone: 'UTC',
+          timeZone: 'Asia/Tehran',
           year: new Date().getFullYear(),
           month: new Date().getMonth() + 1,
           day: new Date().getDate(),
@@ -324,7 +323,10 @@ const NewScenarioDialog: React.FC<NewScenarioDialogProps> = ({
   };
 
   const handleNext = () => {
-    const message = validateStep(activeStep);
+    const message =
+      activeStep === 0
+        ? validateStep(0) || validateStep(1)
+        : validateStep(activeStep);
     setValidationMessage(message);
     if (!message) {
       setActiveStep(prevActiveStep => prevActiveStep + 1);
@@ -394,11 +396,11 @@ const NewScenarioDialog: React.FC<NewScenarioDialogProps> = ({
   };
 
   const handleSubmit = async () => {
-    for (let step = 0; step < steps.length - 1; step += 1) {
+    for (let step = 0; step < steps.length; step += 1) {
       const message = validateStep(step);
       if (message) {
         setValidationMessage(message);
-        setActiveStep(step);
+        setActiveStep(0);
         return;
       }
     }
@@ -471,8 +473,8 @@ const NewScenarioDialog: React.FC<NewScenarioDialogProps> = ({
     }
   };
 
-  const renderStepContent = () => {
-    switch (activeStep) {
+  const renderStepContent = (contentStep = activeStep) => {
+    switch (contentStep) {
       case 0:
         return (
           <Box sx={{ mt: 2 }}>
@@ -485,7 +487,7 @@ const NewScenarioDialog: React.FC<NewScenarioDialogProps> = ({
                   مشخصات و زمان‌بندی سناریو
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
-                  اطلاعات اصلی، استاندارد نمادها و زمان شروع را یکجا تنظیم کنید.
+                  اطلاعات اصلی و زمان شروع سناریو را یکجا تنظیم کنید.
                 </Typography>
               </Box>
             </Box>
@@ -528,158 +530,22 @@ const NewScenarioDialog: React.FC<NewScenarioDialogProps> = ({
               </Grid>
 
               <Grid item xs={12}>
-                <Divider sx={{ my: 1 }}>استاندارد نمادشناسی</Divider>
-                <FormControl component="fieldset">
-                  <RadioGroup
-                    row
-                    value={formData.symbologyStandard}
-                    onChange={e =>
-                      setFormData(prev => ({
-                        ...prev,
-                        symbologyStandard: e.target.value as 'app6' | '2525',
-                      }))
-                    }
-                  >
-                    <Paper
-                      sx={{
-                        py: 0.5,
-                        px: 1.5,
-                        mr: 2,
-                        border: formData.symbologyStandard === 'app6' ? 2 : 1,
-                        borderColor:
-                          formData.symbologyStandard === 'app6'
-                            ? 'primary.main'
-                            : 'divider',
-                        cursor: 'pointer',
-                        '&:hover': { bgcolor: 'action.hover' },
-                      }}
-                      onClick={() =>
-                        setFormData(prev => ({
-                          ...prev,
-                          symbologyStandard: 'app6',
-                        }))
-                      }
-                    >
-                      <FormControlLabel
-                        value="app6"
-                        control={<Radio />}
-                        label={
-                          <Box>
-                            <Typography variant="body1" fontWeight="bold">
-                              APP-6
-                            </Typography>
-                            <Typography
-                              variant="caption"
-                              color="text.secondary"
-                            >
-                              نسخه ناتو
-                            </Typography>
-                          </Box>
-                        }
-                      />
-                    </Paper>
-                    <Paper
-                      sx={{
-                        py: 0.5,
-                        px: 1.5,
-                        border: formData.symbologyStandard === '2525' ? 2 : 1,
-                        borderColor:
-                          formData.symbologyStandard === '2525'
-                            ? 'primary.main'
-                            : 'divider',
-                        cursor: 'pointer',
-                        '&:hover': { bgcolor: 'action.hover' },
-                      }}
-                      onClick={() =>
-                        setFormData(prev => ({
-                          ...prev,
-                          symbologyStandard: '2525',
-                        }))
-                      }
-                    >
-                      <FormControlLabel
-                        value="2525"
-                        control={<Radio />}
-                        label={
-                          <Box>
-                            <Typography variant="body1" fontWeight="bold">
-                              MIL-STD-2525D
-                            </Typography>
-                            <Typography
-                              variant="caption"
-                              color="text.secondary"
-                            >
-                              نسخه آمریکایی
-                            </Typography>
-                          </Box>
-                        }
-                      />
-                    </Paper>
-                  </RadioGroup>
-                </FormControl>
-              </Grid>
-
-              <Grid item xs={12}>
                 <Divider sx={{ my: 1 }}>زمان شروع</Divider>
               </Grid>
-              <Grid item xs={12} md={4}>
-                <TextField
-                  fullWidth
-                  label="منطقه زمانی"
-                  value={formData.timeZone}
-                  onChange={e =>
-                    setFormData(prev => ({ ...prev, timeZone: e.target.value }))
-                  }
-                  placeholder="UTC"
-                  error={!isValidTimeZone(formData.timeZone.trim())}
-                  helperText="مانند UTC یا Asia/Tehran"
-                />
-              </Grid>
-              <Grid item xs={6} sm={4} md={2}>
-                <TextField
-                  fullWidth
-                  label="سال"
-                  type="number"
-                  value={formData.year}
-                  onChange={e =>
+              <Grid item xs={12} sm={6}>
+                <PersianDatePickerField
+                  year={formData.year}
+                  month={formData.month}
+                  day={formData.day}
+                  onChange={(date) =>
                     setFormData(prev => ({
                       ...prev,
-                      year: parseInt(e.target.value) || 0,
+                      ...date,
                     }))
                   }
                 />
               </Grid>
-              <Grid item xs={3} sm={2} md={1}>
-                <TextField
-                  fullWidth
-                  label="ماه"
-                  type="number"
-                  value={formData.month}
-                  onChange={e =>
-                    setFormData(prev => ({
-                      ...prev,
-                      month: parseInt(e.target.value) || 0,
-                    }))
-                  }
-                  inputProps={{ min: 1, max: 12 }}
-                />
-              </Grid>
-              <Grid item xs={3} sm={2} md={1}>
-                <TextField
-                  fullWidth
-                  label="روز"
-                  type="number"
-                  value={formData.day}
-                  onChange={e =>
-                    setFormData(prev => ({
-                      ...prev,
-                      day: parseInt(e.target.value) || 0,
-                    }))
-                  }
-                  inputProps={{ min: 1, max: 31 }}
-                />
-              </Grid>
-              <Grid item xs={6} sm={2} md={2}>
+              <Grid item xs={6} sm={3}>
                 <TextField
                   fullWidth
                   label="ساعت"
@@ -694,7 +560,7 @@ const NewScenarioDialog: React.FC<NewScenarioDialogProps> = ({
                   inputProps={{ min: 0, max: 23 }}
                 />
               </Grid>
-              <Grid item xs={6} sm={2} md={2}>
+              <Grid item xs={6} sm={3}>
                 <TextField
                   fullWidth
                   label="دقیقه"
@@ -759,15 +625,12 @@ const NewScenarioDialog: React.FC<NewScenarioDialogProps> = ({
         return (
           <Box sx={{ mt: 1 }}>
             <Box sx={{ mb: 2, display: 'flex', alignItems: 'center', gap: 1.5 }}>
-              <Avatar sx={{ bgcolor: 'primary.main', width: 34, height: 34 }}>
-                <Typography variant="subtitle1" fontWeight={700}>2</Typography>
-              </Avatar>
               <Box>
                 <Typography variant="h6" fontWeight="bold">
                   آرایش نبرد اولیه
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
-                  طرف‌ها و واحدهای ریشه.
+                  طرف‌های درگیری و واحدهای ریشه را تعریف کنید یا تکمیل آن را به بعد بسپارید.
                 </Typography>
               </Box>
             </Box>
@@ -780,7 +643,7 @@ const NewScenarioDialog: React.FC<NewScenarioDialogProps> = ({
                 />
               }
               label="طرف‌ها و واحدهای ریشه را بعداً اضافه کن"
-              sx={{ mb: 2 }}
+              sx={{ mb: 1 }}
             />
 
             {!noInitialOrbat && (
@@ -788,21 +651,14 @@ const NewScenarioDialog: React.FC<NewScenarioDialogProps> = ({
                 <Paper
                   variant="outlined"
                   sx={{
-                    p: 2,
-                    mb: 3,
-                    borderRadius: 2,
+                    p: 1.5,
+                    mb: 2,
+                    borderRadius: 1,
                     bgcolor: alpha(theme.palette.primary.main, 0.025),
                   }}
                 >
-                  <Typography variant="subtitle1" fontWeight={700} gutterBottom>
+                  <Typography variant="subtitle2" fontWeight={700} sx={{ mb: 1 }}>
                     هویت طرف جدید
-                  </Typography>
-                  <Typography
-                    variant="body2"
-                    color="text.secondary"
-                    sx={{ mb: 2 }}
-                  >
-                    قاب و رنگ استاندارد طرف را انتخاب کنید.
                   </Typography>
                   <Box
                     sx={{
@@ -811,7 +667,7 @@ const NewScenarioDialog: React.FC<NewScenarioDialogProps> = ({
                         xs: 'repeat(2, minmax(0, 1fr))',
                         md: 'repeat(4, minmax(0, 1fr))',
                       },
-                      gap: 1.5,
+                      gap: 1,
                     }}
                   >
                     {COMBAT_SIDE_STANDARD_IDENTITY_OPTIONS.map(option => {
@@ -827,7 +683,7 @@ const NewScenarioDialog: React.FC<NewScenarioDialogProps> = ({
                           }
                           aria-label={`انتخاب هویت ${option.label}`}
                           sx={{
-                            minHeight: 92,
+                            minHeight: 72,
                             display: 'flex',
                             flexDirection: 'column',
                             gap: 0.5,
@@ -838,7 +694,7 @@ const NewScenarioDialog: React.FC<NewScenarioDialogProps> = ({
                             standardIdentity={option.value}
                             echelon="18"
                             icon="121000"
-                            size={46}
+                            size={36}
                             compact
                             symbologyStandard={formData.symbologyStandard}
                           />
@@ -854,10 +710,11 @@ const NewScenarioDialog: React.FC<NewScenarioDialogProps> = ({
                     })}
                   </Box>
                   <Box
-                    sx={{ display: 'flex', justifyContent: 'center', mt: 2 }}
+                    sx={{ display: 'flex', justifyContent: 'center', mt: 1.5 }}
                   >
                     <Button
                       variant="contained"
+                      size="small"
                       startIcon={<Add />}
                       onClick={handleAddSide}
                     >
@@ -876,10 +733,10 @@ const NewScenarioDialog: React.FC<NewScenarioDialogProps> = ({
                     key={sideIndex}
                     defaultExpanded={sideIndex === 0}
                     sx={{
-                      mb: 2,
+                      mb: 1.5,
                       border: '1px solid',
                       borderColor: 'divider',
-                      borderRadius: '12px !important',
+                      borderRadius: '8px !important',
                       overflow: 'hidden',
                       '&::before': { display: 'none' },
                     }}
@@ -896,7 +753,7 @@ const NewScenarioDialog: React.FC<NewScenarioDialogProps> = ({
                           echelon={side.units[0]?.rootUnitEchelon || '18'}
                           icon={side.units[0]?.rootUnitIcon || '121000'}
                           fillColor={side.symbolOptions?.fillColor}
-                          size={42}
+                          size={36}
                           compact
                           symbologyStandard={formData.symbologyStandard}
                         />
@@ -915,8 +772,8 @@ const NewScenarioDialog: React.FC<NewScenarioDialogProps> = ({
                         </Box>
                       </Stack>
                     </AccordionSummary>
-                    <AccordionDetails>
-                      <Grid container spacing={2} sx={{ mb: 2 }}>
+                    <AccordionDetails sx={{ p: 1.5 }}>
+                      <Grid container spacing={1.5} sx={{ mb: 1.5 }}>
                         <Grid item xs={12} md={7}>
                           <TextField
                             fullWidth
@@ -1343,7 +1200,7 @@ const NewScenarioDialog: React.FC<NewScenarioDialogProps> = ({
           <Box sx={{ mt: 1 }}>
             <Box sx={{ mb: 2, display: 'flex', alignItems: 'center', gap: 1.5 }}>
               <Avatar sx={{ bgcolor: 'primary.main', width: 34, height: 34 }}>
-                <Typography variant="subtitle1" fontWeight={700}>3</Typography>
+                <Typography variant="subtitle1" fontWeight={700}>2</Typography>
               </Avatar>
               <Box>
                 <Typography variant="h6" fontWeight="bold">
@@ -1671,7 +1528,15 @@ const NewScenarioDialog: React.FC<NewScenarioDialogProps> = ({
           </Alert>
         )}
 
-        {renderStepContent()}
+        {activeStep === 0 ? (
+          <>
+            {renderStepContent(0)}
+            <Divider sx={{ my: 2.5 }} />
+            {renderStepContent(1)}
+          </>
+        ) : (
+          renderStepContent(2)
+        )}
 
         {symbolPickerTarget &&
           sides[symbolPickerTarget.sideIndex]?.units[

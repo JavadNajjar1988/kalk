@@ -64,7 +64,10 @@ import SidePanel from './SidePanel';
 import PersianDateTime from '@/components/common/PersianDateTime';
 import { useTranslation } from '@/hooks/useTranslation';
 import SearchBar from '@/components/common/SearchBar';
-import { canAccessFeature } from '@/security/roleAccess';
+import {
+  canAccessFeature,
+  SIDEBAR_FEATURES,
+} from '@/security/roleAccess';
 import AvatarPicker from '@/modules/users/components/AvatarPicker';
 import { resolveAvatarSrc } from '@/modules/users/utils/avatarOptions';
 import { getAccessLevelColor } from '@/modules/users/utils/userPresentation';
@@ -189,40 +192,42 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
       label: t('menu.dashboard'), 
       icon: <Dashboard />, 
       path: '/dashboard',
-      feature: 'dashboard.view' as const,
+      feature: SIDEBAR_FEATURES.home,
     },
     { 
       id: 'scenarios', 
       label: 'مدیریت سناریوها', 
       icon: <Assignment />, 
       path: '/dashboard/scenarios',
-      feature: 'scenarios.view' as const,
+      feature: SIDEBAR_FEATURES.scenarios,
     },
     { 
       id: 'users', 
       label: 'مدیریت کاربران', 
       icon: <People />, 
       path: '/dashboard/users',
-      feature: 'users.view' as const,
+      feature: SIDEBAR_FEATURES.users,
     },
     { 
       id: 'resources-module', 
       label: 'مدیریت منابع', 
       icon: <AccountBox />, 
       path: '/dashboard/resources',
-      feature: 'resources.view' as const,
+      feature: SIDEBAR_FEATURES.resources,
     },
     {
       id: 'data-management',
       label: 'مدیریت داده',
       icon: <UploadFile />,
       path: '/dashboard/data-management',
-      feature: 'data.manage' as const,
+      feature: SIDEBAR_FEATURES.dataManagement,
     },
   ];
 
   const currentRole = user?.role || 'viewer';
-  const filteredMenuItems = menuItems.filter(item => canAccessFeature(currentRole, item.feature));
+  const filteredMenuItems = menuItems.filter(item =>
+    canAccessFeature(currentRole, item.feature)
+  );
   const canManageSettings = canAccessFeature(currentRole, 'settings.manage');
   const canViewUsers = canAccessFeature(currentRole, 'users.view');
   const visibleMenuItems = filteredMenuItems.length > 0

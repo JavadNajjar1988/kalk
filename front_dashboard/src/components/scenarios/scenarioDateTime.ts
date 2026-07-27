@@ -1,3 +1,31 @@
+import DateObject from 'react-date-object';
+import gregorian from 'react-date-object/calendars/gregorian';
+import persian from 'react-date-object/calendars/persian';
+
+export interface CalendarDateParts {
+  year: number;
+  month: number;
+  day: number;
+}
+
+export function gregorianToPersianDate(date: CalendarDateParts): CalendarDateParts {
+  const converted = new DateObject({ ...date, calendar: gregorian }).convert(persian);
+  return {
+    year: converted.year,
+    month: converted.month.number,
+    day: converted.day,
+  };
+}
+
+export function persianToGregorianDate(date: CalendarDateParts): CalendarDateParts {
+  const converted = new DateObject({ ...date, calendar: persian }).convert(gregorian);
+  return {
+    year: converted.year,
+    month: converted.month.number,
+    day: converted.day,
+  };
+}
+
 export function isValidTimeZone(timeZone: string): boolean {
   try {
     new Intl.DateTimeFormat('en-US', { timeZone }).format();

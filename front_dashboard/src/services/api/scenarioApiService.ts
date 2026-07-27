@@ -152,6 +152,11 @@ export class ScenarioApiService extends BaseApiClient {
     const intro_video_url = (data as any)?.intro_video_url ?? undefined;
     const intro_title = (data as any)?.intro_title ?? undefined;
     const intro_summary = (data as any)?.intro_summary ?? undefined;
+    const toIsoDate = (value: unknown): string | undefined => {
+      if (value === null || value === undefined || value === '') return undefined;
+      const date = new Date(value as string | number);
+      return Number.isNaN(date.getTime()) ? undefined : date.toISOString();
+    };
     return {
       name,
       description,
@@ -159,6 +164,8 @@ export class ScenarioApiService extends BaseApiClient {
       intro_video_url,
       intro_title,
       intro_summary,
+      start_time: toIsoDate((data as any)?.startTime),
+      end_time: toIsoDate((data as any)?.endTime),
       content: data,
     } as any;
   }
