@@ -119,6 +119,10 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  drawOnDoubleClick: {
+    type: Boolean,
+    default: true,
+  },
 })
 
 const emit = defineEmits(['measureRef', 'symbol-dblclick', 'favorite-change'])
@@ -203,6 +207,8 @@ const handleClick = (event) => {
 
 const handleDoubleClick = async () => {
   emit('symbol-dblclick', props.id)
+  if (!props.drawOnDoubleClick) return
+
   const svcs = servicesRef?.value
   if (!svcs) return
 

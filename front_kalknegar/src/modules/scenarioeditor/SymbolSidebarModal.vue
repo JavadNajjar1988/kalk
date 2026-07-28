@@ -1,5 +1,9 @@
 <template>
-  <Sheet :open="open" @update:open="(value) => $emit('update:open', value)">
+  <Sheet
+    :open="open"
+    :modal="false"
+    @update:open="(value) => $emit('update:open', value)"
+  >
     <SheetContent
       side="right"
       :overlay="false"

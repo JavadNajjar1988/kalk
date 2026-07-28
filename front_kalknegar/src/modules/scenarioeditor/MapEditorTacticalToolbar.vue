@@ -73,18 +73,16 @@ import { useMainToolbarStore } from "@/stores/mainToolbarStore";
 import { useServicesStore } from "@/modules/tactical-symbol-map/stores/services.js";
 import { onUnmounted, ref, watch } from "vue";
 import { onKeyStroke } from "@vueuse/core";
+import {
+  cancelTacticalErase,
+  type TacticalEmitter,
+} from "./tacticalToolLifecycle";
 
 const store = useMainToolbarStore();
 const servicesStore = useServicesStore();
 
 const eraseMode = ref<"fade" | "cut" | null>(null);
 const brushSize = ref(3);
-
-type TacticalEmitter = {
-  on: (event: string, handler: (...args: any[]) => void) => void;
-  off: (event: string, handler: (...args: any[]) => void) => void;
-  emit: (event: string, payload?: unknown) => void;
-};
 
 let emitterRef: TacticalEmitter | null = null;
 
@@ -118,6 +116,9 @@ const bindEmitter = () => {
 watch(() => servicesStore.getServices().emitter, () => bindEmitter(), { immediate: true });
 
 onUnmounted(() => {
+  // The OpenLayers interaction outlives the toolbar component unless it is
+  // explicitly deactivated.
+  cancelTacticalErase(emitterRef);
   emitterRef?.off("ui/erase/active", onEraseActive);
   emitterRef?.off("ui/erase/inactive", onEraseInactive);
 });
