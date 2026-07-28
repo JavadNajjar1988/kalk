@@ -46,54 +46,170 @@
       />
 
       <div class="mt-4 max-h-[40vh] overflow-auto sm:max-h-[50vh]">
+        <section class="border-border mb-3 overflow-hidden rounded-xl border">
+          <button
+            type="button"
+            class="bg-rose-50/70 hover:bg-rose-50 dark:bg-rose-950/20 dark:hover:bg-rose-950/30 flex w-full items-center gap-2 px-4 py-3 text-right transition-colors"
+            :aria-expanded="favoriteCategoryExpanded"
+            @click="favoriteCategoryExpanded = !favoriteCategoryExpanded"
+          >
+            <PhCaretDown
+              class="text-muted-foreground size-4 shrink-0 transition-transform"
+              :class="{ '-rotate-90': !favoriteCategoryExpanded }"
+            />
+            <PhHeart class="size-4 shrink-0 text-rose-600" weight="fill" />
+            <span class="flex-auto text-sm font-bold">کاربردی‌تر</span>
+            <span
+              class="bg-background text-muted-foreground min-w-7 rounded-full border px-2 py-0.5 text-center text-xs font-semibold"
+            >
+              {{ favoriteIcons.length }}
+            </span>
+          </button>
+          <div v-if="favoriteCategoryExpanded" class="border-border border-t">
+            <div
+              v-if="favoriteIcons.length"
+              class="grid grid-cols-2 gap-2 p-2 sm:grid-cols-3"
+            >
+              <div
+                v-for="icon in favoriteIcons"
+                :key="`favorite-${icon.sidc}`"
+                class="relative"
+              >
+                <button
+                  type="button"
+                  class="border-border bg-background hover:bg-accent flex min-h-28 w-full flex-col items-center justify-start rounded-xl border p-3 pt-8 transition-colors"
+                  :class="
+                    icon.code === iconValue ? 'ring-primary bg-primary/5 ring-2' : ''
+                  "
+                  :aria-label="icon.displayLabel"
+                  :aria-pressed="icon.code === iconValue"
+                  @click="iconValue = icon.code"
+                >
+                  <MilSymbol
+                    aria-hidden="true"
+                    :size="symbolSize"
+                    :sidc="icon.sidc"
+                    :modifiers="symbolOptions"
+                  />
+                  <p
+                    v-if="icon.detailLabel"
+                    class="text-muted-foreground mt-1 max-w-full truncate overflow-hidden text-center text-xs"
+                  >
+                    {{ icon.detailLabel }}
+                  </p>
+                  <p
+                    class="mt-1 max-w-full overflow-hidden text-center text-sm font-medium break-words"
+                    :class="icon.code === iconValue ? 'text-primary' : ''"
+                  >
+                    {{ icon.displayLabel }}
+                  </p>
+                </button>
+                <button
+                  type="button"
+                  class="bg-background/90 absolute top-2 left-2 grid size-7 place-items-center rounded-full border text-rose-600 shadow-sm transition-transform hover:scale-105"
+                  title="حذف از کاربردی‌تر"
+                  aria-label="حذف از کاربردی‌تر"
+                  @click.stop="toggleFavorite(icon.sidc)"
+                >
+                  <PhHeart class="size-4" weight="fill" />
+                </button>
+              </div>
+            </div>
+            <p
+              v-else
+              class="text-muted-foreground px-4 py-5 text-center text-xs leading-6"
+            >
+              هنوز نمادی انتخاب نشده؛ برای افزودن به این بخش، قلب کنار نماد را
+              انتخاب کنید.
+            </p>
+          </div>
+        </section>
+
         <div
           v-for="[entity, entityIcons] in filteredIconsByEntity"
           :key="entity"
-          class="relative"
+          class="border-border relative mb-2 overflow-hidden rounded-xl border"
         >
-          <h3
-            class="border-border bg-muted sticky top-0 z-10 border-y p-2 px-4 text-sm font-medium"
+          <button
+            type="button"
+            class="bg-muted/70 hover:bg-muted sticky top-0 z-10 flex w-full items-center gap-2 px-4 py-2.5 text-right text-sm font-semibold transition-colors"
             :id="entity"
+            :aria-expanded="isEntityExpanded(entity)"
+            @click="toggleEntity(entity)"
           >
-            {{ entity }}
-          </h3>
-          <div class="mt-3 grid grid-cols-2 gap-2 p-1 sm:grid-cols-3">
-            <button
-              type="button"
-              v-for="{
-                sidc,
-                entityLabel,
-                detailLabel,
-                displayLabel,
-                code,
-              } in entityIcons"
-              :key="sidc"
-              :id="`scode-${code}`"
-              @click="iconValue = code"
-              :aria-label="displayLabel"
-              :aria-pressed="code === iconValue"
-              class="border-border bg-background hover:bg-accent flex min-h-28 w-full scroll-m-12 flex-col items-center justify-start rounded-xl border p-3 transition-colors"
-              :class="code === iconValue ? 'ring-primary bg-primary/5 ring-2' : ''"
+            <PhCaretDown
+              class="text-muted-foreground size-4 shrink-0 transition-transform"
+              :class="{ '-rotate-90': !isEntityExpanded(entity) }"
+            />
+            <span class="flex-auto">{{ entity }}</span>
+            <span
+              class="bg-background text-muted-foreground min-w-7 rounded-full border px-2 py-0.5 text-center text-xs"
             >
-              <MilSymbol
-                aria-hidden="true"
-                :size="symbolSize"
-                :sidc="sidc"
-                :modifiers="symbolOptions"
-              />
-              <p
-                v-if="detailLabel"
-                class="text-muted-foreground mt-1 max-w-full truncate overflow-hidden text-center text-xs"
+              {{ entityIcons.length }}
+            </span>
+          </button>
+          <div
+            v-if="isEntityExpanded(entity)"
+            class="grid grid-cols-2 gap-2 p-2 sm:grid-cols-3"
+          >
+            <div v-for="icon in entityIcons" :key="icon.sidc" class="relative">
+              <button
+                type="button"
+                :id="`scode-${icon.code}`"
+                @click="iconValue = icon.code"
+                :aria-label="icon.displayLabel"
+                :aria-pressed="icon.code === iconValue"
+                class="border-border bg-background hover:bg-accent flex min-h-28 w-full scroll-m-12 flex-col items-center justify-start rounded-xl border p-3 pt-8 transition-colors"
+                :class="
+                  icon.code === iconValue ? 'ring-primary bg-primary/5 ring-2' : ''
+                "
               >
-                {{ detailLabel }}
-              </p>
-              <p
-                class="mt-1 max-w-full overflow-hidden text-center text-sm font-medium break-words"
-                :class="code === iconValue ? 'text-primary' : ''"
+                <MilSymbol
+                  aria-hidden="true"
+                  :size="symbolSize"
+                  :sidc="icon.sidc"
+                  :modifiers="symbolOptions"
+                />
+                <p
+                  v-if="icon.detailLabel"
+                  class="text-muted-foreground mt-1 max-w-full truncate overflow-hidden text-center text-xs"
+                >
+                  {{ icon.detailLabel }}
+                </p>
+                <p
+                  class="mt-1 max-w-full overflow-hidden text-center text-sm font-medium break-words"
+                  :class="icon.code === iconValue ? 'text-primary' : ''"
+                >
+                  {{ icon.displayLabel }}
+                </p>
+              </button>
+              <button
+                type="button"
+                class="bg-background/90 absolute top-2 left-2 grid size-7 place-items-center rounded-full border shadow-sm transition-transform hover:scale-105"
+                :class="
+                  isFavorite(icon.sidc)
+                    ? 'text-rose-600'
+                    : 'text-muted-foreground hover:text-rose-600'
+                "
+                :title="
+                  isFavorite(icon.sidc)
+                    ? 'حذف از کاربردی‌تر'
+                    : 'افزودن به کاربردی‌تر'
+                "
+                :aria-label="
+                  isFavorite(icon.sidc)
+                    ? 'حذف از کاربردی‌تر'
+                    : 'افزودن به کاربردی‌تر'
+                "
+                :aria-pressed="isFavorite(icon.sidc)"
+                @click.stop="toggleFavorite(icon.sidc)"
               >
-                {{ displayLabel }}
-              </p>
-            </button>
+                <PhHeart
+                  class="size-4"
+                  :weight="isFavorite(icon.sidc) ? 'fill' : 'regular'"
+                />
+              </button>
+            </div>
           </div>
         </div>
         <h3
@@ -171,7 +287,11 @@ import { computed, nextTick, onActivated, ref, watch } from "vue";
 import { groupBy } from "@/utils";
 import { useSymbolItems } from "@/composables/symbolData";
 import { type UnitSymbolOptions } from "@/types/scenarioModels";
-import { PhMagnifyingGlass as MagnifyingGlassIcon } from "@phosphor-icons/vue";
+import {
+  PhCaretDown,
+  PhHeart,
+  PhMagnifyingGlass as MagnifyingGlassIcon,
+} from "@phosphor-icons/vue";
 import { breakpointsTailwind, useBreakpoints, useDebounce } from "@vueuse/core";
 import {
   translateEntity,
@@ -189,6 +309,20 @@ const props = withDefaults(defineProps<Props>(), { symbolSize: 32 });
 const searchQuery = ref("");
 const debouncedQuery = useDebounce(searchQuery, 100);
 const inputRef = ref();
+const favoriteCategoryExpanded = ref(true);
+const expandedEntities = ref<Set<string>>(new Set());
+const favoritesStorageKey = "kalknegar.symbol-favorites.v1";
+
+function loadFavoriteSidcs() {
+  try {
+    const stored = JSON.parse(localStorage.getItem(favoritesStorageKey) || "[]");
+    return new Set<string>(Array.isArray(stored) ? stored : []);
+  } catch {
+    return new Set<string>();
+  }
+}
+
+const favoriteSidcs = ref<Set<string>>(loadFavoriteSidcs());
 
 const {
   mod1Items,
@@ -259,6 +393,43 @@ const filteredIconsByEntity = computed(() => {
   return groupBy(filtered, "entityLabel");
 });
 
+const favoriteIcons = computed(() => {
+  const query = debouncedQuery.value.trim().toLocaleLowerCase("fa");
+  return localizedIcons.value.filter((icon) => {
+    if (!favoriteSidcs.value.has(icon.sidc)) return false;
+    if (!query) return true;
+    return (
+      icon.displayLabel.toLocaleLowerCase("fa").includes(query) ||
+      icon.detailLabel.toLocaleLowerCase("fa").includes(query) ||
+      icon.entityLabel.toLocaleLowerCase("fa").includes(query) ||
+      icon.code.includes(query)
+    );
+  });
+});
+
+function isFavorite(sidc: string) {
+  return favoriteSidcs.value.has(sidc);
+}
+
+function toggleFavorite(sidc: string) {
+  const next = new Set(favoriteSidcs.value);
+  if (next.has(sidc)) next.delete(sidc);
+  else next.add(sidc);
+  favoriteSidcs.value = next;
+  localStorage.setItem(favoritesStorageKey, JSON.stringify([...next]));
+}
+
+function isEntityExpanded(entity: string) {
+  return expandedEntities.value.has(entity);
+}
+
+function toggleEntity(entity: string) {
+  const next = new Set(expandedEntities.value);
+  if (next.has(entity)) next.delete(entity);
+  else next.add(entity);
+  expandedEntities.value = next;
+}
+
 function localizeModifierItems(items: typeof mod1Items.value) {
   return items.map((item) => ({
     ...item,
@@ -294,11 +465,15 @@ watch([mod1Value, mod2Value, iconValue], (value, oldValue) => {
   emit("update-sidc", csidc.value);
 });
 
-function goTo(sidc: string) {
-  const el = document.getElementById(`scode-${sidc}`);
-  if (el) {
-    el.scrollIntoView(true);
+async function goTo(sidc: string) {
+  const targetGroup = [...filteredIconsByEntity.value].find(([, entityIcons]) =>
+    entityIcons.some((icon) => icon.code === sidc),
+  );
+  if (targetGroup && !isEntityExpanded(targetGroup[0])) {
+    toggleEntity(targetGroup[0]);
+    await nextTick();
   }
+  document.getElementById(`scode-${sidc}`)?.scrollIntoView(true);
 }
 
 onActivated(() => {
@@ -307,12 +482,22 @@ onActivated(() => {
     if (!isMobile.value) {
       inputRef.value.focus();
     }
-    const el = document.getElementById(`scode-${iconValue.value}`);
-    if (el) {
-      el.scrollIntoView({ block: "center" });
-    }
+    void goTo(iconValue.value);
   });
 });
+
+watch(
+  [localizedIcons, iconValue],
+  ([currentIcons, currentCode]) => {
+    const currentIcon = currentIcons.find((icon) => icon.code === currentCode);
+    if (!currentIcon || isEntityExpanded(currentIcon.entityLabel)) return;
+    expandedEntities.value = new Set([
+      ...expandedEntities.value,
+      currentIcon.entityLabel,
+    ]);
+  },
+  { immediate: true },
+);
 
 function onEsc(e: KeyboardEvent) {
   if (searchQuery.value.length) {

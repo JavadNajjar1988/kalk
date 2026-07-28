@@ -1,6 +1,6 @@
 /* global clients */
 // Service Worker برای PWA سیستم ساجد
-const CACHE_NAME = 'sajed-v1.1.0';
+const CACHE_NAME = 'sajed-v1.2.0';
 const urlsToCache = [
   '/',
   '/manifest.json',
@@ -58,6 +58,26 @@ self.addEventListener('fetch', (event) => {
   // Always prefer the current application shell for navigations.
   if (request.mode === 'navigate') {
     event.respondWith(fetch(request).catch(() => caches.match('/')));
+    return;
+  }
+
+  // KalkNegar is deployed independently and uses content-hashed chunks.
+  // Prefer the network so a freshly rebuilt frontend is visible immediately,
+  // while retaining a cached response only as an offline fallback.
+  if (url.pathname.startsWith('/kalknegar/')) {
+    event.respondWith(
+      fetch(request)
+        .then((response) => {
+          if (response && response.status === 200 && response.type === 'basic') {
+            const responseToCache = response.clone();
+            event.waitUntil(
+              caches.open(CACHE_NAME).then((cache) => cache.put(request, responseToCache))
+            );
+          }
+          return response;
+        })
+        .catch(() => caches.match(request))
+    );
     return;
   }
 

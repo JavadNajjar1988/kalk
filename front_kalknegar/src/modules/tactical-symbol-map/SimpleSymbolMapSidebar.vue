@@ -1,44 +1,76 @@
 <template>
-  <div
-    class="e3de-sidebar"
-    tabindex="0"
-    @keydown="onKeyDown"
-    @click="onClick(null)"
-  >
+  <div class="e3de-sidebar" tabindex="0" @keydown="onKeyDown" @click="onClick(null)">
     <FilterInput
       @focus="onFocus"
       memento-key="ui.sidebar.symbol-search"
       :initial-search="symbolDefaultSearch"
     />
     <div class="symbol-categories">
+      <div class="category-group favorite-category">
+        <button
+          type="button"
+          class="category-header favorite-category-header"
+          :class="{ collapsed: !favoriteCategoryExpanded }"
+          :aria-expanded="favoriteCategoryExpanded"
+          @click="favoriteCategoryExpanded = !favoriteCategoryExpanded"
+        >
+          <span class="category-icon">{{
+            favoriteCategoryExpanded ? '▼' : '▶'
+          }}</span>
+          <span class="favorite-category-icon" aria-hidden="true">♥</span>
+          <span class="category-title">کاربردی‌تر</span>
+          <span class="category-count">({{ favoriteEntries.length }})</span>
+        </button>
+        <transition name="slide">
+          <div v-if="favoriteCategoryExpanded">
+            <div v-if="favoriteEntries.length" class="category-items">
+              <Card
+                v-for="entry in favoriteEntries"
+                :key="`favorite-${entry.id}`"
+                v-bind="translateEntry(entry)"
+                compact
+                :selected="state.selected.includes(entry.id)"
+                :editing="state.editing"
+                :onClick="onClick"
+                @favorite-change="handleFavoriteChange"
+                @symbol-dblclick="handleSymbolDoubleClick"
+              />
+            </div>
+            <p v-else class="favorite-empty">
+              هنوز نمادی انتخاب نشده؛ برای افزودن به این بخش، روی قلب کنار نماد بزنید.
+            </p>
+          </div>
+        </transition>
+      </div>
       <div
         v-for="(category, categoryName) in groupedEntries"
         :key="categoryName"
         class="category-group"
       >
-        <div 
+        <div
           class="category-header"
-          :class="{ 'collapsed': !isCategoryExpanded(categoryName) }"
+          :class="{ collapsed: !isCategoryExpanded(categoryName) }"
           @click="toggleCategory(categoryName)"
         >
-          <span class="category-icon">{{ isCategoryExpanded(categoryName) ? '▼' : '▶' }}</span>
+          <span class="category-icon">{{
+            isCategoryExpanded(categoryName) ? '▼' : '▶'
+          }}</span>
           <span class="category-title">{{ categoryName || 'سایر' }}</span>
           <span class="category-count">({{ category.length }})</span>
         </div>
         <transition name="slide">
-          <div 
-            v-if="isCategoryExpanded(categoryName)"
-            class="category-items"
-          >
-          <Card
-            v-for="entry in category"
-            :key="entry.id"
-            v-bind="translateEntry(entry)"
-            :selected="state.selected.includes(entry.id)"
-            :editing="state.editing"
-            :onClick="onClick"
-            @symbol-dblclick="handleSymbolDoubleClick"
-          />
+          <div v-if="isCategoryExpanded(categoryName)" class="category-items">
+            <Card
+              v-for="entry in category"
+              :key="entry.id"
+              v-bind="translateEntry(entry)"
+              compact
+              :selected="state.selected.includes(entry.id)"
+              :editing="state.editing"
+              :onClick="onClick"
+              @favorite-change="handleFavoriteChange"
+              @symbol-dblclick="handleSymbolDoubleClick"
+            />
           </div>
         </transition>
       </div>
@@ -59,7 +91,7 @@ import * as ID from './ids.js'
 import { translateEntity } from '../../symbology/translations'
 import {
   ensurePersianTacticalLabel,
-  tacticalWordTranslations
+  tacticalWordTranslations,
 } from './persianTacticalLabels.js'
 // Use Ramda's equals for deep equality check
 const isEqual = (a, b) => JSON.stringify(a) === JSON.stringify(b)
@@ -72,7 +104,7 @@ const emit = defineEmits(['selection-change', 'symbol-dblclick'])
 // Custom default search with @symbol scope
 const symbolDefaultSearch = {
   history: [{ key: 'root', scope: `@${ID.SYMBOL}`, label: 'symbol' }],
-  filter: ''
+  filter: '',
 }
 const symbolRootHistory = [{ key: 'root', scope: `@${ID.SYMBOL}`, label: 'symbol' }]
 
@@ -105,7 +137,7 @@ const handlers = {
   deselect: (state) => {
     if (state.selected.length) return { ...state, selected: [] }
     else return state
-  }
+  },
 }
 
 const reducer = (state, event) => {
@@ -187,7 +219,7 @@ const categoryTranslations = {
   'Psychological Operations (PSYOP)': 'عملیات روانی',
   'Public Venues Infrastructure': 'زیرساخت اماکن عمومی',
   'Rail Incident': 'حادثه ریلی',
-  'Rape': 'تجاوز جنسی',
+  Rape: 'تجاوز جنسی',
   'Rape Attempted': 'اقدام به تجاوز جنسی',
   'Sea Surface Track': 'رد سطحی دریایی',
   'Space Track': 'رد فضایی',
@@ -198,120 +230,120 @@ const categoryTranslations = {
   'Water Supply Infrastructure': 'زیرساخت تأمین آب',
 
   // Military dimensions
-  'Air': 'هوایی',
-  'Ground': 'زمینی',
-  'Sea': 'دریایی',
-  'Space': 'فضایی',
-  'Equipment': 'تجهیزات',
-  'Installation': 'تأسیسات',
+  Air: 'هوایی',
+  Ground: 'زمینی',
+  Sea: 'دریایی',
+  Space: 'فضایی',
+  Equipment: 'تجهیزات',
+  Installation: 'تأسیسات',
   'Control Measure': 'اقدامات کنترلی',
-  'Control': 'کنترل',
-  'Measure': 'اقدامات',
-  'Activity': 'فعالیت',
-  'Meteorological': 'هواشناسی',
-  'Oceanographic': 'اقیانوس‌شناسی',
+  Control: 'کنترل',
+  Measure: 'اقدامات',
+  Activity: 'فعالیت',
+  Meteorological: 'هواشناسی',
+  Oceanographic: 'اقیانوس‌شناسی',
   'Signal Intelligence': 'اطلاعات سیگنال',
-  'SIGINT': 'اطلاعات سیگنال',
-  'Cyberspace': 'فضای سایبری',
-  'Subsurface': 'زیرسطحی',
-  
+  SIGINT: 'اطلاعات سیگنال',
+  Cyberspace: 'فضای سایبری',
+  Subsurface: 'زیرسطحی',
+
   // Emergency Management Symbols
   'Emergency Management Symbols': 'نمادهای مدیریت اضطراری',
   'Emergency Management': 'مدیریت اضطراری',
   'Agriculture and Food Infrastructure': 'زیرساخت کشاورزی و غذایی',
-  'Agriculture': 'کشاورزی',
-  'Food': 'غذا',
+  Agriculture: 'کشاورزی',
+  Food: 'غذا',
   'Special Needs Infrastructure': 'زیرساخت نیازهای ویژه',
   'Special Needs': 'نیازهای ویژه',
   'Natural Events': 'رویدادهای طبیعی',
-  'Natural': 'طبیعی',
-  'Events': 'رویدادها',
-  'Geologic': 'زمین‌شناسی',
-  'Geological': 'زمین‌شناسی',
+  Natural: 'طبیعی',
+  Events: 'رویدادها',
+  Geologic: 'زمین‌شناسی',
+  Geological: 'زمین‌شناسی',
   'Fire Incident': 'حادثه آتش‌سوزی',
-  'Fire': 'آتش',
-  'Incident': 'حادثه',
+  Fire: 'آتش',
+  Incident: 'حادثه',
   'Hazardous Material Incident': 'حادثه مواد خطرناک',
   'Hazardous Material': 'مواد خطرناک',
-  'Hazardous': 'خطرناک',
-  'Infrastructure': 'زیرساخت',
+  Hazardous: 'خطرناک',
+  Infrastructure: 'زیرساخت',
   'Transportation Infrastructure': 'زیرساخت حمل و نقل',
-  'Transportation': 'حمل و نقل',
+  Transportation: 'حمل و نقل',
   'Energy Infrastructure': 'زیرساخت انرژی',
-  'Energy': 'انرژی',
+  Energy: 'انرژی',
   'Water Infrastructure': 'زیرساخت آب',
-  'Water': 'آب',
+  Water: 'آب',
   'Medical Infrastructure': 'زیرساخت پزشکی',
-  'Medical': 'پزشکی',
-  'Health': 'بهداشت',
+  Medical: 'پزشکی',
+  Health: 'بهداشت',
   'Public Works Infrastructure': 'زیرساخت کارهای عمومی',
   'Public Works': 'کارهای عمومی',
   'Emergency Operations': 'عملیات اضطراری',
-  'Operations': 'عملیات',
+  Operations: 'عملیات',
   'Emergency Service': 'خدمات اضطراری',
-  'Service': 'خدمات',
+  Service: 'خدمات',
   'Search and Rescue': 'جستجو و نجات',
-  'Search': 'جستجو',
-  'Rescue': 'نجات',
+  Search: 'جستجو',
+  Rescue: 'نجات',
   'Law Enforcement': 'اجرای قانون',
-  'Law': 'قانون',
-  'Enforcement': 'اجرا',
+  Law: 'قانون',
+  Enforcement: 'اجرا',
   'Fire Service': 'خدمات آتش‌نشانی',
   'Medical Service': 'خدمات پزشکی',
-  'Communication': 'ارتباطات',
-  'Security': 'امنیت',
-  'Shelter': 'پناهگاه',
-  'Supply': 'تدارکات',
-  
+  Communication: 'ارتباطات',
+  Security: 'امنیت',
+  Shelter: 'پناهگاه',
+  Supply: 'تدارکات',
+
   // Additional categories
   'Event (Damage)': 'رویداد (خسارت)',
   'Event (Danger)': 'رویداد (خطر)',
-  'Event': 'رویداد',
-  'Damage': 'خسارت',
-  'Danger': 'خطر',
-  'Forces': 'نیروها',
-  'Force': 'نیرو',
-  'Individual': 'فرد',
-  'Items': 'اقلام',
-  'Item': 'اقلام',
-  'Locations': 'مکان‌ها',
-  'Location': 'مکان',
+  Event: 'رویداد',
+  Damage: 'خسارت',
+  Danger: 'خطر',
+  Forces: 'نیروها',
+  Force: 'نیرو',
+  Individual: 'فرد',
+  Items: 'اقلام',
+  Item: 'اقلام',
+  Locations: 'مکان‌ها',
+  Location: 'مکان',
   'Mobility / Survivability': 'تحرک / بقا',
-  'Mobility': 'تحرک',
-  'Survivability': 'بقا',
+  Mobility: 'تحرک',
+  Survivability: 'بقا',
   'Nonmilitary Group or Organization': 'گروه یا سازمان غیرنظامی',
   'Nonmilitary Group or Organization (NGO)': 'گروه یا سازمان غیرنظامی (سازمان غیردولتی)',
-  'Nonmilitary': 'غیرنظامی',
-  'Group': 'گروه',
-  'Organization': 'سازمان',
-  'NGO': 'سازمان غیردولتی',
-  'Tasks': 'وظایف',
-  'Task': 'وظیفه',
-  'Vehicle': 'وسیله نقلیه',
-  'Vehicles': 'وسایل نقلیه',
+  Nonmilitary: 'غیرنظامی',
+  Group: 'گروه',
+  Organization: 'سازمان',
+  NGO: 'سازمان غیردولتی',
+  Tasks: 'وظایف',
+  Task: 'وظیفه',
+  Vehicle: 'وسیله نقلیه',
+  Vehicles: 'وسایل نقلیه',
   'Violent Activities (Death Causing)': 'فعالیت‌های خشونت‌آمیز (مرگ‌بار)',
   'Violent Activities': 'فعالیت‌های خشونت‌آمیز',
-  'Violent': 'خشونت‌آمیز',
+  Violent: 'خشونت‌آمیز',
   'Death Causing': 'مرگ‌بار',
-  'Death': 'مرگ',
-  'Causing': 'بار',
-  
-  'Other': 'سایر',
-  'Unknown': 'نامشخص'
+  Death: 'مرگ',
+  Causing: 'بار',
+
+  Other: 'سایر',
+  Unknown: 'نامشخص',
 }
 
 const translateCategory = (category) => {
   if (!category || category.trim() === '') {
     return 'سایر'
   }
-  
+
   const trimmedCategory = category.trim()
-  
+
   // Check exact match first
   if (categoryTranslations[trimmedCategory]) {
     return categoryTranslations[trimmedCategory]
   }
-  
+
   // Check case-insensitive exact match
   const lowerCategory = trimmedCategory.toLowerCase()
   for (const [key, value] of Object.entries(categoryTranslations)) {
@@ -319,7 +351,7 @@ const translateCategory = (category) => {
       return value
     }
   }
-  
+
   // Try to find partial matches (longer keys first for better accuracy)
   const sortedKeys = Object.keys(categoryTranslations).sort((a, b) => b.length - a.length)
   for (const key of sortedKeys) {
@@ -329,7 +361,7 @@ const translateCategory = (category) => {
       return categoryTranslations[key]
     }
   }
-  
+
   // Try to translate categories with parentheses like "Event (Damage)"
   const parenMatch = trimmedCategory.match(/^(.+?)\s*\((.+?)\)$/)
   if (parenMatch) {
@@ -337,16 +369,16 @@ const translateCategory = (category) => {
     const parenPart = parenMatch[2].trim()
     const translatedMain = translateCategory(mainPart)
     const translatedParen = translateCategory(parenPart)
-    
+
     // If both parts were translated, combine them
     if (translatedMain !== mainPart || translatedParen !== parenPart) {
       return `${translatedMain} (${translatedParen})`
     }
   }
-  
+
   // Try word-by-word translation for compound categories
   const words = trimmedCategory.split(/\s+/)
-  const translatedWords = words.map(word => {
+  const translatedWords = words.map((word) => {
     // Remove punctuation for matching
     const cleanWord = word.replace(/[()]/g, '')
     // Check if word has translation
@@ -357,17 +389,17 @@ const translateCategory = (category) => {
     }
     return word
   })
-  
+
   // If any words were translated, join them
   const hasTranslation = translatedWords.some((w, idx) => {
     const originalWord = words[idx]
     return w !== originalWord
   })
-  
+
   if (hasTranslation) {
     return translatedWords.join(' ')
   }
-  
+
   // Return original if no translation found
   return trimmedCategory
 }
@@ -375,16 +407,19 @@ const translateCategory = (category) => {
 // Group entries by category (dimension or description)
 const groupedEntries = computed(() => {
   const groups = {}
-  
-  state.entries.forEach(entry => {
+
+  state.entries.forEach((entry) => {
     // Extract category from description (hierarchy) or tags (dimensions)
     let category = 'سایر'
-    
+
     // First try to get from description (hierarchy)
     // Skip first part if it's "Emergency Management Symbols" and use second or third part
     if (entry.description) {
-      const parts = entry.description.split(' • ').map(p => p.trim()).filter(p => p)
-      
+      const parts = entry.description
+        .split(' • ')
+        .map((p) => p.trim())
+        .filter((p) => p)
+
       if (parts.length > 0) {
         // If first part is "Emergency Management Symbols", skip it and use next part
         if (parts[0] === 'Emergency Management Symbols' && parts.length > 1) {
@@ -399,12 +434,14 @@ const groupedEntries = computed(() => {
         }
       }
     }
-    
+
     // If no description or category is still 'سایر', try tags
     if (category === 'سایر' && entry.tags) {
       const tags = entry.tags.split(' ')
       // Find SYSTEM tags (dimensions) - they are in format SYSTEM:dimension:NONE
-      const systemTags = tags.filter(tag => tag.startsWith('SYSTEM:') && tag.includes(':NONE'))
+      const systemTags = tags.filter(
+        (tag) => tag.startsWith('SYSTEM:') && tag.includes(':NONE'),
+      )
       if (systemTags.length > 0) {
         // Get the first dimension
         const dimension = systemTags[0].split(':')[1]
@@ -413,49 +450,82 @@ const groupedEntries = computed(() => {
         }
       }
     }
-    
+
     // Translate category to Persian
     const persianCategory = ensurePersianTacticalLabel(translateCategory(category))
-    
+
     if (!groups[persianCategory]) {
       groups[persianCategory] = []
     }
     groups[persianCategory].push(entry)
   })
-  
+
   // Sort categories alphabetically (Persian)
   const sortedGroups = {}
-  Object.keys(groups).sort().forEach(key => {
-    sortedGroups[key] = groups[key]
-  })
-  
+  Object.keys(groups)
+    .sort()
+    .forEach((key) => {
+      sortedGroups[key] = groups[key]
+    })
+
   return sortedGroups
 })
+
+const favoriteTag = 'USER:pin:NONE'
+
+const isFavoriteEntry = (entry) =>
+  String(entry.tags || '')
+    .split(' ')
+    .some((tag) => tag.toUpperCase() === favoriteTag.toUpperCase())
+
+const favoriteEntries = computed(() => state.entries.filter(isFavoriteEntry))
+const favoriteCategoryExpanded = ref(true)
+
+const handleFavoriteChange = ({ id, favorite }) => {
+  const entry = state.entries.find((item) => item.id === id)
+  if (!entry) return
+
+  const tags = String(entry.tags || '')
+    .split(' ')
+    .filter(Boolean)
+    .filter((tag) => tag.toUpperCase() !== favoriteTag.toUpperCase())
+
+  if (favorite) tags.push(favoriteTag)
+  entry.tags = tags.join(' ')
+}
 
 // Accordion state for categories
 const expandedCategories = ref({})
 
 // Initialize categories expansion state depending on search query and count
-watch(() => groupedEntries.value, (entries) => {
-  const isFiltering = search.value && search.value.filter && search.value.filter.length > 0
-  const isSmallList = Object.keys(entries).length <= 2 || state.entries.length <= 50
-  const shouldExpand = isFiltering || isSmallList
-  
-  Object.keys(entries).forEach(categoryName => {
-    if (!(categoryName in expandedCategories.value)) {
-      expandedCategories.value[categoryName] = shouldExpand
-    }
-  })
-}, { immediate: true })
+watch(
+  () => groupedEntries.value,
+  (entries) => {
+    const isFiltering =
+      search.value && search.value.filter && search.value.filter.length > 0
+    const isSmallList = Object.keys(entries).length <= 2 || state.entries.length <= 50
+    const shouldExpand = isFiltering || isSmallList
+
+    Object.keys(entries).forEach((categoryName) => {
+      if (!(categoryName in expandedCategories.value)) {
+        expandedCategories.value[categoryName] = shouldExpand
+      }
+    })
+  },
+  { immediate: true },
+)
 
 // Also watch search filter to expand automatically when searching
-watch(() => search.value?.filter, (filter) => {
-  if (filter && filter.length > 0) {
-    Object.keys(expandedCategories.value).forEach(category => {
-      expandedCategories.value[category] = true
-    })
-  }
-})
+watch(
+  () => search.value?.filter,
+  (filter) => {
+    if (filter && filter.length > 0) {
+      Object.keys(expandedCategories.value).forEach((category) => {
+        expandedCategories.value[category] = true
+      })
+    }
+  },
+)
 
 watch(
   () => state.selected,
@@ -463,7 +533,7 @@ watch(
     const id = selected[selected.length - 1] || null
     emit('selection-change', { id, entry: findEntryById(id) })
   },
-  { deep: true }
+  { deep: true },
 )
 
 // Check if category is expanded
@@ -481,102 +551,193 @@ const wordDictionary = {
   ...tacticalWordTranslations,
 
   // Common words
-  'Area': 'منطقه', 'Areas': 'مناطق',
-  'Coordination': 'هماهنگی', 'Coordinate': 'هماهنگ',
-  'Airspace': 'حریم هوایی',
-  'Circular': 'دایره‌ای', 'Circle': 'دایره',
-  'Rectangular': 'مستطیلی', 'Rectangle': 'مستطیل',
-  'Tactical': 'تاکتیکی', 'Tactics': 'تاکتیک',
-  'Graphics': 'گرافیک‌ها', 'Graphic': 'گرافیک',
-  'Fire': 'آتش', 'Fires': 'آتش‌ها',
-  'Support': 'پشتیبانی', 'Supports': 'پشتیبانی‌ها',
-  'Command': 'فرماندهی', 'Commands': 'فرماندهی‌ها',
-  'Control': 'کنترل', 'Controls': 'کنترل‌ها',
-  'Adult': 'بزرگسال', 'Adults': 'بزرگسالان',
-  'Day': 'روز', 'Days': 'روزها',
-  'Care': 'مراقبت', 'Cares': 'مراقبت‌ها',
-  'Agricultural': 'کشاورزی', 'Agriculture': 'کشاورزی',
-  'Laboratory': 'آزمایشگاه', 'Lab': 'آزمایشگاه', 'Labs': 'آزمایشگاه‌ها',
-  'Infrastructure': 'زیرساخت', 'Infrastructures': 'زیرساخت‌ها',
-  'Special': 'ویژه', 'Specials': 'ویژه‌ها',
-  'Needs': 'نیازها', 'Need': 'نیاز',
-  'Natural': 'طبیعی', 'Nature': 'طبیعت',
-  'Events': 'رویدادها', 'Event': 'رویداد',
-  'Geologic': 'زمین‌شناسی', 'Geological': 'زمین‌شناسی', 'Geology': 'زمین‌شناسی',
-  'Aftershock': 'پس‌لرزه', 'Aftershocks': 'پس‌لرزه‌ها',
-  'Animal': 'حیوان', 'Animals': 'حیوانات',
-  'Feedlot': 'دامداری', 'Feedlots': 'دامداری‌ها',
-  'Commercial': 'تجاری', 'Commerce': 'تجارت',
-  'Food': 'غذا', 'Foods': 'غذاها',
-  'Distribution': 'توزیع', 'Distribute': 'توزیع',
-  'Center': 'مرکز', 'Centers': 'مراکز',
-  'Farm': 'مزرعه', 'Farms': 'مزارع',
-  'Ranch': 'مزرعه دام', 'Ranches': 'مزارع دام',
-  'Production': 'تولید', 'Produce': 'تولید',
-  'Retail': 'خرده‌فروشی', 'Retails': 'خرده‌فروشی‌ها',
-  'Grain': 'غلات', 'Grains': 'غلات',
-  'Storage': 'ذخیره‌سازی', 'Store': 'ذخیره',
-  'Banking': 'بانکداری', 'Bank': 'بانک', 'Banks': 'بانک‌ها',
-  'Finance': 'مالی', 'Financial': 'مالی',
-  'Insurance': 'بیمه', 'Insurances': 'بیمه‌ها',
-  'ATM': 'خودپرداز', 'ATMs': 'خودپردازها',
-  'Bullion': 'شمش', 'Bullions': 'شمش‌ها',
-  'Federal': 'فدرال', 'Federation': 'فدراسیون',
-  'Reserve': 'ذخیره', 'Reserves': 'ذخایر',
-  'Exchange': 'تبادل', 'Exchanges': 'تبادلات',
-  'Services': 'خدمات', 'Service': 'خدمات',
-  'Other': 'سایر', 'Others': 'سایر',
-  'Chemical': 'شیمیایی', 'Chemicals': 'مواد شیمیایی',
-  'Plant': 'کارخانه', 'Plants': 'کارخانه‌ها',
-  'Firearms': 'اسلحه', 'Firearm': 'اسلحه',
-  'Manufacturer': 'تولیدکننده', 'Manufacturers': 'تولیدکنندگان',
-  'Facility': 'تأسیسات', 'Facilities': 'تأسیسات',
-  'Medical': 'پزشکی', 'Medicine': 'پزشکی',
-  'Health': 'بهداشت', 'Healthcare': 'مراقبت بهداشتی',
-  'Hospital': 'بیمارستان', 'Hospitals': 'بیمارستان‌ها',
-  'Clinic': 'کلینیک', 'Clinics': 'کلینیک‌ها',
-  'Emergency': 'اضطراری', 'Emergencies': 'اضطراری‌ها',
-  'Management': 'مدیریت', 'Manage': 'مدیریت',
-  'Symbols': 'نمادها', 'Symbol': 'نماد',
-  'Installation': 'تأسیسات', 'Installations': 'تأسیسات',
-  'Activity': 'فعالیت', 'Activities': 'فعالیت‌ها',
-  'Damage': 'خسارت', 'Damages': 'خسارات',
-  'Danger': 'خطر', 'Dangers': 'خطرات',
-  'Forces': 'نیروها', 'Force': 'نیرو',
-  'Individual': 'فرد', 'Individuals': 'افراد',
-  'Items': 'اقلام', 'Item': 'اقلام',
-  'Locations': 'مکان‌ها', 'Location': 'مکان',
-  'Mobility': 'تحرک', 'Mobile': 'متحرک',
-  'Survivability': 'بقا', 'Survive': 'زنده ماندن',
-  'Nonmilitary': 'غیرنظامی', 'Military': 'نظامی',
-  'Group': 'گروه', 'Groups': 'گروه‌ها',
-  'Organization': 'سازمان', 'Organizations': 'سازمان‌ها',
-  'Tasks': 'وظایف', 'Task': 'وظیفه',
-  'Vehicle': 'وسیله نقلیه', 'Vehicles': 'وسایل نقلیه',
-  'Violent': 'خشونت‌آمیز', 'Violence': 'خشونت',
-  'Death': 'مرگ', 'Deaths': 'مرگ‌ها',
-  'Causing': 'بار', 'Cause': 'علت',
-  'Transportation': 'حمل و نقل', 'Transport': 'حمل',
-  'Energy': 'انرژی', 'Energies': 'انرژی‌ها',
-  'Water': 'آب', 'Waters': 'آب‌ها',
-  'Public': 'عمومی', 'Publics': 'عمومی‌ها',
-  'Works': 'کارها', 'Work': 'کار',
-  'Operations': 'عملیات', 'Operation': 'عملیات',
-  'Search': 'جستجو', 'Searches': 'جستجوها',
-  'Rescue': 'نجات', 'Rescues': 'نجات‌ها',
-  'Law': 'قانون', 'Laws': 'قوانین',
-  'Enforcement': 'اجرا', 'Enforce': 'اجرا',
-  'Communication': 'ارتباطات', 'Communicate': 'ارتباط',
-  'Security': 'امنیت', 'Secure': 'امن',
-  'Shelter': 'پناهگاه', 'Shelters': 'پناهگاه‌ها',
-  'Supply': 'تدارکات', 'Supplies': 'تدارکات',
-  'Unknown': 'نامشخص',
-  'Planned': 'برنامه‌ریزی شده',
-  'Anticipated': 'پیش‌بینی شده',
-  'Present': 'حاضر',
-  'Friend': 'دوست',
-  'Hostile': 'دشمن',
-  'Neutral': 'خنثی'
+  Area: 'منطقه',
+  Areas: 'مناطق',
+  Coordination: 'هماهنگی',
+  Coordinate: 'هماهنگ',
+  Airspace: 'حریم هوایی',
+  Circular: 'دایره‌ای',
+  Circle: 'دایره',
+  Rectangular: 'مستطیلی',
+  Rectangle: 'مستطیل',
+  Tactical: 'تاکتیکی',
+  Tactics: 'تاکتیک',
+  Graphics: 'گرافیک‌ها',
+  Graphic: 'گرافیک',
+  Fire: 'آتش',
+  Fires: 'آتش‌ها',
+  Support: 'پشتیبانی',
+  Supports: 'پشتیبانی‌ها',
+  Command: 'فرماندهی',
+  Commands: 'فرماندهی‌ها',
+  Control: 'کنترل',
+  Controls: 'کنترل‌ها',
+  Adult: 'بزرگسال',
+  Adults: 'بزرگسالان',
+  Day: 'روز',
+  Days: 'روزها',
+  Care: 'مراقبت',
+  Cares: 'مراقبت‌ها',
+  Agricultural: 'کشاورزی',
+  Agriculture: 'کشاورزی',
+  Laboratory: 'آزمایشگاه',
+  Lab: 'آزمایشگاه',
+  Labs: 'آزمایشگاه‌ها',
+  Infrastructure: 'زیرساخت',
+  Infrastructures: 'زیرساخت‌ها',
+  Special: 'ویژه',
+  Specials: 'ویژه‌ها',
+  Needs: 'نیازها',
+  Need: 'نیاز',
+  Natural: 'طبیعی',
+  Nature: 'طبیعت',
+  Events: 'رویدادها',
+  Event: 'رویداد',
+  Geologic: 'زمین‌شناسی',
+  Geological: 'زمین‌شناسی',
+  Geology: 'زمین‌شناسی',
+  Aftershock: 'پس‌لرزه',
+  Aftershocks: 'پس‌لرزه‌ها',
+  Animal: 'حیوان',
+  Animals: 'حیوانات',
+  Feedlot: 'دامداری',
+  Feedlots: 'دامداری‌ها',
+  Commercial: 'تجاری',
+  Commerce: 'تجارت',
+  Food: 'غذا',
+  Foods: 'غذاها',
+  Distribution: 'توزیع',
+  Distribute: 'توزیع',
+  Center: 'مرکز',
+  Centers: 'مراکز',
+  Farm: 'مزرعه',
+  Farms: 'مزارع',
+  Ranch: 'مزرعه دام',
+  Ranches: 'مزارع دام',
+  Production: 'تولید',
+  Produce: 'تولید',
+  Retail: 'خرده‌فروشی',
+  Retails: 'خرده‌فروشی‌ها',
+  Grain: 'غلات',
+  Grains: 'غلات',
+  Storage: 'ذخیره‌سازی',
+  Store: 'ذخیره',
+  Banking: 'بانکداری',
+  Bank: 'بانک',
+  Banks: 'بانک‌ها',
+  Finance: 'مالی',
+  Financial: 'مالی',
+  Insurance: 'بیمه',
+  Insurances: 'بیمه‌ها',
+  ATM: 'خودپرداز',
+  ATMs: 'خودپردازها',
+  Bullion: 'شمش',
+  Bullions: 'شمش‌ها',
+  Federal: 'فدرال',
+  Federation: 'فدراسیون',
+  Reserve: 'ذخیره',
+  Reserves: 'ذخایر',
+  Exchange: 'تبادل',
+  Exchanges: 'تبادلات',
+  Services: 'خدمات',
+  Service: 'خدمات',
+  Other: 'سایر',
+  Others: 'سایر',
+  Chemical: 'شیمیایی',
+  Chemicals: 'مواد شیمیایی',
+  Plant: 'کارخانه',
+  Plants: 'کارخانه‌ها',
+  Firearms: 'اسلحه',
+  Firearm: 'اسلحه',
+  Manufacturer: 'تولیدکننده',
+  Manufacturers: 'تولیدکنندگان',
+  Facility: 'تأسیسات',
+  Facilities: 'تأسیسات',
+  Medical: 'پزشکی',
+  Medicine: 'پزشکی',
+  Health: 'بهداشت',
+  Healthcare: 'مراقبت بهداشتی',
+  Hospital: 'بیمارستان',
+  Hospitals: 'بیمارستان‌ها',
+  Clinic: 'کلینیک',
+  Clinics: 'کلینیک‌ها',
+  Emergency: 'اضطراری',
+  Emergencies: 'اضطراری‌ها',
+  Management: 'مدیریت',
+  Manage: 'مدیریت',
+  Symbols: 'نمادها',
+  Symbol: 'نماد',
+  Installation: 'تأسیسات',
+  Installations: 'تأسیسات',
+  Activity: 'فعالیت',
+  Activities: 'فعالیت‌ها',
+  Damage: 'خسارت',
+  Damages: 'خسارات',
+  Danger: 'خطر',
+  Dangers: 'خطرات',
+  Forces: 'نیروها',
+  Force: 'نیرو',
+  Individual: 'فرد',
+  Individuals: 'افراد',
+  Items: 'اقلام',
+  Item: 'اقلام',
+  Locations: 'مکان‌ها',
+  Location: 'مکان',
+  Mobility: 'تحرک',
+  Mobile: 'متحرک',
+  Survivability: 'بقا',
+  Survive: 'زنده ماندن',
+  Nonmilitary: 'غیرنظامی',
+  Military: 'نظامی',
+  Group: 'گروه',
+  Groups: 'گروه‌ها',
+  Organization: 'سازمان',
+  Organizations: 'سازمان‌ها',
+  Tasks: 'وظایف',
+  Task: 'وظیفه',
+  Vehicle: 'وسیله نقلیه',
+  Vehicles: 'وسایل نقلیه',
+  Violent: 'خشونت‌آمیز',
+  Violence: 'خشونت',
+  Death: 'مرگ',
+  Deaths: 'مرگ‌ها',
+  Causing: 'بار',
+  Cause: 'علت',
+  Transportation: 'حمل و نقل',
+  Transport: 'حمل',
+  Energy: 'انرژی',
+  Energies: 'انرژی‌ها',
+  Water: 'آب',
+  Waters: 'آب‌ها',
+  Public: 'عمومی',
+  Publics: 'عمومی‌ها',
+  Works: 'کارها',
+  Work: 'کار',
+  Operations: 'عملیات',
+  Operation: 'عملیات',
+  Search: 'جستجو',
+  Searches: 'جستجوها',
+  Rescue: 'نجات',
+  Rescues: 'نجات‌ها',
+  Law: 'قانون',
+  Laws: 'قوانین',
+  Enforcement: 'اجرا',
+  Enforce: 'اجرا',
+  Communication: 'ارتباطات',
+  Communicate: 'ارتباط',
+  Security: 'امنیت',
+  Secure: 'امن',
+  Shelter: 'پناهگاه',
+  Shelters: 'پناهگاه‌ها',
+  Supply: 'تدارکات',
+  Supplies: 'تدارکات',
+  Unknown: 'نامشخص',
+  Planned: 'برنامه‌ریزی شده',
+  Anticipated: 'پیش‌بینی شده',
+  Present: 'حاضر',
+  Friend: 'دوست',
+  Hostile: 'دشمن',
+  Neutral: 'خنثی',
 }
 
 // Symbol name and description translations
@@ -602,67 +763,68 @@ const symbolTranslations = {
   'Financial Services Other': 'سایر خدمات مالی',
   'Commercial Infrastructure': 'زیرساخت تجاری',
   'Chemical Plant': 'کارخانه شیمیایی',
-  'Firearms Manufacturer': 'تولیدکننده اسلحه'
+  'Firearms Manufacturer': 'تولیدکننده اسلحه',
 }
 
 // Tag label translations
 const tagLabelTranslations = {
-  'SYMBOL': 'نماد',
-  'AIR': 'هوایی',
-  'C2': 'فرماندهی و کنترل',
-  'CS': 'پشتیبانی رزمی',
-  'CSS': 'پشتیبانی خدمات رزمی',
-  'EMS': 'مدیریت اضطراری',
-  'LAND': 'زمینی',
-  'MARITIME': 'دریایی',
-  'SIGINT': 'اطلاعات سیگنال',
-  'SO': 'عملیات ویژه',
-  'SOF': 'نیروهای عملیات ویژه',
-  'SPACE': 'فضایی',
-  'SUBSURFACE': 'زیرسطحی',
-  'SURFACE': 'سطحی',
-  'TASK': 'وظیفه',
-  'UNIT': 'یگان',
-  'INSTALLATION': 'تأسیسات',
-  'EQUIPMENT': 'تجهیزات',
-  'ACTIVITY': 'فعالیت',
-  'FIRE': 'آتش',
-  'CONTROL': 'کنترل',
-  'FEATURE': 'ویژگی',
-  'LAYER': 'لایه',
-  'LINK': 'لینک',
-  'MARKER': 'نشانگر',
-  'BOOKMARK': 'بوکمارک',
-  'PLACE': 'مکان',
-  'MEASURE': 'اندازه‌گیری'
+  SYMBOL: 'نماد',
+  AIR: 'هوایی',
+  C2: 'فرماندهی و کنترل',
+  CS: 'پشتیبانی رزمی',
+  CSS: 'پشتیبانی خدمات رزمی',
+  EMS: 'مدیریت اضطراری',
+  LAND: 'زمینی',
+  MARITIME: 'دریایی',
+  SIGINT: 'اطلاعات سیگنال',
+  SO: 'عملیات ویژه',
+  SOF: 'نیروهای عملیات ویژه',
+  SPACE: 'فضایی',
+  SUBSURFACE: 'زیرسطحی',
+  SURFACE: 'سطحی',
+  TASK: 'وظیفه',
+  UNIT: 'یگان',
+  INSTALLATION: 'تأسیسات',
+  EQUIPMENT: 'تجهیزات',
+  ACTIVITY: 'فعالیت',
+  FIRE: 'آتش',
+  CONTROL: 'کنترل',
+  FEATURE: 'ویژگی',
+  LAYER: 'لایه',
+  LINK: 'لینک',
+  MARKER: 'نشانگر',
+  BOOKMARK: 'بوکمارک',
+  PLACE: 'مکان',
+  MEASURE: 'اندازه‌گیری',
 }
 
 // Translate entry title, description and tags
 const translateEntry = (entry) => {
   const translated = { ...entry }
-  
+
   // Translate title
   if (translated.title) {
     translated.title = ensurePersianTacticalLabel(translateText(translated.title))
   }
-  
+
   // Translate description
   if (translated.description) {
     translated.description = translated.description
       .split(' • ')
-      .map(part => ensurePersianTacticalLabel(translateText(part.trim())))
+      .map((part) => ensurePersianTacticalLabel(translateText(part.trim())))
       .join(' • ')
   }
-  
+
   // Translate tags
   if (translated.tags) {
     const tags = translated.tags.split(' ')
-    const translatedTags = tags.map(tag => {
+    const translatedTags = tags.map((tag) => {
       const parts = tag.split(':')
       if (parts.length >= 2) {
         const label = parts[1]
-        const translatedLabel = tagLabelTranslations[label]
-          || ensurePersianTacticalLabel(translateText(label.replaceAll('_', ' ')))
+        const translatedLabel =
+          tagLabelTranslations[label] ||
+          ensurePersianTacticalLabel(translateText(label.replaceAll('_', ' ')))
         parts[1] = translatedLabel
         return parts.join(':')
       }
@@ -670,7 +832,7 @@ const translateEntry = (entry) => {
     })
     translated.tags = translatedTags.join(' ')
   }
-  
+
   return translated
 }
 
@@ -679,7 +841,7 @@ const translateText = (text) => {
   if (!text || text.trim() === '') {
     return text
   }
-  
+
   const trimmedText = text.trim()
 
   // Reuse the centralized MIL-STD Persian glossary before applying the
@@ -688,12 +850,12 @@ const translateText = (text) => {
   if (entityTranslation !== trimmedText) {
     return entityTranslation
   }
-  
+
   // Check exact match in symbol translations first
   if (symbolTranslations[trimmedText]) {
     return symbolTranslations[trimmedText]
   }
-  
+
   // Check case-insensitive match in symbol translations
   const lowerText = trimmedText.toLowerCase()
   for (const [key, value] of Object.entries(symbolTranslations)) {
@@ -701,59 +863,59 @@ const translateText = (text) => {
       return value
     }
   }
-  
+
   // Try to translate word by word using comprehensive dictionary
   const words = trimmedText.split(/\s+/)
-  const translatedWords = words.map(word => {
+  const translatedWords = words.map((word) => {
     // Remove punctuation for matching but keep it in result
     const cleanWord = word.replace(/[(),/]/g, '')
     const punctuation = word.match(/[(),/]/g)?.join('') || ''
-    
+
     // Check in word dictionary first
     if (wordDictionary[cleanWord]) {
       return wordDictionary[cleanWord] + punctuation
     }
-    
+
     // Check case-insensitive in word dictionary
     for (const [key, value] of Object.entries(wordDictionary)) {
       if (key.toLowerCase() === cleanWord.toLowerCase()) {
         return value + punctuation
       }
     }
-    
+
     // Check in symbol translations
     for (const [key, value] of Object.entries(symbolTranslations)) {
       if (key.toLowerCase() === cleanWord.toLowerCase()) {
         return value + punctuation
       }
     }
-    
+
     // Check in category translations
     for (const [key, value] of Object.entries(categoryTranslations)) {
       if (key.toLowerCase() === cleanWord.toLowerCase()) {
         return value + punctuation
       }
     }
-    
+
     // Try partial match in word dictionary (for compound words)
     for (const [key, value] of Object.entries(wordDictionary)) {
       if (cleanWord.toLowerCase().includes(key.toLowerCase()) && key.length > 3) {
         return cleanWord.replace(new RegExp(key, 'gi'), value) + punctuation
       }
     }
-    
+
     return word
   })
-  
+
   // If any words were translated, join them
   const hasTranslation = translatedWords.some((w, idx) => {
     return w !== words[idx]
   })
-  
+
   if (hasTranslation) {
     return translatedWords.join(' ')
   }
-  
+
   // Try to find partial matches in symbol translations (for compound names)
   const sortedKeys = Object.keys(symbolTranslations).sort((a, b) => b.length - a.length)
   for (const key of sortedKeys) {
@@ -762,20 +924,21 @@ const translateText = (text) => {
       return trimmedText.replace(new RegExp(key, 'gi'), symbolTranslations[key])
     }
   }
-  
+
   // Return original if no translation found
   return trimmedText
 }
 
-const normalizePersianSearch = (value) => String(value || '')
-  .normalize('NFKC')
-  .toLocaleLowerCase('fa')
-  .replace(/[يى]/g, 'ی')
-  .replace(/ك/g, 'ک')
-  .replace(/ۀ/g, 'ه')
-  .replace(/[\u064b-\u065f\u0670\u200c\u200d]/g, '')
-  .replace(/\s+/g, ' ')
-  .trim()
+const normalizePersianSearch = (value) =>
+  String(value || '')
+    .normalize('NFKC')
+    .toLocaleLowerCase('fa')
+    .replace(/[يى]/g, 'ی')
+    .replace(/ك/g, 'ک')
+    .replace(/ۀ/g, 'ه')
+    .replace(/[\u064b-\u065f\u0670\u200c\u200d]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim()
 
 // Effects
 onMounted(() => {
@@ -783,145 +946,172 @@ onMounted(() => {
   setSearch({ history: symbolRootHistory, filter: '' })
 
   // Wait for services to be available
-  watch(() => servicesRef?.value, (svcs) => {
-    if (!svcs) return
-    
-    const disposable = Disposable.of()
+  watch(
+    () => servicesRef?.value,
+    (svcs) => {
+      if (!svcs) return
 
-    // Handle sidebar events
-    const pin = (id) => svcs.store.addTag(id, 'pin')
-    const unpin = (id) => svcs.store.removeTag(id, 'pin')
+      const disposable = Disposable.of()
 
-    const link = (id) => {
-      const entry = R.find(R.propEq(id, 'id'), state.entries)
-      setHistory([...search.value.history, {
-        key: id,
-        label: entry.title,
-        scope: `@link !link+${id}`
-      }])
-    }
+      // Handle sidebar events
+      const pin = (id) => svcs.store.addTag(id, 'pin')
+      const unpin = (id) => svcs.store.removeTag(id, 'pin')
 
-    const polygon = async (id) => {
-      const entry = R.find(R.propEq(id, 'id'), state.entries)
-      const geometry = await svcs.store.geometry(id)
-      setHistory([...search.value.history, {
-        scope: `@feature &geometry:${JSON.stringify(geometry)}`,
-        key: id,
-        label: entry.title || 'N/A'
-      }])
-    }
-
-    const layerOpen = (id) => {
-      const entry = R.find(R.propEq(id, 'id'), state.entries)
-      setHistory([...search.value.history, {
-        scope: `@feature !feature:${ID.layerUUID(id)}`,
-        key: id,
-        label: entry.title
-      }])
-    }
-
-    const edit = async (event) => {
-      if (event.action === 'commit') {
-        await svcs.store.rename(event.id, event.value.trim())
-      }
-      if (event.action === 'commit' || event.action === 'rollback') {
-        const sidebar = document.getElementsByClassName('e3de-sidebar')[0]
-        if (sidebar) sidebar.focus()
-      }
-      dispatch({ type: event.path, id: event.id })
-    }
-
-    disposable.on(emitter, 'edit/:action', edit)
-    disposable.on(emitter, 'pin', ({ id }) => pin(id))
-    disposable.on(emitter, 'unpin', ({ id }) => unpin(id))
-    disposable.on(emitter, 'link', ({ id }) => link(id))
-    disposable.on(emitter, 'polygon', ({ id }) => polygon(id))
-    disposable.on(emitter, 'layer/open', ({ id }) => layerOpen(id))
-
-    // Fetch entries when history and/or filter changed
-    watch([() => search.value.history, () => search.value.filter, () => search.value.force], async ([history, filter, force], _, onCleanup) => {
-      if (!svcs.searchIndex) {
-        dispatch({ type: 'entries', entries: [] })
-        return
+      const link = (id) => {
+        const entry = R.find(R.propEq(id, 'id'), state.entries)
+        setHistory([
+          ...search.value.history,
+          {
+            key: id,
+            label: entry.title,
+            scope: `@link !link+${id}`,
+          },
+        ])
       }
 
-      const safeHistory = Array.isArray(history) && history.length ? history : symbolRootHistory
-      const safeScope = R.last(safeHistory)?.scope || `@${ID.SYMBOL}`
-      const safeFilter = typeof filter === 'string' ? filter.trim() : ''
-      const isPersianFilter = /[\u0600-\u06ff]/.test(safeFilter)
-      // The source index contains the original MIL-STD English hierarchy.
-      // For a Persian query, retrieve the current symbol scope and filter
-      // against the exact localized strings rendered by this component.
-      const terms = `${safeScope} ${isPersianFilter ? '' : safeFilter}`.trim()
-      const options = { force: force || false }
-
-      // Updated search/filter must clear any selection
-      if (!isEqual(lastSearch.value, search.value)) {
-        dispatch({ type: 'clear' })
+      const polygon = async (id) => {
+        const entry = R.find(R.propEq(id, 'id'), state.entries)
+        const geometry = await svcs.store.geometry(id)
+        setHistory([
+          ...search.value.history,
+          {
+            scope: `@feature &geometry:${JSON.stringify(geometry)}`,
+            key: id,
+            label: entry.title || 'N/A',
+          },
+        ])
       }
 
-      const queryDisposable = await svcs.searchIndex.query(terms, options, (entries) => {
-        if (!isPersianFilter) {
-          dispatch({ type: 'entries', entries })
-          return
+      const layerOpen = (id) => {
+        const entry = R.find(R.propEq(id, 'id'), state.entries)
+        setHistory([
+          ...search.value.history,
+          {
+            scope: `@feature !feature:${ID.layerUUID(id)}`,
+            key: id,
+            label: entry.title,
+          },
+        ])
+      }
+
+      const edit = async (event) => {
+        if (event.action === 'commit') {
+          await svcs.store.rename(event.id, event.value.trim())
         }
-
-        const normalizedFilter = normalizePersianSearch(safeFilter)
-        const filteredEntries = entries.filter(entry => {
-          const translated = translateEntry(entry)
-          const category = entry.description
-            ?.split(' • ')
-            .map(part => ensurePersianTacticalLabel(translateCategory(part)))
-            .join(' ')
-          const searchableText = [
-            translated.title,
-            translated.description,
-            translated.tags,
-            category
-          ].filter(Boolean).join(' ')
-
-          return normalizePersianSearch(searchableText).includes(normalizedFilter)
-        })
-
-        dispatch({ type: 'entries', entries: filteredEntries })
-      })
-
-      lastSearch.value = { ...search.value }
-
-      onCleanup(() => {
-        if (queryDisposable && queryDisposable.dispose) {
-          queryDisposable.dispose()
+        if (event.action === 'commit' || event.action === 'rollback') {
+          const sidebar = document.getElementsByClassName('e3de-sidebar')[0]
+          if (sidebar) sidebar.focus()
         }
-      })
-    }, { immediate: true })
+        dispatch({ type: event.path, id: event.id })
+      }
 
-    // Sync global selection with list model
-    if (svcs.selection) {
-      const event = () => ({ type: 'selection', selected: svcs.selection.selected() })
-      disposable.on(svcs.selection, 'selection', () => dispatch(event()))
-      
-      // Initial sync
-      dispatch(event())
-    }
+      disposable.on(emitter, 'edit/:action', edit)
+      disposable.on(emitter, 'pin', ({ id }) => pin(id))
+      disposable.on(emitter, 'unpin', ({ id }) => unpin(id))
+      disposable.on(emitter, 'link', ({ id }) => link(id))
+      disposable.on(emitter, 'polygon', ({ id }) => polygon(id))
+      disposable.on(emitter, 'layer/open', ({ id }) => layerOpen(id))
 
-    // Sync list selection with global selection
-    watch(() => state.selected, (selected) => {
+      // Fetch entries when history and/or filter changed
+      watch(
+        [() => search.value.history, () => search.value.filter, () => search.value.force],
+        async ([history, filter, force], _, onCleanup) => {
+          if (!svcs.searchIndex) {
+            dispatch({ type: 'entries', entries: [] })
+            return
+          }
+
+          const safeHistory =
+            Array.isArray(history) && history.length ? history : symbolRootHistory
+          const safeScope = R.last(safeHistory)?.scope || `@${ID.SYMBOL}`
+          const safeFilter = typeof filter === 'string' ? filter.trim() : ''
+          const isPersianFilter = /[\u0600-\u06ff]/.test(safeFilter)
+          // The source index contains the original MIL-STD English hierarchy.
+          // For a Persian query, retrieve the current symbol scope and filter
+          // against the exact localized strings rendered by this component.
+          const terms = `${safeScope} ${isPersianFilter ? '' : safeFilter}`.trim()
+          const options = { force: force || false }
+
+          // Updated search/filter must clear any selection
+          if (!isEqual(lastSearch.value, search.value)) {
+            dispatch({ type: 'clear' })
+          }
+
+          const queryDisposable = await svcs.searchIndex.query(
+            terms,
+            options,
+            (entries) => {
+              if (!isPersianFilter) {
+                dispatch({ type: 'entries', entries })
+                return
+              }
+
+              const normalizedFilter = normalizePersianSearch(safeFilter)
+              const filteredEntries = entries.filter((entry) => {
+                const translated = translateEntry(entry)
+                const category = entry.description
+                  ?.split(' • ')
+                  .map((part) => ensurePersianTacticalLabel(translateCategory(part)))
+                  .join(' ')
+                const searchableText = [
+                  translated.title,
+                  translated.description,
+                  translated.tags,
+                  category,
+                ]
+                  .filter(Boolean)
+                  .join(' ')
+
+                return normalizePersianSearch(searchableText).includes(normalizedFilter)
+              })
+
+              dispatch({ type: 'entries', entries: filteredEntries })
+            },
+          )
+
+          lastSearch.value = { ...search.value }
+
+          onCleanup(() => {
+            if (queryDisposable && queryDisposable.dispose) {
+              queryDisposable.dispose()
+            }
+          })
+        },
+        { immediate: true },
+      )
+
+      // Sync global selection with list model
       if (svcs.selection) {
-        svcs.selection.set(selected)
+        const event = () => ({ type: 'selection', selected: svcs.selection.selected() })
+        disposable.on(svcs.selection, 'selection', () => dispatch(event()))
+
+        // Initial sync
+        dispatch(event())
       }
-    })
 
-    // Keep this sidebar fixed on symbol scope.
-    if (svcs.selection) {
-      disposable.on(svcs.selection, 'focus', ({ id }) => {
-        dispatch({ type: 'focus', id })
+      // Sync list selection with global selection
+      watch(
+        () => state.selected,
+        (selected) => {
+          if (svcs.selection) {
+            svcs.selection.set(selected)
+          }
+        },
+      )
+
+      // Keep this sidebar fixed on symbol scope.
+      if (svcs.selection) {
+        disposable.on(svcs.selection, 'focus', ({ id }) => {
+          dispatch({ type: 'focus', id })
+        })
+      }
+
+      onUnmounted(() => {
+        disposable.dispose()
       })
-    }
-
-    onUnmounted(() => {
-      disposable.dispose()
-    })
-  }, { immediate: true })
+    },
+    { immediate: true },
+  )
 })
 </script>
 
@@ -929,33 +1119,76 @@ onMounted(() => {
 @import './components/sidebar/Sidebar.css';
 
 .symbol-categories {
-  height: 100%;
+  min-height: 0;
+  flex: 1;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: 0.75rem;
+  padding: 0.15rem 0.15rem 1rem;
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--color-primary) 24%, transparent) transparent;
 }
 
 .category-group {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: 0.45rem;
+}
+
+.favorite-category {
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--surface-border);
+}
+
+.favorite-category-header {
+  width: 100%;
+  cursor: pointer;
+  border-color: color-mix(in srgb, #e11d48 25%, var(--surface-border));
+  background: color-mix(in srgb, #e11d48 6%, var(--surface-panel));
+  font-family: inherit;
+}
+
+.favorite-category-header:hover {
+  border-color: color-mix(in srgb, #e11d48 42%, var(--surface-border));
+  background: color-mix(in srgb, #e11d48 10%, var(--surface-panel));
+}
+
+.favorite-category-icon {
+  display: grid;
+  width: 1.25rem;
+  height: 1.25rem;
+  place-items: center;
+  color: #e11d48;
+  font-size: 0.85rem;
+}
+
+.favorite-empty {
+  margin: 0;
+  border: 1px dashed var(--surface-border);
+  border-radius: 0.65rem;
+  padding: 0.7rem 0.8rem;
+  color: hsl(var(--muted-foreground));
+  background: color-mix(in srgb, var(--surface-panel-muted) 45%, transparent);
+  font-size: 0.7rem;
+  line-height: 1.7;
+  text-align: center;
 }
 
 .category-header {
-  font-weight: 600;
-  font-size: 0.9rem;
-  color: #333;
-  padding: 0.5rem 0.75rem;
-  background-color: #f5f5f5;
-  border-radius: 4px;
-  border-right: 3px solid #40a9ff;
+  min-height: 38px;
+  padding: 0.45rem 0.65rem;
+  border: 1px solid var(--surface-border);
+  border-radius: 0.65rem;
+  color: var(--color-foreground);
+  background: color-mix(in srgb, var(--surface-panel) 94%, transparent);
+  font-size: 0.76rem;
+  font-weight: 700;
   text-align: right;
   position: sticky;
   top: 0;
   z-index: 10;
-  backdrop-filter: blur(4px);
-  background-color: rgba(245, 245, 245, 0.95);
+  backdrop-filter: blur(10px);
   cursor: pointer;
   user-select: none;
   display: flex;
@@ -965,16 +1198,23 @@ onMounted(() => {
 }
 
 .category-header:hover {
-  background-color: rgba(230, 230, 230, 0.95);
+  border-color: color-mix(in srgb, var(--color-primary) 28%, var(--surface-border));
+  background: color-mix(in srgb, var(--color-primary) 5%, var(--surface-panel));
 }
 
 .category-header.collapsed {
-  border-right-color: #999;
+  color: hsl(var(--muted-foreground));
 }
 
 .category-icon {
-  font-size: 0.7rem;
-  color: #666;
+  display: grid;
+  width: 1.25rem;
+  height: 1.25rem;
+  place-items: center;
+  border-radius: 0.35rem;
+  color: hsl(var(--muted-foreground));
+  background: var(--surface-panel-muted);
+  font-size: 0.55rem;
   transition: transform 0.2s ease;
   flex-shrink: 0;
 }
@@ -985,17 +1225,22 @@ onMounted(() => {
 }
 
 .category-count {
-  font-size: 0.8rem;
-  color: #666;
-  font-weight: normal;
+  min-width: 1.7rem;
+  border-radius: 999px;
+  padding: 0.15rem 0.35rem;
+  color: hsl(var(--muted-foreground));
+  background: var(--surface-panel-muted);
+  font-size: 0.62rem;
+  font-weight: 600;
+  text-align: center;
   flex-shrink: 0;
 }
 
 .category-items {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-  padding: 0 0.5rem;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.45rem;
+  padding: 0 0.15rem;
 }
 
 /* Accordion transition animations */
@@ -1027,5 +1272,11 @@ onMounted(() => {
   opacity: 0;
   padding-top: 0;
   padding-bottom: 0;
+}
+
+@media (max-width: 380px) {
+  .category-items {
+    grid-template-columns: 1fr;
+  }
 }
 </style>

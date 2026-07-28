@@ -3,20 +3,34 @@
     <SheetContent
       side="right"
       :overlay="false"
-      class="w-full sm:max-w-[420px] p-0"
+      class="symbol-library-sheet w-full p-0 sm:max-w-[500px]"
       @pointer-down-outside="handleOutsideInteraction"
       @interact-outside="handleOutsideInteraction"
     >
-      <SheetHeader class="px-4 pt-5 pb-3 border-b">
-        <SheetTitle>کتابخانه نمادهای تاکتیکی</SheetTitle>
-        <SheetDescription>
-          انتخاب و جستجوی نمادهای تاکتیکی MIL-STD-2525C
-        </SheetDescription>
+      <SheetHeader class="symbol-library-header">
+        <div class="symbol-library-heading">
+          <div class="symbol-library-mark" aria-hidden="true">
+            <PhShieldChevron class="size-5" />
+          </div>
+          <div>
+            <SheetTitle class="text-base font-bold">کتابخانه نمادهای تاکتیکی</SheetTitle>
+            <SheetDescription class="mt-1 text-xs">
+              استاندارد MIL-STD-2525C
+            </SheetDescription>
+          </div>
+        </div>
+        <span class="library-status">
+          <span class="library-status-dot"></span>
+          آماده ترسیم
+        </span>
       </SheetHeader>
-      <div class="flex min-h-0 flex-1 flex-col gap-3 px-4 pb-4">
+      <div class="flex min-h-0 flex-1 flex-col">
         <div class="symbol-attributes">
           <div class="attribute-section">
-            <label class="attribute-label">وابستگی</label>
+            <div class="attribute-heading">
+              <label class="attribute-label">وابستگی</label>
+              <span>هویت عملیاتی نماد</span>
+            </div>
             <div class="attribute-options">
               <button
                 v-for="aff in affiliations"
@@ -31,7 +45,10 @@
             </div>
           </div>
           <div class="attribute-section">
-            <label class="attribute-label">وضعیت</label>
+            <div class="attribute-heading">
+              <label class="attribute-label">وضعیت</label>
+              <span>حالت نمایش روی نقشه</span>
+            </div>
             <div class="attribute-options">
               <button
                 v-for="stat in statuses"
@@ -46,36 +63,27 @@
             </div>
           </div>
         </div>
-        <div class="flex items-center justify-between gap-2">
-          <p class="text-xs text-muted-foreground">
-            {{ selectedLabel }}
-          </p>
+        <div v-if="isDrawingActive" class="drawing-notice">
+          <span class="drawing-pulse"></span>
+          <span>روی نقشه رسم کنید تا نماد اضافه شود.</span>
           <Button
             type="button"
+            variant="link"
             size="sm"
-            :disabled="!canInsert"
-            @click="startSymbolPlacement()"
+            class="mr-auto h-7 px-1"
+            @click="cancelPlacement()"
           >
-            درج روی نقشه
-          </Button>
-        </div>
-        <div
-          v-if="isDrawingActive"
-          class="rounded-md border border-primary/40 bg-primary/10 px-3 py-2 text-xs text-primary"
-        >
-          روی نقشه رسم کنید تا نماد اضافه شود.
-          <Button type="button" variant="link" size="sm" class="px-1" @click="cancelPlacement()">
             لغو
           </Button>
         </div>
         <div
           v-if="placementError"
-          class="rounded-md border border-red-400/60 bg-red-50 px-3 py-2 text-xs text-red-700"
+          class="mx-4 mt-3 rounded-lg border border-red-400/50 bg-red-50 px-3 py-2 text-xs text-red-700 dark:bg-red-950/30 dark:text-red-300"
         >
           {{ placementError }}
         </div>
-        <div class="flex min-h-0 flex-1 flex-col overflow-hidden">
-          <div class="flex-1 overflow-y-auto">
+        <div class="flex min-h-0 flex-1 flex-col overflow-hidden px-4 pt-3">
+          <div class="min-h-0 flex-1 overflow-y-auto">
             <SimpleSymbolMapSidebar
               v-if="servicesReady"
               @selection-change="onSelectionChange"
@@ -89,7 +97,7 @@
                 <p class="text-sm font-medium text-red-700">
                   کتابخانه نمادهای تاکتیکی بارگذاری نشد.
                 </p>
-                <p class="text-xs text-muted-foreground">
+                <p class="text-muted-foreground text-xs">
                   {{ initializationError }}
                 </p>
                 <Button type="button" size="sm" @click="initializeServices()">
@@ -97,13 +105,31 @@
                 </Button>
               </div>
             </div>
-            <div v-else class="flex items-center justify-center h-full">
+            <div v-else class="flex h-full items-center justify-center">
               <div class="text-center">
-                <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-                <p class="text-sm text-muted-foreground">در حال بارگذاری...</p>
+                <div
+                  class="border-primary mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-b-2"
+                ></div>
+                <p class="text-muted-foreground text-sm">در حال بارگذاری...</p>
               </div>
             </div>
           </div>
+        </div>
+        <div class="symbol-library-footer">
+          <div class="min-w-0">
+            <span class="selection-caption">نماد انتخاب‌شده</span>
+            <p class="selection-label">{{ selectedLabel }}</p>
+          </div>
+          <Button
+            type="button"
+            size="sm"
+            class="insert-symbol-button"
+            :disabled="!canInsert"
+            @click="startSymbolPlacement()"
+          >
+            <PhMapPinPlus class="size-4" />
+            درج روی نقشه
+          </Button>
         </div>
       </div>
     </SheetContent>
@@ -120,6 +146,7 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
+import { PhMapPinPlus, PhShieldChevron } from "@phosphor-icons/vue";
 import SimpleSymbolMapSidebar from "@/modules/tactical-symbol-map/SimpleSymbolMapSidebar.vue";
 import { ensureScenarioTacticalServices } from "@/modules/tactical-symbol-map/services/scenarioProjectServices";
 import { injectStrict } from "@/utils";
@@ -129,16 +156,22 @@ import * as MILSTD from "@/modules/tactical-symbol-map/symbology/2525c.js";
 import { svg } from "@/modules/tactical-symbol-map/symbology/symbol.js";
 
 const props = defineProps<{
-  open: boolean
-}>()
+  open: boolean;
+}>();
 
 const emit = defineEmits<{
-  'update:open': [value: boolean]
-}>()
+  "update:open": [value: boolean];
+}>();
 
 const servicesReady = ref(false);
 const services = ref<any>(null);
 const servicesStore = useServicesStore();
+let initializationPromise: Promise<any> | null = null;
+let initializingScenarioId: string | null = null;
+let initializedScenarioId: string | null = null;
+let preloadHandle: number | null = null;
+let preloadUsesIdleCallback = false;
+const configuredPreferenceStores = new WeakSet<object>();
 const symbolSidebarDefaultSearch = {
   history: [{ key: "root", scope: "@symbol", label: "symbol" }],
   filter: "",
@@ -178,32 +211,101 @@ function handleOutsideInteraction(event: Event) {
 }
 
 const initializeServices = async () => {
-  try {
-    servicesReady.value = false;
-    initializationError.value = null;
-    if (services.value) {
-      cancelPlacement();
-    }
+  const scenarioId = activeScenario.store.state.id;
+  if (!scenarioId) return;
+
+  if (
+    initializedScenarioId === scenarioId &&
+    servicesReady.value &&
+    services.value
+  ) {
+    return services.value;
+  }
+
+  if (initializationPromise && initializingScenarioId === scenarioId) {
+    return initializationPromise;
+  }
+
+  servicesReady.value = false;
+  initializationError.value = null;
+  initializingScenarioId = scenarioId;
+
+  const task = (async () => {
     const projectServices = await ensureScenarioTacticalServices({
-      scenarioId: activeScenario.store.state.id,
+      scenarioId,
       metadata: activeScenario.store.state.metadata,
       servicesStore,
     });
-    await projectServices.preferencesStore?.put(
-      "ui.sidebar.symbol-search",
-      symbolSidebarDefaultSearch,
-    );
+
+    const preferenceStore = projectServices.preferencesStore;
+    if (
+      preferenceStore &&
+      typeof preferenceStore === "object" &&
+      !configuredPreferenceStores.has(preferenceStore)
+    ) {
+      await preferenceStore.put(
+        "ui.sidebar.symbol-search",
+        symbolSidebarDefaultSearch,
+      );
+      configuredPreferenceStores.add(preferenceStore);
+    }
+
+    // Ignore a stale preload if the active scenario changed while it was running.
+    if (activeScenario.store.state.id !== scenarioId) return projectServices;
+
     services.value = projectServices;
+    initializedScenarioId = scenarioId;
     servicesReady.value = true;
+    return projectServices;
+  })();
+
+  initializationPromise = task;
+
+  try {
+    return await task;
   } catch (error) {
-    console.error("Failed to initialize symbol sidebar services:", error);
-    servicesReady.value = false;
-    initializationError.value =
-      error instanceof Error
-        ? error.message
-        : "خطای ناشناخته در آماده‌سازی کتابخانه نمادها.";
+    if (activeScenario.store.state.id === scenarioId) {
+      console.error("Failed to initialize symbol sidebar services:", error);
+      servicesReady.value = false;
+      initializationError.value =
+        error instanceof Error
+          ? error.message
+          : "خطای ناشناخته در آماده‌سازی کتابخانه نمادها.";
+    }
+  } finally {
+    if (initializationPromise === task) {
+      initializationPromise = null;
+      initializingScenarioId = null;
+    }
   }
 };
+
+function scheduleServicesPreload() {
+  const browserWindow = window as Window & {
+    requestIdleCallback?: (
+      callback: () => void,
+      options?: { timeout: number },
+    ) => number;
+  };
+
+  if (browserWindow.requestIdleCallback) {
+    preloadUsesIdleCallback = true;
+    preloadHandle = browserWindow.requestIdleCallback(
+      () => {
+        preloadHandle = null;
+        void initializeServices();
+      },
+      { timeout: 800 },
+    );
+    return;
+  }
+
+  preloadUsesIdleCallback = false;
+  preloadHandle = window.setTimeout(() => {
+    preloadHandle = null;
+    void initializeServices();
+  }, 0);
+}
 
 function onSelectionChange(payload: { id: string | null; entry?: any }) {
   selectedSymbolId.value = payload.id;
@@ -252,14 +354,12 @@ const statuses = [
   {
     code: "P",
     labelPersian: "حاضر",
-    icon:
-      '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="4" y="4" width="16" height="16" stroke="#333" stroke-width="2" fill="white"/></svg>',
+    icon: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="4" y="4" width="16" height="16" stroke="#333" stroke-width="2" fill="white"/></svg>',
   },
   {
     code: "A",
     labelPersian: "برنامه‌ریزی شده",
-    icon:
-      '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="4" y="4" width="16" height="16" stroke="#333" stroke-width="2" stroke-dasharray="4 2" fill="white"/></svg>',
+    icon: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="4" y="4" width="16" height="16" stroke="#333" stroke-width="2" stroke-dasharray="4 2" fill="white"/></svg>',
   },
 ];
 
@@ -290,7 +390,9 @@ function startSymbolPlacement() {
 function cancelPlacement() {
   placementError.value = null;
   isDrawingActive.value = false;
-  services.value?.emitter?.emit("command/draw/cancel", { originatorId: "symbol-sidebar" });
+  services.value?.emitter?.emit("command/draw/cancel", {
+    originatorId: "symbol-sidebar",
+  });
 }
 
 watch(
@@ -308,16 +410,20 @@ watch(
 watch(
   () => activeScenario.store.state.id,
   () => {
-    if (props.open) {
-      initializeServices();
-    }
+    cancelPlacement();
+    servicesReady.value = false;
+    services.value = null;
+    initializedScenarioId = null;
+    void initializeServices();
   },
 );
 
 onMounted(() => {
   if (props.open) {
-    initializeServices();
+    void initializeServices();
+    return;
   }
+  scheduleServicesPreload();
 });
 
 watch(
@@ -347,68 +453,158 @@ watch(
 );
 
 onUnmounted(() => {
+  if (preloadHandle !== null) {
+    const browserWindow = window as Window & {
+      cancelIdleCallback?: (handle: number) => void;
+    };
+    if (preloadUsesIdleCallback) {
+      browserWindow.cancelIdleCallback?.(preloadHandle);
+    } else {
+      window.clearTimeout(preloadHandle);
+    }
+    preloadHandle = null;
+  }
   services.value?.emitter?.off("ui/tactical/draw-complete", handleDrawComplete);
 });
 </script>
 
 <style scoped>
+:deep(.symbol-library-sheet) {
+  border-right: 1px solid var(--surface-border);
+  border-radius: 0 1.25rem 1.25rem 0;
+  gap: 0;
+  overflow: hidden;
+}
+
+.symbol-library-header {
+  display: flex;
+  min-height: 76px;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--surface-border);
+  padding: 0.9rem 1rem 0.9rem 3.25rem;
+  background:
+    radial-gradient(
+      circle at 90% 0%,
+      color-mix(in srgb, var(--color-primary) 12%, transparent),
+      transparent 45%
+    ),
+    var(--surface-panel);
+  text-align: right;
+}
+
+.symbol-library-heading {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.symbol-library-mark {
+  display: grid;
+  width: 2.5rem;
+  height: 2.5rem;
+  flex: 0 0 auto;
+  place-items: center;
+  border: 1px solid color-mix(in srgb, var(--color-primary) 28%, transparent);
+  border-radius: 0.75rem;
+  color: var(--color-primary);
+  background: color-mix(in srgb, var(--color-primary) 10%, var(--surface-panel));
+}
+
+.library-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  white-space: nowrap;
+  border: 1px solid color-mix(in srgb, #16a34a 28%, transparent);
+  border-radius: 999px;
+  padding: 0.3rem 0.55rem;
+  color: #15803d;
+  background: color-mix(in srgb, #22c55e 8%, var(--surface-panel));
+  font-size: 0.68rem;
+  font-weight: 600;
+}
+
+.library-status-dot,
+.drawing-pulse {
+  width: 0.42rem;
+  height: 0.42rem;
+  border-radius: 999px;
+  background: #22c55e;
+  box-shadow: 0 0 0 3px color-mix(in srgb, #22c55e 16%, transparent);
+}
+
 :deep(.e3de-sidebar) {
   height: 100%;
   width: 100%;
 }
 
 .symbol-attributes {
-  padding: 0.5rem 0.25rem 0.75rem;
-  border-bottom: 1px solid color-mix(in srgb, var(--color-primary) 20%, transparent);
+  display: grid;
+  grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr);
+  gap: 0.85rem;
+  padding: 1rem 1rem 0.85rem;
+  border-bottom: 1px solid var(--surface-border);
+  background: color-mix(in srgb, var(--surface-panel-muted) 55%, var(--surface-panel));
 }
 
 .attribute-section {
-  margin-bottom: 0.75rem;
+  min-width: 0;
 }
 
-.attribute-section:last-child {
-  margin-bottom: 0;
+.attribute-heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+  color: hsl(var(--muted-foreground));
+  font-size: 0.65rem;
 }
 
 .attribute-label {
-  display: block;
   font-size: 0.75rem;
-  font-weight: 600;
-  color: #333;
-  margin-bottom: 0.5rem;
-  text-align: right;
+  font-weight: 700;
+  color: var(--color-foreground);
 }
 
 .attribute-options {
-  display: flex;
-  flex-direction: row;
-  gap: 0.5rem;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(58px, 1fr));
+  gap: 0.4rem;
 }
 
 .attribute-option {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.25rem;
-  padding: 0.45rem 0.65rem;
-  border: 2px solid #ddd;
-  border-radius: 6px;
-  background: white;
+  gap: 0.3rem;
+  min-width: 0;
+  min-height: 62px;
+  padding: 0.45rem 0.35rem;
+  border: 1px solid var(--surface-border);
+  border-radius: 0.65rem;
+  color: var(--color-foreground);
+  background: var(--surface-panel);
   cursor: pointer;
-  transition: all 0.2s;
-  min-width: 70px;
+  transition:
+    border-color 0.16s ease,
+    background-color 0.16s ease,
+    box-shadow 0.16s ease,
+    transform 0.16s ease;
 }
 
 .attribute-option:hover {
-  border-color: #999;
-  background: #f5f5f5;
+  border-color: color-mix(in srgb, var(--color-primary) 42%, var(--surface-border));
+  background: color-mix(in srgb, var(--color-primary) 5%, var(--surface-panel));
+  transform: translateY(-1px);
 }
 
 .attribute-option.active {
-  border-color: #1976d2;
-  background: #e3f2fd;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+  border-color: color-mix(in srgb, var(--color-primary) 60%, transparent);
+  background: color-mix(in srgb, var(--color-primary) 10%, var(--surface-panel));
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--color-primary) 18%, transparent);
 }
 
 .attribute-icon {
@@ -426,12 +622,90 @@ onUnmounted(() => {
 }
 
 .attribute-text {
-  font-size: 0.7rem;
-  color: #333;
-  font-weight: 500;
+  max-width: 100%;
+  overflow: hidden;
+  color: inherit;
+  font-size: 0.68rem;
+  font-weight: 600;
   text-align: center;
+  text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-</style>
+.drawing-notice {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  margin: 0.75rem 1rem 0;
+  border: 1px solid color-mix(in srgb, var(--color-primary) 30%, transparent);
+  border-radius: 0.65rem;
+  padding: 0.45rem 0.7rem;
+  color: var(--color-primary);
+  background: color-mix(in srgb, var(--color-primary) 8%, var(--surface-panel));
+  font-size: 0.72rem;
+}
 
+.drawing-pulse {
+  background: var(--color-primary);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary) 15%, transparent);
+  animation: drawing-pulse 1.6s ease-out infinite;
+}
+
+.symbol-library-footer {
+  display: flex;
+  min-height: 72px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  border-top: 1px solid var(--surface-border);
+  padding: 0.75rem 1rem;
+  background: var(--surface-panel);
+  box-shadow: 0 -8px 20px color-mix(in srgb, var(--surface-shadow) 45%, transparent);
+}
+
+.selection-caption {
+  display: block;
+  margin-bottom: 0.18rem;
+  color: hsl(var(--muted-foreground));
+  font-size: 0.65rem;
+}
+
+.selection-label {
+  max-width: 260px;
+  overflow: hidden;
+  color: var(--color-foreground);
+  font-size: 0.75rem;
+  font-weight: 650;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.insert-symbol-button {
+  flex: 0 0 auto;
+  gap: 0.4rem;
+  border-radius: 0.65rem;
+}
+
+@keyframes drawing-pulse {
+  0% {
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--color-primary) 35%, transparent);
+  }
+  70% {
+    box-shadow: 0 0 0 6px transparent;
+  }
+  100% {
+    box-shadow: 0 0 0 0 transparent;
+  }
+}
+
+@media (max-width: 460px) {
+  .symbol-attributes {
+    grid-template-columns: 1fr;
+  }
+
+  .library-status,
+  .attribute-heading span {
+    display: none;
+  }
+}
+</style>

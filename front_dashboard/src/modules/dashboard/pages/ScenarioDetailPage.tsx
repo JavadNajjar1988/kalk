@@ -23,12 +23,6 @@ import {
   DialogContent,
   DialogActions,
   TextField,
-  Table,
-  TableHead,
-  TableBody,
-  TableRow,
-  TableCell,
-  TableContainer,
   FormControl,
   InputLabel,
   Select,
@@ -37,15 +31,11 @@ import {
 import {
   Edit,
   Delete,
-  Timeline,
-  Map as MapIcon,
   BarChart,
-  Groups,
   Terrain,
   Settings,
   Save,
   CloudDownload,
-  Assessment,
   Schedule,
   ArrowBack,
   Add,
@@ -65,8 +55,6 @@ import {
   selectCurrentScenario,
   selectScenariosLoading,
   selectScenariosError,
-  analyzeScenario,
-  selectLastAnalysisResult,
   deleteScenario,
   archiveScenario,
   restoreScenario,
@@ -79,7 +67,6 @@ import {
   ScenarioStatus,
   PhaseStatus,
   EnvironmentalFactorType,
-  AnalysisType,
   EnvironmentalCondition,
 } from '@/types';
 import ScenarioDialog from '@/components/common/ScenarioDialog';
@@ -88,7 +75,7 @@ import {
   showErrorNotification,
 } from '@/store/slices/uiSlice';
 import ScenarioIntroSettingsPanel from '@/modules/dashboard/components/ScenarioIntroSettingsPanel';
-import { scenarioApiService } from '@/services/api/scenarioApiService';
+import ScenarioHistoryTab from '@/modules/dashboard/components/ScenarioHistoryTab';
 import { selectUser } from '@/store/slices/authSlice';
 import { canAccessFeature } from '@/security/roleAccess';
 import {
@@ -121,208 +108,17 @@ function TabPanel(props: TabPanelProps) {
   );
 }
 
-// ---------- Managed-in-KalkNegar placeholder ----------
-const ManagedInKalkNegar: React.FC<{
-  scenarioId?: string;
-  canLaunch: boolean;
-}> = ({ scenarioId, canLaunch }) => {
-  const { t } = useTranslation();
-  const kalknegarUrl = scenarioId
-    ? `/kalknegar/scenario/${scenarioId}?integration=react`
-    : '#';
-
+// ---------- Analysis tab ----------
+const ScenarioAnalysis: React.FC = () => {
   return (
     <Box sx={{ textAlign: 'center', py: 6 }}>
-      <OpenInNew sx={{ fontSize: 48, color: 'text.secondary', mb: 2 }} />
+      <BarChart sx={{ fontSize: 48, color: 'text.secondary', mb: 2 }} />
       <Typography variant="h6" gutterBottom>
-        {t('scenarios.managedInKalknegar.title')}
+        بخش تحلیل در حال توسعه است
       </Typography>
-      <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-        {t('scenarios.managedInKalknegar.description')}
+      <Typography variant="body2" color="text.secondary">
+        ادامه توسعه این بخش پس از تأیید کارفرما انجام خواهد شد.
       </Typography>
-      {canLaunch ? (
-        <Button
-          variant="contained"
-          startIcon={<OpenInNew />}
-          href={kalknegarUrl}
-          target="_blank"
-          rel="noopener"
-        >
-          {t('scenarios.managedInKalknegar.launchButton')}
-        </Button>
-      ) : (
-        <Button variant="contained" startIcon={<OpenInNew />} disabled>
-          نیازمند دسترسی کالک‌نگار
-        </Button>
-      )}
-    </Box>
-  );
-};
-
-// ---------- Analysis tab ----------
-const ScenarioAnalysis: React.FC<{ scenario: EnhancedScenario }> = ({
-  scenario,
-}) => {
-  const { t } = useTranslation();
-  const dispatch = useAppDispatch();
-  const lastResult = useAppSelector(selectLastAnalysisResult);
-  const [analysisType, setAnalysisType] = useState<AnalysisType>(
-    AnalysisType.FORCE_RATIO
-  );
-  const [analyzing, setAnalyzing] = useState(false);
-
-  const handleAnalyzeScenario = async () => {
-    setAnalyzing(true);
-    try {
-      await dispatch(
-        analyzeScenario({ id: scenario.id, analysisType })
-      ).unwrap();
-      dispatch(showSuccessNotification(t('scenarios.analysis.success')));
-    } catch {
-      dispatch(showErrorNotification(t('scenarios.analysis.error')));
-    } finally {
-      setAnalyzing(false);
-    }
-  };
-
-  return (
-    <Box>
-      <Typography variant="h6" gutterBottom>
-        {t('scenarios.analysis.title')}
-      </Typography>
-      {!ANALYSIS_API_AVAILABLE && (
-        <Alert severity="info" sx={{ mb: 2 }}>
-          تحلیل عملیاتی هنوز به سرویس محاسباتی متصل نشده و اجرای آن غیرفعال است.
-        </Alert>
-      )}
-      <Grid container spacing={3}>
-        <Grid item xs={12} md={4}>
-          <Card>
-            <CardHeader title={t('scenarios.analysis.typeTitle')} />
-            <CardContent>
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                {Object.values(AnalysisType).map(type => (
-                  <Button
-                    key={type}
-                    variant={analysisType === type ? 'contained' : 'outlined'}
-                    startIcon={<Assessment />}
-                    onClick={() => setAnalysisType(type)}
-                    fullWidth
-                  >
-                    {t(`scenarios.analysis.types.${type}`)}
-                  </Button>
-                ))}
-                <Button
-                  variant="contained"
-                  color="primary"
-                  onClick={handleAnalyzeScenario}
-                  disabled={analyzing || !ANALYSIS_API_AVAILABLE}
-                  startIcon={analyzing ? undefined : <BarChart />}
-                  sx={{ mt: 2 }}
-                >
-                  {analyzing ? (
-                    <LinearProgress style={{ width: '100%' }} />
-                  ) : (
-                    t('scenarios.analysis.runButton')
-                  )}
-                </Button>
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
-        <Grid item xs={12} md={8}>
-          <Card>
-            <CardHeader
-              title={t('scenarios.analysis.resultsTitle')}
-              subheader={
-                lastResult
-                  ? new Date(lastResult.timestamp).toLocaleString('fa-IR')
-                  : ''
-              }
-            />
-            <CardContent>
-              {!lastResult ? (
-                <Box sx={{ textAlign: 'center', py: 4 }}>
-                  <Typography color="text.secondary">
-                    {t('scenarios.analysis.noResults')}
-                  </Typography>
-                </Box>
-              ) : (
-                <Box>
-                  <Typography variant="subtitle1" gutterBottom>
-                    {t('scenarios.analysis.chartTitle')}
-                  </Typography>
-                  <Box
-                    sx={{
-                      height: 200,
-                      bgcolor: 'background.default',
-                      mb: 2,
-                      p: 2,
-                    }}
-                  >
-                    <pre>{JSON.stringify(lastResult.data.chart, null, 2)}</pre>
-                  </Box>
-                  <Typography variant="subtitle1" gutterBottom>
-                    {t('scenarios.analysis.statisticsTitle')}
-                  </Typography>
-                  <Grid container spacing={2} sx={{ mb: 3 }}>
-                    <Grid item xs={4}>
-                      <Typography variant="body2" color="text.secondary">
-                        {t('scenarios.analysis.effectiveness')}
-                      </Typography>
-                      <Typography variant="h6">
-                        <TransformFarsiNumbers>
-                          {lastResult.data.statistics.effectiveness.toFixed(1)}%
-                        </TransformFarsiNumbers>
-                      </Typography>
-                    </Grid>
-                    <Grid item xs={4}>
-                      <Typography variant="body2" color="text.secondary">
-                        {t('scenarios.analysis.probability')}
-                      </Typography>
-                      <Typography variant="h6">
-                        <TransformFarsiNumbers>
-                          {lastResult.data.statistics.probability.toFixed(1)}%
-                        </TransformFarsiNumbers>
-                      </Typography>
-                    </Grid>
-                    <Grid item xs={4}>
-                      <Typography variant="body2" color="text.secondary">
-                        {t('scenarios.analysis.risk')}
-                      </Typography>
-                      <Typography variant="h6">
-                        <TransformFarsiNumbers>
-                          {lastResult.data.statistics.risk.toFixed(1)}%
-                        </TransformFarsiNumbers>
-                      </Typography>
-                    </Grid>
-                  </Grid>
-                  <Typography variant="subtitle1" gutterBottom>
-                    {t('scenarios.analysis.conclusionsTitle')}
-                  </Typography>
-                  <Box sx={{ mb: 2 }}>
-                    {lastResult.conclusions?.map((c: string, i: number) => (
-                      <Typography key={i} variant="body2" paragraph>
-                        • {c}
-                      </Typography>
-                    ))}
-                  </Box>
-                  <Typography variant="subtitle1" gutterBottom>
-                    {t('scenarios.analysis.recommendationsTitle')}
-                  </Typography>
-                  <Box>
-                    {lastResult.recommendations?.map((r: string, i: number) => (
-                      <Typography key={i} variant="body2" paragraph>
-                        • {r}
-                      </Typography>
-                    ))}
-                  </Box>
-                </Box>
-              )}
-            </CardContent>
-          </Card>
-        </Grid>
-      </Grid>
     </Box>
   );
 };
@@ -347,6 +143,7 @@ const ScenarioPhasesManager: React.FC<{
   const unassignedEvents = events.filter(event => !event.phaseId);
   const timeIssues: string[] = [];
   const chronologicalPhases = [...phases].sort(
+    (a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime()
     (a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime()
   );
 
@@ -625,6 +422,8 @@ const EnvironmentalConditionsManager: React.FC<{
         <Box>
           <Typography variant="h6">مرور شرایط محیطی</Typography>
           <Typography variant="body2" color="text.secondary">
+            این اطلاعات در کالک‌نگار روی نقشه و خط زمانی تعریف می‌شوند و اینجا
+            فقط قابل مرور هستند.
             این اطلاعات در کالک‌نگار روی نقشه و خط زمانی تعریف می‌شوند و اینجا
             فقط قابل مرور هستند.
           </Typography>
@@ -1371,21 +1170,6 @@ const ScenarioDetailPage: React.FC = () => {
               iconPosition="start"
               label={t('scenarios.tabs.history')}
             />
-            <Tab
-              icon={<Timeline />}
-              iconPosition="start"
-              label={t('scenarios.tabs.timeline')}
-            />
-            <Tab
-              icon={<MapIcon />}
-              iconPosition="start"
-              label={t('scenarios.tabs.map')}
-            />
-            <Tab
-              icon={<Groups />}
-              iconPosition="start"
-              label={t('scenarios.tabs.units')}
-            />
           </Tabs>
         </Box>
 
@@ -1400,11 +1184,12 @@ const ScenarioDetailPage: React.FC = () => {
         {/* Environment */}
         <TabPanel value={tabValue} index={1}>
           <EnvironmentalConditionsManager scenario={scenario} />
+          <EnvironmentalConditionsManager scenario={scenario} />
         </TabPanel>
 
         {/* Analysis */}
         <TabPanel value={tabValue} index={2}>
-          <ScenarioAnalysis scenario={scenario} />
+          <ScenarioAnalysis />
         </TabPanel>
 
         {/* Intro */}
@@ -1418,30 +1203,6 @@ const ScenarioDetailPage: React.FC = () => {
         {/* History */}
         <TabPanel value={tabValue} index={4}>
           <ScenarioHistoryTab scenarioId={scenario.id} />
-        </TabPanel>
-
-        {/* Timeline */}
-        <TabPanel value={tabValue} index={5}>
-          <ManagedInKalkNegar
-            scenarioId={scenario.id}
-            canLaunch={canLaunchKalknegar}
-          />
-        </TabPanel>
-
-        {/* Map – managed in KalkNegar */}
-        <TabPanel value={tabValue} index={6}>
-          <ManagedInKalkNegar
-            scenarioId={scenario.id}
-            canLaunch={canLaunchKalknegar}
-          />
-        </TabPanel>
-
-        {/* Units – managed in KalkNegar */}
-        <TabPanel value={tabValue} index={7}>
-          <ManagedInKalkNegar
-            scenarioId={scenario.id}
-            canLaunch={canLaunchKalknegar}
-          />
         </TabPanel>
       </Box>
 
