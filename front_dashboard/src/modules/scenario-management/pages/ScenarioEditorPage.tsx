@@ -8,6 +8,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { Box, CircularProgress, Alert, Typography } from '@mui/material';
 import { OrbatProvider } from '../../orbat-integration';
 import { ScenarioEditorLayout } from '../components/editor/ScenarioEditorLayout';
+import { navigateToPreviousStep } from '@/utils/navigation';
 
 interface ScenarioEditorPageProps {
   // Props for future extension
@@ -74,7 +75,7 @@ const ScenarioEditorPage: React.FC<ScenarioEditorPageProps> = () => {
 
   // Handle back to scenarios list
   const handleBackToScenarios = () => {
-    navigate('/dashboard/scenario-management');
+    navigateToPreviousStep(navigate, window.location.pathname, '/dashboard/scenarios');
   };
 
   // Loading state

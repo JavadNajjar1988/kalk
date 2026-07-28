@@ -102,6 +102,8 @@ import KalknegarLaunchDialog from '@/components/common/KalknegarLaunchDialog';
 import KalknegarLoadingDialog from '@/components/common/KalknegarLoadingDialog';
 import UnityLaunchDialog from '@/components/common/UnityLaunchDialog';
 import TransformFarsiNumbers from '@/components/common/TransformFarsiNumbers';
+import PersianCalendarField from '@/components/common/PersianCalendarField';
+import { localDateTimeToIso, toLocalDateTimeInput } from '@/utils/dateUtils';
 import {
   buildResourcesFormDialogSx,
   resourcesDialogTitleSx,
@@ -376,12 +378,8 @@ const ScenarioDialog: React.FC<ScenarioDialogProps> = ({
         name: scenario.name,
         description: scenario.description,
         status: scenario.status,
-        startTime: scenario.startTime
-          ? new Date(scenario.startTime).toISOString().slice(0, 16)
-          : '',
-        endTime: scenario.endTime
-          ? new Date(scenario.endTime).toISOString().slice(0, 16)
-          : '',
+        startTime: toLocalDateTimeInput(scenario.startTime),
+        endTime: toLocalDateTimeInput(scenario.endTime),
         objectives: scenario.objectives?.join('\n') || '',
       });
     } else {
@@ -401,12 +399,8 @@ const ScenarioDialog: React.FC<ScenarioDialogProps> = ({
       name: formData.name,
       description: formData.description,
       status: formData.status,
-      startTime: formData.startTime
-        ? new Date(formData.startTime).toISOString()
-        : undefined,
-      endTime: formData.endTime
-        ? new Date(formData.endTime).toISOString()
-        : undefined,
+      startTime: localDateTimeToIso(formData.startTime),
+      endTime: localDateTimeToIso(formData.endTime),
       objectives: formData.objectives.split('\n').filter(obj => obj.trim()),
     };
 
@@ -480,28 +474,20 @@ const ScenarioDialog: React.FC<ScenarioDialogProps> = ({
           </Grid>
 
           <Grid item xs={12} md={6}>
-            <TextField
-              fullWidth
+            <PersianCalendarField
               label={t('scenarios.dialog.startTimeLabel')}
-              type="datetime-local"
               value={formData.startTime}
-              onChange={e =>
-                setFormData(prev => ({ ...prev, startTime: e.target.value }))
+              onChange={startTime =>
+                setFormData(prev => ({ ...prev, startTime }))
               }
-              InputLabelProps={{ shrink: true }}
             />
           </Grid>
 
           <Grid item xs={12} md={6}>
-            <TextField
-              fullWidth
+            <PersianCalendarField
               label={t('scenarios.dialog.endTimeLabel')}
-              type="datetime-local"
               value={formData.endTime}
-              onChange={e =>
-                setFormData(prev => ({ ...prev, endTime: e.target.value }))
-              }
-              InputLabelProps={{ shrink: true }}
+              onChange={endTime => setFormData(prev => ({ ...prev, endTime }))}
             />
           </Grid>
 
@@ -930,7 +916,9 @@ const ScenariosPage: React.FC = () => {
         })
       ).unwrap();
       dispatch(
-        showSuccessNotification(t('scenarios.notifications.statusChangeSuccess'))
+        showSuccessNotification(
+          t('scenarios.notifications.statusChangeSuccess')
+        )
       );
     } catch (statusChangeError) {
       console.error('Scenario status update failed:', statusChangeError);
@@ -2221,9 +2209,10 @@ const ScenariosPage: React.FC = () => {
               }
               handleMenuClose();
             }}
-            disabled={!canDelete || Boolean(
-              menuScenario && isBuiltinDemoScenario(menuScenario)
-            )}
+            disabled={
+              !canDelete ||
+              Boolean(menuScenario && isBuiltinDemoScenario(menuScenario))
+            }
             sx={{ color: 'error.main' }}
           >
             <Delete sx={{ mr: 1 }} />
@@ -2575,7 +2564,7 @@ const ScenariosPage: React.FC = () => {
               • اطمینان حاصل کنید که popup blocker مرورگر شما غیرفعال است
               <br />
               • شبیه‌ساز ممکن است چند ثانیه طول بکشد تا بارگذاری شود
-              <br />• می‌توانید از طریق دکمه "بازگشت به داشبورد" در شبیه‌ساز به
+              <br />• می‌توانید از طریق دکمه "بازگشت به مرحله قبل" در شبیه‌ساز به
               این صفحه برگردید
             </Typography>
           </DialogContent>

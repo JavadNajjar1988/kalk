@@ -1,8 +1,8 @@
 import React, { useState, useRef } from 'react';
-import { 
-  Box, 
-  Typography, 
-  Paper, 
+import {
+  Box,
+  Typography,
+  Paper,
   Button,
   Alert,
   Dialog,
@@ -17,7 +17,7 @@ import {
   ListItemIcon,
   Divider,
   ToggleButtonGroup,
-  ToggleButton
+  ToggleButton,
 } from '@mui/material';
 
 // Icons
@@ -33,6 +33,7 @@ import CodeIcon from '@mui/icons-material/Code';
 // Excel libraries
 import * as XLSX from 'xlsx';
 import { saveAs } from 'file-saver';
+import { formatPersianFileDate } from '@/utils/dateUtils';
 
 // Types
 import { TreeNode } from './common/TreePathPicker';
@@ -44,7 +45,7 @@ interface EquipmentTreeExportImportProps {
 
 const EquipmentTreeExportImport: React.FC<EquipmentTreeExportImportProps> = ({
   treeData,
-  onTreeDataChange
+  onTreeDataChange,
 }) => {
   const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
   const [importData, setImportData] = useState<string>('');
@@ -57,24 +58,29 @@ const EquipmentTreeExportImport: React.FC<EquipmentTreeExportImportProps> = ({
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // تبدیل درخت به آرایه مسطح برای Excel
-  const flattenTreeToArray = (nodes: TreeNode[], parentPath: string = ''): any[] => {
+  const flattenTreeToArray = (
+    nodes: TreeNode[],
+    parentPath: string = ''
+  ): any[] => {
     const result: any[] = [];
-    
-    nodes.forEach((node) => {
-      const currentPath = parentPath ? `${parentPath} > ${node.name}` : node.name;
-      
+
+    nodes.forEach(node => {
+      const currentPath = parentPath
+        ? `${parentPath} > ${node.name}`
+        : node.name;
+
       result.push({
-        'مسیر': currentPath,
+        مسیر: currentPath,
         'نام فارسی': node.name,
         'نام انگلیسی': node.englishName,
-        'ترتیب': node.order
+        ترتیب: node.order,
       });
-      
+
       if (node.children && node.children.length > 0) {
         result.push(...flattenTreeToArray(node.children, currentPath));
       }
     });
-    
+
     return result;
   };
 
@@ -83,31 +89,31 @@ const EquipmentTreeExportImport: React.FC<EquipmentTreeExportImportProps> = ({
     if (exportFormat === 'excel') {
       // Export به Excel
       const flattenedData = flattenTreeToArray(treeData);
-      
+
       // ایجاد workbook و worksheet
       const wb = XLSX.utils.book_new();
       const ws = XLSX.utils.json_to_sheet(flattenedData);
-      
+
       // تنظیم عرض ستون‌ها
       const colWidths = [
-        { wch: 50 },  // مسیر
-        { wch: 30 },  // نام فارسی
-        { wch: 30 },  // نام انگلیسی
-        { wch: 10 }   // ترتیب
+        { wch: 50 }, // مسیر
+        { wch: 30 }, // نام فارسی
+        { wch: 30 }, // نام انگلیسی
+        { wch: 10 }, // ترتیب
       ];
       ws['!cols'] = colWidths;
-      
+
       // اضافه کردن worksheet به workbook
       XLSX.utils.book_append_sheet(wb, ws, 'ساختار تجهیزات');
-      
+
       // ذخیره فایل
-      const fileName = `ساختار_تجهیزات_${new Date().toISOString().split('T')[0]}.xlsx`;
+      const fileName = `ساختار_تجهیزات_${formatPersianFileDate()}.xlsx`;
       XLSX.writeFile(wb, fileName);
     } else {
       // Export به JSON
       const jsonData = JSON.stringify(treeData, null, 2);
       const blob = new Blob([jsonData], { type: 'application/json' });
-      const fileName = `ساختار_تجهیزات_${new Date().toISOString().split('T')[0]}.json`;
+      const fileName = `ساختار_تجهیزات_${formatPersianFileDate()}.json`;
       saveAs(blob, fileName);
     }
   };
@@ -120,7 +126,7 @@ const EquipmentTreeExportImport: React.FC<EquipmentTreeExportImportProps> = ({
     setSelectedFileName(file.name);
     const reader = new FileReader();
 
-    reader.onload = (e) => {
+    reader.onload = e => {
       const content = e.target?.result as string;
       setImportData(content);
     };
@@ -146,7 +152,7 @@ const EquipmentTreeExportImport: React.FC<EquipmentTreeExportImportProps> = ({
         const workbook = XLSX.read(importData, { type: 'array' });
         const worksheet = workbook.Sheets[workbook.SheetNames[0]];
         const jsonData = XLSX.utils.sheet_to_json(worksheet);
-        
+
         // تبدیل داده‌های Excel به ساختار درخت
         parsedData = convertExcelToTree(jsonData);
       } else {
@@ -165,7 +171,9 @@ const EquipmentTreeExportImport: React.FC<EquipmentTreeExportImportProps> = ({
       const errors: string[] = [];
       const validateNode = (node: any, path: string = ''): boolean => {
         if (!node.id || !node.name || !node.englishName) {
-          errors.push(`گره در مسیر "${path}" فاقد فیلدهای اجباری است (id, name, englishName)`);
+          errors.push(
+            `گره در مسیر "${path}" فاقد فیلدهای اجباری است (id, name, englishName)`
+          );
           return false;
         }
 
@@ -196,7 +204,6 @@ const EquipmentTreeExportImport: React.FC<EquipmentTreeExportImportProps> = ({
       setImportSuccess(['داده‌های وارد شده معتبر است و آماده import می‌باشد']);
       setIsValidating(false);
       return true;
-
     } catch (error) {
       setImportErrors([`خطا در پردازش فایل: ${error}`]);
       setIsValidating(false);
@@ -226,7 +233,7 @@ const EquipmentTreeExportImport: React.FC<EquipmentTreeExportImportProps> = ({
         englishName,
         order,
         children: [],
-        isActive: true
+        isActive: true,
       };
 
       if (pathParts.length === 1) {
@@ -269,7 +276,6 @@ const EquipmentTreeExportImport: React.FC<EquipmentTreeExportImportProps> = ({
         setSelectedFileName('');
         setImportErrors([]);
         setImportSuccess([]);
-
       } catch (error) {
         setImportErrors([`خطا در import: ${error}`]);
       }
@@ -289,12 +295,13 @@ const EquipmentTreeExportImport: React.FC<EquipmentTreeExportImportProps> = ({
   };
 
   return (
-    <Paper 
-      sx={{ 
-        p: 3, 
+    <Paper
+      sx={{
+        p: 3,
         borderRadius: 2,
-        boxShadow: (theme) => `0 4px 20px ${alpha(theme.palette.common.black, 0.08)}`,
-        overflow: 'hidden'
+        boxShadow: theme =>
+          `0 4px 20px ${alpha(theme.palette.common.black, 0.08)}`,
+        overflow: 'hidden',
       }}
     >
       {/* عنوان و توضیحات */}
@@ -303,7 +310,8 @@ const EquipmentTreeExportImport: React.FC<EquipmentTreeExportImportProps> = ({
           خروجی و ورودی ساختار تجهیزات
         </Typography>
         <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-          می‌توانید ساختار درختی تجهیزات را به صورت فایل Excel یا JSON خروجی بگیرید یا از فایل وارد کنید.
+          می‌توانید ساختار درختی تجهیزات را به صورت فایل Excel یا JSON خروجی
+          بگیرید یا از فایل وارد کنید.
         </Typography>
       </Box>
 
@@ -312,7 +320,7 @@ const EquipmentTreeExportImport: React.FC<EquipmentTreeExportImportProps> = ({
         <Typography variant="h6" sx={{ mb: 2 }}>
           خروجی ساختار
         </Typography>
-        
+
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
           <Typography variant="body2">فرمت خروجی:</Typography>
           <ToggleButtonGroup
@@ -355,7 +363,7 @@ const EquipmentTreeExportImport: React.FC<EquipmentTreeExportImportProps> = ({
         <Typography variant="h6" sx={{ mb: 2 }}>
           ورودی ساختار
         </Typography>
-        
+
         <Button
           variant="outlined"
           startIcon={<FileUploadIcon />}
@@ -372,13 +380,11 @@ const EquipmentTreeExportImport: React.FC<EquipmentTreeExportImportProps> = ({
         maxWidth="md"
         fullWidth
         PaperProps={{
-          sx: { direction: 'rtl' }
+          sx: { direction: 'rtl' },
         }}
       >
-        <DialogTitle>
-          ورودی ساختار تجهیزات
-        </DialogTitle>
-        
+        <DialogTitle>ورودی ساختار تجهیزات</DialogTitle>
+
         <DialogContent>
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
             {/* انتخاب فرمت */}
@@ -389,7 +395,9 @@ const EquipmentTreeExportImport: React.FC<EquipmentTreeExportImportProps> = ({
               <ToggleButtonGroup
                 value={importFormat}
                 exclusive
-                onChange={(_, newFormat) => newFormat && setImportFormat(newFormat)}
+                onChange={(_, newFormat) =>
+                  newFormat && setImportFormat(newFormat)
+                }
                 size="small"
               >
                 <ToggleButton value="excel">
@@ -423,9 +431,9 @@ const EquipmentTreeExportImport: React.FC<EquipmentTreeExportImportProps> = ({
                 انتخاب فایل {importFormat === 'excel' ? 'Excel' : 'JSON'}
               </Button>
               {selectedFileName && (
-                <Chip 
-                  label={selectedFileName} 
-                  color="primary" 
+                <Chip
+                  label={selectedFileName}
+                  color="primary"
                   variant="outlined"
                   sx={{ ml: 1 }}
                 />
@@ -477,8 +485,13 @@ const EquipmentTreeExportImport: React.FC<EquipmentTreeExportImportProps> = ({
               </Typography>
               <Typography variant="body2" component="div">
                 <ul>
-                  <li>فایل Excel باید شامل ستون‌های: مسیر، نام فارسی، نام انگلیسی، ترتیب باشد</li>
-                  <li>فایل JSON باید شامل آرایه‌ای از گره‌ها با ساختار صحیح باشد</li>
+                  <li>
+                    فایل Excel باید شامل ستون‌های: مسیر، نام فارسی، نام انگلیسی،
+                    ترتیب باشد
+                  </li>
+                  <li>
+                    فایل JSON باید شامل آرایه‌ای از گره‌ها با ساختار صحیح باشد
+                  </li>
                   <li>هر گره باید دارای id، name، englishName باشد</li>
                   <li>import جدید جایگزین ساختار فعلی خواهد شد</li>
                 </ul>
@@ -486,22 +499,22 @@ const EquipmentTreeExportImport: React.FC<EquipmentTreeExportImportProps> = ({
             </Alert>
           </Box>
         </DialogContent>
-        
+
         <DialogActions sx={{ p: 2, gap: 1 }}>
-          <Button 
+          <Button
             onClick={() => setIsImportDialogOpen(false)}
             variant="outlined"
           >
             انصراف
           </Button>
-          <Button 
+          <Button
             onClick={validateImportData}
             variant="outlined"
             disabled={!importData}
           >
             اعتبارسنجی
           </Button>
-          <Button 
+          <Button
             onClick={handleImport}
             variant="contained"
             disabled={!importData || importErrors.length > 0}

@@ -16,7 +16,7 @@ import {
 import { useUiStore } from "@/stores/uiStore";
 
 import type { ScenarioActions, UiAction } from "@/types/constants";
-import { useRoute } from "vue-router";
+import { useRoute, useRouter } from "vue-router";
 import { useMapSettingsStore } from "@/stores/mapSettingsStore";
 import { storeToRefs } from "pinia";
 import { useMeasurementsStore } from "@/stores/geoStore";
@@ -25,6 +25,7 @@ import { injectStrict } from "@/utils";
 import { activeScenarioKey } from "@/components/injects";
 import { Bars3Icon } from "@heroicons/vue/24/outline";
 import { useUnifiedUndoRedo } from "@/modules/scenarioeditor/useUnifiedUndoRedo";
+import { dashboardSectionUrl, goToPreviousStep } from "@/utils/navigation";
 
 const breakpoints = useBreakpoints(breakpointsTailwind);
 const isMobile = breakpoints.smallerOrEqual("md");
@@ -38,6 +39,7 @@ const { store: scenarioStore } = injectStrict(activeScenarioKey);
 const { undo, redo, canRedo, canUndo } = useUnifiedUndoRedo(scenarioStore);
 
 const route = useRoute();
+const router = useRouter();
 const uiSettings = useUiStore();
 
 const { coordinateFormat, showLocation, showScaleLine, showDayNightTerminator } =
@@ -45,12 +47,8 @@ const { coordinateFormat, showLocation, showScaleLine, showDayNightTerminator } 
 
 const { measurementUnit } = storeToRefs(useMeasurementsStore());
 
-// Function to redirect to dashboard
-const goToDashboard = () => {
-  const parentOrigin = window.parent !== window 
-    ? (document.referrer ? new URL(document.referrer).origin : window.location.origin)
-    : window.location.origin;
-  window.location.href = parentOrigin;
+const goBack = () => {
+  goToPreviousStep(router, dashboardSectionUrl());
 };
 </script>
 
@@ -66,8 +64,8 @@ const goToDashboard = () => {
         :side-offset="12"
         dir="rtl"
       >
-      <DropdownMenuItem @select="goToDashboard" class="font-medium flex w-full justify-end text-right">
-        بازگشت به داشبورد
+      <DropdownMenuItem @select="goBack" class="font-medium flex w-full justify-end text-right">
+        بازگشت به مرحله قبل
       </DropdownMenuItem>
 
       <DropdownMenuSeparator />

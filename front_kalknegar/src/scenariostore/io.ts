@@ -393,6 +393,8 @@ export function useScenarioIO(store: ShallowRef<NewScenarioStore>) {
         createdDate: state?.meta?.createdDate,
         lastModifiedDate: new Date().toISOString(),
       },
+      status: state.status,
+      objectives: klona(state.objectives),
       ...getScenarioInfo(state),
       sides: getSides(state),
       layers: getLayers(state),

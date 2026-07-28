@@ -28,16 +28,15 @@ import {
   Circle,
 } from '@mui/icons-material';
 import { useAppDispatch, useAppSelector } from '@/store';
-import { 
+import {
   selectNotifications,
   selectUnreadNotifications,
   markNotificationAsRead,
   markAllNotificationsAsRead,
   removeNotification,
-  clearAllNotifications
+  clearAllNotifications,
 } from '@/store/slices/uiSlice';
-import { format } from 'date-fns';
-import { faIR } from 'date-fns/locale';
+import { formatPersianDateTime } from '@/utils/dateUtils';
 
 interface NotificationPanelProps {
   anchorEl: HTMLElement | null;
@@ -60,32 +59,68 @@ const NotificationPanel: React.FC<NotificationPanelProps> = ({
   const getSoftSurface = () => {
     const primary = (theme.palette.primary.main || '#4a90e2').toLowerCase();
     const hex = primary.replace('#', '');
-    if (hex.includes('10b981') || hex.includes('4caf50') || hex.includes('2e7d32')) return '#f0f4f3';
-    if (hex.includes('4a90e2') || hex.includes('1976d2') || hex.includes('2196f3')) return '#f0f4f8';
-    if (hex.includes('ef4444') || hex.includes('f44336') || hex.includes('d32f2f')) return '#fbf1f0';
-    if (hex.includes('6b21a8') || hex.includes('9c27b0') || hex.includes('673ab7')) return '#22262d';
-    if (hex.includes('f59e0b') || hex.includes('ff9800') || hex.includes('fb8c00')) return '#fbf1f1';
+    if (
+      hex.includes('10b981') ||
+      hex.includes('4caf50') ||
+      hex.includes('2e7d32')
+    )
+      return '#f0f4f3';
+    if (
+      hex.includes('4a90e2') ||
+      hex.includes('1976d2') ||
+      hex.includes('2196f3')
+    )
+      return '#f0f4f8';
+    if (
+      hex.includes('ef4444') ||
+      hex.includes('f44336') ||
+      hex.includes('d32f2f')
+    )
+      return '#fbf1f0';
+    if (
+      hex.includes('6b21a8') ||
+      hex.includes('9c27b0') ||
+      hex.includes('673ab7')
+    )
+      return '#22262d';
+    if (
+      hex.includes('f59e0b') ||
+      hex.includes('ff9800') ||
+      hex.includes('fb8c00')
+    )
+      return '#fbf1f1';
     const clamp = (n: number) => Math.max(0, Math.min(255, Math.round(n)));
     const hexToRgb = (h: string) => {
-      const n = h.length === 3 ? h.split('').map(c => c + c).join('') : h;
+      const n =
+        h.length === 3
+          ? h
+              .split('')
+              .map(c => c + c)
+              .join('')
+          : h;
       const r = parseInt(n.substring(0, 2), 16);
       const g = parseInt(n.substring(2, 4), 16);
       const b = parseInt(n.substring(4, 6), 16);
       return { r, g, b };
     };
-    const rgbToHex = (r: number, g: number, b: number) => `#${clamp(r).toString(16).padStart(2, '0')}${clamp(g).toString(16).padStart(2, '0')}${clamp(b).toString(16).padStart(2, '0')}`;
-    const blendWithWhite = (h: string, primaryWeight = 0.10) => {
+    const rgbToHex = (r: number, g: number, b: number) =>
+      `#${clamp(r).toString(16).padStart(2, '0')}${clamp(g).toString(16).padStart(2, '0')}${clamp(b).toString(16).padStart(2, '0')}`;
+    const blendWithWhite = (h: string, primaryWeight = 0.1) => {
       const { r, g, b } = hexToRgb(h);
-      const wr = 255, wg = 255, wb = 255;
+      const wr = 255,
+        wg = 255,
+        wb = 255;
       const w = 1 - primaryWeight;
       const br = wr * w + r * primaryWeight;
       const bg = wg * w + g * primaryWeight;
       const bb = wb * w + b * primaryWeight;
       return rgbToHex(br, bg, bb);
     };
-    if (/^[0-9a-f]{3,6}$/.test(hex)) return blendWithWhite(hex, 0.10);
+    if (/^[0-9a-f]{3,6}$/.test(hex)) return blendWithWhite(hex, 0.1);
     try {
-      const fallback = (theme.palette.primary.light || '#90caf9').toLowerCase().replace('#', '');
+      const fallback = (theme.palette.primary.light || '#90caf9')
+        .toLowerCase()
+        .replace('#', '');
       return blendWithWhite(fallback, 0.08);
     } catch {
       return '#f5f7fa';
@@ -128,7 +163,10 @@ const NotificationPanel: React.FC<NotificationPanelProps> = ({
   };
 
   // حذف اعلان
-  const handleDeleteNotification = (notificationId: string, event: React.MouseEvent) => {
+  const handleDeleteNotification = (
+    notificationId: string,
+    event: React.MouseEvent
+  ) => {
     event.stopPropagation();
     dispatch(removeNotification(notificationId));
   };
@@ -156,10 +194,12 @@ const NotificationPanel: React.FC<NotificationPanelProps> = ({
           overflow: 'hidden',
           mt: 1.5,
           borderRadius: '20px',
-          backgroundColor: (theme) => alpha(theme.palette.primary.light, 0.10),
+          backgroundColor: theme => alpha(theme.palette.primary.light, 0.1),
           backdropFilter: 'blur(20px)',
-          border: (theme) => `1px solid ${alpha(theme.palette.primary.light, 0.2)}`,
-          boxShadow: (theme) => `0 20px 60px ${alpha(theme.palette.primary.light, 0.25)}, inset 0 1px 0 rgba(255, 255, 255, 0.75)`,
+          border: theme =>
+            `1px solid ${alpha(theme.palette.primary.light, 0.2)}`,
+          boxShadow: theme =>
+            `0 20px 60px ${alpha(theme.palette.primary.light, 0.25)}, inset 0 1px 0 rgba(255, 255, 255, 0.75)`,
           '&:before': {
             content: '""',
             display: 'block',
@@ -169,8 +209,10 @@ const NotificationPanel: React.FC<NotificationPanelProps> = ({
             width: 12,
             height: 12,
             bgcolor: getSoftSurface(),
-            borderTop: (theme) => `1px solid ${alpha(theme.palette.primary.light, 0.2)}`,
-            borderLeft: (theme) => `1px solid ${alpha(theme.palette.primary.light, 0.2)}`,
+            borderTop: theme =>
+              `1px solid ${alpha(theme.palette.primary.light, 0.2)}`,
+            borderLeft: theme =>
+              `1px solid ${alpha(theme.palette.primary.light, 0.2)}`,
             transform: 'translateY(-50%) rotate(45deg)',
             zIndex: 0,
           },
@@ -180,12 +222,33 @@ const NotificationPanel: React.FC<NotificationPanelProps> = ({
       anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
     >
       {/* هدر */}
-      <Box sx={{ px: 2.5, py: 2, borderBottom: (theme) => `1px solid ${alpha(theme.palette.primary.light, 0.2)}`, backgroundColor: getSoftSurface() }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <Typography variant="h6" sx={{ fontWeight: 700, color: 'primary.main' }}>
+      <Box
+        sx={{
+          px: 2.5,
+          py: 2,
+          borderBottom: theme =>
+            `1px solid ${alpha(theme.palette.primary.light, 0.2)}`,
+          backgroundColor: getSoftSurface(),
+        }}
+      >
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+          }}
+        >
+          <Typography
+            variant="h6"
+            sx={{ fontWeight: 700, color: 'primary.main' }}
+          >
             اعلان‌ها
           </Typography>
-          <Badge badgeContent={unreadCount} color="error" sx={{ '& .MuiBadge-badge': { fontWeight: 600 } }}>
+          <Badge
+            badgeContent={unreadCount}
+            color="error"
+            sx={{ '& .MuiBadge-badge': { fontWeight: 600 } }}
+          >
             <Notifications />
           </Badge>
         </Box>
@@ -218,16 +281,25 @@ const NotificationPanel: React.FC<NotificationPanelProps> = ({
       </Box>
 
       {/* لیست اعلان‌ها */}
-      <MenuList sx={{ p: 0, maxHeight: 360, overflow: 'auto', backgroundColor: getSoftSurface() }}>
+      <MenuList
+        sx={{
+          p: 0,
+          maxHeight: 360,
+          overflow: 'auto',
+          backgroundColor: getSoftSurface(),
+        }}
+      >
         {notifications.length === 0 ? (
           <Box sx={{ textAlign: 'center', py: 4, px: 2 }}>
-            <Notifications sx={{ fontSize: 48, color: 'text.disabled', mb: 1 }} />
+            <Notifications
+              sx={{ fontSize: 48, color: 'text.disabled', mb: 1 }}
+            />
             <Typography variant="body2" color="text.secondary">
               هیچ اعلانی وجود ندارد
             </Typography>
           </Box>
         ) : (
-          notifications.map((notification) => (
+          notifications.map(notification => (
             <MenuItem
               key={notification.id}
               onClick={() => handleNotificationClick(notification.id)}
@@ -244,18 +316,29 @@ const NotificationPanel: React.FC<NotificationPanelProps> = ({
                   p: 2,
                   borderRight: 4,
                   borderColor: getNotificationColor(notification.type),
-                  bgcolor: !notification.read ? `${getNotificationColor(notification.type)}08` : 'transparent',
+                  bgcolor: !notification.read
+                    ? `${getNotificationColor(notification.type)}08`
+                    : 'transparent',
                   position: 'relative',
                 }}
               >
                 {/* آیکن و عنوان */}
-                <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1.5 }}>
+                <Box
+                  sx={{ display: 'flex', alignItems: 'flex-start', gap: 1.5 }}
+                >
                   <Box sx={{ mt: 0.25 }}>
                     {getNotificationIcon(notification.type)}
                   </Box>
-                  
+
                   <Box sx={{ flex: 1, minWidth: 0 }}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
+                    <Box
+                      sx={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 1,
+                        mb: 0.5,
+                      }}
+                    >
                       <Typography
                         variant="subtitle2"
                         sx={{
@@ -268,12 +351,12 @@ const NotificationPanel: React.FC<NotificationPanelProps> = ({
                       >
                         {notification.title}
                       </Typography>
-                      
+
                       {!notification.read && (
                         <Circle sx={{ color: 'primary.main', fontSize: 8 }} />
                       )}
                     </Box>
-                    
+
                     <Typography
                       variant="body2"
                       color="text.secondary"
@@ -288,16 +371,24 @@ const NotificationPanel: React.FC<NotificationPanelProps> = ({
                     >
                       {notification.message}
                     </Typography>
-                    
+
                     {/* زمان و عملیات */}
-                    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <Box
+                      sx={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                      }}
+                    >
                       <Typography variant="caption" color="text.secondary">
-                        {format(new Date(notification.timestamp), 'HH:mm - dd/MM/yyyy', { locale: faIR })}
+                        {formatPersianDateTime(notification.timestamp)}
                       </Typography>
-                      
+
                       <IconButton
                         size="small"
-                        onClick={(e) => handleDeleteNotification(notification.id, e)}
+                        onClick={e =>
+                          handleDeleteNotification(notification.id, e)
+                        }
                         sx={{ opacity: 0.7, '&:hover': { opacity: 1 } }}
                       >
                         <Close fontSize="small" />
@@ -313,8 +404,21 @@ const NotificationPanel: React.FC<NotificationPanelProps> = ({
 
       {/* فوتر */}
       {notifications.length > 0 && (
-        <Box sx={{ p: 1.5, borderTop: (theme) => `1px solid ${alpha(theme.palette.primary.light, 0.2)}`, backgroundColor: getSoftSurface(), textAlign: 'center' }}>
-          <Button variant="text" size="small" fullWidth sx={{ borderRadius: '10px', fontWeight: 600 }}>
+        <Box
+          sx={{
+            p: 1.5,
+            borderTop: theme =>
+              `1px solid ${alpha(theme.palette.primary.light, 0.2)}`,
+            backgroundColor: getSoftSurface(),
+            textAlign: 'center',
+          }}
+        >
+          <Button
+            variant="text"
+            size="small"
+            fullWidth
+            sx={{ borderRadius: '10px', fontWeight: 600 }}
+          >
             مشاهده همه اعلان‌ها
           </Button>
         </Box>
@@ -323,4 +427,4 @@ const NotificationPanel: React.FC<NotificationPanelProps> = ({
   );
 };
 
-export default NotificationPanel; 
+export default NotificationPanel;

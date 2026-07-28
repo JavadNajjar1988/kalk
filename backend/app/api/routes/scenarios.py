@@ -5,10 +5,11 @@ import json
 import shutil
 import uuid
 from pathlib import Path
+from urllib.parse import unquote, urlparse
 
-from fastapi import APIRouter, Depends, File, HTTPException, Request, Response, UploadFile, status
+from fastapi import APIRouter, Depends, File, HTTPException, Query, Request, Response, UploadFile, status
 from fastapi.responses import FileResponse
-from sqlalchemy import select
+from sqlalchemy import delete, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
@@ -27,6 +28,7 @@ from app.services.scenario_import import (
     upsert_scenario_from_import,
 )
 from app.services.notifications import publish_notification
+from app.services.scenario_history import build_content_history_diff
 from pydantic import BaseModel, Field
 import logging
 
@@ -90,9 +92,65 @@ SCENARIO_INTRO_VIDEO_DIR.mkdir(parents=True, exist_ok=True)
 
 ALLOWED_IMAGE_EXTENSIONS = {".jpg", ".jpeg", ".png", ".webp", ".gif"}
 ALLOWED_INTRO_VIDEO_EXTENSIONS = {".mp4", ".webm"}
+ALLOWED_INTRO_VIDEO_CONTENT_TYPES = {
+    "application/octet-stream",
+    "video/mp4",
+    "video/webm",
+}
 MAX_IMAGE_SIZE_BYTES = 5 * 1024 * 1024
 MAX_INTRO_VIDEO_SIZE_BYTES = 50 * 1024 * 1024  # 50 MB
 MAX_SCENARIO_FILE_SIZE_BYTES = 25 * 1024 * 1024  # 25 MB
+UPLOAD_CHUNK_SIZE_BYTES = 1024 * 1024
+
+
+def _intro_video_signature_matches(extension: str, header: bytes) -> bool:
+    if extension == ".mp4":
+        return len(header) >= 12 and header[4:8] == b"ftyp"
+    if extension == ".webm":
+        return header.startswith(b"\x1aE\xdf\xa3")
+    return False
+
+
+def _managed_intro_video_filename(video_url: str | None) -> str | None:
+    if not video_url:
+        return None
+    try:
+        path = unquote(urlparse(video_url.strip()).path).replace("\\", "/")
+    except ValueError:
+        return None
+    marker = "/scenarios/intro-videos/"
+    if marker not in path:
+        return None
+    filename = path.rsplit(marker, 1)[-1]
+    if not filename or "/" in filename or Path(filename).name != filename:
+        return None
+    if Path(filename).suffix.lower() not in ALLOWED_INTRO_VIDEO_EXTENSIONS:
+        return None
+    return filename
+
+
+async def _delete_managed_intro_video_if_unreferenced(
+    db: AsyncSession, video_url: str | None
+) -> None:
+    filename = _managed_intro_video_filename(video_url)
+    if not filename:
+        return
+    referenced_urls = await db.scalars(
+        select(Scenario.intro_video_url).where(
+            Scenario.intro_video_url.is_not(None),
+            Scenario.intro_video_url.like(f"%/{filename}"),
+        )
+    )
+    if any(
+        _managed_intro_video_filename(referenced_url) == filename
+        for referenced_url in referenced_urls.all()
+    ):
+        return
+    path = SCENARIO_INTRO_VIDEO_DIR / filename
+    try:
+        path.unlink(missing_ok=True)
+    except OSError:
+        logger.warning("Failed to delete scenario intro video %s", path, exc_info=True)
 
 
 async def _resolve_user_id(db: AsyncSession, user: dict) -> str:
@@ -344,30 +402,37 @@ async def upload_scenario_intro_video(request: Request, file: UploadFile = File(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Unsupported video type (use mp4 or webm)",
         )
-    unique_filename = f"{uuid.uuid4().hex}{ext}"
-    target_path = SCENARIO_INTRO_VIDEO_DIR / unique_filename
-    file_size: int | None = None
-    try:
-        file.file.seek(0, 2)
-        file_size = file.file.tell()
-        file.file.seek(0)
-    except Exception:
-        file_size = None
-    if file_size is not None and file_size > MAX_INTRO_VIDEO_SIZE_BYTES:
+    if (file.content_type or "").lower() not in ALLOWED_INTRO_VIDEO_CONTENT_TYPES:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Video file too large (max 50 MB)",
+            detail="Unsupported video content type",
         )
+    header = await file.read(64)
+    if not _intro_video_signature_matches(ext, header):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="File content does not match its video extension",
+        )
+    await file.seek(0)
+
+    unique_filename = f"{uuid.uuid4().hex}{ext}"
+    target_path = SCENARIO_INTRO_VIDEO_DIR / unique_filename
+    total_bytes = 0
     try:
-        file.file.seek(0)
         with target_path.open("wb") as buffer:
-            shutil.copyfileobj(file.file, buffer)
+            while chunk := await file.read(UPLOAD_CHUNK_SIZE_BYTES):
+                total_bytes += len(chunk)
+                if total_bytes > MAX_INTRO_VIDEO_SIZE_BYTES:
+                    raise HTTPException(
+                        status_code=status.HTTP_400_BAD_REQUEST,
+                        detail="Video file too large (max 50 MB)",
+                    )
+                buffer.write(chunk)
+    except HTTPException:
+        target_path.unlink(missing_ok=True)
+        raise
     except Exception as exc:
-        if target_path.exists():
-            try:
-                target_path.unlink()
-            except Exception:
-                pass
+        target_path.unlink(missing_ok=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to save video: {exc}",
@@ -376,6 +441,43 @@ async def upload_scenario_intro_video(request: Request, file: UploadFile = File(
         await file.close()
     video_url = request.url_for("get_scenario_intro_video", filename=unique_filename)
     return success({"filename": unique_filename, "url": str(video_url)})
+
+
+@router.delete(
+    "/intro-videos/{filename}",
+    response_model=dict,
+    dependencies=[Depends(require_roles("SUPER_ADMIN", "COMMANDER"))],
+)
+async def delete_scenario_intro_video(filename: str, db: DbSession):
+    safe_name = Path(filename).name
+    if (
+        safe_name != filename
+        or Path(safe_name).suffix.lower() not in ALLOWED_INTRO_VIDEO_EXTENSIONS
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid video name"
+        )
+
+    referenced_urls = await db.scalars(
+        select(Scenario.intro_video_url).where(
+            Scenario.intro_video_url.is_not(None),
+            Scenario.intro_video_url.like(f"%/{safe_name}"),
+        )
+    )
+    if any(
+        _managed_intro_video_filename(video_url) == safe_name
+        for video_url in referenced_urls.all()
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Video is currently assigned to a scenario",
+        )
+
+    video_path = SCENARIO_INTRO_VIDEO_DIR / safe_name
+    if not video_path.exists():
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Video not found")
+    video_path.unlink()
+    return success({"filename": safe_name, "deleted": True})
 
 
 @router.get("/intro-videos/{filename}", response_class=FileResponse)
@@ -539,6 +641,9 @@ async def create_scenario(
         name=payload.name,
         description=payload.description,
         image=payload.image,
+        intro_video_url=payload.intro_video_url,
+        intro_title=payload.intro_title,
+        intro_summary=payload.intro_summary,
         content=getattr(payload, "content", None),
         start_time=payload.start_time or _schedule_from_content(payload.content, "startTime"),
         end_time=payload.end_time or _schedule_from_content(payload.content, "endTime"),
@@ -574,21 +679,52 @@ async def update_scenario(
     obj = await db.get(Scenario, scenario_id)
     if not obj:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Scenario not found")
+    previous_intro_video_url = obj.intro_video_url
+    previous_content = obj.content
     data = payload.model_dump(exclude_unset=True)
     if "content" in data:
         content = data["content"]
+        if isinstance(content, dict) and isinstance(previous_content, dict):
+            # Older KalkNegar clients did not serialize dashboard-owned fields.
+            # Preserve them so an editor autosave cannot reset scenario status.
+            content = dict(content)
+            for dashboard_field in ("status", "objectives"):
+                if (
+                    dashboard_field not in content
+                    and dashboard_field in previous_content
+                ):
+                    content[dashboard_field] = previous_content[dashboard_field]
+            data["content"] = content
         if "start_time" not in data and isinstance(content, dict) and "startTime" in content:
             data["start_time"] = _schedule_from_content(content, "startTime")
         if "end_time" not in data and isinstance(content, dict) and "endTime" in content:
             data["end_time"] = _schedule_from_content(content, "endTime")
     changed_keys = {k for k, v in data.items() if getattr(obj, k, None) != v}
+    intro_changed = bool(
+        changed_keys & {"intro_video_url", "intro_title", "intro_summary"}
+    )
     for k, v in data.items():
         setattr(obj, k, v)
     obj.modified = datetime.now(timezone.utc)
+    if intro_changed:
+        await db.execute(
+            delete(ScenarioIntroView).where(
+                ScenarioIntroView.scenario_id == scenario_id
+            )
+        )
     if changed_keys:
-        await _audit(db, scenario_id, user, "update", {"fields": list(changed_keys)})
+        audit_diff: dict = {"fields": sorted(changed_keys)}
+        if "content" in changed_keys:
+            audit_diff.update(
+                build_content_history_diff(previous_content, data.get("content"))
+            )
+        await _audit(db, scenario_id, user, "update", audit_diff)
     await db.commit()
     await db.refresh(obj)
+    if previous_intro_video_url != obj.intro_video_url:
+        await _delete_managed_intro_video_if_unreferenced(
+            db, previous_intro_video_url
+        )
     await manager.broadcast("scenarios", {"type": "scenario_updated", "data": ScenarioOut.model_validate(obj).model_dump()})
     if changed_keys:
         await publish_notification(
@@ -616,9 +752,11 @@ async def delete_scenario(
     if not obj:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Scenario not found")
     scenario_name = obj.name
+    intro_video_url = obj.intro_video_url
     await _audit(db, scenario_id, user, "delete", {"name": scenario_name})
     await db.delete(obj)
     await db.commit()
+    await _delete_managed_intro_video_if_unreferenced(db, intro_video_url)
     await manager.broadcast("scenarios", {"type": "scenario_deleted", "data": {"id": scenario_id}})
     await publish_notification(
         db,
@@ -752,12 +890,12 @@ class AuditLogOut(BaseModel):
     id: str
     scenario_id: str
     actor_user_id: str | None = None
+    actor_username: str | None = None
+    actor_display_name: str | None = None
+    actor_user_code: str | None = None
     action: str
     payload_diff: dict | None = None
     created_at: datetime
-
-    class Config:
-        from_attributes = True
 
 
 @router.get(
@@ -768,21 +906,66 @@ class AuditLogOut(BaseModel):
 async def get_scenario_history(
     scenario_id: str,
     db: DbSession,
-    limit: int = 50,
-    offset: int = 0,
+    limit: int = Query(default=20, ge=1, le=100),
+    offset: int = Query(default=0, ge=0),
 ):
     obj = await db.get(Scenario, scenario_id)
     if not obj:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Scenario not found")
+    total = (
+        await db.scalar(
+            select(func.count())
+            .select_from(ScenarioAuditLog)
+            .where(ScenarioAuditLog.scenario_id == scenario_id)
+        )
+        or 0
+    )
     stmt = (
         select(ScenarioAuditLog)
         .where(ScenarioAuditLog.scenario_id == scenario_id)
         .order_by(ScenarioAuditLog.created_at.desc())
         .offset(offset)
-        .limit(min(limit, 200))
+        .limit(limit)
     )
     result = await db.execute(stmt)
     items = result.scalars().all()
-    return success([AuditLogOut.model_validate(i).model_dump() for i in items])
+    actor_ids = {item.actor_user_id for item in items if item.actor_user_id}
+    users_by_id: dict[str, User] = {}
+    if actor_ids:
+        users = (
+            await db.execute(select(User).where(User.id.in_(actor_ids)))
+        ).scalars().all()
+        users_by_id = {user.id: user for user in users}
+
+    history_items = []
+    for item in items:
+        actor = users_by_id.get(item.actor_user_id or "")
+        actor_display_name = None
+        if actor:
+            actor_display_name = (
+                (actor.personal_info or {}).get("fullName") or actor.username
+            )
+        history_items.append(
+            AuditLogOut(
+                id=item.id,
+                scenario_id=item.scenario_id,
+                actor_user_id=item.actor_user_id,
+                actor_username=actor.username if actor else None,
+                actor_display_name=actor_display_name,
+                actor_user_code=actor.user_code if actor else None,
+                action=item.action,
+                payload_diff=item.payload_diff,
+                created_at=item.created_at,
+            ).model_dump()
+        )
+
+    return success(
+        {
+            "items": history_items,
+            "total": total,
+            "limit": limit,
+            "offset": offset,
+        }
+    )
 
 

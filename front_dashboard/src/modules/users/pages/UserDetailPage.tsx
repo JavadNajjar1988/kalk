@@ -41,6 +41,7 @@ import { updateUser as updateAuthenticatedUser } from '@/store/slices/authSlice'
 import { canAccessFeature } from '@/security/roleAccess';
 import { resolveAvatarSrc } from '../utils/avatarOptions';
 import { getAccessLevelColor, getUserInitials } from '../utils/userPresentation';
+import { navigateToPreviousStep } from '@/utils/navigation';
 
 const UserDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -65,7 +66,7 @@ const UserDetailPage: React.FC = () => {
   }, [id, dispatch]);
 
   const handleBack = () => {
-    navigate('/dashboard/users');
+    navigateToPreviousStep(navigate, window.location.pathname, '/dashboard/users');
   };
 
   const handleMenuOpen = (event: React.MouseEvent<HTMLElement>) => {

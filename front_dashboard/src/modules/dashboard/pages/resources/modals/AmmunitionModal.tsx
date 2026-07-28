@@ -19,9 +19,13 @@ import {
 } from '../resourcesDialogStyles';
 import { useTranslation } from '@/hooks/useTranslation';
 import AmmunitionHierarchicalSelector from '@/components/common/AmmunitionHierarchicalSelector';
-import type { AmmunitionPath, AmmunitionFieldDefinition } from '@/hooks/useAmmunitionHierarchy';
+import type {
+  AmmunitionPath,
+  AmmunitionFieldDefinition,
+} from '@/hooks/useAmmunitionHierarchy';
 import PrimaryImageField from '../components/PrimaryImageField';
 import type { PrimaryImageChanges } from '../components/primaryImageHelpers';
+import PersianCalendarField from '@/components/common/PersianCalendarField';
 
 interface AmmunitionModalProps {
   open: boolean;
@@ -40,8 +44,12 @@ const AmmunitionModal: React.FC<AmmunitionModalProps> = ({
   const theme = useTheme();
 
   const [formData, setFormData] = useState<any>({});
-  const [selectedAmmunitionPath, setSelectedAmmunitionPath] = useState<AmmunitionPath[]>([]);
-  const [ammunitionHierarchyFields, setAmmunitionHierarchyFields] = useState<AmmunitionFieldDefinition[]>([]);
+  const [selectedAmmunitionPath, setSelectedAmmunitionPath] = useState<
+    AmmunitionPath[]
+  >([]);
+  const [ammunitionHierarchyFields, setAmmunitionHierarchyFields] = useState<
+    AmmunitionFieldDefinition[]
+  >([]);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [clearExisting, setClearExisting] = useState<boolean>(false);
 
@@ -86,11 +94,16 @@ const AmmunitionModal: React.FC<AmmunitionModalProps> = ({
     onSave(finalData, { selectedFile, clearExisting });
   };
 
-  const handleAmmunitionPathChange = (path: AmmunitionPath[], _finalNodeId?: string) => {
+  const handleAmmunitionPathChange = (
+    path: AmmunitionPath[],
+    _finalNodeId?: string
+  ) => {
     setSelectedAmmunitionPath(path);
   };
 
-  const handleAmmunitionFieldsChange = (fields: AmmunitionFieldDefinition[]) => {
+  const handleAmmunitionFieldsChange = (
+    fields: AmmunitionFieldDefinition[]
+  ) => {
     setAmmunitionHierarchyFields(fields);
   };
 
@@ -111,7 +124,7 @@ const AmmunitionModal: React.FC<AmmunitionModalProps> = ({
             select
             label={field.name}
             value={formData[field.id] || ''}
-            onChange={(e) => handleChange(field.id, e.target.value)}
+            onChange={e => handleChange(field.id, e.target.value)}
           >
             {field.options?.map((option: string) => (
               <MenuItem key={option} value={option}>
@@ -129,7 +142,7 @@ const AmmunitionModal: React.FC<AmmunitionModalProps> = ({
             label={field.name}
             SelectProps={{ multiple: true }}
             value={formData[field.id] || []}
-            onChange={(e) => handleChange(field.id, e.target.value)}
+            onChange={e => handleChange(field.id, e.target.value)}
           >
             {field.options?.map((option: string) => (
               <MenuItem key={option} value={option}>
@@ -146,19 +159,23 @@ const AmmunitionModal: React.FC<AmmunitionModalProps> = ({
             type="number"
             label={`${field.name}${field.unit ? ` (${field.unit})` : ''}`}
             value={formData[field.id] || ''}
-            onChange={(e) => handleChange(field.id, e.target.value ? Number(e.target.value) : '')}
+            onChange={e =>
+              handleChange(
+                field.id,
+                e.target.value ? Number(e.target.value) : ''
+              )
+            }
           />
         );
       case 'date':
         return (
-          <TextField
-            {...commonProps}
+          <PersianCalendarField
             key={field.id}
-            type="date"
             label={field.name}
             value={formData[field.id] || ''}
-            onChange={(e) => handleChange(field.id, e.target.value)}
-            InputLabelProps={{ shrink: true }}
+            onChange={value => handleChange(field.id, value)}
+            dateOnly
+            required={field.isRequired}
           />
         );
       default:
@@ -168,7 +185,7 @@ const AmmunitionModal: React.FC<AmmunitionModalProps> = ({
             key={field.id}
             label={field.name}
             value={formData[field.id] || ''}
-            onChange={(e) => handleChange(field.id, e.target.value)}
+            onChange={e => handleChange(field.id, e.target.value)}
           />
         );
     }
@@ -183,7 +200,9 @@ const AmmunitionModal: React.FC<AmmunitionModalProps> = ({
       sx={buildResourcesFormDialogSx(theme)}
     >
       <DialogTitle sx={resourcesDialogTitleSx(theme)}>
-        {ammunition ? t('resources.ammunition.editTitle') : t('resources.ammunition.addTitle')}
+        {ammunition
+          ? t('resources.ammunition.editTitle')
+          : t('resources.ammunition.addTitle')}
       </DialogTitle>
 
       <DialogContent dividers sx={resourcesDialogContentDividersSx(theme)}>

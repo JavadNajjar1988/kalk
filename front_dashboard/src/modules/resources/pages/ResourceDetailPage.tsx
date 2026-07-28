@@ -17,6 +17,7 @@ import {
   Delete as DeleteIcon,
 } from '@mui/icons-material';
 import { useAppSelector } from '@/store';
+import { navigateToPreviousStep } from '@/utils/navigation';
 
 const ResourceDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -27,7 +28,7 @@ const ResourceDetailPage: React.FC = () => {
   );
 
   const handleBack = () => {
-    navigate('/dashboard/resources');
+    navigateToPreviousStep(navigate, window.location.pathname, '/dashboard/resources');
   };
 
   const handleEdit = () => {

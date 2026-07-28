@@ -58,7 +58,11 @@ const [properties] = useMemento('ui.properties', '')
 provide('services', projectServices)
 
 const goBack = () => {
-  router.push('/')
+  if (window.history.state?.back) {
+    router.back()
+    return
+  }
+  router.replace('/')
 }
 
 onMounted(async () => {

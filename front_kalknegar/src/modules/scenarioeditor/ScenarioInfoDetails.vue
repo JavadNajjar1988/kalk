@@ -7,11 +7,9 @@
         description="از نحو مارک‌داون برای قالب‌بندی استفاده کنید"
       />
       <DescriptionItem label="زمان شروع"
-        >{{ computedStartTime.format() }}
+        >{{ computedStartTime }}
         <PlainButton @click="openTimeModal()" class="ml-2">تغییر</PlainButton>
       </DescriptionItem>
-      <TimezoneSelect label="منطقه زمانی" v-model="form.timeZone" />
-      <RadioGroupList :items="standardSettings" v-model="form.symbologyStandard" />
       <div class="flex justify-end space-x-2">
         <PrimaryButton type="submit">به‌روزرسانی</PrimaryButton>
         <PlainButton type="button" @click="toggleEditMode()">لغو</PlainButton>
@@ -20,18 +18,12 @@
     <div v-else class="space-y-4 p-0">
       <DescriptionItem label="توضیحات">
         <div
-          class="prose prose-sm max-w-none text-right text-foreground dark:prose-invert [&_*]:text-inherit [&_p]:text-right [&_li]:text-right"
+          class="prose prose-sm text-foreground dark:prose-invert max-w-none text-right [&_*]:text-inherit [&_li]:text-right [&_p]:text-right"
           v-html="hDescription"
         ></div>
       </DescriptionItem>
 
-      <DescriptionItem label="زمان شروع"
-        >{{ computedStartTime.format() }}
-      </DescriptionItem>
-      <DescriptionItem label="نام منطقه زمانی">{{ state.info.timeZone }}</DescriptionItem>
-      <DescriptionItem label="استاندارد نمادشناسی"
-        >{{ state.info.symbologyStandard }}
-      </DescriptionItem>
+      <DescriptionItem label="زمان شروع">{{ computedStartTime }}</DescriptionItem>
 
       <DescriptionItem label="تعداد واحدها"
         >{{ Object.keys(state.unitMap).length }}
@@ -52,40 +44,20 @@ import { renderMarkdown } from "@/composables/formatting";
 import { useToggle } from "@vueuse/core";
 import PlainButton from "@/components/PlainButton.vue";
 import { type ScenarioInfo } from "@/types/scenarioModels";
-import dayjs from "dayjs";
-import RadioGroupList from "@/components/RadioGroupList.vue";
-import { useSymbolSettingsStore } from "@/stores/settingsStore";
 import { injectStrict } from "@/utils";
 import { activeScenarioKey, timeModalKey } from "@/components/injects";
 import { useNotifications } from "@/composables/notifications";
+import { jalaliDateTimeFormatter } from "@/utils/jalaliFormatters";
 
 const { send } = useNotifications();
 
 const { store, io } = injectStrict(activeScenarioKey);
 const { getModalTimestamp } = injectStrict(timeModalKey);
 
-const standardSettings = [
-  {
-    value: "2525",
-    name: "MIL-STD-2525D",
-    description: "نسخه آمریکایی",
-  },
-  {
-    value: "app6",
-    name: "APP-6",
-    description: "نسخه ناتو",
-  },
-];
-
-const TimezoneSelect = defineAsyncComponent(
-  () => import("@/components/TimezoneSelect.vue"),
-);
-
 const SimpleMarkdownInput = defineAsyncComponent(
   () => import("@/components/SimpleMarkdownInput.vue"),
 );
 
-const settingsStore = useSymbolSettingsStore();
 const { state } = store;
 
 const isEditMode = ref(false);
@@ -117,13 +89,9 @@ watch(
   { immediate: true },
 );
 
-const computedStartTime = computed(() => {
-  try {
-    return dayjs(form.value.startTime).tz(form.value.timeZone);
-  } catch (e) {
-    return dayjs(form.value.startTime);
-  }
-});
+const computedStartTime = computed(() =>
+  jalaliDateTimeFormatter(Number(form.value.startTime)),
+);
 
 function onDownload() {
   io.downloadAsJson();
@@ -140,12 +108,7 @@ function onLoad() {
 }
 
 function onFormSubmit() {
-  const {
-    state: { info },
-  } = store;
   updateScenarioInfo(form.value);
-
-  if (info.symbologyStandard) settingsStore.symbologyStandard = info.symbologyStandard;
   isEditMode.value = false;
 }
 

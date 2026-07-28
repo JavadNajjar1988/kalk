@@ -2,6 +2,7 @@ import { createPinia, setActivePinia } from "pinia";
 import { beforeEach, describe, expect, it } from "vitest";
 import { useScenario } from "./index";
 import type { Scenario } from "@/types/scenarioModels";
+import { ScenarioStatus } from "@/types/scenarioModels";
 
 function createScenario(id: string): Scenario {
   return {
@@ -32,5 +33,18 @@ describe("useScenario", () => {
     expect(io.savedDirty.value).toBe(true);
     expect(scenario.value.io).toBe(io);
     expect(scenario.value.io.savedDirty.value).toBe(true);
+  });
+
+  it("keeps dashboard status and objectives in autosave output", () => {
+    const { scenario } = useScenario();
+    const input = createScenario("status-persistence");
+    input.status = ScenarioStatus.ACTIVE;
+    input.objectives = ["حفظ منطقه عملیاتی"];
+
+    scenario.value.io.loadFromObject(input);
+    const saved = JSON.parse(scenario.value.io.stringifyScenario());
+
+    expect(saved.status).toBe(ScenarioStatus.ACTIVE);
+    expect(saved.objectives).toEqual(["حفظ منطقه عملیاتی"]);
   });
 });

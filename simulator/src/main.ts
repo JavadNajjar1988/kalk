@@ -284,18 +284,24 @@ setTimeout(() => {
   }
 }, 15000); // 15 seconds maximum
 
-// Setup back to dashboard button
+// Return to the page that launched the simulator, with a safe section fallback.
 if (backToDashboardButton) {
   backToDashboardButton.addEventListener('click', (e) => {
     e.preventDefault();
-    // Get dashboard URL from environment or use default
-    const dashboardUrl = (import.meta as any).env?.VITE_DASHBOARD_URL || 'http://127.0.0.1:3000/';
-    // Try to close current window if opened by parent, otherwise navigate
     if (window.opener) {
       window.close();
-    } else {
-      window.location.href = dashboardUrl;
+      return;
     }
+
+    if (document.referrer && window.history.length > 1) {
+      window.history.back();
+      return;
+    }
+
+    const dashboardUrl =
+      (import.meta as any).env?.VITE_DASHBOARD_URL ||
+      'http://127.0.0.1:3000';
+    window.location.href = new URL('/dashboard/scenarios', dashboardUrl).toString();
   });
 }
 

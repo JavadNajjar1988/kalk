@@ -1,4 +1,8 @@
 <script setup lang="ts">
+import { useRouter } from "vue-router";
+import { dashboardSectionUrl, goToPreviousStep } from "@/utils/navigation";
+
+const router = useRouter();
 const resolveParentOrigin = () => {
   const envOrigin = (import.meta as any).env?.VITE_PARENT_ORIGIN as string | undefined;
   if (envOrigin && envOrigin.trim().length > 0) {
@@ -17,6 +21,7 @@ const resolveParentOrigin = () => {
 };
 
 const parentHelpUrl = `${resolveParentOrigin()}/dashboard/help`;
+const goBack = () => goToPreviousStep(router, dashboardSectionUrl());
 </script>
 
 <template>
@@ -30,9 +35,9 @@ const parentHelpUrl = `${resolveParentOrigin()}/dashboard/help`;
         متأسفانه سناریویی که به دنبال آن هستید یافت نشد. ممکن است حذف شده باشد یا در این مرورگر وجود نداشته باشد.
       </p>
       <div class="mt-10 flex items-center justify-center gap-x-8">
-        <router-link to="/" class="text-sm font-semibold text-indigo-500 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300"
-          ><span aria-hidden="true">&larr;</span> بازگشت به خانه
-        </router-link>
+        <button type="button" @click="goBack" class="text-sm font-semibold text-indigo-500 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300"
+          ><span aria-hidden="true">&larr;</span> بازگشت به مرحله قبل
+        </button>
         <a
           :href="parentHelpUrl"
           class="text-sm font-semibold text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-slate-100"

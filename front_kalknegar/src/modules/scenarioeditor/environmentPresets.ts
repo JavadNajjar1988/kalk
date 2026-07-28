@@ -1,7 +1,5 @@
-import type {
-  EnvironmentalKind,
-  EnvironmentalParameters,
-} from "@/types/scenarioModels";
+import type { EnvironmentalKind, EnvironmentalParameters } from "@/types/scenarioModels";
+import { DEFAULT_METOC_SIDC } from "@/scenariostore/environment";
 
 export interface EnvironmentFieldOption {
   value: string;
@@ -26,10 +24,14 @@ export interface EnvironmentPreset {
   kind: EnvironmentalKind;
   emoji: string;
   color: string;
-  metocSidc?: string;
+  metocSidc: string;
   parameters: EnvironmentalParameters;
   fields: EnvironmentField[];
 }
+
+type EnvironmentPresetDefinition = Omit<EnvironmentPreset, "metocSidc"> & {
+  metocSidc?: string;
+};
 
 const intensity: EnvironmentField = {
   key: "intensity",
@@ -47,7 +49,7 @@ const visibility: EnvironmentField = {
   min: 0,
 };
 
-export const ENVIRONMENT_PRESETS: EnvironmentPreset[] = [
+const ENVIRONMENT_PRESET_DEFINITIONS: EnvironmentPresetDefinition[] = [
   {
     id: "rain",
     category: "atmosphere",
@@ -71,7 +73,10 @@ export const ENVIRONMENT_PRESETS: EnvironmentPreset[] = [
     color: "#64748b",
     metocSidc: "W-S-WSS-LI",
     parameters: { mode: "snow", intensity: 0.6, rateMmPerHour: 5 },
-    fields: [intensity, { key: "rateMmPerHour", label: "نرخ بارش", type: "number", unit: "mm/h", min: 0 }],
+    fields: [
+      intensity,
+      { key: "rateMmPerHour", label: "نرخ بارش", type: "number", unit: "mm/h", min: 0 },
+    ],
   },
   {
     id: "hail",
@@ -82,7 +87,10 @@ export const ENVIRONMENT_PRESETS: EnvironmentPreset[] = [
     color: "#475569",
     metocSidc: "W-S-WSGRL-",
     parameters: { mode: "hail", intensity: 0.6, diameterMm: 8 },
-    fields: [intensity, { key: "diameterMm", label: "قطر دانه", type: "number", unit: "mm", min: 0 }],
+    fields: [
+      intensity,
+      { key: "diameterMm", label: "قطر دانه", type: "number", unit: "mm", min: 0 },
+    ],
   },
   {
     id: "thunderstorm",
@@ -93,7 +101,16 @@ export const ENVIRONMENT_PRESETS: EnvironmentPreset[] = [
     color: "#4338ca",
     metocSidc: "W-S-WSTMH-",
     parameters: { intensity: 0.7, lightningPerMinute: 5 },
-    fields: [intensity, { key: "lightningPerMinute", label: "تعداد صاعقه", type: "number", unit: "در دقیقه", min: 0 }],
+    fields: [
+      intensity,
+      {
+        key: "lightningPerMinute",
+        label: "تعداد صاعقه",
+        type: "number",
+        unit: "در دقیقه",
+        min: 0,
+      },
+    ],
   },
   {
     id: "dust-storm",
@@ -114,7 +131,11 @@ export const ENVIRONMENT_PRESETS: EnvironmentPreset[] = [
     emoji: "🌬️",
     color: "#64748b",
     parameters: { intensity: 0.8, visibilityMeters: 300, windSpeedMps: 18 },
-    fields: [intensity, visibility, { key: "windSpeedMps", label: "سرعت باد", type: "number", unit: "m/s", min: 0 }],
+    fields: [
+      intensity,
+      visibility,
+      { key: "windSpeedMps", label: "سرعت باد", type: "number", unit: "m/s", min: 0 },
+    ],
   },
   {
     id: "fog",
@@ -145,7 +166,10 @@ export const ENVIRONMENT_PRESETS: EnvironmentPreset[] = [
     emoji: "🔥",
     color: "#dc2626",
     parameters: { intensity: 0.7, spreadRateMph: 50 },
-    fields: [intensity, { key: "spreadRateMph", label: "سرعت گسترش", type: "number", unit: "m/h", min: 0 }],
+    fields: [
+      intensity,
+      { key: "spreadRateMph", label: "سرعت گسترش", type: "number", unit: "m/h", min: 0 },
+    ],
   },
   {
     id: "wind",
@@ -157,7 +181,14 @@ export const ENVIRONMENT_PRESETS: EnvironmentPreset[] = [
     parameters: { speedMps: 10, directionDeg: 0, gustMps: 14 },
     fields: [
       { key: "speedMps", label: "سرعت", type: "number", unit: "m/s", min: 0 },
-      { key: "directionDeg", label: "جهت", type: "number", unit: "درجه", min: 0, max: 359 },
+      {
+        key: "directionDeg",
+        label: "جهت",
+        type: "number",
+        unit: "درجه",
+        min: 0,
+        max: 359,
+      },
       { key: "gustMps", label: "سرعت تندباد", type: "number", unit: "m/s", min: 0 },
     ],
   },
@@ -169,7 +200,9 @@ export const ENVIRONMENT_PRESETS: EnvironmentPreset[] = [
     emoji: "👁️",
     color: "#7c3aed",
     parameters: { rangeMeters: 1000 },
-    fields: [{ key: "rangeMeters", label: "برد دید", type: "number", unit: "متر", min: 0 }],
+    fields: [
+      { key: "rangeMeters", label: "برد دید", type: "number", unit: "متر", min: 0 },
+    ],
   },
   {
     id: "temperature",
@@ -189,7 +222,16 @@ export const ENVIRONMENT_PRESETS: EnvironmentPreset[] = [
     emoji: "💧",
     color: "#0ea5e9",
     parameters: { percent: 60 },
-    fields: [{ key: "percent", label: "رطوبت نسبی", type: "number", unit: "%", min: 0, max: 100 }],
+    fields: [
+      {
+        key: "percent",
+        label: "رطوبت نسبی",
+        type: "number",
+        unit: "%",
+        min: 0,
+        max: 100,
+      },
+    ],
   },
   {
     id: "pressure",
@@ -199,7 +241,9 @@ export const ENVIRONMENT_PRESETS: EnvironmentPreset[] = [
     emoji: "🧭",
     color: "#0369a1",
     parameters: { hPa: 1013 },
-    fields: [{ key: "hPa", label: "فشار", type: "number", unit: "hPa", min: 800, max: 1100 }],
+    fields: [
+      { key: "hPa", label: "فشار", type: "number", unit: "hPa", min: 800, max: 1100 },
+    ],
   },
   {
     id: "cloud",
@@ -209,7 +253,16 @@ export const ENVIRONMENT_PRESETS: EnvironmentPreset[] = [
     emoji: "☁️",
     color: "#475569",
     parameters: { coverage: 0.7, baseMeters: 1200 },
-    fields: [{ ...intensity, key: "coverage", label: "پوشش" }, { key: "baseMeters", label: "ارتفاع پایه ابر", type: "number", unit: "متر", min: 0 }],
+    fields: [
+      { ...intensity, key: "coverage", label: "پوشش" },
+      {
+        key: "baseMeters",
+        label: "ارتفاع پایه ابر",
+        type: "number",
+        unit: "متر",
+        min: 0,
+      },
+    ],
   },
   {
     id: "illumination",
@@ -221,10 +274,17 @@ export const ENVIRONMENT_PRESETS: EnvironmentPreset[] = [
     parameters: { lux: 10, phase: "night" },
     fields: [
       { key: "lux", label: "شدت روشنایی", type: "number", unit: "lux", min: 0 },
-      { key: "phase", label: "وضعیت", type: "select", options: [
-        { value: "day", label: "روز" }, { value: "dawn", label: "سپیده‌دم" },
-        { value: "dusk", label: "غروب" }, { value: "night", label: "شب" },
-      ] },
+      {
+        key: "phase",
+        label: "وضعیت",
+        type: "select",
+        options: [
+          { value: "day", label: "روز" },
+          { value: "dawn", label: "سپیده‌دم" },
+          { value: "dusk", label: "غروب" },
+          { value: "night", label: "شب" },
+        ],
+      },
     ],
   },
   ...[
@@ -240,6 +300,14 @@ export const ENVIRONMENT_PRESETS: EnvironmentPreset[] = [
     kind: "surface_condition" as const,
     emoji,
     color,
+    metocSidc:
+      {
+        dry: "G-G-GPO---",
+        wet: "W-S-WSD-LI",
+        muddy: "E-N-BC----",
+        icy: "E-N-AB----",
+        snow_covered: "W-S-WSS-LI",
+      }[condition] ?? DEFAULT_METOC_SIDC.surface_condition,
     parameters: { condition, intensity: 0.6 },
     fields: [intensity],
   })),
@@ -266,10 +334,17 @@ export const ENVIRONMENT_PRESETS: EnvironmentPreset[] = [
     parameters: { kPa: 100, soilType: "soil" },
     fields: [
       { key: "kPa", label: "ظرفیت تحمل", type: "number", unit: "kPa", min: 0 },
-      { key: "soilType", label: "جنس سطح", type: "select", options: [
-        { value: "soil", label: "خاک" }, { value: "sand", label: "شن" },
-        { value: "rock", label: "سنگ" }, { value: "asphalt", label: "آسفالت" },
-      ] },
+      {
+        key: "soilType",
+        label: "جنس سطح",
+        type: "select",
+        options: [
+          { value: "soil", label: "خاک" },
+          { value: "sand", label: "شن" },
+          { value: "rock", label: "سنگ" },
+          { value: "asphalt", label: "آسفالت" },
+        ],
+      },
     ],
   },
   {
@@ -282,7 +357,14 @@ export const ENVIRONMENT_PRESETS: EnvironmentPreset[] = [
     parameters: { degrees: 15, aspectDeg: 0 },
     fields: [
       { key: "degrees", label: "شیب", type: "number", unit: "درجه", min: 0, max: 90 },
-      { key: "aspectDeg", label: "جهت شیب", type: "number", unit: "درجه", min: 0, max: 359 },
+      {
+        key: "aspectDeg",
+        label: "جهت شیب",
+        type: "number",
+        unit: "درجه",
+        min: 0,
+        max: 359,
+      },
     ],
   },
   {
@@ -293,7 +375,9 @@ export const ENVIRONMENT_PRESETS: EnvironmentPreset[] = [
     emoji: "⛰️",
     color: "#57534e",
     parameters: { level: 3 },
-    fields: [{ key: "level", label: "درجه ناهمواری", type: "number", min: 1, max: 5, step: 1 }],
+    fields: [
+      { key: "level", label: "درجه ناهمواری", type: "number", min: 1, max: 5, step: 1 },
+    ],
   },
   {
     id: "vegetation",
@@ -303,7 +387,10 @@ export const ENVIRONMENT_PRESETS: EnvironmentPreset[] = [
     emoji: "🌳",
     color: "#15803d",
     parameters: { density: 0.6, heightMeters: 3 },
-    fields: [{ ...intensity, key: "density", label: "تراکم" }, { key: "heightMeters", label: "ارتفاع متوسط", type: "number", unit: "متر", min: 0 }],
+    fields: [
+      { ...intensity, key: "density", label: "تراکم" },
+      { key: "heightMeters", label: "ارتفاع متوسط", type: "number", unit: "متر", min: 0 },
+    ],
   },
   {
     id: "elevation",
@@ -313,7 +400,9 @@ export const ENVIRONMENT_PRESETS: EnvironmentPreset[] = [
     emoji: "🏔️",
     color: "#475569",
     parameters: { metersAsl: 1000 },
-    fields: [{ key: "metersAsl", label: "ارتفاع از سطح دریا", type: "number", unit: "متر" }],
+    fields: [
+      { key: "metersAsl", label: "ارتفاع از سطح دریا", type: "number", unit: "متر" },
+    ],
   },
   {
     id: "road",
@@ -324,10 +413,17 @@ export const ENVIRONMENT_PRESETS: EnvironmentPreset[] = [
     color: "#334155",
     parameters: { condition: "open", maxSpeedKph: 60 },
     fields: [
-      { key: "condition", label: "وضعیت", type: "select", options: [
-        { value: "open", label: "باز" }, { value: "damaged", label: "آسیب‌دیده" },
-        { value: "blocked", label: "مسدود" }, { value: "mined", label: "مین‌گذاری‌شده" },
-      ] },
+      {
+        key: "condition",
+        label: "وضعیت",
+        type: "select",
+        options: [
+          { value: "open", label: "باز" },
+          { value: "damaged", label: "آسیب‌دیده" },
+          { value: "blocked", label: "مسدود" },
+          { value: "mined", label: "مین‌گذاری‌شده" },
+        ],
+      },
       { key: "maxSpeedKph", label: "حداکثر سرعت", type: "number", unit: "km/h", min: 0 },
     ],
   },
@@ -340,10 +436,16 @@ export const ENVIRONMENT_PRESETS: EnvironmentPreset[] = [
     color: "#475569",
     parameters: { condition: "operational", loadClass: 40 },
     fields: [
-      { key: "condition", label: "وضعیت", type: "select", options: [
-        { value: "operational", label: "عملیاتی" }, { value: "damaged", label: "آسیب‌دیده" },
-        { value: "destroyed", label: "منهدم" },
-      ] },
+      {
+        key: "condition",
+        label: "وضعیت",
+        type: "select",
+        options: [
+          { value: "operational", label: "عملیاتی" },
+          { value: "damaged", label: "آسیب‌دیده" },
+          { value: "destroyed", label: "منهدم" },
+        ],
+      },
       { key: "loadClass", label: "کلاس بار", type: "number", min: 0 },
     ],
   },
@@ -362,6 +464,12 @@ export const ENVIRONMENT_PRESETS: EnvironmentPreset[] = [
     ],
   },
 ];
+
+export const ENVIRONMENT_PRESETS: EnvironmentPreset[] =
+  ENVIRONMENT_PRESET_DEFINITIONS.map((preset) => ({
+    ...preset,
+    metocSidc: preset.metocSidc ?? DEFAULT_METOC_SIDC[preset.kind],
+  }));
 
 export function presetForCondition(
   kind: EnvironmentalKind,

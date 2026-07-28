@@ -6,8 +6,9 @@ import {
   Paper,
   Container,
 } from '@mui/material';
-import { Error, Refresh, Home } from '@mui/icons-material';
+import { ArrowBack, Error, Refresh } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
+import { navigateToPreviousStep } from '@/utils/navigation';
 
 interface ErrorFallbackProps {
   error: Error;
@@ -20,9 +21,9 @@ export const ErrorFallback: React.FC<ErrorFallbackProps> = ({
 }) => {
   const navigate = useNavigate();
 
-  const handleGoHome = () => {
-    navigate('/');
+  const handleGoBack = () => {
     resetErrorBoundary();
+    navigateToPreviousStep(navigate, window.location.pathname, '/dashboard');
   };
 
   return (
@@ -89,10 +90,10 @@ export const ErrorFallback: React.FC<ErrorFallbackProps> = ({
             
             <Button
               variant="outlined"
-              startIcon={<Home />}
-              onClick={handleGoHome}
+              startIcon={<ArrowBack />}
+              onClick={handleGoBack}
             >
-              بازگشت به خانه
+              بازگشت به مرحله قبل
             </Button>
           </Box>
         </Paper>

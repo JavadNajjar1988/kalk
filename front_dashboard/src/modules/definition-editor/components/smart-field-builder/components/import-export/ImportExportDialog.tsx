@@ -4,6 +4,7 @@
  */
 
 import React, { useState, useCallback, useRef } from 'react';
+import { formatPersianFileDate } from '@/utils/dateUtils';
 import {
   Dialog,
   DialogTitle,
@@ -32,7 +33,7 @@ import {
   ListItemIcon,
   ListItemText,
   alpha,
-  useTheme
+  useTheme,
 } from '@mui/material';
 import {
   FileDownload as ExportIcon,
@@ -44,7 +45,7 @@ import {
   Error as ErrorIcon,
   Info as InfoIcon,
   Backup as BackupIcon,
-  Close as CloseIcon
+  Close as CloseIcon,
 } from '@mui/icons-material';
 import { useFieldImportExport } from '../../hooks/useFieldImportExport';
 import { AnimatedProgress } from '../animations/EnhancedTransitions';
@@ -64,11 +65,11 @@ export const ImportExportDialog: React.FC<ImportExportDialogProps> = ({
   mode,
   fields,
   onImport,
-  onExport
+  onExport,
 }) => {
   const theme = useTheme();
   const fileInputRef = useRef<HTMLInputElement>(null);
-  
+
   const {
     isExporting,
     isImporting,
@@ -78,7 +79,7 @@ export const ImportExportDialog: React.FC<ImportExportDialogProps> = ({
     importFields,
     downloadExport,
     createBackup,
-    validateFieldConfig
+    validateFieldConfig,
   } = useFieldImportExport();
 
   // Export state
@@ -87,7 +88,7 @@ export const ImportExportDialog: React.FC<ImportExportDialogProps> = ({
     includeMetadata: true,
     includeValidation: true,
     includeEnhancements: true,
-    compression: false
+    compression: false,
   });
 
   // Import state
@@ -95,7 +96,7 @@ export const ImportExportDialog: React.FC<ImportExportDialogProps> = ({
     overwriteExisting: false,
     validateOnImport: true,
     createBackup: true,
-    mergeStrategy: 'append' as 'replace' | 'merge' | 'append'
+    mergeStrategy: 'append' as 'replace' | 'merge' | 'append',
   });
 
   const [importData, setImportData] = useState<string>('');
@@ -107,15 +108,15 @@ export const ImportExportDialog: React.FC<ImportExportDialogProps> = ({
   const handleExport = useCallback(async () => {
     try {
       const data = await exportFields(fields, exportOptions);
-      
+
       if (onExport) {
         onExport(data);
       }
-      
+
       // Generate filename
-      const timestamp = new Date().toISOString().split('T')[0];
+      const timestamp = formatPersianFileDate();
       const filename = `field-config-${timestamp}.${exportOptions.format}`;
-      
+
       downloadExport(data, filename, exportOptions.format);
       onClose();
     } catch (error) {
@@ -124,39 +125,42 @@ export const ImportExportDialog: React.FC<ImportExportDialogProps> = ({
   }, [fields, exportOptions, exportFields, onExport, downloadExport, onClose]);
 
   // Handle file selection
-  const handleFileSelect = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      setImportFile(file);
-      
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        const content = e.target?.result as string;
-        setImportData(content);
-        
-        // Preview import data
-        try {
-          const parsed = JSON.parse(content);
-          if (parsed.fields && Array.isArray(parsed.fields)) {
-            setImportPreview(parsed.fields.slice(0, 5)); // Show first 5 fields
-            
-            // Validate fields
-            const errors: string[] = [];
-            parsed.fields.forEach((field: any, index: number) => {
-              const fieldErrors = validateFieldConfig(field);
-              if (fieldErrors.length > 0) {
-                errors.push(`Field ${index + 1}: ${fieldErrors.join(', ')}`);
-              }
-            });
-            setValidationErrors(errors);
+  const handleFileSelect = useCallback(
+    (event: React.ChangeEvent<HTMLInputElement>) => {
+      const file = event.target.files?.[0];
+      if (file) {
+        setImportFile(file);
+
+        const reader = new FileReader();
+        reader.onload = e => {
+          const content = e.target?.result as string;
+          setImportData(content);
+
+          // Preview import data
+          try {
+            const parsed = JSON.parse(content);
+            if (parsed.fields && Array.isArray(parsed.fields)) {
+              setImportPreview(parsed.fields.slice(0, 5)); // Show first 5 fields
+
+              // Validate fields
+              const errors: string[] = [];
+              parsed.fields.forEach((field: any, index: number) => {
+                const fieldErrors = validateFieldConfig(field);
+                if (fieldErrors.length > 0) {
+                  errors.push(`Field ${index + 1}: ${fieldErrors.join(', ')}`);
+                }
+              });
+              setValidationErrors(errors);
+            }
+          } catch (error) {
+            setValidationErrors(['Invalid JSON format']);
           }
-        } catch (error) {
-          setValidationErrors(['Invalid JSON format']);
-        }
-      };
-      reader.readAsText(file);
-    }
-  }, [validateFieldConfig]);
+        };
+        reader.readAsText(file);
+      }
+    },
+    [validateFieldConfig]
+  );
 
   // Handle import
   const handleImport = useCallback(async () => {
@@ -169,17 +173,27 @@ export const ImportExportDialog: React.FC<ImportExportDialogProps> = ({
       }
 
       const importedFields = await importFields(importData, importOptions);
-      
+
       if (onImport) {
         onImport(importedFields);
       }
-      
+
       onClose();
     } catch (error) {
       console.error('Import failed:', error);
-      setValidationErrors([error instanceof Error ? error.message : 'Import failed']);
+      setValidationErrors([
+        error instanceof Error ? error.message : 'Import failed',
+      ]);
     }
-  }, [importData, importOptions, fields, importFields, createBackup, onImport, onClose]);
+  }, [
+    importData,
+    importOptions,
+    fields,
+    importFields,
+    createBackup,
+    onImport,
+    onClose,
+  ]);
 
   const renderExportOptions = () => (
     <Box sx={{ space: 3 }}>
@@ -187,7 +201,12 @@ export const ImportExportDialog: React.FC<ImportExportDialogProps> = ({
         <FormLabel component="legend">فرمت خروجی</FormLabel>
         <RadioGroup
           value={exportOptions.format}
-          onChange={(e) => setExportOptions(prev => ({ ...prev, format: e.target.value as any }))}
+          onChange={e =>
+            setExportOptions(prev => ({
+              ...prev,
+              format: e.target.value as any,
+            }))
+          }
           row
         >
           <FormControlLabel value="json" control={<Radio />} label="JSON" />
@@ -199,48 +218,75 @@ export const ImportExportDialog: React.FC<ImportExportDialogProps> = ({
       <Typography variant="subtitle2" gutterBottom>
         گزینه‌های اضافی
       </Typography>
-      
+
       <FormControlLabel
         control={
           <Checkbox
             checked={exportOptions.includeMetadata}
-            onChange={(e) => setExportOptions(prev => ({ ...prev, includeMetadata: e.target.checked }))}
+            onChange={e =>
+              setExportOptions(prev => ({
+                ...prev,
+                includeMetadata: e.target.checked,
+              }))
+            }
           />
         }
         label="شامل اطلاعات متا"
       />
-      
+
       <FormControlLabel
         control={
           <Checkbox
             checked={exportOptions.includeValidation}
-            onChange={(e) => setExportOptions(prev => ({ ...prev, includeValidation: e.target.checked }))}
+            onChange={e =>
+              setExportOptions(prev => ({
+                ...prev,
+                includeValidation: e.target.checked,
+              }))
+            }
           />
         }
         label="شامل قوانین اعتبارسنجی"
       />
-      
+
       <FormControlLabel
         control={
           <Checkbox
             checked={exportOptions.includeEnhancements}
-            onChange={(e) => setExportOptions(prev => ({ ...prev, includeEnhancements: e.target.checked }))}
+            onChange={e =>
+              setExportOptions(prev => ({
+                ...prev,
+                includeEnhancements: e.target.checked,
+              }))
+            }
           />
         }
         label="شامل بهبودها"
       />
-      
+
       <FormControlLabel
         control={
           <Checkbox
             checked={exportOptions.compression}
-            onChange={(e) => setExportOptions(prev => ({ ...prev, compression: e.target.checked }))}
+            onChange={e =>
+              setExportOptions(prev => ({
+                ...prev,
+                compression: e.target.checked,
+              }))
+            }
           />
         }
         label="فشرده‌سازی (JSON)"
       />
 
-      <Box sx={{ mt: 2, p: 2, backgroundColor: alpha(theme.palette.info.main, 0.1), borderRadius: 1 }}>
+      <Box
+        sx={{
+          mt: 2,
+          p: 2,
+          backgroundColor: alpha(theme.palette.info.main, 0.1),
+          borderRadius: 1,
+        }}
+      >
         <Typography variant="body2" color="text.secondary">
           📊 تعداد فیلدها: {fields.length}
         </Typography>
@@ -262,7 +308,7 @@ export const ImportExportDialog: React.FC<ImportExportDialogProps> = ({
           onChange={handleFileSelect}
           style={{ display: 'none' }}
         />
-        
+
         <Button
           variant="outlined"
           startIcon={<UploadIcon />}
@@ -272,7 +318,7 @@ export const ImportExportDialog: React.FC<ImportExportDialogProps> = ({
         >
           انتخاب فایل
         </Button>
-        
+
         {importFile && (
           <Chip
             label={importFile.name}
@@ -293,11 +339,28 @@ export const ImportExportDialog: React.FC<ImportExportDialogProps> = ({
         <FormLabel component="legend">استراتژی ادغام</FormLabel>
         <RadioGroup
           value={importOptions.mergeStrategy}
-          onChange={(e) => setImportOptions(prev => ({ ...prev, mergeStrategy: e.target.value as any }))}
+          onChange={e =>
+            setImportOptions(prev => ({
+              ...prev,
+              mergeStrategy: e.target.value as any,
+            }))
+          }
         >
-          <FormControlLabel value="append" control={<Radio />} label="اضافه کردن (حفظ موجودی)" />
-          <FormControlLabel value="merge" control={<Radio />} label="ادغام (بروزرسانی موجودی)" />
-          <FormControlLabel value="replace" control={<Radio />} label="جایگزینی (حذف همه)" />
+          <FormControlLabel
+            value="append"
+            control={<Radio />}
+            label="اضافه کردن (حفظ موجودی)"
+          />
+          <FormControlLabel
+            value="merge"
+            control={<Radio />}
+            label="ادغام (بروزرسانی موجودی)"
+          />
+          <FormControlLabel
+            value="replace"
+            control={<Radio />}
+            label="جایگزینی (حذف همه)"
+          />
         </RadioGroup>
       </FormControl>
 
@@ -305,17 +368,27 @@ export const ImportExportDialog: React.FC<ImportExportDialogProps> = ({
         control={
           <Checkbox
             checked={importOptions.validateOnImport}
-            onChange={(e) => setImportOptions(prev => ({ ...prev, validateOnImport: e.target.checked }))}
+            onChange={e =>
+              setImportOptions(prev => ({
+                ...prev,
+                validateOnImport: e.target.checked,
+              }))
+            }
           />
         }
         label="اعتبارسنجی در هنگام ورود"
       />
-      
+
       <FormControlLabel
         control={
           <Checkbox
             checked={importOptions.createBackup}
-            onChange={(e) => setImportOptions(prev => ({ ...prev, createBackup: e.target.checked }))}
+            onChange={e =>
+              setImportOptions(prev => ({
+                ...prev,
+                createBackup: e.target.checked,
+              }))
+            }
           />
         }
         label="ایجاد پشتیبان قبل از ورود"
@@ -376,7 +449,7 @@ export const ImportExportDialog: React.FC<ImportExportDialogProps> = ({
       maxWidth="md"
       fullWidth
       PaperProps={{
-        sx: { borderRadius: 2 }
+        sx: { borderRadius: 2 },
       }}
     >
       <DialogTitle
@@ -385,16 +458,20 @@ export const ImportExportDialog: React.FC<ImportExportDialogProps> = ({
           alignItems: 'center',
           gap: 2,
           pb: 2,
-          borderBottom: `1px solid ${alpha(theme.palette.divider, 0.12)}`
+          borderBottom: `1px solid ${alpha(theme.palette.divider, 0.12)}`,
         }}
       >
-        {mode === 'export' ? <ExportIcon color="primary" /> : <ImportIcon color="primary" />}
+        {mode === 'export' ? (
+          <ExportIcon color="primary" />
+        ) : (
+          <ImportIcon color="primary" />
+        )}
         <Typography variant="h6" component="h2">
           {mode === 'export' ? 'خروجی تنظیمات فیلدها' : 'ورود تنظیمات فیلدها'}
         </Typography>
-        
+
         <Box sx={{ flex: 1 }} />
-        
+
         <IconButton onClick={onClose} size="small">
           <CloseIcon />
         </IconButton>
@@ -422,7 +499,7 @@ export const ImportExportDialog: React.FC<ImportExportDialogProps> = ({
         <Button onClick={onClose} variant="outlined">
           انصراف
         </Button>
-        
+
         {mode === 'export' ? (
           <Button
             onClick={handleExport}
@@ -457,7 +534,7 @@ interface ImportExportButtonsProps {
 export const ImportExportButtons: React.FC<ImportExportButtonsProps> = ({
   fields,
   onImport,
-  onExport
+  onExport,
 }) => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [dialogMode, setDialogMode] = useState<'import' | 'export'>('export');
@@ -486,7 +563,7 @@ export const ImportExportButtons: React.FC<ImportExportButtonsProps> = ({
             خروجی
           </Button>
         </Tooltip>
-        
+
         <Tooltip title="ورود تنظیمات">
           <Button
             variant="outlined"
