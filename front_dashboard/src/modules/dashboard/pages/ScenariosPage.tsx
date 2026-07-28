@@ -29,10 +29,9 @@ import {
   Paper,
   Toolbar,
   InputAdornment,
-  Menu,
+  Popover,
   MenuItem,
-  Divider,
-  ListSubheader,
+  ButtonBase,
   Fab,
   Tooltip,
   LinearProgress,
@@ -73,8 +72,10 @@ import {
   CloudUpload,
   Archive,
   Unarchive,
+  Settings,
 } from '@mui/icons-material';
 import { alpha, createTheme } from '@mui/material/styles';
+import type { Theme } from '@mui/material/styles';
 import { useAppDispatch, useAppSelector } from '@/store';
 import {
   fetchScenarios,
@@ -111,6 +112,89 @@ import {
   resourcesDialogActionsSx,
   resourcesOutlinedCancelButtonSx,
 } from '@/modules/dashboard/pages/resources/resourcesDialogStyles';
+
+type ScenarioActionColor =
+  | 'primary'
+  | 'secondary'
+  | 'success'
+  | 'warning'
+  | 'info'
+  | 'error';
+
+const scenarioActionButtonSx = (
+  theme: Theme,
+  color: ScenarioActionColor,
+  compact = false
+) => {
+  const actionColor = theme.palette[color].main;
+
+  return {
+    minWidth: 0,
+    minHeight: compact ? 38 : 56,
+    px: compact ? 1 : 0.75,
+    py: compact ? 0.5 : 0.75,
+    border: `1px solid ${alpha(actionColor, 0.24)}`,
+    borderRadius: 1.5,
+    color: actionColor,
+    bgcolor: alpha(actionColor, 0.045),
+    display: 'flex',
+    flexDirection: compact ? 'row' : 'column',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 0.5,
+    transition: theme.transitions.create(
+      ['background-color', 'border-color', 'transform'],
+      { duration: theme.transitions.duration.shortest }
+    ),
+    '& .MuiTypography-root': {
+      color: theme.palette.text.primary,
+      fontWeight: 600,
+      lineHeight: 1.4,
+    },
+    '&:hover': {
+      bgcolor: alpha(actionColor, 0.1),
+      borderColor: alpha(actionColor, 0.5),
+      transform: 'translateY(-1px)',
+    },
+    '&.Mui-disabled': {
+      color: theme.palette.action.disabled,
+      bgcolor: theme.palette.action.disabledBackground,
+      borderColor: theme.palette.divider,
+    },
+  } as const;
+};
+
+const scenarioStatusButtonSx = (theme: Theme, selected: boolean) => ({
+  minWidth: 0,
+  minHeight: 38,
+  px: 0.75,
+  py: 0.5,
+  border: `1px solid ${
+    selected
+      ? alpha(theme.palette.success.main, 0.5)
+      : theme.palette.divider
+  }`,
+  borderRadius: 1.5,
+  color: selected ? theme.palette.success.main : theme.palette.text.secondary,
+  bgcolor: selected
+    ? alpha(theme.palette.success.main, 0.09)
+    : theme.palette.background.paper,
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  gap: 0.75,
+  '& .MuiTypography-root': {
+    color: selected ? theme.palette.success.dark : theme.palette.text.primary,
+    fontWeight: selected ? 700 : 600,
+  },
+  '&:hover': {
+    borderColor: alpha(theme.palette.primary.main, 0.45),
+    bgcolor: alpha(theme.palette.primary.main, 0.06),
+  },
+  '&.Mui-disabled': {
+    opacity: selected ? 1 : 0.5,
+  },
+});
 
 // انواع وضعیت سناریو
 const getStatusOptions = (
@@ -1536,6 +1620,12 @@ const ScenariosPage: React.FC = () => {
                             <IconButton
                               size="small"
                               onClick={e => handleMenuOpen(e, scenario)}
+                              aria-label={`عملیات سناریوی ${scenario.name}`}
+                              aria-haspopup="dialog"
+                              aria-expanded={
+                                Boolean(menuAnchor) &&
+                                menuScenario?.id === scenario.id
+                              }
                               sx={{
                                 ...(scenarioImage
                                   ? {
@@ -1870,6 +1960,12 @@ const ScenariosPage: React.FC = () => {
                         <IconButton
                           onClick={e => handleMenuOpen(e, scenario)}
                           size="small"
+                          aria-label={`عملیات سناریوی ${scenario.name}`}
+                          aria-haspopup="dialog"
+                          aria-expanded={
+                            Boolean(menuAnchor) &&
+                            menuScenario?.id === scenario.id
+                          }
                         >
                           <MoreVert />
                         </IconButton>
@@ -2081,160 +2177,288 @@ const ScenariosPage: React.FC = () => {
           </DialogActions>
         </Dialog>
 
-        {/* منوی عملیات */}
-        <Menu
+        {/* پنل یکپارچه عملیات سناریو */}
+        <Popover
+          id="scenario-actions-panel"
           anchorEl={menuAnchor}
-          open={Boolean(menuAnchor)}
+          open={Boolean(menuAnchor && menuScenario)}
           onClose={handleMenuClose}
-          MenuListProps={{ 'aria-label': t('scenarios.table.actions') }}
+          anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
+          transformOrigin={{ vertical: 'top', horizontal: 'left' }}
+          slotProps={{
+            paper: {
+              role: 'dialog',
+              'aria-label': menuScenario
+                ? `عملیات سناریوی ${menuScenario.name}`
+                : t('scenarios.table.actions'),
+              sx: {
+                width: { xs: 'calc(100vw - 24px)', sm: 560 },
+                maxWidth: 'calc(100vw - 24px)',
+                maxHeight: 'min(680px, calc(100vh - 32px))',
+                mt: 1,
+                overflow: 'auto',
+                borderRadius: 2,
+                border: `1px solid ${alpha(theme.palette.divider, 0.9)}`,
+                boxShadow: '0 16px 40px rgba(15, 23, 42, 0.18)',
+                backgroundImage: 'none',
+              },
+            },
+          }}
         >
-          <MenuItem
-            onClick={() => {
-              if (menuScenario) {
-                handleViewScenarioDetails(menuScenario.id);
-              }
-              handleMenuClose();
-            }}
-          >
-            <Visibility sx={{ mr: 1 }} />
-            {t('scenarios.menu.viewDetails')}
-          </MenuItem>
-
-          <MenuItem
-            onClick={() => {
-              if (menuScenario) {
-                handleExecuteScenario(menuScenario.id);
-              }
-              handleMenuClose();
-            }}
-          >
-            <PlayArrow sx={{ mr: 1 }} />
-            اجرای شبیه ساز
-          </MenuItem>
-
-          <MenuItem
-            onClick={() => {
-              if (menuScenario) {
-                handleOpenScenarioInKalknegar(menuScenario.id);
-              }
-              handleMenuClose();
-            }}
-          >
-            <MapIcon sx={{ mr: 1 }} />
-            اجرای کالک نگار
-          </MenuItem>
-
-          <MenuItem
-            disabled={!canEdit}
-            onClick={async () => {
-              if (menuScenario) {
-                try {
-                  // کپی سناریو با استفاده از API
-                  const { scenarioApiService } = await import(
-                    '@/services/api/scenarioApiService'
-                  );
-                  await scenarioApiService.duplicateScenario(menuScenario.id);
-                  dispatch(fetchScenarios({ include_archived: true })); // Refresh list
-                  dispatch(showSuccessNotification('سناریو با موفقیت کپی شد'));
-                } catch (error) {
-                  dispatch(showErrorNotification('خطا در کپی سناریو'));
-                }
-              }
-              handleMenuClose();
-            }}
-          >
-            <ContentCopy sx={{ mr: 1 }} />
-            کپی
-          </MenuItem>
-
-          {canEdit && menuScenario && !isBuiltinDemoScenario(menuScenario) && (
-            <>
-              <Divider />
-              <ListSubheader disableSticky>
-                {t('scenarios.menu.changeStatus')}
-              </ListSubheader>
-              {statusOptions.map(option => (
-                <MenuItem
-                  key={option.value}
-                  selected={
-                    !isScenarioArchived(menuScenario) &&
-                    menuScenario.status === option.value
-                  }
-                  disabled={
-                    isScenarioArchived(menuScenario) ||
-                    menuScenario.status === option.value ||
-                    scenarioActionLoading === menuScenario.id
-                  }
-                  onClick={() => {
-                    const scenario = menuScenario;
-                    handleMenuClose();
-                    void handleQuickStatusChange(scenario, option.value);
-                  }}
-                  sx={{ pl: 4 }}
-                >
-                  {option.label}
-                </MenuItem>
-              ))}
-              <Divider />
-              <MenuItem
-                disabled={scenarioActionLoading === menuScenario.id}
-                onClick={() => {
-                  const scenario = menuScenario;
-                  handleMenuClose();
-                  void handleArchiveToggle(scenario);
-                }}
+          {menuScenario && (
+            <Box>
+              <Box
                 sx={{
-                  color: isScenarioArchived(menuScenario)
-                    ? 'info.main'
-                    : 'warning.main',
+                  px: { xs: 1.5, sm: 2 },
+                  py: 1.25,
+                  borderBottom: `1px solid ${theme.palette.divider}`,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 1.5,
+                  bgcolor: alpha(theme.palette.primary.main, 0.045),
                 }}
               >
-                {isScenarioArchived(menuScenario) ? (
-                  <Unarchive sx={{ mr: 1 }} />
-                ) : (
-                  <Archive sx={{ mr: 1 }} />
+                <Avatar
+                  sx={{
+                    width: 32,
+                    height: 32,
+                    bgcolor: alpha(theme.palette.primary.main, 0.12),
+                    color: 'primary.main',
+                  }}
+                >
+                  <Settings fontSize="small" />
+                </Avatar>
+                <Box sx={{ minWidth: 0 }}>
+                  <Typography variant="subtitle1" fontWeight={700} noWrap>
+                    {menuScenario.name}
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary">
+                    عملیات سناریو
+                  </Typography>
+                </Box>
+              </Box>
+
+              <Box
+                sx={{
+                  p: { xs: 1.25, sm: 1.5 },
+                  display: 'grid',
+                  gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' },
+                  gap: { xs: 1.5, sm: 1.75 },
+                }}
+              >
+                <Box>
+                  <Typography
+                    variant="overline"
+                    color="text.secondary"
+                    sx={{ display: 'block', mb: 0.75 }}
+                  >
+                    مشاهده و اجرا
+                  </Typography>
+                  <Box
+                    sx={{
+                      display: 'grid',
+                      gridTemplateColumns: 'repeat(3, minmax(0, 1fr))',
+                      gap: 1,
+                    }}
+                  >
+                    <ButtonBase
+                      onClick={() => {
+                        handleViewScenarioDetails(menuScenario.id);
+                        handleMenuClose();
+                      }}
+                      sx={scenarioActionButtonSx(theme, 'primary')}
+                    >
+                      <Visibility />
+                      <Typography variant="caption">
+                        {t('scenarios.menu.viewDetails')}
+                      </Typography>
+                    </ButtonBase>
+                    <ButtonBase
+                      onClick={() => {
+                        handleOpenScenarioInKalknegar(menuScenario.id);
+                        handleMenuClose();
+                      }}
+                      sx={scenarioActionButtonSx(theme, 'success')}
+                    >
+                      <MapIcon />
+                      <Typography variant="caption">کالک‌نگار</Typography>
+                    </ButtonBase>
+                    <ButtonBase
+                      onClick={() => {
+                        handleExecuteScenario(menuScenario.id);
+                        handleMenuClose();
+                      }}
+                      sx={scenarioActionButtonSx(theme, 'warning')}
+                    >
+                      <PlayArrow />
+                      <Typography variant="caption">شبیه‌ساز</Typography>
+                    </ButtonBase>
+                  </Box>
+                </Box>
+
+                {canEdit && (
+                  <Box>
+                    <Typography
+                      variant="overline"
+                      color="text.secondary"
+                      sx={{ display: 'block', mb: 0.75 }}
+                    >
+                      مدیریت
+                    </Typography>
+                    <Box
+                      sx={{
+                        display: 'grid',
+                        gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
+                        gap: 1,
+                      }}
+                    >
+                      <ButtonBase
+                        onClick={() => {
+                          setSelectedScenario(menuScenario);
+                          setDialogOpen(true);
+                          handleMenuClose();
+                        }}
+                        sx={scenarioActionButtonSx(theme, 'info')}
+                      >
+                        <Edit />
+                        <Typography variant="caption">
+                          {t('scenarios.menu.edit')}
+                        </Typography>
+                      </ButtonBase>
+                      <ButtonBase
+                        onClick={() => {
+                          const scenario = menuScenario;
+                          handleMenuClose();
+                          void handleCopyScenario(scenario);
+                        }}
+                        sx={scenarioActionButtonSx(theme, 'secondary')}
+                      >
+                        <ContentCopy />
+                        <Typography variant="caption">ایجاد کپی</Typography>
+                      </ButtonBase>
+                    </Box>
+                  </Box>
                 )}
-                {isScenarioArchived(menuScenario)
-                  ? t('scenarios.actions.restore')
-                  : t('scenarios.actions.archive')}
-              </MenuItem>
-            </>
-          )}
 
-          <MenuItem
-            onClick={() => {
-              if (menuScenario) {
-                setScenarioToDelete(menuScenario);
-                setDeleteConfirmOpen(true);
-              }
-              handleMenuClose();
-            }}
-            disabled={
-              !canDelete ||
-              Boolean(menuScenario && isBuiltinDemoScenario(menuScenario))
-            }
-            sx={{ color: 'error.main' }}
-          >
-            <Delete sx={{ mr: 1 }} />
-            حذف
-          </MenuItem>
+                {canEdit && !isBuiltinDemoScenario(menuScenario) && (
+                  <Box sx={{ gridColumn: { sm: '1 / -1' } }}>
+                    <Typography
+                      variant="overline"
+                      color="text.secondary"
+                      sx={{ display: 'block', mb: 0.75 }}
+                    >
+                      {t('scenarios.menu.changeStatus')}
+                    </Typography>
+                    <Box
+                      sx={{
+                        display: 'grid',
+                        gridTemplateColumns: {
+                          xs: 'repeat(2, minmax(0, 1fr))',
+                          sm: 'repeat(5, minmax(0, 1fr))',
+                        },
+                        gap: 1,
+                      }}
+                    >
+                      {statusOptions.map(option => {
+                        const isSelected =
+                          !isScenarioArchived(menuScenario) &&
+                          menuScenario.status === option.value;
+                        return (
+                          <ButtonBase
+                            key={option.value}
+                            disabled={
+                              isScenarioArchived(menuScenario) ||
+                              isSelected ||
+                              scenarioActionLoading === menuScenario.id
+                            }
+                            onClick={() => {
+                              const scenario = menuScenario;
+                              handleMenuClose();
+                              void handleQuickStatusChange(
+                                scenario,
+                                option.value
+                              );
+                            }}
+                            sx={scenarioStatusButtonSx(theme, isSelected)}
+                          >
+                            {isSelected ? (
+                              <CheckCircle fontSize="small" />
+                            ) : (
+                              <Box
+                                component="span"
+                                sx={{
+                                  width: 8,
+                                  height: 8,
+                                  borderRadius: '50%',
+                                  bgcolor: 'currentColor',
+                                }}
+                              />
+                            )}
+                            <Typography variant="caption">
+                              {option.label}
+                            </Typography>
+                          </ButtonBase>
+                        );
+                      })}
+                      <ButtonBase
+                        disabled={scenarioActionLoading === menuScenario.id}
+                        onClick={() => {
+                          const scenario = menuScenario;
+                          handleMenuClose();
+                          void handleArchiveToggle(scenario);
+                        }}
+                        sx={scenarioActionButtonSx(theme, 'warning', true)}
+                      >
+                        {isScenarioArchived(menuScenario) ? (
+                          <Unarchive fontSize="small" />
+                        ) : (
+                          <Archive fontSize="small" />
+                        )}
+                        <Typography variant="caption">
+                          {isScenarioArchived(menuScenario)
+                            ? t('scenarios.actions.restore')
+                            : t('scenarios.actions.archive')}
+                        </Typography>
+                      </ButtonBase>
+                    </Box>
+                  </Box>
+                )}
 
-          {canEdit && (
-            <MenuItem
-              onClick={() => {
-                if (menuScenario) {
-                  // باز کردن دیالوگ 6 مرحله‌ای برای ویرایش سناریو
-                  setSelectedScenario(menuScenario);
-                  setDialogOpen(true);
-                }
-                handleMenuClose();
-              }}
-            >
-              <Edit sx={{ mr: 1 }} />
-              {t('scenarios.menu.edit')}
-            </MenuItem>
+                {canDelete && !isBuiltinDemoScenario(menuScenario) && (
+                  <Box
+                    sx={{
+                      gridColumn: { sm: '1 / -1' },
+                      pt: 1.5,
+                      borderTop: `1px solid ${theme.palette.divider}`,
+                    }}
+                  >
+                    <Typography
+                      variant="overline"
+                      color="text.secondary"
+                      sx={{ display: 'block', mb: 0.75 }}
+                    >
+                      اقدامات حساس
+                    </Typography>
+                    <ButtonBase
+                      onClick={() => {
+                        setScenarioToDelete(menuScenario);
+                        setDeleteConfirmOpen(true);
+                        handleMenuClose();
+                      }}
+                      sx={{
+                        ...scenarioActionButtonSx(theme, 'error', true),
+                        width: { xs: '100%', sm: 150 },
+                      }}
+                    >
+                      <Delete fontSize="small" />
+                      <Typography variant="caption">حذف سناریو</Typography>
+                    </ButtonBase>
+                  </Box>
+                )}
+              </Box>
+            </Box>
           )}
-        </Menu>
+        </Popover>
 
         {/* دیالوگ ایجاد/ویرایش سناریو (6 مرحله‌ای) */}
         <NewScenarioDialog
