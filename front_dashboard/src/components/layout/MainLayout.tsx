@@ -57,11 +57,16 @@ import {
 } from '@/store/slices/uiSlice';
 import {
   fetchServerNotifications,
+  markAllServerNotificationsRead,
   markServerNotificationRead,
   selectServerNotifications,
+  selectServerNotificationsError,
+  selectServerNotificationsLoading,
   selectUnreadServerNotifications,
 } from '@/store/slices/serverNotificationsSlice';
+import type { ServerNotification } from '@/services/api/notificationsApiService';
 import SidePanel from './SidePanel';
+import NotificationBellPopover from './NotificationBellPopover';
 import PersianDateTime from '@/components/common/PersianDateTime';
 import { useTranslation } from '@/hooks/useTranslation';
 import SearchBar from '@/components/common/SearchBar';
@@ -76,7 +81,6 @@ import {
   resourcesMenuPaperSx,
   resourcesDialogTitleSx,
   resourcesDialogActionsSx,
-  getResourcesDialogAccent,
 } from '@/modules/dashboard/pages/resources/resourcesDialogStyles';
 
 const DRAWER_WIDTH = 180; // further narrow sidebar width for more main content space
@@ -96,6 +100,8 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
   const user = useAppSelector(selectUser);
   const notifications = useAppSelector(selectServerNotifications);
   const unreadNotifications = useAppSelector(selectUnreadServerNotifications);
+  const notificationsLoading = useAppSelector(selectServerNotificationsLoading);
+  const notificationsError = useAppSelector(selectServerNotificationsError);
   const layout = useAppSelector(selectLayout);
   const sidePanel = useAppSelector(selectSidePanel);
   const userAccessColor = getAccessLevelColor(theme, user?.accessLevel);
@@ -103,7 +109,8 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
   const [profileMenuAnchor, setProfileMenuAnchor] = useState<null | HTMLElement>(null);
   const [searchValue, setSearchValue] = useState('');
   const [notifDialogOpen, setNotifDialogOpen] = useState(false);
-  const [notifDialogData, setNotifDialogData] = useState<any>(null);
+  const [notifDialogData, setNotifDialogData] =
+    useState<ServerNotification | null>(null);
   const [avatarDialogOpen, setAvatarDialogOpen] = useState(false);
   const [selectedAvatar, setSelectedAvatar] = useState<string | undefined>();
   const [avatarSaving, setAvatarSaving] = useState(false);
@@ -321,6 +328,43 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
 
   const handleNotificationsClick = (event: React.MouseEvent<HTMLElement>) => {
     handleNotificationsMenuOpen(event);
+    void dispatch(fetchServerNotifications(false));
+  };
+
+  const handleNotificationSelect = (notification: ServerNotification) => {
+    if (!notification.read) {
+      void dispatch(markServerNotificationRead(notification.id));
+    }
+    setNotifDialogData(notification);
+    setNotifDialogOpen(true);
+    handleNotificationsMenuClose();
+  };
+
+  const handleMarkAllNotificationsRead = () => {
+    void dispatch(markAllServerNotificationsRead());
+  };
+
+  const handleRefreshNotifications = () => {
+    void dispatch(fetchServerNotifications(false));
+  };
+
+  const handleViewAllNotifications = () => {
+    handleNotificationsMenuClose();
+    navigate('/dashboard/notifications');
+  };
+
+  const handleNotificationAction = () => {
+    const actionUrl = notifDialogData?.actionUrl;
+    setNotifDialogOpen(false);
+    if (!actionUrl) return;
+
+    const target = new URL(actionUrl, window.location.origin);
+    if (!['http:', 'https:'].includes(target.protocol)) return;
+    if (target.origin === window.location.origin) {
+      navigate(`${target.pathname}${target.search}${target.hash}`);
+      return;
+    }
+    window.location.assign(target.toString());
   };
 
   const handleProfileClick = (event: React.MouseEvent<HTMLElement>) => {
@@ -457,6 +501,18 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
             <Tooltip title={t('layout.notificationsTooltip')}>
               <IconButton
                 onClick={handleNotificationsClick}
+                aria-label={
+                  unreadCount > 0
+                    ? `${unreadCount.toLocaleString('fa-IR')} اعلان خوانده‌نشده`
+                    : 'اعلان‌ها'
+                }
+                aria-haspopup="dialog"
+                aria-controls={
+                  notificationsMenuAnchor
+                    ? 'notification-bell-popover'
+                    : undefined
+                }
+                aria-expanded={Boolean(notificationsMenuAnchor)}
                 sx={{ 
                   color: 'text.primary',
                   width: 40,
@@ -464,7 +520,22 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
                   '&:hover': { bgcolor: alpha(theme.palette.primary.main, 0.1) }
                 }}
               >
-                <Badge badgeContent={unreadCount} color="error">
+                <Badge
+                  badgeContent={unreadCount}
+                  max={99}
+                  color="error"
+                  overlap="circular"
+                  invisible={unreadCount === 0}
+                  sx={{
+                    '& .MuiBadge-badge': {
+                      minWidth: 17,
+                      height: 17,
+                      px: 0.5,
+                      fontSize: '0.65rem',
+                      fontWeight: 700,
+                    },
+                  }}
+                >
                   <NotificationsIcon fontSize="small" />
                 </Badge>
               </IconButton>
@@ -538,103 +609,18 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
         </Toolbar>
       </AppBar>
 
-      {/* منوی اعلان‌ها */}
-      <Menu
+      <NotificationBellPopover
         anchorEl={notificationsMenuAnchor}
-        open={Boolean(notificationsMenuAnchor)}
+        notifications={notifications}
+        unreadCount={unreadCount}
+        loading={notificationsLoading}
+        error={notificationsError}
         onClose={handleNotificationsMenuClose}
-        PaperProps={{
-          sx: resourcesMenuPaperSx(theme, {
-            width: 380,
-            maxHeight: 520,
-            mt: 1.5,
-            '&:before': {
-              content: '""',
-              display: 'block',
-              position: 'absolute',
-              top: 0,
-              right: 18,
-              width: 12,
-              height: 12,
-              bgcolor: alpha(getResourcesDialogAccent(theme), 0.08),
-              borderTop: `1px solid ${alpha(getResourcesDialogAccent(theme), 0.2)}`,
-              borderLeft: `1px solid ${alpha(getResourcesDialogAccent(theme), 0.2)}`,
-              transform: 'translateY(-50%) rotate(45deg)',
-              zIndex: 0,
-            },
-          }),
-        }}
-        transformOrigin={{ horizontal: 'right', vertical: 'top' }}
-        anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
-      >
-        <Box sx={{ p: 2.5, ...resourcesDialogTitleSx(theme) }}>
-          <Typography variant="h6" sx={{ fontWeight: 700, color: 'primary.main' }}>
-            {t('layout.notificationsTitle')}
-          </Typography>
-        </Box>
-        {notifications.length === 0 ? (
-          <Box sx={{ p: 3, textAlign: 'center', bgcolor: 'transparent' }}>
-            <NotificationsIcon sx={{ fontSize: 48, color: 'text.secondary', mb: 1 }} />
-            <Typography variant="body2" color="text.secondary">
-              {t('layout.noNewNotifications')}
-            </Typography>
-          </Box>
-        ) : (
-          notifications.slice(0, 3).map((notification) => {
-            const accent = getResourcesDialogAccent(theme);
-            return (
-            <MenuItem
-              key={notification.id}
-              onClick={() => {
-                if (!notification.read) {
-                  void dispatch(markServerNotificationRead(notification.id));
-                }
-                setNotifDialogData(notification);
-                setNotifDialogOpen(true);
-                handleNotificationsMenuClose();
-              }}
-              sx={{
-                borderBottom: `1px solid ${alpha(theme.palette.divider, 0.05)}`,
-                py: 0.5,
-                px: 1.5,
-                borderRadius: 2,
-                boxShadow: `0 1px 4px ${alpha(accent, 0.05)}`,
-                mb: 0.5,
-                minHeight: 36,
-                bgcolor: notification.read ? alpha(theme.palette.background.paper, 0.7) : alpha(accent, 0.1),
-                transition: 'all 0.15s',
-                '&:hover': {
-                  bgcolor: alpha(accent, 0.07),
-                  boxShadow: `0 2px 8px ${alpha(accent, 0.1)}`,
-                  transform: 'scale(1.01)',
-                },
-                display: 'flex',
-                alignItems: 'center',
-                gap: 1,
-              }}
-            >
-              <Avatar sx={{ bgcolor: 'background.paper', color: 'primary.main', mr: 1, width: 28, height: 28, boxShadow: 2, fontSize: 18 }}>
-                {notification.type === 'success' ? <CheckCircle sx={{ color: 'primary.main', fontSize: 20 }} /> :
-                 notification.type === 'warning' ? <WarningIcon sx={{ color: 'warning.main', fontSize: 20 }} /> :
-                 notification.type === 'error' ? <WarningIcon sx={{ color: 'error.main', fontSize: 20 }} /> :
-                 <NotificationsIcon sx={{ color: 'info.main', fontSize: 20 }} />}
-              </Avatar>
-              <Box sx={{ flex: 1, minWidth: 0 }}>
-                <Typography variant="subtitle2" sx={{ fontWeight: 600, color: notification.read ? 'text.primary' : 'primary.main', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontSize: '0.93rem', mb: 0 }}>
-                  {notification.title}
-                </Typography>
-                <Typography variant="body2" color="text.secondary" sx={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 120, fontSize: '0.85rem', mb: 0 }}>
-                  {notification.message}
-                </Typography>
-              </Box>
-              <Typography variant="caption" color="text.secondary" sx={{ minWidth: 54, textAlign: 'left', fontSize: '0.75rem' }}>
-                {new Date(notification.createdAt).toLocaleDateString('fa-IR')}
-              </Typography>
-            </MenuItem>
-            );
-          })
-        )}
-      </Menu>
+        onSelect={handleNotificationSelect}
+        onMarkAllRead={handleMarkAllNotificationsRead}
+        onRefresh={handleRefreshNotifications}
+        onViewAll={handleViewAllNotifications}
+      />
 
       {/* منوی پروفایل */}
       <Menu
@@ -783,8 +769,17 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
       </Dialog>
 
       {/* Dialog نمایش جزئیات اعلان */}
-      <Dialog open={notifDialogOpen} onClose={() => setNotifDialogOpen(false)} maxWidth="xs" fullWidth>
-        <DialogTitle sx={{ fontWeight: 700, textAlign: 'center', pb: 1 }}>
+      <Dialog
+        open={notifDialogOpen}
+        onClose={() => setNotifDialogOpen(false)}
+        maxWidth="xs"
+        fullWidth
+        aria-labelledby="notification-detail-title"
+      >
+        <DialogTitle
+          id="notification-detail-title"
+          sx={{ fontWeight: 700, textAlign: 'center', pb: 1 }}
+        >
           {notifDialogData?.title}
         </DialogTitle>
         <DialogContent sx={{ textAlign: 'center', pt: 0 }}>
@@ -803,6 +798,16 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
               : ''}
           </Typography>
         </DialogContent>
+        <DialogActions>
+          <Button color="inherit" onClick={() => setNotifDialogOpen(false)}>
+            بستن
+          </Button>
+          {notifDialogData?.actionUrl && (
+            <Button variant="contained" onClick={handleNotificationAction}>
+              مشاهده
+            </Button>
+          )}
+        </DialogActions>
       </Dialog>
 
       {/* Sidebar */}

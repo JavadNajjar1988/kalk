@@ -148,6 +148,8 @@ export const selectArchivedServerNotifications = (state: RootState) => state.ser
 export const selectUnreadServerNotifications = (state: RootState) =>
   state.serverNotifications.active.filter((item) => !item.read);
 export const selectServerNotificationsLoading = (state: RootState) => state.serverNotifications.loading;
+export const selectServerNotificationsError = (state: RootState) =>
+  state.serverNotifications.error;
 export const selectServerNotificationStats = (state: RootState) => {
   const active = state.serverNotifications.active;
   const archived = state.serverNotifications.archived;

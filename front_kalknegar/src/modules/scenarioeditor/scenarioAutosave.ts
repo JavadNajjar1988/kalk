@@ -51,26 +51,26 @@ export function handleTacticalBatchChange({
 
 export function createScenarioAutosaveQueue() {
   let inFlight: Promise<void> | null = null;
-  let pending = false;
+  let pendingTarget: ScenarioAutosaveTarget | null = null;
 
   const run = async (target: ScenarioAutosaveTarget) => {
     if (target.isDemoScenario || !target.isDirty()) {
       return;
     }
 
+    pendingTarget = target;
     if (inFlight) {
-      pending = true;
       return inFlight;
     }
 
     inFlight = (async () => {
-      do {
-        pending = false;
-
-        if (!target.isDemoScenario && target.isDirty()) {
-          await target.save();
+      while (pendingTarget) {
+        const nextTarget = pendingTarget;
+        pendingTarget = null;
+        if (!nextTarget.isDemoScenario && nextTarget.isDirty()) {
+          await nextTarget.save();
         }
-      } while (pending && !target.isDemoScenario && target.isDirty());
+      }
     })();
 
     try {
@@ -80,5 +80,9 @@ export function createScenarioAutosaveQueue() {
     }
   };
 
-  return { run };
+  const waitForIdle = async () => {
+    await inFlight;
+  };
+
+  return { run, waitForIdle };
 }

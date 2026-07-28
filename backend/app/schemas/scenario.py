@@ -30,6 +30,7 @@ class ScenarioCreate(ScenarioBase):
 
 
 class ScenarioUpdate(BaseModel):
+    expected_modified: Optional[datetime] = None
     name: Optional[str] = Field(default=None, min_length=1, max_length=200)
     description: Optional[str] = Field(default=None, max_length=2000)
     image: Optional[str] = Field(default=None, max_length=500)
@@ -40,7 +41,7 @@ class ScenarioUpdate(BaseModel):
     end_time: Optional[datetime] = None
     content: Optional[dict] = None
 
-    @field_validator("start_time", "end_time")
+    @field_validator("expected_modified", "start_time", "end_time")
     @classmethod
     def normalize_schedule_to_utc(cls, value: Optional[datetime]) -> Optional[datetime]:
         if value is None:

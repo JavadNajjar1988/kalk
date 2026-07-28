@@ -380,7 +380,10 @@ const scenarioSaveStatus = computed(() =>
   }),
 );
 const scenarioTitleButtonTitle = computed(
-  () => `${state.info.name} - ${scenarioSaveStatus.value.label}`,
+  () =>
+    io.apiSaveState.value === "error" && io.apiSaveError.value
+      ? `${state.info.name} - ${io.apiSaveError.value}`
+      : `${state.info.name} - ${scenarioSaveStatus.value.label}`,
 );
 const scenarioSaveStatusClass = computed(() => {
   switch (scenarioSaveStatus.value.tone) {

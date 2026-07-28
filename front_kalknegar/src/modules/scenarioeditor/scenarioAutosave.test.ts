@@ -67,6 +67,59 @@ describe("createScenarioAutosaveQueue", () => {
 
     expect(saves).toBe(2);
   });
+
+  it("uses the latest target for a save queued during an in-flight request", async () => {
+    const queue = createScenarioAutosaveQueue();
+    let releaseFirstSave!: () => void;
+    const savedTargets: string[] = [];
+
+    const firstRun = queue.run({
+      isDemoScenario: false,
+      isDirty: () => true,
+      save: async () => {
+        savedTargets.push("scenario-a");
+        await new Promise<void>((resolve) => {
+          releaseFirstSave = resolve;
+        });
+      },
+    });
+    const secondRun = queue.run({
+      isDemoScenario: false,
+      isDirty: () => true,
+      save: async () => {
+        savedTargets.push("scenario-b");
+      },
+    });
+
+    releaseFirstSave();
+    await Promise.all([firstRun, secondRun]);
+
+    expect(savedTargets).toEqual(["scenario-a", "scenario-b"]);
+  });
+
+  it("can retry after a failed save", async () => {
+    const queue = createScenarioAutosaveQueue();
+    await expect(
+      queue.run({
+        isDemoScenario: false,
+        isDirty: () => true,
+        save: async () => {
+          throw new Error("offline");
+        },
+      }),
+    ).rejects.toThrow("offline");
+
+    let retries = 0;
+    await queue.run({
+      isDemoScenario: false,
+      isDirty: () => true,
+      save: async () => {
+        retries++;
+      },
+    });
+
+    expect(retries).toBe(1);
+  });
 });
 
 describe("shouldMarkTacticalBatchDirty", () => {

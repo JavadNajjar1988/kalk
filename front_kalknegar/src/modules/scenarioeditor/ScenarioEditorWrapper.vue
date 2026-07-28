@@ -19,6 +19,12 @@ import {
 } from "./scenarioAutosave";
 import { useServicesStore } from "@/modules/tactical-symbol-map/stores/services.js";
 import { DEFAULT_SCENARIO_LAYER_NAME } from "./scenarioFeatureNaming";
+import { useIndexedDb } from "@/scenariostore/localdb";
+import {
+  decideScenarioDraftRecovery,
+  newestScenarioDraft,
+  type ScenarioDraftCandidate,
+} from "./scenarioDraftRecovery";
 
 const props = defineProps<{ scenarioId: string }>();
 
@@ -35,7 +41,9 @@ async function applyPublishedCatalogMapLayers() {
 const localReady = ref(false);
 const scenarioNotFound = ref(false);
 const autosaveQueue = createScenarioAutosaveQueue();
+const draftSaveQueue = createScenarioAutosaveQueue();
 const servicesStore = useServicesStore();
+let autosaveRetryTimer: number | null = null;
 
 const introModalOpen = ref(false);
 const introStatus = ref<ScenarioIntroStatus | null>(null);
@@ -153,21 +161,69 @@ function isScenarioDirty() {
   return scenario.value?.io?.savedDirty?.value ?? false;
 }
 
-async function autosaveScenario() {
+async function autosaveScenario(scenarioId = props.scenarioId) {
   if (!localReady.value || !isReady.value) {
     return;
   }
 
-  await autosaveQueue.run({
-    isDemoScenario: isDemoScenario(props.scenarioId),
-    isDirty: isScenarioDirty,
-    save: () => scenario.value.io.saveToIndexedDb(),
-  });
+  try {
+    await autosaveQueue.run({
+      isDemoScenario: isDemoScenario(scenarioId),
+      isDirty: isScenarioDirty,
+      save: () => scenario.value.io.saveToIndexedDb(),
+    });
+    if (autosaveRetryTimer !== null) {
+      window.clearTimeout(autosaveRetryTimer);
+      autosaveRetryTimer = null;
+    }
+  } catch (error) {
+    console.error("[ScenarioEditorWrapper] Autosave failed:", error);
+    const isVersionConflict = (error as { status?: number })?.status === 409;
+    if (
+      !isVersionConflict &&
+      autosaveRetryTimer === null &&
+      isScenarioDirty()
+    ) {
+      autosaveRetryTimer = window.setTimeout(() => {
+        autosaveRetryTimer = null;
+        void autosaveScenario();
+      }, 5_000);
+    }
+  }
 }
 
 const debouncedAutosaveScenario = useDebounceFn(() => {
   void autosaveScenario();
 }, 3000);
+
+async function persistLocalDraft({
+  syncTactical = false,
+  scenarioId = props.scenarioId,
+} = {}) {
+  if (
+    !localReady.value ||
+    !isReady.value ||
+    isDemoScenario(scenarioId) ||
+    !isScenarioDirty()
+  ) {
+    return;
+  }
+  try {
+    await draftSaveQueue.run({
+      isDemoScenario: false,
+      isDirty: isScenarioDirty,
+      save: () =>
+        scenario.value.io.saveDraftToIndexedDb({ syncTactical }),
+    });
+  } catch (error) {
+    console.error("[ScenarioEditorWrapper] Local draft save failed:", error);
+    scenario.value.io.persistEmergencyDraft();
+  }
+}
+
+const debouncedDraftSave = useDebounceFn(() => {
+  void persistLocalDraft();
+}, 400);
 
 let currentTacticalStore: any = null;
 const onTacticalBatch = (event: TacticalBatchEvent) => {
@@ -177,7 +233,10 @@ const onTacticalBatch = (event: TacticalBatchEvent) => {
     isReady: isReady.value,
     isDemoScenario: isDemoScenario(props.scenarioId),
     markChanged: () => scenario.value?.store?.markChanged?.(),
-    saveNow: () => void autosaveScenario(),
+    saveNow: () => {
+      void persistLocalDraft({ syncTactical: true });
+      void autosaveScenario();
+    },
   });
 };
 
@@ -216,11 +275,23 @@ function syncBasemapBaselineAfterLoad(expectedScenarioId: string) {
 
 watch(
   () => props.scenarioId,
-  async (newScenarioId) => {
+  async (newScenarioId, previousScenarioId) => {
+    if (
+      previousScenarioId &&
+      previousScenarioId !== newScenarioId &&
+      localReady.value &&
+      isScenarioDirty()
+    ) {
+      cancelDebounced(debouncedAutosaveScenario);
+      cancelDebounced(debouncedDraftSave);
+      await persistLocalDraft({ scenarioId: previousScenarioId });
+      await autosaveScenario(previousScenarioId);
+    }
     localReady.value = false;
     basemapBaseline.value = null;
     cancelDebounced(debouncedBroadcastBasemap);
     cancelDebounced(debouncedAutosaveScenario);
+    cancelDebounced(debouncedDraftSave);
     introModalOpen.value = false;
     introStatus.value = null;
     if (isDemoScenario(newScenarioId)) {
@@ -237,9 +308,38 @@ watch(
       localReady.value = true;
       syncBasemapBaselineAfterLoad(newScenarioId);
     } else {
+      let recoveredLocalDraft = false;
       try {
         console.log("[ScenarioEditorWrapper] Loading scenario:", newScenarioId);
-        const scn = await scenarioApiService.getById(newScenarioId);
+        const indexedDb = await useIndexedDb();
+        const [apiRecord, indexedDraft] = await Promise.all([
+          scenarioApiService.getByIdRecord(newScenarioId),
+          indexedDb.getScenarioDraft(newScenarioId),
+        ]);
+        const emergencyDraft = scenario.value.io.readEmergencyDraft(
+          newScenarioId,
+        ) as ScenarioDraftCandidate | undefined;
+        const draft = newestScenarioDraft(indexedDraft, emergencyDraft);
+        const recovery = decideScenarioDraftRecovery(
+          draft,
+          apiRecord.modified,
+        );
+        let scn = apiRecord.scenario;
+
+        if (recovery.kind === "restore") {
+          scn = recovery.draft.scenario;
+          recoveredLocalDraft = true;
+        } else if (
+          recovery.kind === "conflict" &&
+          window.confirm(
+            "یک پیش‌نویس ذخیره‌نشده روی این دستگاه وجود دارد، اما نسخه سرور نیز تغییر کرده است. آیا پیش‌نویس محلی بازیابی شود؟",
+          )
+        ) {
+          scn = recovery.draft.scenario;
+          recoveredLocalDraft = true;
+        }
+
+        scenario.value.io.setServerComparisonKey(apiRecord.modified);
         console.log("[ScenarioEditorWrapper] Scenario loaded:", scn);
         console.log("[ScenarioEditorWrapper] Scenario type:", scn?.type);
         console.log(
@@ -323,6 +423,10 @@ watch(
 
           if (scn.type === "ORBAT-mapper") {
             scenario.value.io.loadFromObject(scn as any);
+            scenario.value.io.setServerComparisonKey(apiRecord.modified);
+            if (recoveredLocalDraft) {
+              scenario.value.store.markChanged();
+            }
             startTacticalPrewarm();
             await applyPublishedCatalogMapLayers();
             selectedItems.clear();
@@ -345,6 +449,10 @@ watch(
         scenarioNotFound.value = true;
       }
       localReady.value = true;
+      if (recoveredLocalDraft) {
+        void persistLocalDraft();
+        debouncedAutosaveScenario();
+      }
     }
   },
   { immediate: true },
@@ -362,6 +470,7 @@ watch(
       return;
     }
 
+    debouncedDraftSave();
     debouncedAutosaveScenario();
   },
 );
@@ -403,8 +512,16 @@ watch(
 );
 
 onUnmounted(() => {
+  if (isScenarioDirty()) {
+    scenario.value.io.persistEmergencyDraft();
+  }
   cancelDebounced(debouncedBroadcastBasemap);
   cancelDebounced(debouncedAutosaveScenario);
+  cancelDebounced(debouncedDraftSave);
+  if (autosaveRetryTimer !== null) {
+    window.clearTimeout(autosaveRetryTimer);
+    autosaveRetryTimer = null;
+  }
   detachTacticalStoreListener();
 });
 
@@ -417,15 +534,27 @@ onBeforeRouteLeave(async (to, from) => {
 });
 
 useEventListener(document, "visibilitychange", async () => {
-  await saveScenarioIfNecessary();
+  if (document.visibilityState === "hidden") {
+    await saveScenarioIfNecessary();
+  }
 });
 
-useEventListener(window, "beforeunload", async () => {
-  await saveScenarioIfNecessary();
+useEventListener(window, "pagehide", () => {
+  if (!isScenarioDirty()) return;
+  scenario.value.io.persistEmergencyDraft();
+  void persistLocalDraft();
+});
+
+useEventListener(window, "beforeunload", (event) => {
+  if (!isScenarioDirty()) return;
+  scenario.value.io.persistEmergencyDraft();
+  event.preventDefault();
+  event.returnValue = "";
 });
 
 async function saveScenarioIfNecessary({ saveDemo = false } = {}) {
   cancelDebounced(debouncedAutosaveScenario);
+  cancelDebounced(debouncedDraftSave);
   if (isScenarioDirty()) {
     if (isDemoScenario(props.scenarioId)) {
       if (!saveDemo) {
@@ -438,9 +567,12 @@ async function saveScenarioIfNecessary({ saveDemo = false } = {}) {
       ) {
         return;
       }
+      await scenario.value.io.saveToIndexedDb();
+      return;
     }
 
-    await scenario.value.io.saveToIndexedDb();
+    await persistLocalDraft({ syncTactical: true });
+    await autosaveScenario();
   }
 }
 </script>

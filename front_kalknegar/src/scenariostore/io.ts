@@ -350,8 +350,10 @@ function getSupplyUoMs(state: ScenarioState): UnitOfMeasure[] {
 export function useScenarioIO(store: ShallowRef<NewScenarioStore>) {
   const settingsStore = useSymbolSettingsStore();
   const apiSaveState = ref<"idle" | "saving" | "saved" | "error">("idle");
+  const apiSaveError = ref<string | null>(null);
   const lastApiSavedAt = ref<Date | null>(null);
   const lastDraftSavedAt = ref<Date | null>(null);
+  const serverComparisonKey = ref<string | null>(null);
   const lastSavedChangeCounter = ref(store.value.changeCounter?.value ?? 0);
   const savedDirty = computed(() => {
     return (store.value.changeCounter?.value ?? 0) !== lastSavedChangeCounter.value;
@@ -429,16 +431,97 @@ export function useScenarioIO(store: ShallowRef<NewScenarioStore>) {
     return JSON.parse(stringifyScenario());
   }
 
+  const emergencyDraftKey = (scenarioId: string) =>
+    `kalk-emergency-draft:${scenarioId}`;
+
+  function setServerComparisonKey(value: string | null | undefined) {
+    serverComparisonKey.value = value || null;
+  }
+
+  function persistEmergencyDraft() {
+    if (!savedDirty.value || typeof localStorage === "undefined") {
+      return false;
+    }
+    try {
+      const scenario = serializeToObject();
+      const payload = JSON.stringify({
+        scenarioId: scenario.id,
+        scenario,
+        updatedAt: Date.now(),
+        appVersion: SCENARIO_FILE_VERSION,
+        savedComparisonKey: serverComparisonKey.value ?? undefined,
+      });
+      // localStorage is only the last-resort unload fallback. Large drafts remain in IndexedDB.
+      if (payload.length > 1_500_000) {
+        return false;
+      }
+      localStorage.setItem(emergencyDraftKey(scenario.id), payload);
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  function readEmergencyDraft(scenarioId: string) {
+    if (typeof localStorage === "undefined") return undefined;
+    try {
+      const raw = localStorage.getItem(emergencyDraftKey(scenarioId));
+      if (!raw) return undefined;
+      const draft = JSON.parse(raw);
+      if (
+        draft?.scenarioId !== scenarioId ||
+        draft?.scenario?.id !== scenarioId ||
+        typeof draft?.updatedAt !== "number"
+      ) {
+        return undefined;
+      }
+      return draft;
+    } catch {
+      return undefined;
+    }
+  }
+
+  function clearEmergencyDraft(scenarioId: string) {
+    if (typeof localStorage !== "undefined") {
+      localStorage.removeItem(emergencyDraftKey(scenarioId));
+    }
+  }
+
   async function saveToLocalStorage(key = LOCALSTORAGE_KEY) {
     await syncTacticalSnapshotToState();
     const scn = useLocalStorage(key, "");
     scn.value = stringifyScenario();
   }
 
+  async function saveDraftToIndexedDb({
+    syncTactical = false,
+  }: { syncTactical?: boolean } = {}) {
+    const snapshotStartedAt = Date.now();
+    if (syncTactical) {
+      await syncTacticalSnapshotToState();
+    }
+    const scn = serializeToObject();
+    if (scn.id.startsWith("demo-")) {
+      return null;
+    }
+    const { putScenarioDraft } = await useIndexedDb();
+    await putScenarioDraft(scn.id, scn, {
+      updatedAt: snapshotStartedAt,
+      appVersion: SCENARIO_FILE_VERSION,
+      savedComparisonKey: serverComparisonKey.value ?? undefined,
+    });
+    lastDraftSavedAt.value = new Date();
+    clearEmergencyDraft(scn.id);
+    return scn.id;
+  }
+
   async function saveToIndexedDb() {
     apiSaveState.value = "saving";
+    apiSaveError.value = null;
     try {
+      const snapshotStartedAt = Date.now();
       await syncTacticalSnapshotToState();
+      const snapshotChangeCounter = store.value.changeCounter?.value ?? 0;
       const scn = serializeToObject();
       console.log(
         "[saveToIndexedDb] metadata.tacticalSymbols tuples:",
@@ -450,18 +533,40 @@ export function useScenarioIO(store: ShallowRef<NewScenarioStore>) {
       }
 
       // ذخیره در IndexedDB محلی
-      const { putScenario } = await useIndexedDb();
+      const { putScenario, putScenarioDraft, deleteScenarioDraft } =
+        await useIndexedDb();
       await putScenario(scn);
+      await putScenarioDraft(scn.id, scn, {
+        updatedAt: snapshotStartedAt,
+        appVersion: SCENARIO_FILE_VERSION,
+        savedComparisonKey: serverComparisonKey.value ?? undefined,
+      });
       lastDraftSavedAt.value = new Date();
+      clearEmergencyDraft(scn.id);
 
       // ذخیره در API
-      const saved = await scenarioApiService.save(scn);
+      const saved = await scenarioApiService.saveRecord(
+        scn,
+        serverComparisonKey.value,
+      );
       lastApiSavedAt.value = new Date();
-      lastSavedChangeCounter.value = store.value.changeCounter?.value ?? 0;
+      lastSavedChangeCounter.value = snapshotChangeCounter;
+      setServerComparisonKey(saved.modified);
+      if ((store.value.changeCounter?.value ?? 0) === snapshotChangeCounter) {
+        await deleteScenarioDraft(scn.id);
+      } else {
+        await saveDraftToIndexedDb();
+      }
       apiSaveState.value = "saved";
-      return saved.id;
+      return saved.scenario.id;
     } catch (error) {
       apiSaveState.value = "error";
+      apiSaveError.value =
+        (error as { status?: number })?.status === 409
+          ? "نسخه سرور پس از شروع ویرایش تغییر کرده است. پیش‌نویس محلی شما حفظ شد؛ صفحه را دوباره باز کنید و نسخه مورد نظر را انتخاب کنید."
+          : error instanceof Error
+            ? error.message
+            : "ذخیره سناریو انجام نشد";
       throw error;
     }
   }
@@ -487,8 +592,10 @@ export function useScenarioIO(store: ShallowRef<NewScenarioStore>) {
     store.value = useNewScenarioStore(data);
     lastSavedChangeCounter.value = store.value.changeCounter?.value ?? 0;
     apiSaveState.value = "idle";
+    apiSaveError.value = null;
     lastApiSavedAt.value = null;
     lastDraftSavedAt.value = null;
+    serverComparisonKey.value = null;
     settingsStore.symbologyStandard = store.value.state.info.symbologyStandard || "2525";
   }
 
@@ -569,8 +676,15 @@ export function useScenarioIO(store: ShallowRef<NewScenarioStore>) {
     stringifyObject,
     toObject,
     apiSaveState,
+    apiSaveError,
     lastApiSavedAt,
     lastDraftSavedAt,
     savedDirty,
+    serverComparisonKey,
+    setServerComparisonKey,
+    saveDraftToIndexedDb,
+    persistEmergencyDraft,
+    readEmergencyDraft,
+    clearEmergencyDraft,
   };
 }

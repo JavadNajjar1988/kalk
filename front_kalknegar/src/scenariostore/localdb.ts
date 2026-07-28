@@ -207,7 +207,13 @@ export async function useIndexedDb() {
       appVersion: options.appVersion,
       savedComparisonKey: options.savedComparisonKey,
     };
-    await db.put("scenario-drafts", draft);
+    const tx = db.transaction("scenario-drafts", "readwrite");
+    const store = tx.objectStore("scenario-drafts");
+    const existing = await store.get(scenarioId);
+    if (!existing || existing.updatedAt <= draft.updatedAt) {
+      await store.put(draft);
+    }
+    await tx.done;
     return draft;
   }
 

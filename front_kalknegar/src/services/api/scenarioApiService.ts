@@ -17,6 +17,11 @@ export interface ScenarioIntroStatus {
   intro_summary: string | null;
 }
 
+export interface ScenarioApiRecord {
+  scenario: Scenario;
+  modified: string | null;
+}
+
 export class ScenarioApiService extends BaseApiClient {
   private useMockApi = (import.meta as any).env?.VITE_USE_MOCK === "true";
 
@@ -70,8 +75,11 @@ export class ScenarioApiService extends BaseApiClient {
 
     // اگر از طریق داشبورد (integration=react) وارد شده‌ایم، همیشه از API واقعی استفاده کن
     try {
-      const params = new URLSearchParams(window.location.search);
-      if (params.get("integration") === "react") {
+      const params =
+        typeof window !== "undefined"
+          ? new URLSearchParams(window.location.search)
+          : null;
+      if (params?.get("integration") === "react") {
         this.useMockApi = false;
         console.log(
           "[ScenarioApiService] integration=react detected → disabling mock API",
@@ -95,6 +103,14 @@ export class ScenarioApiService extends BaseApiClient {
     const description = (scn as any)?.description || "";
     const image = (scn as any)?.image;
     return { name, description, image, content: scn } as any;
+  }
+
+  private mapRecord(apiItem: any): ScenarioApiRecord {
+    return {
+      scenario: this.mapOut(apiItem),
+      modified:
+        typeof apiItem?.modified === "string" ? apiItem.modified : null,
+    };
   }
 
   private mapOut(apiItem: any): Scenario {
@@ -180,52 +196,87 @@ export class ScenarioApiService extends BaseApiClient {
   }
 
   async getById(id: string): Promise<Scenario> {
+    return (await this.getByIdRecord(id)).scenario;
+  }
+
+  async getByIdRecord(id: string): Promise<ScenarioApiRecord> {
     if (this.useMockApi) {
       const res = await mockApiServer.getScenarioById(id);
-      return handleApiResponse(res);
+      return {
+        scenario: handleApiResponse(res),
+        modified: null,
+      };
     }
     console.log("[ScenarioApiService] Fetching scenario:", id);
     const res = await super.get<any>(`/scenarios/${id}`);
     console.log("[ScenarioApiService] API response:", res);
     const data = handleApiResponse(res);
     console.log("[ScenarioApiService] Parsed data:", data);
-    const mapped = this.mapOut(data);
-    console.log("[ScenarioApiService] Mapped scenario:", mapped);
-    return mapped;
+    const record = this.mapRecord(data);
+    console.log("[ScenarioApiService] Mapped scenario:", record.scenario);
+    return record;
   }
 
   async create(scn: Scenario): Promise<Scenario> {
+    return (await this.createRecord(scn)).scenario;
+  }
+
+  async createRecord(scn: Scenario): Promise<ScenarioApiRecord> {
     if (this.useMockApi) {
       const res = await mockApiServer.createScenario(scn);
-      return handleApiResponse(res);
+      return {
+        scenario: handleApiResponse(res),
+        modified: null,
+      };
     }
     const payload = this.buildPayload(scn);
     const res = await super.post<any>("/scenarios", payload);
     const data = handleApiResponse(res);
-    return this.mapOut(data);
+    return this.mapRecord(data);
   }
 
   async save(scn: Scenario): Promise<Scenario> {
+    return (await this.saveRecord(scn)).scenario;
+  }
+
+  async saveRecord(
+    scn: Scenario,
+    expectedModified?: string | null,
+  ): Promise<ScenarioApiRecord> {
     // Try update; if not found, create
     try {
-      return await this.update(scn.id, scn);
+      return await this.updateRecord(scn.id, scn, expectedModified);
     } catch (e) {
       if (!(e instanceof ApiClientError) || e.status !== 404) {
         throw e;
       }
-      return await this.create(scn);
+      return await this.createRecord(scn);
     }
   }
 
   async update(id: string, updates: Partial<Scenario>): Promise<Scenario> {
+    return (await this.updateRecord(id, updates)).scenario;
+  }
+
+  async updateRecord(
+    id: string,
+    updates: Partial<Scenario>,
+    expectedModified?: string | null,
+  ): Promise<ScenarioApiRecord> {
     if (this.useMockApi) {
       const res = await mockApiServer.updateScenario(id, updates);
-      return handleApiResponse(res);
+      return {
+        scenario: handleApiResponse(res),
+        modified: null,
+      };
     }
     const payload = this.buildPayload({ ...(updates as any), id } as Scenario);
+    if (expectedModified) {
+      payload.expected_modified = expectedModified;
+    }
     const res = await super.put<any>(`/scenarios/${id}`, payload);
     const data = handleApiResponse(res);
-    return this.mapOut(data);
+    return this.mapRecord(data);
   }
 
   async remove(id: string): Promise<{ id: string }> {

@@ -66,6 +66,15 @@ def _schedule_from_content(content: object, key: str) -> datetime | None:
     return _normalize_scenario_datetime(content.get(key), key)
 
 
+def _scenario_versions_match(actual: datetime, expected: datetime) -> bool:
+    def as_utc(value: datetime) -> datetime:
+        if value.tzinfo is None or value.utcoffset() is None:
+            return value.replace(tzinfo=timezone.utc)
+        return value.astimezone(timezone.utc)
+
+    return as_utc(actual) == as_utc(expected)
+
+
 async def _audit(db: AsyncSession, scenario_id: str, actor: dict, action: str, diff: dict | None = None):
     user_id: str | None = actor.get("user_id") or None
     db.add(
@@ -682,6 +691,18 @@ async def update_scenario(
     previous_intro_video_url = obj.intro_video_url
     previous_content = obj.content
     data = payload.model_dump(exclude_unset=True)
+    expected_modified = data.pop("expected_modified", None)
+    if expected_modified and not _scenario_versions_match(
+        obj.modified, expected_modified
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail={
+                "code": "scenario_version_conflict",
+                "message": "Scenario was changed after this editor loaded it",
+                "modified": obj.modified.isoformat(),
+            },
+        )
     if "content" in data:
         content = data["content"]
         if isinstance(content, dict) and isinstance(previous_content, dict):
