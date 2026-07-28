@@ -149,6 +149,28 @@ async def test_auth_and_crud_scenarios():
         )
         assert resp.status_code == 200
 
+        # A KalkNegar autosave from an older client must not erase dashboard status.
+        status_content = {**content, "status": "completed", "objectives": ["هدف اصلی"]}
+        resp = await ac.put(
+            f"{settings.API_PREFIX}/scenarios/{scn_id}",
+            json={"content": status_content},
+            headers=headers,
+        )
+        assert resp.status_code == 200
+        kalknegar_autosave = {
+            key: value
+            for key, value in status_content.items()
+            if key not in {"status", "objectives"}
+        }
+        resp = await ac.put(
+            f"{settings.API_PREFIX}/scenarios/{scn_id}",
+            json={"content": kalknegar_autosave},
+            headers=headers,
+        )
+        assert resp.status_code == 200
+        assert resp.json()["data"]["content"]["status"] == "completed"
+        assert resp.json()["data"]["content"]["objectives"] == ["هدف اصلی"]
+
         # history is enriched with actor identity and supports real pagination
         resp = await ac.get(
             f"{settings.API_PREFIX}/scenarios/{scn_id}/history",
@@ -163,8 +185,6 @@ async def test_auth_and_crud_scenarios():
         assert len(history["items"]) == 1
         assert history["items"][0]["actor_username"] == "admin"
         assert history["items"][0]["actor_display_name"]
-        assert history["items"][0]["payload_diff"]["summary"]["moved"] == 1
-        assert history["items"][0]["payload_diff"]["changes"][0]["name"] == "محور پیشروی"
 
         second_page = await ac.get(
             f"{settings.API_PREFIX}/scenarios/{scn_id}/history",
@@ -176,6 +196,18 @@ async def test_auth_and_crud_scenarios():
         assert second_history["offset"] == 1
         assert len(second_history["items"]) == 1
         assert second_history["items"][0]["id"] != history["items"][0]["id"]
+
+        detailed_history = await ac.get(
+            f"{settings.API_PREFIX}/scenarios/{scn_id}/history",
+            params={"limit": 20},
+            headers=headers,
+        )
+        movement_entry = next(
+            item
+            for item in detailed_history.json()["data"]["items"]
+            if (item.get("payload_diff") or {}).get("summary", {}).get("moved") == 1
+        )
+        assert movement_entry["payload_diff"]["changes"][0]["name"] == "محور پیشروی"
 
         # delete
         resp = await ac.delete(f"{settings.API_PREFIX}/scenarios/{scn_id}", headers=headers)

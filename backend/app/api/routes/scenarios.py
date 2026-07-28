@@ -684,6 +684,17 @@ async def update_scenario(
     data = payload.model_dump(exclude_unset=True)
     if "content" in data:
         content = data["content"]
+        if isinstance(content, dict) and isinstance(previous_content, dict):
+            # Older KalkNegar clients did not serialize dashboard-owned fields.
+            # Preserve them so an editor autosave cannot reset scenario status.
+            content = dict(content)
+            for dashboard_field in ("status", "objectives"):
+                if (
+                    dashboard_field not in content
+                    and dashboard_field in previous_content
+                ):
+                    content[dashboard_field] = previous_content[dashboard_field]
+            data["content"] = content
         if "start_time" not in data and isinstance(content, dict) and "startTime" in content:
             data["start_time"] = _schedule_from_content(content, "startTime")
         if "end_time" not in data and isinstance(content, dict) and "endTime" in content:

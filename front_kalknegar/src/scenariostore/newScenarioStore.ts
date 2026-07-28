@@ -59,6 +59,8 @@ export interface ScenarioState {
   id: EntityId;
   meta: ScenarioMetadata;
   metadata?: Record<string, any>;
+  status?: Scenario["status"];
+  objectives: string[];
   unitMap: Record<EntityId, NUnit>;
   sideMap: Record<EntityId, NSide>;
   sideGroupMap: Record<EntityId, NSideGroup>;
@@ -172,8 +174,7 @@ export function prepareScenario(newScenario: Scenario): ScenarioState {
       ...klona(condition),
       id: condition.id || nanoid(),
       startTime: +dayjs(condition.startTime),
-      endTime:
-        condition.endTime !== undefined ? +dayjs(condition.endTime) : undefined,
+      endTime: condition.endTime !== undefined ? +dayjs(condition.endTime) : undefined,
     }),
   );
 
@@ -505,6 +506,8 @@ export function prepareScenario(newScenario: Scenario): ScenarioState {
     id: scenarioId,
     meta,
     metadata: scenario.metadata ? klona(scenario.metadata) : undefined,
+    status: scenario.status,
+    objectives: klona(scenario.objectives ?? []),
     layers,
     mapLayers: mapLayers,
     mapLayerMap: mapLayerMap,
