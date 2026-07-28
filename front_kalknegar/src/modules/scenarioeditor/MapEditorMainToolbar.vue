@@ -19,7 +19,7 @@
         </MainToolbarButton>
         <MainToolbarButton
           @click="setSelectMode()"
-          :active="!moveUnitEnabled"
+          :active="!moveUnitEnabled && !store.currentToolbar"
           class="toolbar-icon-button select-button"
         >
           <SelectIcon class="size-6 transition-all duration-300" />
@@ -47,7 +47,7 @@
         <div class="h-7 border-r-2 border-slate-200 sm:mx-1 dark:border-slate-600" />
         <MainToolbarButton
           :active="store.currentToolbar === 'measurements'"
-          @click="store.toggleToolbar('measurements')"
+          @click="toggleMapToolbar('measurements')"
           title="اندازه‌گیری‌ها"
           class="toolbar-icon-button measurement-button"
         >
@@ -55,7 +55,7 @@
         </MainToolbarButton>
         <MainToolbarButton
           :active="store.currentToolbar === 'draw'"
-          @click="store.toggleToolbar('draw')"
+          @click="toggleMapToolbar('draw')"
           title="کشیدن"
           class="toolbar-icon-button draw-button"
         >
@@ -64,7 +64,7 @@
         <MainToolbarButton
           title="مسیر واحد"
           :active="store.currentToolbar === 'track'"
-          @click="store.toggleToolbar('track')"
+          @click="toggleMapToolbar('track')"
           class="toolbar-icon-button track-button"
         >
           <IconMapMarkerPath class="size-6 transition-all duration-300" />
@@ -72,7 +72,7 @@
         <MainToolbarButton
           title="ویرایش نماد تاکتیکی (محو / برش)"
           :active="store.currentToolbar === 'tactical'"
-          @click="store.toggleToolbar('tactical')"
+          @click="toggleMapToolbar('tactical')"
           class="toolbar-icon-button tactical-button hidden sm:flex"
         >
           <TacticalEditIcon class="size-6 transition-all duration-300" />
@@ -91,7 +91,7 @@
         <MainToolbarButton
           title="ترسیم شرایط محیطی و هواشناسی"
           :active="store.currentToolbar === 'environment'"
-          @click="store.toggleToolbar('environment')"
+          @click="toggleMapToolbar('environment')"
           class="toolbar-icon-button environment-button"
         >
           <WeatherIcon class="size-6 transition-all duration-300" />
@@ -388,7 +388,10 @@ import {
 import { useRouter } from "vue-router";
 import { SIMPLE_TACTICAL_MAP_ROUTE } from "@/router/names";
 import MainToolbarButton from "@/components/MainToolbarButton.vue";
-import { useMainToolbarStore } from "@/stores/mainToolbarStore";
+import {
+  useMainToolbarStore,
+  type ToolbarType,
+} from "@/stores/mainToolbarStore";
 import { injectStrict } from "@/utils";
 import { activeMapKey, activeScenarioKey } from "@/components/injects";
 import { storeToRefs } from "pinia";
@@ -423,6 +426,8 @@ import {
 import { hasEventPlaybackLoopRange } from "@/modules/scenarioeditor/scenarioPlayback";
 import SymbolSidebarModal from "./SymbolSidebarModal.vue";
 import type { StoryboardShowMode } from "@/types/scenarioModels";
+import { useServicesStore } from "@/modules/tactical-symbol-map/stores/services.js";
+import { cancelTacticalErase } from "./tacticalToolLifecycle";
 
 const props = withDefaults(
   defineProps<{
@@ -465,6 +470,7 @@ const {
 const mapRef = injectStrict(activeMapKey);
 
 const store = useMainToolbarStore();
+const tacticalServicesStore = useServicesStore();
 const { addMultiple } = storeToRefs(store);
 const { moveUnitEnabled } = storeToRefs(useUnitSettingsStore());
 const recordingStore = useRecordingStore();
@@ -498,12 +504,25 @@ const computedSidc = computed(() => {
 });
 
 function setSelectMode() {
+  leaveTransientMapTool();
   moveUnitEnabled.value = false;
 }
 
 function setMoveMode() {
   if (!recordingStore.isRecordingLocation) return;
+  leaveTransientMapTool();
   moveUnitEnabled.value = true;
+}
+
+function leaveTransientMapTool() {
+  cancelTacticalErase(tacticalServicesStore.getServices()?.emitter);
+  store.clearToolbar();
+}
+
+function toggleMapToolbar(toolbar: ToolbarType) {
+  cancelTacticalErase(tacticalServicesStore.getServices()?.emitter);
+  moveUnitEnabled.value = false;
+  store.toggleToolbar(toolbar);
 }
 
 const symbolOptions = computed(() =>
@@ -702,6 +721,8 @@ watch(eventLoopAvailable, (available) => {
 const symbolSidebarOpen = ref(false);
 
 function openSymbolSidebar() {
+  leaveTransientMapTool();
+  moveUnitEnabled.value = false;
   symbolSidebarOpen.value = true;
 }
 

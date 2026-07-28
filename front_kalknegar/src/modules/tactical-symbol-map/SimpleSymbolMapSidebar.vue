@@ -5,6 +5,56 @@
       memento-key="ui.sidebar.symbol-search"
       :initial-search="symbolDefaultSearch"
     />
+    <div class="taxonomy-filters" aria-label="فیلترهای دسته‌بندی نمادها">
+      <label class="taxonomy-filter">
+        <span>محیط</span>
+        <select v-model="taxonomyFilters.environment">
+          <option value="">همه محیط‌ها</option>
+          <option
+            v-for="option in TAXONOMY_ENVIRONMENTS"
+            :key="option.key"
+            :value="option.key"
+          >
+            {{ option.label }}
+          </option>
+        </select>
+      </label>
+      <label class="taxonomy-filter">
+        <span>نوع ترسیم</span>
+        <select v-model="taxonomyFilters.drawingType">
+          <option value="">همه انواع</option>
+          <option
+            v-for="option in TAXONOMY_DRAWING_TYPES"
+            :key="option.key"
+            :value="option.key"
+          >
+            {{ option.label }}
+          </option>
+        </select>
+      </label>
+      <label class="taxonomy-filter">
+        <span>استاندارد</span>
+        <select v-model="taxonomyFilters.standard">
+          <option value="">همه استانداردها</option>
+          <option
+            v-for="option in TAXONOMY_STANDARDS"
+            :key="option.key"
+            :value="option.key"
+          >
+            {{ option.label }}
+          </option>
+        </select>
+      </label>
+      <button
+        v-if="hasTaxonomyFilter"
+        type="button"
+        class="taxonomy-reset"
+        title="پاک‌کردن فیلترها"
+        @click="resetTaxonomyFilters"
+      >
+        پاک‌کردن
+      </button>
+    </div>
     <div class="symbol-categories">
       <div class="category-group favorite-category">
         <button
@@ -19,16 +69,17 @@
           }}</span>
           <span class="favorite-category-icon" aria-hidden="true">♥</span>
           <span class="category-title">کاربردی‌تر</span>
-          <span class="category-count">({{ favoriteEntries.length }})</span>
+        <span class="category-count">({{ filteredFavoriteEntries.length }})</span>
         </button>
         <transition name="slide">
           <div v-if="favoriteCategoryExpanded">
-            <div v-if="favoriteEntries.length" class="category-items">
+            <div v-if="filteredFavoriteEntries.length" class="category-items">
               <Card
-                v-for="entry in favoriteEntries"
+                v-for="entry in filteredFavoriteEntries"
                 :key="`favorite-${entry.id}`"
                 v-bind="translateEntry(entry)"
                 compact
+                :draw-on-double-click="false"
                 :selected="state.selected.includes(entry.id)"
                 :editing="state.editing"
                 :onClick="onClick"
@@ -43,37 +94,69 @@
         </transition>
       </div>
       <div
-        v-for="(category, categoryName) in groupedEntries"
-        :key="categoryName"
+        v-for="category in groupedEntries"
+        :key="category.key"
         class="category-group"
       >
-        <div
+        <button
+          type="button"
           class="category-header"
-          :class="{ collapsed: !isCategoryExpanded(categoryName) }"
-          @click="toggleCategory(categoryName)"
+          :class="{ collapsed: !isCategoryExpanded(category.key) }"
+          :aria-expanded="isCategoryExpanded(category.key)"
+          @click="toggleCategory(category.key)"
         >
           <span class="category-icon">{{
-            isCategoryExpanded(categoryName) ? '▼' : '▶'
+            isCategoryExpanded(category.key) ? '▼' : '▶'
           }}</span>
-          <span class="category-title">{{ categoryName || 'سایر' }}</span>
-          <span class="category-count">({{ category.length }})</span>
-        </div>
+          <span class="category-title">{{ category.label }}</span>
+          <span class="category-count">({{ category.count }})</span>
+        </button>
         <transition name="slide">
-          <div v-if="isCategoryExpanded(categoryName)" class="category-items">
-            <Card
-              v-for="entry in category"
-              :key="entry.id"
-              v-bind="translateEntry(entry)"
-              compact
-              :selected="state.selected.includes(entry.id)"
-              :editing="state.editing"
-              :onClick="onClick"
-              @favorite-change="handleFavoriteChange"
-              @symbol-dblclick="handleSymbolDoubleClick"
-            />
+          <div v-if="isCategoryExpanded(category.key)" class="environment-groups">
+            <section
+              v-for="environment in category.environments"
+              :key="`${category.key}-${environment.key}`"
+              class="environment-group"
+            >
+              <button
+                type="button"
+                class="environment-header"
+                :class="{ collapsed: !isEnvironmentExpanded(category.key, environment.key) }"
+                :aria-expanded="isEnvironmentExpanded(category.key, environment.key)"
+                @click="toggleEnvironment(category.key, environment.key)"
+              >
+                <span class="environment-icon">{{
+                  isEnvironmentExpanded(category.key, environment.key) ? '−' : '+'
+                }}</span>
+                <span>{{ environment.label }}</span>
+                <span class="category-count">({{ environment.entries.length }})</span>
+              </button>
+              <transition name="slide">
+                <div
+                  v-if="isEnvironmentExpanded(category.key, environment.key)"
+                  class="category-items"
+                >
+                  <Card
+                    v-for="entry in environment.entries"
+                    :key="entry.id"
+                    v-bind="translateEntry(entry)"
+                    compact
+                    :draw-on-double-click="false"
+                    :selected="state.selected.includes(entry.id)"
+                    :editing="state.editing"
+                    :onClick="onClick"
+                    @favorite-change="handleFavoriteChange"
+                    @symbol-dblclick="handleSymbolDoubleClick"
+                  />
+                </div>
+              </transition>
+            </section>
           </div>
         </transition>
       </div>
+      <p v-if="!groupedEntries.length" class="taxonomy-empty">
+        نمادی با این ترکیب فیلتر پیدا نشد.
+      </p>
     </div>
   </div>
 </template>
@@ -93,6 +176,13 @@ import {
   ensurePersianTacticalLabel,
   tacticalWordTranslations,
 } from './persianTacticalLabels.js'
+import {
+  TAXONOMY_CATEGORIES,
+  TAXONOMY_DRAWING_TYPES,
+  TAXONOMY_ENVIRONMENTS,
+  TAXONOMY_STANDARDS,
+  classifySymbolEntry,
+} from './symbolTaxonomy.js'
 // Use Ramda's equals for deep equality check
 const isEqual = (a, b) => JSON.stringify(a) === JSON.stringify(b)
 import FilterInput from './components/sidebar/FilterInput.vue'
@@ -115,6 +205,21 @@ const [search, setSearch] = useMemento('ui.sidebar.symbol-search', symbolDefault
 const emitter = useEmitter('sidebar')
 const state = reactive({ ...defaultState })
 const lastSearch = ref(null)
+const taxonomyFilters = reactive({
+  environment: '',
+  drawingType: '',
+  standard: '',
+})
+
+const hasTaxonomyFilter = computed(() =>
+  Object.values(taxonomyFilters).some(Boolean),
+)
+
+const resetTaxonomyFilters = () => {
+  taxonomyFilters.environment = ''
+  taxonomyFilters.drawingType = ''
+  taxonomyFilters.standard = ''
+}
 
 // Handlers for state reducer
 const handlers = {
@@ -404,71 +509,43 @@ const translateCategory = (category) => {
   return trimmedCategory
 }
 
-// Group entries by category (dimension or description)
+const matchesTaxonomyFilters = (entry) => {
+  const classification = classifySymbolEntry(entry)
+  return (
+    (!taxonomyFilters.environment ||
+      classification.environment === taxonomyFilters.environment) &&
+    (!taxonomyFilters.drawingType ||
+      classification.drawingType === taxonomyFilters.drawingType) &&
+    (!taxonomyFilters.standard || classification.standard === taxonomyFilters.standard)
+  )
+}
+
+// Group first by semantic purpose, then by operational environment.
 const groupedEntries = computed(() => {
-  const groups = {}
+  const groups = new Map(
+    TAXONOMY_CATEGORIES.map((category) => [
+      category.key,
+      new Map(TAXONOMY_ENVIRONMENTS.map((environment) => [environment.key, []])),
+    ]),
+  )
 
-  state.entries.forEach((entry) => {
-    // Extract category from description (hierarchy) or tags (dimensions)
-    let category = 'سایر'
-
-    // First try to get from description (hierarchy)
-    // Skip first part if it's "Emergency Management Symbols" and use second or third part
-    if (entry.description) {
-      const parts = entry.description
-        .split(' • ')
-        .map((p) => p.trim())
-        .filter((p) => p)
-
-      if (parts.length > 0) {
-        // If first part is "Emergency Management Symbols", skip it and use next part
-        if (parts[0] === 'Emergency Management Symbols' && parts.length > 1) {
-          // Use second part (more specific category)
-          category = parts[1]
-        } else if (parts.length > 1) {
-          // Use second part if available (more specific)
-          category = parts[1]
-        } else {
-          // Use first part if only one part exists
-          category = parts[0]
-        }
-      }
-    }
-
-    // If no description or category is still 'سایر', try tags
-    if (category === 'سایر' && entry.tags) {
-      const tags = entry.tags.split(' ')
-      // Find SYSTEM tags (dimensions) - they are in format SYSTEM:dimension:NONE
-      const systemTags = tags.filter(
-        (tag) => tag.startsWith('SYSTEM:') && tag.includes(':NONE'),
-      )
-      if (systemTags.length > 0) {
-        // Get the first dimension
-        const dimension = systemTags[0].split(':')[1]
-        if (dimension) {
-          category = dimension
-        }
-      }
-    }
-
-    // Translate category to Persian
-    const persianCategory = ensurePersianTacticalLabel(translateCategory(category))
-
-    if (!groups[persianCategory]) {
-      groups[persianCategory] = []
-    }
-    groups[persianCategory].push(entry)
+  state.entries.filter(matchesTaxonomyFilters).forEach((entry) => {
+    const classification = classifySymbolEntry(entry)
+    groups.get(classification.category)?.get(classification.environment)?.push(entry)
   })
 
-  // Sort categories alphabetically (Persian)
-  const sortedGroups = {}
-  Object.keys(groups)
-    .sort()
-    .forEach((key) => {
-      sortedGroups[key] = groups[key]
-    })
+  return TAXONOMY_CATEGORIES.map((category) => {
+    const environments = TAXONOMY_ENVIRONMENTS.map((environment) => ({
+      ...environment,
+      entries: groups.get(category.key)?.get(environment.key) || [],
+    })).filter((environment) => environment.entries.length)
 
-  return sortedGroups
+    return {
+      ...category,
+      environments,
+      count: environments.reduce((total, environment) => total + environment.entries.length, 0),
+    }
+  }).filter((category) => category.count)
 })
 
 const favoriteTag = 'USER:pin:NONE'
@@ -479,6 +556,9 @@ const isFavoriteEntry = (entry) =>
     .some((tag) => tag.toUpperCase() === favoriteTag.toUpperCase())
 
 const favoriteEntries = computed(() => state.entries.filter(isFavoriteEntry))
+const filteredFavoriteEntries = computed(() =>
+  favoriteEntries.value.filter(matchesTaxonomyFilters),
+)
 const favoriteCategoryExpanded = ref(true)
 
 const handleFavoriteChange = ({ id, favorite }) => {
@@ -496,6 +576,7 @@ const handleFavoriteChange = ({ id, favorite }) => {
 
 // Accordion state for categories
 const expandedCategories = ref({})
+const expandedEnvironments = ref({})
 
 // Initialize categories expansion state depending on search query and count
 watch(
@@ -503,13 +584,19 @@ watch(
   (entries) => {
     const isFiltering =
       search.value && search.value.filter && search.value.filter.length > 0
-    const isSmallList = Object.keys(entries).length <= 2 || state.entries.length <= 50
+    const isSmallList = entries.length <= 2 || state.entries.length <= 50
     const shouldExpand = isFiltering || isSmallList
 
-    Object.keys(entries).forEach((categoryName) => {
-      if (!(categoryName in expandedCategories.value)) {
-        expandedCategories.value[categoryName] = shouldExpand
+    entries.forEach((category) => {
+      if (!(category.key in expandedCategories.value)) {
+        expandedCategories.value[category.key] = shouldExpand
       }
+      category.environments.forEach((environment) => {
+        const key = `${category.key}:${environment.key}`
+        if (!(key in expandedEnvironments.value)) {
+          expandedEnvironments.value[key] = shouldExpand || category.environments.length === 1
+        }
+      })
     })
   },
   { immediate: true },
@@ -522,6 +609,9 @@ watch(
     if (filter && filter.length > 0) {
       Object.keys(expandedCategories.value).forEach((category) => {
         expandedCategories.value[category] = true
+      })
+      Object.keys(expandedEnvironments.value).forEach((environment) => {
+        expandedEnvironments.value[environment] = true
       })
     }
   },
@@ -544,6 +634,17 @@ const isCategoryExpanded = (categoryName) => {
 // Toggle category expand/collapse
 const toggleCategory = (categoryName) => {
   expandedCategories.value[categoryName] = !isCategoryExpanded(categoryName)
+}
+
+const environmentExpansionKey = (categoryKey, environmentKey) =>
+  `${categoryKey}:${environmentKey}`
+
+const isEnvironmentExpanded = (categoryKey, environmentKey) =>
+  expandedEnvironments.value[environmentExpansionKey(categoryKey, environmentKey)] !== false
+
+const toggleEnvironment = (categoryKey, environmentKey) => {
+  const key = environmentExpansionKey(categoryKey, environmentKey)
+  expandedEnvironments.value[key] = !isEnvironmentExpanded(categoryKey, environmentKey)
 }
 
 // Comprehensive word dictionary for symbol translation
@@ -1130,6 +1231,67 @@ onMounted(() => {
   scrollbar-color: color-mix(in srgb, var(--color-primary) 24%, transparent) transparent;
 }
 
+.taxonomy-filters {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.4rem;
+  margin-bottom: 0.65rem;
+  padding: 0.55rem;
+  border: 1px solid var(--surface-border);
+  border-radius: 0.7rem;
+  background: color-mix(in srgb, var(--surface-panel) 92%, transparent);
+}
+
+.taxonomy-filter {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 0.2rem;
+  color: hsl(var(--muted-foreground));
+  font-size: 0.6rem;
+  font-weight: 700;
+}
+
+.taxonomy-filter select {
+  min-width: 0;
+  height: 2rem;
+  border: 1px solid var(--surface-border);
+  border-radius: 0.5rem;
+  padding: 0 0.4rem;
+  color: var(--color-foreground);
+  background: var(--surface-panel-muted);
+  font: inherit;
+  font-size: 0.66rem;
+  outline: none;
+}
+
+.taxonomy-filter select:focus {
+  border-color: color-mix(in srgb, var(--color-primary) 60%, var(--surface-border));
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-primary) 14%, transparent);
+}
+
+.taxonomy-reset {
+  grid-column: 1 / -1;
+  justify-self: end;
+  border: 0;
+  padding: 0.15rem 0.25rem;
+  color: var(--color-primary);
+  background: transparent;
+  font-size: 0.64rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.taxonomy-empty {
+  margin: 0;
+  border: 1px dashed var(--surface-border);
+  border-radius: 0.65rem;
+  padding: 1rem 0.75rem;
+  color: hsl(var(--muted-foreground));
+  font-size: 0.72rem;
+  text-align: center;
+}
+
 .category-group {
   display: flex;
   flex-direction: column;
@@ -1243,6 +1405,55 @@ onMounted(() => {
   padding: 0 0.15rem;
 }
 
+.environment-groups {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  padding: 0.1rem 0.25rem 0;
+}
+
+.environment-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.environment-header {
+  display: flex;
+  min-height: 30px;
+  align-items: center;
+  gap: 0.4rem;
+  border: 0;
+  border-inline-start: 3px solid
+    color-mix(in srgb, var(--color-primary) 45%, var(--surface-border));
+  border-radius: 0.4rem;
+  padding: 0.3rem 0.55rem;
+  color: var(--color-foreground);
+  background: var(--surface-panel-muted);
+  font-family: inherit;
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-align: right;
+  cursor: pointer;
+}
+
+.environment-header > :nth-child(2) {
+  flex: 1;
+}
+
+.environment-header.collapsed {
+  color: hsl(var(--muted-foreground));
+}
+
+.environment-icon {
+  display: grid;
+  width: 1rem;
+  height: 1rem;
+  place-items: center;
+  color: var(--color-primary);
+  font-size: 0.8rem;
+}
+
 /* Accordion transition animations */
 .slide-enter-active,
 .slide-leave-active {
@@ -1275,6 +1486,10 @@ onMounted(() => {
 }
 
 @media (max-width: 380px) {
+  .taxonomy-filters {
+    grid-template-columns: 1fr;
+  }
+
   .category-items {
     grid-template-columns: 1fr;
   }
