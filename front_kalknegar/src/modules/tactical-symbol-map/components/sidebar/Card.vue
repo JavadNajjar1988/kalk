@@ -2,6 +2,7 @@
   <div class="e3de-card-container" ref="cardRef">
     <div
       class="e3de-card e3de-column"
+      :class="{ 'e3de-card--compact': compact }"
       :style="cardStyle"
       :aria-selected="selected"
       @click="handleClick"
@@ -12,31 +13,36 @@
       @drop="onDrop"
     >
       <div class="header e3de-row">
-        <Title
-          :id="id"
-          :value="displayTitle"
-          :editing="editing"
-          :highlight="highlight"
-        />
+        <Title :id="id" :value="displayTitle" :editing="editing" :highlight="highlight" />
         <button
           v-if="canRename"
           class="e3de-button"
+          type="button"
+          aria-label="تغییر نام"
+          title="تغییر نام"
           @click="handleRename"
         >
           <Icon class="e3de-icon tt-rename-button" :path="mdi.mdiPencil" />
         </button>
         <button
           class="e3de-button"
-          @click="handlePin"
+          :class="{ 'e3de-button--favorite': favorite }"
+          type="button"
+          :aria-pressed="favorite"
+          :aria-label="favorite ? 'حذف از علاقه‌مندی‌ها' : 'افزودن به علاقه‌مندی‌ها'"
+          :title="favorite ? 'حذف از علاقه‌مندی‌ها' : 'افزودن به علاقه‌مندی‌ها'"
+          @click.stop="handleFavorite"
         >
-          <Icon class="e3de-icon tt-pin-button" :path="pinPath" />
+          <Icon class="e3de-icon tt-favorite-button" :path="favoritePath" />
         </button>
       </div>
       <template v-if="hasBody">
         <hr />
         <div class="body e3de-row">
-          <span v-if="displayDescription" class="e3de-description">{{ displayDescription }}</span>
-          <div v-if="svg" class="avatar" v-html="svg"></div>
+          <span v-if="displayDescription" class="e3de-description">{{
+            displayDescription
+          }}</span>
+          <div v-if="resolvedSvg" class="avatar" v-html="resolvedSvg"></div>
         </div>
       </template>
       <hr />
@@ -61,52 +67,61 @@ import Icon from '../Icon.vue'
 import * as mdi from '@mdi/js'
 import { TAG } from './tags.js'
 import { ensurePersianTacticalLabel } from '../../persianTacticalLabels.js'
+import { svg as renderSymbolSvg } from '../../symbology/symbol.js'
 import './Card.css'
 
 const props = defineProps({
   id: {
     type: String,
-    required: true
+    required: true,
   },
   capabilities: {
     type: String,
-    default: ''
+    default: '',
   },
   svg: {
     type: String,
-    default: ''
+    default: '',
+  },
+  sidc: {
+    type: String,
+    default: '',
   },
   title: {
     type: String,
-    default: ''
+    default: '',
   },
   highlight: {
     type: Boolean,
-    default: false
+    default: false,
   },
   description: {
     type: String,
-    default: ''
+    default: '',
   },
   tags: {
     type: String,
-    default: ''
+    default: '',
   },
   selected: {
     type: Boolean,
-    default: false
+    default: false,
   },
   editing: {
     type: [String, Boolean],
-    default: false
+    default: false,
   },
   onClick: {
     type: Function,
-    required: true
-  }
+    required: true,
+  },
+  compact: {
+    type: Boolean,
+    default: false,
+  },
 })
 
-const emit = defineEmits(['measureRef', 'symbol-dblclick'])
+const emit = defineEmits(['measureRef', 'symbol-dblclick', 'favorite-change'])
 
 const cardRef = ref(null)
 const sidebarEmitter = useEmitter('sidebar')
@@ -124,28 +139,32 @@ const cardStyle = computed(() => {
     : {}
 })
 
-const pinned = computed(() => {
-  return props.tags.split(' ').findIndex(s => s.match(/USER:pin:NONE/gi)) !== -1
+const favorite = computed(() => {
+  return props.tags.split(' ').findIndex((s) => s.match(/USER:pin:NONE/gi)) !== -1
 })
 
-const pinPath = computed(() => {
-  return pinned.value ? mdi.mdiPin : mdi.mdiPinOutline
+const favoritePath = computed(() => {
+  return favorite.value ? mdi.mdiHeart : mdi.mdiHeartOutline
 })
 
 const canRename = computed(() => {
   return (props.capabilities || '').includes('RENAME')
 })
 
+const resolvedSvg = computed(() => {
+  if (props.svg) return props.svg
+  if (!isTacticalSymbol.value || !props.sidc) return ''
+  return renderSymbolSvg(props.sidc)
+})
+
 const hasBody = computed(() => {
-  return !!(props.svg || displayDescription.value)
+  return !!(resolvedSvg.value || displayDescription.value)
 })
 
 const isTacticalSymbol = computed(() => ID.scope(props.id) === ID.SYMBOL)
 
 const displayTitle = computed(() => {
-  return isTacticalSymbol.value
-    ? ensurePersianTacticalLabel(props.title)
-    : props.title
+  return isTacticalSymbol.value ? ensurePersianTacticalLabel(props.title) : props.title
 })
 
 const displayDescription = computed(() => {
@@ -155,7 +174,7 @@ const displayDescription = computed(() => {
 })
 
 const tagSpecs = computed(() => {
-  return props.tags.split(' ').filter(s => s)
+  return props.tags.split(' ').filter((s) => s)
 })
 
 const tagComponent = (spec) => {
@@ -171,12 +190,10 @@ const tagProps = (spec) => {
   return {
     id: props.id,
     spec,
-    label: isTacticalSymbol.value
-      ? ensurePersianTacticalLabel(label)
-      : label,
+    label: isTacticalSymbol.value ? ensurePersianTacticalLabel(label) : label,
     action,
     path,
-    removable
+    removable,
   }
 }
 
@@ -188,10 +205,10 @@ const handleDoubleClick = async () => {
   emit('symbol-dblclick', props.id)
   const svcs = servicesRef?.value
   if (!svcs) return
-  
+
   const { emitter, store, featureStore, ipcRenderer } = svcs
   const scope = ID.scope(props.id)
-  
+
   const scopes = {
     symbol: () => {
       // Use global emitter for draw command
@@ -199,7 +216,7 @@ const handleDoubleClick = async () => {
     },
     'link+layer': async () => {
       const links = await store.values([props.id])
-      links.forEach(link => {
+      links.forEach((link) => {
         if (ipcRenderer && ipcRenderer.send) {
           ipcRenderer.send('OPEN_LINK', link)
         } else {
@@ -210,7 +227,7 @@ const handleDoubleClick = async () => {
     },
     'link+feature': async () => {
       const links = await store.values([props.id])
-      links.forEach(link => {
+      links.forEach((link) => {
         if (ipcRenderer && ipcRenderer.send) {
           ipcRenderer.send('OPEN_LINK', link)
         } else {
@@ -231,7 +248,7 @@ const handleDoubleClick = async () => {
       emitter.emit('map/goto', {
         center: entity[0].center,
         resolution: entity[0].resolution,
-        rotation: entity[0].rotation
+        rotation: entity[0].rotation,
       })
     },
     feature: async () => {
@@ -241,9 +258,9 @@ const handleDoubleClick = async () => {
     place: async () => {
       const center = await featureStore.center(props.id)
       if (center) emitter.emit('map/goto', { center })
-    }
+    },
   }
-  
+
   const handler = scopes[scope] || (() => {})
   await handler()
 }
@@ -252,14 +269,18 @@ const handleRename = () => {
   sidebarEmitter.value.emit('edit/begin', { id: props.id })
 }
 
-const handlePin = () => {
-  sidebarEmitter.value.emit(pinned.value ? 'unpin' : 'pin', { id: props.id })
+const handleFavorite = () => {
+  const nextFavorite = !favorite.value
+  emit('favorite-change', { id: props.id, favorite: nextFavorite })
+  sidebarEmitter.value.emit(nextFavorite ? 'pin' : 'unpin', { id: props.id })
 }
 
 const dropEffect = (event) => {
   const types = [...event.dataTransfer.types]
   return acceptDrop.value
-    ? types.some(t => t === 'text/uri-list') ? 'copy' : 'link'
+    ? types.some((t) => t === 'text/uri-list')
+      ? 'copy'
+      : 'link'
     : 'none'
 }
 
@@ -301,10 +322,10 @@ const onDrop = async (event) => {
   // Process URI items:
   const items = [...event.dataTransfer.items]
   const links = []
-  
+
   for (const item of items) {
     if (item.type === 'text/uri-list') {
-      const url = await new Promise(resolve => {
+      const url = await new Promise((resolve) => {
         item.getAsString(resolve)
       })
       try {
@@ -328,4 +349,3 @@ const onDrop = async (event) => {
 <style scoped>
 @import './Card.css';
 </style>
-

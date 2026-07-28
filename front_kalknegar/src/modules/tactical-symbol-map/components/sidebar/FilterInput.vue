@@ -1,5 +1,8 @@
 <template>
   <div class="fe6e-filter-container">
+    <svg class="fe6e-search-icon" viewBox="0 0 24 24" aria-hidden="true">
+      <path d="m21 21-4.35-4.35m2.35-5.65a8 8 0 1 1-16 0 8 8 0 0 1 16 0Z" />
+    </svg>
     <input
       class="fe6e-filter"
       type="text"
@@ -12,6 +15,7 @@
       @click="stopPropagation"
       id="filter-input"
     />
+    <kbd class="fe6e-filter-shortcut">ESC</kbd>
   </div>
 </template>
 
@@ -27,16 +31,16 @@ import './FilterInput.css'
 const props = defineProps({
   onFocus: {
     type: Function,
-    default: () => {}
+    default: () => {},
   },
   mementoKey: {
     type: String,
-    default: 'ui.sidebar.search'
+    default: 'ui.sidebar.search',
   },
   initialSearch: {
     type: Object,
-    default: () => defaultSearch
-  }
+    default: () => defaultSearch,
+  },
 })
 
 const [search, setSearch] = useMemento(props.mementoKey, props.initialSearch)
@@ -47,11 +51,9 @@ watch([cursor, () => search.value.filter], async () => {
   await nextTick()
   const input = inputRef.value
   if (!input) return
-  
-  const position = cursor.value === null
-    ? search.value.filter.length
-    : cursor.value
-  
+
+  const position = cursor.value === null ? search.value.filter.length : cursor.value
+
   input.setSelectionRange(position, position)
 })
 
@@ -62,20 +64,21 @@ const handleChange = (event) => {
 }
 
 const handleKeyDown = (event) => {
-  matcher([
-    ({ key }) => key === 'Enter',
-    ({ key }) => key === 'Escape',
-    ({ key }) => key === 'ArrowDown',
-    ({ key }) => key === 'ArrowUp',
-    ({ key }) => key === 'Home',
-    ({ key }) => key === 'End',
-    ({ key }) => key === ' ',
-    event => cmdOrCtrl(event) && event.key === 'a'
-  ], stopPropagation)(event)
+  matcher(
+    [
+      ({ key }) => key === 'Enter',
+      ({ key }) => key === 'Escape',
+      ({ key }) => key === 'ArrowDown',
+      ({ key }) => key === 'ArrowUp',
+      ({ key }) => key === 'Home',
+      ({ key }) => key === 'End',
+      ({ key }) => key === ' ',
+      (event) => cmdOrCtrl(event) && event.key === 'a',
+    ],
+    stopPropagation,
+  )(event)
 
-  matcher([
-    ({ key }) => key === 'ArrowDown'
-  ], preventDefault)(event)
+  matcher([({ key }) => key === 'ArrowDown'], preventDefault)(event)
 
   if (event.key === 'Enter') {
     setSearch({ ...search.value, force: true })
@@ -96,4 +99,3 @@ const handleKeyDown = (event) => {
 <style scoped>
 @import './FilterInput.css';
 </style>
-
