@@ -46,6 +46,7 @@ import {
   AddAPhoto,
 } from '@mui/icons-material';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { navigateToPreviousStep } from '@/utils/navigation';
 import { useAppSelector, useAppDispatch } from '@/store';
 import { selectUser, logout, updateUser } from '@/store/slices/authSlice';
 import {
@@ -338,9 +339,9 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
     }
   };
 
-  const handleBackToDashboard = () => {
+  const handleBackToPreviousStep = () => {
     if (!isDashboardHome) {
-      navigate('/dashboard');
+      navigateToPreviousStep(navigate, location.pathname);
     }
   };
 
@@ -975,11 +976,11 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
                 justifyContent: theme.direction === 'rtl' ? 'flex-start' : 'flex-end',
               }}
             >
-              <Tooltip title="بازگشت به صفحه اصلی">
+              <Tooltip title="بازگشت به مرحله قبل">
                 <Button
                   variant="contained"
                   startIcon={<KeyboardBackspace />}
-                  onClick={handleBackToDashboard}
+                  onClick={handleBackToPreviousStep}
                   sx={{
                     borderRadius: '999px',
                     px: 2.25,

@@ -27,6 +27,12 @@ import {
   InputLabel,
   Select,
   MenuItem,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
 } from '@mui/material';
 import {
   Edit,
@@ -46,6 +52,7 @@ import {
   OpenInNew,
   History,
 } from '@mui/icons-material';
+import { navigateToPreviousStep } from '@/utils/navigation';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from '@/hooks/useTranslation';
 import { useAppDispatch, useAppSelector } from '@/store';
@@ -75,9 +82,9 @@ import {
   showErrorNotification,
 } from '@/store/slices/uiSlice';
 import ScenarioIntroSettingsPanel from '@/modules/dashboard/components/ScenarioIntroSettingsPanel';
-import ScenarioHistoryTab from '@/modules/dashboard/components/ScenarioHistoryTab';
 import { selectUser } from '@/store/slices/authSlice';
 import { canAccessFeature } from '@/security/roleAccess';
+import { scenarioApiService } from '@/services/api/scenarioApiService';
 import {
   environmentalKindLabel,
   environmentalParameters,
@@ -143,7 +150,6 @@ const ScenarioPhasesManager: React.FC<{
   const unassignedEvents = events.filter(event => !event.phaseId);
   const timeIssues: string[] = [];
   const chronologicalPhases = [...phases].sort(
-    (a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime()
     (a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime()
   );
 
@@ -423,9 +429,8 @@ const EnvironmentalConditionsManager: React.FC<{
           <Typography variant="h6">مرور شرایط محیطی</Typography>
           <Typography variant="body2" color="text.secondary">
             این اطلاعات در کالک‌نگار روی نقشه و خط زمانی تعریف می‌شوند و اینجا
-            فقط قابل مرور هستند.
-            این اطلاعات در کالک‌نگار روی نقشه و خط زمانی تعریف می‌شوند و اینجا
-            فقط قابل مرور هستند.
+            فقط قابل مرور هستند. این اطلاعات در کالک‌نگار روی نقشه و خط زمانی
+            تعریف می‌شوند و اینجا فقط قابل مرور هستند.
           </Typography>
         </Box>
       </Box>
@@ -573,7 +578,7 @@ const ScenarioHistoryTab: React.FC<{ scenarioId: string }> = ({
       try {
         setLoadError(false);
         const data = await scenarioApiService.getScenarioHistory(scenarioId);
-        if (!cancelled) setLogs(data);
+        if (!cancelled) setLogs(data.items);
       } catch {
         if (!cancelled) setLoadError(true);
       } finally {
@@ -813,7 +818,13 @@ const ScenarioDetailPage: React.FC = () => {
         <Alert severity="error">{error}</Alert>
         <Button
           startIcon={<ArrowBack />}
-          onClick={() => navigate('/dashboard/scenarios')}
+          onClick={() =>
+            navigateToPreviousStep(
+              navigate,
+              window.location.pathname,
+              '/dashboard/scenarios'
+            )
+          }
           sx={{ mt: 2 }}
         >
           {t('scenarios.backToList')}
@@ -828,7 +839,13 @@ const ScenarioDetailPage: React.FC = () => {
         <Alert severity="warning">{t('scenarios.notFound')}</Alert>
         <Button
           startIcon={<ArrowBack />}
-          onClick={() => navigate('/dashboard/scenarios')}
+          onClick={() =>
+            navigateToPreviousStep(
+              navigate,
+              window.location.pathname,
+              '/dashboard/scenarios'
+            )
+          }
           sx={{ mt: 2 }}
         >
           {t('scenarios.backToList')}
@@ -888,7 +905,13 @@ const ScenarioDetailPage: React.FC = () => {
             >
               <Tooltip title={t('scenarios.backToList')}>
                 <IconButton
-                  onClick={() => navigate('/dashboard/scenarios')}
+                  onClick={() =>
+                    navigateToPreviousStep(
+                      navigate,
+                      window.location.pathname,
+                      '/dashboard/scenarios'
+                    )
+                  }
                   size="small"
                 >
                   <ArrowBack />

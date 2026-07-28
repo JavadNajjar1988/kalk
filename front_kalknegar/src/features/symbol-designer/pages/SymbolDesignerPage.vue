@@ -3,7 +3,7 @@
     <header class="tsd-header bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
         <h1 class="tsd-title text-2xl font-bold text-gray-900 dark:text-white">سامانه تعریف نمادهای تاکتیکال</h1>
-        <RouterLink to="/" class="tsd-back text-sm text-blue-600 dark:text-blue-300 hover:underline">بازگشت</RouterLink>
+        <button type="button" class="tsd-back text-sm text-blue-600 dark:text-blue-300 hover:underline" @click="goBack">بازگشت</button>
       </div>
     </header>
 
@@ -38,6 +38,11 @@
 import AnchorCanvas from "../components/AnchorCanvas.vue";
 import SvgPicker from "../components/SvgPicker.vue";
 import SegmentRulesForm from "../components/SegmentRulesForm.vue";
+import { useRouter } from "vue-router";
+import { goToPreviousStep } from "@/utils/navigation";
+
+const router = useRouter();
+const goBack = () => goToPreviousStep(router, "/");
 </script>
 
 <style scoped>

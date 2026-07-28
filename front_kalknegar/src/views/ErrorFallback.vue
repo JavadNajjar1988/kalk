@@ -17,12 +17,13 @@
           >
             تلاش مجدد
           </button>
-          <router-link 
-            to="/" 
+          <button
+            type="button"
+            @click="goBack"
             class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded inline-block"
           >
-            بازگشت به صفحه اصلی
-          </router-link>
+            بازگشت به مرحله قبل
+          </button>
         </div>
       </div>
     </div>
@@ -30,7 +31,16 @@
 </template>
 
 <script setup lang="ts">
+import { useRouter } from "vue-router";
+import { goToPreviousStep } from "@/utils/navigation";
+
+const router = useRouter();
+
 function reload() {
   window.location.reload();
+}
+
+function goBack() {
+  goToPreviousStep(router, "/");
 }
 </script>

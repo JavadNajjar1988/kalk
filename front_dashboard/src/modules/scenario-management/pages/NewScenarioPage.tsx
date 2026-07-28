@@ -24,6 +24,7 @@ import ScenarioBasicInfoForm from '../components/ScenarioBasicInfoForm';
 import ScenarioTimeSettingsForm from '../components/ScenarioTimeSettingsForm';
 import ScenarioOrbatForm from '../components/ScenarioOrbatForm';
 import type { NewScenarioFormData } from '../types/new-scenario';
+import { navigateToPreviousStep } from '@/utils/navigation';
 
 const NewScenarioPage: React.FC = () => {
   const theme = useTheme();
@@ -57,7 +58,7 @@ const NewScenarioPageContent: React.FC = () => {
   } = useNewScenarioForm({
     onSuccess: (scenarioId) => {
       // Navigate to scenario editor/viewer
-      navigate(`/dashboard/scenario-management`);
+      navigate('/dashboard/scenarios');
       // TODO: Navigate to ORBAT editor with scenario ID
       console.log('Scenario created:', scenarioId);
     },
@@ -74,7 +75,7 @@ const NewScenarioPageContent: React.FC = () => {
   };
   
   const handleCancel = () => {
-    navigate('/dashboard/scenario-management');
+    navigateToPreviousStep(navigate, window.location.pathname, '/dashboard/scenarios');
   };
   
   // Wrapper functions for proper type compatibility

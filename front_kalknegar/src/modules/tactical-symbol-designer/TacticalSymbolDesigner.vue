@@ -81,6 +81,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue';
 import { useRouter } from 'vue-router';
+import { goToPreviousStep } from '@/utils/navigation';
 import DrawingCanvas from './components/DrawingCanvas.vue';
 import Toolbar from './components/Toolbar.vue';
 import PointList from './components/PointList.vue';
@@ -101,7 +102,7 @@ const lines = computed(() => store.lines);
 
 // Methods
 const goBack = () => {
-  router.push('/');
+  goToPreviousStep(router, '/');
 };
 
 const updatePoints = (newPoints: Point[]) => {
