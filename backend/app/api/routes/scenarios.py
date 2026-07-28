@@ -28,6 +28,7 @@ from app.services.scenario_import import (
     upsert_scenario_from_import,
 )
 from app.services.notifications import publish_notification
+from app.services.scenario_history import build_content_history_diff
 from pydantic import BaseModel, Field
 import logging
 
@@ -679,6 +680,7 @@ async def update_scenario(
     if not obj:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Scenario not found")
     previous_intro_video_url = obj.intro_video_url
+    previous_content = obj.content
     data = payload.model_dump(exclude_unset=True)
     if "content" in data:
         content = data["content"]
@@ -700,7 +702,12 @@ async def update_scenario(
             )
         )
     if changed_keys:
-        await _audit(db, scenario_id, user, "update", {"fields": list(changed_keys)})
+        audit_diff: dict = {"fields": sorted(changed_keys)}
+        if "content" in changed_keys:
+            audit_diff.update(
+                build_content_history_diff(previous_content, data.get("content"))
+            )
+        await _audit(db, scenario_id, user, "update", audit_diff)
     await db.commit()
     await db.refresh(obj)
     if previous_intro_video_url != obj.intro_video_url:

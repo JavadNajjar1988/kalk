@@ -112,6 +112,43 @@ async def test_auth_and_crud_scenarios():
         assert resp.status_code == 200
         assert resp.json()["data"]["description"] == "جدید"
 
+        content = {
+            "metadata": {
+                "tacticalSymbols": {
+                    "version": 1,
+                    "tuples": [
+                        [
+                            "feature:layer-1/symbol-1",
+                            {
+                                "type": "Feature",
+                                "name": "محور پیشروی",
+                                "geometry": {
+                                    "type": "Point",
+                                    "coordinates": [48.0, 31.0],
+                                },
+                                "properties": {"sidc": "GFGPG-----*****"},
+                            },
+                        ]
+                    ],
+                }
+            }
+        }
+        resp = await ac.put(
+            f"{settings.API_PREFIX}/scenarios/{scn_id}",
+            json={"content": content},
+            headers=headers,
+        )
+        assert resp.status_code == 200
+        content["metadata"]["tacticalSymbols"]["tuples"][0][1]["geometry"][
+            "coordinates"
+        ] = [48.2, 31.2]
+        resp = await ac.put(
+            f"{settings.API_PREFIX}/scenarios/{scn_id}",
+            json={"content": content},
+            headers=headers,
+        )
+        assert resp.status_code == 200
+
         # history is enriched with actor identity and supports real pagination
         resp = await ac.get(
             f"{settings.API_PREFIX}/scenarios/{scn_id}/history",
@@ -126,6 +163,8 @@ async def test_auth_and_crud_scenarios():
         assert len(history["items"]) == 1
         assert history["items"][0]["actor_username"] == "admin"
         assert history["items"][0]["actor_display_name"]
+        assert history["items"][0]["payload_diff"]["summary"]["moved"] == 1
+        assert history["items"][0]["payload_diff"]["changes"][0]["name"] == "محور پیشروی"
 
         second_page = await ac.get(
             f"{settings.API_PREFIX}/scenarios/{scn_id}/history",
