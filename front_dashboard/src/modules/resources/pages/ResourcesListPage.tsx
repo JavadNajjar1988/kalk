@@ -30,21 +30,24 @@ import {
   Clear as ClearIcon,
 } from '@mui/icons-material';
 import { useAppDispatch, useAppSelector } from '@/store';
-import { fetchResources, setFilters, clearFilters, createResource, clearError } from '../store/resourcesSlice';
+import {
+  fetchResources,
+  setFilters,
+  clearFilters,
+  createResource,
+  clearError,
+} from '../store/resourcesSlice';
 import type { Resource, ResourceFilters } from '../types';
 import { useTranslation } from '@/hooks/useTranslation';
+import PersianCalendarField from '@/components/common/PersianCalendarField';
 
 const ResourcesListPage: React.FC = () => {
   const dispatch = useAppDispatch();
   const { t } = useTranslation();
-  
-  const {
-    resources,
-    filters,
-    isLoading,
-    error,
-    pagination,
-  } = useAppSelector((state) => state.resourcesModule);
+
+  const { resources, filters, isLoading, error, pagination } = useAppSelector(
+    state => state.resourcesModule
+  );
 
   const [searchTerm, setSearchTerm] = useState(filters.search || '');
   const [showAddModal, setShowAddModal] = useState(false);
@@ -102,7 +105,7 @@ const ResourcesListPage: React.FC = () => {
         },
         isActive: true,
       };
-      
+
       await dispatch(createResource(resourceData));
       setShowAddModal(false);
       setNewResourceForm({
@@ -121,19 +124,27 @@ const ResourcesListPage: React.FC = () => {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'اشخاص کلیدی': return 'primary';
-      case 'نظامی': return 'success';
-      case 'غیرنظامی': return 'warning';
-      default: return 'default';
+      case 'اشخاص کلیدی':
+        return 'primary';
+      case 'نظامی':
+        return 'success';
+      case 'غیرنظامی':
+        return 'warning';
+      default:
+        return 'default';
     }
   };
 
   const getSubStatusColor = (subStatus: string) => {
     switch (subStatus) {
-      case 'زنده': return 'success';
-      case 'شهید': return 'error';
-      case 'آسیب دیده': return 'warning';
-      default: return 'default';
+      case 'زنده':
+        return 'success';
+      case 'شهید':
+        return 'error';
+      case 'آسیب دیده':
+        return 'warning';
+      default:
+        return 'default';
     }
   };
 
@@ -150,7 +161,14 @@ const ResourcesListPage: React.FC = () => {
   return (
     <Box sx={{ p: 3 }}>
       {/* Header */}
-      <Box sx={{ mb: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <Box
+        sx={{
+          mb: 3,
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+        }}
+      >
         <Typography variant="h4" component="h1" fontWeight={600}>
           مدیریت منابع
         </Typography>
@@ -171,7 +189,10 @@ const ResourcesListPage: React.FC = () => {
       {/* Filters */}
       <Card sx={{ mb: 3, borderRadius: 2 }}>
         <CardContent>
-          <Typography variant="h6" sx={{ mb: 2, display: 'flex', alignItems: 'center' }}>
+          <Typography
+            variant="h6"
+            sx={{ mb: 2, display: 'flex', alignItems: 'center' }}
+          >
             <FilterIcon sx={{ mr: 1 }} />
             فیلترها و جستجو
           </Typography>
@@ -181,7 +202,7 @@ const ResourcesListPage: React.FC = () => {
                 fullWidth
                 placeholder="جستجو در منابع..."
                 value={searchTerm}
-                onChange={(e) => handleSearch(e.target.value)}
+                onChange={e => handleSearch(e.target.value)}
                 InputProps={{
                   startAdornment: (
                     <InputAdornment position="start">
@@ -197,7 +218,7 @@ const ResourcesListPage: React.FC = () => {
                 <InputLabel>وضعیت</InputLabel>
                 <Select
                   value={filters.status || ''}
-                  onChange={(e) => handleFilterChange('status', e.target.value)}
+                  onChange={e => handleFilterChange('status', e.target.value)}
                   label="وضعیت"
                 >
                   <MenuItem value="">همه</MenuItem>
@@ -212,7 +233,9 @@ const ResourcesListPage: React.FC = () => {
                 <InputLabel>وضعیت فرعی</InputLabel>
                 <Select
                   value={filters.subStatus || ''}
-                  onChange={(e) => handleFilterChange('subStatus', e.target.value)}
+                  onChange={e =>
+                    handleFilterChange('subStatus', e.target.value)
+                  }
                   label="وضعیت فرعی"
                 >
                   <MenuItem value="">همه</MenuItem>
@@ -227,7 +250,7 @@ const ResourcesListPage: React.FC = () => {
                 <InputLabel>جنسیت</InputLabel>
                 <Select
                   value={filters.gender || ''}
-                  onChange={(e) => handleFilterChange('gender', e.target.value)}
+                  onChange={e => handleFilterChange('gender', e.target.value)}
                   label="جنسیت"
                 >
                   <MenuItem value="">همه</MenuItem>
@@ -259,7 +282,9 @@ const ResourcesListPage: React.FC = () => {
       ) : resources.length === 0 ? (
         <Card sx={{ borderRadius: 2 }}>
           <CardContent sx={{ textAlign: 'center', py: 6 }}>
-            <ResourceIcon sx={{ fontSize: 64, color: 'text.secondary', mb: 2 }} />
+            <ResourceIcon
+              sx={{ fontSize: 64, color: 'text.secondary', mb: 2 }}
+            />
             <Typography variant="h6" color="text.secondary">
               هیچ منبعی یافت نشد
             </Typography>
@@ -271,7 +296,7 @@ const ResourcesListPage: React.FC = () => {
       ) : (
         <>
           <Grid container spacing={2}>
-            {resources.map((resource) => (
+            {resources.map(resource => (
               <Grid item xs={12} md={6} lg={4} key={resource.id}>
                 <Card
                   sx={{
@@ -279,43 +304,74 @@ const ResourcesListPage: React.FC = () => {
                     cursor: 'pointer',
                     transition: 'all 0.2s',
                     '&:hover': {
-                      boxShadow: (theme) => theme.shadows[8],
+                      boxShadow: theme => theme.shadows[8],
                       transform: 'translateY(-2px)',
                     },
                   }}
                 >
                   <CardContent>
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
+                    <Box
+                      sx={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'flex-start',
+                        mb: 2,
+                      }}
+                    >
                       <Typography variant="h6" noWrap>
                         {resource.personalInfo.fullName}
                       </Typography>
-                      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
+                      <Box
+                        sx={{
+                          display: 'flex',
+                          flexDirection: 'column',
+                          gap: 0.5,
+                        }}
+                      >
                         <Chip
                           label={resource.legalInfo.status}
-                          color={getStatusColor(resource.legalInfo.status) as any}
+                          color={
+                            getStatusColor(resource.legalInfo.status) as any
+                          }
                           size="small"
                         />
                         <Chip
                           label={resource.legalInfo.subStatus}
-                          color={getSubStatusColor(resource.legalInfo.subStatus) as any}
+                          color={
+                            getSubStatusColor(
+                              resource.legalInfo.subStatus
+                            ) as any
+                          }
                           size="small"
                           variant="outlined"
                         />
                       </Box>
                     </Box>
-                    
-                    <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+
+                    <Typography
+                      variant="body2"
+                      color="text.secondary"
+                      sx={{ mb: 1 }}
+                    >
                       تاریخ تولد: {resource.personalInfo.birthDate}
                     </Typography>
-                    
-                    <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+
+                    <Typography
+                      variant="body2"
+                      color="text.secondary"
+                      sx={{ mb: 1 }}
+                    >
                       جنسیت: {resource.personalInfo.gender}
                     </Typography>
-                    
-                    <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+
+                    <Typography
+                      variant="body2"
+                      color="text.secondary"
+                      sx={{ mb: 1 }}
+                    >
                       تابعیت: {resource.personalInfo.nationality}
                     </Typography>
-                    
+
                     {resource.personalInfo.birthPlace && (
                       <Typography variant="body2" color="text.secondary">
                         محل تولد: {resource.personalInfo.birthPlace}
@@ -370,17 +426,22 @@ const ResourcesListPage: React.FC = () => {
                 fullWidth
                 label="نام و نام خانوادگی"
                 value={newResourceForm.fullName}
-                onChange={(e) => setNewResourceForm((prev) => ({ ...prev, fullName: e.target.value }))}
+                onChange={e =>
+                  setNewResourceForm(prev => ({
+                    ...prev,
+                    fullName: e.target.value,
+                  }))
+                }
               />
             </Grid>
             <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
-                type="date"
+              <PersianCalendarField
                 label="تاریخ تولد"
-                InputLabelProps={{ shrink: true }}
                 value={newResourceForm.birthDate}
-                onChange={(e) => setNewResourceForm((prev) => ({ ...prev, birthDate: e.target.value }))}
+                onChange={value =>
+                  setNewResourceForm(prev => ({ ...prev, birthDate: value }))
+                }
+                dateOnly
               />
             </Grid>
             <Grid item xs={12} sm={6}>
@@ -389,7 +450,12 @@ const ResourcesListPage: React.FC = () => {
                 <Select
                   value={newResourceForm.gender}
                   label="جنسیت"
-                  onChange={(e) => setNewResourceForm((prev) => ({ ...prev, gender: e.target.value as 'مرد' | 'زن' }))}
+                  onChange={e =>
+                    setNewResourceForm(prev => ({
+                      ...prev,
+                      gender: e.target.value as 'مرد' | 'زن',
+                    }))
+                  }
                 >
                   <MenuItem value="مرد">مرد</MenuItem>
                   <MenuItem value="زن">زن</MenuItem>
@@ -402,10 +468,13 @@ const ResourcesListPage: React.FC = () => {
                 <Select
                   value={newResourceForm.nationality}
                   label="تابعیت"
-                  onChange={(e) =>
-                    setNewResourceForm((prev) => ({
+                  onChange={e =>
+                    setNewResourceForm(prev => ({
                       ...prev,
-                      nationality: e.target.value as 'ایرانی' | 'غیرایرانی' | 'تبعه مضاعف',
+                      nationality: e.target.value as
+                        | 'ایرانی'
+                        | 'غیرایرانی'
+                        | 'تبعه مضاعف',
                     }))
                   }
                 >
@@ -420,7 +489,12 @@ const ResourcesListPage: React.FC = () => {
                 fullWidth
                 label="محل تولد"
                 value={newResourceForm.birthPlace}
-                onChange={(e) => setNewResourceForm((prev) => ({ ...prev, birthPlace: e.target.value }))}
+                onChange={e =>
+                  setNewResourceForm(prev => ({
+                    ...prev,
+                    birthPlace: e.target.value,
+                  }))
+                }
               />
             </Grid>
             <Grid item xs={12} sm={6}>
@@ -429,10 +503,13 @@ const ResourcesListPage: React.FC = () => {
                 <Select
                   value={newResourceForm.status}
                   label="وضعیت اصلی"
-                  onChange={(e) =>
-                    setNewResourceForm((prev) => ({
+                  onChange={e =>
+                    setNewResourceForm(prev => ({
                       ...prev,
-                      status: e.target.value as 'اشخاص کلیدی' | 'نظامی' | 'غیرنظامی',
+                      status: e.target.value as
+                        | 'اشخاص کلیدی'
+                        | 'نظامی'
+                        | 'غیرنظامی',
                     }))
                   }
                 >
@@ -448,10 +525,13 @@ const ResourcesListPage: React.FC = () => {
                 <Select
                   value={newResourceForm.subStatus}
                   label="وضعیت فرعی"
-                  onChange={(e) =>
-                    setNewResourceForm((prev) => ({
+                  onChange={e =>
+                    setNewResourceForm(prev => ({
                       ...prev,
-                      subStatus: e.target.value as 'زنده' | 'شهید' | 'آسیب دیده',
+                      subStatus: e.target.value as
+                        | 'زنده'
+                        | 'شهید'
+                        | 'آسیب دیده',
                     }))
                   }
                 >
@@ -465,7 +545,9 @@ const ResourcesListPage: React.FC = () => {
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setShowAddModal(false)}>انصراف</Button>
-          <Button variant="contained" onClick={handleSaveResource}>ذخیره</Button>
+          <Button variant="contained" onClick={handleSaveResource}>
+            ذخیره
+          </Button>
         </DialogActions>
       </Dialog>
     </Box>

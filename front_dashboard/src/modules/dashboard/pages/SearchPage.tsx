@@ -1,6 +1,24 @@
 import React, { useState } from 'react';
 import { useLocation } from 'react-router-dom';
-import { Box, Typography, Paper, TextField, MenuItem, Select, InputLabel, FormControl, Button, Divider, Chip, List, ListItem, ListItemText, ListSubheader, Grid } from '@mui/material';
+import {
+  Box,
+  Typography,
+  Paper,
+  TextField,
+  MenuItem,
+  Select,
+  InputLabel,
+  FormControl,
+  Button,
+  Divider,
+  Chip,
+  List,
+  ListItem,
+  ListItemText,
+  ListSubheader,
+  Grid,
+} from '@mui/material';
+import PersianCalendarField from '@/components/common/PersianCalendarField';
 
 function useQuery() {
   return new URLSearchParams(useLocation().search);
@@ -8,11 +26,28 @@ function useQuery() {
 
 // داده تستی برای جستجو
 const mockUsers = [
-  { id: 1, name: 'علی رضایی', status: 'active', role: 'admin', createdAt: '2023-12-01' },
-  { id: 2, name: 'مریم محمدی', status: 'inactive', role: 'operator', createdAt: '2024-01-10' },
+  {
+    id: 1,
+    name: 'علی رضایی',
+    status: 'active',
+    role: 'admin',
+    createdAt: '2023-12-01',
+  },
+  {
+    id: 2,
+    name: 'مریم محمدی',
+    status: 'inactive',
+    role: 'operator',
+    createdAt: '2024-01-10',
+  },
 ];
 const mockScenarios = [
-  { id: 1, name: 'عملیات والفجر', status: 'inprogress', createdAt: '2024-02-01' },
+  {
+    id: 1,
+    name: 'عملیات والفجر',
+    status: 'inprogress',
+    createdAt: '2024-02-01',
+  },
   { id: 2, name: 'رزمایش فتح', status: 'completed', createdAt: '2023-11-20' },
 ];
 const mockEquipments = [
@@ -100,9 +135,15 @@ const SearchPage: React.FC = () => {
             <Grid item xs={6} md={2}>
               <FormControl fullWidth size="small">
                 <InputLabel>نوع داده</InputLabel>
-                <Select value={type} label="نوع داده" onChange={e => setType(e.target.value)}>
+                <Select
+                  value={type}
+                  label="نوع داده"
+                  onChange={e => setType(e.target.value)}
+                >
                   {typeOptions.map(opt => (
-                    <MenuItem key={opt.value} value={opt.value}>{opt.label}</MenuItem>
+                    <MenuItem key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </MenuItem>
                   ))}
                 </Select>
               </FormControl>
@@ -110,33 +151,33 @@ const SearchPage: React.FC = () => {
             <Grid item xs={6} md={2}>
               <FormControl fullWidth size="small">
                 <InputLabel>وضعیت</InputLabel>
-                <Select value={status} label="وضعیت" onChange={e => setStatus(e.target.value)}>
+                <Select
+                  value={status}
+                  label="وضعیت"
+                  onChange={e => setStatus(e.target.value)}
+                >
                   {statusOptions.map(opt => (
-                    <MenuItem key={opt.value} value={opt.value}>{opt.label}</MenuItem>
+                    <MenuItem key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </MenuItem>
                   ))}
                 </Select>
               </FormControl>
             </Grid>
             <Grid item xs={6} md={2}>
-              <TextField
-                fullWidth
+              <PersianCalendarField
                 label="از تاریخ"
-                type="date"
-                size="small"
-                InputLabelProps={{ shrink: true }}
                 value={dateFrom}
-                onChange={e => setDateFrom(e.target.value)}
+                onChange={setDateFrom}
+                dateOnly
               />
             </Grid>
             <Grid item xs={6} md={2}>
-              <TextField
-                fullWidth
+              <PersianCalendarField
                 label="تا تاریخ"
-                type="date"
-                size="small"
-                InputLabelProps={{ shrink: true }}
                 value={dateTo}
-                onChange={e => setDateTo(e.target.value)}
+                onChange={setDateTo}
+                dateOnly
               />
             </Grid>
             <Grid item xs={12} md={12}>
@@ -155,30 +196,51 @@ const SearchPage: React.FC = () => {
           </Typography>
           <Divider sx={{ mb: 2 }} />
           <List subheader={<ListSubheader>کاربران</ListSubheader>}>
-            {results.users.length === 0 && <ListItem><ListItemText primary="نتیجه‌ای یافت نشد" /></ListItem>}
+            {results.users.length === 0 && (
+              <ListItem>
+                <ListItemText primary="نتیجه‌ای یافت نشد" />
+              </ListItem>
+            )}
             {results.users.map((u: any) => (
               <ListItem key={u.id}>
-                <ListItemText primary={u.name} secondary={`وضعیت: ${u.status} | نقش: ${u.role}`} />
+                <ListItemText
+                  primary={u.name}
+                  secondary={`وضعیت: ${u.status} | نقش: ${u.role}`}
+                />
                 <Chip label="کاربر" color="info" size="small" />
               </ListItem>
             ))}
           </List>
           <Divider sx={{ my: 2 }} />
           <List subheader={<ListSubheader>سناریوها</ListSubheader>}>
-            {results.scenarios.length === 0 && <ListItem><ListItemText primary="نتیجه‌ای یافت نشد" /></ListItem>}
+            {results.scenarios.length === 0 && (
+              <ListItem>
+                <ListItemText primary="نتیجه‌ای یافت نشد" />
+              </ListItem>
+            )}
             {results.scenarios.map((s: any) => (
               <ListItem key={s.id}>
-                <ListItemText primary={s.name} secondary={`وضعیت: ${s.status}`} />
+                <ListItemText
+                  primary={s.name}
+                  secondary={`وضعیت: ${s.status}`}
+                />
                 <Chip label="سناریو" color="primary" size="small" />
               </ListItem>
             ))}
           </List>
           <Divider sx={{ my: 2 }} />
           <List subheader={<ListSubheader>تجهیزات</ListSubheader>}>
-            {results.equipments.length === 0 && <ListItem><ListItemText primary="نتیجه‌ای یافت نشد" /></ListItem>}
+            {results.equipments.length === 0 && (
+              <ListItem>
+                <ListItemText primary="نتیجه‌ای یافت نشد" />
+              </ListItem>
+            )}
             {results.equipments.map((eq: any) => (
               <ListItem key={eq.id}>
-                <ListItemText primary={eq.name} secondary={`وضعیت: ${eq.status}`} />
+                <ListItemText
+                  primary={eq.name}
+                  secondary={`وضعیت: ${eq.status}`}
+                />
                 <Chip label="تجهیزات" color="warning" size="small" />
               </ListItem>
             ))}
@@ -189,4 +251,4 @@ const SearchPage: React.FC = () => {
   );
 };
 
-export default SearchPage; 
+export default SearchPage;

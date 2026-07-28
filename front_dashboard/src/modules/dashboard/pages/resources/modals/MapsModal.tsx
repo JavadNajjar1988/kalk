@@ -21,6 +21,8 @@ import {
   resourcesDialogActionsSx,
   resourcesOutlinedCancelButtonSx,
 } from '../resourcesDialogStyles';
+import PersianCalendarField from '@/components/common/PersianCalendarField';
+import { toLocalDateInput } from '@/utils/dateUtils';
 import { MapItem } from '@/store/slices/tabularResourcesSlice';
 
 interface MapsModalProps {
@@ -58,7 +60,7 @@ const MapsModal: React.FC<MapsModalProps> = ({
     projection: '',
     securityClassification: 'public',
     source: '',
-    lastUpdated: new Date().toISOString().split('T')[0],
+    lastUpdated: toLocalDateInput(new Date()),
     version: '1.0',
     format: 'digital',
     status: 'active',
@@ -86,7 +88,7 @@ const MapsModal: React.FC<MapsModalProps> = ({
         projection: '',
         securityClassification: 'public',
         source: '',
-        lastUpdated: new Date().toISOString().split('T')[0],
+        lastUpdated: toLocalDateInput(new Date()),
         version: '1.0',
         format: 'digital',
         status: 'active',
@@ -102,7 +104,10 @@ const MapsModal: React.FC<MapsModalProps> = ({
     }
   };
 
-  const handleCoordinateChange = (coordinate: keyof MapItem['coordinates'], value: number) => {
+  const handleCoordinateChange = (
+    coordinate: keyof MapItem['coordinates'],
+    value: number
+  ) => {
     setFormData(prev => ({
       ...prev,
       coordinates: {
@@ -170,7 +175,7 @@ const MapsModal: React.FC<MapsModalProps> = ({
               fullWidth
               label="کد نقشه"
               value={formData.mapCode || ''}
-              onChange={(e) => handleChange('mapCode', e.target.value)}
+              onChange={e => handleChange('mapCode', e.target.value)}
               error={!!errors.mapCode}
               helperText={errors.mapCode}
               sx={textFieldSx}
@@ -181,7 +186,7 @@ const MapsModal: React.FC<MapsModalProps> = ({
               fullWidth
               label="عنوان نقشه"
               value={formData.title || ''}
-              onChange={(e) => handleChange('title', e.target.value)}
+              onChange={e => handleChange('title', e.target.value)}
               error={!!errors.title}
               helperText={errors.title}
               sx={textFieldSx}
@@ -194,7 +199,7 @@ const MapsModal: React.FC<MapsModalProps> = ({
               fullWidth
               label="نوع نقشه"
               value={formData.type || ''}
-              onChange={(e) => handleChange('type', e.target.value)}
+              onChange={e => handleChange('type', e.target.value)}
               sx={textFieldSx}
             >
               <MenuItem value="topographic">توپوگرافی</MenuItem>
@@ -208,7 +213,7 @@ const MapsModal: React.FC<MapsModalProps> = ({
               fullWidth
               label="مقیاس"
               value={formData.scale || ''}
-              onChange={(e) => handleChange('scale', e.target.value)}
+              onChange={e => handleChange('scale', e.target.value)}
               placeholder="1:50000"
               sx={textFieldSx}
             />
@@ -219,7 +224,7 @@ const MapsModal: React.FC<MapsModalProps> = ({
               fullWidth
               label="منطقه"
               value={formData.area || ''}
-              onChange={(e) => handleChange('area', e.target.value)}
+              onChange={e => handleChange('area', e.target.value)}
               error={!!errors.area}
               helperText={errors.area}
               sx={textFieldSx}
@@ -227,7 +232,10 @@ const MapsModal: React.FC<MapsModalProps> = ({
           </Grid>
 
           <Grid item xs={12}>
-            <Typography variant="subtitle1" sx={{ fontWeight: 600, color: accent, mb: 1 }}>
+            <Typography
+              variant="subtitle1"
+              sx={{ fontWeight: 600, color: accent, mb: 1 }}
+            >
               مختصات جغرافیایی
             </Typography>
             <Grid container spacing={2}>
@@ -237,7 +245,12 @@ const MapsModal: React.FC<MapsModalProps> = ({
                   label="شمال"
                   type="number"
                   value={formData.coordinates?.north ?? 0}
-                  onChange={(e) => handleCoordinateChange('north', parseFloat(e.target.value) || 0)}
+                  onChange={e =>
+                    handleCoordinateChange(
+                      'north',
+                      parseFloat(e.target.value) || 0
+                    )
+                  }
                   sx={textFieldSx}
                 />
               </Grid>
@@ -247,7 +260,12 @@ const MapsModal: React.FC<MapsModalProps> = ({
                   label="جنوب"
                   type="number"
                   value={formData.coordinates?.south ?? 0}
-                  onChange={(e) => handleCoordinateChange('south', parseFloat(e.target.value) || 0)}
+                  onChange={e =>
+                    handleCoordinateChange(
+                      'south',
+                      parseFloat(e.target.value) || 0
+                    )
+                  }
                   sx={textFieldSx}
                 />
               </Grid>
@@ -257,7 +275,12 @@ const MapsModal: React.FC<MapsModalProps> = ({
                   label="شرق"
                   type="number"
                   value={formData.coordinates?.east ?? 0}
-                  onChange={(e) => handleCoordinateChange('east', parseFloat(e.target.value) || 0)}
+                  onChange={e =>
+                    handleCoordinateChange(
+                      'east',
+                      parseFloat(e.target.value) || 0
+                    )
+                  }
                   sx={textFieldSx}
                 />
               </Grid>
@@ -267,7 +290,12 @@ const MapsModal: React.FC<MapsModalProps> = ({
                   label="غرب"
                   type="number"
                   value={formData.coordinates?.west ?? 0}
-                  onChange={(e) => handleCoordinateChange('west', parseFloat(e.target.value) || 0)}
+                  onChange={e =>
+                    handleCoordinateChange(
+                      'west',
+                      parseFloat(e.target.value) || 0
+                    )
+                  }
                   sx={textFieldSx}
                 />
               </Grid>
@@ -284,7 +312,7 @@ const MapsModal: React.FC<MapsModalProps> = ({
               fullWidth
               label="دیتوم"
               value={formData.datum || ''}
-              onChange={(e) => handleChange('datum', e.target.value)}
+              onChange={e => handleChange('datum', e.target.value)}
               sx={textFieldSx}
             />
           </Grid>
@@ -293,7 +321,7 @@ const MapsModal: React.FC<MapsModalProps> = ({
               fullWidth
               label="سیستم تصویر"
               value={formData.projection || ''}
-              onChange={(e) => handleChange('projection', e.target.value)}
+              onChange={e => handleChange('projection', e.target.value)}
               sx={textFieldSx}
             />
           </Grid>
@@ -304,7 +332,9 @@ const MapsModal: React.FC<MapsModalProps> = ({
               fullWidth
               label="طبقه‌بندی امنیتی"
               value={formData.securityClassification || 'public'}
-              onChange={(e) => handleChange('securityClassification', e.target.value)}
+              onChange={e =>
+                handleChange('securityClassification', e.target.value)
+              }
               sx={textFieldSx}
             >
               <MenuItem value="public">عمومی</MenuItem>
@@ -319,7 +349,7 @@ const MapsModal: React.FC<MapsModalProps> = ({
               fullWidth
               label="فرمت نقشه"
               value={formData.format || 'digital'}
-              onChange={(e) => handleChange('format', e.target.value)}
+              onChange={e => handleChange('format', e.target.value)}
               sx={textFieldSx}
             >
               <MenuItem value="digital">دیجیتال</MenuItem>
@@ -333,7 +363,7 @@ const MapsModal: React.FC<MapsModalProps> = ({
               fullWidth
               label="منبع"
               value={formData.source || ''}
-              onChange={(e) => handleChange('source', e.target.value)}
+              onChange={e => handleChange('source', e.target.value)}
               sx={textFieldSx}
             />
           </Grid>
@@ -342,20 +372,17 @@ const MapsModal: React.FC<MapsModalProps> = ({
               fullWidth
               label="نسخه"
               value={formData.version || ''}
-              onChange={(e) => handleChange('version', e.target.value)}
+              onChange={e => handleChange('version', e.target.value)}
               sx={textFieldSx}
             />
           </Grid>
 
           <Grid item xs={12} md={6}>
-            <TextField
-              fullWidth
-              type="date"
+            <PersianCalendarField
               label="آخرین به‌روزرسانی"
               value={formData.lastUpdated || ''}
-              onChange={(e) => handleChange('lastUpdated', e.target.value)}
-              InputLabelProps={{ shrink: true }}
-              sx={textFieldSx}
+              onChange={value => handleChange('lastUpdated', value)}
+              dateOnly
             />
           </Grid>
           <Grid item xs={12} md={6}>
@@ -364,7 +391,7 @@ const MapsModal: React.FC<MapsModalProps> = ({
               fullWidth
               label="وضعیت"
               value={formData.status || 'active'}
-              onChange={(e) => handleChange('status', e.target.value)}
+              onChange={e => handleChange('status', e.target.value)}
               sx={textFieldSx}
             >
               <MenuItem value="active">فعال</MenuItem>

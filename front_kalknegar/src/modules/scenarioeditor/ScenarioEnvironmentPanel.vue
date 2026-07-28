@@ -18,6 +18,7 @@ import type {
   EnvironmentalScope,
 } from "@/types/scenarioModels";
 import { symbolGenerator } from "@/symbology/milsymbwrapper";
+import PersianDateTimeField from "@/components/PersianDateTimeField.vue";
 import {
   ENVIRONMENT_PRESETS,
   presetForCondition,
@@ -187,9 +188,9 @@ function parameterSummary(condition: EnvironmentalCondition) {
 }
 
 function metocSvg(condition: EnvironmentalCondition) {
-  if (!condition.metocSidc) return "";
   try {
-    return symbolGenerator(condition.metocSidc, { size: 28 }).asSVG();
+    const sidc = condition.metocSidc ?? DEFAULT_METOC_SIDC[condition.kind];
+    return symbolGenerator(sidc, { size: 28 }).asSVG();
   } catch {
     return "";
   }
@@ -216,11 +217,18 @@ onUnmounted(stopDrawing);
       </button>
     </header>
 
-    <div v-if="issues.length" class="rounded border border-amber-300 bg-amber-50 p-2 text-xs text-amber-900">
-      {{ issues.length }} هشدار اعتبارسنجی وجود دارد (هم‌پوشانی، بازه نامعتبر یا محدوده ترسیم‌نشده).
+    <div
+      v-if="issues.length"
+      class="rounded border border-amber-300 bg-amber-50 p-2 text-xs text-amber-900"
+    >
+      {{ issues.length }} هشدار اعتبارسنجی وجود دارد (هم‌پوشانی، بازه نامعتبر یا محدوده
+      ترسیم‌نشده).
     </div>
 
-    <div v-if="!conditions.length" class="rounded border border-dashed p-4 text-center text-sm text-slate-500">
+    <div
+      v-if="!conditions.length"
+      class="rounded border border-dashed p-4 text-center text-sm text-slate-500"
+    >
       هنوز وضعیت محیطی ثبت نشده است.
     </div>
     <article
@@ -231,32 +239,89 @@ onUnmounted(stopDrawing);
       :style="`border-right: 5px solid ${conditionPreset(condition).color}; background: linear-gradient(135deg, ${conditionPreset(condition).color}12, transparent 55%);`"
     >
       <div class="flex items-start gap-2">
-        <span v-if="condition.metocSidc" class="h-12 w-12 shrink-0 rounded-lg bg-white/80 p-1 shadow-sm" v-html="metocSvg(condition)" />
-        <span v-else class="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-white/80 text-3xl shadow-sm dark:bg-slate-800">{{ conditionPreset(condition).emoji }}</span>
+        <span
+          class="h-12 w-12 shrink-0 rounded-lg bg-white/80 p-1 shadow-sm"
+          v-html="metocSvg(condition)"
+        />
         <div class="min-w-0 flex-1">
-          <div class="font-medium">{{ condition.name || conditionPreset(condition).label }}</div>
+          <div class="font-medium">
+            {{ condition.name || conditionPreset(condition).label }}
+          </div>
           <div class="text-muted-foreground text-xs">
             {{ new Date(Number(condition.startTime)).toLocaleString("fa-IR") }}
             تا
-            {{ condition.endTime ? new Date(Number(condition.endTime)).toLocaleString("fa-IR") : "ادامه‌دار" }}
+            {{
+              condition.endTime
+                ? new Date(Number(condition.endTime)).toLocaleString("fa-IR")
+                : "ادامه‌دار"
+            }}
           </div>
-          <div class="mt-1 text-xs">{{ parameterSummary(condition) }} · {{ condition.scope === "area" ? "محدوده‌ای" : "سراسری" }}</div>
+          <div class="mt-1 text-xs">
+            {{ parameterSummary(condition) }} ·
+            {{ condition.scope === "area" ? "محدوده‌ای" : "سراسری" }}
+          </div>
         </div>
         <div class="flex gap-1">
-          <button class="rounded border px-2 py-1 text-xs" @click="scenario.environment.setConditionEnabled(condition.id, condition.enabled === false)">فعال/غیرفعال</button>
-          <button class="rounded border px-2 py-1 text-xs" @click="resetForm(condition)">ویرایش</button>
-          <button class="rounded border border-red-300 px-2 py-1 text-xs text-red-600" @click="scenario.environment.deleteCondition(condition.id)">حذف</button>
+          <button
+            class="rounded border px-2 py-1 text-xs"
+            @click="
+              scenario.environment.setConditionEnabled(
+                condition.id,
+                condition.enabled === false,
+              )
+            "
+          >
+            فعال/غیرفعال
+          </button>
+          <button class="rounded border px-2 py-1 text-xs" @click="resetForm(condition)">
+            ویرایش
+          </button>
+          <button
+            class="rounded border border-red-300 px-2 py-1 text-xs text-red-600"
+            @click="scenario.environment.deleteCondition(condition.id)"
+          >
+            حذف
+          </button>
         </div>
       </div>
     </article>
 
-    <form v-if="formOpen" class="space-y-3 rounded border bg-slate-50 p-3 dark:bg-slate-900" @submit.prevent="save">
+    <form
+      v-if="formOpen"
+      class="space-y-3 rounded border bg-slate-50 p-3 dark:bg-slate-900"
+      @submit.prevent="save"
+    >
       <div>
         <div class="mb-1 text-xs font-medium">انتخاب وضعیت محیطی</div>
         <div class="mb-2 flex rounded-lg bg-slate-200/70 p-1 dark:bg-slate-800">
-          <button type="button" class="flex-1 rounded px-2 py-1 text-xs" :class="{ 'bg-white shadow dark:bg-slate-700': activeCategory === 'atmosphere' }" @click="activeCategory = 'atmosphere'">جو و هوا</button>
-          <button type="button" class="flex-1 rounded px-2 py-1 text-xs" :class="{ 'bg-white shadow dark:bg-slate-700': activeCategory === 'terrain' }" @click="activeCategory = 'terrain'">زمین</button>
-          <button type="button" class="flex-1 rounded px-2 py-1 text-xs" :class="{ 'bg-white shadow dark:bg-slate-700': activeCategory === 'infrastructure' }" @click="activeCategory = 'infrastructure'">راه و زیرساخت</button>
+          <button
+            type="button"
+            class="flex-1 rounded px-2 py-1 text-xs"
+            :class="{
+              'bg-white shadow dark:bg-slate-700': activeCategory === 'atmosphere',
+            }"
+            @click="activeCategory = 'atmosphere'"
+          >
+            جو و هوا
+          </button>
+          <button
+            type="button"
+            class="flex-1 rounded px-2 py-1 text-xs"
+            :class="{ 'bg-white shadow dark:bg-slate-700': activeCategory === 'terrain' }"
+            @click="activeCategory = 'terrain'"
+          >
+            زمین
+          </button>
+          <button
+            type="button"
+            class="flex-1 rounded px-2 py-1 text-xs"
+            :class="{
+              'bg-white shadow dark:bg-slate-700': activeCategory === 'infrastructure',
+            }"
+            @click="activeCategory = 'infrastructure'"
+          >
+            راه و زیرساخت
+          </button>
         </div>
         <div class="grid grid-cols-3 gap-1 sm:grid-cols-5">
           <button
@@ -264,28 +329,54 @@ onUnmounted(stopDrawing);
             :key="preset.id"
             type="button"
             class="flex min-h-16 flex-col items-center justify-center rounded-lg border p-1 text-[11px] transition"
-            :class="isPresetSelected(preset) ? 'border-sky-500 bg-sky-100 text-sky-900 ring-1 ring-sky-400 dark:bg-sky-950 dark:text-sky-100' : 'border-slate-200 bg-white hover:border-sky-300 dark:border-slate-700 dark:bg-slate-800'"
+            :class="
+              isPresetSelected(preset)
+                ? 'border-sky-500 bg-sky-100 text-sky-900 ring-1 ring-sky-400 dark:bg-sky-950 dark:text-sky-100'
+                : 'border-slate-200 bg-white hover:border-sky-300 dark:border-slate-700 dark:bg-slate-800'
+            "
             @click="choosePreset(preset)"
           >
-            <span v-if="preset.metocSidc" class="h-8 w-8" v-html="symbolGenerator(preset.metocSidc, { size: 24 }).asSVG()" />
-            <span v-else class="text-2xl">{{ preset.emoji }}</span>
+            <span
+              class="h-8 w-8"
+              v-html="symbolGenerator(preset.metocSidc, { size: 24 }).asSVG()"
+            />
             <span>{{ preset.label }}</span>
           </button>
         </div>
       </div>
       <div class="grid grid-cols-2 gap-2">
-        <label class="col-span-2 text-xs">عنوان<input v-model="form.name" class="mt-1 w-full rounded border bg-transparent p-2" /></label>
-        <label class="text-xs">دامنه
-          <select v-model="form.scope" class="mt-1 w-full rounded border bg-transparent p-2">
-            <option value="global">سراسری</option><option value="area">محدوده روی نقشه</option>
+        <label class="col-span-2 text-xs"
+          >عنوان<input
+            v-model="form.name"
+            class="mt-1 w-full rounded border bg-transparent p-2"
+        /></label>
+        <label class="text-xs"
+          >دامنه
+          <select
+            v-model="form.scope"
+            class="mt-1 w-full rounded border bg-transparent p-2"
+          >
+            <option value="global">سراسری</option>
+            <option value="area">محدوده روی نقشه</option>
           </select>
         </label>
-        <label class="text-xs">شروع<input v-model="form.startTime" required type="datetime-local" class="mt-1 w-full rounded border bg-transparent p-2" /></label>
-        <label class="text-xs">پایان<input v-model="form.endTime" type="datetime-local" class="mt-1 w-full rounded border bg-transparent p-2" /></label>
+        <PersianDateTimeField v-model="form.startTime" label="شروع" required />
+        <PersianDateTimeField v-model="form.endTime" label="پایان" />
         <label v-for="field in selectedPreset.fields" :key="field.key" class="text-xs">
-          {{ field.label }} <span v-if="field.unit" class="text-muted-foreground">({{ field.unit }})</span>
-          <select v-if="field.type === 'select'" v-model="parameterValues[field.key]" class="mt-1 w-full rounded border bg-transparent p-2">
-            <option v-for="option in field.options" :key="option.value" :value="option.value">{{ option.label }}</option>
+          {{ field.label }}
+          <span v-if="field.unit" class="text-muted-foreground">({{ field.unit }})</span>
+          <select
+            v-if="field.type === 'select'"
+            v-model="parameterValues[field.key]"
+            class="mt-1 w-full rounded border bg-transparent p-2"
+          >
+            <option
+              v-for="option in field.options"
+              :key="option.value"
+              :value="option.value"
+            >
+              {{ option.label }}
+            </option>
           </select>
           <input
             v-else
@@ -297,22 +388,55 @@ onUnmounted(stopDrawing);
             class="mt-1 w-full rounded border bg-transparent p-2"
           />
         </label>
-        <label class="text-xs">اولویت<input v-model.number="form.priority" type="number" class="mt-1 w-full rounded border bg-transparent p-2" /></label>
+        <label class="text-xs"
+          >اولویت<input
+            v-model.number="form.priority"
+            type="number"
+            class="mt-1 w-full rounded border bg-transparent p-2"
+        /></label>
       </div>
       <label v-if="form.scope === 'area'" class="block text-xs">
         نوع هندسه
-        <select v-model="form.geometryMode" class="mt-1 w-full rounded border bg-transparent p-2">
+        <select
+          v-model="form.geometryMode"
+          class="mt-1 w-full rounded border bg-transparent p-2"
+        >
           <option value="Polygon">محدوده چندضلعی</option>
           <option value="LineString">مسیر یا محور</option>
           <option value="Point">نقطه</option>
         </select>
       </label>
-      <button v-if="form.scope === 'area'" type="button" class="w-full rounded border border-sky-500 p-2 text-sky-700" @click="drawArea">
-        {{ drawing ? "ترسیم را روی نقشه کامل کنید…" : form.geometry ? "ترسیم مجدد مکان" : "ترسیم روی نقشه" }}
+      <button
+        v-if="form.scope === 'area'"
+        type="button"
+        class="w-full rounded border border-sky-500 p-2 text-sky-700"
+        @click="drawArea"
+      >
+        {{
+          drawing
+            ? "ترسیم را روی نقشه کامل کنید…"
+            : form.geometry
+              ? "ترسیم مجدد مکان"
+              : "ترسیم روی نقشه"
+        }}
       </button>
-      <textarea v-model="form.description" rows="2" placeholder="توضیحات" class="w-full rounded border bg-transparent p-2" />
+      <textarea
+        v-model="form.description"
+        rows="2"
+        placeholder="توضیحات"
+        class="w-full rounded border bg-transparent p-2"
+      />
       <div class="flex justify-end gap-2">
-        <button type="button" class="rounded border px-3 py-1.5" @click="formOpen = false; stopDrawing()">انصراف</button>
+        <button
+          type="button"
+          class="rounded border px-3 py-1.5"
+          @click="
+            formOpen = false;
+            stopDrawing();
+          "
+        >
+          انصراف
+        </button>
         <button class="rounded bg-sky-600 px-3 py-1.5 text-white">ذخیره</button>
       </div>
     </form>

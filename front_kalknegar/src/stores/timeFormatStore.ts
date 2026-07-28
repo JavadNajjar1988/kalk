@@ -1,16 +1,15 @@
 import { computed, ref, watchEffect } from "vue";
 import { useLocalStorage } from "@vueuse/core";
 import { defineStore } from "pinia";
-import { injectStrict, toPersianDigits } from "@/utils";
+import { injectStrict } from "@/utils";
 import { activeScenarioKey } from "@/components/injects";
-import { formatDateString, formatDTG } from "@/geo/utils";
 import type { TScenario } from "@/scenariostore";
 import type { RadioGroupItem } from "@/components/types";
-import { 
+import {
   jalaliDateTimeFormatter,
   jalaliTableDateFormatter,
   formatPersianDateShort,
-  formatJalaliTimestamp
+  formatJalaliTimestamp,
 } from "@/utils/jalaliFormatters";
 
 export type TimeFormat = "iso" | "local" | "military" | "custom";
@@ -23,9 +22,7 @@ export interface TimeFormatSettings {
 }
 
 export const timeFormatItems: RadioGroupItem<TimeFormat>[] = [
-  { name: "ISO 8601", value: "iso" },
-  { name: "تاریخ شمسی (محلی)", value: "local" },
-  { name: "نظامی DTG", value: "military" },
+  { name: "تاریخ و زمان شمسی", value: "local" },
 ];
 
 export const intlItems = [
@@ -73,76 +70,32 @@ export const useTimeFormatStore = defineStore("timeFormat", () => {
 });
 
 function createFormatter(
-  timeZone: string,
+  _timeZone: string,
   settings: TimeFormatSettings,
   { dateOnly = false } = {},
 ) {
-  if (settings.timeFormat === "iso") {
-    if (dateOnly) {
-      return {
-        format: (value: number) => toPersianDigits(formatDateString(value, timeZone).split("T")[0]),
-      };
-    }
-    return {
-      format: (value: number) => toPersianDigits(formatDateString(value, timeZone)),
-    };
-  }
-  if (settings.timeFormat === "military") {
-    return {
-      format: (value: number) => toPersianDigits(formatDTG(value, timeZone)),
-    };
-  }
-  
-  // استفاده از فرمت‌کننده‌های شمسی به عنوان پیش‌فرض
-  // Use Jalali formatters as default for local format
-  if (settings.locale === "fa-IR" || settings.locale === "fa" || !settings.locale) {
-    if (dateOnly) {
-      return {
-        format: (value: number) => {
-          if (settings.dateStyle === "full") {
-            return formatJalaliTimestamp(value, 'dddd DD MMMM YYYY');
-          } else if (settings.dateStyle === "long") {
-            return formatJalaliTimestamp(value, 'DD MMMM YYYY');
-          } else if (settings.dateStyle === "medium") {
-            return formatJalaliTimestamp(value, 'DD MMMM YYYY');
-          } else {
-            return formatPersianDateShort(value);
-          }
-        },
-      };
-    }
+  if (dateOnly) {
     return {
       format: (value: number) => {
-        if (settings.dateStyle === "full" && settings.timeStyle === "full") {
-          return formatJalaliTimestamp(value, 'dddd DD MMMM YYYY در ساعت HH:mm:ss');
-        } else if (settings.dateStyle === "long") {
-          return formatJalaliTimestamp(value, 'DD MMMM YYYY HH:mm');
-        } else if (settings.dateStyle === "medium") {
-          return formatJalaliTimestamp(value, 'DD MMMM YYYY HH:mm');
+        if (settings.dateStyle === "full") {
+          return formatJalaliTimestamp(value, "dddd DD MMMM YYYY");
+        } else if (settings.dateStyle === "long" || settings.dateStyle === "medium") {
+          return formatJalaliTimestamp(value, "DD MMMM YYYY");
         } else {
-          return jalaliDateTimeFormatter(value);
+          return formatPersianDateShort(value);
         }
       },
     };
   }
-  
-  // Fallback to Intl.DateTimeFormat for non-Persian locales
-  if (dateOnly) {
-    const formatter = new Intl.DateTimeFormat(settings.locale || undefined, {
-      timeZone,
-      dateStyle: settings.dateStyle,
-    });
-    return {
-      format: (value: number) => toPersianDigits(formatter.format(value)),
-    };
-  }
-  const formatter = new Intl.DateTimeFormat(settings.locale || undefined, {
-    timeZone,
-    dateStyle: settings.dateStyle,
-    timeStyle: settings.timeStyle,
-  });
   return {
-    format: (value: number) => toPersianDigits(formatter.format(value)),
+    format: (value: number) => {
+      if (settings.dateStyle === "full" && settings.timeStyle === "full") {
+        return formatJalaliTimestamp(value, "dddd DD MMMM YYYY در ساعت HH:mm:ss");
+      } else if (settings.dateStyle === "long" || settings.dateStyle === "medium") {
+        return formatJalaliTimestamp(value, "DD MMMM YYYY HH:mm");
+      }
+      return jalaliDateTimeFormatter(value);
+    },
   };
 }
 

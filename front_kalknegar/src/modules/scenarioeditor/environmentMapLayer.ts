@@ -9,14 +9,17 @@ import VectorLayer from "ol/layer/Vector";
 import VectorSource from "ol/source/Vector";
 import { Fill, Icon, Stroke, Style, Text } from "ol/style";
 import type { EnvironmentalCondition } from "@/types/scenarioModels";
-import { isEnvironmentalConditionActive } from "@/scenariostore/environment";
+import {
+  DEFAULT_METOC_SIDC,
+  isEnvironmentalConditionActive,
+} from "@/scenariostore/environment";
 import { symbolGenerator } from "@/symbology/milsymbwrapper";
 import { presetForCondition } from "./environmentPresets";
 
 function iconSource(condition: EnvironmentalCondition) {
-  if (!condition.metocSidc) return undefined;
   try {
-    const svg = symbolGenerator(condition.metocSidc, { size: 30 }).asSVG();
+    const sidc = condition.metocSidc ?? DEFAULT_METOC_SIDC[condition.kind];
+    const svg = symbolGenerator(sidc, { size: 30 }).asSVG();
     return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
   } catch {
     return undefined;
@@ -44,9 +47,7 @@ export function createEnvironmentMapLayer() {
       if (feature.getGeometry() instanceof Point) {
         const src = iconSource(condition);
         return new Style({
-          image: src
-            ? new Icon({ src, anchor: [0.5, 0.5], scale: 0.9 })
-            : undefined,
+          image: src ? new Icon({ src, anchor: [0.5, 0.5], scale: 0.9 }) : undefined,
           text: src
             ? undefined
             : new Text({
@@ -65,7 +66,11 @@ export function createEnvironmentMapLayer() {
   });
   const format = new GeoJSON();
 
-  function refresh(conditions: EnvironmentalCondition[], timestamp: number, projection: string) {
+  function refresh(
+    conditions: EnvironmentalCondition[],
+    timestamp: number,
+    projection: string,
+  ) {
     source.clear();
     conditions
       .filter(

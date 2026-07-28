@@ -28,6 +28,8 @@ import {
   resourcesOutlinedCancelButtonSx,
 } from '../resourcesDialogStyles';
 import { PersonnelItem } from '@/store/slices/tabularResourcesSlice';
+import PersianCalendarField from '@/components/common/PersianCalendarField';
+import { toLocalDateInput } from '@/utils/dateUtils';
 
 interface PersonnelModalProps {
   open: boolean;
@@ -44,7 +46,7 @@ const PersonnelModal: React.FC<PersonnelModalProps> = ({
   onSave,
   personnel,
   categories,
-  fields
+  fields,
 }) => {
   const theme = useTheme();
   const accent = getResourcesDialogAccent(theme);
@@ -61,7 +63,7 @@ const PersonnelModal: React.FC<PersonnelModalProps> = ({
     phoneNumber: '',
     email: '',
     status: 'active',
-    startDate: new Date().toISOString().split('T')[0],
+    startDate: toLocalDateInput(new Date()),
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -81,7 +83,7 @@ const PersonnelModal: React.FC<PersonnelModalProps> = ({
         phoneNumber: '',
         email: '',
         status: 'active',
-        startDate: new Date().toISOString().split('T')[0],
+        startDate: toLocalDateInput(new Date()),
       });
     }
     setErrors({});
@@ -90,7 +92,7 @@ const PersonnelModal: React.FC<PersonnelModalProps> = ({
   const handleChange = (fieldId: string, value: any) => {
     setFormData(prev => ({
       ...prev,
-      [fieldId]: value
+      [fieldId]: value,
     }));
     if (errors[fieldId]) {
       setErrors(prev => ({ ...prev, [fieldId]: '' }));
@@ -155,34 +157,32 @@ const PersonnelModal: React.FC<PersonnelModalProps> = ({
             fullWidth
             label={field.name}
             value={formData[field.id as keyof PersonnelItem] || ''}
-            onChange={(e) => handleChange(field.id, e.target.value)}
+            onChange={e => handleChange(field.id, e.target.value)}
             required={field.required}
             error={!!errors[field.id]}
             helperText={errors[field.id]}
             sx={textFieldSx}
           >
-            {field.id === 'status' && options?.map((option: any) => (
-              <MenuItem key={option.value} value={option.value}>
-                {option.label}
-              </MenuItem>
-            ))}
+            {field.id === 'status' &&
+              options?.map((option: any) => (
+                <MenuItem key={option.value} value={option.value}>
+                  {option.label}
+                </MenuItem>
+              ))}
           </TextField>
         );
       }
       case 'date':
         return (
-          <TextField
+          <PersianCalendarField
             key={field.id}
-            fullWidth
-            type="date"
             label={field.name}
-            value={formData[field.id as keyof PersonnelItem] || ''}
-            onChange={(e) => handleChange(field.id, e.target.value)}
+            value={String(formData[field.id as keyof PersonnelItem] || '')}
+            onChange={value => handleChange(field.id, value)}
+            dateOnly
             required={field.required}
             error={!!errors[field.id]}
             helperText={errors[field.id]}
-            InputLabelProps={{ shrink: true }}
-            sx={textFieldSx}
           />
         );
       case 'tel':
@@ -194,7 +194,7 @@ const PersonnelModal: React.FC<PersonnelModalProps> = ({
             type={field.type}
             label={field.name}
             value={formData[field.id as keyof PersonnelItem] || ''}
-            onChange={(e) => handleChange(field.id, e.target.value)}
+            onChange={e => handleChange(field.id, e.target.value)}
             required={field.required}
             error={!!errors[field.id]}
             helperText={errors[field.id]}
@@ -209,7 +209,7 @@ const PersonnelModal: React.FC<PersonnelModalProps> = ({
             type={field.type}
             label={field.name}
             value={formData[field.id as keyof PersonnelItem] || ''}
-            onChange={(e) => handleChange(field.id, e.target.value)}
+            onChange={e => handleChange(field.id, e.target.value)}
             required={field.required}
             error={!!errors[field.id]}
             helperText={errors[field.id]}
@@ -270,7 +270,12 @@ const PersonnelModal: React.FC<PersonnelModalProps> = ({
           </Typography>
           <Grid container spacing={3}>
             {fields.map((field: any) => (
-              <Grid item xs={12} sm={field.type === 'textarea' ? 12 : 6} key={field.id}>
+              <Grid
+                item
+                xs={12}
+                sm={field.type === 'textarea' ? 12 : 6}
+                key={field.id}
+              >
                 {renderField(field)}
               </Grid>
             ))}
