@@ -1,6 +1,9 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import {
   Alert,
+  Accordion,
+  AccordionDetails,
+  AccordionSummary,
   Avatar,
   Box,
   Chip,
@@ -16,12 +19,15 @@ import {
   ContentCopyOutlined,
   DeleteOutline,
   EditNoteOutlined,
+  ExpandMore,
   History,
+  LocationOnOutlined,
   RestoreOutlined,
 } from '@mui/icons-material';
 import { useTranslation } from '@/hooks/useTranslation';
 import {
   scenarioApiService,
+  type ScenarioHistoryChange,
   type ScenarioHistoryEntry,
 } from '@/services/api/scenarioApiService';
 
@@ -42,6 +48,60 @@ const FIELD_LABELS: Record<string, string> = {
 const readableField = (field: string) =>
   FIELD_LABELS[field] || field.replace(/_/g, ' ');
 
+const CATEGORY_LABELS: Record<string, string> = {
+  tactical_symbol: 'نماد تاکتیکی',
+  unit: 'یگان',
+  map_feature: 'عارضه نقشه',
+};
+
+const locationLabel = (change: ScenarioHistoryChange) => {
+  if (change.region) return `«${change.region}»`;
+  if (change.layer) return `لایه «${change.layer}»`;
+  if (change.location)
+    return `مختصات ${change.location.lat.toLocaleString('fa-IR', {
+      maximumFractionDigits: 4,
+    })}، ${change.location.lon.toLocaleString('fa-IR', {
+      maximumFractionDigits: 4,
+    })}`;
+  return '';
+};
+
+export const describeScenarioHistoryChange = (
+  change: ScenarioHistoryChange
+) => {
+  const category = CATEGORY_LABELS[change.category] || 'عنصر';
+  const subject = `${category} «${change.name}»`;
+  const location = locationLabel(change);
+
+  if (
+    change.operation === 'moved' &&
+    change.previous_region &&
+    change.region &&
+    change.previous_region !== change.region
+  ) {
+    return `${subject} از «${change.previous_region}» به «${change.region}» منتقل شد.`;
+  }
+
+  switch (change.operation) {
+    case 'added':
+      return `${subject}${location ? ` در ${location}` : ''} اضافه شد.`;
+    case 'removed': {
+      const previousLocation = change.previous_region
+        ? ` از «${change.previous_region}»`
+        : change.layer
+          ? ` از لایه «${change.layer}»`
+          : '';
+      return `${subject}${previousLocation} حذف شد.`;
+    }
+    case 'moved':
+      return `${subject}${location ? ` در ${location}` : ''} جابه‌جا شد.`;
+    case 'edited':
+      return `${subject}${location ? ` در ${location}` : ''} ویرایش شد.`;
+    default:
+      return `${subject} تغییر کرد.`;
+  }
+};
+
 export const describeScenarioHistoryEntry = (
   entry: Pick<ScenarioHistoryEntry, 'action' | 'payload_diff'>
 ) => {
@@ -52,11 +112,31 @@ export const describeScenarioHistoryEntry = (
         (field): field is string => typeof field === 'string'
       )
     : [];
+  const operationalChangeCount = details.summary?.total || 0;
 
   switch (entry.action) {
     case 'create':
       return name ? `سناریوی «${name}» ایجاد شد.` : 'سناریو ایجاد شد.';
     case 'update':
+      if (operationalChangeCount) {
+        const summaryParts = [
+          details.summary?.added
+            ? `${details.summary.added.toLocaleString('fa-IR')} افزوده`
+            : '',
+          details.summary?.removed
+            ? `${details.summary.removed.toLocaleString('fa-IR')} حذف`
+            : '',
+          details.summary?.moved
+            ? `${details.summary.moved.toLocaleString('fa-IR')} جابه‌جایی`
+            : '',
+          details.summary?.edited
+            ? `${details.summary.edited.toLocaleString('fa-IR')} ویرایش`
+            : '',
+        ].filter(Boolean);
+        return `${operationalChangeCount.toLocaleString('fa-IR')} تغییر عملیاتی ثبت شد${
+          summaryParts.length ? `: ${summaryParts.join('، ')}` : ''
+        }.`;
+      }
       return fields.length
         ? `${fields.map(readableField).join('، ')} تغییر کرد.`
         : 'اطلاعات سناریو ویرایش شد.';
@@ -335,6 +415,114 @@ const ScenarioHistoryTab: React.FC<{ scenarioId: string }> = ({
                 <Typography variant="body1" sx={{ mt: 1.5, fontWeight: 600 }}>
                   {describeScenarioHistoryEntry(log)}
                 </Typography>
+
+                {!!log.payload_diff?.changes?.length && (
+                  <Accordion
+                    disableGutters
+                    elevation={0}
+                    sx={{
+                      mt: 1.5,
+                      border: 1,
+                      borderColor: 'divider',
+                      borderRadius: '10px !important',
+                      overflow: 'hidden',
+                      '&::before': { display: 'none' },
+                    }}
+                  >
+                    <AccordionSummary
+                      expandIcon={<ExpandMore />}
+                      sx={{
+                        minHeight: 42,
+                        bgcolor: 'action.hover',
+                        '& .MuiAccordionSummary-content': { my: 1 },
+                      }}
+                    >
+                      <Typography
+                        variant="body2"
+                        sx={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 0.75,
+                          fontWeight: 700,
+                        }}
+                      >
+                        <LocationOnOutlined fontSize="small" color="primary" />
+                        مشاهده جزئیات تغییرات
+                        <Chip
+                          size="small"
+                          label={log.payload_diff.changes.length.toLocaleString(
+                            'fa-IR'
+                          )}
+                          sx={{ height: 22 }}
+                        />
+                      </Typography>
+                    </AccordionSummary>
+                    <AccordionDetails sx={{ p: 0 }}>
+                      <Stack
+                        divider={
+                          <Box sx={{ borderTop: 1, borderColor: 'divider' }} />
+                        }
+                      >
+                        {log.payload_diff.changes.map((change, changeIndex) => (
+                          <Box
+                            key={`${change.category}-${change.name}-${changeIndex}`}
+                            sx={{
+                              display: 'flex',
+                              alignItems: 'flex-start',
+                              gap: 1.25,
+                              p: 1.5,
+                            }}
+                          >
+                            <Box
+                              aria-hidden="true"
+                              sx={{
+                                width: 9,
+                                height: 9,
+                                mt: 0.7,
+                                flex: '0 0 auto',
+                                borderRadius: '50%',
+                                bgcolor:
+                                  change.operation === 'added'
+                                    ? 'success.main'
+                                    : change.operation === 'removed'
+                                      ? 'error.main'
+                                      : change.operation === 'moved'
+                                        ? 'info.main'
+                                        : 'warning.main',
+                              }}
+                            />
+                            <Box sx={{ minWidth: 0 }}>
+                              <Typography
+                                variant="body2"
+                                sx={{ fontWeight: 600 }}
+                              >
+                                {describeScenarioHistoryChange(change)}
+                              </Typography>
+                              {(change.layer || change.side) && (
+                                <Typography
+                                  variant="caption"
+                                  color="text.secondary"
+                                >
+                                  {[
+                                    change.layer && `لایه: ${change.layer}`,
+                                    change.side && `جبهه: ${change.side}`,
+                                  ]
+                                    .filter(Boolean)
+                                    .join(' • ')}
+                                </Typography>
+                              )}
+                            </Box>
+                          </Box>
+                        ))}
+                      </Stack>
+                      {log.payload_diff.truncated && (
+                        <Alert severity="info" sx={{ borderRadius: 0 }}>
+                          فقط ۵۰ تغییر نخست این ذخیره نمایش داده شده است.
+                        </Alert>
+                      )}
+                    </AccordionDetails>
+                  </Accordion>
+                )}
 
                 <Box
                   sx={{

@@ -13,6 +13,34 @@ export interface ScenarioFormData {
   [key: string]: any;
 }
 
+export interface ScenarioHistoryChange {
+  category: 'tactical_symbol' | 'unit' | 'map_feature' | string;
+  operation: 'added' | 'removed' | 'moved' | 'edited' | string;
+  name: string;
+  layer?: string;
+  side?: string;
+  region?: string;
+  previous_region?: string;
+  location?: { lon: number; lat: number };
+  previous_location?: { lon: number; lat: number };
+  changed_fields?: string[];
+}
+
+export interface ScenarioHistoryDiff {
+  fields?: string[];
+  summary?: {
+    added?: number;
+    removed?: number;
+    moved?: number;
+    edited?: number;
+    total?: number;
+  };
+  changes?: ScenarioHistoryChange[];
+  truncated?: boolean;
+  name?: string;
+  source_id?: string;
+}
+
 export interface ScenarioHistoryEntry {
   id: string;
   scenario_id: string;
@@ -21,7 +49,7 @@ export interface ScenarioHistoryEntry {
   actor_display_name: string | null;
   actor_user_code: string | null;
   action: string;
-  payload_diff: Record<string, unknown> | null;
+  payload_diff: ScenarioHistoryDiff | null;
   created_at: string;
 }
 
