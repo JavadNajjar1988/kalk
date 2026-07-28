@@ -13,6 +13,25 @@ export interface ScenarioFormData {
   [key: string]: any;
 }
 
+export interface ScenarioHistoryEntry {
+  id: string;
+  scenario_id: string;
+  actor_user_id: string | null;
+  actor_username: string | null;
+  actor_display_name: string | null;
+  actor_user_code: string | null;
+  action: string;
+  payload_diff: Record<string, unknown> | null;
+  created_at: string;
+}
+
+export interface ScenarioHistoryPage {
+  items: ScenarioHistoryEntry[];
+  total: number;
+  limit: number;
+  offset: number;
+}
+
 /**
  * تبدیل داده‌های فرم داشبورد به یک سناریوی سازگار با ORBAT-mapper
  * این ساختار در فیلد `content` در بک‌اند ذخیره می‌شود تا مستقیماً توسط کالک‌نگار قابل لود باشد.
@@ -154,7 +173,8 @@ export class ScenarioApiService extends BaseApiClient {
     const intro_title = (data as any)?.intro_title ?? undefined;
     const intro_summary = (data as any)?.intro_summary ?? undefined;
     const toIsoDate = (value: unknown): string | undefined => {
-      if (value === null || value === undefined || value === '') return undefined;
+      if (value === null || value === undefined || value === '')
+        return undefined;
       const date = new Date(value as string | number);
       return Number.isNaN(date.getTime()) ? undefined : date.toISOString();
     };
@@ -404,6 +424,21 @@ export class ScenarioApiService extends BaseApiClient {
     }
   }
 
+  async deleteScenarioIntroVideo(filename: string): Promise<void> {
+    try {
+      const safeFilename = filename.trim();
+      if (!/^[a-f0-9]{32}\.(mp4|webm)$/i.test(safeFilename)) {
+        throw new Error('Invalid scenario intro video filename');
+      }
+      await this.delete(
+        `/scenarios/intro-videos/${encodeURIComponent(safeFilename)}`
+      );
+    } catch (error) {
+      console.error('Failed to delete scenario intro video:', error);
+      throw error;
+    }
+  }
+
   // GET /api/scenarios/:id/export
   async exportScenario(
     id: string,
@@ -514,13 +549,27 @@ export class ScenarioApiService extends BaseApiClient {
   }
 
   // Get audit history
-  async getScenarioHistory(id: string, limit = 50, offset = 0): Promise<any[]> {
+  async getScenarioHistory(
+    id: string,
+    limit = 20,
+    offset = 0
+  ): Promise<ScenarioHistoryPage> {
     try {
-      const response = await this.get<any[]>(`/scenarios/${id}/history`, {
-        limit,
-        offset,
-      });
-      return handleApiResponse(response) || [];
+      const response = await this.get<ScenarioHistoryPage>(
+        `/scenarios/${id}/history`,
+        {
+          limit,
+          offset,
+        }
+      );
+      return (
+        handleApiResponse(response) || {
+          items: [],
+          total: 0,
+          limit,
+          offset,
+        }
+      );
     } catch (error) {
       console.error(`Failed to fetch scenario history ${id}:`, error);
       throw error;

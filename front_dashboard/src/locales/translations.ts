@@ -104,9 +104,12 @@ export const translations = {
         availableForces: 'نیروهای موجود',
         ongoingOperations: 'عملیات در حال اجرا',
         securityAlerts: 'هشدارهای امنیتی',
-        activeScenariosSubtitle: '{activePercent}% فعال | {inactiveCount} غیرفعال',
-        availableForcesSubtitle: '{iranianPercent}% ایرانی | {foreignPercent}% خارجی',
-        ongoingOperationsSubtitle: '{commanderCount} فرمانده | {operatorCount} اپراتور | {viewerCount} بیننده',
+        activeScenariosSubtitle:
+          '{activePercent}% فعال | {inactiveCount} غیرفعال',
+        availableForcesSubtitle:
+          '{iranianPercent}% ایرانی | {foreignPercent}% خارجی',
+        ongoingOperationsSubtitle:
+          '{commanderCount} فرمانده | {operatorCount} اپراتور | {viewerCount} بیننده',
         securityAlertsSubtitle: '{todayPercent}% امروز | {weekCount} این هفته',
         todayAlerts: 'هشدارهای امروز:',
         alertItems: 'مورد',
@@ -186,8 +189,8 @@ export const translations = {
         starAll: 'ستاره‌دار کردن همه',
         unarchiveAll: 'لغو آرشیو همه',
         unstarAll: 'لغو ستاره‌دار کردن همه',
-        deselectAll: 'لغو انتخاب همه'  // ترجمه جدید
-      }
+        deselectAll: 'لغو انتخاب همه', // ترجمه جدید
+      },
     },
     scenarios: {
       pageTitle: 'سناریوها',
@@ -203,7 +206,7 @@ export const translations = {
         active: 'فعال',
         paused: 'متوقف',
         completed: 'تکمیل شده',
-        archived: 'بایگانی شده'
+        archived: 'بایگانی شده',
       },
 
       // اجرای سناریو
@@ -217,7 +220,7 @@ export const translations = {
         resumeSuccess: 'اجرای سناریو ادامه یافت',
         stopSuccess: 'اجرای سناریو پایان یافت',
         error: 'خطا در تغییر وضعیت اجرای سناریو',
-        stopError: 'خطا در پایان دادن به اجرای سناریو'
+        stopError: 'خطا در پایان دادن به اجرای سناریو',
       },
 
       // تب‌ها
@@ -240,10 +243,16 @@ export const translations = {
         hint: 'فرمت‌های مجاز: MP4 یا WebM. حداکثر حجم در سرور ۵۰ مگابایت. طول پیشنهادی ۶۰–۹۰ ثانیه.',
         uploadButton: 'انتخاب و آپلود ویدئو',
         videoUrlLabel: 'آدرس ویدئو',
-        videoUrlHelper: 'پس از آپلود به‌صورت خودکار پر می‌شود؛ در صورت نیاز می‌توانید URL دیگری قرار دهید.',
+        videoUrlHelper:
+          'پس از آپلود به‌صورت خودکار پر می‌شود؛ در صورت نیاز می‌توانید URL دیگری قرار دهید.',
+        previewTitle: 'پیش‌نمایش ویدئوی اینترو',
+        unsupportedPlayback: 'مرورگر امکان پخش این ویدئو را ندارد.',
+        deleteVideo: 'حذف ویدئو',
+        cleanupError: 'پاک‌سازی ویدئوی آپلودشده انجام نشد',
         introTitleLabel: 'عنوان اینترو',
         summaryLabel: 'خلاصه (هر خط یک نکته)',
-        summaryHelper: 'چند خط کوتاه؛ در پاپ‌آپ به‌صورت فهرست نمایش داده می‌شود.',
+        summaryHelper:
+          'چند خط کوتاه؛ در پاپ‌آپ به‌صورت فهرست نمایش داده می‌شود.',
         saveButton: 'ذخیره اینترو',
         uploadSuccess: 'ویدئو با موفقیت آپلود شد',
         uploadError: 'خطا در آپلود ویدئو',
@@ -260,7 +269,7 @@ export const translations = {
         created: 'ایجاد شده',
         lastModified: 'آخرین ویرایش',
         objectives: 'اهداف',
-        noObjectives: 'اهدافی تعریف نشده است'
+        noObjectives: 'اهدافی تعریف نشده است',
       },
 
       // آنالیز سناریو
@@ -286,8 +295,8 @@ export const translations = {
           mission_success: 'احتمال موفقیت عملیات',
           terrain_advantage: 'مزیت زمین',
           supply_efficiency: 'کارایی تدارکات',
-          command_effectiveness: 'اثربخشی فرماندهی'
-        }
+          command_effectiveness: 'اثربخشی فرماندهی',
+        },
       },
 
       // فازهای سناریو
@@ -305,8 +314,8 @@ export const translations = {
           in_progress: 'در حال اجرا',
           completed: 'تکمیل شده',
           failed: 'ناموفق',
-          cancelled: 'لغو شده'
-        }
+          cancelled: 'لغو شده',
+        },
       },
 
       // شرایط محیطی
@@ -325,32 +334,32 @@ export const translations = {
           wind: 'باد',
           time_of_day: 'زمان روز',
           season: 'فصل',
-          terrain_condition: 'وضعیت زمین'
-        }
+          terrain_condition: 'وضعیت زمین',
+        },
       },
 
       // خط زمانی رویدادها
       timeline: {
         title: 'خط زمانی رویدادها',
-        description: 'نمایش رویدادهای سناریو در خط زمان'
+        description: 'نمایش رویدادهای سناریو در خط زمان',
       },
 
       // نقشه
       map: {
         title: 'نقشه سناریو',
-        description: 'نمایش نقشه و موقعیت واحدها'
+        description: 'نمایش نقشه و موقعیت واحدها',
       },
 
       // واحدها
       units: {
         title: 'واحدهای نظامی',
-        description: 'مدیریت واحدهای نظامی سناریو'
+        description: 'مدیریت واحدهای نظامی سناریو',
       },
 
       // تنظیمات
       settings: {
         title: 'تنظیمات سناریو',
-        description: 'تغییر تنظیمات پیشرفته سناریو'
+        description: 'تغییر تنظیمات پیشرفته سناریو',
       },
 
       // اکشن‌ها
@@ -379,7 +388,7 @@ export const translations = {
         searchPlaceholder: 'جستجوی سناریو',
         statusFilter: 'فیلتر وضعیت',
         allStatuses: 'همه وضعیت‌ها',
-        newScenarioButton: 'سناریوی جدید'
+        newScenarioButton: 'سناریوی جدید',
       },
 
       // منو
@@ -387,7 +396,7 @@ export const translations = {
         viewDetails: 'مشاهده جزئیات',
         changeStatus: 'تغییر وضعیت',
         edit: 'ویرایش',
-        delete: 'حذف'
+        delete: 'حذف',
       },
 
       // جدول
@@ -399,7 +408,7 @@ export const translations = {
         objectives: 'اهداف',
         actions: 'عملیات',
         noMatch: 'هیچ سناریویی با فیلترهای انتخاب شده یافت نشد',
-        noScenarios: 'هنوز سناریویی ایجاد نشده است'
+        noScenarios: 'هنوز سناریویی ایجاد نشده است',
       },
 
       // دیالوگ‌ها
@@ -416,7 +425,7 @@ export const translations = {
         objectivesHelper: 'اهداف اصلی سناریو را وارد کنید (هر هدف در یک خط)',
         cancelButton: 'انصراف',
         saveButton: 'ذخیره',
-        createButton: 'ایجاد'
+        createButton: 'ایجاد',
       },
 
       // دیالوگ حذف
@@ -431,7 +440,8 @@ export const translations = {
 
       archiveDialog: {
         title: 'آرشیو سناریو',
-        message: 'سناریوی "{name}" آرشیو می‌شود و از لیست اصلی مخفی می‌شود. بعداً می‌توانید بازیابی کنید.',
+        message:
+          'سناریوی "{name}" آرشیو می‌شود و از لیست اصلی مخفی می‌شود. بعداً می‌توانید بازیابی کنید.',
         confirmButton: 'آرشیو',
       },
 
@@ -463,7 +473,7 @@ export const translations = {
         total: 'کل سناریوها',
         active: 'فعال',
         completed: 'تکمیل شده',
-        draft: 'پیش‌نویس'
+        draft: 'پیش‌نویس',
       },
 
       // اعلان‌ها
@@ -476,8 +486,8 @@ export const translations = {
         statusChangeError: 'خطا در تغییر وضعیت سناریو',
         deleteSuccess: 'سناریو با موفقیت حذف شد',
         deleteError: 'خطا در حذف سناریو',
-        deleteDemoNotAllowed: 'حذف سناریوهای نمونه امکان‌پذیر نیست'
-      }
+        deleteDemoNotAllowed: 'حذف سناریوهای نمونه امکان‌پذیر نیست',
+      },
     },
     resources: {
       pageTitle: 'مدیریت منابع',
@@ -588,7 +598,7 @@ export const translations = {
           naval: 'دریایی',
           missile: 'موشکی',
           electronic: 'الکترونیکی',
-        }
+        },
       },
       equipmentAssignment: {
         selectUnitTitle: 'انتخاب واحد برای تخصیص تجهیزات',
@@ -608,7 +618,7 @@ export const translations = {
           onHandLabel: 'تعداد موجود',
           cancelButton: 'انصراف',
           assignButton: 'تخصیص',
-        }
+        },
       },
       equipmentInventory: {
         searchPlaceholder: 'جستجو در تجهیزات...',
@@ -646,7 +656,7 @@ export const translations = {
           cancelButton: 'انصراف',
           addButton: 'افزودن',
           saveButton: 'ذخیره تغییرات',
-        }
+        },
       },
       maps: {
         serverLayersTitle: 'لایه‌های نقشه سرور',
@@ -680,8 +690,8 @@ export const translations = {
           cancelButton: 'انصراف',
           addButton: 'افزودن',
           uploadButton: 'آپلود',
-        }
-      }
+        },
+      },
     },
     // Users Module
     users: {
@@ -691,15 +701,15 @@ export const translations = {
       searchPlaceholder: 'جستجو در کاربران...',
       noUsers: 'هیچ کاربری یافت نشد',
       loading: 'در حال بارگذاری...',
-      
+
       // نمایش و عملیات
       viewMode: {
         table: 'نمایش جدولی',
         card: 'نمایش کارتی',
         tableTooltip: 'نمایش جدولی',
-        cardTooltip: 'نمایش کارتی'
+        cardTooltip: 'نمایش کارتی',
       },
-      
+
       // فیلترها
       filters: {
         title: 'فیلترها و جستجو',
@@ -709,9 +719,9 @@ export const translations = {
         role: 'نقش',
         accessLevel: 'سطح دسترسی',
         nationality: 'تابعیت',
-        all: 'همه'
+        all: 'همه',
       },
-      
+
       // جدول کاربران
       table: {
         rowNumber: 'ردیف',
@@ -721,9 +731,9 @@ export const translations = {
         role: 'نقش',
         accessLevel: 'سطح دسترسی',
         status: 'وضعیت',
-        actions: 'عملیات'
+        actions: 'عملیات',
       },
-      
+
       // عملیات سریع
       quickActions: {
         title: 'تغییرات فوری',
@@ -736,55 +746,59 @@ export const translations = {
         deactivateUser: 'غیرفعال کردن کاربر',
         activateDesc: 'کاربر قادر به ورود خواهد بود',
         deactivateDesc: 'کاربر قادر به ورود نخواهد بود',
-        
+
         // فرم تغییر رمز
         passwordForm: {
           newPassword: 'رمز عبور جدید',
           confirmPassword: 'تکرار رمز عبور جدید',
           passwordMismatch: 'رمز عبور و تکرار آن یکسان نیستند',
-          passwordRequirements: 'رمز عبور جدید باید حداقل ۸ کاراکتر و شامل حروف، اعداد و نمادها باشد.'
+          passwordRequirements:
+            'رمز عبور جدید باید حداقل ۸ کاراکتر و شامل حروف، اعداد و نمادها باشد.',
         },
-        
+
         // فرم تغییر دسترسی
         accessForm: {
           systemRole: 'نقش سیستمی',
           accessLevel: 'سطح دسترسی',
           currentPermissions: 'مجوزهای فعلی',
-          accessWarning: 'تغییر سطح دسترسی بر روی قابلیت‌های کاربر تأثیر خواهد گذاشت.'
+          accessWarning:
+            'تغییر سطح دسترسی بر روی قابلیت‌های کاربر تأثیر خواهد گذاشت.',
         },
-        
+
         // تأیید تغییر وضعیت
         statusConfirm: {
           user: 'کاربر',
           userCode: 'کد کاربری',
           role: 'نقش',
           currentStatus: 'وضعیت فعلی',
-          deactivateWarning: 'با غیرفعال کردن این کاربر، وی قادر به ورود به سیستم نخواهد بود.',
-          activateInfo: 'با فعال کردن این کاربر، وی قادر به ورود به سیستم خواهد بود.'
+          deactivateWarning:
+            'با غیرفعال کردن این کاربر، وی قادر به ورود به سیستم نخواهد بود.',
+          activateInfo:
+            'با فعال کردن این کاربر، وی قادر به ورود به سیستم خواهد بود.',
         },
-        
+
         // دکمه‌ها
         buttons: {
           back: 'بازگشت',
           cancel: 'انصراف',
           confirm: 'تأیید',
-          processing: 'در حال انجام...'
-        }
+          processing: 'در حال انجام...',
+        },
       },
-      
+
       // اکشن‌های عمومی
       actions: {
         view: 'مشاهده جزئیات',
         edit: 'ویرایش',
         delete: 'حذف',
-        quickActions: 'تغییرات فوری'
+        quickActions: 'تغییرات فوری',
       },
-      
+
       status: {
         active: 'فعال',
         inactive: 'غیرفعال',
         pending: 'در انتظار',
-        suspended: 'معلق'
+        suspended: 'معلق',
       },
       form: {
         personalInfo: 'اطلاعات شخصی',
@@ -800,10 +814,10 @@ export const translations = {
         address: 'آدرس',
         postalCode: 'کد پستی',
         status: 'وضعیت',
-        isActive: 'کاربر فعال'
-      }
+        isActive: 'کاربر فعال',
+      },
     },
-    // Resources Module  
+    // Resources Module
     resourcesModule: {
       pageTitle: 'مدیریت منابع',
       pageDescription: 'مدیریت و سازماندهی منابع',
@@ -814,14 +828,14 @@ export const translations = {
       status: {
         keyPersons: 'اشخاص کلیدی',
         military: 'نظامی',
-        civilian: 'غیرنظامی'
+        civilian: 'غیرنظامی',
       },
       subStatus: {
         alive: 'زنده',
         martyr: 'شهید',
-        injured: 'آسیب دیده'
-      }
-    }
+        injured: 'آسیب دیده',
+      },
+    },
   },
   en: {
     // Settings Panel
@@ -905,11 +919,14 @@ export const translations = {
         availableForces: 'Available Forces',
         ongoingOperations: 'Ongoing Operations',
         securityAlerts: 'Security Alerts',
-        activeScenariosSubtitle: '{activePercent}٪ active | {inactiveCount} inactive',
-        availableForcesSubtitle: '{iranianPercent}٪ Iranian | {foreignPercent}٪ foreign',
-        ongoingOperationsSubtitle: '{commanderCount} Cmdr. | {operatorCount} Op. | {viewerCount} Viewer',
+        activeScenariosSubtitle:
+          '{activePercent}٪ active | {inactiveCount} inactive',
+        availableForcesSubtitle:
+          '{iranianPercent}٪ Iranian | {foreignPercent}٪ foreign',
+        ongoingOperationsSubtitle:
+          '{commanderCount} Cmdr. | {operatorCount} Op. | {viewerCount} Viewer',
         securityAlertsSubtitle: '{todayPercent}٪ today | {weekCount} this week',
-        todayAlerts: 'Today\'s Alerts:',
+        todayAlerts: "Today's Alerts:",
         alertItems: 'items',
         today: 'Today',
         thisWeek: 'This Week',
@@ -981,14 +998,14 @@ export const translations = {
         starAll: 'Star All',
         unarchiveAll: 'Unarchive All',
         unstarAll: 'Unstar All',
-        deselectAll: 'Deselect All'
+        deselectAll: 'Deselect All',
       },
       notifications: {
         archiveAllSuccess: 'All activities have been archived',
         unarchiveAllSuccess: 'Archiving of all activities has been canceled',
         starAllSuccess: 'All activities have been starred',
         unstarAllSuccess: 'Starring of all activities has been canceled',
-      }
+      },
     },
     scenarios: {
       pageTitle: 'Scenario Management',
@@ -1062,7 +1079,8 @@ export const translations = {
       },
       archiveDialog: {
         title: 'Archive Scenario',
-        message: 'Scenario "{name}" will be archived and hidden from the main list. You can restore it later.',
+        message:
+          'Scenario "{name}" will be archived and hidden from the main list. You can restore it later.',
         confirmButton: 'Archive',
       },
       history: {
@@ -1115,7 +1133,12 @@ export const translations = {
         hint: 'Allowed: MP4 or WebM. Max upload size on server: 50 MB. Recommended length: 60–90 seconds.',
         uploadButton: 'Select and upload video',
         videoUrlLabel: 'Video URL',
-        videoUrlHelper: 'Filled automatically after upload; you may paste another URL if needed.',
+        videoUrlHelper:
+          'Filled automatically after upload; you may paste another URL if needed.',
+        previewTitle: 'Intro video preview',
+        unsupportedPlayback: 'Your browser cannot play this video.',
+        deleteVideo: 'Remove video',
+        cleanupError: 'The uploaded video could not be cleaned up',
         introTitleLabel: 'Intro title',
         summaryLabel: 'Summary (one bullet per line)',
         summaryHelper: 'Short lines; shown as a list in the popup.',
@@ -1153,7 +1176,7 @@ export const translations = {
           naval: 'Naval',
           missile: 'Missile',
           electronic: 'Electronic',
-        }
+        },
       },
       equipmentAssignment: {
         selectUnitTitle: 'Select Unit for Equipment Assignment',
@@ -1173,7 +1196,7 @@ export const translations = {
           onHandLabel: 'On Hand Count',
           cancelButton: 'Cancel',
           assignButton: 'Assign',
-        }
+        },
       },
       equipmentInventory: {
         searchPlaceholder: 'Search in equipment...',
@@ -1211,7 +1234,7 @@ export const translations = {
           cancelButton: 'Cancel',
           addButton: 'Add',
           saveButton: 'Save Changes',
-        }
+        },
       },
       maps: {
         serverLayersTitle: 'Server Map Layers',
@@ -1245,9 +1268,9 @@ export const translations = {
           cancelButton: 'Cancel',
           addButton: 'Add',
           uploadButton: 'Upload',
-        }
-      }
-    }
+        },
+      },
+    },
   },
   ar: {
     // Settings Panel
@@ -1331,10 +1354,14 @@ export const translations = {
         availableForces: 'القوات المتاحة',
         ongoingOperations: 'العمليات الجارية',
         securityAlerts: 'التنبيهات الأمنية',
-        activeScenariosSubtitle: '{activePercent}٪ نشط | {inactiveCount} غير نشط',
-        availableForcesSubtitle: '{iranianPercent}٪ إيراني | {foreignPercent}٪ أجنبي',
-        ongoingOperationsSubtitle: '{commanderCount} قائد | {operatorCount} مشغل | {viewerCount} مشاهد',
-        securityAlertsSubtitle: '{todayPercent}٪ اليوم | {weekCount} هذا الأسبوع',
+        activeScenariosSubtitle:
+          '{activePercent}٪ نشط | {inactiveCount} غير نشط',
+        availableForcesSubtitle:
+          '{iranianPercent}٪ إيراني | {foreignPercent}٪ أجنبي',
+        ongoingOperationsSubtitle:
+          '{commanderCount} قائد | {operatorCount} مشغل | {viewerCount} مشاهد',
+        securityAlertsSubtitle:
+          '{todayPercent}٪ اليوم | {weekCount} هذا الأسبوع',
         todayAlerts: 'تنبيهات اليوم:',
         alertItems: 'عناصر',
         today: 'اليوم',
@@ -1407,14 +1434,14 @@ export const translations = {
         starAll: 'تمييز الكل بنجمة',
         unarchiveAll: 'إلغاء أرشفة الكل',
         unstarAll: 'إلغاء تمييز الكل بنجمة',
-        deselectAll: 'إلغاء تحديد الكل'
+        deselectAll: 'إلغاء تحديد الكل',
       },
       notifications: {
         archiveAllSuccess: 'تم أرشفة جميع الأنشطة',
         unarchiveAllSuccess: 'تم إلغاء أرشفة جميع الأنشطة',
         starAllSuccess: 'تم وضع نجمة على جميع الأنشطة',
         unstarAllSuccess: 'تم إلغاء وضع النجمة على جميع الأنشطة',
-      }
+      },
     },
     scenarios: {
       pageTitle: 'إدارة السيناريوهات',
@@ -1495,7 +1522,7 @@ export const translations = {
         deleteSuccess: 'تم حذف السيناريو بنجاح',
         deleteError: 'خطأ في حذف السيناريو',
         deleteDemoNotAllowed: 'لا يمكن حذف السيناريوهات التجريبية',
-      }
+      },
     },
     resources: {
       pageTitle: 'إدارة الموارد',
@@ -1520,7 +1547,7 @@ export const translations = {
           naval: 'البحري',
           missile: 'الصواريخ',
           electronic: 'الإلكترونية',
-        }
+        },
       },
 
       maps: {
@@ -1555,8 +1582,8 @@ export const translations = {
           cancelButton: 'إلغاء',
           addButton: 'إضافة',
           uploadButton: 'رفع',
-        }
-      }
+        },
+      },
     },
     // Users Module
     users: {
@@ -1566,15 +1593,15 @@ export const translations = {
       searchPlaceholder: 'البحث في المستخدمين...',
       noUsers: 'لم يتم العثور على مستخدمين',
       loading: 'جار التحميل...',
-      
+
       // View and Operations
       viewMode: {
         table: 'عرض جدولي',
         card: 'عرض بطاقات',
         tableTooltip: 'عرض جدولي',
-        cardTooltip: 'عرض بطاقات'
+        cardTooltip: 'عرض بطاقات',
       },
-      
+
       // Filters
       filters: {
         title: 'الفلاتر والبحث',
@@ -1584,9 +1611,9 @@ export const translations = {
         role: 'الدور',
         accessLevel: 'مستوى الوصول',
         nationality: 'الجنسية',
-        all: 'الكل'
+        all: 'الكل',
       },
-      
+
       // Users Table
       table: {
         rowNumber: 'الصف',
@@ -1596,9 +1623,9 @@ export const translations = {
         role: 'الدور',
         accessLevel: 'مستوى الوصول',
         status: 'الحالة',
-        actions: 'الإجراءات'
+        actions: 'الإجراءات',
       },
-      
+
       // Quick Actions
       quickActions: {
         title: 'إجراءات سريعة',
@@ -1611,55 +1638,58 @@ export const translations = {
         deactivateUser: 'تعطيل المستخدم',
         activateDesc: 'سيتمكن المستخدم من تسجيل الدخول',
         deactivateDesc: 'لن يتمكن المستخدم من تسجيل الدخول',
-        
+
         // Password Form
         passwordForm: {
           newPassword: 'كلمة المرور الجديدة',
           confirmPassword: 'تأكيد كلمة المرور الجديدة',
           passwordMismatch: 'كلمة المرور والتأكيد غير متطابقين',
-          passwordRequirements: 'يجب أن تكون كلمة المرور الجديدة على الأقل 8 أحرف وتشمل حروف وأرقام ورموز.'
+          passwordRequirements:
+            'يجب أن تكون كلمة المرور الجديدة على الأقل 8 أحرف وتشمل حروف وأرقام ورموز.',
         },
-        
+
         // Access Form
         accessForm: {
           systemRole: 'دور النظام',
           accessLevel: 'مستوى الوصول',
           currentPermissions: 'الأذونات الحالية',
-          accessWarning: 'تغيير مستوى الوصول سيؤثر على قدرات المستخدم.'
+          accessWarning: 'تغيير مستوى الوصول سيؤثر على قدرات المستخدم.',
         },
-        
+
         // Status Confirmation
         statusConfirm: {
           user: 'المستخدم',
           userCode: 'رمز المستخدم',
           role: 'الدور',
           currentStatus: 'الحالة الحالية',
-          deactivateWarning: 'بتعطيل هذا المستخدم، لن يتمكن من تسجيل الدخول إلى النظام.',
-          activateInfo: 'بتفعيل هذا المستخدم، سيتمكن من تسجيل الدخول إلى النظام.'
+          deactivateWarning:
+            'بتعطيل هذا المستخدم، لن يتمكن من تسجيل الدخول إلى النظام.',
+          activateInfo:
+            'بتفعيل هذا المستخدم، سيتمكن من تسجيل الدخول إلى النظام.',
         },
-        
+
         // Buttons
         buttons: {
           back: 'رجوع',
           cancel: 'إلغاء',
           confirm: 'تأكيد',
-          processing: 'جار المعالجة...'
-        }
+          processing: 'جار المعالجة...',
+        },
       },
-      
+
       // General Actions
       actions: {
         view: 'عرض التفاصيل',
         edit: 'تعديل',
         delete: 'حذف',
-        quickActions: 'إجراءات سريعة'
+        quickActions: 'إجراءات سريعة',
       },
-      
+
       status: {
         active: 'نشط',
         inactive: 'غير نشط',
         pending: 'قيد الانتظار',
-        suspended: 'معلق'
+        suspended: 'معلق',
       },
       form: {
         personalInfo: 'المعلومات الشخصية',
@@ -1675,8 +1705,8 @@ export const translations = {
         address: 'العنوان',
         postalCode: 'الرمز البريدي',
         status: 'الحالة',
-        isActive: 'مستخدم نشط'
-      }
+        isActive: 'مستخدم نشط',
+      },
     },
     // Resources Module
     resourcesModule: {
@@ -1689,15 +1719,15 @@ export const translations = {
       status: {
         keyPersons: 'Key Persons',
         military: 'Military',
-        civilian: 'Civilian'
+        civilian: 'Civilian',
       },
       subStatus: {
         alive: 'Alive',
         martyr: 'Martyr',
-        injured: 'Injured'
-      }
-    }
+        injured: 'Injured',
+      },
+    },
   },
 };
 
-export type TranslationKey = keyof typeof translations.fa; 
+export type TranslationKey = keyof typeof translations.fa;

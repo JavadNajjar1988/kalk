@@ -112,9 +112,129 @@ async def test_auth_and_crud_scenarios():
         assert resp.status_code == 200
         assert resp.json()["data"]["description"] == "جدید"
 
+        # history is enriched with actor identity and supports real pagination
+        resp = await ac.get(
+            f"{settings.API_PREFIX}/scenarios/{scn_id}/history",
+            params={"limit": 1, "offset": 0},
+            headers=headers,
+        )
+        assert resp.status_code == 200
+        history = resp.json()["data"]
+        assert history["total"] >= 2
+        assert history["limit"] == 1
+        assert history["offset"] == 0
+        assert len(history["items"]) == 1
+        assert history["items"][0]["actor_username"] == "admin"
+        assert history["items"][0]["actor_display_name"]
+
+        second_page = await ac.get(
+            f"{settings.API_PREFIX}/scenarios/{scn_id}/history",
+            params={"limit": 1, "offset": 1},
+            headers=headers,
+        )
+        assert second_page.status_code == 200
+        second_history = second_page.json()["data"]
+        assert second_history["offset"] == 1
+        assert len(second_history["items"]) == 1
+        assert second_history["items"][0]["id"] != history["items"][0]["id"]
+
         # delete
         resp = await ac.delete(f"{settings.API_PREFIX}/scenarios/{scn_id}", headers=headers)
         assert resp.status_code == 200 or resp.status_code == 204
+
+
+@pytest.mark.asyncio
+async def test_scenario_intro_lifecycle_and_video_validation():
+    async with AsyncClient(transport=asgi_transport, base_url="http://test") as ac:
+        login = await ac.post(
+            f"{settings.API_PREFIX}/auth/token",
+            data={"username": "admin", "password": TEST_ADMIN_PASSWORD},
+        )
+        assert login.status_code == 200
+        headers = {"Authorization": f"Bearer {login.json()['access_token']}"}
+
+        invalid_upload = await ac.post(
+            f"{settings.API_PREFIX}/scenarios/intro-videos",
+            headers=headers,
+            files={"file": ("fake.mp4", b"not-a-video", "video/mp4")},
+        )
+        assert invalid_upload.status_code == 400
+
+        mp4_header = (
+            b"\x00\x00\x00\x18ftypisom"
+            b"\x00\x00\x02\x00isomiso2"
+        )
+        upload = await ac.post(
+            f"{settings.API_PREFIX}/scenarios/intro-videos",
+            headers=headers,
+            files={"file": ("intro.mp4", mp4_header, "video/mp4")},
+        )
+        assert upload.status_code == 200
+        uploaded = upload.json()["data"]
+
+        create = await ac.post(
+            f"{settings.API_PREFIX}/scenarios",
+            headers=headers,
+            json={
+                "name": "سناریو تست اینترو",
+                "intro_video_url": uploaded["url"],
+                "intro_title": "نسخه اول",
+            },
+        )
+        assert create.status_code == 201
+        scenario_id = create.json()["data"]["id"]
+
+        record = await ac.post(
+            f"{settings.API_PREFIX}/scenarios/{scenario_id}/intro-view",
+            headers=headers,
+            json={"never_show_again": True},
+        )
+        assert record.status_code == 200
+
+        seen_status = await ac.get(
+            f"{settings.API_PREFIX}/scenarios/{scenario_id}/intro-status",
+            headers=headers,
+        )
+        assert seen_status.status_code == 200
+        assert seen_status.json()["data"]["should_show_intro"] is False
+        assert seen_status.json()["data"]["intro_replay_available"] is False
+
+        update = await ac.put(
+            f"{settings.API_PREFIX}/scenarios/{scenario_id}",
+            headers=headers,
+            json={"intro_title": "نسخه دوم"},
+        )
+        assert update.status_code == 200
+
+        reset_status = await ac.get(
+            f"{settings.API_PREFIX}/scenarios/{scenario_id}/intro-status",
+            headers=headers,
+        )
+        assert reset_status.status_code == 200
+        assert reset_status.json()["data"]["should_show_intro"] is True
+
+        referenced_delete = await ac.delete(
+            f"{settings.API_PREFIX}/scenarios/intro-videos/{uploaded['filename']}",
+            headers=headers,
+        )
+        assert referenced_delete.status_code == 409
+
+        clear_video = await ac.put(
+            f"{settings.API_PREFIX}/scenarios/{scenario_id}",
+            headers=headers,
+            json={"intro_video_url": None},
+        )
+        assert clear_video.status_code == 200
+
+        removed_video = await ac.get(
+            f"{settings.API_PREFIX}/scenarios/intro-videos/{uploaded['filename']}"
+        )
+        assert removed_video.status_code == 404
+
+        await ac.delete(
+            f"{settings.API_PREFIX}/scenarios/{scenario_id}",
+            headers=headers,
+        )
 
 
 @pytest.mark.asyncio
