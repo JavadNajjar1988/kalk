@@ -15,6 +15,8 @@ import {
 } from '@mui/material';
 import { ScenarioStatus } from '@/types';
 import type { Scenario } from '@/types';
+import PersianCalendarField from '@/components/common/PersianCalendarField';
+import { localDateTimeToIso, toLocalDateTimeInput } from '@/utils/dateUtils';
 import {
   buildResourcesFormDialogSx,
   resourcesDialogTitleSx,
@@ -37,7 +39,12 @@ interface ScenarioDialogProps {
   onSave: (scenario: Partial<Scenario>) => void;
 }
 
-const ScenarioDialog: React.FC<ScenarioDialogProps> = ({ open, onClose, scenario, onSave }) => {
+const ScenarioDialog: React.FC<ScenarioDialogProps> = ({
+  open,
+  onClose,
+  scenario,
+  onSave,
+}) => {
   const theme = useTheme();
   const [formData, setFormData] = useState({
     name: '',
@@ -54,8 +61,8 @@ const ScenarioDialog: React.FC<ScenarioDialogProps> = ({ open, onClose, scenario
         name: scenario.name,
         description: scenario.description,
         status: scenario.status,
-        startTime: scenario.startTime ? new Date(scenario.startTime).toISOString().slice(0, 16) : '',
-        endTime: scenario.endTime ? new Date(scenario.endTime).toISOString().slice(0, 16) : '',
+        startTime: toLocalDateTimeInput(scenario.startTime),
+        endTime: toLocalDateTimeInput(scenario.endTime),
         objectives: scenario.objectives?.join('\n') || '',
       });
     } else {
@@ -75,8 +82,8 @@ const ScenarioDialog: React.FC<ScenarioDialogProps> = ({ open, onClose, scenario
       name: formData.name,
       description: formData.description,
       status: formData.status,
-      startTime: formData.startTime ? new Date(formData.startTime).toISOString() : undefined,
-      endTime: formData.endTime ? new Date(formData.endTime).toISOString() : undefined,
+      startTime: localDateTimeToIso(formData.startTime),
+      endTime: localDateTimeToIso(formData.endTime),
       objectives: formData.objectives.split('\n').filter(obj => obj.trim()),
     };
     if (scenario) scenarioData.id = scenario.id;
@@ -84,8 +91,16 @@ const ScenarioDialog: React.FC<ScenarioDialogProps> = ({ open, onClose, scenario
   };
 
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth sx={buildResourcesFormDialogSx(theme)}>
-      <DialogTitle sx={resourcesDialogTitleSx(theme)}>{scenario ? 'ویرایش سناریو' : 'ایجاد سناریو جدید'}</DialogTitle>
+    <Dialog
+      open={open}
+      onClose={onClose}
+      maxWidth="md"
+      fullWidth
+      sx={buildResourcesFormDialogSx(theme)}
+    >
+      <DialogTitle sx={resourcesDialogTitleSx(theme)}>
+        {scenario ? 'ویرایش سناریو' : 'ایجاد سناریو جدید'}
+      </DialogTitle>
       <DialogContent dividers sx={resourcesDialogContentDividersSx(theme)}>
         <Grid container spacing={3} sx={{ mt: 0.5 }}>
           <Grid item xs={12} md={8}>
@@ -93,7 +108,9 @@ const ScenarioDialog: React.FC<ScenarioDialogProps> = ({ open, onClose, scenario
               fullWidth
               label="نام سناریو"
               value={formData.name}
-              onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+              onChange={e =>
+                setFormData(prev => ({ ...prev, name: e.target.value }))
+              }
               required
             />
           </Grid>
@@ -103,10 +120,17 @@ const ScenarioDialog: React.FC<ScenarioDialogProps> = ({ open, onClose, scenario
               <Select
                 value={formData.status}
                 label="وضعیت"
-                onChange={(e) => setFormData(prev => ({ ...prev, status: e.target.value as ScenarioStatus }))}
+                onChange={e =>
+                  setFormData(prev => ({
+                    ...prev,
+                    status: e.target.value as ScenarioStatus,
+                  }))
+                }
               >
                 {statusOptions.map(option => (
-                  <MenuItem key={option.value} value={option.value}>{option.label}</MenuItem>
+                  <MenuItem key={option.value} value={option.value}>
+                    {option.label}
+                  </MenuItem>
                 ))}
               </Select>
             </FormControl>
@@ -118,27 +142,25 @@ const ScenarioDialog: React.FC<ScenarioDialogProps> = ({ open, onClose, scenario
               multiline
               rows={3}
               value={formData.description}
-              onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+              onChange={e =>
+                setFormData(prev => ({ ...prev, description: e.target.value }))
+              }
             />
           </Grid>
           <Grid item xs={12} md={6}>
-            <TextField
-              fullWidth
+            <PersianCalendarField
               label="زمان شروع"
-              type="datetime-local"
               value={formData.startTime}
-              onChange={(e) => setFormData(prev => ({ ...prev, startTime: e.target.value }))}
-              InputLabelProps={{ shrink: true }}
+              onChange={startTime =>
+                setFormData(prev => ({ ...prev, startTime }))
+              }
             />
           </Grid>
           <Grid item xs={12} md={6}>
-            <TextField
-              fullWidth
+            <PersianCalendarField
               label="زمان پایان"
-              type="datetime-local"
               value={formData.endTime}
-              onChange={(e) => setFormData(prev => ({ ...prev, endTime: e.target.value }))}
-              InputLabelProps={{ shrink: true }}
+              onChange={endTime => setFormData(prev => ({ ...prev, endTime }))}
             />
           </Grid>
           <Grid item xs={12}>
@@ -148,7 +170,9 @@ const ScenarioDialog: React.FC<ScenarioDialogProps> = ({ open, onClose, scenario
               multiline
               rows={4}
               value={formData.objectives}
-              onChange={(e) => setFormData(prev => ({ ...prev, objectives: e.target.value }))}
+              onChange={e =>
+                setFormData(prev => ({ ...prev, objectives: e.target.value }))
+              }
               placeholder="هر هدف را در یک خط جداگانه وارد کنید"
               helperText="هر هدف را در یک خط جداگانه وارد کنید"
             />

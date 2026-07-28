@@ -1,9 +1,6 @@
 import { klona } from "klona";
 import { nanoid } from "@/utils";
-import type {
-  EnvironmentalCondition,
-  EnvironmentalKind,
-} from "@/types/scenarioModels";
+import type { EnvironmentalCondition, EnvironmentalKind } from "@/types/scenarioModels";
 import type { NewScenarioStore } from "./newScenarioStore";
 
 export type EnvironmentalConditionInput = Omit<EnvironmentalCondition, "id"> & {
@@ -16,31 +13,31 @@ export interface EnvironmentalValidationIssue {
   relatedConditionId?: string;
 }
 
-export const DEFAULT_METOC_SIDC: Record<EnvironmentalKind, string | undefined> = {
+export const DEFAULT_METOC_SIDC: Record<EnvironmentalKind, string> = {
   precipitation: "W-S-WSR-LI",
-  visibility: undefined,
-  wind: undefined,
-  temperature: undefined,
+  visibility: "W-S-WSFGSO",
+  wind: "W-S-WSTSS-",
+  temperature: "S-G-UCFOO-",
   fog: "W-S-WSFGSO",
-  surface_condition: undefined,
-  cloud_cover: undefined,
+  surface_condition: "G-M-OAOF--",
+  cloud_cover: "W-S-WSTSS-",
   thunderstorm: "W-S-WSTMH-",
   dust_storm: "W-S-WSDSLM",
-  blizzard: undefined,
-  humidity: undefined,
-  pressure: undefined,
-  smoke: undefined,
-  fire: undefined,
-  illumination: undefined,
-  flood: undefined,
-  soil_bearing: undefined,
-  slope: undefined,
-  roughness: undefined,
-  vegetation: undefined,
-  road_condition: undefined,
-  bridge_condition: undefined,
-  water_crossing: undefined,
-  elevation: undefined,
+  blizzard: "W-S-WSS-LI",
+  humidity: "W-S-WSD-LI",
+  pressure: "S-G-UCFOO-",
+  smoke: "E-I-CF----",
+  fire: "E-I-CH----",
+  illumination: "S-G-UCFOO-",
+  flood: "E-N-BC----",
+  soil_bearing: "S-G-UCE---",
+  slope: "E-N-AD----",
+  roughness: "G-M-OAOF--",
+  vegetation: "E-F-AD----",
+  road_condition: "G-O-PR----",
+  bridge_condition: "G-M-BCB---",
+  water_crossing: "E-F-LE----",
+  elevation: "S-G-UCECO-",
 };
 
 export function normalizeEnvironmentalCondition(

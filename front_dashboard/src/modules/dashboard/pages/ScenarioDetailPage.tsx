@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import ms from 'milsymbol';
 import {
   Box,
   Tab,
@@ -77,6 +78,13 @@ import ScenarioIntroSettingsPanel from '@/modules/dashboard/components/ScenarioI
 import ScenarioHistoryTab from '@/modules/dashboard/components/ScenarioHistoryTab';
 import { selectUser } from '@/store/slices/authSlice';
 import { canAccessFeature } from '@/security/roleAccess';
+import {
+  environmentalKindLabel,
+  environmentalParameters,
+  environmentalSidc,
+} from '@/modules/dashboard/utils/environmentPresentation';
+
+const ANALYSIS_API_AVAILABLE = false;
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -135,6 +143,7 @@ const ScenarioPhasesManager: React.FC<{
   const unassignedEvents = events.filter(event => !event.phaseId);
   const timeIssues: string[] = [];
   const chronologicalPhases = [...phases].sort(
+    (a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime()
     (a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime()
   );
 
@@ -365,83 +374,41 @@ const ENVIRONMENTAL_TYPE_LABELS: Record<EnvironmentalFactorType, string> = {
   [EnvironmentalFactorType.TERRAIN_CONDITION]: 'وضعیت متغیر زمین',
 };
 
-const ENVIRONMENTAL_KIND_LABELS: Record<string, string> = {
-  precipitation: 'بارش',
-  visibility: 'دید',
-  wind: 'باد',
-  temperature: 'دما',
-  fog: 'مه',
-  surface_condition: 'وضعیت زمین',
-  cloud_cover: 'پوشش ابر',
-  thunderstorm: 'رعدوبرق',
-  dust_storm: 'گردوغبار',
-  blizzard: 'کولاک',
-  humidity: 'رطوبت',
-  pressure: 'فشار هوا',
-  smoke: 'دود',
-  fire: 'آتش‌سوزی',
-  illumination: 'روشنایی',
-  flood: 'آب‌گرفتگی/سیلاب',
-  soil_bearing: 'تحمل خاک',
-  slope: 'شیب',
-  roughness: 'ناهمواری',
-  vegetation: 'پوشش گیاهی',
-  road_condition: 'وضعیت جاده',
-  bridge_condition: 'وضعیت پل',
-  water_crossing: 'گذرگاه آبی',
-  elevation: 'ارتفاع',
-};
-
-const ENVIRONMENTAL_KIND_ICONS: Record<string, string> = {
-  precipitation: '🌧️',
-  visibility: '👁️',
-  wind: '💨',
-  temperature: '🌡️',
-  fog: '🌫️',
-  surface_condition: '🏜️',
-  cloud_cover: '☁️',
-  thunderstorm: '🌩️',
-  dust_storm: '🌪️',
-  blizzard: '🌬️',
-  humidity: '💧',
-  pressure: '🧭',
-  smoke: '💨',
-  fire: '🔥',
-  illumination: '🌙',
-  flood: '🌊',
-  soil_bearing: '⚖️',
-  slope: '📐',
-  roughness: '⛰️',
-  vegetation: '🌳',
-  road_condition: '🛣️',
-  bridge_condition: '🌉',
-  water_crossing: '🚙',
-  elevation: '🏔️',
-};
-
 const environmentLabel = (condition: EnvironmentalCondition) =>
   condition.kind
-    ? ENVIRONMENTAL_KIND_LABELS[condition.kind] || condition.kind
+    ? environmentalKindLabel(condition)
     : condition.type
       ? ENVIRONMENTAL_TYPE_LABELS[condition.type]
       : 'شرایط محیطی';
 
-const environmentValue = (condition: EnvironmentalCondition) => {
-  const parameters = condition.parameters;
-  if (!parameters) return condition.value ?? '—';
-  if (parameters.mode)
-    return `${parameters.mode} · شدت ${parameters.intensity ?? '—'}`;
-  if (parameters.rangeMeters) return `${parameters.rangeMeters} متر`;
-  if (parameters.speedMps)
-    return `${parameters.speedMps} m/s · ${parameters.directionDeg ?? 0}°`;
-  if (parameters.celsius !== undefined) return `${parameters.celsius} °C`;
-  if (parameters.condition) return parameters.condition;
-  if (parameters.coverage !== undefined) return `پوشش ${parameters.coverage}`;
-  return Object.entries(parameters)
-    .filter(([, value]) => value !== undefined)
-    .slice(0, 3)
-    .map(([key, value]) => `${key}: ${value}`)
-    .join(' · ');
+const EnvironmentMilitarySymbol: React.FC<{
+  condition: EnvironmentalCondition;
+}> = ({ condition }) => {
+  let svg = '';
+  try {
+    svg = new ms.Symbol(environmentalSidc(condition), { size: 44 }).asSVG();
+  } catch {
+    svg = new ms.Symbol('S-G-UCFOO-', { size: 44 }).asSVG();
+  }
+
+  return (
+    <Box
+      aria-label={`نماد نظامی ${environmentLabel(condition)}`}
+      sx={{
+        width: 56,
+        height: 56,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        bgcolor: 'background.paper',
+        border: 1,
+        borderColor: 'divider',
+        borderRadius: 1,
+        '& svg': { maxWidth: '48px', maxHeight: '48px' },
+      }}
+      dangerouslySetInnerHTML={{ __html: svg }}
+    />
+  );
 };
 
 const EnvironmentalConditionsManager: React.FC<{
@@ -455,6 +422,8 @@ const EnvironmentalConditionsManager: React.FC<{
         <Box>
           <Typography variant="h6">مرور شرایط محیطی</Typography>
           <Typography variant="body2" color="text.secondary">
+            این اطلاعات در کالک‌نگار روی نقشه و خط زمانی تعریف می‌شوند و اینجا
+            فقط قابل مرور هستند.
             این اطلاعات در کالک‌نگار روی نقشه و خط زمانی تعریف می‌شوند و اینجا
             فقط قابل مرور هستند.
           </Typography>
@@ -475,9 +444,13 @@ const EnvironmentalConditionsManager: React.FC<{
             )
             .map(condition => (
               <Grid item xs={12} sm={6} md={4} key={condition.id}>
-                <Card>
+                <Card
+                  variant="outlined"
+                  sx={{ height: '100%', borderRadius: 1 }}
+                >
                   <CardHeader
-                    title={`${ENVIRONMENTAL_KIND_ICONS[condition.kind || ''] || '🌐'} ${condition.name || environmentLabel(condition)}`}
+                    avatar={<EnvironmentMilitarySymbol condition={condition} />}
+                    title={condition.name || environmentLabel(condition)}
                     subheader={`${new Date(condition.startTime).toLocaleString(
                       'fa-IR'
                     )} تا ${
@@ -485,6 +458,20 @@ const EnvironmentalConditionsManager: React.FC<{
                         ? new Date(condition.endTime).toLocaleString('fa-IR')
                         : 'ادامه‌دار'
                     }`}
+                    action={
+                      <Chip
+                        size="small"
+                        color={
+                          condition.enabled === false ? 'default' : 'success'
+                        }
+                        variant="outlined"
+                        label={condition.enabled === false ? 'غیرفعال' : 'فعال'}
+                      />
+                    }
+                    sx={{
+                      alignItems: 'flex-start',
+                      '& .MuiCardHeader-action': { m: 0 },
+                    }}
                   />
                   <CardContent>
                     {condition.description && (
@@ -492,10 +479,70 @@ const EnvironmentalConditionsManager: React.FC<{
                         {condition.description}
                       </Typography>
                     )}
-                    <Typography variant="body2" color="text.secondary">
-                      {environmentValue(condition)} ·{' '}
-                      {condition.scope === 'area' ? 'محدوده‌ای' : 'سراسری'}
-                    </Typography>
+                    <Box
+                      sx={{
+                        display: 'flex',
+                        flexWrap: 'wrap',
+                        gap: 1,
+                        mb: 2,
+                      }}
+                    >
+                      <Chip
+                        size="small"
+                        label={
+                          condition.scope === 'area' ? 'محدوده‌ای' : 'سراسری'
+                        }
+                      />
+                      <Chip
+                        size="small"
+                        variant="outlined"
+                        label={`اولویت ${(condition.priority ?? 0).toLocaleString('fa-IR')}`}
+                      />
+                      {condition.geometry?.type && (
+                        <Chip
+                          size="small"
+                          variant="outlined"
+                          label={`هندسه ${
+                            {
+                              Point: 'نقطه',
+                              LineString: 'مسیر',
+                              Polygon: 'محدوده',
+                              MultiPolygon: 'چندمحدوده',
+                            }[condition.geometry.type] ?? 'مکانی'
+                          }`}
+                        />
+                      )}
+                    </Box>
+                    <Box
+                      sx={{
+                        display: 'grid',
+                        gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
+                        gap: 1,
+                      }}
+                    >
+                      {environmentalParameters(condition).map(parameter => (
+                        <Box
+                          key={parameter.key}
+                          sx={{
+                            minWidth: 0,
+                            p: 1,
+                            bgcolor: 'action.hover',
+                            borderRadius: 1,
+                          }}
+                        >
+                          <Typography
+                            variant="caption"
+                            color="text.secondary"
+                            display="block"
+                          >
+                            {parameter.label}
+                          </Typography>
+                          <Typography variant="body2">
+                            {parameter.value}
+                          </Typography>
+                        </Box>
+                      ))}
+                    </Box>
                     {condition.scope === 'area' && !condition.geometry && (
                       <Alert severity="warning" sx={{ mt: 1 }}>
                         محدوده این وضعیت روی نقشه ثبت نشده است.
@@ -507,6 +554,114 @@ const EnvironmentalConditionsManager: React.FC<{
             ))}
         </Grid>
       )}
+    </Box>
+  );
+};
+
+// ---------- History tab ----------
+const ScenarioHistoryTab: React.FC<{ scenarioId: string }> = ({
+  scenarioId,
+}) => {
+  const { t } = useTranslation();
+  const [logs, setLogs] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        setLoadError(false);
+        const data = await scenarioApiService.getScenarioHistory(scenarioId);
+        if (!cancelled) setLogs(data);
+      } catch {
+        if (!cancelled) setLoadError(true);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [scenarioId]);
+
+  if (loading) return <LinearProgress />;
+
+  if (loadError) {
+    return (
+      <Alert severity="error">دریافت تاریخچهٔ تغییرات سناریو انجام نشد.</Alert>
+    );
+  }
+
+  if (logs.length === 0) {
+    return (
+      <Box sx={{ textAlign: 'center', py: 6 }}>
+        <History sx={{ fontSize: 48, color: 'text.secondary', mb: 2 }} />
+        <Typography color="text.secondary">
+          {t('scenarios.history.noHistory')}
+        </Typography>
+      </Box>
+    );
+  }
+
+  return (
+    <Box>
+      <Typography variant="h6" gutterBottom>
+        {t('scenarios.history.title')}
+      </Typography>
+      <TableContainer component={Paper} variant="outlined">
+        <Table size="small">
+          <TableHead>
+            <TableRow>
+              <TableCell>{t('scenarios.history.action')}</TableCell>
+              <TableCell>{t('scenarios.history.actor')}</TableCell>
+              <TableCell>{t('scenarios.history.date')}</TableCell>
+              <TableCell>{t('scenarios.history.details')}</TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {logs.map(log => (
+              <TableRow key={log.id}>
+                <TableCell>
+                  <Chip
+                    label={
+                      t(`scenarios.history.actions.${log.action}`) || log.action
+                    }
+                    size="small"
+                    color={
+                      log.action === 'delete'
+                        ? 'error'
+                        : log.action === 'archive'
+                          ? 'warning'
+                          : log.action === 'create'
+                            ? 'success'
+                            : 'default'
+                    }
+                    variant="outlined"
+                  />
+                </TableCell>
+                <TableCell>{log.actor_user_id || '—'}</TableCell>
+                <TableCell>
+                  {new Date(log.created_at).toLocaleString('fa-IR')}
+                </TableCell>
+                <TableCell>
+                  {log.payload_diff ? (
+                    <Typography
+                      variant="caption"
+                      component="code"
+                      sx={{ whiteSpace: 'pre-wrap' }}
+                    >
+                      {JSON.stringify(log.payload_diff, null, 1)}
+                    </Typography>
+                  ) : (
+                    '—'
+                  )}
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </TableContainer>
     </Box>
   );
 };
@@ -1028,6 +1183,7 @@ const ScenarioDetailPage: React.FC = () => {
 
         {/* Environment */}
         <TabPanel value={tabValue} index={1}>
+          <EnvironmentalConditionsManager scenario={scenario} />
           <EnvironmentalConditionsManager scenario={scenario} />
         </TabPanel>
 

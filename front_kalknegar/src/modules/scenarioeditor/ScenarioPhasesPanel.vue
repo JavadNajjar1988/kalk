@@ -5,6 +5,7 @@ import { activeScenarioKey } from "@/components/injects";
 import { injectStrict } from "@/utils";
 import { PhaseStatus, type ScenarioPhase } from "@/types/scenarioModels";
 import { validateScenarioPhases } from "@/scenariostore/phases";
+import PersianDateTimeField from "@/components/PersianDateTimeField.vue";
 
 const { store, phases: phaseActions } = injectStrict(activeScenarioKey);
 
@@ -193,23 +194,8 @@ function statusLabel(status: PhaseStatus) {
         />
       </label>
       <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
-        <label class="block text-xs">
-          <span>زمان شروع</span>
-          <input
-            v-model="form.startTime"
-            type="datetime-local"
-            required
-            class="bg-background mt-1 w-full rounded-md border px-2 py-2"
-          />
-        </label>
-        <label class="block text-xs">
-          <span>زمان پایان (اختیاری)</span>
-          <input
-            v-model="form.endTime"
-            type="datetime-local"
-            class="bg-background mt-1 w-full rounded-md border px-2 py-2"
-          />
-        </label>
+        <PersianDateTimeField v-model="form.startTime" label="زمان شروع" required />
+        <PersianDateTimeField v-model="form.endTime" label="زمان پایان (اختیاری)" />
       </div>
       <label class="block text-xs">
         <span>وضعیت</span>

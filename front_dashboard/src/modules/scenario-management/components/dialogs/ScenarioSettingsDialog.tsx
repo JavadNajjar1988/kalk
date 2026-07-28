@@ -36,9 +36,11 @@ import {
   Map as MapIcon,
   Timeline as TimelineIcon,
   Visibility as VisibilityIcon,
-  Speed as SpeedIcon
+  Speed as SpeedIcon,
 } from '@mui/icons-material';
 import { useOrbatIntegration } from '../../hooks/useOrbatIntegration';
+import PersianCalendarField from '@/components/common/PersianCalendarField';
+import { toLocalDateTimeInput } from '@/utils/dateUtils';
 
 interface ScenarioSettingsDialogProps {
   open: boolean;
@@ -112,17 +114,17 @@ const DEFAULT_SETTINGS: ScenarioSettings = {
     description: '',
     author: '',
     version: '1.0.0',
-    tags: []
+    tags: [],
   },
   map: {
     defaultZoom: 12,
     centerLat: 35.6892,
-    centerLng: 51.3890,
+    centerLng: 51.389,
     baseLayers: ['osm', 'satellite'],
     defaultBaseLayer: 'osm',
     showGrid: false,
     gridSize: 1000,
-    showCoordinates: true
+    showCoordinates: true,
   },
   timeline: {
     startTime: new Date(),
@@ -130,7 +132,7 @@ const DEFAULT_SETTINGS: ScenarioSettings = {
     timeStep: 300,
     autoPlay: false,
     playbackSpeed: 1,
-    showEvents: true
+    showEvents: true,
   },
   display: {
     showUnitLabels: true,
@@ -138,26 +140,26 @@ const DEFAULT_SETTINGS: ScenarioSettings = {
     symbolSize: 24,
     labelSize: 12,
     showTrails: false,
-    trailLength: 10
+    trailLength: 10,
   },
   simulation: {
     enablePhysics: false,
     collisionDetection: false,
     weatherEffects: false,
-    terrainEffects: false
+    terrainEffects: false,
   },
   export: {
     includeMetadata: true,
     compressData: true,
-    format: 'json'
-  }
+    format: 'json',
+  },
 };
 
 const ScenarioSettingsDialog: React.FC<ScenarioSettingsDialogProps> = ({
   open,
   scenarioId,
   onClose,
-  onSave
+  onSave,
 }) => {
   const theme = useTheme();
   const accent = theme.palette.success.main;
@@ -175,10 +177,11 @@ const ScenarioSettingsDialog: React.FC<ScenarioSettingsDialogProps> = ({
 
   const loadSettings = async () => {
     if (!scenarioId || !orbatInstance) return;
-    
+
     setLoading(true);
     try {
-      const scenarioSettings = await orbatInstance.getScenarioSettings(scenarioId);
+      const scenarioSettings =
+        await orbatInstance.getScenarioSettings(scenarioId);
       setSettings({ ...DEFAULT_SETTINGS, ...scenarioSettings });
     } catch (error) {
       console.error('Failed to load settings:', error);
@@ -188,7 +191,7 @@ const ScenarioSettingsDialog: React.FC<ScenarioSettingsDialogProps> = ({
 
   const handleSave = async () => {
     if (!scenarioId) return;
-    
+
     try {
       if (orbatInstance) {
         await orbatInstance.updateScenarioSettings(scenarioId, settings);
@@ -207,50 +210,50 @@ const ScenarioSettingsDialog: React.FC<ScenarioSettingsDialogProps> = ({
   const updateGeneralSettings = (field: string, value: any) => {
     setSettings(prev => ({
       ...prev,
-      general: { ...prev.general, [field]: value }
+      general: { ...prev.general, [field]: value },
     }));
   };
 
   const updateMapSettings = (field: string, value: any) => {
     setSettings(prev => ({
       ...prev,
-      map: { ...prev.map, [field]: value }
+      map: { ...prev.map, [field]: value },
     }));
   };
 
   const updateTimelineSettings = (field: string, value: any) => {
     setSettings(prev => ({
       ...prev,
-      timeline: { ...prev.timeline, [field]: value }
+      timeline: { ...prev.timeline, [field]: value },
     }));
   };
 
   const updateDisplaySettings = (field: string, value: any) => {
     setSettings(prev => ({
       ...prev,
-      display: { ...prev.display, [field]: value }
+      display: { ...prev.display, [field]: value },
     }));
   };
 
   const updateSimulationSettings = (field: string, value: any) => {
     setSettings(prev => ({
       ...prev,
-      simulation: { ...prev.simulation, [field]: value }
+      simulation: { ...prev.simulation, [field]: value },
     }));
   };
 
   const updateExportSettings = (field: string, value: any) => {
     setSettings(prev => ({
       ...prev,
-      export: { ...prev.export, [field]: value }
+      export: { ...prev.export, [field]: value },
     }));
   };
 
   return (
-    <Dialog 
-      open={open} 
-      onClose={onClose} 
-      maxWidth="lg" 
+    <Dialog
+      open={open}
+      onClose={onClose}
+      maxWidth="lg"
       fullWidth
       sx={{
         '& .MuiDialog-paper': {
@@ -273,8 +276,19 @@ const ScenarioSettingsDialog: React.FC<ScenarioSettingsDialogProps> = ({
         },
       }}
     >
-      <DialogTitle sx={{ borderBottom: `1px solid ${alpha(accent, 0.2)}`, backgroundColor: alpha(accent, 0.08) }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+      <DialogTitle
+        sx={{
+          borderBottom: `1px solid ${alpha(accent, 0.2)}`,
+          backgroundColor: alpha(accent, 0.08),
+        }}
+      >
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+          }}
+        >
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             <SettingsIcon sx={{ color: accent }} />
             <Typography variant="h6">تنظیمات سناریو</Typography>
@@ -286,7 +300,10 @@ const ScenarioSettingsDialog: React.FC<ScenarioSettingsDialogProps> = ({
       </DialogTitle>
 
       <DialogContent>
-        <Tabs value={tabValue} onChange={(_, newValue) => setTabValue(newValue)}>
+        <Tabs
+          value={tabValue}
+          onChange={(_, newValue) => setTabValue(newValue)}
+        >
           <Tab label="General" />
           <Tab label="Map" />
           <Tab label="Timeline" />
@@ -302,21 +319,21 @@ const ScenarioSettingsDialog: React.FC<ScenarioSettingsDialogProps> = ({
                 fullWidth
                 label="Scenario Name"
                 value={settings.general.name}
-                onChange={(e) => updateGeneralSettings('name', e.target.value)}
+                onChange={e => updateGeneralSettings('name', e.target.value)}
                 margin="normal"
               />
               <TextField
                 fullWidth
                 label="Author"
                 value={settings.general.author}
-                onChange={(e) => updateGeneralSettings('author', e.target.value)}
+                onChange={e => updateGeneralSettings('author', e.target.value)}
                 margin="normal"
               />
               <TextField
                 fullWidth
                 label="Version"
                 value={settings.general.version}
-                onChange={(e) => updateGeneralSettings('version', e.target.value)}
+                onChange={e => updateGeneralSettings('version', e.target.value)}
                 margin="normal"
               />
             </Grid>
@@ -327,14 +344,21 @@ const ScenarioSettingsDialog: React.FC<ScenarioSettingsDialogProps> = ({
                 rows={4}
                 label="Description"
                 value={settings.general.description}
-                onChange={(e) => updateGeneralSettings('description', e.target.value)}
+                onChange={e =>
+                  updateGeneralSettings('description', e.target.value)
+                }
                 margin="normal"
               />
               <TextField
                 fullWidth
                 label="Tags (comma separated)"
                 value={settings.general.tags.join(', ')}
-                onChange={(e) => updateGeneralSettings('tags', e.target.value.split(',').map(tag => tag.trim()))}
+                onChange={e =>
+                  updateGeneralSettings(
+                    'tags',
+                    e.target.value.split(',').map(tag => tag.trim())
+                  )
+                }
                 margin="normal"
               />
             </Grid>
@@ -344,82 +368,100 @@ const ScenarioSettingsDialog: React.FC<ScenarioSettingsDialogProps> = ({
         <TabPanel value={tabValue} index={1}>
           <Grid container spacing={3}>
             <Grid item xs={12} md={6}>
-              <Typography variant="subtitle1" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <Typography
+                variant="subtitle1"
+                gutterBottom
+                sx={{ display: 'flex', alignItems: 'center', gap: 1 }}
+              >
                 <MapIcon /> Map Settings
               </Typography>
-              
+
               <TextField
                 fullWidth
                 type="number"
                 label="Default Zoom Level"
                 value={settings.map.defaultZoom}
-                onChange={(e) => updateMapSettings('defaultZoom', parseInt(e.target.value))}
+                onChange={e =>
+                  updateMapSettings('defaultZoom', parseInt(e.target.value))
+                }
                 margin="normal"
                 inputProps={{ min: 1, max: 20 }}
               />
-              
+
               <TextField
                 fullWidth
                 type="number"
                 label="Center Latitude"
                 value={settings.map.centerLat}
-                onChange={(e) => updateMapSettings('centerLat', parseFloat(e.target.value))}
+                onChange={e =>
+                  updateMapSettings('centerLat', parseFloat(e.target.value))
+                }
                 margin="normal"
                 inputProps={{ step: 0.000001 }}
               />
-              
+
               <TextField
                 fullWidth
                 type="number"
                 label="Center Longitude"
                 value={settings.map.centerLng}
-                onChange={(e) => updateMapSettings('centerLng', parseFloat(e.target.value))}
+                onChange={e =>
+                  updateMapSettings('centerLng', parseFloat(e.target.value))
+                }
                 margin="normal"
                 inputProps={{ step: 0.000001 }}
               />
             </Grid>
-            
+
             <Grid item xs={12} md={6}>
               <FormControl fullWidth margin="normal">
                 <InputLabel>Default Base Layer</InputLabel>
                 <Select
                   value={settings.map.defaultBaseLayer}
-                  onChange={(e) => updateMapSettings('defaultBaseLayer', e.target.value)}
+                  onChange={e =>
+                    updateMapSettings('defaultBaseLayer', e.target.value)
+                  }
                 >
                   <MenuItem value="osm">OpenStreetMap</MenuItem>
                   <MenuItem value="satellite">Satellite</MenuItem>
                   <MenuItem value="terrain">Terrain</MenuItem>
                 </Select>
               </FormControl>
-              
+
               <FormControlLabel
                 control={
                   <Switch
                     checked={settings.map.showGrid}
-                    onChange={(e) => updateMapSettings('showGrid', e.target.checked)}
+                    onChange={e =>
+                      updateMapSettings('showGrid', e.target.checked)
+                    }
                   />
                 }
                 label="Show Grid"
                 sx={{ mt: 2 }}
               />
-              
+
               <FormControlLabel
                 control={
                   <Switch
                     checked={settings.map.showCoordinates}
-                    onChange={(e) => updateMapSettings('showCoordinates', e.target.checked)}
+                    onChange={e =>
+                      updateMapSettings('showCoordinates', e.target.checked)
+                    }
                   />
                 }
                 label="Show Coordinates"
               />
-              
+
               {settings.map.showGrid && (
                 <TextField
                   fullWidth
                   type="number"
                   label="Grid Size (meters)"
                   value={settings.map.gridSize}
-                  onChange={(e) => updateMapSettings('gridSize', parseInt(e.target.value))}
+                  onChange={e =>
+                    updateMapSettings('gridSize', parseInt(e.target.value))
+                  }
                   margin="normal"
                 />
               )}
@@ -428,72 +470,82 @@ const ScenarioSettingsDialog: React.FC<ScenarioSettingsDialogProps> = ({
         </TabPanel>
 
         <TabPanel value={tabValue} index={2}>
-          <Typography variant="subtitle1" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <Typography
+            variant="subtitle1"
+            gutterBottom
+            sx={{ display: 'flex', alignItems: 'center', gap: 1 }}
+          >
             <TimelineIcon /> Timeline Settings
           </Typography>
-          
+
           <Grid container spacing={3}>
             <Grid item xs={12} md={6}>
-              <TextField
-                fullWidth
-                type="datetime-local"
-                label="Start Time"
-                value={settings.timeline.startTime.toISOString().slice(0, 16)}
-                onChange={(e) => updateTimelineSettings('startTime', new Date(e.target.value))}
-                margin="normal"
-                InputLabelProps={{ shrink: true }}
+              <PersianCalendarField
+                label="زمان شروع"
+                value={toLocalDateTimeInput(settings.timeline.startTime)}
+                onChange={value =>
+                  updateTimelineSettings('startTime', new Date(value))
+                }
               />
-              
-              <TextField
-                fullWidth
-                type="datetime-local"
-                label="End Time"
-                value={settings.timeline.endTime.toISOString().slice(0, 16)}
-                onChange={(e) => updateTimelineSettings('endTime', new Date(e.target.value))}
-                margin="normal"
-                InputLabelProps={{ shrink: true }}
-              />
-              
+
+              <Box sx={{ mt: 2 }}>
+                <PersianCalendarField
+                  label="زمان پایان"
+                  value={toLocalDateTimeInput(settings.timeline.endTime)}
+                  onChange={value =>
+                    updateTimelineSettings('endTime', new Date(value))
+                  }
+                />
+              </Box>
+
               <TextField
                 fullWidth
                 type="number"
                 label="Time Step (seconds)"
                 value={settings.timeline.timeStep}
-                onChange={(e) => updateTimelineSettings('timeStep', parseInt(e.target.value))}
+                onChange={e =>
+                  updateTimelineSettings('timeStep', parseInt(e.target.value))
+                }
                 margin="normal"
                 helperText="Time interval between simulation steps"
               />
             </Grid>
-            
+
             <Grid item xs={12} md={6}>
               <FormControlLabel
                 control={
                   <Switch
                     checked={settings.timeline.autoPlay}
-                    onChange={(e) => updateTimelineSettings('autoPlay', e.target.checked)}
+                    onChange={e =>
+                      updateTimelineSettings('autoPlay', e.target.checked)
+                    }
                   />
                 }
                 label="Auto Play on Load"
                 sx={{ mt: 2, mb: 2 }}
               />
-              
+
               <FormControlLabel
                 control={
                   <Switch
                     checked={settings.timeline.showEvents}
-                    onChange={(e) => updateTimelineSettings('showEvents', e.target.checked)}
+                    onChange={e =>
+                      updateTimelineSettings('showEvents', e.target.checked)
+                    }
                   />
                 }
                 label="Show Timeline Events"
                 sx={{ mb: 2 }}
               />
-              
+
               <Typography variant="body2" gutterBottom>
                 Playback Speed: {settings.timeline.playbackSpeed}x
               </Typography>
               <Slider
                 value={settings.timeline.playbackSpeed}
-                onChange={(_, value) => updateTimelineSettings('playbackSpeed', value)}
+                onChange={(_, value) =>
+                  updateTimelineSettings('playbackSpeed', value)
+                }
                 min={0.1}
                 max={10}
                 step={0.1}
@@ -501,7 +553,7 @@ const ScenarioSettingsDialog: React.FC<ScenarioSettingsDialogProps> = ({
                   { value: 0.5, label: '0.5x' },
                   { value: 1, label: '1x' },
                   { value: 2, label: '2x' },
-                  { value: 5, label: '5x' }
+                  { value: 5, label: '5x' },
                 ]}
               />
             </Grid>
@@ -509,69 +561,83 @@ const ScenarioSettingsDialog: React.FC<ScenarioSettingsDialogProps> = ({
         </TabPanel>
 
         <TabPanel value={tabValue} index={3}>
-          <Typography variant="subtitle1" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <Typography
+            variant="subtitle1"
+            gutterBottom
+            sx={{ display: 'flex', alignItems: 'center', gap: 1 }}
+          >
             <VisibilityIcon /> Display Settings
           </Typography>
-          
+
           <Grid container spacing={3}>
             <Grid item xs={12} md={6}>
               <FormControlLabel
                 control={
                   <Switch
                     checked={settings.display.showUnitLabels}
-                    onChange={(e) => updateDisplaySettings('showUnitLabels', e.target.checked)}
+                    onChange={e =>
+                      updateDisplaySettings('showUnitLabels', e.target.checked)
+                    }
                   />
                 }
                 label="Show Unit Labels"
                 sx={{ mb: 1 }}
               />
-              
+
               <FormControlLabel
                 control={
                   <Switch
                     checked={settings.display.showUnitIcons}
-                    onChange={(e) => updateDisplaySettings('showUnitIcons', e.target.checked)}
+                    onChange={e =>
+                      updateDisplaySettings('showUnitIcons', e.target.checked)
+                    }
                   />
                 }
                 label="Show Unit Icons"
                 sx={{ mb: 1 }}
               />
-              
+
               <FormControlLabel
                 control={
                   <Switch
                     checked={settings.display.showTrails}
-                    onChange={(e) => updateDisplaySettings('showTrails', e.target.checked)}
+                    onChange={e =>
+                      updateDisplaySettings('showTrails', e.target.checked)
+                    }
                   />
                 }
                 label="Show Unit Trails"
                 sx={{ mb: 2 }}
               />
             </Grid>
-            
+
             <Grid item xs={12} md={6}>
               <Typography variant="body2" gutterBottom>
                 Symbol Size: {settings.display.symbolSize}px
               </Typography>
               <Slider
                 value={settings.display.symbolSize}
-                onChange={(_, value) => updateDisplaySettings('symbolSize', value)}
+                onChange={(_, value) =>
+                  updateDisplaySettings('symbolSize', value)
+                }
                 min={16}
                 max={64}
                 sx={{ mb: 2 }}
               />
-              
+
               <Typography variant="body2" gutterBottom>
                 Label Size: {settings.display.labelSize}px
               </Typography>
               <Slider
                 value={settings.display.labelSize}
-                onChange={(_, value) => updateDisplaySettings('labelSize', value)}
+                onChange={(_, value) =>
+                  updateDisplaySettings('labelSize', value)
+                }
                 min={8}
                 max={24}
                 sx={{ mb: 2 }}
               />
-              
+
               {settings.display.showTrails && (
                 <>
                   <Typography variant="body2" gutterBottom>
@@ -579,7 +645,9 @@ const ScenarioSettingsDialog: React.FC<ScenarioSettingsDialogProps> = ({
                   </Typography>
                   <Slider
                     value={settings.display.trailLength}
-                    onChange={(_, value) => updateDisplaySettings('trailLength', value)}
+                    onChange={(_, value) =>
+                      updateDisplaySettings('trailLength', value)
+                    }
                     min={5}
                     max={50}
                   />
@@ -590,52 +658,76 @@ const ScenarioSettingsDialog: React.FC<ScenarioSettingsDialogProps> = ({
         </TabPanel>
 
         <TabPanel value={tabValue} index={4}>
-          <Typography variant="subtitle1" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <Typography
+            variant="subtitle1"
+            gutterBottom
+            sx={{ display: 'flex', alignItems: 'center', gap: 1 }}
+          >
             <SpeedIcon /> Simulation Settings
           </Typography>
-          
+
           <Grid container spacing={2}>
             <Grid item xs={12} md={6}>
               <FormControlLabel
                 control={
                   <Switch
                     checked={settings.simulation.enablePhysics}
-                    onChange={(e) => updateSimulationSettings('enablePhysics', e.target.checked)}
+                    onChange={e =>
+                      updateSimulationSettings(
+                        'enablePhysics',
+                        e.target.checked
+                      )
+                    }
                   />
                 }
                 label="Enable Physics Simulation"
                 sx={{ mb: 1 }}
               />
-              
+
               <FormControlLabel
                 control={
                   <Switch
                     checked={settings.simulation.collisionDetection}
-                    onChange={(e) => updateSimulationSettings('collisionDetection', e.target.checked)}
+                    onChange={e =>
+                      updateSimulationSettings(
+                        'collisionDetection',
+                        e.target.checked
+                      )
+                    }
                   />
                 }
                 label="Collision Detection"
                 sx={{ mb: 1 }}
               />
             </Grid>
-            
+
             <Grid item xs={12} md={6}>
               <FormControlLabel
                 control={
                   <Switch
                     checked={settings.simulation.weatherEffects}
-                    onChange={(e) => updateSimulationSettings('weatherEffects', e.target.checked)}
+                    onChange={e =>
+                      updateSimulationSettings(
+                        'weatherEffects',
+                        e.target.checked
+                      )
+                    }
                   />
                 }
                 label="Weather Effects"
                 sx={{ mb: 1 }}
               />
-              
+
               <FormControlLabel
                 control={
                   <Switch
                     checked={settings.simulation.terrainEffects}
-                    onChange={(e) => updateSimulationSettings('terrainEffects', e.target.checked)}
+                    onChange={e =>
+                      updateSimulationSettings(
+                        'terrainEffects',
+                        e.target.checked
+                      )
+                    }
                   />
                 }
                 label="Terrain Effects"
@@ -646,15 +738,17 @@ const ScenarioSettingsDialog: React.FC<ScenarioSettingsDialogProps> = ({
         </TabPanel>
 
         <TabPanel value={tabValue} index={5}>
-          <Typography variant="subtitle1" gutterBottom>Export Settings</Typography>
-          
+          <Typography variant="subtitle1" gutterBottom>
+            Export Settings
+          </Typography>
+
           <Grid container spacing={2}>
             <Grid item xs={12} md={6}>
               <FormControl fullWidth margin="normal">
                 <InputLabel>Export Format</InputLabel>
                 <Select
                   value={settings.export.format}
-                  onChange={(e) => updateExportSettings('format', e.target.value)}
+                  onChange={e => updateExportSettings('format', e.target.value)}
                 >
                   <MenuItem value="json">JSON</MenuItem>
                   <MenuItem value="kml">KML</MenuItem>
@@ -662,24 +756,28 @@ const ScenarioSettingsDialog: React.FC<ScenarioSettingsDialogProps> = ({
                 </Select>
               </FormControl>
             </Grid>
-            
+
             <Grid item xs={12} md={6}>
               <FormControlLabel
                 control={
                   <Switch
                     checked={settings.export.includeMetadata}
-                    onChange={(e) => updateExportSettings('includeMetadata', e.target.checked)}
+                    onChange={e =>
+                      updateExportSettings('includeMetadata', e.target.checked)
+                    }
                   />
                 }
                 label="Include Metadata"
                 sx={{ mt: 2, mb: 1 }}
               />
-              
+
               <FormControlLabel
                 control={
                   <Switch
                     checked={settings.export.compressData}
-                    onChange={(e) => updateExportSettings('compressData', e.target.checked)}
+                    onChange={e =>
+                      updateExportSettings('compressData', e.target.checked)
+                    }
                   />
                 }
                 label="Compress Data"
@@ -690,9 +788,16 @@ const ScenarioSettingsDialog: React.FC<ScenarioSettingsDialogProps> = ({
         </TabPanel>
       </DialogContent>
 
-      <DialogActions sx={{ borderTop: `1px solid ${alpha(accent, 0.2)}`, backgroundColor: alpha(accent, 0.04), px: 3, py: 2 }}>
-        <Button 
-          onClick={handleReset} 
+      <DialogActions
+        sx={{
+          borderTop: `1px solid ${alpha(accent, 0.2)}`,
+          backgroundColor: alpha(accent, 0.04),
+          px: 3,
+          py: 2,
+        }}
+      >
+        <Button
+          onClick={handleReset}
           startIcon={<RestoreIcon />}
           variant="outlined"
           color="inherit"
@@ -701,7 +806,7 @@ const ScenarioSettingsDialog: React.FC<ScenarioSettingsDialogProps> = ({
           بازنشانی به پیش‌فرض
         </Button>
         <Box sx={{ flex: 1 }} />
-        <Button 
+        <Button
           onClick={onClose}
           variant="outlined"
           color="inherit"
@@ -709,9 +814,9 @@ const ScenarioSettingsDialog: React.FC<ScenarioSettingsDialogProps> = ({
         >
           انصراف
         </Button>
-        <Button 
-          onClick={handleSave} 
-          variant="contained" 
+        <Button
+          onClick={handleSave}
+          variant="contained"
           color="success"
           startIcon={<SaveIcon />}
           sx={{ borderRadius: 2 }}

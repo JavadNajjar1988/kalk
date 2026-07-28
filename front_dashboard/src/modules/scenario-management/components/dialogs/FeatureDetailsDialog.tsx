@@ -19,7 +19,7 @@ import {
   Switch,
   FormControlLabel,
   Slider,
-  Chip
+  Chip,
 } from '@mui/material';
 import {
   Close as CloseIcon,
@@ -28,9 +28,10 @@ import {
   Cancel as CancelIcon,
   Place as PlaceIcon,
   Palette as PaletteIcon,
-  Visibility as VisibilityIcon
+  Visibility as VisibilityIcon,
 } from '@mui/icons-material';
 import { useOrbatIntegration } from '../../hooks/useOrbatIntegration';
+import { formatPersianDate } from '@/utils/dateUtils';
 
 interface FeatureDetailsDialogProps {
   open: boolean;
@@ -67,7 +68,7 @@ interface FeatureData {
   notes: string;
 }
 
-type FeatureType = 
+type FeatureType =
   | 'unit_position'
   | 'objective'
   | 'boundary'
@@ -99,12 +100,22 @@ const FEATURE_TYPES: { value: FeatureType; label: string }[] = [
   { value: 'building', label: 'Building' },
   { value: 'terrain', label: 'Terrain Feature' },
   { value: 'annotation', label: 'Annotation' },
-  { value: 'area_of_interest', label: 'Area of Interest' }
+  { value: 'area_of_interest', label: 'Area of Interest' },
 ];
 
 const PRESET_COLORS = [
-  '#FF0000', '#00FF00', '#0000FF', '#FFFF00', '#FF00FF', '#00FFFF',
-  '#FF8000', '#8000FF', '#0080FF', '#80FF00', '#FF0080', '#00FF80'
+  '#FF0000',
+  '#00FF00',
+  '#0000FF',
+  '#FFFF00',
+  '#FF00FF',
+  '#00FFFF',
+  '#FF8000',
+  '#8000FF',
+  '#0080FF',
+  '#80FF00',
+  '#FF0080',
+  '#00FF80',
 ];
 
 const FeatureDetailsDialog: React.FC<FeatureDetailsDialogProps> = ({
@@ -112,7 +123,7 @@ const FeatureDetailsDialog: React.FC<FeatureDetailsDialogProps> = ({
   featureId,
   onClose,
   onSave,
-  readonly = false
+  readonly = false,
 }) => {
   const [feature, setFeature] = useState<FeatureData | null>(null);
   const [editMode, setEditMode] = useState(false);
@@ -128,7 +139,7 @@ const FeatureDetailsDialog: React.FC<FeatureDetailsDialogProps> = ({
 
   const loadFeatureData = async () => {
     if (!featureId || !orbatInstance) return;
-    
+
     setLoading(true);
     try {
       const featureData = await orbatInstance.getFeatureData(featureId);
@@ -141,16 +152,16 @@ const FeatureDetailsDialog: React.FC<FeatureDetailsDialogProps> = ({
 
   const handleSave = async () => {
     if (!feature) return;
-    
+
     try {
       const updatedFeature = {
         ...feature,
         metadata: {
           ...feature.metadata,
-          modified: new Date()
-        }
+          modified: new Date(),
+        },
       };
-      
+
       if (orbatInstance) {
         await orbatInstance.updateFeature(feature.id, updatedFeature);
       }
@@ -177,8 +188,8 @@ const FeatureDetailsDialog: React.FC<FeatureDetailsDialogProps> = ({
       ...feature,
       properties: {
         ...feature.properties,
-        [property]: value
-      }
+        [property]: value,
+      },
     });
   };
 
@@ -212,13 +223,22 @@ const FeatureDetailsDialog: React.FC<FeatureDetailsDialogProps> = ({
   return (
     <Dialog open={open} onClose={onClose} maxWidth="lg" fullWidth>
       <DialogTitle>
-        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+          }}
+        >
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             <PlaceIcon />
             <Typography variant="h6">{feature.name}</Typography>
-            <Chip 
-              label={FEATURE_TYPES.find(t => t.value === feature.type)?.label || feature.type} 
-              size="small" 
+            <Chip
+              label={
+                FEATURE_TYPES.find(t => t.value === feature.type)?.label ||
+                feature.type
+              }
+              size="small"
             />
           </Box>
           <Box>
@@ -235,7 +255,10 @@ const FeatureDetailsDialog: React.FC<FeatureDetailsDialogProps> = ({
       </DialogTitle>
 
       <DialogContent>
-        <Tabs value={tabValue} onChange={(_, newValue) => setTabValue(newValue)}>
+        <Tabs
+          value={tabValue}
+          onChange={(_, newValue) => setTabValue(newValue)}
+        >
           <Tab label="General" />
           <Tab label="Appearance" />
           <Tab label="Geometry" />
@@ -248,7 +271,7 @@ const FeatureDetailsDialog: React.FC<FeatureDetailsDialogProps> = ({
                 fullWidth
                 label="Feature Name"
                 value={feature.name}
-                onChange={(e) => handleFieldChange('name', e.target.value)}
+                onChange={e => handleFieldChange('name', e.target.value)}
                 disabled={!editMode}
                 margin="normal"
               />
@@ -256,10 +279,10 @@ const FeatureDetailsDialog: React.FC<FeatureDetailsDialogProps> = ({
                 <InputLabel>Feature Type</InputLabel>
                 <Select
                   value={feature.type}
-                  onChange={(e) => handleFieldChange('type', e.target.value)}
+                  onChange={e => handleFieldChange('type', e.target.value)}
                   disabled={!editMode}
                 >
-                  {FEATURE_TYPES.map((type) => (
+                  {FEATURE_TYPES.map(type => (
                     <MenuItem key={type.value} value={type.value}>
                       {type.label}
                     </MenuItem>
@@ -272,19 +295,28 @@ const FeatureDetailsDialog: React.FC<FeatureDetailsDialogProps> = ({
                 rows={3}
                 label="Description"
                 value={feature.description}
-                onChange={(e) => handleFieldChange('description', e.target.value)}
+                onChange={e => handleFieldChange('description', e.target.value)}
                 disabled={!editMode}
                 margin="normal"
               />
             </Grid>
             <Grid item xs={12} md={6}>
-              <Box sx={{ p: 2, bgcolor: 'background.default', borderRadius: 1, mb: 2 }}>
-                <Typography variant="subtitle2" gutterBottom>Metadata</Typography>
-                <Typography variant="body2" color="text.secondary">
-                  Created: {feature.metadata.created.toLocaleDateString()}
+              <Box
+                sx={{
+                  p: 2,
+                  bgcolor: 'background.default',
+                  borderRadius: 1,
+                  mb: 2,
+                }}
+              >
+                <Typography variant="subtitle2" gutterBottom>
+                  Metadata
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
-                  Modified: {feature.metadata.modified.toLocaleDateString()}
+                  ایجاد: {formatPersianDate(feature.metadata.created)}
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  ویرایش: {formatPersianDate(feature.metadata.modified)}
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
                   Author: {feature.metadata.author}
@@ -294,7 +326,12 @@ const FeatureDetailsDialog: React.FC<FeatureDetailsDialogProps> = ({
                 fullWidth
                 label="Tags (comma separated)"
                 value={feature.tags.join(', ')}
-                onChange={(e) => handleFieldChange('tags', e.target.value.split(',').map(tag => tag.trim()))}
+                onChange={e =>
+                  handleFieldChange(
+                    'tags',
+                    e.target.value.split(',').map(tag => tag.trim())
+                  )
+                }
                 disabled={!editMode}
                 margin="normal"
               />
@@ -306,7 +343,7 @@ const FeatureDetailsDialog: React.FC<FeatureDetailsDialogProps> = ({
                 rows={4}
                 label="Notes"
                 value={feature.notes}
-                onChange={(e) => handleFieldChange('notes', e.target.value)}
+                onChange={e => handleFieldChange('notes', e.target.value)}
                 disabled={!editMode}
                 margin="normal"
               />
@@ -321,19 +358,21 @@ const FeatureDetailsDialog: React.FC<FeatureDetailsDialogProps> = ({
                 control={
                   <Switch
                     checked={feature.properties.visible}
-                    onChange={(e) => handlePropertyChange('visible', e.target.checked)}
+                    onChange={e =>
+                      handlePropertyChange('visible', e.target.checked)
+                    }
                     disabled={!editMode}
                   />
                 }
                 label="Visible on map"
               />
-              
+
               <Box sx={{ mt: 2 }}>
                 <Typography variant="subtitle2" gutterBottom>
                   Stroke Color
                 </Typography>
                 <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', mb: 2 }}>
-                  {PRESET_COLORS.map((color) => (
+                  {PRESET_COLORS.map(color => (
                     <Box
                       key={color}
                       sx={{
@@ -341,11 +380,16 @@ const FeatureDetailsDialog: React.FC<FeatureDetailsDialogProps> = ({
                         height: 32,
                         bgcolor: color,
                         border: feature.properties.color === color ? 2 : 1,
-                        borderColor: feature.properties.color === color ? 'primary.main' : 'divider',
+                        borderColor:
+                          feature.properties.color === color
+                            ? 'primary.main'
+                            : 'divider',
                         borderRadius: 1,
-                        cursor: editMode ? 'pointer' : 'default'
+                        cursor: editMode ? 'pointer' : 'default',
                       }}
-                      onClick={() => editMode && handlePropertyChange('color', color)}
+                      onClick={() =>
+                        editMode && handlePropertyChange('color', color)
+                      }
                     />
                   ))}
                 </Box>
@@ -353,7 +397,7 @@ const FeatureDetailsDialog: React.FC<FeatureDetailsDialogProps> = ({
                   size="small"
                   label="Custom Color"
                   value={feature.properties.color}
-                  onChange={(e) => handlePropertyChange('color', e.target.value)}
+                  onChange={e => handlePropertyChange('color', e.target.value)}
                   disabled={!editMode}
                 />
               </Box>
@@ -367,7 +411,9 @@ const FeatureDetailsDialog: React.FC<FeatureDetailsDialogProps> = ({
                     size="small"
                     label="Fill Color"
                     value={feature.properties.fillColor || ''}
-                    onChange={(e) => handlePropertyChange('fillColor', e.target.value)}
+                    onChange={e =>
+                      handlePropertyChange('fillColor', e.target.value)
+                    }
                     disabled={!editMode}
                   />
                 </Box>
@@ -380,7 +426,9 @@ const FeatureDetailsDialog: React.FC<FeatureDetailsDialogProps> = ({
               </Typography>
               <Slider
                 value={feature.properties.strokeWidth}
-                onChange={(_, value) => handlePropertyChange('strokeWidth', value)}
+                onChange={(_, value) =>
+                  handlePropertyChange('strokeWidth', value)
+                }
                 min={1}
                 max={10}
                 disabled={!editMode}
@@ -403,11 +451,14 @@ const FeatureDetailsDialog: React.FC<FeatureDetailsDialogProps> = ({
               {feature.geometry.type === 'Polygon' && (
                 <>
                   <Typography variant="subtitle2" gutterBottom>
-                    Fill Opacity: {Math.round((feature.properties.fillOpacity || 0.3) * 100)}%
+                    Fill Opacity:{' '}
+                    {Math.round((feature.properties.fillOpacity || 0.3) * 100)}%
                   </Typography>
                   <Slider
                     value={feature.properties.fillOpacity || 0.3}
-                    onChange={(_, value) => handlePropertyChange('fillOpacity', value)}
+                    onChange={(_, value) =>
+                      handlePropertyChange('fillOpacity', value)
+                    }
                     min={0}
                     max={1}
                     step={0.1}
@@ -438,7 +489,7 @@ const FeatureDetailsDialog: React.FC<FeatureDetailsDialogProps> = ({
                 Geometry Type
               </Typography>
               <Chip label={feature.geometry.type} sx={{ mb: 2 }} />
-              
+
               <Typography variant="subtitle2" gutterBottom>
                 Coordinates
               </Typography>
@@ -447,7 +498,9 @@ const FeatureDetailsDialog: React.FC<FeatureDetailsDialogProps> = ({
               </Typography>
             </Grid>
             <Grid item xs={12} md={6}>
-              <Box sx={{ p: 2, bgcolor: 'background.default', borderRadius: 1 }}>
+              <Box
+                sx={{ p: 2, bgcolor: 'background.default', borderRadius: 1 }}
+              >
                 <Typography variant="subtitle2" gutterBottom>
                   Geometry Details
                 </Typography>
@@ -457,25 +510,33 @@ const FeatureDetailsDialog: React.FC<FeatureDetailsDialogProps> = ({
                 {feature.geometry.type === 'Point' && (
                   <>
                     <Typography variant="body2" color="text.secondary">
-                      Latitude: {(feature.geometry.coordinates as number[])[1].toFixed(6)}
+                      Latitude:{' '}
+                      {(feature.geometry.coordinates as number[])[1].toFixed(6)}
                     </Typography>
                     <Typography variant="body2" color="text.secondary">
-                      Longitude: {(feature.geometry.coordinates as number[])[0].toFixed(6)}
+                      Longitude:{' '}
+                      {(feature.geometry.coordinates as number[])[0].toFixed(6)}
                     </Typography>
                   </>
                 )}
                 {feature.geometry.type === 'LineString' && (
                   <Typography variant="body2" color="text.secondary">
-                    Points: {(feature.geometry.coordinates as number[][]).length}
+                    Points:{' '}
+                    {(feature.geometry.coordinates as number[][]).length}
                   </Typography>
                 )}
                 {feature.geometry.type === 'Polygon' && (
                   <>
                     <Typography variant="body2" color="text.secondary">
-                      Rings: {(feature.geometry.coordinates as number[][][]).length}
+                      Rings:{' '}
+                      {(feature.geometry.coordinates as number[][][]).length}
                     </Typography>
                     <Typography variant="body2" color="text.secondary">
-                      Total Points: {(feature.geometry.coordinates as number[][][]).reduce((sum, ring) => sum + ring.length, 0)}
+                      Total Points:{' '}
+                      {(feature.geometry.coordinates as number[][][]).reduce(
+                        (sum, ring) => sum + ring.length,
+                        0
+                      )}
                     </Typography>
                   </>
                 )}
@@ -491,7 +552,11 @@ const FeatureDetailsDialog: React.FC<FeatureDetailsDialogProps> = ({
             <Button onClick={handleCancel} startIcon={<CancelIcon />}>
               Cancel
             </Button>
-            <Button onClick={handleSave} variant="contained" startIcon={<SaveIcon />}>
+            <Button
+              onClick={handleSave}
+              variant="contained"
+              startIcon={<SaveIcon />}
+            >
               Save Changes
             </Button>
           </>

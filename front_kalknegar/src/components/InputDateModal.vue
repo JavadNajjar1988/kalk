@@ -1,16 +1,13 @@
 <script setup lang="ts">
-import { computed } from "vue";
-import { useStorage } from "@vueuse/core";
+import { computed, ref, watch } from "vue";
 import PrimaryButton from "./PrimaryButton.vue";
-import InputGroup from "./InputGroup.vue";
-import DescriptionItem from "./DescriptionItem.vue";
-import { useDateElements } from "@/composables/scenarioTime";
-import { useFocusOnMount } from "@/components/helpers";
 import ScenarioEventsPanel from "@/modules/scenarioeditor/ScenarioEventsPanel.vue";
 import { type ScenarioEvent } from "@/types/scenarioModels";
-import ToggleField from "@/components/ToggleField.vue";
 import NewSimpleModal from "@/components/NewSimpleModal.vue";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import PersianDateTimeField from "@/components/PersianDateTimeField.vue";
+import dayjs from "@/dayjs";
+import { jalaliDateTimeFormatter } from "@/utils/jalaliFormatters";
 
 interface Props {
   dialogTitle?: string;
@@ -27,16 +24,20 @@ const props = withDefaults(defineProps<Props>(), {
 });
 const emit = defineEmits(["update:timestamp", "cancel"]);
 
-const { focusId } = useFocusOnMount(undefined, 150);
-
 const open = defineModel<boolean>();
-const enabled = useStorage("utc-mode", false);
-const isLocal = computed(() => !enabled.value);
-const { date, hour, minute, resDateTime } = useDateElements({
-  timestamp: props.timestamp,
-  isLocal,
-  timeZone: props.timeZone,
-});
+const localDateTime = ref("");
+
+const inputDateTime = computed(() => dayjs.utc(props.timestamp).tz(props.timeZone));
+
+watch(
+  inputDateTime,
+  (value) => {
+    localDateTime.value = value.format("YYYY-MM-DDTHH:mm");
+  },
+  { immediate: true },
+);
+
+const resDateTime = computed(() => dayjs.tz(localDateTime.value, props.timeZone));
 
 const updateTime = () => {
   emit("update:timestamp", resDateTime.value.valueOf());
@@ -57,20 +58,16 @@ function onEventClick(event: ScenarioEvent) {
       </TabsList>
       <TabsContent value="time">
         <form @submit.prevent="updateTime" class="mt-4 space-y-6">
-          <div class="flex items-center justify-between">
-            <DescriptionItem label="نام منطقه زمانی">
-              {{ timeZone }}
-            </DescriptionItem>
-            <ToggleField v-model="enabled">حالت UTC</ToggleField>
-          </div>
-          <InputGroup :id="focusId" label="تاریخ" type="date" v-model="date" />
-          <div class="flex space-x-4">
-            <InputGroup label="ساعت" v-model="hour" type="number" min="0" max="23" />
-            <InputGroup label="دقیقه" v-model="minute" type="number" min="0" max="59" />
-          </div>
+          <PersianDateTimeField
+            v-model="localDateTime"
+            label="تاریخ و زمان سناریو"
+            required
+          />
 
           <p class="flex items-center justify-between">
-            <span class="font-mono text-gray-700">{{ resDateTime.format() }}</span>
+            <span class="font-mono text-gray-700">
+              {{ jalaliDateTimeFormatter(resDateTime.valueOf()) }}
+            </span>
             <PrimaryButton type="submit" class="">به‌روزرسانی زمان</PrimaryButton>
           </p>
         </form>

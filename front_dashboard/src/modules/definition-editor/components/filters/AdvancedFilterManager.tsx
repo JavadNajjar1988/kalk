@@ -33,7 +33,7 @@ import {
   Tooltip,
   Badge,
   Menu,
-  alpha
+  alpha,
 } from '@mui/material';
 import {
   Add as AddIcon,
@@ -49,7 +49,7 @@ import {
   Upload as ImportIcon,
   Clear as ClearIcon,
   Check as CheckIcon,
-  Close as CloseIcon
+  Close as CloseIcon,
 } from '@mui/icons-material';
 
 // Types
@@ -59,8 +59,9 @@ import type {
   AdvancedFilterConfig,
   SavedFilter,
   FilterOperator,
-  FilterFieldDefinition
+  FilterFieldDefinition,
 } from '../../types/fieldConstructor';
+import PersianCalendarField from '@/components/common/PersianCalendarField';
 
 interface AdvancedFilterManagerProps {
   availableFields: FilterFieldDefinition[];
@@ -81,26 +82,26 @@ const AdvancedFilterManager: React.FC<AdvancedFilterManagerProps> = ({
   savedFilters = [],
   onSaveFilter,
   onLoadFilter,
-  onDeleteFilter
+  onDeleteFilter,
 }) => {
   const [filterConfig, setFilterConfig] = useState<AdvancedFilterConfig>(
     currentFilter || {
       groups: [],
       globalLogicalOperator: 'AND',
-      savedFilters: []
+      savedFilters: [],
     }
   );
-  
+
   const [dialogOpen, setDialogOpen] = useState(false);
   const [saveDialogOpen, setSaveDialogOpen] = useState(false);
   const [editingGroup, setEditingGroup] = useState<FilterGroup | null>(null);
   const [menuAnchor, setMenuAnchor] = useState<HTMLElement | null>(null);
-  
+
   // Form states for new/edit filter group
   const [groupName, setGroupName] = useState('');
   const [groupOperator, setGroupOperator] = useState<'AND' | 'OR'>('AND');
   const [criteria, setCriteria] = useState<FilterCriteria[]>([]);
-  
+
   // Save filter form states
   const [saveFilterName, setSaveFilterName] = useState('');
   const [saveFilterDescription, setSaveFilterDescription] = useState('');
@@ -111,11 +112,40 @@ const AdvancedFilterManager: React.FC<AdvancedFilterManagerProps> = ({
   const getOperatorsForFieldType = (fieldType: string): FilterOperator[] => {
     switch (fieldType) {
       case 'text':
-        return ['=', '!=', 'contains', 'not_contains', 'starts_with', 'ends_with', 'exists', 'not_exists'];
+        return [
+          '=',
+          '!=',
+          'contains',
+          'not_contains',
+          'starts_with',
+          'ends_with',
+          'exists',
+          'not_exists',
+        ];
       case 'number':
-        return ['=', '!=', '>', '<', '>=', '<=', 'between', 'exists', 'not_exists'];
+        return [
+          '=',
+          '!=',
+          '>',
+          '<',
+          '>=',
+          '<=',
+          'between',
+          'exists',
+          'not_exists',
+        ];
       case 'date':
-        return ['=', '!=', '>', '<', '>=', '<=', 'between', 'exists', 'not_exists'];
+        return [
+          '=',
+          '!=',
+          '>',
+          '<',
+          '>=',
+          '<=',
+          'between',
+          'exists',
+          'not_exists',
+        ];
       case 'boolean':
         return ['=', '!=', 'exists', 'not_exists'];
       case 'select':
@@ -131,13 +161,15 @@ const AdvancedFilterManager: React.FC<AdvancedFilterManagerProps> = ({
     setEditingGroup(null);
     setGroupName('');
     setGroupOperator('AND');
-    setCriteria([{
-      id: `criteria_${Date.now()}`,
-      field: availableFields[0]?.id || '',
-      operator: '=',
-      value: '',
-      logicalOperator: 'AND'
-    }]);
+    setCriteria([
+      {
+        id: `criteria_${Date.now()}`,
+        field: availableFields[0]?.id || '',
+        operator: '=',
+        value: '',
+        logicalOperator: 'AND',
+      },
+    ]);
     setDialogOpen(true);
   };
 
@@ -157,14 +189,16 @@ const AdvancedFilterManager: React.FC<AdvancedFilterManagerProps> = ({
       name: groupName,
       criteria,
       logicalOperator: groupOperator,
-      isActive: true
+      isActive: true,
     };
 
     const updatedConfig = {
       ...filterConfig,
       groups: editingGroup
-        ? filterConfig.groups.map(g => g.id === editingGroup.id ? newGroup : g)
-        : [...filterConfig.groups, newGroup]
+        ? filterConfig.groups.map(g =>
+            g.id === editingGroup.id ? newGroup : g
+          )
+        : [...filterConfig.groups, newGroup],
     };
 
     setFilterConfig(updatedConfig);
@@ -176,7 +210,7 @@ const AdvancedFilterManager: React.FC<AdvancedFilterManagerProps> = ({
   const handleDeleteGroup = (groupId: string) => {
     const updatedConfig = {
       ...filterConfig,
-      groups: filterConfig.groups.filter(g => g.id !== groupId)
+      groups: filterConfig.groups.filter(g => g.id !== groupId),
     };
     setFilterConfig(updatedConfig);
     onFilterChange(updatedConfig);
@@ -186,9 +220,9 @@ const AdvancedFilterManager: React.FC<AdvancedFilterManagerProps> = ({
   const handleToggleGroup = (groupId: string) => {
     const updatedConfig = {
       ...filterConfig,
-      groups: filterConfig.groups.map(g => 
+      groups: filterConfig.groups.map(g =>
         g.id === groupId ? { ...g, isActive: !g.isActive } : g
-      )
+      ),
     };
     setFilterConfig(updatedConfig);
     onFilterChange(updatedConfig);
@@ -201,16 +235,19 @@ const AdvancedFilterManager: React.FC<AdvancedFilterManagerProps> = ({
       field: availableFields[0]?.id || '',
       operator: '=',
       value: '',
-      logicalOperator: 'AND'
+      logicalOperator: 'AND',
     };
     setCriteria([...criteria, newCriteria]);
   };
 
   // Update criteria
-  const handleUpdateCriteria = (criteriaId: string, updates: Partial<FilterCriteria>) => {
-    setCriteria(criteria.map(c => 
-      c.id === criteriaId ? { ...c, ...updates } : c
-    ));
+  const handleUpdateCriteria = (
+    criteriaId: string,
+    updates: Partial<FilterCriteria>
+  ) => {
+    setCriteria(
+      criteria.map(c => (c.id === criteriaId ? { ...c, ...updates } : c))
+    );
   };
 
   // Delete criteria
@@ -229,7 +266,7 @@ const AdvancedFilterManager: React.FC<AdvancedFilterManagerProps> = ({
       config: filterConfig,
       createdAt: new Date(),
       isPublic: saveFilterPublic,
-      tags: saveFilterTags
+      tags: saveFilterTags,
     };
 
     onSaveFilter(newSavedFilter);
@@ -245,7 +282,7 @@ const AdvancedFilterManager: React.FC<AdvancedFilterManagerProps> = ({
     const clearedConfig: AdvancedFilterConfig = {
       groups: [],
       globalLogicalOperator: 'AND',
-      savedFilters: []
+      savedFilters: [],
     };
     setFilterConfig(clearedConfig);
     onFilterChange(clearedConfig);
@@ -275,9 +312,10 @@ const AdvancedFilterManager: React.FC<AdvancedFilterManagerProps> = ({
 
     const commonProps = {
       value: criteria.value || '',
-      onChange: (e: any) => handleUpdateCriteria(criteria.id, { value: e.target.value }),
+      onChange: (e: any) =>
+        handleUpdateCriteria(criteria.id, { value: e.target.value }),
       size: 'small' as const,
-      sx: { minWidth: 120 }
+      sx: { minWidth: 120 },
     };
 
     switch (field.type) {
@@ -293,18 +331,24 @@ const AdvancedFilterManager: React.FC<AdvancedFilterManagerProps> = ({
             </Select>
           </FormControl>
         );
-      
+
       case 'multiSelect':
         return (
           <FormControl {...commonProps}>
             <Select
               {...commonProps}
               multiple
-              renderValue={(selected) => (
+              renderValue={selected => (
                 <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                  {(selected as string[]).map((value) => {
+                  {(selected as string[]).map(value => {
                     const option = field.options?.find(o => o.value === value);
-                    return <Chip key={value} label={option?.label || value} size="small" />;
+                    return (
+                      <Chip
+                        key={value}
+                        label={option?.label || value}
+                        size="small"
+                      />
+                    );
                   })}
                 </Box>
               )}
@@ -317,7 +361,7 @@ const AdvancedFilterManager: React.FC<AdvancedFilterManagerProps> = ({
             </Select>
           </FormControl>
         );
-      
+
       case 'number':
         return (
           <TextField
@@ -325,20 +369,20 @@ const AdvancedFilterManager: React.FC<AdvancedFilterManagerProps> = ({
             type="number"
             inputProps={{
               min: field.validation?.min,
-              max: field.validation?.max
+              max: field.validation?.max,
             }}
           />
         );
-      
+
       case 'date':
         return (
-          <TextField
-            {...commonProps}
-            type="date"
-            InputLabelProps={{ shrink: true }}
+          <PersianCalendarField
+            value={String(criteria.value || '')}
+            onChange={value => handleUpdateCriteria(criteria.id, { value })}
+            dateOnly
           />
         );
-      
+
       case 'boolean':
         return (
           <FormControl {...commonProps}>
@@ -348,7 +392,7 @@ const AdvancedFilterManager: React.FC<AdvancedFilterManagerProps> = ({
             </Select>
           </FormControl>
         );
-      
+
       default:
         return <TextField {...commonProps} />;
     }
@@ -357,40 +401,71 @@ const AdvancedFilterManager: React.FC<AdvancedFilterManagerProps> = ({
   return (
     <Box>
       {/* Header */}
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+      <Box
+        sx={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          mb: 2,
+        }}
+      >
         <Typography variant="h6">
           Advanced Filters
-          <Badge badgeContent={filterConfig.groups.filter(g => g.isActive).length} color="primary" sx={{ ml: 1 }}>
+          <Badge
+            badgeContent={filterConfig.groups.filter(g => g.isActive).length}
+            color="primary"
+            sx={{ ml: 1 }}
+          >
             <FilterIcon />
           </Badge>
         </Typography>
-        
+
         <Box sx={{ display: 'flex', gap: 1 }}>
-          <Button startIcon={<AddIcon />} onClick={handleAddGroup} variant="outlined" size="small">
+          <Button
+            startIcon={<AddIcon />}
+            onClick={handleAddGroup}
+            variant="outlined"
+            size="small"
+          >
             Add Group
           </Button>
-          
+
           <IconButton
-            onClick={(e) => setMenuAnchor(e.currentTarget)}
+            onClick={e => setMenuAnchor(e.currentTarget)}
             size="small"
           >
             <MoreIcon />
           </IconButton>
-          
+
           <Menu
             anchorEl={menuAnchor}
             open={Boolean(menuAnchor)}
             onClose={() => setMenuAnchor(null)}
           >
-            <MenuItem onClick={() => { setSaveDialogOpen(true); setMenuAnchor(null); }}>
+            <MenuItem
+              onClick={() => {
+                setSaveDialogOpen(true);
+                setMenuAnchor(null);
+              }}
+            >
               <SaveIcon fontSize="small" sx={{ mr: 1 }} />
               Save Filter
             </MenuItem>
-            <MenuItem onClick={() => { handleExportFilter(); setMenuAnchor(null); }}>
+            <MenuItem
+              onClick={() => {
+                handleExportFilter();
+                setMenuAnchor(null);
+              }}
+            >
               <ExportIcon fontSize="small" sx={{ mr: 1 }} />
               Export
             </MenuItem>
-            <MenuItem onClick={() => { handleClearFilters(); setMenuAnchor(null); }}>
+            <MenuItem
+              onClick={() => {
+                handleClearFilters();
+                setMenuAnchor(null);
+              }}
+            >
               <ClearIcon fontSize="small" sx={{ mr: 1 }} />
               Clear All
             </MenuItem>
@@ -405,10 +480,10 @@ const AdvancedFilterManager: React.FC<AdvancedFilterManagerProps> = ({
             <InputLabel>Group Logic</InputLabel>
             <Select
               value={filterConfig.globalLogicalOperator}
-              onChange={(e) => {
+              onChange={e => {
                 const updatedConfig = {
                   ...filterConfig,
-                  globalLogicalOperator: e.target.value as 'AND' | 'OR'
+                  globalLogicalOperator: e.target.value as 'AND' | 'OR',
                 };
                 setFilterConfig(updatedConfig);
                 onFilterChange(updatedConfig);
@@ -424,9 +499,18 @@ const AdvancedFilterManager: React.FC<AdvancedFilterManagerProps> = ({
       {/* Filter Groups */}
       <Box sx={{ mb: 2 }}>
         {filterConfig.groups.map((group, index) => (
-          <Card key={group.id} sx={{ mb: 1, opacity: group.isActive ? 1 : 0.6 }}>
+          <Card
+            key={group.id}
+            sx={{ mb: 1, opacity: group.isActive ? 1 : 0.6 }}
+          >
             <CardContent sx={{ py: 1 }}>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <Box
+                sx={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                }}
+              >
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                   <Switch
                     checked={group.isActive}
@@ -434,28 +518,48 @@ const AdvancedFilterManager: React.FC<AdvancedFilterManagerProps> = ({
                     size="small"
                   />
                   <Typography variant="subtitle2">{group.name}</Typography>
-                  <Chip label={group.logicalOperator} size="small" variant="outlined" />
-                  <Badge badgeContent={group.criteria.length} color="secondary" size="small">
+                  <Chip
+                    label={group.logicalOperator}
+                    size="small"
+                    variant="outlined"
+                  />
+                  <Badge
+                    badgeContent={group.criteria.length}
+                    color="secondary"
+                    size="small"
+                  >
                     <FilterIcon fontSize="small" />
                   </Badge>
                 </Box>
-                
+
                 <Box>
-                  <IconButton onClick={() => handleEditGroup(group)} size="small">
+                  <IconButton
+                    onClick={() => handleEditGroup(group)}
+                    size="small"
+                  >
                     <EditIcon fontSize="small" />
                   </IconButton>
-                  <IconButton onClick={() => handleDeleteGroup(group.id)} size="small" color="error">
+                  <IconButton
+                    onClick={() => handleDeleteGroup(group.id)}
+                    size="small"
+                    color="error"
+                  >
                     <DeleteIcon fontSize="small" />
                   </IconButton>
                 </Box>
               </Box>
-              
+
               {/* Show criteria preview */}
               <Box sx={{ mt: 1 }}>
                 {group.criteria.map((criteria, idx) => {
                   const field = getFieldDefinition(criteria.field);
                   return (
-                    <Typography key={criteria.id} variant="caption" display="block" color="text.secondary">
+                    <Typography
+                      key={criteria.id}
+                      variant="caption"
+                      display="block"
+                      color="text.secondary"
+                    >
                       {idx > 0 && ` ${criteria.logicalOperator} `}
                       {field?.name} {criteria.operator} {criteria.value}
                     </Typography>
@@ -474,7 +578,8 @@ const AdvancedFilterManager: React.FC<AdvancedFilterManagerProps> = ({
         disabled={filterConfig.groups.filter(g => g.isActive).length === 0}
         fullWidth
       >
-        Apply Filters ({filterConfig.groups.filter(g => g.isActive).length} active)
+        Apply Filters ({filterConfig.groups.filter(g => g.isActive).length}{' '}
+        active)
       </Button>
 
       {/* Saved Filters */}
@@ -487,17 +592,24 @@ const AdvancedFilterManager: React.FC<AdvancedFilterManagerProps> = ({
           </AccordionSummary>
           <AccordionDetails>
             <List dense>
-              {savedFilters.map((saved) => (
+              {savedFilters.map(saved => (
                 <ListItem key={saved.id}>
                   <ListItemText
                     primary={saved.name}
                     secondary={saved.description}
                   />
                   <ListItemSecondaryAction>
-                    <IconButton onClick={() => onLoadFilter?.(saved)} size="small">
+                    <IconButton
+                      onClick={() => onLoadFilter?.(saved)}
+                      size="small"
+                    >
                       <CheckIcon fontSize="small" />
                     </IconButton>
-                    <IconButton onClick={() => onDeleteFilter?.(saved.id)} size="small" color="error">
+                    <IconButton
+                      onClick={() => onDeleteFilter?.(saved.id)}
+                      size="small"
+                      color="error"
+                    >
                       <DeleteIcon fontSize="small" />
                     </IconButton>
                   </ListItemSecondaryAction>
@@ -509,7 +621,12 @@ const AdvancedFilterManager: React.FC<AdvancedFilterManagerProps> = ({
       )}
 
       {/* Add/Edit Group Dialog */}
-      <Dialog open={dialogOpen} onClose={() => setDialogOpen(false)} maxWidth="md" fullWidth>
+      <Dialog
+        open={dialogOpen}
+        onClose={() => setDialogOpen(false)}
+        maxWidth="md"
+        fullWidth
+      >
         <DialogTitle>
           {editingGroup ? 'Edit Filter Group' : 'Add Filter Group'}
         </DialogTitle>
@@ -520,7 +637,7 @@ const AdvancedFilterManager: React.FC<AdvancedFilterManagerProps> = ({
                 fullWidth
                 label="Group Name"
                 value={groupName}
-                onChange={(e) => setGroupName(e.target.value)}
+                onChange={e => setGroupName(e.target.value)}
               />
             </Grid>
             <Grid item xs={12} sm={6}>
@@ -528,7 +645,9 @@ const AdvancedFilterManager: React.FC<AdvancedFilterManagerProps> = ({
                 <InputLabel>Logic Operator</InputLabel>
                 <Select
                   value={groupOperator}
-                  onChange={(e) => setGroupOperator(e.target.value as 'AND' | 'OR')}
+                  onChange={e =>
+                    setGroupOperator(e.target.value as 'AND' | 'OR')
+                  }
                 >
                   <MenuItem value="AND">AND</MenuItem>
                   <MenuItem value="OR">OR</MenuItem>
@@ -541,7 +660,7 @@ const AdvancedFilterManager: React.FC<AdvancedFilterManagerProps> = ({
           <Typography variant="subtitle2" sx={{ mt: 3, mb: 1 }}>
             Filter Criteria
           </Typography>
-          
+
           {criteria.map((criteriaItem, index) => (
             <Card key={criteriaItem.id} variant="outlined" sx={{ mb: 1 }}>
               <CardContent sx={{ py: 1 }}>
@@ -551,7 +670,11 @@ const AdvancedFilterManager: React.FC<AdvancedFilterManagerProps> = ({
                       <FormControl fullWidth size="small">
                         <Select
                           value={criteriaItem.logicalOperator}
-                          onChange={(e) => handleUpdateCriteria(criteriaItem.id, { logicalOperator: e.target.value as 'AND' | 'OR' })}
+                          onChange={e =>
+                            handleUpdateCriteria(criteriaItem.id, {
+                              logicalOperator: e.target.value as 'AND' | 'OR',
+                            })
+                          }
                         >
                           <MenuItem value="AND">AND</MenuItem>
                           <MenuItem value="OR">OR</MenuItem>
@@ -559,13 +682,17 @@ const AdvancedFilterManager: React.FC<AdvancedFilterManagerProps> = ({
                       </FormControl>
                     </Grid>
                   )}
-                  
+
                   <Grid item xs={12} sm={3}>
                     <FormControl fullWidth size="small">
                       <InputLabel>Field</InputLabel>
                       <Select
                         value={criteriaItem.field}
-                        onChange={(e) => handleUpdateCriteria(criteriaItem.id, { field: e.target.value })}
+                        onChange={e =>
+                          handleUpdateCriteria(criteriaItem.id, {
+                            field: e.target.value,
+                          })
+                        }
                       >
                         {availableFields.map(field => (
                           <MenuItem key={field.id} value={field.id}>
@@ -575,27 +702,39 @@ const AdvancedFilterManager: React.FC<AdvancedFilterManagerProps> = ({
                       </Select>
                     </FormControl>
                   </Grid>
-                  
+
                   <Grid item xs={12} sm={2}>
                     <FormControl fullWidth size="small">
                       <InputLabel>Operator</InputLabel>
                       <Select
                         value={criteriaItem.operator}
-                        onChange={(e) => handleUpdateCriteria(criteriaItem.id, { operator: e.target.value as FilterOperator })}
+                        onChange={e =>
+                          handleUpdateCriteria(criteriaItem.id, {
+                            operator: e.target.value as FilterOperator,
+                          })
+                        }
                       >
-                        {getOperatorsForFieldType(getFieldDefinition(criteriaItem.field)?.type || 'text').map(op => (
-                          <MenuItem key={op} value={op}>{op}</MenuItem>
+                        {getOperatorsForFieldType(
+                          getFieldDefinition(criteriaItem.field)?.type || 'text'
+                        ).map(op => (
+                          <MenuItem key={op} value={op}>
+                            {op}
+                          </MenuItem>
                         ))}
                       </Select>
                     </FormControl>
                   </Grid>
-                  
+
                   <Grid item xs={12} sm={3}>
                     {renderCriteriaValueInput(criteriaItem)}
                   </Grid>
-                  
+
                   <Grid item xs={12} sm={1}>
-                    <IconButton onClick={() => handleDeleteCriteria(criteriaItem.id)} size="small" color="error">
+                    <IconButton
+                      onClick={() => handleDeleteCriteria(criteriaItem.id)}
+                      size="small"
+                      color="error"
+                    >
                       <DeleteIcon fontSize="small" />
                     </IconButton>
                   </Grid>
@@ -603,21 +742,35 @@ const AdvancedFilterManager: React.FC<AdvancedFilterManagerProps> = ({
               </CardContent>
             </Card>
           ))}
-          
-          <Button startIcon={<AddIcon />} onClick={handleAddCriteria} variant="outlined" size="small">
+
+          <Button
+            startIcon={<AddIcon />}
+            onClick={handleAddCriteria}
+            variant="outlined"
+            size="small"
+          >
             Add Criteria
           </Button>
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setDialogOpen(false)}>Cancel</Button>
-          <Button onClick={handleSaveGroup} variant="contained" disabled={!groupName.trim() || criteria.length === 0}>
+          <Button
+            onClick={handleSaveGroup}
+            variant="contained"
+            disabled={!groupName.trim() || criteria.length === 0}
+          >
             Save Group
           </Button>
         </DialogActions>
       </Dialog>
 
       {/* Save Filter Dialog */}
-      <Dialog open={saveDialogOpen} onClose={() => setSaveDialogOpen(false)} maxWidth="sm" fullWidth>
+      <Dialog
+        open={saveDialogOpen}
+        onClose={() => setSaveDialogOpen(false)}
+        maxWidth="sm"
+        fullWidth
+      >
         <DialogTitle>Save Filter Configuration</DialogTitle>
         <DialogContent>
           <Grid container spacing={2} sx={{ mt: 1 }}>
@@ -626,7 +779,7 @@ const AdvancedFilterManager: React.FC<AdvancedFilterManagerProps> = ({
                 fullWidth
                 label="Filter Name"
                 value={saveFilterName}
-                onChange={(e) => setSaveFilterName(e.target.value)}
+                onChange={e => setSaveFilterName(e.target.value)}
                 required
               />
             </Grid>
@@ -635,7 +788,7 @@ const AdvancedFilterManager: React.FC<AdvancedFilterManagerProps> = ({
                 fullWidth
                 label="Description"
                 value={saveFilterDescription}
-                onChange={(e) => setSaveFilterDescription(e.target.value)}
+                onChange={e => setSaveFilterDescription(e.target.value)}
                 multiline
                 rows={2}
               />
@@ -645,7 +798,7 @@ const AdvancedFilterManager: React.FC<AdvancedFilterManagerProps> = ({
                 control={
                   <Switch
                     checked={saveFilterPublic}
-                    onChange={(e) => setSaveFilterPublic(e.target.checked)}
+                    onChange={e => setSaveFilterPublic(e.target.checked)}
                   />
                 }
                 label="Make Public"
@@ -655,7 +808,11 @@ const AdvancedFilterManager: React.FC<AdvancedFilterManagerProps> = ({
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setSaveDialogOpen(false)}>Cancel</Button>
-          <Button onClick={handleSaveFilter} variant="contained" disabled={!saveFilterName.trim()}>
+          <Button
+            onClick={handleSaveFilter}
+            variant="contained"
+            disabled={!saveFilterName.trim()}
+          >
             Save Filter
           </Button>
         </DialogActions>
