@@ -76,7 +76,7 @@ import FarsiNumber from '@/components/common/FarsiNumber';
 import TransformFarsiNumbers from '@/components/common/TransformFarsiNumbers';
 import { useTranslation } from '@/hooks/useTranslation';
 import { dashboardApiService, DashboardSummary } from '@/services/api/dashboardApiService';
-import KalkWorkbenchCards from '@/modules/dashboard/components/KalkWorkbenchCards';
+import EditableDashboardWorkspace from '@/modules/dashboard/components/EditableDashboardWorkspace';
 
 // تایپ‌های مورد نیاز برای کارت‌های آماری
 interface StatItem {
@@ -112,6 +112,7 @@ const EMPTY_SUMMARY: DashboardSummary = {
   scenarioOverview: { total: 0, draft: 0, readyForReview: 0, archived: 0 },
   latestScenario: null,
   recentScenarios: [],
+  managementMetrics: null,
 };
 
 const DashboardStats: React.FC<DashboardStatsProps> = ({
@@ -1635,17 +1636,13 @@ const HomePage: React.FC = () => {
 
   const isVisible = (key: DashboardSummary['visibleCards'][number]) =>
     summary.visibleCards.includes(key);
-  const showStatsSection =
-    (dashboardModules.showStatArchivedScenarios && isVisible('archived_scenarios')) ||
-    (dashboardModules.showStatAvailableForces && isVisible('available_forces')) ||
-    (dashboardModules.showStatOngoingOperations && isVisible('ongoing_operations')) ||
-    (dashboardModules.showStatSecurityAlerts && isVisible('security_alerts'));
+  const showStatsSection = false;
   const showLegacyRecentActivities = false;
   const showQuickAccessSection = false;
   const showSystemStatusSection = dashboardModules.showSystemStatus && isVisible('system_status');
   const showImportantNoticesSection =
     dashboardModules.showImportantNotices && isVisible('important_notices');
-  const showRightColumn = showQuickAccessSection || showSystemStatusSection || showImportantNoticesSection;
+  const showRightColumn = false;
   const unifiedAccent = theme.palette.primary.main;
   const unifiedPanelSurface = `linear-gradient(135deg, ${alpha(unifiedAccent, 0.07)}, ${alpha(unifiedAccent, 0.04)})`;
   const unifiedPanelBorder = `1px solid ${alpha(unifiedAccent, 0.24)}`;
@@ -1829,7 +1826,7 @@ const HomePage: React.FC = () => {
       )}
 
       {/* آمار */}
-      <KalkWorkbenchCards
+      <EditableDashboardWorkspace
         summary={summary}
         modules={dashboardModules}
         loading={activitiesLoading}

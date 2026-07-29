@@ -18,7 +18,7 @@ import { DashboardScenarioCard } from '@/services/api/dashboardApiService';
 
 interface ScenarioMapPreviewProps {
   scenario: DashboardScenarioCard;
-  height: number;
+  height: number | string;
 }
 
 interface MapLayerConfig {
@@ -51,6 +51,7 @@ const ScenarioMapPreview: React.FC<ScenarioMapPreviewProps> = ({ scenario, heigh
 
     let disposed = false;
     let map: Map | undefined;
+    let resizeObserver: ResizeObserver | undefined;
 
     const initialize = async () => {
       setLoadError(false);
@@ -114,6 +115,8 @@ const ScenarioMapPreview: React.FC<ScenarioMapPreviewProps> = ({ scenario, heigh
           zoom: scenario.mapPreview.zoom,
         }),
       });
+      resizeObserver = new ResizeObserver(() => map?.updateSize());
+      resizeObserver.observe(targetRef.current);
 
       if (features.length > 0) {
         map.getView().fit(vectorSource.getExtent(), {
@@ -132,6 +135,7 @@ const ScenarioMapPreview: React.FC<ScenarioMapPreviewProps> = ({ scenario, heigh
 
     return () => {
       disposed = true;
+      resizeObserver?.disconnect();
       map?.setTarget(undefined);
     };
   }, [scenario]);
