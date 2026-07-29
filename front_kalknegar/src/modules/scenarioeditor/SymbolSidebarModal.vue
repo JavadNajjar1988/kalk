@@ -241,6 +241,7 @@ const initializeServices = async () => {
       scenarioId,
       metadata: activeScenario.store.state.metadata,
       servicesStore,
+      waitFor: "library",
     });
 
     const preferenceStore = projectServices.preferencesStore;

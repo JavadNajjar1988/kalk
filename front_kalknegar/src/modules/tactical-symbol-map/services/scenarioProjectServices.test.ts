@@ -22,6 +22,8 @@ function createServicesStore() {
     selection: null,
     osdDriver: null,
     ipcRenderer: null,
+    clipboard: null,
+    undo: null,
     getServices() {
       return {
         projectUUID: this.projectUUID,
@@ -35,6 +37,8 @@ function createServicesStore() {
         selection: this.selection,
         osdDriver: this.osdDriver,
         ipcRenderer: this.ipcRenderer,
+        clipboard: this.clipboard,
+        undo: this.undo,
       };
     },
   };
@@ -52,6 +56,8 @@ function createReadyServices(id: string) {
     selection: { id: `selection:${id}` },
     osdDriver: { id: `osdDriver:${id}` },
     ipcRenderer: { id: `ipcRenderer:${id}` },
+    clipboard: { id: `clipboard:${id}` },
+    undo: { id: `undo:${id}` },
   };
 }
 
@@ -112,5 +118,53 @@ describe("ensureScenarioTacticalServices", () => {
     await initialization;
 
     expect(servicesStore.searchIndex).toBe(services.searchIndex);
+  });
+
+  it("resolves core and library readiness without starting a second initializer", async () => {
+    const servicesStore = createServicesStore();
+    const services = createReadyServices("readiness");
+    let publishCore!: () => Promise<void>;
+    let publishLibrary!: () => Promise<void>;
+    let finishBootstrap!: () => void;
+    const bootstrapFinished = new Promise<void>((resolve) => {
+      finishBootstrap = resolve;
+    });
+
+    initializeProjectServices.mockImplementation(async (_projectUUID, options) => {
+      publishCore = () => options.onCoreReady(services);
+      publishLibrary = () => options.onLibraryReady(services);
+      await bootstrapFinished;
+      return services;
+    });
+
+    const coreRequest = ensureScenarioTacticalServices({
+      scenarioId: "scenario-readiness",
+      servicesStore,
+      waitFor: "core",
+    });
+    const libraryRequest = ensureScenarioTacticalServices({
+      scenarioId: "scenario-readiness",
+      servicesStore,
+      waitFor: "library",
+    });
+    const completeRequest = ensureScenarioTacticalServices({
+      scenarioId: "scenario-readiness",
+      servicesStore,
+      waitFor: "complete",
+    });
+
+    await vi.waitFor(() => expect(publishCore).toBeTypeOf("function"));
+    await publishCore();
+    await expect(coreRequest).resolves.toBe(services);
+    expect(servicesStore.store).toBe(services.store);
+    expect(servicesStore.searchIndex).toBeNull();
+
+    await publishLibrary();
+    await expect(libraryRequest).resolves.toBe(services);
+    expect(servicesStore.searchIndex).toBe(services.searchIndex);
+    expect(initializeProjectServices).toHaveBeenCalledTimes(1);
+
+    finishBootstrap();
+    await expect(completeRequest).resolves.toBe(services);
   });
 });

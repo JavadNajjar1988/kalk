@@ -41,7 +41,10 @@ function createProjectDb(projectUUID, { persistent }) {
   return L.leveldb()
 }
 
-async function initializeProjectServicesWithDb(projectUUID, { persistent, onCoreReady }) {
+async function initializeProjectServicesWithDb(
+  projectUUID,
+  { persistent, onCoreReady, onLibraryReady },
+) {
   console.log('projectServices.js: Initializing services for project:', projectUUID, {
     persistent
   })
@@ -124,17 +127,13 @@ async function initializeProjectServicesWithDb(projectUUID, { persistent, onCore
     await schema.bootstrap()
     console.log('projectServices.js: Schema bootstrapped')
 
-    console.log('projectServices.js: Bootstrapping tileLayerStore...')
-    await tileLayerStore.bootstrap()
-    console.log('projectServices.js: TileLayerStore bootstrapped')
-
-    console.log('projectServices.js: Bootstrapping spatialIndex...')
-    await spatialIndex.bootstrap()
-    console.log('projectServices.js: SpatialIndex bootstrapped')
-
-    console.log('projectServices.js: Bootstrapping searchIndex...')
-    await searchIndex.bootstrap()
-    console.log('projectServices.js: SearchIndex bootstrapped')
+    await bootstrapProjectIndexes({
+      services,
+      tileLayerStore,
+      spatialIndex,
+      searchIndex,
+      onLibraryReady,
+    })
 
     const commandRegistry = new CommandRegistry(services)
     services.commandRegistry = commandRegistry
@@ -159,6 +158,7 @@ export async function initializeProjectServices(projectUUID, options = {}) {
       initializeProjectServicesWithDb(projectUUID, {
         persistent: true,
         onCoreReady,
+        onLibraryReady: options.onLibraryReady,
       }),
     startFallback: (onCoreReady, error) => {
       console.warn(
@@ -168,6 +168,7 @@ export async function initializeProjectServices(projectUUID, options = {}) {
       return initializeProjectServicesWithDb(projectUUID, {
         persistent: false,
         onCoreReady,
+        onLibraryReady: options.onLibraryReady,
       })
     },
     timeout: timeoutAfter(
@@ -176,6 +177,36 @@ export async function initializeProjectServices(projectUUID, options = {}) {
     ),
     onCoreReady: options.onCoreReady,
   })
+}
+
+export async function bootstrapProjectIndexes({
+  services,
+  tileLayerStore,
+  spatialIndex,
+  searchIndex,
+  onLibraryReady,
+}) {
+  console.log('projectServices.js: Bootstrapping tileLayerStore...')
+  const tileLayerBootstrap = tileLayerStore.bootstrap().then(() => {
+    console.log('projectServices.js: TileLayerStore bootstrapped')
+  })
+
+  console.log('projectServices.js: Bootstrapping spatialIndex...')
+  const spatialBootstrap = spatialIndex.bootstrap().then(() => {
+    console.log('projectServices.js: SpatialIndex bootstrapped')
+  })
+
+  console.log('projectServices.js: Bootstrapping searchIndex...')
+  const searchBootstrap = searchIndex.bootstrap().then(async () => {
+    console.log('projectServices.js: SearchIndex bootstrapped')
+    await onLibraryReady?.(services)
+  })
+
+  await Promise.all([
+    tileLayerBootstrap,
+    spatialBootstrap,
+    searchBootstrap,
+  ])
 }
 
 export async function chooseProjectServices({

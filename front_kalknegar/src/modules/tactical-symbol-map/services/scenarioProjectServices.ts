@@ -26,15 +26,56 @@ interface EnsureScenarioServicesOptions {
   scenarioId: string;
   metadata?: Record<string, any>;
   servicesStore: ServicesStoreLike;
+  waitFor?: Readiness;
 }
 
-const initializationByProjectUUID = new Map<string, Promise<any>>();
+type Readiness = "core" | "library" | "complete";
 
-function hasReadyServices(services: any): boolean {
+type Deferred<T> = {
+  promise: Promise<T>;
+  resolve: (value: T) => void;
+  reject: (error: unknown) => void;
+};
+
+type InitializationRecord = Record<Readiness, Deferred<any>>;
+
+const initializationByProjectUUID = new Map<string, InitializationRecord>();
+
+function createDeferred<T>(): Deferred<T> {
+  let settled = false;
+  let resolvePromise!: (value: T) => void;
+  let rejectPromise!: (error: unknown) => void;
+  const promise = new Promise<T>((resolve, reject) => {
+    resolvePromise = resolve;
+    rejectPromise = reject;
+  });
+  return {
+    promise,
+    resolve(value) {
+      if (settled) return;
+      settled = true;
+      resolvePromise(value);
+    },
+    reject(error) {
+      if (settled) return;
+      settled = true;
+      rejectPromise(error);
+    },
+  };
+}
+
+function createInitializationRecord(): InitializationRecord {
+  return {
+    core: createDeferred(),
+    library: createDeferred(),
+    complete: createDeferred(),
+  };
+}
+
+function hasCoreServices(services: any): boolean {
   return Boolean(
     services?.store &&
       services?.featureStore &&
-      services?.searchIndex &&
       services?.emitter &&
       services?.sessionStore &&
       services?.selection &&
@@ -45,42 +86,56 @@ function hasReadyServices(services: any): boolean {
   );
 }
 
+function hasLibraryServices(services: any): boolean {
+  return hasCoreServices(services) && Boolean(services?.searchIndex);
+}
+
+const readMaybeRef = (value: any) =>
+  value &&
+  typeof value === "object" &&
+  Object.prototype.hasOwnProperty.call(value, "value")
+    ? value.value
+    : value;
+
+const writeMaybeRef = (target: any, value: any) => {
+  if (
+    target &&
+    typeof target === "object" &&
+    Object.prototype.hasOwnProperty.call(target, "value")
+  ) {
+    target.value = value;
+    return target;
+  }
+  return value;
+};
+
 export async function ensureScenarioTacticalServices({
   scenarioId,
   metadata,
   servicesStore,
+  waitFor = "complete",
 }: EnsureScenarioServicesOptions) {
   const projectUUID = tacticalProjectUUIDForScenarioId(scenarioId);
   const currentServices = servicesStore.getServices();
 
-  // Pinia setup-stores expose refs for state fields. Support both "ref" and "plain value" stores.
-  const readMaybeRef = (v: any) =>
-    v && typeof v === "object" && Object.prototype.hasOwnProperty.call(v, "value")
-      ? v.value
-      : v;
-  const writeMaybeRef = (target: any, value: any) => {
-    if (
-      target &&
-      typeof target === "object" &&
-      Object.prototype.hasOwnProperty.call(target, "value")
-    ) {
-      target.value = value;
-    } else return value;
-  };
-
-  if (
-    readMaybeRef((servicesStore as any).projectUUID) === projectUUID &&
-    hasReadyServices(currentServices)
-  ) {
-    return currentServices;
-  }
-
   const existingInitialization = initializationByProjectUUID.get(projectUUID);
   if (existingInitialization) {
-    return existingInitialization;
+    return existingInitialization[waitFor].promise;
   }
 
-  const initialization = (async () => {
+  if (readMaybeRef((servicesStore as any).projectUUID) === projectUUID) {
+    if (waitFor === "core" && hasCoreServices(currentServices)) {
+      return currentServices;
+    }
+    if (waitFor !== "core" && hasLibraryServices(currentServices)) {
+      return currentServices;
+    }
+  }
+
+  const record = createInitializationRecord();
+  initializationByProjectUUID.set(projectUUID, record);
+
+  void (async () => {
     const snapshot = getTacticalSnapshotFromMetadata(metadata);
     const hydratedStores = new WeakSet<object>();
 
@@ -118,28 +173,37 @@ export async function ensureScenarioTacticalServices({
       writeService("undo", projectServices.undo);
     };
 
-    const projectServices = await initializeProjectServices(projectUUID, {
-      onCoreReady: async (coreServices: any) => {
-        await hydrateSnapshot(coreServices);
-        // Publish only what map rendering needs. The symbol search index is
-        // published after its full bootstrap completes below.
-        publishServices(coreServices, false);
-      },
-    });
+    try {
+      const projectServices = await initializeProjectServices(projectUUID, {
+        onCoreReady: async (coreServices: any) => {
+          await hydrateSnapshot(coreServices);
+          publishServices(coreServices, false);
+          record.core.resolve(coreServices);
+        },
+        onLibraryReady: async (libraryServices: any) => {
+          await hydrateSnapshot(libraryServices);
+          publishServices(libraryServices, true);
+          record.core.resolve(libraryServices);
+          record.library.resolve(libraryServices);
+        },
+      });
 
-    // Mock/legacy initializers may not invoke onCoreReady.
-    await hydrateSnapshot(projectServices);
-    publishServices(projectServices, true);
-
-    return projectServices;
+      // Mock/legacy initializers may omit one or both staged callbacks.
+      await hydrateSnapshot(projectServices);
+      publishServices(projectServices, true);
+      record.core.resolve(projectServices);
+      record.library.resolve(projectServices);
+      record.complete.resolve(projectServices);
+    } catch (error) {
+      record.core.reject(error);
+      record.library.reject(error);
+      record.complete.reject(error);
+    } finally {
+      if (initializationByProjectUUID.get(projectUUID) === record) {
+        initializationByProjectUUID.delete(projectUUID);
+      }
+    }
   })();
 
-  initializationByProjectUUID.set(projectUUID, initialization);
-  try {
-    return await initialization;
-  } finally {
-    if (initializationByProjectUUID.get(projectUUID) === initialization) {
-      initializationByProjectUUID.delete(projectUUID);
-    }
-  }
+  return record[waitFor].promise;
 }

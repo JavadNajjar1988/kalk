@@ -2,6 +2,7 @@ export declare function initializeProjectServices(
     projectUUID: string,
     options?: {
         onCoreReady?: (services: any) => void | Promise<void>;
+        onLibraryReady?: (services: any) => void | Promise<void>;
     },
 ): Promise<{
     emitter: any;
@@ -37,3 +38,11 @@ export declare function chooseProjectServices(options: {
     timeout: Promise<never>;
     onCoreReady?: (services: any) => void | Promise<void>;
 }): Promise<any>;
+
+export declare function bootstrapProjectIndexes(options: {
+    services: any;
+    tileLayerStore: { bootstrap: () => Promise<void> };
+    spatialIndex: { bootstrap: () => Promise<void> };
+    searchIndex: { bootstrap: () => Promise<void> };
+    onLibraryReady?: (services: any) => void | Promise<void>;
+}): Promise<void>;

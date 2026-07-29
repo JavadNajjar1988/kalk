@@ -308,6 +308,7 @@ async function ensureTacticalServicesForScenario() {
       scenarioId: state.id,
       metadata: state.metadata,
       servicesStore,
+      waitFor: "core",
     });
   } catch (error) {
     console.error("Failed to initialize tactical services for map:", error);

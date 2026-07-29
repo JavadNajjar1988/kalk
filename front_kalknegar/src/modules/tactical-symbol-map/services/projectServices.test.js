@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
+  bootstrapProjectIndexes,
   chooseProjectServices,
   initializeProjectServices,
 } from "./projectServices.js";
@@ -154,5 +155,59 @@ describe("chooseProjectServices", () => {
     persistentDone.reject(failure);
     await expect(result).rejects.toBe(failure);
     expect(startFallback).not.toHaveBeenCalled();
+  });
+});
+
+describe("bootstrapProjectIndexes", () => {
+  it("starts independent bootstraps together and publishes library readiness after search", async () => {
+    const tile = deferred();
+    const spatial = deferred();
+    const search = deferred();
+    const events = [];
+    const services = { searchIndex: {} };
+
+    const result = bootstrapProjectIndexes({
+      services,
+      tileLayerStore: {
+        bootstrap: vi.fn(() => {
+          events.push("tile:start");
+          return tile.promise;
+        }),
+      },
+      spatialIndex: {
+        bootstrap: vi.fn(() => {
+          events.push("spatial:start");
+          return spatial.promise;
+        }),
+      },
+      searchIndex: {
+        bootstrap: vi.fn(() => {
+          events.push("search:start");
+          return search.promise;
+        }),
+      },
+      onLibraryReady: vi.fn(() => {
+        events.push("library:ready");
+      }),
+    });
+
+    expect(events).toEqual([
+      "tile:start",
+      "spatial:start",
+      "search:start",
+    ]);
+
+    search.resolve();
+    await vi.waitFor(() => expect(events).toContain("library:ready"));
+    expect(events).toEqual([
+      "tile:start",
+      "spatial:start",
+      "search:start",
+      "library:ready",
+    ]);
+
+    tile.resolve();
+    spatial.resolve();
+    await expect(result).resolves.toBeUndefined();
   });
 });
