@@ -78,7 +78,7 @@ export default options => {
       return
     }
 
-    const geometry = geometries.find(geometry => geometry.match(descriptor))
+    const geometry = findDrawingStrategy(descriptor)
     if (!geometry) {
       emitter.emit('ui/tactical/draw-error', { id, reason: 'geometry-not-supported' })
       return
@@ -299,3 +299,6 @@ const geometries = [
     }
   }
 ]
+
+export const findDrawingStrategy = descriptor =>
+  geometries.find(geometry => geometry.match(descriptor))
