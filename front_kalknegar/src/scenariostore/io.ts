@@ -354,6 +354,7 @@ export function useScenarioIO(store: ShallowRef<NewScenarioStore>) {
   const lastApiSavedAt = ref<Date | null>(null);
   const lastDraftSavedAt = ref<Date | null>(null);
   const serverComparisonKey = ref<string | null>(null);
+  let lastUploadedMapPreview: string | null = null;
   const lastSavedChangeCounter = ref(store.value.changeCounter?.value ?? 0);
   const savedDirty = computed(() => {
     return (store.value.changeCounter?.value ?? 0) !== lastSavedChangeCounter.value;
@@ -462,6 +463,39 @@ export function useScenarioIO(store: ShallowRef<NewScenarioStore>) {
     }
   }
 
+  async function syncMapSnapshotToState() {
+    try {
+      const servicesStore = useServicesStore();
+      const ipcRenderer = servicesStore.ipcRenderer as any;
+      const dataUrl = await ipcRenderer?.capturePreview?.();
+      if (
+        typeof dataUrl !== "string" ||
+        !dataUrl.startsWith("data:image/") ||
+        dataUrl === lastUploadedMapPreview
+      ) {
+        return;
+      }
+
+      const response = await fetch(dataUrl);
+      const blob = await response.blob();
+      const scenarioId = store.value.state.id;
+      const file = new File([blob], `map-snapshot-${scenarioId}.webp`, {
+        type: blob.type || "image/webp",
+      });
+      const uploaded = await scenarioApiService.uploadMapSnapshot(scenarioId, file);
+      store.value.state.metadata = {
+        ...(store.value.state.metadata ?? {}),
+        dashboardMapSnapshotUrl: uploaded.url,
+        dashboardMapSnapshotCapturedAt: new Date().toISOString(),
+        dashboardMapSnapshotVersion: 3,
+      };
+      lastUploadedMapPreview = dataUrl;
+    } catch (error) {
+      // A map snapshot is supplementary; a capture or upload failure must not block scenario saves.
+      console.warn("[syncMapSnapshotToState] Map snapshot was not updated:", error);
+    }
+  }
+
   function readEmergencyDraft(scenarioId: string) {
     if (typeof localStorage === "undefined") return undefined;
     try {
@@ -521,6 +555,7 @@ export function useScenarioIO(store: ShallowRef<NewScenarioStore>) {
     try {
       const snapshotStartedAt = Date.now();
       await syncTacticalSnapshotToState();
+      await syncMapSnapshotToState();
       const snapshotChangeCounter = store.value.changeCounter?.value ?? 0;
       const scn = serializeToObject();
       console.log(

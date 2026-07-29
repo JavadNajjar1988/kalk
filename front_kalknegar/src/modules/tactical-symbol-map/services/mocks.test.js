@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
-import { MockUndo } from './mocks'
+import { MockIpcRenderer, MockUndo } from './mocks'
 
 const reversibleCommand = (state, nextValue) => {
   const previousValue = state.value
@@ -63,5 +63,22 @@ describe('MockUndo', () => {
 
     await history.redo()
     expect(state.value).toBe(2)
+  })
+})
+
+describe('MockIpcRenderer map preview bridge', () => {
+  it('captures the latest rendered map image on demand', async () => {
+    const ipcRenderer = new MockIpcRenderer()
+    ipcRenderer.setPreviewProvider(async () => 'data:image/webp;base64,new-preview')
+
+    await expect(ipcRenderer.capturePreview()).resolves.toBe(
+      'data:image/webp;base64,new-preview'
+    )
+
+    ipcRenderer.send('PREVIEW', 'data:image/webp;base64,pushed-preview')
+    ipcRenderer.setPreviewProvider(null)
+    await expect(ipcRenderer.capturePreview()).resolves.toBe(
+      'data:image/webp;base64,pushed-preview'
+    )
   })
 })

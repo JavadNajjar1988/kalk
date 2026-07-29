@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from datetime import datetime, timezone
+import hashlib
 import json
 import shutil
 import uuid
@@ -275,6 +276,57 @@ async def get_scenario_image(filename: str):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Image not found")
 
     return FileResponse(image_path)
+
+
+@router.post(
+    "/{scenario_id}/map-snapshot",
+    response_model=dict,
+    dependencies=[Depends(require_roles("SUPER_ADMIN", "COMMANDER"))],
+)
+async def upload_scenario_map_snapshot(
+    scenario_id: str,
+    request: Request,
+    db: DbSession,
+    file: UploadFile = File(...),
+):
+    scenario = await db.get(Scenario, scenario_id)
+    if scenario is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Scenario not found")
+    if not file.filename:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Snapshot file is required"
+        )
+
+    ext = Path(file.filename).suffix.lower()
+    if ext not in {".jpg", ".jpeg", ".png", ".webp"}:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Unsupported snapshot type"
+        )
+
+    digest = hashlib.sha256(scenario_id.encode("utf-8")).hexdigest()[:32]
+    filename = f"map-snapshot-{digest}{ext}"
+    target_path = SCENARIO_IMAGE_DIR / filename
+    temporary_path = SCENARIO_IMAGE_DIR / f".{filename}.{uuid.uuid4().hex}.tmp"
+
+    try:
+        file.file.seek(0, 2)
+        file_size = file.file.tell()
+        file.file.seek(0)
+        if file_size > MAX_IMAGE_SIZE_BYTES:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Snapshot file too large (max 5 MB)",
+            )
+        with temporary_path.open("wb") as buffer:
+            shutil.copyfileobj(file.file, buffer)
+        temporary_path.replace(target_path)
+    finally:
+        await file.close()
+        if temporary_path.exists():
+            temporary_path.unlink(missing_ok=True)
+
+    image_url = request.url_for("get_scenario_image", filename=filename)
+    return success({"filename": filename, "url": str(image_url)})
 
 
 @router.post(

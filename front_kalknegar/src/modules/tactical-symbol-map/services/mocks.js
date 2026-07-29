@@ -18,6 +18,11 @@ export class MockOSDDriver {
  * Mock IpcRenderer - minimal implementation for web
  */
 export class MockIpcRenderer {
+  constructor() {
+    this.previewProvider = null
+    this.latestPreview = null
+  }
+
   on(channel, callback) {
     // Do nothing in web version
   }
@@ -27,7 +32,21 @@ export class MockIpcRenderer {
   }
   
   send(channel, ...args) {
-    // Do nothing in web version
+    if (channel === 'PREVIEW' && typeof args[0] === 'string') {
+      this.latestPreview = args[0]
+    }
+  }
+
+  setPreviewProvider(provider) {
+    this.previewProvider = typeof provider === 'function' ? provider : null
+  }
+
+  async capturePreview() {
+    const preview = await this.previewProvider?.()
+    if (typeof preview === 'string' && preview.startsWith('data:image/')) {
+      this.latestPreview = preview
+    }
+    return this.latestPreview
   }
 }
 

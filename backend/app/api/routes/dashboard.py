@@ -247,6 +247,7 @@ def _scenario_card(item: Scenario) -> dict[str, Any]:
             "baseMapId": str(map_settings.get("baseMapId") or "osm"),
             "center": center,
             "zoom": max(1, min(float(zoom), 20)),
+            "snapshotUrl": (content.get("metadata") or {}).get("dashboardMapSnapshotUrl"),
             "features": preview_features,
             "truncated": total_preview_features > 250,
         },

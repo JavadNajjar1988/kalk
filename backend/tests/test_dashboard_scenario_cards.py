@@ -52,7 +52,10 @@ def test_scenario_card_uses_saved_status_and_image():
     item = _scenario(
         {
             "status": "active",
-            "metadata": {"image": "/api/scenarios/images/preview.jpg"},
+            "metadata": {
+                "image": "/api/scenarios/images/preview.jpg",
+                "dashboardMapSnapshotUrl": "/api/scenarios/images/map-snapshot.webp",
+            },
             "settings": {"map": {"baseMapId": "osm-de"}},
             "mapView": {"center": [51.4, 35.7], "zoom": 9},
             "layers": [
@@ -79,6 +82,7 @@ def test_scenario_card_uses_saved_status_and_image():
     assert card["mapPreview"]["baseMapId"] == "osm-de"
     assert card["mapPreview"]["center"] == [51.4, 35.7]
     assert card["mapPreview"]["zoom"] == 9
+    assert card["mapPreview"]["snapshotUrl"] == "/api/scenarios/images/map-snapshot.webp"
     assert len(card["mapPreview"]["features"]) == 1
 
 

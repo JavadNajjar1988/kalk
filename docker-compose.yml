@@ -26,6 +26,7 @@ services:
     # فقط کد Python زیر app/ را برای reload نگاه کن؛ آپلود mbtiles به static/maps باعث قطع اتصال نشود
     volumes:
       - ./backend/static/maps:/app/backend/static/maps
+      - ./backend/static/scenarios:/app/backend/static/scenarios
       # برای استفاده از هارد خارجی (10+ ترابایت):
       # 1. در فایل .env متغیر EXTERNAL_MAPS_PATH را تنظیم کنید
       # 2. مثال Windows: EXTERNAL_MAPS_PATH=D:/maps

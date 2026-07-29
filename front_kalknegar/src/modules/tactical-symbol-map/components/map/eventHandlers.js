@@ -21,23 +21,25 @@ const sourceHandlers = (sources, layers) => {
 /**
  *
  */
-const sendPreview = (services, map) => {
-  const { ipcRenderer } = services
-
-  // Adapted from: https://openlayers.org/en/latest/examples/export-map.html
+const capturePreview = map => {
   const draw = context => canvas => {
     if (canvas.width > 0) {
-      const opacity = canvas.parentNode.style.opacity
+      const opacity = canvas.parentNode?.style?.opacity || canvas.style.opacity
       context.globalAlpha = opacity === '' ? 1 : Number(opacity)
       const transform = canvas.style.transform
 
-      // Get the transform parameters from the style's transform matrix
-      const matrix = transform
-        .match(/^matrix\(([^(]*)\)$/)[1]
-        .split(',')
-        .map(Number)
+      const match = transform?.match(/^matrix\(([^(]*)\)$/)
+      const matrix = match
+        ? match[1].split(',').map(Number)
+        : [
+            parseFloat(canvas.style.width) / canvas.width || 1,
+            0,
+            0,
+            parseFloat(canvas.style.height) / canvas.height || 1,
+            0,
+            0,
+          ]
 
-      // Apply the transform to the export map context
       CanvasRenderingContext2D.prototype.setTransform.apply(context, matrix)
       context.drawImage(canvas, 0, 0)
     }
@@ -45,23 +47,37 @@ const sendPreview = (services, map) => {
 
   const canvas = document.createElement('canvas')
   const size = map.getSize()
+  if (!size?.[0] || !size?.[1]) return null
   canvas.width = size[0]
   canvas.height = size[1]
   const context = canvas.getContext('2d')
+  if (!context) return null
+  context.fillStyle = '#eef2ef'
+  context.fillRect(0, 0, canvas.width, canvas.height)
 
-  const list = document.querySelectorAll('.ol-layer canvas')
+  const list = map.getViewport().querySelectorAll('.ol-layer canvas, canvas.ol-layer')
   Array.prototype.forEach.call(list, draw(context))
 
   try {
-    const url = canvas.toDataURL()
-    ipcRenderer.send('PREVIEW', url)
+    const scale = Math.min(1, 960 / canvas.width, 540 / canvas.height)
+    const previewCanvas = document.createElement('canvas')
+    previewCanvas.width = Math.max(1, Math.round(canvas.width * scale))
+    previewCanvas.height = Math.max(1, Math.round(canvas.height * scale))
+    const previewContext = previewCanvas.getContext('2d')
+    if (!previewContext) return null
+    previewContext.drawImage(canvas, 0, 0, previewCanvas.width, previewCanvas.height)
+    return previewCanvas.toDataURL('image/webp', 0.82)
+  } catch (error) {
+    console.warn('[map-preview] Snapshot capture skipped:', error)
+    return null
   } finally {
     canvas.remove()
   }
+}
 
-  // Send map preview every 5 minutes to main process.
-  const reschedule = () => map.once('rendercomplete', ({ target }) => sendPreview(services, target))
-  setTimeout(reschedule, 5 * 60 * 1000)
+const sendPreview = (services, map) => {
+  const url = capturePreview(map)
+  if (url) services.ipcRenderer.send('PREVIEW', url)
 }
 
 /**
@@ -69,6 +85,27 @@ const sendPreview = (services, map) => {
  */
 const mapHandlers = (services, map) => {
   const { selection, osdDriver, dragAndDrop, emitter } = services
+  services.ipcRenderer.setPreviewProvider?.(async () => {
+    const view = map.getView()
+    const resolution = view.getResolution()
+    if (!resolution) {
+      map.renderSync()
+      return capturePreview(map)
+    }
+
+    const previewResolution = Math.min(
+      resolution * 16,
+      view.getMaxResolution() || resolution * 16
+    )
+    try {
+      view.setResolution(previewResolution)
+      map.renderSync()
+      return capturePreview(map)
+    } finally {
+      view.setResolution(resolution)
+      map.renderSync()
+    }
+  })
 
   map.addEventListener('keydown', event => {
     const { key } = event.originalEvent

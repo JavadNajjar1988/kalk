@@ -101,6 +101,7 @@ export interface DashboardScenarioCard {
     baseMapId: string;
     center: [number, number];
     zoom: number;
+    snapshotUrl: string | null;
     features: Array<Record<string, unknown>>;
     truncated: boolean;
   };
