@@ -12,7 +12,7 @@ export const useUiStore = defineStore("ui", {
     getLocationActive: false,
     activeItem: null,
     activeStateItem: null,
-    debugMode: useLocalStorage("debugMode", false),
+    debugMode: false,
     mobilePanelOpen: false,
     layersPanelActive: false,
     activeTabIndex: TAB_ORBAT,

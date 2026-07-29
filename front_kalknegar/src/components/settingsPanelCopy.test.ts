@@ -9,8 +9,37 @@ describe("settings panel copy", () => {
     expect(source).not.toContain("For debugging:");
   });
 
+  it("does not expose debug mode in settings", () => {
+    const source = readFileSync(resolve(__dirname, "MainViewSlideOver.vue"), "utf8");
+
+    expect(source).not.toContain("حالت اشکال‌یابی");
+    expect(source).not.toContain("debugMode");
+  });
+
+  it("explains timeline-driven day and night in the layers panel", () => {
+    const source = readFileSync(resolve(__dirname, "LayersPanel.vue"), "utf8");
+
+    expect(source).toContain('v-model="mapSettings.showDayNightTerminator"');
+    expect(source).toContain("بر اساس زمان خط زمان");
+  });
+
+  it("groups settings into readable sections", () => {
+    const mapSettings = readFileSync(resolve(__dirname, "MapSettingsPanel.vue"), "utf8");
+    const mainSettings = readFileSync(
+      resolve(__dirname, "MainViewSlideOver.vue"),
+      "utf8",
+    );
+
+    expect(mapSettings).toContain("اجزای رابط نقشه");
+    expect(mapSettings).toContain("مختصات و اندازه‌گیری");
+    expect(mainSettings).toContain("ظاهر نمادها");
+  });
+
   it("uses Persian labels in time settings", () => {
-    const source = readFileSync(resolve(__dirname, "TimeDateSettingsDetails.vue"), "utf8");
+    const source = readFileSync(
+      resolve(__dirname, "TimeDateSettingsDetails.vue"),
+      "utf8",
+    );
 
     expect(source).toContain("زبان مرورگر");
     expect(source).toContain("پیش‌نمایش");
@@ -19,7 +48,10 @@ describe("settings panel copy", () => {
   });
 
   it("uses Persian date and time style names", () => {
-    const source = readFileSync(resolve(__dirname, "../stores/timeFormatStore.ts"), "utf8");
+    const source = readFileSync(
+      resolve(__dirname, "../stores/timeFormatStore.ts"),
+      "utf8",
+    );
 
     expect(source).toContain('{ label: "کامل", value: "full" }');
     expect(source).toContain('{ label: "کوتاه", value: "short" }');

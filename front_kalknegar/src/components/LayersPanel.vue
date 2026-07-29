@@ -1,38 +1,54 @@
 <template>
-  <div>
-    <p class="text-xs font-medium tracking-wider text-gray-500 uppercase">لایه‌های پایه</p>
+  <div class="space-y-4 py-4">
+    <section class="bg-card rounded-xl border p-4 shadow-sm">
+      <h3 class="text-foreground text-sm font-semibold">نقشه پایه</h3>
+      <p class="text-muted-foreground mt-1 text-xs leading-5">
+        پس‌زمینه مناسب سناریو را انتخاب کنید.
+      </p>
+      <BaseLayerSwitcher
+        class="mt-4"
+        :settings="baseLayers"
+        v-model="activeBaseLayer"
+        @update:layer-opacity="updateOpacity"
+      />
+    </section>
 
-    <BaseLayerSwitcher
-      class="mt-4"
-      :settings="baseLayers"
-      v-model="activeBaseLayer"
-      @update:layer-opacity="updateOpacity"
-    />
+    <section class="bg-card rounded-xl border p-4 shadow-sm">
+      <div class="flex items-start justify-between gap-4">
+        <div>
+          <h3 class="text-foreground text-sm font-semibold">شب و روز</h3>
+          <p class="text-muted-foreground mt-1 text-xs leading-5">
+            سایه شب بر اساس زمان خط زمان جابه‌جا می‌شود.
+          </p>
+        </div>
+        <CheckboxField v-model="mapSettings.showDayNightTerminator">
+          نمایش
+        </CheckboxField>
+      </div>
+    </section>
 
-    <p class="mt-4 text-xs font-medium tracking-wider text-gray-500 uppercase">
-      لایه‌های دیگر
-    </p>
-
-    <div class="layers-panel-container mt-4 overflow-hidden rounded-2xl border backdrop-blur-md shadow-sm">
-      <ul class="layers-panel-list divide-y">
-        <li v-for="layer in vectorLayers" :key="layer.id" class="px-6 py-4">
-          <div class="flex items-center justify-between">
-            <p class="flex-auto truncate text-sm">{{ layer.title }}</p>
-            <div class="ml-2 flex shrink-0 items-center">
-              <OpacityInput
-                :model-value="layer.opacity"
-                @update:model-value="updateOpacity(layer, $event)"
-              />
-              <button class="ml-4 h-5 w-5 text-gray-500" @click="toggleLayer(layer)">
-                <EyeIcon v-if="layer.visible" />
-                <EyeSlashIcon v-else />
-              </button>
+    <section v-if="vectorLayers.length">
+      <h3 class="text-foreground mb-2 px-1 text-sm font-semibold">لایه‌های دیگر</h3>
+      <div class="layers-panel-container overflow-hidden rounded-xl border shadow-sm">
+        <ul class="layers-panel-list divide-y">
+          <li v-for="layer in vectorLayers" :key="layer.id" class="px-4 py-3">
+            <div class="flex items-center justify-between">
+              <p class="flex-auto truncate text-sm">{{ layer.title }}</p>
+              <div class="ml-2 flex shrink-0 items-center">
+                <OpacityInput
+                  :model-value="layer.opacity"
+                  @update:model-value="updateOpacity(layer, $event)"
+                />
+                <button class="ml-4 h-5 w-5 text-gray-500" @click="toggleLayer(layer)">
+                  <EyeIcon v-if="layer.visible" />
+                  <EyeSlashIcon v-else />
+                </button>
+              </div>
             </div>
-          </div>
-        </li>
-      </ul>
-    </div>
-
+          </li>
+        </ul>
+      </div>
+    </section>
   </div>
 </template>
 
@@ -53,6 +69,7 @@ import { getUid } from "ol";
 import { type LayerType } from "@/modules/scenarioeditor/featureLayerUtils";
 import { useMapSettingsStore } from "@/stores/mapSettingsStore";
 import ImageLayer from "ol/layer/Image";
+import CheckboxField from "@/components/CheckboxField.vue";
 
 export interface LayerInfo<T extends BaseLayer = BaseLayer> {
   id: string;
@@ -75,7 +92,13 @@ let tileLayers = ref<LayerInfo<TileLayer<TileSource>>[]>([]);
 let vectorLayers = ref<LayerInfo<AnyVectorLayer>[]>([]);
 let activeBaseLayer = shallowRef<LayerInfo<TileLayer<TileSource>>>();
 
-const noneLayer = { title: "هیچکدام", id: null, description: "", opacity: -1, name: "هیچکدام" };
+const noneLayer = {
+  title: "هیچکدام",
+  id: null,
+  description: "",
+  opacity: -1,
+  name: "هیچکدام",
+};
 const baseLayers = computed(() => {
   const l = tileLayers.value
     .map((l) => ({ ...l, name: l.title, description: "" }))
@@ -145,12 +168,14 @@ function updateLayers() {
     (l) => l.visible,
   )[0] as LayerInfo<AnyTileLayer>;
 
-  vectorLayers.value = mappedLayers.filter(
-    ({ layer }) =>
-      layer instanceof VectorLayer ||
-      layer instanceof LayerGroup ||
-      layer instanceof ImageLayer,
-  ) as LayerInfo<AnyVectorLayer>[];
+  vectorLayers.value = mappedLayers
+    .filter(
+      ({ layer }) =>
+        layer instanceof VectorLayer ||
+        layer instanceof LayerGroup ||
+        layer instanceof ImageLayer,
+    )
+    .filter(({ layer }) => !layer.get("isDayNightLayer")) as LayerInfo<AnyVectorLayer>[];
 }
 
 const toggleLayer = (l: LayerInfo<any>) => {

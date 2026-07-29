@@ -25,30 +25,30 @@ const persianTrackTime = computed(() => {
 });
 </script>
 <template>
-  <PanelHeading>زمان و تاریخ</PanelHeading>
-  <HeadingDesciption
-    >نحوه قالب‌بندی زمان و تاریخ سناریو را انتخاب کنید.</HeadingDesciption
-  >
-  <AccordionPanel label="فرمت زمان و تاریخ سناریو">
-    <template #closedContent>
-      <span class="text-sm leading-7 text-gray-600">
-        {{ persianScenarioTime }}
-      </span>
-    </template>
-    <TimeDateSettingsDetails
-      :sample-time="persianScenarioTime"
-      v-model="scenario"
-    />
-  </AccordionPanel>
-  <AccordionPanel label="فرمت نقشه">
-    <template #closedContent>
-      <span class="text-sm leading-7 text-gray-600">
-        {{ persianTrackTime }}
-      </span>
-    </template>
-    <TimeDateSettingsDetails
-      :sample-time="persianTrackTime"
-      v-model="track"
-    />
-  </AccordionPanel>
+  <div class="space-y-4 py-4">
+    <section class="bg-card rounded-xl border p-4 shadow-sm">
+      <PanelHeading>زمان و تاریخ</PanelHeading>
+      <HeadingDesciption>
+        قالب نمایش زمان سناریو و نوشته‌های روی نقشه را جداگانه انتخاب کنید.
+      </HeadingDesciption>
+    </section>
+    <div class="bg-card overflow-hidden rounded-xl border shadow-sm">
+      <AccordionPanel label="فرمت زمان و تاریخ سناریو">
+        <template #closedContent>
+          <span class="text-sm leading-7 text-gray-600">
+            {{ persianScenarioTime }}
+          </span>
+        </template>
+        <TimeDateSettingsDetails :sample-time="persianScenarioTime" v-model="scenario" />
+      </AccordionPanel>
+      <AccordionPanel label="فرمت نقشه">
+        <template #closedContent>
+          <span class="text-sm leading-7 text-gray-600">
+            {{ persianTrackTime }}
+          </span>
+        </template>
+        <TimeDateSettingsDetails :sample-time="persianTrackTime" v-model="track" />
+      </AccordionPanel>
+    </div>
+  </div>
 </template>

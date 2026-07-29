@@ -1,8 +1,11 @@
 <template>
   <div class="flex h-full flex-col">
     <header class="shrink-0">
-      <div class="border-b border-gray-300 dark:border-gray-400" :class="extraClass">
-        <div class="flex justify-between">
+      <div
+        class="overflow-x-auto border-b border-gray-300 dark:border-gray-400"
+        :class="extraClass"
+      >
+        <div class="flex min-w-max justify-between">
           <nav class="-mb-px flex" :class="gap" aria-label="برگه‌ها">
             <button
               v-for="(tab, index) in tabsInfo"

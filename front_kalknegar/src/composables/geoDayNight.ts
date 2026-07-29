@@ -9,6 +9,7 @@ import { watch } from "vue";
 import { watchPausable } from "@vueuse/core";
 import { storeToRefs } from "pinia";
 import { useMapSettingsStore } from "@/stores/mapSettingsStore";
+import { syncDayNightWithTimeline } from "@/composables/dayNightTimeline";
 
 export function useDayNightLayer() {
   const {
@@ -18,7 +19,7 @@ export function useDayNightLayer() {
 
   const vectorSource = new DayNight();
   const layer = new VectorLayer({
-    properties: { title: "Day/Night" },
+    properties: { title: "شب و روز", isDayNightLayer: true },
     source: vectorSource,
     visible: showDayNightTerminator.value,
     style: new Style({
@@ -35,7 +36,7 @@ export function useDayNightLayer() {
   const { pause, resume } = watchPausable(
     () => state.currentTime,
     (time) => {
-      vectorSource.setTime(new Date(time));
+      syncDayNightWithTimeline(vectorSource, time);
     },
     { immediate: true },
   );
@@ -43,7 +44,12 @@ export function useDayNightLayer() {
   watch(
     showDayNightTerminator,
     (show) => {
-      show ? resume() : pause();
+      if (show) {
+        syncDayNightWithTimeline(vectorSource, state.currentTime);
+        resume();
+      } else {
+        pause();
+      }
       layer.setVisible(show);
     },
     { immediate: true },

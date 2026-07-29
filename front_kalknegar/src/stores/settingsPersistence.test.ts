@@ -4,6 +4,7 @@ import { createPinia, setActivePinia } from "pinia";
 import { nextTick } from "vue";
 import { useMeasurementsStore } from "./geoStore";
 import { useUiStore } from "./uiStore";
+import { useMapSettingsStore } from "./mapSettingsStore";
 
 describe("settings persistence", () => {
   beforeEach(() => {
@@ -25,5 +26,20 @@ describe("settings persistence", () => {
     setActivePinia(createPinia());
 
     expect(useUiStore().showToolbar).toBe(false);
+  });
+
+  it("keeps day and night visibility between sessions", async () => {
+    useMapSettingsStore().showDayNightTerminator = false;
+    await nextTick();
+    setActivePinia(createPinia());
+
+    expect(useMapSettingsStore().showDayNightTerminator).toBe(false);
+  });
+
+  it("does not restore the removed debug mode", () => {
+    localStorage.setItem("debugMode", "true");
+    setActivePinia(createPinia());
+
+    expect(useUiStore().debugMode).toBe(false);
   });
 });
