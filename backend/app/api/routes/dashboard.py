@@ -104,6 +104,53 @@ def _count_nested_units(value: Any) -> int:
     return count
 
 
+def _tactical_preview_features(content: dict[str, Any]) -> list[dict[str, Any]]:
+    metadata = content.get("metadata")
+    metadata = metadata if isinstance(metadata, dict) else {}
+    snapshot = metadata.get("tacticalSymbols")
+    snapshot = snapshot if isinstance(snapshot, dict) else {}
+    tuples = snapshot.get("tuples")
+    if not isinstance(tuples, list):
+        return []
+
+    hidden_keys = {
+        key.removeprefix("hidden+")
+        for entry in tuples
+        if (
+            isinstance(entry, list)
+            and len(entry) == 2
+            and isinstance(entry[0], str)
+            and entry[0].startswith("hidden+")
+            and entry[1] is True
+        )
+        for key in [entry[0]]
+    }
+    features: list[dict[str, Any]] = []
+    for entry in tuples:
+        if not (
+            isinstance(entry, list)
+            and len(entry) == 2
+            and isinstance(entry[0], str)
+            and entry[0].startswith(("feature:", "marker:", "measure:"))
+            and entry[0] not in hidden_keys
+            and isinstance(entry[1], dict)
+        ):
+            continue
+        feature = entry[1]
+        if feature.get("type") != "Feature" or not isinstance(feature.get("geometry"), dict):
+            continue
+        properties = dict(feature.get("properties") or {})
+        properties.update(
+            {
+                "__dashboardSource": "tactical",
+                "__dashboardProjection": "EPSG:3857",
+                "__dashboardKey": entry[0],
+            }
+        )
+        features.append({**feature, "properties": properties})
+    return features
+
+
 def _scenario_content_stats(item: Scenario) -> dict[str, int]:
     content = item.content or {}
     sides = content.get("sides")
@@ -122,17 +169,18 @@ def _scenario_content_stats(item: Scenario) -> dict[str, int]:
         if isinstance(side, dict)
     )
     layers = content.get("layers") if isinstance(content.get("layers"), list) else []
-    features = sum(
+    layer_features = sum(
         len(layer.get("features") or [])
         for layer in layers
         if isinstance(layer, dict) and isinstance(layer.get("features"), list)
     )
+    tactical_features = _tactical_preview_features(content)
     storyboard = content.get("storyboard") or {}
     scenes = storyboard.get("scenes") if isinstance(storyboard, dict) else []
     return {
         "units": units,
         "events": len(content.get("events") or []),
-        "features": features,
+        "features": layer_features + len(tactical_features),
         "layers": len(layers),
         "conditions": len(
             content.get("environmentalConditions")
@@ -161,6 +209,7 @@ def _scenario_card(item: Scenario) -> dict[str, Any]:
     if not isinstance(zoom, (int, float)):
         zoom = 6
     preview_features: list[dict[str, Any]] = []
+    total_layer_preview_features = 0
     for layer in content.get("layers") or []:
         if not isinstance(layer, dict):
             continue
@@ -170,11 +219,21 @@ def _scenario_card(item: Scenario) -> dict[str, Any]:
                 and feature.get("type") == "Feature"
                 and isinstance(feature.get("geometry"), dict)
             ):
-                preview_features.append(feature)
+                total_layer_preview_features += 1
                 if len(preview_features) >= 250:
-                    break
-        if len(preview_features) >= 250:
-            break
+                    continue
+                properties = dict(feature.get("properties") or {})
+                properties.update(
+                    {
+                        "__dashboardSource": "layer",
+                        "__dashboardProjection": "EPSG:4326",
+                    }
+                )
+                preview_features.append({**feature, "properties": properties})
+    all_tactical_features = _tactical_preview_features(content)
+    remaining = max(0, 250 - len(preview_features))
+    preview_features.extend(all_tactical_features[:remaining])
+    total_preview_features = total_layer_preview_features + len(all_tactical_features)
     return {
         "id": item.id,
         "name": item.name,
@@ -189,7 +248,7 @@ def _scenario_card(item: Scenario) -> dict[str, Any]:
             "center": center,
             "zoom": max(1, min(float(zoom), 20)),
             "features": preview_features,
-            "truncated": len(preview_features) >= 250,
+            "truncated": total_preview_features > 250,
         },
     }
 
@@ -259,7 +318,7 @@ def _workspace_payload(user: User) -> dict[str, Any]:
     if not isinstance(stored, dict):
         return {"version": 1, "layouts": {}, "hiddenWidgetIds": []}
     return {
-        "version": 1,
+        "version": stored.get("version") if isinstance(stored.get("version"), int) else 1,
         "layouts": stored.get("layouts") if isinstance(stored.get("layouts"), dict) else {},
         "hiddenWidgetIds": stored.get("hiddenWidgetIds")
         if isinstance(stored.get("hiddenWidgetIds"), list)

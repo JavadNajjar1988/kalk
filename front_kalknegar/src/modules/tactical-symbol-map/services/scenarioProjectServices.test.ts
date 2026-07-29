@@ -167,4 +167,52 @@ describe("ensureScenarioTacticalServices", () => {
     finishBootstrap();
     await expect(completeRequest).resolves.toBe(services);
   });
+
+  it("keeps unsynced local symbols when the server snapshot has no drawable features", async () => {
+    const servicesStore = createServicesStore();
+    const services = createReadyServices("legacy-recovery") as any;
+    const batch = vi.fn(async () => undefined);
+    services.store = {
+      db: {},
+      batch,
+      tuples: vi.fn(async (prefix: string) => {
+        if (prefix === "feature:") {
+          return [
+            [
+              "feature:local",
+              {
+                type: "Feature",
+                geometry: { type: "Point", coordinates: [1, 2] },
+              },
+            ],
+          ];
+        }
+        return [];
+      }),
+    };
+    initializeProjectServices.mockImplementation(async (_projectUUID, options) => {
+      await options.onCoreReady(services);
+      return services;
+    });
+
+    const result = await ensureScenarioTacticalServices({
+      scenarioId: "scenario-legacy-recovery",
+      metadata: {
+        tacticalSymbols: {
+          version: 1,
+          tuples: [["layer:server", { name: "Server layer" }]],
+        },
+      },
+      servicesStore,
+    });
+
+    expect(result.recoveredLocalTacticalData).toBe(true);
+    const operations = batch.mock.calls[0][1];
+    expect(operations).not.toContainEqual(
+      expect.objectContaining({ type: "del", key: "feature:local" }),
+    );
+    expect(operations).toContainEqual(
+      expect.objectContaining({ type: "put", key: "layer:server" }),
+    );
+  });
 });

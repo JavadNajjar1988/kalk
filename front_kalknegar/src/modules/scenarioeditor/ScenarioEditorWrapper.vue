@@ -54,11 +54,16 @@ async function prewarmTacticalServices() {
   const { ensureScenarioTacticalServices } = await import(
     "@/modules/tactical-symbol-map/services/scenarioProjectServices"
   );
-  await ensureScenarioTacticalServices({
+  const tacticalServices = await ensureScenarioTacticalServices({
     scenarioId,
     metadata: loadedState?.metadata,
     servicesStore,
   });
+  if (tacticalServices?.recoveredLocalTacticalData) {
+    scenario.value.store.markChanged();
+    await scenario.value.io.saveToIndexedDb();
+    tacticalServices.recoveredLocalTacticalData = false;
+  }
 }
 
 function startTacticalPrewarm() {

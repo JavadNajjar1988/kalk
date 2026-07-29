@@ -144,7 +144,27 @@ export async function ensureScenarioTacticalServices({
       if (!snapshot || !tacticalStore || hydratedStores.has(tacticalStore)) {
         return;
       }
-      await importTacticalSnapshot(tacticalStore, snapshot);
+      const snapshotHasDrawableFeatures = snapshot.tuples.some(([key]) =>
+        key.startsWith("feature:") ||
+        key.startsWith("marker:") ||
+        key.startsWith("measure:")
+      );
+      const localDrawableTuples = snapshotHasDrawableFeatures
+        ? []
+        : (
+          await Promise.all(
+            ["feature:", "marker:", "measure:"].map((prefix) =>
+              tacticalStore.tuples(prefix)
+            ),
+          )
+        ).flat();
+      const recoveredLocalTacticalData = localDrawableTuples.length > 0;
+      await importTacticalSnapshot(tacticalStore, snapshot, {
+        preserveLocalEntries: recoveredLocalTacticalData,
+      });
+      if (recoveredLocalTacticalData) {
+        projectServices.recoveredLocalTacticalData = true;
+      }
       hydratedStores.add(tacticalStore);
     };
 

@@ -177,6 +177,7 @@ export async function exportTacticalSnapshot(
 export async function importTacticalSnapshot(
   inputStore: MaybeRef<TacticalStoreLike>,
   snapshot: TacticalSymbolsSnapshot | null | undefined,
+  { preserveLocalEntries = false }: { preserveLocalEntries?: boolean } = {},
 ): Promise<void> {
   const store = resolveTacticalStore(inputStore);
   const normalized = normalizeSnapshot(snapshot);
@@ -185,7 +186,7 @@ export async function importTacticalSnapshot(
 
   const operations = [];
   for (const key of currentKeys) {
-    if (!next.has(key)) {
+    if (!preserveLocalEntries && !next.has(key)) {
       operations.push(L.delOp(key));
     }
   }

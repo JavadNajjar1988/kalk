@@ -1,10 +1,12 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Box, Chip, Stack, Typography, alpha } from '@mui/material';
+import ms from 'milsymbol';
 import Map from 'ol/Map';
 import View from 'ol/View';
 import Feature from 'ol/Feature';
 import GeoJSON from 'ol/format/GeoJSON';
 import Geometry from 'ol/geom/Geometry';
+import Point from 'ol/geom/Point';
 import TileLayer from 'ol/layer/Tile';
 import VectorLayer from 'ol/layer/Vector';
 import { defaults as defaultInteractions } from 'ol/interaction/defaults';
@@ -12,7 +14,13 @@ import { fromLonLat } from 'ol/proj';
 import OSM from 'ol/source/OSM';
 import VectorSource from 'ol/source/Vector';
 import XYZ from 'ol/source/XYZ';
-import { Circle as CircleStyle, Fill, Stroke, Style } from 'ol/style';
+import {
+  Circle as CircleStyle,
+  Fill,
+  Icon,
+  Stroke,
+  Style,
+} from 'ol/style';
 import 'ol/ol.css';
 import { DashboardScenarioCard } from '@/services/api/dashboardApiService';
 
@@ -41,6 +49,54 @@ const previewStyle = new Style({
     stroke: new Stroke({ color: '#ffffff', width: 2 }),
   }),
 });
+
+const militaryStyleCache = new globalThis.Map<string, Style>();
+
+const affiliationColor = (sidc: string) => {
+  const identity = sidc.charAt(1).toUpperCase();
+  if ('HJSK'.includes(identity)) return '#c62828';
+  if ('NLG'.includes(identity)) return '#2e7d42';
+  if ('UPW'.includes(identity)) return '#b77900';
+  return '#1769aa';
+};
+
+const tacticalStyle = (feature: Feature<Geometry>) => {
+  const sidc = String(feature.get('sidc') || '').trim();
+  const geometry = feature.getGeometry();
+  if (sidc && geometry instanceof Point) {
+    const cached = militaryStyleCache.get(sidc);
+    if (cached) return cached;
+    try {
+      const symbol = new ms.Symbol(sidc, { size: 32, infoFields: true });
+      const canvas = symbol.asCanvas();
+      const anchor = symbol.getAnchor();
+      const style = new Style({
+        image: new Icon({
+          img: canvas,
+          size: [canvas.width, canvas.height],
+          anchor: [anchor.x, anchor.y],
+          anchorXUnits: 'pixels',
+          anchorYUnits: 'pixels',
+        }),
+      });
+      militaryStyleCache.set(sidc, style);
+      return style;
+    } catch {
+      // Invalid legacy SIDCs still get a visible affiliation-colored marker.
+    }
+  }
+
+  const color = sidc ? affiliationColor(sidc) : '#b4232d';
+  return new Style({
+    stroke: new Stroke({ color, width: 2.5 }),
+    fill: new Fill({ color: alpha(color, 0.16) }),
+    image: new CircleStyle({
+      radius: 6,
+      fill: new Fill({ color }),
+      stroke: new Stroke({ color: '#ffffff', width: 2 }),
+    }),
+  });
+};
 
 const ScenarioMapPreview: React.FC<ScenarioMapPreviewProps> = ({ scenario, height }) => {
   const targetRef = useRef<HTMLDivElement | null>(null);
@@ -84,14 +140,36 @@ const ScenarioMapPreview: React.FC<ScenarioMapPreviewProps> = ({ scenario, heigh
 
       if (disposed || !targetRef.current) return;
 
-      const features = new GeoJSON().readFeatures(
+      const layerFeatureData = scenario.mapPreview.features.filter(
+        (feature) => (
+          feature.properties as Record<string, unknown> | undefined
+        )?.__dashboardProjection !== 'EPSG:3857',
+      );
+      const tacticalFeatureData = scenario.mapPreview.features.filter(
+        (feature) => (
+          feature.properties as Record<string, unknown> | undefined
+        )?.__dashboardProjection === 'EPSG:3857',
+      );
+      const geoJson = new GeoJSON();
+      const layerFeatures = geoJson.readFeatures(
         {
           type: 'FeatureCollection',
-          features: scenario.mapPreview.features,
+          features: layerFeatureData,
         },
-        { featureProjection: 'EPSG:3857' },
+        { dataProjection: 'EPSG:4326', featureProjection: 'EPSG:3857' },
       ) as Feature<Geometry>[];
-      const vectorSource = new VectorSource<Feature<Geometry>>({ features });
+      const tacticalFeatures = geoJson.readFeatures(
+        {
+          type: 'FeatureCollection',
+          features: tacticalFeatureData,
+        },
+        { dataProjection: 'EPSG:3857', featureProjection: 'EPSG:3857' },
+      ) as Feature<Geometry>[];
+      const layerVectorSource = new VectorSource<Feature<Geometry>>({ features: layerFeatures });
+      const tacticalVectorSource = new VectorSource<Feature<Geometry>>({
+        features: tacticalFeatures,
+      });
+      const features = [...layerFeatures, ...tacticalFeatures];
 
       map = new Map({
         target: targetRef.current,
@@ -108,7 +186,12 @@ const ScenarioMapPreview: React.FC<ScenarioMapPreviewProps> = ({ scenario, heigh
         }),
         layers: [
           new TileLayer({ source }),
-          new VectorLayer({ source: vectorSource, style: previewStyle }),
+          new VectorLayer({ source: layerVectorSource, style: previewStyle }),
+          new VectorLayer({
+            source: tacticalVectorSource,
+            style: (feature) => tacticalStyle(feature as Feature<Geometry>),
+            zIndex: 2,
+          }),
         ],
         view: new View({
           center: fromLonLat(scenario.mapPreview.center),
@@ -119,8 +202,19 @@ const ScenarioMapPreview: React.FC<ScenarioMapPreviewProps> = ({ scenario, heigh
       resizeObserver.observe(targetRef.current);
 
       if (features.length > 0) {
-        map.getView().fit(vectorSource.getExtent(), {
-          padding: [28, 28, 28, 28],
+        const extent = layerVectorSource.getExtent();
+        tacticalVectorSource.forEachFeature((feature) => {
+          const geometry = feature.getGeometry();
+          if (geometry) {
+            const featureExtent = geometry.getExtent();
+            extent[0] = Math.min(extent[0], featureExtent[0]);
+            extent[1] = Math.min(extent[1], featureExtent[1]);
+            extent[2] = Math.max(extent[2], featureExtent[2]);
+            extent[3] = Math.max(extent[3], featureExtent[3]);
+          }
+        });
+        map.getView().fit(extent, {
+          padding: [22, 22, 22, 22],
           maxZoom: 14,
           duration: 0,
         });
