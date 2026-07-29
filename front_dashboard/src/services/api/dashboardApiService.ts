@@ -21,6 +21,34 @@ export interface DashboardSummary {
   activities: Array<{ id: string; kind: string; title: string; description: string; occurredAt: string }>;
   systemStatus: Array<{ key: 'cpu' | 'ram' | 'disk' | 'network'; name: string; value: number; color: 'success' | 'warning' | 'error' }>;
   notices: Array<{ severity: 'success' | 'info' | 'warning' | 'error'; message: string }>;
+  scenarioOverview: { total: number; draft: number; readyForReview: number; archived: number };
+  latestScenario: DashboardScenarioCard | null;
+  recentScenarios: DashboardScenarioCard[];
+}
+
+export interface DashboardScenarioCard {
+  id: string;
+  name: string;
+  description: string;
+  image: string | null;
+  status: string;
+  modifiedAt: string;
+  archivedAt: string | null;
+  contentStats: {
+    units: number;
+    events: number;
+    features: number;
+    layers: number;
+    conditions: number;
+    storyboardScenes: number;
+  };
+  mapPreview: {
+    baseMapId: string;
+    center: [number, number];
+    zoom: number;
+    features: Array<Record<string, unknown>>;
+    truncated: boolean;
+  };
 }
 
 class DashboardApiService extends BaseApiClient {
@@ -39,4 +67,3 @@ class DashboardApiService extends BaseApiClient {
 }
 
 export const dashboardApiService = new DashboardApiService();
-
