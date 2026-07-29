@@ -154,30 +154,54 @@ async function initializeProjectServicesWithDb(projectUUID, { persistent, onCore
 }
 
 export async function initializeProjectServices(projectUUID, options = {}) {
-  try {
-    // Publish a persistent core only after its complete bootstrap succeeds.
-    // Otherwise a late timeout leaves the map wired to the abandoned emitter
-    // while the sidebar receives the in-memory fallback emitter.
-    const services = await Promise.race([
+  return chooseProjectServices({
+    startPersistent: onCoreReady =>
       initializeProjectServicesWithDb(projectUUID, {
         persistent: true,
-        onCoreReady: undefined,
+        onCoreReady,
       }),
-      timeoutAfter(
-        PERSISTENT_BOOTSTRAP_TIMEOUT_MS,
-        `Persistent tactical services bootstrap timed out after ${PERSISTENT_BOOTSTRAP_TIMEOUT_MS}ms`,
-      ),
-    ])
-    await options.onCoreReady?.(services)
-    return services
+    startFallback: (onCoreReady, error) => {
+      console.warn(
+        'projectServices.js: Falling back to in-memory tactical services.',
+        error,
+      )
+      return initializeProjectServicesWithDb(projectUUID, {
+        persistent: false,
+        onCoreReady,
+      })
+    },
+    timeout: timeoutAfter(
+      PERSISTENT_BOOTSTRAP_TIMEOUT_MS,
+      `Persistent tactical services bootstrap timed out after ${PERSISTENT_BOOTSTRAP_TIMEOUT_MS}ms`,
+    ),
+    onCoreReady: options.onCoreReady,
+  })
+}
+
+export async function chooseProjectServices({
+  startPersistent,
+  startFallback,
+  timeout,
+  onCoreReady,
+}) {
+  let coreReady = false
+  let abandoned = false
+
+  const persistent = startPersistent(async services => {
+    if (abandoned) return
+    coreReady = true
+    await onCoreReady?.(services)
+  })
+
+  try {
+    return await Promise.race([persistent, timeout])
   } catch (error) {
-    console.warn(
-      'projectServices.js: Falling back to in-memory tactical services.',
+    if (coreReady) return persistent
+
+    abandoned = true
+    return startFallback(
+      services => onCoreReady?.(services),
       error,
     )
-    return initializeProjectServicesWithDb(projectUUID, {
-      persistent: false,
-      onCoreReady: options.onCoreReady,
-    })
   }
 }

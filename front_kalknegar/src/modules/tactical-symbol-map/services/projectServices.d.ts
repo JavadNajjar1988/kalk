@@ -27,3 +27,13 @@ export declare function initializeProjectServices(
     signals: Record<string, any>;
     commandRegistry: any;
 }>;
+
+export declare function chooseProjectServices(options: {
+    startPersistent: (onCoreReady: (services: any) => void | Promise<void>) => Promise<any>;
+    startFallback: (
+        onCoreReady: (services: any) => void | Promise<void>,
+        error: unknown,
+    ) => Promise<any>;
+    timeout: Promise<never>;
+    onCoreReady?: (services: any) => void | Promise<void>;
+}): Promise<any>;
