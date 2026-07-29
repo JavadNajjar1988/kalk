@@ -124,4 +124,21 @@ describe("پوشش فارسی کتابخانهٔ نمادهای نظامی", () 
     expect(translateModifier("Interceptor")).toBe("رهگیر");
     expect(translateModifier("Not Applicable")).toBe("قابل اجرا نیست");
   });
+
+  it("اصطلاحات نظامی چندمعنایی را با معادل تخصصی ترجمه می‌کند", () => {
+    expect(translateEntity("Task Force")).toBe("گروه رزمی");
+    expect(translateEntity("Decontamination")).toBe("رفع آلودگی");
+    expect(translateEntity("Utility")).toBe("چندمنظوره");
+    expect(translateEntity("Air Assault with Organic Lift")).toBe(
+      "هجوم هوایی با ترابری سازمانی",
+    );
+    expect(translateEntity("Army Aviation/Aviation Rotary Wing")).toBe(
+      "هوانیروز/هوانوردی بال‌گردان",
+    );
+    expect(translateEntity("Aviation Composite")).toBe(
+      "یگان هوانوردی مختلط",
+    );
+    expect(translateEntity("Special Troops")).toBe("رسته‌های ویژه");
+    expect(translateEntity("Radiological")).toBe("پرتوی");
+  });
 });

@@ -42,7 +42,7 @@ export const entityTranslations: Record<string, string> = {
 
   // Movement and Maneuver
   "Movement and Manoeuvre": "حرکت و مانور",
-  "Air Assault with Organic Lift": "حمله هوایی با بالابر ارگانیک",
+  "Air Assault with Organic Lift": "هجوم هوایی با ترابری سازمانی",
   "Air Traffic Services/Airfield Operations": "خدمات ترافیک هوایی/عملیات فرودگاه",
   Amphibious: "آبی‌خاکی",
   "Antitank/Antiarmour": "ضدتانک/ضدزره",
@@ -50,8 +50,8 @@ export const entityTranslations: Record<string, string> = {
   Motorized: "موتوریزه",
   "Armour/Armoured/Mechanized/Self-Propelled/ Tracked": "زرهی/مکانیزه/خودکششی/زنجیری",
   "Reconnaissance/Cavalry/Scout": "شناسایی/سواره‌نظام/پیشاهنگ",
-  "Army Aviation/Aviation Rotary Wing": "هوانیروز ارتش/هواپیمای بالگردی",
-  "Aviation Composite": "هواپیمای ترکیبی",
+  "Army Aviation/Aviation Rotary Wing": "هوانیروز/هوانوردی بال‌گردان",
+  "Aviation Composite": "یگان هوانوردی مختلط",
   "Aviation Fixed Wing": "هواپیمای بال ثابت",
   Combat: "رزمی",
   "Combined Arms": "ترکیبی",
@@ -158,7 +158,7 @@ export const modifierTranslations: Record<string, string> = {
   Combat: "رزمی",
   "Command and Control": "فرماندهی و کنترل",
   Construction: "ساخت‌وساز",
-  Decontamination: "ضدعفونی",
+  Decontamination: "رفع آلودگی",
   Detention: "بازداشت",
   "Direct Communications": "ارتباطات مستقیم",
   Diving: "غواصی",
@@ -207,7 +207,7 @@ export const modifierTranslations: Record<string, string> = {
   "Crowd and Riot Control": "کنترل جمعیت و شورش",
   "Nuclear, Biological, Chemical (NBC)": "هسته‌ای، بیولوژیکی، شیمیایی",
   "Patient Evacuation Coordination Centre": "مرکز هماهنگی تخلیه بیمار",
-  Radiological: "پرتوافشانی",
+  Radiological: "پرتوی",
   "Search and Rescue": "جستجو و نجات",
   Security: "امنیت",
   "Shore Party": "گروه ساحلی",
@@ -217,7 +217,7 @@ export const modifierTranslations: Record<string, string> = {
   "Special Purpose Marine Air-Ground Task Force": "نیروی ویژه دریایی هوایی-زمینی",
   Supply: "تأمین",
   Tactical: "تاکتیکی",
-  "Task Force": "نیروی کار",
+  "Task Force": "گروه رزمی",
   Topographic: "توپوگرافی",
   Troop: "نیرو",
   "Vertical or Short Take-Off and Landing (VTOL/VSTOL)": "برخاست و فرود عمودی یا کوتاه",
@@ -226,7 +226,7 @@ export const modifierTranslations: Record<string, string> = {
   "High to Low Altitude": "ارتفاع بالا تا پایین",
   "Medium to Low Altitude": "ارتفاع متوسط تا پایین",
   Refuel: "سوخت‌گیری",
-  Utility: "ابزاری",
+  Utility: "چندمنظوره",
   "Combat Search and Rescue": "جستجو و نجات رزمی",
 
   // Additional Modifiers
@@ -247,7 +247,7 @@ export const modifierTranslations: Record<string, string> = {
  * این فهرست عمداً بر اساس نام واقعی اصطلاح است، نه کد یا عنوانی مانند «گزینه».
  */
 const supplementalTranslations: Record<string, string> = {
-  "Special Troops": "نیروهای ویژه",
+  "Special Troops": "رسته‌های ویژه",
   "Air and Missile Defense": "دفاع هوایی و موشکی",
   "Chemical, Biological, Radiological, Nuclear, and High-Yield Explosives":
     "مواد شیمیایی، زیستی، پرتوزا، هسته‌ای و انفجاری پرقدرت",
@@ -582,19 +582,42 @@ function translateMineCombination(value: string): string | undefined {
   return /[A-Za-z]/.test(translated) ? undefined : translated;
 }
 
-function translateTerm(value: string, primary: Record<string, string>): string {
+function findReviewedTranslation(
+  value: string,
+  primary: Record<string, string>,
+): string | undefined {
   const normalized = normalizeTerm(value);
-  const translated =
+  return (
     primary[normalized] ||
     supplementalTranslations[normalized] ||
     registeredTranslations[normalized] ||
-    translateMineCombination(normalized) ||
-    normalized;
+    translateMineCombination(normalized)
+  );
+}
+
+export function findReviewedEntityTranslation(
+  entity: string,
+): string | undefined {
+  const normalized = normalizeTerm(entity);
+  return (
+    entityTranslations[normalized] ||
+    modifierTranslations[normalized] ||
+    supplementalTranslations[normalized] ||
+    registeredTranslations[normalized] ||
+    translateMineCombination(normalized)
+  );
+}
+
+function translateTerm(value: string, primary: Record<string, string>): string {
+  const normalized = normalizeTerm(value);
+  const translated = findReviewedTranslation(normalized, primary) || normalized;
   return persianizeLatinFragments(translated);
 }
 
 export function translateEntity(entity: string): string {
-  return translateTerm(entity, entityTranslations);
+  const normalized = normalizeTerm(entity);
+  const translated = findReviewedEntityTranslation(normalized) || normalized;
+  return persianizeLatinFragments(translated);
 }
 
 export function translateModifier(modifier: string): string {

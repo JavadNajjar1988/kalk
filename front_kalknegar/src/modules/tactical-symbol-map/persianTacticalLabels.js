@@ -1,3 +1,5 @@
+import { findReviewedEntityTranslation } from '../../symbology/translations'
+
 // High-frequency MIL-STD-2525 / SKKM vocabulary used at every hierarchy level.
 export const tacticalWordTranslations = {
   and: 'و', of: 'از', or: 'یا', for: 'برای', with: 'با', in: 'در', at: 'در', by: 'توسط',
@@ -166,6 +168,16 @@ export const tacticalWordTranslations = {
 }
 
 export const tacticalPhraseTranslations = {
+  'Armored Reconnaissance Unit': 'یگان شناسایی زرهی',
+  'Emergency Medical Operation Unit': 'یگان عملیات پزشکی اضطراری',
+  'Emergency Operation Unit': 'یگان عملیات اضطراری',
+  'Fire Fighting Operation Unit': 'یگان عملیات آتش‌نشانی',
+  'Law Enforcement Operation Unit': 'یگان عملیات اجرای قانون',
+  'Fire Support Area': 'منطقه پشتیبانی آتش',
+  'Fire Support Coordination Line': 'خط هماهنگی پشتیبانی آتش',
+  'Signals Intelligence': 'اطلاعات سیگنالی',
+  'Signal Intercept': 'رهگیری سیگنال',
+  'Blue Kill Box (BKB) - Irregular': 'محدوده انهدام آبی (بی‌کی‌بی) - نامنظم',
   'Civil Aircraft - Lighter Than Air': 'هواگرد غیرنظامی - سبک‌تر از هوا',
   'Civil Aircraft - Fixed Wing': 'هواگرد غیرنظامی - بال ثابت',
   'Civil Aircraft': 'هواگرد غیرنظامی',
@@ -232,18 +244,26 @@ function transliterateWord(word) {
   return result.replace(/ِ+/g, 'ِ')
 }
 
-// Guarantees a Persian display label. Uncommon proper names and abbreviations
-// are transliterated, so newly-added hierarchy entries cannot leak English.
+const separatorPattern = /(\s+[•/]\s+|\s+-\s+)/
+const isSeparator = value => separatorPattern.test(value)
+const reviewedTranslation = value =>
+  tacticalPhraseTranslations[value] || findReviewedEntityTranslation(value)
+
+// Unknown labels remain in their source language until a reviewed phrase is
+// added. This avoids presenting transliteration as if it were a translation.
 export function ensurePersianTacticalLabel(value) {
   if (!value) return value
 
-  const translatedPhrases = Object.entries(tacticalPhraseTranslations)
-    .sort(([a], [b]) => b.length - a.length)
-    .reduce((label, [phrase, translation]) => {
-      return label.replace(new RegExp(phrase.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi'), translation)
-    }, value)
+  const exact = reviewedTranslation(value)
+  if (exact) return exact
 
-  return translatedPhrases.replace(/[A-Za-z]+(?:-[A-Za-z]+)*/g, word => {
-    return tacticalWordTranslations[word.toLowerCase()] || transliterateWord(word)
-  })
+  const parts = value.split(separatorPattern)
+  if (parts.length === 1) return value
+
+  const labels = parts.filter(part => !isSeparator(part))
+  if (!labels.every(part => reviewedTranslation(part))) return value
+
+  return parts
+    .map(part => isSeparator(part) ? part : reviewedTranslation(part))
+    .join('')
 }

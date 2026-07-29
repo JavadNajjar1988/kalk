@@ -171,7 +171,6 @@ import { defaultState } from './components/sidebar/state.js'
 import { matcher, preventDefault } from './components/events.js'
 import * as R from 'ramda'
 import * as ID from './ids.js'
-import { translateEntity } from '../../symbology/translations'
 import {
   ensurePersianTacticalLabel,
   tacticalWordTranslations,
@@ -438,75 +437,8 @@ const categoryTranslations = {
 }
 
 const translateCategory = (category) => {
-  if (!category || category.trim() === '') {
-    return 'سایر'
-  }
-
-  const trimmedCategory = category.trim()
-
-  // Check exact match first
-  if (categoryTranslations[trimmedCategory]) {
-    return categoryTranslations[trimmedCategory]
-  }
-
-  // Check case-insensitive exact match
-  const lowerCategory = trimmedCategory.toLowerCase()
-  for (const [key, value] of Object.entries(categoryTranslations)) {
-    if (key.toLowerCase() === lowerCategory) {
-      return value
-    }
-  }
-
-  // Try to find partial matches (longer keys first for better accuracy)
-  const sortedKeys = Object.keys(categoryTranslations).sort((a, b) => b.length - a.length)
-  for (const key of sortedKeys) {
-    const lowerKey = key.toLowerCase()
-    // Check if category contains the key or key contains category
-    if (lowerCategory.includes(lowerKey) || lowerKey.includes(lowerCategory)) {
-      return categoryTranslations[key]
-    }
-  }
-
-  // Try to translate categories with parentheses like "Event (Damage)"
-  const parenMatch = trimmedCategory.match(/^(.+?)\s*\((.+?)\)$/)
-  if (parenMatch) {
-    const mainPart = parenMatch[1].trim()
-    const parenPart = parenMatch[2].trim()
-    const translatedMain = translateCategory(mainPart)
-    const translatedParen = translateCategory(parenPart)
-
-    // If both parts were translated, combine them
-    if (translatedMain !== mainPart || translatedParen !== parenPart) {
-      return `${translatedMain} (${translatedParen})`
-    }
-  }
-
-  // Try word-by-word translation for compound categories
-  const words = trimmedCategory.split(/\s+/)
-  const translatedWords = words.map((word) => {
-    // Remove punctuation for matching
-    const cleanWord = word.replace(/[()]/g, '')
-    // Check if word has translation
-    for (const [key, value] of Object.entries(categoryTranslations)) {
-      if (key.toLowerCase() === cleanWord.toLowerCase()) {
-        return word.replace(cleanWord, value)
-      }
-    }
-    return word
-  })
-
-  // If any words were translated, join them
-  const hasTranslation = translatedWords.some((w, idx) => {
-    const originalWord = words[idx]
-    return w !== originalWord
-  })
-
-  if (hasTranslation) {
-    return translatedWords.join(' ')
-  }
-
-  // Return original if no translation found
-  return trimmedCategory
+  if (!category || category.trim() === '') return 'سایر'
+  return ensurePersianTacticalLabel(category.trim())
 }
 
 const matchesTaxonomyFilters = (entry) => {
@@ -939,95 +871,8 @@ const translateEntry = (entry) => {
 
 // Translate text (title or description part)
 const translateText = (text) => {
-  if (!text || text.trim() === '') {
-    return text
-  }
-
-  const trimmedText = text.trim()
-
-  // Reuse the centralized MIL-STD Persian glossary before applying the
-  // sidebar's word-by-word fallback.
-  const entityTranslation = translateEntity(trimmedText)
-  if (entityTranslation !== trimmedText) {
-    return entityTranslation
-  }
-
-  // Check exact match in symbol translations first
-  if (symbolTranslations[trimmedText]) {
-    return symbolTranslations[trimmedText]
-  }
-
-  // Check case-insensitive match in symbol translations
-  const lowerText = trimmedText.toLowerCase()
-  for (const [key, value] of Object.entries(symbolTranslations)) {
-    if (key.toLowerCase() === lowerText) {
-      return value
-    }
-  }
-
-  // Try to translate word by word using comprehensive dictionary
-  const words = trimmedText.split(/\s+/)
-  const translatedWords = words.map((word) => {
-    // Remove punctuation for matching but keep it in result
-    const cleanWord = word.replace(/[(),/]/g, '')
-    const punctuation = word.match(/[(),/]/g)?.join('') || ''
-
-    // Check in word dictionary first
-    if (wordDictionary[cleanWord]) {
-      return wordDictionary[cleanWord] + punctuation
-    }
-
-    // Check case-insensitive in word dictionary
-    for (const [key, value] of Object.entries(wordDictionary)) {
-      if (key.toLowerCase() === cleanWord.toLowerCase()) {
-        return value + punctuation
-      }
-    }
-
-    // Check in symbol translations
-    for (const [key, value] of Object.entries(symbolTranslations)) {
-      if (key.toLowerCase() === cleanWord.toLowerCase()) {
-        return value + punctuation
-      }
-    }
-
-    // Check in category translations
-    for (const [key, value] of Object.entries(categoryTranslations)) {
-      if (key.toLowerCase() === cleanWord.toLowerCase()) {
-        return value + punctuation
-      }
-    }
-
-    // Try partial match in word dictionary (for compound words)
-    for (const [key, value] of Object.entries(wordDictionary)) {
-      if (cleanWord.toLowerCase().includes(key.toLowerCase()) && key.length > 3) {
-        return cleanWord.replace(new RegExp(key, 'gi'), value) + punctuation
-      }
-    }
-
-    return word
-  })
-
-  // If any words were translated, join them
-  const hasTranslation = translatedWords.some((w, idx) => {
-    return w !== words[idx]
-  })
-
-  if (hasTranslation) {
-    return translatedWords.join(' ')
-  }
-
-  // Try to find partial matches in symbol translations (for compound names)
-  const sortedKeys = Object.keys(symbolTranslations).sort((a, b) => b.length - a.length)
-  for (const key of sortedKeys) {
-    const lowerKey = key.toLowerCase()
-    if (lowerText.includes(lowerKey)) {
-      return trimmedText.replace(new RegExp(key, 'gi'), symbolTranslations[key])
-    }
-  }
-
-  // Return original if no translation found
-  return trimmedText
+  if (!text || text.trim() === '') return text
+  return ensurePersianTacticalLabel(text.trim())
 }
 
 const normalizePersianSearch = (value) =>
