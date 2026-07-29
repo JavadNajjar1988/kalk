@@ -11,17 +11,17 @@ import { toPersianDigits } from "@/utils";
 
 const { store } = useActiveScenario();
 
-const currentTime = store.state.currentTime;
+const currentTime = computed(() => store.state.currentTime);
 const { track, scenario } = storeToRefs(useTimeFormatSettingsStore());
 const fmt = useTimeFormatStore();
 
 // Computed properties for Persian time display
 const persianScenarioTime = computed(() => {
-  return toPersianDigits(fmt.scenarioFormatter.format(currentTime));
+  return toPersianDigits(fmt.scenarioFormatter.format(currentTime.value));
 });
 
 const persianTrackTime = computed(() => {
-  return toPersianDigits(fmt.trackFormatter.format(currentTime));
+  return toPersianDigits(fmt.trackFormatter.format(currentTime.value));
 });
 </script>
 <template>
