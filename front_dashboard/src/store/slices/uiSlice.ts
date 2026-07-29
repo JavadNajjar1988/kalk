@@ -96,6 +96,9 @@ export interface HeaderSettings {
 
 export interface DashboardModulesSettings {
   showHeaderBanner: boolean;
+  showContinueLatestKalk: boolean;
+  showScenarioOverview: boolean;
+  showRecentScenarios: boolean;
   showStatArchivedScenarios: boolean;
   showStatAvailableForces: boolean;
   showStatOngoingOperations: boolean;
@@ -108,6 +111,9 @@ export interface DashboardModulesSettings {
 
 export const DEFAULT_DASHBOARD_MODULES: DashboardModulesSettings = {
   showHeaderBanner: true,
+  showContinueLatestKalk: true,
+  showScenarioOverview: true,
+  showRecentScenarios: true,
   showStatArchivedScenarios: true,
   showStatAvailableForces: true,
   showStatOngoingOperations: true,
@@ -636,8 +642,10 @@ export const selectLayout = (state: RootState) => state.ui.layout;
 export const selectSidePanel = (state: RootState) => state.ui.sidePanel;
 export const selectNotifications = (state: RootState) => state.ui.notifications;
 export const selectHeaderSettings = (state: RootState) => state.ui.header;
-export const selectDashboardModules = (state: RootState) =>
-  state.ui.dashboardModules || DEFAULT_DASHBOARD_MODULES;
+export const selectDashboardModules = createSelector(
+  [(state: RootState) => state.ui.dashboardModules],
+  (modules) => ({ ...DEFAULT_DASHBOARD_MODULES, ...(modules || {}) })
+);
 
 // استفاده از createSelector برای بهینه‌سازی سلکتور و جلوگیری از رندر مجدد غیرضروری
 export const selectUnreadNotifications = createSelector(

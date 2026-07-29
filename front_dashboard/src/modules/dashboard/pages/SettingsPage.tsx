@@ -1289,6 +1289,29 @@ const SettingsPage: React.FC = () => {
               </Box>
 
               <Grid container spacing={1}>
+                <Grid item xs={12}>
+                  <Typography variant="subtitle2" sx={{ mt: 0.5, mb: 0.75, fontWeight: 700 }}>
+                    کارت‌های میز کار کالک‌نگاری
+                  </Typography>
+                </Grid>
+                <Grid item xs={12} md={4}>
+                  <FormControlLabel
+                    control={<Switch color="primary" checked={dashboardModules.showContinueLatestKalk} onChange={handleDashboardModuleToggle('showContinueLatestKalk')} />}
+                    label="نمایش ادامه آخرین کالک"
+                  />
+                </Grid>
+                <Grid item xs={12} md={4}>
+                  <FormControlLabel
+                    control={<Switch color="primary" checked={dashboardModules.showScenarioOverview} onChange={handleDashboardModuleToggle('showScenarioOverview')} />}
+                    label="نمایش خلاصه وضعیت سناریوها"
+                  />
+                </Grid>
+                <Grid item xs={12} md={4}>
+                  <FormControlLabel
+                    control={<Switch color="primary" checked={dashboardModules.showRecentScenarios} onChange={handleDashboardModuleToggle('showRecentScenarios')} />}
+                    label="نمایش سناریوهای اخیر"
+                  />
+                </Grid>
                 <Grid item xs={12} md={4}>
                   <FormControlLabel
                     control={<Switch color="primary" checked={dashboardModules.showHeaderBanner} onChange={handleDashboardModuleToggle('showHeaderBanner')} />}

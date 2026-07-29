@@ -7,7 +7,35 @@ export type DashboardCardKey =
   | 'security_alerts'
   | 'recent_activities'
   | 'system_status'
-  | 'important_notices';
+  | 'important_notices'
+  | 'active_users_24h'
+  | 'failed_logins_24h'
+  | 'storage_usage'
+  | 'healthy_services'
+  | 'user_activity_chart';
+
+export type DashboardWidgetId =
+  | 'continue_latest_kalk'
+  | 'scenario_overview'
+  | 'recent_scenarios'
+  | 'quick_access'
+  | DashboardCardKey;
+
+export interface DashboardLayoutItem {
+  i: DashboardWidgetId;
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+  minW?: number;
+  minH?: number;
+}
+
+export interface DashboardWorkspace {
+  version: 1;
+  layouts: Record<string, DashboardLayoutItem[]>;
+  hiddenWidgetIds: DashboardWidgetId[];
+}
 
 export interface DashboardSummary {
   generatedAt: string;
@@ -21,6 +49,61 @@ export interface DashboardSummary {
   activities: Array<{ id: string; kind: string; title: string; description: string; occurredAt: string }>;
   systemStatus: Array<{ key: 'cpu' | 'ram' | 'disk' | 'network'; name: string; value: number; color: 'success' | 'warning' | 'error' }>;
   notices: Array<{ severity: 'success' | 'info' | 'warning' | 'error'; message: string }>;
+  scenarioOverview: { total: number; draft: number; readyForReview: number; archived: number };
+  latestScenario: DashboardScenarioCard | null;
+  recentScenarios: DashboardScenarioCard[];
+  managementMetrics: {
+    activeUsers24h: number;
+    failedLogins24h: number;
+    storage: {
+      usedBytes: number;
+      totalBytes: number;
+      freeBytes: number;
+      percent: number;
+    } | null;
+    services: {
+      healthy: number;
+      total: number;
+      items: Array<{
+        key: string;
+        name: string;
+        healthy: boolean;
+        latencyMs: number | null;
+      }>;
+    };
+    userActivity: Array<{
+      userId: string;
+      name: string;
+      created: number;
+      changed: number;
+    }>;
+    activityWindowDays: number;
+  } | null;
+}
+
+export interface DashboardScenarioCard {
+  id: string;
+  name: string;
+  description: string;
+  image: string | null;
+  status: string;
+  modifiedAt: string;
+  archivedAt: string | null;
+  contentStats: {
+    units: number;
+    events: number;
+    features: number;
+    layers: number;
+    conditions: number;
+    storyboardScenes: number;
+  };
+  mapPreview: {
+    baseMapId: string;
+    center: [number, number];
+    zoom: number;
+    features: Array<Record<string, unknown>>;
+    truncated: boolean;
+  };
 }
 
 class DashboardApiService extends BaseApiClient {
@@ -36,7 +119,16 @@ class DashboardApiService extends BaseApiClient {
   async getSummary(): Promise<DashboardSummary> {
     return handleApiResponse(await this.get<DashboardSummary>('/dashboard/summary'));
   }
+
+  async getWorkspace(): Promise<DashboardWorkspace> {
+    return handleApiResponse(await this.get<DashboardWorkspace>('/dashboard/workspace'));
+  }
+
+  async saveWorkspace(workspace: DashboardWorkspace): Promise<DashboardWorkspace> {
+    return handleApiResponse(
+      await this.put<DashboardWorkspace>('/dashboard/workspace', workspace),
+    );
+  }
 }
 
 export const dashboardApiService = new DashboardApiService();
-

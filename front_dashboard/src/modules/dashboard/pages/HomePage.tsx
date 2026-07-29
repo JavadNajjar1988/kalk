@@ -76,6 +76,7 @@ import FarsiNumber from '@/components/common/FarsiNumber';
 import TransformFarsiNumbers from '@/components/common/TransformFarsiNumbers';
 import { useTranslation } from '@/hooks/useTranslation';
 import { dashboardApiService, DashboardSummary } from '@/services/api/dashboardApiService';
+import EditableDashboardWorkspace from '@/modules/dashboard/components/EditableDashboardWorkspace';
 
 // تایپ‌های مورد نیاز برای کارت‌های آماری
 interface StatItem {
@@ -108,6 +109,10 @@ const EMPTY_SUMMARY: DashboardSummary = {
   activities: [],
   systemStatus: [],
   notices: [],
+  scenarioOverview: { total: 0, draft: 0, readyForReview: 0, archived: 0 },
+  latestScenario: null,
+  recentScenarios: [],
+  managementMetrics: null,
 };
 
 const DashboardStats: React.FC<DashboardStatsProps> = ({
@@ -1115,6 +1120,9 @@ const HomePage: React.FC = () => {
   };
   const dashboardModules: DashboardModulesSettings = rawDashboardModules || {
     showHeaderBanner: true,
+    showContinueLatestKalk: true,
+    showScenarioOverview: true,
+    showRecentScenarios: true,
     showStatArchivedScenarios: true,
     showStatAvailableForces: true,
     showStatOngoingOperations: true,
@@ -1628,16 +1636,13 @@ const HomePage: React.FC = () => {
 
   const isVisible = (key: DashboardSummary['visibleCards'][number]) =>
     summary.visibleCards.includes(key);
-  const showStatsSection =
-    (dashboardModules.showStatArchivedScenarios && isVisible('archived_scenarios')) ||
-    (dashboardModules.showStatAvailableForces && isVisible('available_forces')) ||
-    (dashboardModules.showStatOngoingOperations && isVisible('ongoing_operations')) ||
-    (dashboardModules.showStatSecurityAlerts && isVisible('security_alerts'));
-  const showQuickAccessSection = dashboardModules.showQuickAccess && quickActions.length > 0;
+  const showStatsSection = false;
+  const showLegacyRecentActivities = false;
+  const showQuickAccessSection = false;
   const showSystemStatusSection = dashboardModules.showSystemStatus && isVisible('system_status');
   const showImportantNoticesSection =
     dashboardModules.showImportantNotices && isVisible('important_notices');
-  const showRightColumn = showQuickAccessSection || showSystemStatusSection || showImportantNoticesSection;
+  const showRightColumn = false;
   const unifiedAccent = theme.palette.primary.main;
   const unifiedPanelSurface = `linear-gradient(135deg, ${alpha(unifiedAccent, 0.07)}, ${alpha(unifiedAccent, 0.04)})`;
   const unifiedPanelBorder = `1px solid ${alpha(unifiedAccent, 0.24)}`;
@@ -1821,6 +1826,13 @@ const HomePage: React.FC = () => {
       )}
 
       {/* آمار */}
+      <EditableDashboardWorkspace
+        summary={summary}
+        modules={dashboardModules}
+        loading={activitiesLoading}
+        onRefresh={handleRefreshActivities}
+      />
+
       {showStatsSection && (
         <DashboardStats
           showStatArchivedScenarios={dashboardModules.showStatArchivedScenarios && isVisible('archived_scenarios')}
@@ -1831,10 +1843,10 @@ const HomePage: React.FC = () => {
         />
       )}
 
-      {((dashboardModules.showRecentActivities && isVisible('recent_activities')) || showRightColumn) && (
+      {((showLegacyRecentActivities && dashboardModules.showRecentActivities && isVisible('recent_activities')) || showRightColumn) && (
       <Grid container spacing={3}>
         {/* فعالیت‌های اخیر */}
-        {dashboardModules.showRecentActivities && isVisible('recent_activities') && (
+        {showLegacyRecentActivities && dashboardModules.showRecentActivities && isVisible('recent_activities') && (
         <Grid item xs={12} md={showRightColumn ? 8 : 12}>
           <Paper
             sx={{
@@ -1961,7 +1973,7 @@ const HomePage: React.FC = () => {
 
         {/* دسترسی سریع و وضعیت سیستم */}
         {showRightColumn && (
-        <Grid item xs={12} md={dashboardModules.showRecentActivities && isVisible('recent_activities') ? 4 : 12}>
+        <Grid item xs={12} md={showLegacyRecentActivities && dashboardModules.showRecentActivities && isVisible('recent_activities') ? 4 : 12}>
           {showQuickAccessSection && (
             <Paper
               sx={{
