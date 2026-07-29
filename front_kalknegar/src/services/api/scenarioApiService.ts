@@ -298,6 +298,19 @@ export class ScenarioApiService extends BaseApiClient {
     return handleApiResponse(res);
   }
 
+  async uploadMapSnapshot(
+    scenarioId: string,
+    file: File,
+  ): Promise<ScenarioImageUploadResponse> {
+    const formData = new FormData();
+    formData.append("file", file);
+    const res = await this.postForm<ScenarioImageUploadResponse>(
+      `/scenarios/${encodeURIComponent(scenarioId)}/map-snapshot`,
+      formData,
+    );
+    return handleApiResponse(res);
+  }
+
   async getIntroStatus(scenarioId: string): Promise<ScenarioIntroStatus> {
     if (this.useMockApi) {
       return {

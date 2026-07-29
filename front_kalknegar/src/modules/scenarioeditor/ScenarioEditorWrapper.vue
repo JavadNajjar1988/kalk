@@ -44,6 +44,7 @@ const autosaveQueue = createScenarioAutosaveQueue();
 const draftSaveQueue = createScenarioAutosaveQueue();
 const servicesStore = useServicesStore();
 let autosaveRetryTimer: number | null = null;
+let mapSnapshotBootstrapTimer: number | null = null;
 
 const introModalOpen = ref(false);
 const introStatus = ref<ScenarioIntroStatus | null>(null);
@@ -262,6 +263,41 @@ function cancelDebounced(fn: unknown) {
   (fn as { cancel?: () => void }).cancel?.();
 }
 
+function scheduleMissingMapSnapshot(attempt = 0) {
+  if (
+    isDemoScenario(props.scenarioId) ||
+    (
+      scenario.value?.store?.state?.metadata?.dashboardMapSnapshotUrl &&
+      scenario.value?.store?.state?.metadata?.dashboardMapSnapshotVersion === 3
+    )
+  ) {
+    return;
+  }
+  if (mapSnapshotBootstrapTimer !== null) {
+    window.clearTimeout(mapSnapshotBootstrapTimer);
+  }
+  mapSnapshotBootstrapTimer = window.setTimeout(async () => {
+    mapSnapshotBootstrapTimer = null;
+    if (!localReady.value || !isReady.value) {
+      if (attempt < 6) scheduleMissingMapSnapshot(attempt + 1);
+      return;
+    }
+    const ipcRenderer = readMaybeRef((servicesStore as any).ipcRenderer);
+    let preview: unknown;
+    try {
+      preview = await ipcRenderer?.capturePreview?.();
+    } catch {
+      preview = null;
+    }
+    if (typeof preview !== "string" || !preview.startsWith("data:image/")) {
+      if (attempt < 6) scheduleMissingMapSnapshot(attempt + 1);
+      return;
+    }
+    scenario.value.store.markChanged();
+    await autosaveScenario();
+  }, attempt === 0 ? 900 : 600);
+}
+
 const basemapBaseline = ref<{ scenarioId: string; baseMapId: string } | null>(null);
 
 function syncBasemapBaselineAfterLoad(expectedScenarioId: string) {
@@ -293,6 +329,10 @@ watch(
       await autosaveScenario(previousScenarioId);
     }
     localReady.value = false;
+    if (mapSnapshotBootstrapTimer !== null) {
+      window.clearTimeout(mapSnapshotBootstrapTimer);
+      mapSnapshotBootstrapTimer = null;
+    }
     basemapBaseline.value = null;
     cancelDebounced(debouncedBroadcastBasemap);
     cancelDebounced(debouncedAutosaveScenario);
@@ -454,6 +494,7 @@ watch(
         scenarioNotFound.value = true;
       }
       localReady.value = true;
+      scheduleMissingMapSnapshot();
       if (recoveredLocalDraft) {
         void persistLocalDraft();
         debouncedAutosaveScenario();
@@ -526,6 +567,10 @@ onUnmounted(() => {
   if (autosaveRetryTimer !== null) {
     window.clearTimeout(autosaveRetryTimer);
     autosaveRetryTimer = null;
+  }
+  if (mapSnapshotBootstrapTimer !== null) {
+    window.clearTimeout(mapSnapshotBootstrapTimer);
+    mapSnapshotBootstrapTimer = null;
   }
   detachTacticalStoreListener();
 });

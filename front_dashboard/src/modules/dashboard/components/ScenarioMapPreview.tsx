@@ -101,8 +101,15 @@ const tacticalStyle = (feature: Feature<Geometry>) => {
 const ScenarioMapPreview: React.FC<ScenarioMapPreviewProps> = ({ scenario, height }) => {
   const targetRef = useRef<HTMLDivElement | null>(null);
   const [loadError, setLoadError] = useState(false);
+  const [snapshotFailed, setSnapshotFailed] = useState(false);
+  const snapshotUrl = scenario.mapPreview.snapshotUrl;
 
   useEffect(() => {
+    setSnapshotFailed(false);
+  }, [scenario.id, snapshotUrl]);
+
+  useEffect(() => {
+    if (snapshotUrl && !snapshotFailed) return undefined;
     if (!targetRef.current) return undefined;
 
     let disposed = false;
@@ -215,7 +222,7 @@ const ScenarioMapPreview: React.FC<ScenarioMapPreviewProps> = ({ scenario, heigh
         });
         map.getView().fit(extent, {
           padding: [22, 22, 22, 22],
-          maxZoom: 14,
+          maxZoom: 6,
           duration: 0,
         });
       }
@@ -232,7 +239,7 @@ const ScenarioMapPreview: React.FC<ScenarioMapPreviewProps> = ({ scenario, heigh
       resizeObserver?.disconnect();
       map?.setTarget(undefined);
     };
-  }, [scenario]);
+  }, [scenario, snapshotFailed, snapshotUrl]);
 
   return (
     <Box
@@ -245,7 +252,25 @@ const ScenarioMapPreview: React.FC<ScenarioMapPreviewProps> = ({ scenario, heigh
         '& .ol-viewport': { pointerEvents: 'none' },
       }}
     >
-      <Box ref={targetRef} sx={{ position: 'absolute', inset: 0 }} />
+      {snapshotUrl && !snapshotFailed ? (
+        <Box
+          component="img"
+          src={snapshotUrl}
+          alt={`نمای ذخیره‌شده کالک ${scenario.name}`}
+          onError={() => setSnapshotFailed(true)}
+          sx={{
+            position: 'absolute',
+            inset: 0,
+            width: '100%',
+            height: '100%',
+            display: 'block',
+            objectFit: 'contain',
+            bgcolor: '#e8eee9',
+          }}
+        />
+      ) : (
+        <Box ref={targetRef} sx={{ position: 'absolute', inset: 0 }} />
+      )}
       <Stack
         direction="row"
         spacing={0.7}
