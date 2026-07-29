@@ -68,6 +68,7 @@ import * as mdi from '@mdi/js'
 import { TAG } from './tags.js'
 import { ensurePersianTacticalLabel } from '../../persianTacticalLabels.js'
 import { svg as renderSymbolSvg } from '../../symbology/symbol.js'
+import { toggleFavorite } from './favoriteToggle.js'
 import './Card.css'
 
 const props = defineProps({
@@ -272,13 +273,16 @@ const handleDoubleClick = async () => {
 }
 
 const handleRename = () => {
-  sidebarEmitter.value.emit('edit/begin', { id: props.id })
+  sidebarEmitter.emit('edit/begin', { id: props.id })
 }
 
 const handleFavorite = () => {
-  const nextFavorite = !favorite.value
-  emit('favorite-change', { id: props.id, favorite: nextFavorite })
-  sidebarEmitter.value.emit(nextFavorite ? 'pin' : 'unpin', { id: props.id })
+  toggleFavorite({
+    emitter: sidebarEmitter,
+    id: props.id,
+    favorite: favorite.value,
+    notify: payload => emit('favorite-change', payload),
+  })
 }
 
 const dropEffect = (event) => {
