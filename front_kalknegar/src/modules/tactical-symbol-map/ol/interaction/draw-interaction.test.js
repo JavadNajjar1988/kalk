@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from 'vitest'
 import Draw from 'ol/interaction/Draw'
 import Feature from 'ol/Feature'
 import Point from 'ol/geom/Point'
+import LineString from 'ol/geom/LineString'
 import EventEmitter from '../../shared/emitter'
 import symbols2525c from '../../symbology/2525c.json'
 import symbolsSkkm from '../../symbology/skkm.json'
@@ -108,6 +109,52 @@ describe('drawInteraction', () => {
       }),
     ])
     expect(complete).toHaveBeenCalledOnce()
+  })
+
+  it('stores Boundary echelon and adjacent unit metadata', async () => {
+    const emitter = new EventEmitter()
+    const store = { insertGeoJSON: vi.fn() }
+    const map = {
+      addInteraction: vi.fn(),
+      removeInteraction: vi.fn(),
+      getTargetElement: () => ({ style: {}, focus: vi.fn() }),
+    }
+
+    drawInteraction({ services: { emitter, store }, map })
+    emitter.emit('command/entry/draw', {
+      id: 'symbol:G*G*GLB---',
+      boundary: {
+        echelonCode: 'D',
+        leftUnitId: 'u-left',
+        rightUnitId: 'u-right',
+        leftDesignation: 'گردان ۱',
+        rightDesignation: 'گردان ۲',
+      },
+    })
+    await nextTask()
+
+    const interaction = map.addInteraction.mock.calls[0][0]
+    const feature = new Feature(new LineString([[0, 0], [100, 0]]))
+    interaction.dispatchEvent({ type: 'drawstart', feature })
+    interaction.dispatchEvent({ type: 'drawend', feature })
+    await nextTask()
+
+    expect(store.insertGeoJSON).toHaveBeenCalledWith([
+      expect.objectContaining({
+        type: 'Feature',
+        geometry: {
+          type: 'LineString',
+          coordinates: [[0, 0], [100, 0]],
+        },
+        properties: expect.objectContaining({
+          sidc: 'GFGPGLB---*D***',
+          t: 'گردان ۱',
+          t1: 'گردان ۲',
+          boundaryLeftUnitId: 'u-left',
+          boundaryRightUnitId: 'u-right',
+        }),
+      }),
+    ])
   })
 
   it('reports an invalid symbol instead of silently failing', async () => {

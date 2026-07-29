@@ -44,13 +44,18 @@ export default options => {
     emitter.emit('ui/tactical/draw-cancelled')
   }
 
-  const drawstart = descriptor => ({ feature }) => {
+  const drawstart = (descriptor, boundary) => ({ feature }) => {
     const sidc = MILSTD.format(descriptor.sidc, {
       identity: selectedHostility, // Use selected hostility
-      status: selectedStatus // Use selected status
+      status: selectedStatus, // Use selected status
+      echelon: boundary?.echelonCode
     })
 
     feature.set('sidc', sidc)
+    if (boundary?.leftDesignation) feature.set('t', boundary.leftDesignation)
+    if (boundary?.rightDesignation) feature.set('t1', boundary.rightDesignation)
+    if (boundary?.leftUnitId) feature.set('boundaryLeftUnitId', boundary.leftUnitId)
+    if (boundary?.rightUnitId) feature.set('boundaryRightUnitId', boundary.rightUnitId)
   }
 
   const drawend = geometry => ({ feature }) => {
@@ -67,7 +72,7 @@ export default options => {
     if (originatorId !== ORIGINATOR_ID) { cancel() }
   })
 
-  emitter.on('command/entry/draw', ({ id }) => {
+  emitter.on('command/entry/draw', ({ id, boundary }) => {
     // Cancel current draw unconditionally:
     cancel()
     emitter.emit('command/draw/cancel', { originatorId: ORIGINATOR_ID })
@@ -88,7 +93,7 @@ export default options => {
 
     handlers = {
       drawabort: cancel,
-      drawstart: drawstart(descriptor),
+      drawstart: drawstart(descriptor, boundary),
       drawend: drawend(geometry)
     }
 
