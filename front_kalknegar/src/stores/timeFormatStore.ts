@@ -20,10 +20,10 @@ export const timeFormatItems: RadioGroupItem<TimeFormat>[] = [
 ];
 
 export const intlItems = [
-  { label: "Full", value: "full" },
-  { label: "Long", value: "long" },
-  { label: "Medium", value: "medium" },
-  { label: "Short", value: "short" },
+  { label: "کامل", value: "full" },
+  { label: "بلند", value: "long" },
+  { label: "متوسط", value: "medium" },
+  { label: "کوتاه", value: "short" },
 ];
 
 export const useTimeFormatSettingsStore = defineStore("timeFormatSettings", {

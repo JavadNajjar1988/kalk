@@ -33,10 +33,6 @@
       </ul>
     </div>
 
-    <div class="mt-4">
-      <p>For debugging:</p>
-      <pre class="text-sm">{{ mapView }}</pre>
-    </div>
   </div>
 </template>
 
@@ -52,7 +48,6 @@ import { PhEye as EyeIcon, PhEyeSlash as EyeSlashIcon } from "@phosphor-icons/vu
 import BaseLayerSwitcher from "./BaseLayerSwitcher.vue";
 import type { AnyTileLayer, AnyVectorLayer } from "@/geo/types";
 import TileSource from "ol/source/Tile";
-import { toLonLat } from "ol/proj";
 import OpacityInput from "./OpacityInput.vue";
 import { getUid } from "ol";
 import { type LayerType } from "@/modules/scenarioeditor/featureLayerUtils";
@@ -88,15 +83,6 @@ const baseLayers = computed(() => {
   // @ts-ignore
   l.push(noneLayer);
   return l;
-});
-
-const mapView = computed(() => {
-  if (!geoStore.olMap) return;
-  const view = geoStore.olMap.getView();
-  return {
-    center: toLonLat(view.getCenter() || [0, 0], view.getProjection()),
-    zoom: view.getZoom(),
-  };
 });
 
 watch(

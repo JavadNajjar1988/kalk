@@ -13,7 +13,7 @@ const props = defineProps<{ sampleTime: string }>();
 const settings = defineModel<TimeFormatSettings>({ required: true });
 const browserLocale = navigator.language;
 
-const languageNames = new Intl.DisplayNames(["en"], { type: "language" });
+const languageNames = new Intl.DisplayNames(["fa"], { type: "language" });
 const browserLanguageName = languageNames.of(browserLocale);
 </script>
 
@@ -25,7 +25,7 @@ const browserLanguageName = languageNames.of(browserLocale);
       <InputGroupTemplate label="زبان">
         <LanguageSelect v-model="settings.locale" />
         <template #description>
-          Browser locale is
+          زبان مرورگر:
           <span class="font-medium">{{ browserLanguageName }}({{ browserLocale }})</span>
         </template>
       </InputGroupTemplate>
@@ -44,7 +44,7 @@ const browserLanguageName = languageNames.of(browserLocale);
       </div>
     </template>
 
-    <p class="text-sm font-semibold">Preview:</p>
+    <p class="text-sm font-semibold">پیش‌نمایش:</p>
     <p>{{ sampleTime }}</p>
   </div>
 </template>
