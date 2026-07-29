@@ -32,7 +32,7 @@ export interface DashboardLayoutItem {
 }
 
 export interface DashboardWorkspace {
-  version: 1;
+  version: number;
   layouts: Record<string, DashboardLayoutItem[]>;
   hiddenWidgetIds: DashboardWidgetId[];
 }

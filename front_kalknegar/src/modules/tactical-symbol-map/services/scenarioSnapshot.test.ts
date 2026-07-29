@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 import {
   exportTacticalSnapshot,
   getTacticalSnapshotFromMetadata,
+  importTacticalSnapshot,
 } from "./scenarioSnapshot";
 
 describe("scenarioSnapshot", () => {
@@ -73,5 +74,36 @@ describe("scenarioSnapshot", () => {
         properties: { label: "invalid" },
       },
     ]);
+  });
+
+  it("preserves local tactical entries during legacy recovery", async () => {
+    const operations: Array<{ type: string; key: string; value?: unknown }> = [];
+    const store = {
+      db: {},
+      tuples: vi.fn(async (prefix: string) =>
+        prefix === "feature:"
+          ? [["feature:local", { type: "Feature" }]]
+          : [],
+      ),
+      batch: vi.fn(async (_db, nextOperations) => {
+        operations.push(...nextOperations);
+      }),
+    };
+
+    await importTacticalSnapshot(
+      store as any,
+      {
+        version: 1,
+        tuples: [["layer:server", { name: "Server layer" }]],
+      },
+      { preserveLocalEntries: true },
+    );
+
+    expect(operations).not.toContainEqual(
+      expect.objectContaining({ type: "del", key: "feature:local" }),
+    );
+    expect(operations).toContainEqual(
+      expect.objectContaining({ type: "put", key: "layer:server" }),
+    );
   });
 });

@@ -91,10 +91,10 @@ const definitions: WidgetDefinition[] = [
   { id: 'failed_logins_24h', title: 'ورودهای ناموفق', minW: 3, minH: 2, defaultLayout: { i: 'failed_logins_24h', x: 3, y: 0, w: 3, h: 2 }, enabled: (s) => s.visibleCards.includes('failed_logins_24h') },
   { id: 'storage_usage', title: 'فضای ذخیره‌سازی', minW: 3, minH: 2, defaultLayout: { i: 'storage_usage', x: 6, y: 0, w: 3, h: 2 }, enabled: (s) => s.visibleCards.includes('storage_usage') },
   { id: 'healthy_services', title: 'سرویس‌های سالم', minW: 3, minH: 2, defaultLayout: { i: 'healthy_services', x: 9, y: 0, w: 3, h: 2 }, enabled: (s) => s.visibleCards.includes('healthy_services') },
-  { id: 'continue_latest_kalk', title: 'ادامه آخرین کالک', minW: 6, minH: 4, defaultLayout: { i: 'continue_latest_kalk', x: 0, y: 2, w: 12, h: 5 }, enabled: (_s, m) => m.showContinueLatestKalk },
+  { id: 'continue_latest_kalk', title: 'ادامه آخرین کالک', minW: 5, minH: 3, defaultLayout: { i: 'continue_latest_kalk', x: 0, y: 2, w: 8, h: 4 }, enabled: (_s, m) => m.showContinueLatestKalk },
   { id: 'scenario_overview', title: 'وضعیت سناریوها', minW: 4, minH: 2, defaultLayout: { i: 'scenario_overview', x: 0, y: 7, w: 12, h: 2 }, enabled: (_s, m) => m.showScenarioOverview },
   { id: 'recent_scenarios', title: 'سناریوهای اخیر', minW: 5, minH: 4, defaultLayout: { i: 'recent_scenarios', x: 0, y: 9, w: 8, h: 5 }, enabled: (_s, m) => m.showRecentScenarios },
-  { id: 'quick_access', title: 'دسترسی سریع', minW: 3, minH: 3, defaultLayout: { i: 'quick_access', x: 8, y: 9, w: 4, h: 5 }, enabled: (_s, m) => m.showQuickAccess },
+  { id: 'quick_access', title: 'دسترسی سریع', minW: 3, minH: 3, defaultLayout: { i: 'quick_access', x: 8, y: 2, w: 4, h: 4 }, enabled: (_s, m) => m.showQuickAccess },
   { id: 'user_activity_chart', title: 'فعالیت کاربران و ساخت سناریو', minW: 5, minH: 4, defaultLayout: { i: 'user_activity_chart', x: 0, y: 14, w: 8, h: 5 }, enabled: (s) => s.visibleCards.includes('user_activity_chart') },
   { id: 'recent_activities', title: 'آخرین تغییرات', minW: 3, minH: 3, defaultLayout: { i: 'recent_activities', x: 8, y: 14, w: 4, h: 5 }, enabled: (s, m) => m.showRecentActivities && s.visibleCards.includes('recent_activities') },
   { id: 'archived_scenarios', title: 'سناریوهای بایگانی‌شده', minW: 3, minH: 2, defaultLayout: { i: 'archived_scenarios', x: 0, y: 19, w: 3, h: 2 }, enabled: (s, m) => m.showStatArchivedScenarios && s.visibleCards.includes('archived_scenarios') },
@@ -118,14 +118,46 @@ const defaultLayouts = (): Layouts => ({
   lg: definitions.map(({ defaultLayout, minW, minH }) => ({ ...defaultLayout, minW, minH })),
 });
 
-const normalizeLayouts = (stored: DashboardWorkspace['layouts']): Layouts => {
+const normalizeLayouts = (
+  stored: DashboardWorkspace['layouts'],
+  workspaceVersion = 4,
+): Layouts => {
   const defaults = defaultLayouts();
   const result: Layouts = {};
   for (const breakpoint of Object.keys(BREAKPOINTS)) {
-    const source = stored?.[breakpoint] || defaults[breakpoint] || defaults.lg;
+    const source = workspaceVersion === 3
+      ? defaults[breakpoint] || defaults.lg
+      : stored?.[breakpoint] || defaults[breakpoint] || defaults.lg;
     const known = source
       .filter((item) => definitions.some((definition) => definition.id === item.i))
-      .map((item) => ({ ...item }));
+      .map((item) => {
+        if (
+          workspaceVersion < 2
+          && item.i === 'continue_latest_kalk'
+          && item.w === 12
+          && item.h === 5
+        ) {
+          return { ...item, w: 8, h: 4, minW: 5, minH: 3 };
+        }
+        if (
+          workspaceVersion < 3
+          && item.i === 'quick_access'
+          && item.w === 4
+          && item.h === 5
+          && (item.y === 2 || (item.x === 8 && item.y === 9))
+        ) {
+          return {
+            ...item,
+            x: item.y === 2 ? item.x : 8,
+            y: 2,
+            w: 4,
+            h: 4,
+            minW: 3,
+            minH: 3,
+          };
+        }
+        return { ...item };
+      });
     const present = new Set<string>(known.map((item) => item.i));
     const additions = (defaults.lg || [])
       .filter((item) => !present.has(item.i))
@@ -167,6 +199,7 @@ const WidgetHeader = ({
   action?: React.ReactNode;
 }) => (
   <Stack
+    dir="ltr"
     className="dashboard-drag-handle"
     direction="row"
     alignItems="center"
@@ -179,10 +212,25 @@ const WidgetHeader = ({
       cursor: 'grab',
       bgcolor: 'transparent',
     }}
+    style={{ direction: 'ltr', flexDirection: 'row-reverse' }}
   >
-    <Stack direction="row" alignItems="center" spacing={0.75}>
+    <Stack
+      dir="rtl"
+      direction="row"
+      alignItems="center"
+      spacing={0.75}
+      sx={{ minWidth: 0 }}
+      style={{ direction: 'rtl' }}
+    >
       <DragIndicator fontSize="small" color="disabled" />
-      <Typography variant="subtitle2" fontWeight={800}>{title}</Typography>
+      <Typography
+        className="dashboard-widget-title"
+        variant="subtitle2"
+        fontWeight={800}
+        style={{ textAlign: 'right' }}
+      >
+        {title}
+      </Typography>
     </Stack>
     {action}
   </Stack>
@@ -196,6 +244,7 @@ const MetricWidget = ({
   color,
   editing,
   progress,
+  valueDirection = 'rtl',
 }: {
   title: string;
   value: string;
@@ -204,16 +253,32 @@ const MetricWidget = ({
   color: string;
   editing: boolean;
   progress?: number;
+  valueDirection?: 'ltr' | 'rtl';
 }) => (
   <Paper sx={panelSx}>
     <WidgetHeader title={title} editing={editing} />
     <Stack sx={{ p: 1.5, height: 'calc(100% - 45px)' }} justifyContent="space-between">
       <Stack direction="row" alignItems="center" justifyContent="space-between">
         <Avatar sx={{ width: 36, height: 36, bgcolor: alpha(color, 0.1), color }}>{icon}</Avatar>
-        <Typography variant="h5" fontWeight={900}>{value}</Typography>
+        <Typography
+          dir={valueDirection}
+          variant="h5"
+          fontWeight={900}
+          sx={{ direction: valueDirection, unicodeBidi: 'isolate' }}
+        >
+          {value}
+        </Typography>
       </Stack>
       <Box>
-        <Typography variant="caption" color="text.secondary">{detail}</Typography>
+        <Typography
+          className="dashboard-widget-description"
+          variant="caption"
+          color="text.secondary"
+          sx={{ display: 'block', width: '100%' }}
+          style={{ textAlign: 'right' }}
+        >
+          {detail}
+        </Typography>
         {typeof progress === 'number' && (
           <LinearProgress
             variant="determinate"
@@ -258,8 +323,17 @@ const EditableDashboardWorkspace: React.FC<Props> = ({
     dashboardApiService.getWorkspace()
       .then((workspace) => {
         if (!active) return;
-        setLayouts(normalizeLayouts(workspace.layouts));
-        setHiddenIds(workspace.hiddenWidgetIds || []);
+        const nextLayouts = normalizeLayouts(workspace.layouts, workspace.version);
+        const nextHiddenIds = workspace.hiddenWidgetIds || [];
+        setLayouts(nextLayouts);
+        setHiddenIds(nextHiddenIds);
+        if (workspace.version < 4) {
+          void dashboardApiService.saveWorkspace({
+            version: 4,
+            layouts: nextLayouts as DashboardWorkspace['layouts'],
+            hiddenWidgetIds: nextHiddenIds,
+          });
+        }
       })
       .catch(() => {
         if (active) setSaveState('error');
@@ -281,7 +355,7 @@ const EditableDashboardWorkspace: React.FC<Props> = ({
     setSaveState('saving');
     try {
       const payload: DashboardWorkspace = {
-        version: 1,
+        version: 4,
         layouts: nextLayouts as DashboardWorkspace['layouts'],
         hiddenWidgetIds: nextHidden,
       };
@@ -321,7 +395,7 @@ const EditableDashboardWorkspace: React.FC<Props> = ({
   };
 
   const resetWorkspace = () => {
-    const nextLayouts = normalizeLayouts({});
+    const nextLayouts = normalizeLayouts({}, 4);
     setLayouts(nextLayouts);
     setHiddenIds([]);
     scheduleSave(nextLayouts, []);
@@ -353,26 +427,43 @@ const EditableDashboardWorkspace: React.FC<Props> = ({
     }
     if (id === 'healthy_services') {
       const services = management?.services;
-      return <MetricWidget title="سرویس‌های سالم" value={`${fa(services?.healthy || 0)} از ${fa(services?.total || 0)}`} detail="بررسی زنده سرویس‌های سامانه" icon={<CloudDoneOutlined />} color="#2e7d42" editing={editing} progress={services?.total ? services.healthy / services.total * 100 : 0} />;
+      return <MetricWidget title="سرویس‌های سالم" value={`${fa(services?.healthy || 0)} / ${fa(services?.total || 0)}`} valueDirection="ltr" detail="تعداد سرویس‌های سالم از کل سرویس‌ها" icon={<CloudDoneOutlined />} color="#2e7d42" editing={editing} progress={services?.total ? services.healthy / services.total * 100 : 0} />;
     }
     if (id === 'continue_latest_kalk') {
       return (
         <Paper sx={panelSx}>
           <WidgetHeader title="ادامه آخرین کالک" editing={editing} action={<Tooltip title="به‌روزرسانی"><span><IconButton size="small" disabled={loading} onClick={onRefresh}><RefreshOutlined fontSize="small" /></IconButton></span></Tooltip>} />
           {latest ? (
-            <Stack direction={{ xs: 'column', md: 'row' }} sx={{ height: 'calc(100% - 45px)' }}>
-              <Box sx={{ width: { xs: '100%', md: '38%' }, height: { xs: 150, md: '100%' }, minHeight: 0 }}>
+            <Stack
+              dir="ltr"
+              direction={{ xs: 'column', md: 'row' }}
+              sx={{ height: 'calc(100% - 45px)' }}
+              style={{ direction: 'ltr' }}
+            >
+              <Box sx={{ width: { xs: '100%', md: '46%' }, height: { xs: 140, md: '100%' }, minHeight: 0 }}>
                 <ScenarioMapPreview scenario={latest} height="100%" />
               </Box>
-              <Stack spacing={1.3} sx={{ p: 2, flex: 1, minWidth: 0, overflow: 'auto' }}>
+              <Stack
+                dir="rtl"
+                spacing={0.9}
+                sx={{ p: 1.5, flex: 1, minWidth: 0, overflow: 'auto' }}
+                style={{ direction: 'rtl', textAlign: 'right' }}
+              >
                 <Stack direction="row" alignItems="center" justifyContent="space-between" spacing={1}>
                   <Box sx={{ minWidth: 0 }}>
-                    <Typography variant="h6" fontWeight={900} noWrap>{latest.name}</Typography>
-                    <Typography variant="caption" color="text.secondary">آخرین ذخیره: {formatPersianDateTime(latest.modifiedAt)}</Typography>
+                    <Typography variant="h6" fontWeight={900} noWrap style={{ textAlign: 'right' }}>{latest.name}</Typography>
+                    <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }} style={{ textAlign: 'right' }}>آخرین ذخیره: {formatPersianDateTime(latest.modifiedAt)}</Typography>
                   </Box>
                   <Chip size="small" label={latest.archivedAt ? 'بایگانی‌شده' : 'ذخیره‌شده'} color={latest.archivedAt ? 'default' : 'success'} variant="outlined" />
                 </Stack>
-                <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
+                <Stack
+                  dir="rtl"
+                  direction="row"
+                  spacing={1}
+                  flexWrap="wrap"
+                  useFlexGap
+                  style={{ direction: 'rtl', textAlign: 'right' }}
+                >
                   <Chip size="small" icon={<Inventory2Outlined />} label={`${fa(latest.contentStats.units)} یگان`} />
                   <Chip size="small" icon={<MapOutlined />} label={`${fa(latest.contentStats.features)} عارضه`} />
                   <Chip size="small" icon={<TimelineOutlined />} label={`${fa(latest.contentStats.events)} رویداد`} />
@@ -413,8 +504,8 @@ const EditableDashboardWorkspace: React.FC<Props> = ({
             {items.map(([label, value, icon, itemColor], index) => (
               <Stack key={label} direction="row" alignItems="center" justifyContent="space-between" sx={{ flex: 1, minWidth: 0, px: 1.5, borderLeft: index < items.length - 1 ? '1px solid' : 0, borderColor: 'divider' }}>
                 <Avatar sx={{ width: 34, height: 34, bgcolor: alpha(itemColor, 0.1), color: itemColor }}>{icon}</Avatar>
-                <Box sx={{ textAlign: 'left' }}>
-                  <Typography variant="caption" color="text.secondary">{label}</Typography>
+                <Box style={{ textAlign: 'right' }}>
+                  <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }} style={{ textAlign: 'right' }}>{label}</Typography>
                   <Typography fontWeight={900}>{fa(value)}</Typography>
                 </Box>
               </Stack>
@@ -434,6 +525,8 @@ const EditableDashboardWorkspace: React.FC<Props> = ({
                 <ListItemText
                   primary={<Typography variant="body2" fontWeight={800}>{scenario.name}</Typography>}
                   secondary={`${formatPersianDateTime(scenario.modifiedAt)} · ${fa(scenario.contentStats.features)} عارضه · ${fa(scenario.contentStats.units)} یگان`}
+                  style={{ textAlign: 'right' }}
+                  secondaryTypographyProps={{ style: { textAlign: 'right' } }}
                 />
               </ListItem>
             ))}
@@ -494,7 +587,13 @@ const EditableDashboardWorkspace: React.FC<Props> = ({
             {summary.activities.slice(0, 8).map((activity) => (
               <ListItem key={activity.id} divider>
                 <ListItemAvatar><Avatar sx={{ width: 30, height: 30, bgcolor: alpha(color, 0.1), color }}><HistoryOutlined sx={{ fontSize: 17 }} /></Avatar></ListItemAvatar>
-                <ListItemText primary={activity.title} secondary={`${activity.description} · ${formatPersianDateTime(activity.occurredAt)}`} primaryTypographyProps={{ variant: 'body2', fontWeight: 700 }} secondaryTypographyProps={{ variant: 'caption', noWrap: true }} />
+                <ListItemText
+                  primary={activity.title}
+                  secondary={`${activity.description} · ${formatPersianDateTime(activity.occurredAt)}`}
+                  style={{ textAlign: 'right' }}
+                  primaryTypographyProps={{ variant: 'body2', fontWeight: 700, style: { textAlign: 'right' } }}
+                  secondaryTypographyProps={{ variant: 'caption', noWrap: true, style: { textAlign: 'right' } }}
+                />
               </ListItem>
             ))}
           </List>
@@ -532,7 +631,7 @@ const EditableDashboardWorkspace: React.FC<Props> = ({
       <Paper sx={panelSx}>
         <WidgetHeader title="اطلاعیه‌های مهم" editing={editing} />
         <Stack spacing={1} sx={{ p: 1.25, height: 'calc(100% - 45px)', overflow: 'auto' }}>
-          {summary.notices.map((notice, index) => <Alert key={index} severity={notice.severity} sx={{ py: 0 }}><Typography variant="caption">{notice.message}</Typography></Alert>)}
+          {summary.notices.map((notice, index) => <Alert key={index} severity={notice.severity} sx={{ py: 0 }} style={{ textAlign: 'right' }}><Typography variant="caption" sx={{ display: 'block' }} style={{ textAlign: 'right' }}>{notice.message}</Typography></Alert>)}
         </Stack>
       </Paper>
     );
@@ -574,12 +673,7 @@ const EditableDashboardWorkspace: React.FC<Props> = ({
             borderRadius: 1.5,
           },
           '& .react-resizable-handle': {
-            display: 'block',
-            opacity: 0.18,
-            transition: 'opacity 120ms ease',
-          },
-          '& .react-grid-item:hover .react-resizable-handle': {
-            opacity: 0.85,
+            display: 'none !important',
           },
         }}
       >
@@ -593,9 +687,8 @@ const EditableDashboardWorkspace: React.FC<Props> = ({
           containerPadding={[0, 0]}
           compactType="vertical"
           isDraggable
-          isResizable
+          isResizable={false}
           draggableHandle=".dashboard-drag-handle"
-          resizeHandles={['se']}
           onLayoutChange={handleLayoutChange}
         >
           {visible.map((definition) => (
@@ -617,7 +710,11 @@ const EditableDashboardWorkspace: React.FC<Props> = ({
             {available.map((definition) => (
               <ListItem key={definition.id} divider secondaryAction={<Switch edge="end" checked={!hiddenIds.includes(definition.id)} onChange={() => toggleWidget(definition.id)} />}>
                 <ListItemAvatar><Avatar sx={{ width: 30, height: 30, bgcolor: alpha(theme.palette.primary.main, 0.1), color: 'primary.main' }}><DragIndicator sx={{ fontSize: 17 }} /></Avatar></ListItemAvatar>
-                <ListItemText primary={definition.title} primaryTypographyProps={{ variant: 'body2' }} />
+                <ListItemText
+                  primary={definition.title}
+                  style={{ textAlign: 'right' }}
+                  primaryTypographyProps={{ variant: 'body2', style: { textAlign: 'right' } }}
+                />
               </ListItem>
             ))}
           </List>

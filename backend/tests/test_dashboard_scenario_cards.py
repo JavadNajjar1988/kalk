@@ -80,3 +80,40 @@ def test_scenario_card_uses_saved_status_and_image():
     assert card["mapPreview"]["center"] == [51.4, 35.7]
     assert card["mapPreview"]["zoom"] == 9
     assert len(card["mapPreview"]["features"]) == 1
+
+
+def test_scenario_card_includes_visible_tactical_snapshot_features():
+    tactical_feature = {
+        "type": "Feature",
+        "geometry": {"type": "Point", "coordinates": [5729744.3, 4257980.7]},
+        "properties": {"sidc": "SFGPUCI---*****", "t": "گردان یکم"},
+    }
+    hidden_feature = {
+        "type": "Feature",
+        "geometry": {"type": "Point", "coordinates": [5730000, 4258000]},
+        "properties": {"sidc": "SHGPUCI---*****"},
+    }
+    item = _scenario(
+        {
+            "metadata": {
+                "tacticalSymbols": {
+                    "version": 1,
+                    "tuples": [
+                        ["feature:layer-1/visible", tactical_feature],
+                        ["feature:layer-1/hidden", hidden_feature],
+                        ["hidden+feature:layer-1/hidden", True],
+                    ],
+                }
+            },
+            "layers": [],
+        }
+    )
+
+    card = _scenario_card(item)
+
+    assert card["contentStats"]["features"] == 1
+    assert len(card["mapPreview"]["features"]) == 1
+    preview = card["mapPreview"]["features"][0]
+    assert preview["properties"]["sidc"] == "SFGPUCI---*****"
+    assert preview["properties"]["__dashboardProjection"] == "EPSG:3857"
+    assert preview["properties"]["__dashboardSource"] == "tactical"
