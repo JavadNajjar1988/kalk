@@ -26,7 +26,6 @@ import {
   AssignmentOutlined,
   CheckCircleOutline,
   CloudDoneOutlined,
-  DashboardCustomizeOutlined,
   DescriptionOutlined,
   DragIndicator,
   ErrorOutline,
@@ -161,7 +160,6 @@ const panelSx = {
 
 const WidgetHeader = ({
   title,
-  editing,
   action,
 }: {
   title: string;
@@ -169,7 +167,7 @@ const WidgetHeader = ({
   action?: React.ReactNode;
 }) => (
   <Stack
-    className={editing ? 'dashboard-drag-handle' : undefined}
+    className="dashboard-drag-handle"
     direction="row"
     alignItems="center"
     justifyContent="space-between"
@@ -178,12 +176,12 @@ const WidgetHeader = ({
       px: 1.5,
       borderBottom: '1px solid',
       borderColor: 'divider',
-      cursor: editing ? 'grab' : 'default',
-      bgcolor: editing ? 'action.hover' : 'transparent',
+      cursor: 'grab',
+      bgcolor: 'transparent',
     }}
   >
     <Stack direction="row" alignItems="center" spacing={0.75}>
-      {editing && <DragIndicator fontSize="small" color="disabled" />}
+      <DragIndicator fontSize="small" color="disabled" />
       <Typography variant="subtitle2" fontWeight={800}>{title}</Typography>
     </Stack>
     {action}
@@ -308,7 +306,7 @@ const EditableDashboardWorkspace: React.FC<Props> = ({
   }, [persistWorkspace]);
 
   const handleLayoutChange = (_current: Layout[], next: Layouts) => {
-    if (!editing || !workspaceReady) return;
+    if (!workspaceReady) return;
     const merged = mergeLayouts(layouts, next);
     setLayouts(merged);
     scheduleSave(merged, hiddenIds);
@@ -542,26 +540,33 @@ const EditableDashboardWorkspace: React.FC<Props> = ({
 
   return (
     <Box>
-      <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 1.5 }}>
+      <Stack
+        dir="ltr"
+        direction="row"
+        alignItems="center"
+        justifyContent="space-between"
+        sx={{ mb: 1.5 }}
+        style={{ direction: 'ltr' }}
+      >
         <Button
-          variant={editing ? 'contained' : 'outlined'}
-          startIcon={editing ? <SaveOutlined /> : <TuneOutlined />}
-          onClick={() => editing ? closeEditor() : setEditing(true)}
+          dir="rtl"
+          variant="outlined"
+          startIcon={<TuneOutlined />}
+          onClick={() => setEditing(true)}
         >
-          {editing ? 'پایان ویرایش' : 'ویرایش داشبورد'}
+          مدیریت کارت‌ها
         </Button>
-        <Stack direction="row" alignItems="center" spacing={1}>
+        <Stack dir="rtl" direction="row" alignItems="center" spacing={1}>
           {saveState === 'saving' && <Typography variant="caption" color="text.secondary">در حال ذخیره میزکار...</Typography>}
           {saveState === 'saved' && <Typography variant="caption" color="success.main">میزکار ذخیره شد</Typography>}
           {saveState === 'error' && <Typography variant="caption" color="error.main">ذخیره میزکار انجام نشد</Typography>}
-          {editing && <Chip size="small" icon={<DashboardCustomizeOutlined />} label="ویجت‌ها را جابه‌جا یا از گوشه تغییر اندازه دهید" />}
         </Stack>
       </Stack>
 
       <Box
         dir="ltr"
+        style={{ direction: 'ltr' }}
         sx={{
-          direction: 'ltr',
           '& .react-grid-item > *': { direction: 'rtl' },
           '& .react-grid-item.react-grid-placeholder': {
             bgcolor: alpha(theme.palette.primary.main, 0.18),
@@ -569,12 +574,17 @@ const EditableDashboardWorkspace: React.FC<Props> = ({
             borderRadius: 1.5,
           },
           '& .react-resizable-handle': {
-            display: editing ? 'block' : 'none',
-            opacity: 0.7,
+            display: 'block',
+            opacity: 0.18,
+            transition: 'opacity 120ms ease',
+          },
+          '& .react-grid-item:hover .react-resizable-handle': {
+            opacity: 0.85,
           },
         }}
       >
         <ResponsiveGrid
+          key={visible.map((item) => item.id).join('|')}
           layouts={layouts}
           breakpoints={BREAKPOINTS}
           cols={COLS}
@@ -582,8 +592,8 @@ const EditableDashboardWorkspace: React.FC<Props> = ({
           margin={[12, 12]}
           containerPadding={[0, 0]}
           compactType="vertical"
-          isDraggable={editing}
-          isResizable={editing}
+          isDraggable
+          isResizable
           draggableHandle=".dashboard-drag-handle"
           resizeHandles={['se']}
           onLayoutChange={handleLayoutChange}
@@ -594,7 +604,7 @@ const EditableDashboardWorkspace: React.FC<Props> = ({
         </ResponsiveGrid>
       </Box>
 
-      <Drawer anchor="left" open={editing} onClose={closeEditor}>
+      <Drawer variant="persistent" anchor="left" open={editing}>
         <Stack sx={{ width: 310, p: 2, height: '100%' }} spacing={1.5}>
           <Stack direction="row" alignItems="center" justifyContent="space-between">
             <Box>
