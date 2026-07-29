@@ -158,6 +158,7 @@ import { activeScenarioKey } from "@/components/injects";
 import { useServicesStore } from "@/modules/tactical-symbol-map/stores/services.js";
 import * as MILSTD from "@/modules/tactical-symbol-map/symbology/2525c.js";
 import { svg } from "@/modules/tactical-symbol-map/symbology/symbol.js";
+import { requestTacticalDraw } from "./tacticalDrawRequest";
 
 const props = defineProps<{
   open: boolean;
@@ -175,6 +176,7 @@ let initializingScenarioId: string | null = null;
 let initializedScenarioId: string | null = null;
 let preloadHandle: number | null = null;
 let preloadUsesIdleCallback = false;
+let placementRequestVersion = 0;
 const configuredPreferenceStores = new WeakSet<object>();
 const symbolSidebarDefaultSearch = {
   history: [{ key: "root", scope: "@symbol", label: "symbol" }],
@@ -377,7 +379,7 @@ function selectStatus(code: string) {
   services.value?.emitter?.emit("status/selected", { code });
 }
 
-function startSymbolPlacement() {
+async function startSymbolPlacement() {
   placementError.value = null;
   if (!selectedSymbolId.value || !selectedSidc.value) {
     placementError.value = "ابتدا یک نماد را انتخاب کنید.";
@@ -388,10 +390,22 @@ function startSymbolPlacement() {
     return;
   }
   isDrawingActive.value = true;
-  services.value.emitter.emit("command/entry/draw", { id: selectedSymbolId.value });
+  const requestVersion = ++placementRequestVersion;
+  const accepted = await requestTacticalDraw(
+    services.value.emitter,
+    selectedSymbolId.value,
+  );
+
+  if (requestVersion !== placementRequestVersion) return;
+  if (!accepted) {
+    isDrawingActive.value = false;
+    placementError.value =
+      "ابزار رسم نقشه آماده نشد. پنل را ببندید و دوباره باز کنید.";
+  }
 }
 
 function cancelPlacement() {
+  placementRequestVersion += 1;
   placementError.value = null;
   isDrawingActive.value = false;
   services.value?.emitter?.emit("command/draw/cancel", {
@@ -444,13 +458,38 @@ const handleDrawComplete = () => {
   isDrawingActive.value = false;
 };
 
+const handleDrawCancelled = () => {
+  placementRequestVersion += 1;
+  isDrawingActive.value = false;
+};
+
+const handleDrawReady = () => {
+  placementError.value = null;
+  isDrawingActive.value = true;
+};
+
+const handleDrawError = ({ reason }: { reason?: string }) => {
+  placementRequestVersion += 1;
+  isDrawingActive.value = false;
+  placementError.value =
+    reason === "symbol-not-found"
+      ? "کد این نماد در کتابخانهٔ رسم پیدا نشد."
+      : "هندسهٔ این نماد برای رسم روی نقشه پشتیبانی نمی‌شود.";
+};
+
 watch(
   () => services.value?.emitter,
   (emitter, _, onCleanup) => {
     if (!emitter) return;
     emitter.on("ui/tactical/draw-complete", handleDrawComplete);
+    emitter.on("ui/tactical/draw-cancelled", handleDrawCancelled);
+    emitter.on("ui/tactical/draw-ready", handleDrawReady);
+    emitter.on("ui/tactical/draw-error", handleDrawError);
     onCleanup(() => {
       emitter.off("ui/tactical/draw-complete", handleDrawComplete);
+      emitter.off("ui/tactical/draw-cancelled", handleDrawCancelled);
+      emitter.off("ui/tactical/draw-ready", handleDrawReady);
+      emitter.off("ui/tactical/draw-error", handleDrawError);
     });
   },
   { immediate: true },
@@ -469,6 +508,9 @@ onUnmounted(() => {
     preloadHandle = null;
   }
   services.value?.emitter?.off("ui/tactical/draw-complete", handleDrawComplete);
+  services.value?.emitter?.off("ui/tactical/draw-cancelled", handleDrawCancelled);
+  services.value?.emitter?.off("ui/tactical/draw-ready", handleDrawReady);
+  services.value?.emitter?.off("ui/tactical/draw-error", handleDrawError);
 });
 </script>
 

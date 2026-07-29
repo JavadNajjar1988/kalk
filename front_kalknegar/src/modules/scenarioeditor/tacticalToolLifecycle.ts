@@ -6,4 +6,7 @@ export type TacticalEmitter = {
 
 export function cancelTacticalErase(emitter?: TacticalEmitter | null) {
   emitter?.emit("command/erase/cancel");
+  emitter?.emit("command/draw/cancel", {
+    originatorId: "scenario-map-toolbar",
+  });
 }

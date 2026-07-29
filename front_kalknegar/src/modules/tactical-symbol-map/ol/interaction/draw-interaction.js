@@ -16,6 +16,7 @@ export default options => {
 
   let pendingDraw = null
   let handlers = {}
+  let previousCursor = ''
   let selectedHostility = 'F' // Default: FRIENDLY
   let selectedStatus = 'P' // Default: PRESENT
 
@@ -38,6 +39,9 @@ export default options => {
     handlers = {}
     map.removeInteraction(pendingDraw)
     pendingDraw = null
+    const target = map.getTargetElement()
+    if (target) target.style.cursor = previousCursor
+    emitter.emit('ui/tactical/draw-cancelled')
   }
 
   const drawstart = descriptor => ({ feature }) => {
@@ -69,10 +73,16 @@ export default options => {
     emitter.emit('command/draw/cancel', { originatorId: ORIGINATOR_ID })
     const sidc = id.split(':')[1]
     const descriptor = MILSTD.descriptor(sidc)
-    if (!descriptor) return
+    if (!descriptor) {
+      emitter.emit('ui/tactical/draw-error', { id, reason: 'symbol-not-found' })
+      return
+    }
 
     const geometry = geometries.find(geometry => geometry.match(descriptor))
-    if (!geometry) return
+    if (!geometry) {
+      emitter.emit('ui/tactical/draw-error', { id, reason: 'geometry-not-supported' })
+      return
+    }
 
     const options = geometry.options(descriptor)
 
@@ -89,7 +99,16 @@ export default options => {
     })
 
     map.addInteraction(pendingDraw)
-    map.getTargetElement().focus()
+    const target = map.getTargetElement()
+    if (target) {
+      previousCursor = target.style.cursor
+      target.style.cursor = 'crosshair'
+      target.focus()
+    }
+    emitter.emit('ui/tactical/draw-ready', {
+      id,
+      geometryType: options.type,
+    })
   })
 }
 

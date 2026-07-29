@@ -26,4 +26,17 @@ describe("initializeProjectServices", () => {
     expect(services.preferencesStore).toBeTruthy();
     expect(services.store.tuples).toBeTypeOf("function");
   }, 30000);
+
+  it("publishes only the service instance that survives fallback", async () => {
+    const publishedCores = [];
+    const services = await initializeProjectServices("test-atomic-fallback", {
+      onCoreReady: (coreServices) => {
+        publishedCores.push(coreServices);
+      },
+    });
+
+    expect(publishedCores).toHaveLength(1);
+    expect(publishedCores[0].emitter).toBe(services.emitter);
+    expect(publishedCores[0].store).toBe(services.store);
+  }, 30000);
 });

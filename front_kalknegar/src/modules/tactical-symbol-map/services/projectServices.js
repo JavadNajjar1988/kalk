@@ -155,16 +155,21 @@ async function initializeProjectServicesWithDb(projectUUID, { persistent, onCore
 
 export async function initializeProjectServices(projectUUID, options = {}) {
   try {
-    return await Promise.race([
+    // Publish a persistent core only after its complete bootstrap succeeds.
+    // Otherwise a late timeout leaves the map wired to the abandoned emitter
+    // while the sidebar receives the in-memory fallback emitter.
+    const services = await Promise.race([
       initializeProjectServicesWithDb(projectUUID, {
         persistent: true,
-        onCoreReady: options.onCoreReady,
+        onCoreReady: undefined,
       }),
       timeoutAfter(
         PERSISTENT_BOOTSTRAP_TIMEOUT_MS,
         `Persistent tactical services bootstrap timed out after ${PERSISTENT_BOOTSTRAP_TIMEOUT_MS}ms`,
       ),
     ])
+    await options.onCoreReady?.(services)
+    return services
   } catch (error) {
     console.warn(
       'projectServices.js: Falling back to in-memory tactical services.',

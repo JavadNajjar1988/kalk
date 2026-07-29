@@ -11,8 +11,10 @@ describe("tactical tool lifecycle", () => {
       off: vi.fn(),
     });
 
-    expect(emit).toHaveBeenCalledOnce();
     expect(emit).toHaveBeenCalledWith("command/erase/cancel");
+    expect(emit).toHaveBeenCalledWith("command/draw/cancel", {
+      originatorId: "scenario-map-toolbar",
+    });
   });
 
   it("is safe before tactical services are ready", () => {
