@@ -28,7 +28,7 @@ describe('drawInteraction', () => {
       .filter(item => !findDrawingStrategy(item))
       .map(item => item.sidc)
 
-    expect(unsupported).toEqual(['G*F*AXS---*****'])
+    expect(unsupported).toEqual([])
   })
 
   it('activates a linear symbol draw and exposes visible cursor feedback', async () => {

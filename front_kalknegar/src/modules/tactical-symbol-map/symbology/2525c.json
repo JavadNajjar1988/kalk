@@ -2986,7 +2986,12 @@
       "Fire Support",
       "Areas",
       "Weapons / Sensor Range Fans, Sector"
-    ]
+    ],
+    "parameters": {
+      "layout": "fan",
+      "maxPoints": 3,
+      "minPoints": 3
+    }
   },
   {
     "sidc": "G*F*AZCI--*****",
