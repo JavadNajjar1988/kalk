@@ -86,7 +86,15 @@
         >
           {{ placementError }}
         </div>
-        <div class="flex min-h-0 flex-1 flex-col overflow-hidden px-4 pt-3">
+        <BoundaryDrawConfigurator
+          v-if="showBoundaryConfigurator"
+          :units="scenarioUnits"
+          :selected-unit-ids="selectedUnitIdList"
+          :initial-echelon="lastBoundaryEchelon"
+          @confirm="confirmBoundaryConfiguration"
+          @cancel="showBoundaryConfigurator = false"
+        />
+        <div v-else class="flex min-h-0 flex-1 flex-col overflow-hidden px-4 pt-3">
           <div class="min-h-0 flex-1 overflow-y-auto">
             <SimpleSymbolMapSidebar
               v-if="servicesReady"
@@ -119,7 +127,7 @@
             </div>
           </div>
         </div>
-        <div class="symbol-library-footer">
+        <div v-if="!showBoundaryConfigurator" class="symbol-library-footer">
           <div class="min-w-0">
             <span class="selection-caption">نماد انتخاب‌شده</span>
             <p class="selection-label">{{ selectedLabel }}</p>
@@ -152,13 +160,17 @@ import {
 import { Button } from "@/components/ui/button";
 import { PhMapPinPlus, PhShieldChevron } from "@phosphor-icons/vue";
 import SimpleSymbolMapSidebar from "@/modules/tactical-symbol-map/SimpleSymbolMapSidebar.vue";
+import BoundaryDrawConfigurator from "./BoundaryDrawConfigurator.vue";
 import { ensureScenarioTacticalServices } from "@/modules/tactical-symbol-map/services/scenarioProjectServices";
 import { injectStrict } from "@/utils";
 import { activeScenarioKey } from "@/components/injects";
 import { useServicesStore } from "@/modules/tactical-symbol-map/stores/services.js";
 import * as MILSTD from "@/modules/tactical-symbol-map/symbology/2525c.js";
 import { svg } from "@/modules/tactical-symbol-map/symbology/symbol.js";
-import { requestTacticalDraw } from "./tacticalDrawRequest";
+import { requestTacticalDraw, type BoundaryDrawOptions } from "./tacticalDrawRequest";
+import { useSelectedItems } from "@/stores/selectedStore";
+import type { BoundaryEchelonCode } from "@/symbology/boundaryEchelons";
+import { placementModeForSidc } from "./boundaryDrawSelection";
 
 const props = defineProps<{
   open: boolean;
@@ -187,6 +199,7 @@ const symbolSidebarDefaultSearch = {
 provide("services", services);
 
 const activeScenario = injectStrict(activeScenarioKey);
+const { selectedUnitIds } = useSelectedItems();
 
 const selectedSymbolId = ref<string | null>(null);
 const selectedSymbolTitle = ref<string | null>(null);
@@ -195,6 +208,10 @@ const initializationError = ref<string | null>(null);
 const isDrawingActive = ref(false);
 const selectedHostility = ref("F");
 const selectedStatus = ref("P");
+const showBoundaryConfigurator = ref(false);
+const lastBoundaryEchelon = ref<BoundaryEchelonCode>("F");
+const scenarioUnits = computed(() => activeScenario.unitActions.units.value);
+const selectedUnitIdList = computed(() => [...selectedUnitIds.value]);
 
 const selectedSidc = computed(() => {
   return selectedSymbolId.value ? selectedSymbolId.value.split(":")[1] : null;
@@ -220,11 +237,7 @@ const initializeServices = async () => {
   const scenarioId = activeScenario.store.state.id;
   if (!scenarioId) return;
 
-  if (
-    initializedScenarioId === scenarioId &&
-    servicesReady.value &&
-    services.value
-  ) {
+  if (initializedScenarioId === scenarioId && servicesReady.value && services.value) {
     return services.value;
   }
 
@@ -250,10 +263,7 @@ const initializeServices = async () => {
       typeof preferenceStore === "object" &&
       !configuredPreferenceStores.has(preferenceStore)
     ) {
-      await preferenceStore.put(
-        "ui.sidebar.symbol-search",
-        symbolSidebarDefaultSearch,
-      );
+      await preferenceStore.put("ui.sidebar.symbol-search", symbolSidebarDefaultSearch);
       configuredPreferenceStores.add(preferenceStore);
     }
 
@@ -289,10 +299,7 @@ const initializeServices = async () => {
 
 function scheduleServicesPreload() {
   const browserWindow = window as Window & {
-    requestIdleCallback?: (
-      callback: () => void,
-      options?: { timeout: number },
-    ) => number;
+    requestIdleCallback?: (callback: () => void, options?: { timeout: number }) => number;
   };
 
   if (browserWindow.requestIdleCallback) {
@@ -318,6 +325,7 @@ function onSelectionChange(payload: { id: string | null; entry?: any }) {
   selectedSymbolId.value = payload.id;
   selectedSymbolTitle.value = payload.entry?.title || null;
   placementError.value = null;
+  showBoundaryConfigurator.value = false;
 }
 
 function onSymbolDblClick(payload: { id: string; entry?: any }) {
@@ -380,7 +388,7 @@ function selectStatus(code: string) {
   services.value?.emitter?.emit("status/selected", { code });
 }
 
-async function startSymbolPlacement() {
+async function startSymbolPlacement(boundary?: BoundaryDrawOptions) {
   placementError.value = null;
   if (!selectedSymbolId.value || !selectedSidc.value) {
     placementError.value = "ابتدا یک نماد را انتخاب کنید.";
@@ -390,25 +398,36 @@ async function startSymbolPlacement() {
     placementError.value = "سرویس‌های نقشه هنوز آماده نشده‌اند.";
     return;
   }
+  if (!boundary && placementModeForSidc(selectedSidc.value) === "configure-boundary") {
+    showBoundaryConfigurator.value = true;
+    return;
+  }
   isDrawingActive.value = true;
   const requestVersion = ++placementRequestVersion;
   const accepted = await requestTacticalDraw(
     services.value.emitter,
     selectedSymbolId.value,
+    { boundary },
   );
 
   if (requestVersion !== placementRequestVersion) return;
   if (!accepted) {
     isDrawingActive.value = false;
-    placementError.value =
-      "ابزار رسم نقشه آماده نشد. پنل را ببندید و دوباره باز کنید.";
+    placementError.value = "ابزار رسم نقشه آماده نشد. پنل را ببندید و دوباره باز کنید.";
   }
+}
+
+function confirmBoundaryConfiguration(options: BoundaryDrawOptions) {
+  lastBoundaryEchelon.value = options.echelonCode;
+  showBoundaryConfigurator.value = false;
+  void startSymbolPlacement(options);
 }
 
 function cancelPlacement() {
   placementRequestVersion += 1;
   placementError.value = null;
   isDrawingActive.value = false;
+  showBoundaryConfigurator.value = false;
   services.value?.emitter?.emit("command/draw/cancel", {
     originatorId: "symbol-sidebar",
   });

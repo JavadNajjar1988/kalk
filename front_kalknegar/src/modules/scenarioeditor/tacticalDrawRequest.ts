@@ -1,10 +1,22 @@
+import type { EntityId } from "@/types/base";
+import type { BoundaryEchelonCode } from "@/symbology/boundaryEchelons";
+
 type DrawEmitter = {
   emit: (event: string, payload?: unknown) => boolean | void;
 };
 
+export interface BoundaryDrawOptions {
+  echelonCode: BoundaryEchelonCode;
+  leftUnitId?: EntityId;
+  rightUnitId?: EntityId;
+  leftDesignation?: string;
+  rightDesignation?: string;
+}
+
 type DrawRequestOptions = {
   attempts?: number;
   intervalMs?: number;
+  boundary?: BoundaryDrawOptions;
 };
 
 const wait = (delay: number) =>
@@ -18,10 +30,11 @@ const wait = (delay: number) =>
 export async function requestTacticalDraw(
   emitter: DrawEmitter,
   id: string,
-  { attempts = 30, intervalMs = 50 }: DrawRequestOptions = {},
+  { attempts = 30, intervalMs = 50, boundary }: DrawRequestOptions = {},
 ) {
+  const command = boundary ? { id, boundary } : { id };
   for (let attempt = 0; attempt < attempts; attempt += 1) {
-    if (emitter.emit("command/entry/draw", { id })) return true;
+    if (emitter.emit("command/entry/draw", command)) return true;
     if (attempt < attempts - 1) await wait(intervalMs);
   }
   return false;

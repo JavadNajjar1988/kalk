@@ -33,4 +33,26 @@ describe("requestTacticalDraw", () => {
       ),
     ).resolves.toBe(false);
   });
+
+  it("includes Boundary metadata in the accepted draw command", async () => {
+    const emit = vi.fn(() => true);
+    const boundary = {
+      echelonCode: "D" as const,
+      leftUnitId: "u-left",
+      rightUnitId: "u-right",
+      leftDesignation: "گردان ۱",
+      rightDesignation: "گردان ۲",
+    };
+
+    await requestTacticalDraw(
+      { emit },
+      "symbol:G*G*GLB---",
+      { attempts: 1, intervalMs: 0, boundary },
+    );
+
+    expect(emit).toHaveBeenCalledWith("command/entry/draw", {
+      id: "symbol:G*G*GLB---",
+      boundary,
+    });
+  });
 });

@@ -49,6 +49,7 @@ import * as R from 'ramda'
 import * as MILSTD from '../../symbology/2525c.js'
 import { isFeatureId, lockedId, restrictedId, associatedId, scope, isAssociatedId } from '../../ids.js'
 import HostilityStatus from './HostilityStatus.vue'
+import BoundaryProperties from './BoundaryProperties.vue'
 
 // Debug: Check if component is imported
 console.log('Properties: HostilityStatus imported:', HostilityStatus)
@@ -112,7 +113,7 @@ const propertiesPanels = {
   'feature:INSTALLATION': PlaceholderComponent,
   'feature:ACTIVITY': PlaceholderComponent,
   'feature:GRAPHICS': PlaceholderComponent,
-  'feature:BOUNDARIES': PlaceholderComponent,
+  'feature:BOUNDARIES': BoundaryProperties,
   'feature:POINT': PlaceholderComponent,
   marker: PlaceholderComponent,
   'tile-service': PlaceholderComponent,
