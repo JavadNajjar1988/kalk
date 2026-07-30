@@ -268,7 +268,7 @@ function scheduleMissingMapSnapshot(attempt = 0) {
     isDemoScenario(props.scenarioId) ||
     (
       scenario.value?.store?.state?.metadata?.dashboardMapSnapshotUrl &&
-      scenario.value?.store?.state?.metadata?.dashboardMapSnapshotVersion === 3
+      scenario.value?.store?.state?.metadata?.dashboardMapSnapshotVersion === 4
     )
   ) {
     return;

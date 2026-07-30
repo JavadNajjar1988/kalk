@@ -222,7 +222,7 @@ const ScenarioMapPreview: React.FC<ScenarioMapPreviewProps> = ({ scenario, heigh
         });
         map.getView().fit(extent, {
           padding: [22, 22, 22, 22],
-          maxZoom: 6,
+          maxZoom: 9,
           duration: 0,
         });
       }

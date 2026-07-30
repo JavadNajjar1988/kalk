@@ -487,7 +487,7 @@ export function useScenarioIO(store: ShallowRef<NewScenarioStore>) {
         ...(store.value.state.metadata ?? {}),
         dashboardMapSnapshotUrl: uploaded.url,
         dashboardMapSnapshotCapturedAt: new Date().toISOString(),
-        dashboardMapSnapshotVersion: 3,
+        dashboardMapSnapshotVersion: 4,
       };
       lastUploadedMapPreview = dataUrl;
     } catch (error) {

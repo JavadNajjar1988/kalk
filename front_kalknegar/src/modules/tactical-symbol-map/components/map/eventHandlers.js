@@ -94,8 +94,8 @@ const mapHandlers = (services, map) => {
     }
 
     const previewResolution = Math.min(
-      resolution * 16,
-      view.getMaxResolution() || resolution * 16
+      resolution * 2,
+      view.getMaxResolution() || resolution * 2
     )
     try {
       view.setResolution(previewResolution)
