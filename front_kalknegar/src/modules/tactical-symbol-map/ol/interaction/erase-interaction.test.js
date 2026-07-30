@@ -13,10 +13,11 @@ const selectableLayer = {
   get: key => key === 'selectable'
 }
 
-const makeMap = (featureOrFeatures, resolution = 0.01) => ({
+const makeMap = (featureOrFeatures, resolution = 0.01, isHit = () => true) => ({
   getView: () => ({ getResolution: () => resolution }),
   getPixelFromCoordinate: coordinate => coordinate,
   forEachFeatureAtPixel: (_pixel, callback) => {
+    if (!isHit(_pixel)) return
     const features = Array.isArray(featureOrFeatures)
       ? featureOrFeatures
       : [featureOrFeatures]
@@ -110,6 +111,7 @@ describe('eraseInteraction', () => {
     emitter.emit('ERASE_FADE_START', { brushSize: 3 })
     interaction.handleEvent(pointerEvent(map, 'pointerdown', [2, 0]))
     interaction.handleEvent(pointerEvent(map, 'pointerdrag', [5, 0]))
+    interaction.handleEvent(pointerEvent(map, 'pointerup', [5, 0], 0))
 
     expect(state['feature:test'].properties.fadeZones).toHaveLength(1)
     expect(state['feature:test'].properties.fadeZones[0]).toMatchObject({
@@ -153,6 +155,7 @@ describe('eraseInteraction', () => {
     emitter.emit('ERASE_FADE_START', { brushSize: 3 })
     interaction.handleEvent(pointerEvent(map, 'pointerdown', [2, 6]))
     interaction.handleEvent(pointerEvent(map, 'pointerdrag', [5, 6]))
+    interaction.handleEvent(pointerEvent(map, 'pointerup', [5, 6], 0))
 
     expect(state['feature:test'].properties.fadeZones).toBeDefined()
   })
@@ -192,6 +195,7 @@ describe('eraseInteraction', () => {
     emitter.emit('ERASE_FADE_START', { brushSize: 3 })
     interaction.handleEvent(pointerEvent(map, 'pointerdown', [5, 0]))
     interaction.handleEvent(pointerEvent(map, 'pointerdrag', [10, 0]))
+    interaction.handleEvent(pointerEvent(map, 'pointerup', [10, 0], 0))
 
     expect(state['feature:test'].properties.fadeZones).toBeDefined()
   })
@@ -237,7 +241,6 @@ describe('eraseInteraction', () => {
     expect(state['feature:test'].properties.fadeZones).toBeUndefined()
     expect(state['feature:test'].properties.spatialCuts).toHaveLength(1)
     expect(state['feature:test'].properties.spatialCuts[0].coordinates).toEqual([
-      [2, 0],
       [2, 0],
       [5, 0]
     ])
@@ -372,6 +375,132 @@ describe('eraseInteraction', () => {
     expect(state['feature:b'].properties.spatialCuts).toHaveLength(1)
   })
 
+  it('does not connect separate cut segments when the pointer leaves the symbol', () => {
+    const feature = new Feature(
+      new LineString([
+        [0, 0],
+        [10, 0]
+      ])
+    )
+    feature.setId('feature:test')
+    feature.set('sidc', 'G*G*GLB---')
+    const state = {
+      'feature:test': {
+        geometry: writeGeometryObject(feature.getGeometry()),
+        properties: { sidc: feature.get('sidc') }
+      }
+    }
+    const store = {
+      update: (keys, updater) => {
+        keys.forEach(key => {
+          state[key] = updater(state[key])
+        })
+      }
+    }
+    const emitter = new EventEmitter()
+    const map = makeMap(feature, 0.01, pixel => pixel[1] === 0)
+    const interaction = eraseInteraction({
+      services: { store, emitter },
+      map,
+      hitTolerance: 1
+    })
+
+    emitter.emit('ERASE_CUT_START', { brushSize: 3 })
+    interaction.handleEvent(pointerEvent(map, 'pointerdown', [2, 0]))
+    interaction.handleEvent(pointerEvent(map, 'pointerdrag', [5, 10]))
+    interaction.handleEvent(pointerEvent(map, 'pointerdrag', [8, 0]))
+    interaction.handleEvent(pointerEvent(map, 'pointerup', [8, 0], 0))
+
+    expect(state['feature:test'].properties.spatialCuts).toHaveLength(2)
+    expect(state['feature:test'].properties.spatialCuts.map(cut => cut.coordinates)).toEqual([
+      [[2, 0]],
+      [[8, 0]]
+    ])
+  })
+
+  it('finishes a stroke when the primary mouse button is no longer pressed', () => {
+    const feature = new Feature(
+      new LineString([
+        [0, 0],
+        [10, 0]
+      ])
+    )
+    feature.setId('feature:test')
+    feature.set('sidc', 'G*G*GLB---')
+    const state = {
+      'feature:test': {
+        geometry: writeGeometryObject(feature.getGeometry()),
+        properties: { sidc: feature.get('sidc') }
+      }
+    }
+    let updates = 0
+    const store = {
+      update: (keys, updater) => {
+        updates += 1
+        keys.forEach(key => {
+          state[key] = updater(state[key])
+        })
+      }
+    }
+    const emitter = new EventEmitter()
+    const map = makeMap(feature)
+    const interaction = eraseInteraction({
+      services: { store, emitter },
+      map,
+      hitTolerance: 12
+    })
+
+    emitter.emit('ERASE_FADE_START', { brushSize: 3 })
+    interaction.handleEvent(pointerEvent(map, 'pointerdown', [2, 0]))
+    interaction.handleEvent(pointerEvent(map, 'pointerdrag', [5, 0]))
+    interaction.handleEvent(pointerEvent(map, 'pointermove', [5, 0], 0))
+    interaction.handleEvent(pointerEvent(map, 'pointerdrag', [8, 0], 1))
+
+    expect(updates).toBe(1)
+    expect(state['feature:test'].properties.fadeZones[0].to).toBeCloseTo(0.511)
+  })
+
+  it('persists the completed part of a stroke when the pointer is cancelled', () => {
+    const feature = new Feature(
+      new LineString([
+        [0, 0],
+        [10, 0]
+      ])
+    )
+    feature.setId('feature:test')
+    feature.set('sidc', 'G*G*GLB---')
+    const state = {
+      'feature:test': {
+        geometry: writeGeometryObject(feature.getGeometry()),
+        properties: { sidc: feature.get('sidc') }
+      }
+    }
+    let updates = 0
+    const store = {
+      update: (keys, updater) => {
+        updates += 1
+        keys.forEach(key => {
+          state[key] = updater(state[key])
+        })
+      }
+    }
+    const emitter = new EventEmitter()
+    const map = makeMap(feature)
+    const interaction = eraseInteraction({
+      services: { store, emitter },
+      map,
+      hitTolerance: 12
+    })
+
+    emitter.emit('ERASE_FADE_START', { brushSize: 3 })
+    interaction.handleEvent(pointerEvent(map, 'pointerdown', [2, 0]))
+    interaction.handleEvent(pointerEvent(map, 'pointerdrag', [5, 0]))
+    interaction.handleEvent(pointerEvent(map, 'pointercancel', [5, 0], 0))
+
+    expect(updates).toBe(1)
+    expect(state['feature:test'].properties.fadeZones[0].to).toBeCloseTo(0.511)
+  })
+
   it('cuts a rendered symbol stroke even when it is away from the control geometry', () => {
     const feature = new Feature(
       new LineString([
@@ -503,6 +632,7 @@ describe('eraseInteraction', () => {
     emitter.emit('ERASE_FADE_START', { brushSize: 3 })
     interaction.handleEvent(pointerEvent(map, 'pointerdown', [2, 0]))
     interaction.handleEvent(pointerEvent(map, 'pointerdrag', [5, 0]))
+    interaction.handleEvent(pointerEvent(map, 'pointerup', [5, 0], 0))
 
     expect(state['feature:test'].properties.fadeZones).toBeUndefined()
     expect(state['timed+feature:feature:test']).toEqual([
@@ -557,6 +687,7 @@ describe('eraseInteraction', () => {
     emitter.emit('ERASE_FADE_START', { brushSize: 3 })
     interaction.handleEvent(pointerEvent(map, 'pointerdown', [2, 0]))
     interaction.handleEvent(pointerEvent(map, 'pointerdrag', [5, 0]))
+    interaction.handleEvent(pointerEvent(map, 'pointerup', [5, 0], 0))
 
     expect(state['timed+feature:feature:test']).toEqual([
       {

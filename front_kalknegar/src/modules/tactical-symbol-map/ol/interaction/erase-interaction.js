@@ -244,8 +244,12 @@ export default options => {
   let lastAppliedTo = null
   let cutTargets = new Map()
   let cutEventSerial = 0
+  let cutSegmentSerial = 0
   let cutGestureSerial = 0
   let cutGestureId = null
+  let capturedPointerTarget = null
+  let capturedPointerId = null
+  let pendingWrites = new Map()
 
   const overlaySource = new VectorSource({ useSpatialIndex: false })
   const overlayLayer = new VectorLayer({
@@ -300,7 +304,75 @@ export default options => {
     }
   }
 
-  const resetBrush = () => {
+  const releasePointer = () => {
+    if (capturedPointerTarget && capturedPointerId !== null) {
+      try {
+        capturedPointerTarget.releasePointerCapture?.(capturedPointerId)
+      } catch {
+        // Pointer capture may already have been released by the browser.
+      }
+    }
+    capturedPointerTarget = null
+    capturedPointerId = null
+  }
+
+  const capturePointer = event => {
+    const target = event.originalEvent?.target
+    const pointerId = event.originalEvent?.pointerId
+    if (!target?.setPointerCapture || !Number.isFinite(pointerId)) return
+    try {
+      target.setPointerCapture(pointerId)
+      capturedPointerTarget = target
+      capturedPointerId = pointerId
+    } catch {
+      capturedPointerTarget = null
+      capturedPointerId = null
+    }
+  }
+
+  const stageWrite = (feature, field) => {
+    const key = feature.getId()
+    const pending = pendingWrites.get(key) || { feature, fields: new Set() }
+    pending.fields.add(field)
+    pendingWrites.set(key, pending)
+  }
+
+  const propertySnapshot = (feature, fields) => {
+    const properties = {}
+    fields.forEach(field => {
+      const value = feature.get(field)
+      properties[field] = Array.isArray(value) ? value : undefined
+    })
+    return properties
+  }
+
+  const applyProperties = (value, properties) => {
+    const nextProperties = { ...(value?.properties || {}) }
+    Object.entries(properties).forEach(([key, next]) => {
+      if (next === undefined || next.length === 0) delete nextProperties[key]
+      else nextProperties[key] = next
+    })
+    return { ...value, properties: nextProperties }
+  }
+
+  const flushPendingWrites = () => {
+    const writes = [...pendingWrites.values()]
+    pendingWrites = new Map()
+    writes.forEach(({ feature, fields }) => {
+      const properties = propertySnapshot(feature, fields)
+      if (isTimedRecording()) {
+        persistTimedState(feature, { properties }, { properties: {} })
+      } else {
+        store.update([feature.getId()], value => applyProperties(value, properties))
+      }
+      feature.commit?.()
+    })
+  }
+
+  const resetBrush = ({ persist = true } = {}) => {
+    if (persist) flushPendingWrites()
+    else pendingWrites = new Map()
+    releasePointer()
     brushing = false
     brushFeature = null
     brushFrom = null
@@ -309,6 +381,7 @@ export default options => {
     lastAppliedTo = null
     cutTargets = new Map()
     cutEventSerial = 0
+    cutSegmentSerial = 0
     cutGestureId = null
     clearOverlay()
   }
@@ -399,25 +472,13 @@ export default options => {
 
   const persistFade = (feature, from, to, opacity = FADE_OPACITY) => {
     if (to - from < MIN_STROKE) return
-    const key = feature.getId()
     const fadeZones = mergeFadeZone(feature.get('fadeZones'), {
       from,
       to,
       opacity
     })
     feature.set('fadeZones', fadeZones)
-    if (isTimedRecording()) {
-      persistTimedState(feature, { properties: { fadeZones } }, { properties: {} })
-      feature.commit?.()
-      return
-    }
-    store.update([key], value => ({
-      ...value,
-      properties: {
-        ...value.properties,
-        fadeZones
-      }
-    }))
+    stageWrite(feature, 'fadeZones')
     feature.commit?.()
   }
 
@@ -426,37 +487,21 @@ export default options => {
     persistFade(feature, from, to, 0)
   }
 
-  const persistSpatialCut = (feature, coordinates) => {
+  const persistSpatialCut = (feature, coordinates, segment) => {
     if (!coordinates.length || !cutGestureId) return
-    const key = feature.getId()
     const fadeZones = (feature.get('fadeZones') || []).filter(
       zone => Number(zone?.opacity) > 0
     )
     const spatialCuts = mergeSpatialCut(feature.get('spatialCuts'), {
       coordinates,
       radius: brushMapRadius(feature, map, brushSize),
-      gesture: `${cutGestureId}:${key}`
+      gesture: `${cutGestureId}:${segment}:${feature.getId()}`
     })
     feature.set('spatialCuts', spatialCuts)
     if (fadeZones.length) feature.set('fadeZones', fadeZones)
     else feature.unset('fadeZones', true)
-    if (isTimedRecording()) {
-      persistTimedState(
-        feature,
-        { properties: { spatialCuts, fadeZones: fadeZones.length ? fadeZones : undefined } },
-        { properties: {} }
-      )
-      feature.commit?.()
-      return
-    }
-    store.update([key], value => ({
-      ...value,
-      properties: {
-        ...value.properties,
-        fadeZones: fadeZones.length ? fadeZones : undefined,
-        spatialCuts
-      }
-    }))
+    stageWrite(feature, 'spatialCuts')
+    stageWrite(feature, 'fadeZones')
     feature.commit?.()
   }
 
@@ -477,16 +522,18 @@ export default options => {
       const id = hit.feature.getId()
       const previous = cutTargets.get(id)
       const isContinuous = previous?.eventSerial === cutEventSerial - 1
+      const segment = isContinuous ? previous.segment : ++cutSegmentSerial
       const coordinates = isContinuous
         ? [previous.coordinate, hit.coordinate]
         : [hit.coordinate]
 
-      persistSpatialCut(hit.feature, coordinates)
+      persistSpatialCut(hit.feature, coordinates, segment)
       emitter.emit('ui/erase/applied', { mode: 'cut' })
       cutTargets.set(id, {
         feature: hit.feature,
         coordinate: hit.coordinate,
-        eventSerial: cutEventSerial
+        eventSerial: cutEventSerial,
+        segment
       })
     })
   }
@@ -514,8 +561,25 @@ export default options => {
 
   const interaction = new Interaction({ handleEvent })
 
+  const hasPrimaryButton = event => {
+    const originalEvent = event.originalEvent
+    if (originalEvent?.pointerType === 'touch') return true
+    if (Number.isFinite(originalEvent?.buttons)) return (originalEvent.buttons & 1) === 1
+    return originalEvent?.button === 0
+  }
+
   function handleEvent(event) {
     if (!interaction.getActive()) return true
+
+    if (
+      brushing &&
+      (event.type === 'pointercancel' ||
+        (event.type === 'pointermove' && !hasPrimaryButton(event)))
+    ) {
+      event.stopPropagation()
+      resetBrush()
+      return false
+    }
 
     if (event.type === 'pointermove' && !brushing) {
       const hit = findFeatureAt(event)
@@ -523,14 +587,16 @@ export default options => {
       return true
     }
 
-    if (event.type === 'pointerdown' && event.originalEvent?.buttons === 1) {
+    if (event.type === 'pointerdown' && hasPrimaryButton(event)) {
       const hits =
         mode === 'cut' ? findFeaturesAt(event) : [findFeatureAt(event)].filter(Boolean)
       if (!hits.length) return true
       const hit = hits[0]
 
       event.stopPropagation()
+      pendingWrites = new Map()
       brushing = true
+      capturePointer(event)
       brushFeature = hit.feature
       brushFrom = hit.t
       brushTo = hit.t
@@ -548,14 +614,14 @@ export default options => {
       brushing &&
       brushFeature &&
       (event.type === 'pointerdrag' ||
-        (event.type === 'pointermove' && event.originalEvent?.buttons === 1))
+        (event.type === 'pointermove' && hasPrimaryButton(event)))
 
     if (isBrushingMove) {
       event.stopPropagation()
       if (mode === 'cut') {
         const hits = findFeaturesAt(event)
+        applyCutHits(hits)
         if (hits.length) {
-          applyCutHits(hits)
           showBrushCursor(hits[0].coordinate)
         }
         return false

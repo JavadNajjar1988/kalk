@@ -8,15 +8,22 @@ const validCoordinate = coordinate =>
   Number.isFinite(coordinate[0]) &&
   Number.isFinite(coordinate[1])
 
+const sameCoordinate = (left, right) =>
+  left?.[0] === right?.[0] && left?.[1] === right?.[1]
+
+const normalizeCoordinates = coordinates =>
+  coordinates.filter(validCoordinate).reduce((result, coordinate) => {
+    const next = [coordinate[0], coordinate[1]]
+    if (!sameCoordinate(result[result.length - 1], next)) result.push(next)
+    return result
+  }, [])
+
 export const normalizeSpatialCuts = cuts => {
   if (!Array.isArray(cuts)) return []
   return cuts
     .filter(cut => cut && Array.isArray(cut.coordinates))
     .map(cut => ({
-      coordinates: cut.coordinates.filter(validCoordinate).map(coordinate => [
-        coordinate[0],
-        coordinate[1]
-      ]),
+      coordinates: normalizeCoordinates(cut.coordinates),
       radius: Number.isFinite(cut.radius) ? Math.max(0, cut.radius) : 0,
       gesture: typeof cut.gesture === 'string' ? cut.gesture : undefined
     }))
@@ -30,7 +37,11 @@ export const mergeSpatialCut = (cuts, cut) => {
 
   const previous = normalized[normalized.length - 1]
   if (previous && previous.gesture && previous.gesture === next.gesture) {
-    previous.coordinates.push(...next.coordinates)
+    const coordinates = [...next.coordinates]
+    if (sameCoordinate(previous.coordinates[previous.coordinates.length - 1], coordinates[0])) {
+      coordinates.shift()
+    }
+    previous.coordinates.push(...coordinates)
     previous.radius = Math.max(previous.radius, next.radius)
     return normalized
   }

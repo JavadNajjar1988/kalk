@@ -83,6 +83,27 @@ describe('spatialCuts', () => {
     expect(extended).toHaveLength(1)
     expect(extended[0].coordinates).toEqual([
       [1, 1],
+      [2, 1]
+    ])
+  })
+
+  it('removes consecutive duplicate coordinates from persisted masks', async () => {
+    const { normalizeSpatialCuts } = await import('./spatialCuts')
+
+    expect(
+      normalizeSpatialCuts([
+        {
+          coordinates: [
+            [1, 1],
+            [1, 1],
+            [2, 1],
+            [2, 1]
+          ],
+          radius: 2,
+          gesture: 'gesture:a'
+        }
+      ])[0].coordinates
+    ).toEqual([
       [1, 1],
       [2, 1]
     ])
