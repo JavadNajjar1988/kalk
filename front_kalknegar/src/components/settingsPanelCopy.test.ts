@@ -23,6 +23,17 @@ describe("settings panel copy", () => {
     expect(source).toContain("بر اساس زمان خط زمان");
   });
 
+  it("keeps the day and night source synchronized while the layer is hidden", () => {
+    const source = readFileSync(
+      resolve(__dirname, "../composables/geoDayNight.ts"),
+      "utf8",
+    );
+
+    expect(source).not.toContain("watchPausable");
+    expect(source).not.toContain("pause()");
+    expect(source).toContain("syncDayNightWithTimeline(vectorSource, time)");
+  });
+
   it("groups settings into readable sections", () => {
     const mapSettings = readFileSync(resolve(__dirname, "MapSettingsPanel.vue"), "utf8");
     const mainSettings = readFileSync(
