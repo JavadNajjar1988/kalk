@@ -1,18 +1,27 @@
-import dayjs from "dayjs";
-
-import "@/dayjs";
-import { toPersianDigits } from "@/utils";
+import { createFormatter, type TimeFormatSettings } from "@/stores/timeFormatStore";
 
 export interface MapTimeDisplay {
   date: string;
   time: string;
 }
 
-export function formatMapTimeDisplay(timestamp: number, timeZone = "UTC"): MapTimeDisplay {
-  const zonedTime = dayjs(timestamp).tz(timeZone).calendar("jalali").locale("fa");
+const defaultMapTimeSettings: TimeFormatSettings = {
+  timeFormat: "local",
+  locale: "fa-IR",
+  dateStyle: "long",
+  timeStyle: "short",
+};
 
+export function formatMapTimeDisplay(
+  timestamp: number,
+  timeZone = "UTC",
+  settings: TimeFormatSettings = defaultMapTimeSettings,
+): MapTimeDisplay {
   return {
-    date: toPersianDigits(zonedTime.format("DD MMMM YYYY").replace(/\s+/g, " ").trim()),
-    time: toPersianDigits(zonedTime.format("HH:mm")),
+    date: createFormatter(timeZone, settings, { dateOnly: true })
+      .format(timestamp)
+      .replace(/\s+/g, " ")
+      .trim(),
+    time: createFormatter(timeZone, settings, { timeOnly: true }).format(timestamp),
   };
 }
