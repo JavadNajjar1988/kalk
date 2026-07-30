@@ -6,7 +6,9 @@
       dir="rtl"
     >
       <span class="whitespace-nowrap">{{ mapTimeDisplay.date }}</span>
-      <span class="w-20 shrink-0 text-left font-mono tabular-nums tracking-normal">{{ mapTimeDisplay.time }}</span>
+      <span class="shrink-0 text-left font-mono tracking-normal tabular-nums">
+        {{ mapTimeDisplay.time }}
+      </span>
     </p>
     <BaseToolbar v-if="showControls">
       <ToolbarButton @click="emit('show-settings')" start>
@@ -53,6 +55,7 @@ import ToolbarButton from "./ToolbarButton.vue";
 import { injectStrict } from "@/utils";
 import { activeScenarioKey } from "@/components/injects";
 import { formatMapTimeDisplay } from "./mapTimeControllerDisplay";
+import { useTimeFormatSettingsStore } from "@/stores/timeFormatStore";
 
 const props = withDefaults(
   defineProps<{
@@ -63,8 +66,13 @@ const props = withDefaults(
 );
 
 const mapTimeDisplay = computed(() => {
-  return formatMapTimeDisplay(state.currentTime, state.info.timeZone || "UTC");
+  return formatMapTimeDisplay(
+    state.currentTime,
+    state.info.timeZone || "UTC",
+    timeSettings.track,
+  );
 });
+const timeSettings = useTimeFormatSettingsStore();
 
 const emit = defineEmits([
   "open-time-modal",

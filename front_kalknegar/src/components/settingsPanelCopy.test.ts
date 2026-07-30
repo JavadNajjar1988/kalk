@@ -35,6 +35,15 @@ describe("settings panel copy", () => {
     expect(mainSettings).toContain("ظاهر نمادها");
   });
 
+  it("exposes scenario and chart settings in the main settings panel", () => {
+    const source = readFileSync(resolve(__dirname, "MainViewSlideOver.vue"), "utf8");
+
+    expect(source).toContain('label="تنظیمات سناریو"');
+    expect(source).toContain("<ScenarioSettingsPanel");
+    expect(source).toContain('label="تنظیمات چارت"');
+    expect(source).toContain("<OrbatChartSettings");
+  });
+
   it("uses Persian labels in time settings", () => {
     const source = readFileSync(
       resolve(__dirname, "TimeDateSettingsDetails.vue"),

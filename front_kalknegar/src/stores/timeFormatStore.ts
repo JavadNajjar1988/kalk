@@ -66,12 +66,12 @@ export const useTimeFormatStore = defineStore("timeFormat", () => {
 export function createFormatter(
   timeZone: string,
   settings: TimeFormatSettings,
-  { dateOnly = false } = {},
+  { dateOnly = false, timeOnly = false } = {},
 ) {
   const buildFormatter = (locale: string, zone: string) =>
     new Intl.DateTimeFormat(locale, {
       timeZone: zone,
-      dateStyle: settings.dateStyle,
+      ...(timeOnly ? {} : { dateStyle: settings.dateStyle }),
       ...(dateOnly ? {} : { timeStyle: settings.timeStyle }),
     });
 

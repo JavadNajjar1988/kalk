@@ -46,6 +46,12 @@
       <TabItem label="زمان و تاریخ">
         <TimeDateSettingsPanel />
       </TabItem>
+      <TabItem label="تنظیمات سناریو">
+        <ScenarioSettingsPanel class="py-4" />
+      </TabItem>
+      <TabItem label="تنظیمات چارت">
+        <OrbatChartSettings class="py-4" chart-mode />
+      </TabItem>
     </TabView>
   </SlideOver>
 </template>
@@ -61,6 +67,8 @@ import NumberInputGroup from "./NumberInputGroup.vue";
 import MapSettingsPanel from "@/components/MapSettingsPanel.vue";
 import CheckboxField from "@/components/CheckboxField.vue";
 import TimeDateSettingsPanel from "@/components/TimeDateSettingsPanel.vue";
+import ScenarioSettingsPanel from "@/modules/scenarioeditor/ScenarioSettingsPanel.vue";
+import OrbatChartSettings from "@/modules/charteditor/OrbatChartSettings.vue";
 
 const props = defineProps({ modelValue: Boolean });
 
