@@ -81,6 +81,6 @@ export const useMapSettingsStore = defineStore("mapSettings", {
       USER_BASE_LAYER_STORAGE_KEY,
       resolveInitialBaseLayerName(USER_BASE_LAYER_STORAGE_KEY),
     ),
-    showDayNightTerminator: false,
+    showDayNightTerminator: useLocalStorage("showDayNightTerminator", true),
   }),
 });

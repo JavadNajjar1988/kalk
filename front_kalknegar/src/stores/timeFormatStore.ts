@@ -5,12 +5,6 @@ import { injectStrict } from "@/utils";
 import { activeScenarioKey } from "@/components/injects";
 import type { TScenario } from "@/scenariostore";
 import type { RadioGroupItem } from "@/components/types";
-import {
-  jalaliDateTimeFormatter,
-  jalaliTableDateFormatter,
-  formatPersianDateShort,
-  formatJalaliTimestamp,
-} from "@/utils/jalaliFormatters";
 
 export type TimeFormat = "iso" | "local" | "military" | "custom";
 
@@ -26,10 +20,10 @@ export const timeFormatItems: RadioGroupItem<TimeFormat>[] = [
 ];
 
 export const intlItems = [
-  { label: "Full", value: "full" },
-  { label: "Long", value: "long" },
-  { label: "Medium", value: "medium" },
-  { label: "Short", value: "short" },
+  { label: "کامل", value: "full" },
+  { label: "بلند", value: "long" },
+  { label: "متوسط", value: "medium" },
+  { label: "کوتاه", value: "short" },
 ];
 
 export const useTimeFormatSettingsStore = defineStore("timeFormatSettings", {
@@ -69,34 +63,23 @@ export const useTimeFormatStore = defineStore("timeFormat", () => {
   return { timeZone, trackFormatter, scenarioFormatter, scenarioDateFormatter };
 });
 
-function createFormatter(
-  _timeZone: string,
+export function createFormatter(
+  timeZone: string,
   settings: TimeFormatSettings,
   { dateOnly = false } = {},
 ) {
-  if (dateOnly) {
-    return {
-      format: (value: number) => {
-        if (settings.dateStyle === "full") {
-          return formatJalaliTimestamp(value, "dddd DD MMMM YYYY");
-        } else if (settings.dateStyle === "long" || settings.dateStyle === "medium") {
-          return formatJalaliTimestamp(value, "DD MMMM YYYY");
-        } else {
-          return formatPersianDateShort(value);
-        }
-      },
-    };
+  const buildFormatter = (locale: string, zone: string) =>
+    new Intl.DateTimeFormat(locale, {
+      timeZone: zone,
+      dateStyle: settings.dateStyle,
+      ...(dateOnly ? {} : { timeStyle: settings.timeStyle }),
+    });
+
+  try {
+    return buildFormatter(settings.locale, timeZone);
+  } catch {
+    return buildFormatter("fa-IR", "UTC");
   }
-  return {
-    format: (value: number) => {
-      if (settings.dateStyle === "full" && settings.timeStyle === "full") {
-        return formatJalaliTimestamp(value, "dddd DD MMMM YYYY در ساعت HH:mm:ss");
-      } else if (settings.dateStyle === "long" || settings.dateStyle === "medium") {
-        return formatJalaliTimestamp(value, "DD MMMM YYYY HH:mm");
-      }
-      return jalaliDateTimeFormatter(value);
-    },
-  };
 }
 
 export function useTimeFormatterProvider(options: { activeScenario?: TScenario } = {}) {

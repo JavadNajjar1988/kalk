@@ -100,7 +100,7 @@ export const useMeasurementsStore = defineStore("measurements", {
       measurementType: "LineString" as MeasurementTypes,
       clearPrevious: true,
       showSegments: true,
-      measurementUnit: "metric" as MeasurementUnit,
+      measurementUnit: useLocalStorage<MeasurementUnit>("measurementUnit", "metric"),
       snap: true,
       showCircle: useLocalStorage("showMeasurementCircle", true),
     };

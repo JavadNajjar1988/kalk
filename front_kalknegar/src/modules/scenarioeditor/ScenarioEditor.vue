@@ -302,6 +302,7 @@ import RecordingState from "@/components/RecordingState.vue";
 import { useMapSettingsStore } from "@/stores/mapSettingsStore";
 import { useTimeFormatterProvider } from "@/stores/timeFormatStore";
 import { buildScenarioSaveDotClass, buildScenarioSaveStatus } from "./scenarioSaveStatus";
+import { resolveInitialBaseMapId } from "./scenarioBasemap";
 import { useUnifiedUndoRedo } from "./useUnifiedUndoRedo";
 
 const props = defineProps<{ activeScenario: TScenario }>();
@@ -461,11 +462,10 @@ const uiStore = useUiStore();
 const { showSearch } = storeToRefs(uiStore);
 
 const mapStore = useMapSettingsStore();
-if (state.mapSettings.baseMapId !== mapStore.baseLayerName) {
-  props.activeScenario.store.update((s) => {
-    s.mapSettings.baseMapId = mapStore.baseLayerName;
-  });
-}
+mapStore.baseLayerName = resolveInitialBaseMapId(
+  state.mapSettings.baseMapId,
+  mapStore.baseLayerName,
+);
 
 const originalTitle = useTitle().value;
 const windowTitle = computed(() => state.info.name);

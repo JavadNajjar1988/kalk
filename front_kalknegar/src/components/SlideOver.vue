@@ -4,16 +4,20 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sh
 type SlideOverProps = {
   title?: string;
   left?: boolean;
+  widthClass?: string;
 };
 
-defineProps<SlideOverProps>();
+withDefaults(defineProps<SlideOverProps>(), {
+  widthClass: "sm:max-w-[360px]",
+});
 const isOpen = defineModel<boolean>();
 </script>
 <template>
   <Sheet v-model:open="isOpen" :side="left ? 'left' : 'right'">
     <SheetContent
       :side="left ? 'left' : 'right'"
-      class="overflow-y-auto pb-6 sm:max-w-[360px] w-full"
+      class="w-full overflow-y-auto pb-6"
+      :class="widthClass"
     >
       <SheetHeader class="">
         <SheetTitle>

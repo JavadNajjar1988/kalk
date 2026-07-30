@@ -1,24 +1,41 @@
 <template>
-  <div class="space-y-4 p-1">
-    <CheckboxField v-model="uiSettings.showToolbar">نمایش نوار ابزار</CheckboxField>
-    <CheckboxField v-model="uiSettings.showTimeline">نمایش خط زمان</CheckboxField>
-    <CheckboxField v-model="uiSettings.showOrbatBreadcrumbs">نمایش مسیر آرایش نبرد</CheckboxField>
-    <CheckboxField v-model="settings.showScaleLine">نمایش خط مقیاس</CheckboxField>
-    <CheckboxField v-model="settings.showLocation">نمایش موقعیت نشانگر ماوس</CheckboxField>
-    <section>
-      <p class="text-base leading-loose font-medium text-gray-900">فرمت مختصات</p>
-      <RadioGroupList
-        v-model="settings.coordinateFormat"
-        :items="coordinateFormatItems"
-      />
+  <div class="space-y-4 py-4">
+    <section class="bg-card rounded-xl border p-4 shadow-sm">
+      <h3 class="text-foreground text-sm font-semibold">اجزای رابط نقشه</h3>
+      <p class="text-muted-foreground mt-1 text-xs leading-5">
+        مواردی را که هنگام کار با نقشه لازم دارید روشن یا خاموش کنید.
+      </p>
+      <div class="mt-3 space-y-2">
+        <CheckboxField v-model="uiSettings.showToolbar">نمایش نوار ابزار</CheckboxField>
+        <CheckboxField v-model="uiSettings.showTimeline">نمایش خط زمان</CheckboxField>
+        <CheckboxField v-model="uiSettings.showOrbatBreadcrumbs">
+          نمایش مسیر آرایش نبرد
+        </CheckboxField>
+        <CheckboxField v-model="settings.showScaleLine">نمایش خط مقیاس</CheckboxField>
+        <CheckboxField v-model="settings.showLocation">
+          نمایش موقعیت نشانگر ماوس
+        </CheckboxField>
+      </div>
     </section>
 
-    <section>
-      <p class="text-base leading-loose font-medium text-gray-900">واحد اندازه‌گیری</p>
-      <RadioGroupList
-        v-model="measurementStore.measurementUnit"
-        :items="measurementItems"
-      />
+    <section class="bg-card rounded-xl border p-4 shadow-sm">
+      <h3 class="text-foreground text-sm font-semibold">مختصات و اندازه‌گیری</h3>
+      <div class="mt-4 space-y-5">
+        <div>
+          <p class="text-foreground mb-2 text-sm font-medium">فرمت مختصات</p>
+          <RadioGroupList
+            v-model="settings.coordinateFormat"
+            :items="coordinateFormatItems"
+          />
+        </div>
+        <div>
+          <p class="text-foreground mb-2 text-sm font-medium">واحد اندازه‌گیری</p>
+          <RadioGroupList
+            v-model="measurementStore.measurementUnit"
+            :items="measurementItems"
+          />
+        </div>
+      </div>
     </section>
   </div>
 </template>
