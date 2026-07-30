@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import ms from 'milsymbol';
 import {
   Box,
   Tab,
@@ -84,6 +83,7 @@ import {
   environmentalParameters,
   environmentalSidc,
 } from '@/modules/dashboard/utils/environmentPresentation';
+import EnvironmentMetocSymbol from '@/modules/dashboard/components/EnvironmentMetocSymbol';
 
 const ANALYSIS_API_AVAILABLE = false;
 
@@ -387,33 +387,12 @@ const environmentLabel = (condition: EnvironmentalCondition) =>
 
 const EnvironmentMilitarySymbol: React.FC<{
   condition: EnvironmentalCondition;
-}> = ({ condition }) => {
-  let svg = '';
-  try {
-    svg = new ms.Symbol(environmentalSidc(condition), { size: 44 }).asSVG();
-  } catch {
-    svg = new ms.Symbol('S-G-UCFOO-', { size: 44 }).asSVG();
-  }
-
-  return (
-    <Box
-      aria-label={`نماد نظامی ${environmentLabel(condition)}`}
-      sx={{
-        width: 56,
-        height: 56,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        bgcolor: 'background.paper',
-        border: 1,
-        borderColor: 'divider',
-        borderRadius: 1,
-        '& svg': { maxWidth: '48px', maxHeight: '48px' },
-      }}
-      dangerouslySetInnerHTML={{ __html: svg }}
-    />
-  );
-};
+}> = ({ condition }) => (
+  <EnvironmentMetocSymbol
+    sidc={environmentalSidc(condition)}
+    label={condition.name || environmentLabel(condition)}
+  />
+);
 
 const EnvironmentalConditionsManager: React.FC<{
   scenario: EnhancedScenario;
@@ -427,8 +406,7 @@ const EnvironmentalConditionsManager: React.FC<{
           <Typography variant="h6">مرور شرایط محیطی</Typography>
           <Typography variant="body2" color="text.secondary">
             این اطلاعات در کالک‌نگار روی نقشه و خط زمانی تعریف می‌شوند و اینجا
-            فقط قابل مرور هستند. این اطلاعات در کالک‌نگار روی نقشه و خط زمانی
-            تعریف می‌شوند و اینجا فقط قابل مرور هستند.
+            فقط قابل مرور هستند.
           </Typography>
         </Box>
       </Box>

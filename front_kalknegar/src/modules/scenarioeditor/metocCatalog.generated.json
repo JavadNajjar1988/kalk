@@ -1,0 +1,6676 @@
+[
+  {
+    "id": "WA-DPFC-FG-L---",
+    "sidc": "WA-DPFC-FG-L---",
+    "label": "جبهه‌زایی سرد",
+    "labelEn": "Cold Frontogenesis",
+    "family": "atmosphere",
+    "group": "Cold Front",
+    "groupFa": "جبهه سرد",
+    "hierarchy": [
+      "Atmospheric",
+      "Dynamic",
+      "Pressure Systems",
+      "Frontal Systems",
+      "Cold Front",
+      "Cold Frontogenesis"
+    ],
+    "geometry": "LineString",
+    "minPoints": 2,
+    "maxPoints": 10000
+  },
+  {
+    "id": "WA-DPFC-FY-L---",
+    "sidc": "WA-DPFC-FY-L---",
+    "label": "جبهه‌زدایی سرد",
+    "labelEn": "Cold Frontolysis",
+    "family": "atmosphere",
+    "group": "Cold Front",
+    "groupFa": "جبهه سرد",
+    "hierarchy": [
+      "Atmospheric",
+      "Dynamic",
+      "Pressure Systems",
+      "Frontal Systems",
+      "Cold Front",
+      "Cold Frontolysis"
+    ],
+    "geometry": "LineString",
+    "minPoints": 2,
+    "maxPoints": 10000
+  },
+  {
+    "id": "WA-DPFCU---L---",
+    "sidc": "WA-DPFCU---L---",
+    "label": "جبهه سرد تراز بالا",
+    "labelEn": "Upper Cold Front",
+    "family": "atmosphere",
+    "group": "Cold Front",
+    "groupFa": "جبهه سرد",
+    "hierarchy": [
+      "Atmospheric",
+      "Dynamic",
+      "Pressure Systems",
+      "Frontal Systems",
+      "Cold Front",
+      "Upper Cold Front"
+    ],
+    "geometry": "LineString",
+    "minPoints": 2,
+    "maxPoints": 10000
+  },
+  {
+    "id": "WA-DPFC----L---",
+    "sidc": "WA-DPFC----L---",
+    "label": "جبهه سرد",
+    "labelEn": "Cold Front",
+    "family": "atmosphere",
+    "group": "Frontal Systems",
+    "groupFa": "سامانه‌های جبهه‌ای",
+    "hierarchy": [
+      "Atmospheric",
+      "Dynamic",
+      "Pressure Systems",
+      "Frontal Systems",
+      "Cold Front"
+    ],
+    "geometry": "LineString",
+    "minPoints": 2,
+    "maxPoints": 10000
+  },
+  {
+    "id": "WA-DPFO----L---",
+    "sidc": "WA-DPFO----L---",
+    "label": "جبهه بسته",
+    "labelEn": "Occluded Front",
+    "family": "atmosphere",
+    "group": "Frontal Systems",
+    "groupFa": "سامانه‌های جبهه‌ای",
+    "hierarchy": [
+      "Atmospheric",
+      "Dynamic",
+      "Pressure Systems",
+      "Frontal Systems",
+      "Occluded Front"
+    ],
+    "geometry": "LineString",
+    "minPoints": 2,
+    "maxPoints": 10000
+  },
+  {
+    "id": "WA-DPFS----L---",
+    "sidc": "WA-DPFS----L---",
+    "label": "جبهه ساکن",
+    "labelEn": "Stationary Front",
+    "family": "atmosphere",
+    "group": "Frontal Systems",
+    "groupFa": "سامانه‌های جبهه‌ای",
+    "hierarchy": [
+      "Atmospheric",
+      "Dynamic",
+      "Pressure Systems",
+      "Frontal Systems",
+      "Stationary Front"
+    ],
+    "geometry": "LineString",
+    "minPoints": 2,
+    "maxPoints": 10000
+  },
+  {
+    "id": "WA-DPFW----L---",
+    "sidc": "WA-DPFW----L---",
+    "label": "جبهه گرم",
+    "labelEn": "Warm Front",
+    "family": "atmosphere",
+    "group": "Frontal Systems",
+    "groupFa": "سامانه‌های جبهه‌ای",
+    "hierarchy": [
+      "Atmospheric",
+      "Dynamic",
+      "Pressure Systems",
+      "Frontal Systems",
+      "Warm Front"
+    ],
+    "geometry": "LineString",
+    "minPoints": 2,
+    "maxPoints": 10000
+  },
+  {
+    "id": "WAS-PHT---P----",
+    "sidc": "WAS-PHT---P----",
+    "label": "تروپوپاز مرتفع",
+    "labelEn": "Tropopause High",
+    "family": "atmosphere",
+    "group": "High Pressure Center",
+    "groupFa": "مرکز پرفشار",
+    "hierarchy": [
+      "Atmospheric",
+      "Static",
+      "Pressure Systems",
+      "High Pressure Center",
+      "Tropopause High"
+    ],
+    "geometry": "Point",
+    "minPoints": 1,
+    "maxPoints": 1
+  },
+  {
+    "id": "WAS-PLT---P----",
+    "sidc": "WAS-PLT---P----",
+    "label": "تروپوپاز پایین",
+    "labelEn": "Tropopause Low",
+    "family": "atmosphere",
+    "group": "Low Pressure Center",
+    "groupFa": "مرکز کم‌فشار",
+    "hierarchy": [
+      "Atmospheric",
+      "Static",
+      "Pressure Systems",
+      "Low Pressure Center",
+      "Tropopause Low"
+    ],
+    "geometry": "Point",
+    "minPoints": 1,
+    "maxPoints": 1
+  },
+  {
+    "id": "WA-DPFO-FY-L---",
+    "sidc": "WA-DPFO-FY-L---",
+    "label": "جبهه‌زدایی بسته",
+    "labelEn": "Occluded Frontolysis",
+    "family": "atmosphere",
+    "group": "Occluded Front",
+    "groupFa": "جبهه بسته",
+    "hierarchy": [
+      "Atmospheric",
+      "Dynamic",
+      "Pressure Systems",
+      "Frontal Systems",
+      "Occluded Front",
+      "Occluded Frontolysis"
+    ],
+    "geometry": "LineString",
+    "minPoints": 2,
+    "maxPoints": 10000
+  },
+  {
+    "id": "WA-DPFOU---L---",
+    "sidc": "WA-DPFOU---L---",
+    "label": "جبهه بسته تراز بالا",
+    "labelEn": "Upper Occluded Front",
+    "family": "atmosphere",
+    "group": "Occluded Front",
+    "groupFa": "جبهه بسته",
+    "hierarchy": [
+      "Atmospheric",
+      "Dynamic",
+      "Pressure Systems",
+      "Frontal Systems",
+      "Occluded Front",
+      "Upper Occluded Front"
+    ],
+    "geometry": "LineString",
+    "minPoints": 2,
+    "maxPoints": 10000
+  },
+  {
+    "id": "WAS-PA----P----",
+    "sidc": "WAS-PA----P----",
+    "label": "مرکز واچرخند",
+    "labelEn": "Anticyclone Center",
+    "family": "atmosphere",
+    "group": "Pressure Systems",
+    "groupFa": "فشار سامانه‌ها",
+    "hierarchy": [
+      "Atmospheric",
+      "Static",
+      "Pressure Systems",
+      "Anticyclone Center"
+    ],
+    "geometry": "Point",
+    "minPoints": 1,
+    "maxPoints": 1
+  },
+  {
+    "id": "WAS-PC----P----",
+    "sidc": "WAS-PC----P----",
+    "label": "مرکز چرخند",
+    "labelEn": "Cyclone Center",
+    "family": "atmosphere",
+    "group": "Pressure Systems",
+    "groupFa": "فشار سامانه‌ها",
+    "hierarchy": [
+      "Atmospheric",
+      "Static",
+      "Pressure Systems",
+      "Cyclone Center"
+    ],
+    "geometry": "Point",
+    "minPoints": 1,
+    "maxPoints": 1
+  },
+  {
+    "id": "WAS-PH----P----",
+    "sidc": "WAS-PH----P----",
+    "label": "مرکز پرفشار",
+    "labelEn": "High Pressure Center",
+    "family": "atmosphere",
+    "group": "Pressure Systems",
+    "groupFa": "فشار سامانه‌ها",
+    "hierarchy": [
+      "Atmospheric",
+      "Static",
+      "Pressure Systems",
+      "High Pressure Center"
+    ],
+    "geometry": "Point",
+    "minPoints": 1,
+    "maxPoints": 1
+  },
+  {
+    "id": "WAS-PL----P----",
+    "sidc": "WAS-PL----P----",
+    "label": "مرکز کم‌فشار",
+    "labelEn": "Low Pressure Center",
+    "family": "atmosphere",
+    "group": "Pressure Systems",
+    "groupFa": "فشار سامانه‌ها",
+    "hierarchy": [
+      "Atmospheric",
+      "Static",
+      "Pressure Systems",
+      "Low Pressure Center"
+    ],
+    "geometry": "Point",
+    "minPoints": 1,
+    "maxPoints": 1
+  },
+  {
+    "id": "WA-DPFS-FG-L---",
+    "sidc": "WA-DPFS-FG-L---",
+    "label": "جبهه‌زایی ساکن",
+    "labelEn": "Stationary Frontogenesis",
+    "family": "atmosphere",
+    "group": "Stationary Front",
+    "groupFa": "جبهه ساکن",
+    "hierarchy": [
+      "Atmospheric",
+      "Dynamic",
+      "Pressure Systems",
+      "Frontal Systems",
+      "Stationary Front",
+      "Stationary Frontogenesis"
+    ],
+    "geometry": "LineString",
+    "minPoints": 2,
+    "maxPoints": 10000
+  },
+  {
+    "id": "WA-DPFS-FY-L---",
+    "sidc": "WA-DPFS-FY-L---",
+    "label": "جبهه‌زدایی ساکن",
+    "labelEn": "Stationary Frontolysis",
+    "family": "atmosphere",
+    "group": "Stationary Front",
+    "groupFa": "جبهه ساکن",
+    "hierarchy": [
+      "Atmospheric",
+      "Dynamic",
+      "Pressure Systems",
+      "Frontal Systems",
+      "Stationary Front",
+      "Stationary Frontolysis"
+    ],
+    "geometry": "LineString",
+    "minPoints": 2,
+    "maxPoints": 10000
+  },
+  {
+    "id": "WA-DPFSU---L---",
+    "sidc": "WA-DPFSU---L---",
+    "label": "جبهه ساکن تراز بالا",
+    "labelEn": "Upper Stationary Front",
+    "family": "atmosphere",
+    "group": "Stationary Front",
+    "groupFa": "جبهه ساکن",
+    "hierarchy": [
+      "Atmospheric",
+      "Dynamic",
+      "Pressure Systems",
+      "Frontal Systems",
+      "Stationary Front",
+      "Upper Stationary Front"
+    ],
+    "geometry": "LineString",
+    "minPoints": 2,
+    "maxPoints": 10000
+  },
+  {
+    "id": "WA-DPFWU---L---",
+    "sidc": "WA-DPFWU---L---",
+    "label": "جبهه گرم تراز بالا",
+    "labelEn": "Upper Warm Front",
+    "family": "atmosphere",
+    "group": "Warm Front",
+    "groupFa": "جبهه گرم",
+    "hierarchy": [
+      "Atmospheric",
+      "Dynamic",
+      "Pressure Systems",
+      "Frontal Systems",
+      "Warm Front",
+      "Upper Warm Front"
+    ],
+    "geometry": "LineString",
+    "minPoints": 2,
+    "maxPoints": 10000
+  },
+  {
+    "id": "WA-DPFW-FG-L---",
+    "sidc": "WA-DPFW-FG-L---",
+    "label": "جبهه‌زایی گرم",
+    "labelEn": "Warm Frontogenesis",
+    "family": "atmosphere",
+    "group": "Warm Front",
+    "groupFa": "جبهه گرم",
+    "hierarchy": [
+      "Atmospheric",
+      "Dynamic",
+      "Pressure Systems",
+      "Frontal Systems",
+      "Warm Front",
+      "Warm Frontogenesis"
+    ],
+    "geometry": "LineString",
+    "minPoints": 2,
+    "maxPoints": 10000
+  },
+  {
+    "id": "WA-DPFW-FY-L---",
+    "sidc": "WA-DPFW-FY-L---",
+    "label": "جبهه‌زدایی گرم",
+    "labelEn": "Warm Frontolysis",
+    "family": "atmosphere",
+    "group": "Warm Front",
+    "groupFa": "جبهه گرم",
+    "hierarchy": [
+      "Atmospheric",
+      "Dynamic",
+      "Pressure Systems",
+      "Frontal Systems",
+      "Warm Front",
+      "Warm Frontolysis"
+    ],
+    "geometry": "LineString",
+    "minPoints": 2,
+    "maxPoints": 10000
+  },
+  {
+    "id": "WA-DBAI-----A--",
+    "sidc": "WA-DBAI-----A--",
+    "label": "یخ‌زدگی",
+    "labelEn": "Icing",
+    "family": "weather",
+    "group": "Bounded Areas of Weather",
+    "groupFa": "محدوده‌های پدیده جوی",
+    "hierarchy": [
+      "Atmospheric",
+      "Dynamic",
+      "Bounded Areas of Weather",
+      "Icing"
+    ],
+    "geometry": "Polygon",
+    "minPoints": 3,
+    "maxPoints": 10000
+  },
+  {
+    "id": "WAS-ICL---P----",
+    "sidc": "WAS-ICL---P----",
+    "label": "یخ‌زدگی شفاف - سبک",
+    "labelEn": "Clear Icing - Light",
+    "family": "weather",
+    "group": "Clear Icing",
+    "groupFa": "یخ‌زدگی شفاف",
+    "hierarchy": [
+      "Atmospheric",
+      "Static",
+      "Icing",
+      "Clear Icing",
+      "Clear Icing - Light"
+    ],
+    "geometry": "Point",
+    "minPoints": 1,
+    "maxPoints": 1
+  },
+  {
+    "id": "WAS-ICM---P----",
+    "sidc": "WAS-ICM---P----",
+    "label": "یخ‌زدگی شفاف - متوسط",
+    "labelEn": "Clear Icing - Moderate",
+    "family": "weather",
+    "group": "Clear Icing",
+    "groupFa": "یخ‌زدگی شفاف",
+    "hierarchy": [
+      "Atmospheric",
+      "Static",
+      "Icing",
+      "Clear Icing",
+      "Clear Icing - Moderate"
+    ],
+    "geometry": "Point",
+    "minPoints": 1,
+    "maxPoints": 1
+  },
+  {
+    "id": "WAS-ICS---P----",
+    "sidc": "WAS-ICS---P----",
+    "label": "یخ‌زدگی شفاف - شدید",
+    "labelEn": "Clear Icing - Severe",
+    "family": "weather",
+    "group": "Clear Icing",
+    "groupFa": "یخ‌زدگی شفاف",
+    "hierarchy": [
+      "Atmospheric",
+      "Static",
+      "Icing",
+      "Clear Icing",
+      "Clear Icing - Severe"
+    ],
+    "geometry": "Point",
+    "minPoints": 1,
+    "maxPoints": 1
+  },
+  {
+    "id": "WAS-CCCSBCP----",
+    "sidc": "WAS-CCCSBCP----",
+    "label": "پوشش ابر گسسته",
+    "labelEn": "Broken Coverage",
+    "family": "weather",
+    "group": "Cloud Coverage Symbols",
+    "groupFa": "نمادهای پوشش ابر",
+    "hierarchy": [
+      "Atmospheric",
+      "Static",
+      "Cloud Coverage",
+      "Cloud Coverage Symbols",
+      "Broken Coverage"
+    ],
+    "geometry": "Point",
+    "minPoints": 1,
+    "maxPoints": 1
+  },
+  {
+    "id": "WAS-CCCSCSP----",
+    "sidc": "WAS-CCCSCSP----",
+    "label": "شفاف آسمان",
+    "labelEn": "Clear Sky",
+    "family": "weather",
+    "group": "Cloud Coverage Symbols",
+    "groupFa": "نمادهای پوشش ابر",
+    "hierarchy": [
+      "Atmospheric",
+      "Static",
+      "Cloud Coverage",
+      "Cloud Coverage Symbols",
+      "Clear Sky"
+    ],
+    "geometry": "Point",
+    "minPoints": 1,
+    "maxPoints": 1
+  },
+  {
+    "id": "WAS-CCCSFCP----",
+    "sidc": "WAS-CCCSFCP----",
+    "label": "پوشش ابر کم",
+    "labelEn": "Few Coverage",
+    "family": "weather",
+    "group": "Cloud Coverage Symbols",
+    "groupFa": "نمادهای پوشش ابر",
+    "hierarchy": [
+      "Atmospheric",
+      "Static",
+      "Cloud Coverage",
+      "Cloud Coverage Symbols",
+      "Few Coverage"
+    ],
+    "geometry": "Point",
+    "minPoints": 1,
+    "maxPoints": 1
+  },
+  {
+    "id": "WAS-CCCSOCP----",
+    "sidc": "WAS-CCCSOCP----",
+    "label": "پوشش کامل ابر",
+    "labelEn": "Overcast Coverage",
+    "family": "weather",
+    "group": "Cloud Coverage Symbols",
+    "groupFa": "نمادهای پوشش ابر",
+    "hierarchy": [
+      "Atmospheric",
+      "Static",
+      "Cloud Coverage",
+      "Cloud Coverage Symbols",
+      "Overcast Coverage"
+    ],
+    "geometry": "Point",
+    "minPoints": 1,
+    "maxPoints": 1
+  },
+  {
+    "id": "WAS-CCCSSCP----",
+    "sidc": "WAS-CCCSSCP----",
+    "label": "پوشش پراکنده ابر",
+    "labelEn": "Scattered Coverage",
+    "family": "weather",
+    "group": "Cloud Coverage Symbols",
+    "groupFa": "نمادهای پوشش ابر",
+    "hierarchy": [
+      "Atmospheric",
+      "Static",
+      "Cloud Coverage",
+      "Cloud Coverage Symbols",
+      "Scattered Coverage"
+    ],
+    "geometry": "Point",
+    "minPoints": 1,
+    "maxPoints": 1
+  },
+  {
+    "id": "WAS-CCCSOBP----",
+    "sidc": "WAS-CCCSOBP----",
+    "label": "آسمان کاملاً یا بخشی پوشیده",
+    "labelEn": "Sky Totally Or Partially Obscured",
+    "family": "weather",
+    "group": "Cloud Coverage Symbols",
+    "groupFa": "نمادهای پوشش ابر",
+    "hierarchy": [
+      "Atmospheric",
+      "Static",
+      "Cloud Coverage",
+      "Cloud Coverage Symbols",
+      "Sky Totally or Partially Obscured"
+    ],
+    "geometry": "Point",
+    "minPoints": 1,
+    "maxPoints": 1
+  },
+  {
+    "id": "WAS-WSDB--P----",
+    "sidc": "WAS-WSDB--P----",
+    "label": "گرد و خاک یا شن برخاسته",
+    "labelEn": "Blowing Dust Or Sand",
+    "family": "weather",
+    "group": "Drizzle",
+    "groupFa": "نم‌نم باران",
+    "hierarchy": [
+      "Atmospheric",
+      "Static",
+      "Winds",
+      "Weather Symbols",
+      "Drizzle",
+      "Blowing Dust or Sand"
+    ],
+    "geometry": "Point",
+    "minPoints": 1,
+    "maxPoints": 1
+  },
+  {
+    "id": "WAS-WSD-HCP----",
+    "sidc": "WAS-WSD-HCP----",
+    "label": "نم‌نم باران - پیوسته شدید",
+    "labelEn": "Drizzle - Continuous Heavy",
+    "family": "weather",
+    "group": "Drizzle",
+    "groupFa": "نم‌نم باران",
+    "hierarchy": [
+      "Atmospheric",
+      "Static",
+      "Winds",
+      "Weather Symbols",
+      "Drizzle",
+      "Drizzle - Continuous Heavy"
+    ],
+    "geometry": "Point",
+    "minPoints": 1,
+    "maxPoints": 1
+  },
+  {
+    "id": "WAS-WSD-LCP----",
+    "sidc": "WAS-WSD-LCP----",
+    "label": "نم‌نم باران - پیوسته سبک",
+    "labelEn": "Drizzle - Continuous Light",
+    "family": "weather",
+    "group": "Drizzle",
+    "groupFa": "نم‌نم باران",
+    "hierarchy": [
+      "Atmospheric",
+      "Static",
+      "Winds",
+      "Weather Symbols",
+      "Drizzle",
+      "Drizzle - Continuous Light"
+    ],
+    "geometry": "Point",
+    "minPoints": 1,
+    "maxPoints": 1
+  },
+  {
+    "id": "WAS-WSD-MCP----",
+    "sidc": "WAS-WSD-MCP----",
+    "label": "نم‌نم باران - پیوسته متوسط",
+    "labelEn": "Drizzle - Continuous Moderate",
+    "family": "weather",
+    "group": "Drizzle",
+    "groupFa": "نم‌نم باران",
+    "hierarchy": [
+      "Atmospheric",
+      "Static",
+      "Winds",
+      "Weather Symbols",
+      "Drizzle",
+      "Drizzle - Continuous Moderate"
+    ],
+    "geometry": "Point",
+    "minPoints": 1,
+    "maxPoints": 1
+  },
+  {
+    "id": "WAS-WSD-HIP----",
+    "sidc": "WAS-WSD-HIP----",
+    "label": "نم‌نم باران - متناوب شدید",
+    "labelEn": "Drizzle - Intermittent Heavy",
+    "family": "weather",
+    "group": "Drizzle",
+    "groupFa": "نم‌نم باران",
+    "hierarchy": [
+      "Atmospheric",
+      "Static",
+      "Winds",
+      "Weather Symbols",
+      "Drizzle",
+      "Drizzle - Intermittent Heavy"
+    ],
+    "geometry": "Point",
+    "minPoints": 1,
+    "maxPoints": 1
+  },
+  {
+    "id": "WAS-WSD-LIP----",
+    "sidc": "WAS-WSD-LIP----",
+    "label": "نم‌نم باران - متناوب سبک",
+    "labelEn": "Drizzle - Intermittent Light",
+    "family": "weather",
+    "group": "Drizzle",
+    "groupFa": "نم‌نم باران",
+    "hierarchy": [
+      "Atmospheric",
+      "Static",
+      "Winds",
+      "Weather Symbols",
+      "Drizzle",
+      "Drizzle - Intermittent Light"
+    ],
+    "geometry": "Point",
+    "minPoints": 1,
+    "maxPoints": 1
+  },
+  {
+    "id": "WAS-WSD-MIP----",
+    "sidc": "WAS-WSD-MIP----",
+    "label": "نم‌نم باران - متناوب متوسط",
+    "labelEn": "Drizzle - Intermittent Moderate",
+    "family": "weather",
+    "group": "Drizzle",
+    "groupFa": "نم‌نم باران",
+    "hierarchy": [
+      "Atmospheric",
+      "Static",
+      "Winds",
+      "Weather Symbols",
+      "Drizzle",
+      "Drizzle - Intermittent Moderate"
+    ],
+    "geometry": "Point",
+    "minPoints": 1,
+    "maxPoints": 1
+  },
+  {
+    "id": "WAS-WSDD--P----",
+    "sidc": "WAS-WSDD--P----",
+    "label": "گردباد خاک",
+    "labelEn": "Dust Devil",
+    "family": "weather",
+    "group": "Drizzle",
+    "groupFa": "نم‌نم باران",
+    "hierarchy": [
+      "Atmospheric",
+      "Static",
+      "Winds",
+      "Weather Symbols",
+      "Drizzle",
+      "Dust Devil"
+    ],
+    "geometry": "Point",
+    "minPoints": 1,
+    "maxPoints": 1
+  },
+  {
+    "id": "WAS-WSDSS-P----",
+    "sidc": "WAS-WSDSS-P----",
+    "label": "توفان گرد و خاک یا شن - شدید",
+    "labelEn": "Dust/Sand Storm - Severe",
+    "family": "weather",
+    "group": "Drizzle",
+    "groupFa": "نم‌نم باران",
+    "hierarchy": [
+      "Atmospheric",
+      "Static",
+      "Winds",
+      "Weather Symbols",
+      "Drizzle",
+      "Dust/Sand Storm - Severe"
+    ],
+    "geometry": "Point",
+    "minPoints": 1,
+    "maxPoints": 1
+  },
+  {
+    "id": "WAS-WSDSLMP----",
+    "sidc": "WAS-WSDSLMP----",
+    "label": "توفان گرد و خاک یا شن - سبک تا متوسط",
+    "labelEn": "Dust/Sand Storm - Light To Moderate",
+    "family": "weather",
+    "group": "Dust or Sand",
+    "groupFa": "گرد و خاک یا شن",
+    "hierarchy": [
+      "Atmospheric",
+      "Static",
+      "Winds",
+      "Weather Symbols",
+      "Drizzle",
+      "Dust or Sand",
+      "Dust/Sand Storm - Light To Moderate"
+    ],
+    "geometry": "Point",
+    "minPoints": 1,
+    "maxPoints": 1
+  },
+  {
+    "id": "WAS-WSFGFOP----",
+    "sidc": "WAS-WSFGFOP----",
+    "label": "مه - یخ‌زن، آسمان دیده نمی‌شود",
+    "labelEn": "Fog - Freezing, Sky Not Visible",
+    "family": "weather",
+    "group": "Fog",
+    "groupFa": "مه",
+    "hierarchy": [
+      "Atmospheric",
+      "Static",
+      "Winds",
+      "Weather Symbols",
+      "Fog",
+      "Fog - Freezing, Sky Not Visible"
+    ],
+    "geometry": "Point",
+    "minPoints": 1,
+    "maxPoints": 1
+  },
+  {
+    "id": "WAS-WSFGFVP----",
+    "sidc": "WAS-WSFGFVP----",
+    "label": "مه - یخ‌زن، آسمان دیده می‌شود",
+    "labelEn": "Fog - Freezing, Sky Visible",
+    "family": "weather",
+    "group": "Fog",
+    "groupFa": "مه",
+    "hierarchy": [
+      "Atmospheric",
+      "Static",
+      "Winds",
+      "Weather Symbols",
+      "Fog",
+      "Fog - Freezing, Sky Visible"
+    ],
+    "geometry": "Point",
+    "minPoints": 1,
+    "maxPoints": 1
+  },
+  {
+    "id": "WAS-WSFGP-P----",
+    "sidc": "WAS-WSFGP-P----",
+    "label": "مه - تکه‌تکه",
+    "labelEn": "Fog - Patchy",
+    "family": "weather",
+    "group": "Fog",
+    "groupFa": "مه",
+    "hierarchy": [
+      "Atmospheric",
+      "Static",
+      "Winds",
+      "Weather Symbols",
+      "Fog",
+      "Fog - Patchy"
+    ],
+    "geometry": "Point",
+    "minPoints": 1,
+    "maxPoints": 1
+  },
+  {
+    "id": "WAS-WSFGCSP----",
+    "sidc": "WAS-WSFGCSP----",
+    "label": "مه - کم‌عمق و پیوسته",
+    "labelEn": "Fog - Shallow Continuous",
+    "family": "weather",
+    "group": "Fog",
+    "groupFa": "مه",
+    "hierarchy": [
+      "Atmospheric",
+      "Static",
+      "Winds",
+      "Weather Symbols",
+      "Fog",
+      "Fog - Shallow Continuous"
+    ],
+    "geometry": "Point",
+    "minPoints": 1,
+    "maxPoints": 1
+  },
+  {
+    "id": "WAS-WSFGSOP----",
+    "sidc": "WAS-WSFGSOP----",
+    "label": "مه - آسمان پوشیده",
+    "labelEn": "Fog - Sky Obscured",
+    "family": "weather",
+    "group": "Fog",
+    "groupFa": "مه",
+    "hierarchy": [
+      "Atmospheric",
+      "Static",
+      "Winds",
+      "Weather Symbols",
+      "Fog",
+      "Fog - Sky Obscured"
+    ],
+    "geometry": "Point",
+    "minPoints": 1,
+    "maxPoints": 1
+  },
+  {
+    "id": "WAS-WSFGSVP----",
+    "sidc": "WAS-WSFGSVP----",
+    "label": "مه - آسمان دیده می‌شود",
+    "labelEn": "Fog - Sky Visible",
+    "family": "weather",
+    "group": "Fog",
+    "groupFa": "مه",
+    "hierarchy": [
+      "Atmospheric",
+      "Static",
+      "Winds",
+      "Weather Symbols",
+      "Fog",
+      "Fog - Sky Visible"
+    ],
+    "geometry": "Point",
+    "minPoints": 1,
+    "maxPoints": 1
+  },
+  {
+    "id": "WAS-WSFGPSP----",
+    "sidc": "WAS-WSFGPSP----",
+    "label": "مه - لکه‌های کم‌عمق",
+    "labelEn": "Fog - Shallow Patches",
+    "family": "weather",
+    "group": "Fog - Patchy",
+    "groupFa": "مه - تکه‌تکه",
+    "hierarchy": [
+      "Atmospheric",
+      "Static",
+      "Winds",
+      "Weather Symbols",
+      "Fog",
+      "Fog - Patchy",
+      "Fog - Shallow Patches"
+    ],
+    "geometry": "Point",
+    "minPoints": 1,
+    "maxPoints": 1
+  },
+  {
+    "id": "WAS-WSDFL-P----",
+    "sidc": "WAS-WSDFL-P----",
+    "label": "نم‌نم باران یخ‌زن - سبک",
+    "labelEn": "Freezing Drizzle - Light",
+    "family": "weather",
+    "group": "Freezing Drizzle",
+    "groupFa": "نم‌نم باران یخ‌زن",
+    "hierarchy": [
+      "Atmospheric",
+      "Static",
+      "Winds",
+      "Weather Symbols",
+      "Drizzle",
+      "Freezing Drizzle",
+      "Freezing Drizzle - Light"
+    ],
+    "geometry": "Point",
+    "minPoints": 1,
+    "maxPoints": 1
+  },
+  {
+    "id": "WAS-WSDFMHP----",
+    "sidc": "WAS-WSDFMHP----",
+    "label": "نم‌نم باران یخ‌زن - متوسط تا شدید",
+    "labelEn": "Freezing Drizzle - Moderate/Heavy",
+    "family": "weather",
+    "group": "Freezing Drizzle",
+    "groupFa": "نم‌نم باران یخ‌زن",
+    "hierarchy": [
+      "Atmospheric",
+      "Static",
+      "Winds",
+      "Weather Symbols",
+      "Drizzle",
+      "Freezing Drizzle",
+      "Freezing Drizzle - Moderate/Heavy"
+    ],
+    "geometry": "Point",
+    "minPoints": 1,
+    "maxPoints": 1
+  },
+  {
+    "id": "WAS-WSRFL-P----",
+    "sidc": "WAS-WSRFL-P----",
+    "label": "باران یخ‌زن - سبک",
+    "labelEn": "Freezing Rain - Light",
+    "family": "weather",
+    "group": "Freezing Rain",
+    "groupFa": "باران یخ‌زن",
+    "hierarchy": [
+      "Atmospheric",
+      "Static",
+      "Winds",
+      "Weather Symbols",
+      "Rain",
+      "Freezing Rain",
+      "Freezing Rain - Light"
+    ],
+    "geometry": "Point",
+    "minPoints": 1,
+    "maxPoints": 1
+  },
+  {
+    "id": "WAS-WSRFMHP----",
+    "sidc": "WAS-WSRFMHP----",
+    "label": "باران یخ‌زن - متوسط تا شدید",
+    "labelEn": "Freezing Rain - Moderate/Heavy",
+    "family": "weather",
+    "group": "Freezing Rain",
+    "groupFa": "باران یخ‌زن",
+    "hierarchy": [
+      "Atmospheric",
+      "Static",
+      "Winds",
+      "Weather Symbols",
+      "Rain",
+      "Freezing Rain",
+      "Freezing Rain - Moderate/Heavy"
+    ],
+    "geometry": "Point",
+    "minPoints": 1,
+    "maxPoints": 1
+  },
+  {
+    "id": "WAS-WSGRL-P----",
+    "sidc": "WAS-WSGRL-P----",
+    "label": "تگرگ - سبک بدون همراهی رعدوبرق",
+    "labelEn": "Hail - Light Not Associated With Thunder",
+    "family": "weather",
+    "group": "Hail",
+    "groupFa": "تگرگ",
+    "hierarchy": [
+      "Atmospheric",
+      "Static",
+      "Winds",
+      "Weather Symbols",
+      "Hail",
+      "Hail - Light Not Associated With Thunder"
+    ],
+    "geometry": "Point",
+    "minPoints": 1,
+    "maxPoints": 1
+  },
+  {
+    "id": "WAS-WSGRMHP----",
+    "sidc": "WAS-WSGRMHP----",
+    "label": "تگرگ - متوسط تا شدید بدون همراهی رعدوبرق",
+    "labelEn": "Hail - Moderate/Heavy Not Associated With Thunder",
+    "family": "weather",
+    "group": "Hail",
+    "groupFa": "تگرگ",
+    "hierarchy": [
+      "Atmospheric",
+      "Static",
+      "Winds",
+      "Weather Symbols",
+      "Hail",
+      "Hail - Moderate/Heavy Not Associated With Thunder"
+    ],
+    "geometry": "Point",
+    "minPoints": 1,
+    "maxPoints": 1
+  },
+  {
+    "id": "WAS-WSPLH-P----",
+    "sidc": "WAS-WSPLH-P----",
+    "label": "دانه‌های یخ - شدید",
+    "labelEn": "Ice Pellets - Heavy",
+    "family": "weather",
+    "group": "Ice Pellets (Sleet)",
+    "groupFa": "دانه‌های یخ (برف‌آب)",
+    "hierarchy": [
+      "Atmospheric",
+      "Static",
+      "Winds",
+      "Weather Symbols",
+      "Ice Pellets (Sleet)",
+      "Ice Pellets - Heavy"
+    ],
+    "geometry": "Point",
+    "minPoints": 1,
+    "maxPoints": 1
+  },
+  {
+    "id": "WAS-WSPLL-P----",
+    "sidc": "WAS-WSPLL-P----",
+    "label": "دانه‌های یخ - سبک",
+    "labelEn": "Ice Pellets - Light",
+    "family": "weather",
+    "group": "Ice Pellets (Sleet)",
+    "groupFa": "دانه‌های یخ (برف‌آب)",
+    "hierarchy": [
+      "Atmospheric",
+      "Static",
+      "Winds",
+      "Weather Symbols",
+      "Ice Pellets (Sleet)",
+      "Ice Pellets - Light"
+    ],
+    "geometry": "Point",
+    "minPoints": 1,
+    "maxPoints": 1
+  },
+  {
+    "id": "WAS-WSPLM-P----",
+    "sidc": "WAS-WSPLM-P----",
+    "label": "دانه‌های یخ - متوسط",
+    "labelEn": "Ice Pellets - Moderate",
+    "family": "weather",
+    "group": "Ice Pellets (Sleet)",
+    "groupFa": "دانه‌های یخ (برف‌آب)",
+    "hierarchy": [
+      "Atmospheric",
+      "Static",
+      "Winds",
+      "Weather Symbols",
+      "Ice Pellets (Sleet)",
+      "Ice Pellets - Moderate"
+    ],
+    "geometry": "Point",
+    "minPoints": 1,
+    "maxPoints": 1
+  },
+  {
+    "id": "WA-DBAIF----A--",
+    "sidc": "WA-DBAIF----A--",
+    "label": "قواعد پرواز با ابزار (IFR)",
+    "labelEn": "Instrument Flight Rule (Ifr)",
+    "family": "weather",
+    "group": "Icing",
+    "groupFa": "یخ‌زدگی",
+    "hierarchy": [
+      "Atmospheric",
+      "Dynamic",
+      "Bounded Areas of Weather",
+      "Icing",
+      "Instrument Flight Rule (Ifr)"
+    ],
+    "geometry": "Polygon",
+    "minPoints": 3,
+    "maxPoints": 10000
+  },
+  {
+    "id": "WAS-IML---P----",
+    "sidc": "WAS-IML---P----",
+    "label": "یخ‌زدگی مختلط - سبک",
+    "labelEn": "Mixed Icing - Light",
+    "family": "weather",
+    "group": "Mixed Icing",
+    "groupFa": "یخ‌زدگی مختلط",
+    "hierarchy": [
+      "Atmospheric",
+      "Static",
+      "Icing",
+      "Mixed Icing",
+      "Mixed Icing - Light"
+    ],
+    "geometry": "Point",
+    "minPoints": 1,
+    "maxPoints": 1
+  },
+  {
+    "id": "WAS-IMM---P----",
+    "sidc": "WAS-IMM---P----",
+    "label": "یخ‌زدگی مختلط - متوسط",
+    "labelEn": "Mixed Icing - Moderate",
+    "family": "weather",
+    "group": "Mixed Icing",
+    "groupFa": "یخ‌زدگی مختلط",
+    "hierarchy": [
+      "Atmospheric",
+      "Static",
+      "Icing",
+      "Mixed Icing",
+      "Mixed Icing - Moderate"
+    ],
+    "geometry": "Point",
+    "minPoints": 1,
+    "maxPoints": 1
+  },
+  {
+    "id": "WAS-IMS---P----",
+    "sidc": "WAS-IMS---P----",
+    "label": "یخ‌زدگی مختلط - شدید",
+    "labelEn": "Mixed Icing - Severe",
+    "family": "weather",
+    "group": "Mixed Icing",
+    "groupFa": "یخ‌زدگی مختلط",
+    "hierarchy": [
+      "Atmospheric",
+      "Static",
+      "Icing",
+      "Mixed Icing",
+      "Mixed Icing - Severe"
+    ],
+    "geometry": "Point",
+    "minPoints": 1,
+    "maxPoints": 1
+  },
+  {
+    "id": "WAS-WSR-HCP----",
+    "sidc": "WAS-WSR-HCP----",
+    "label": "باران - پیوسته شدید",
+    "labelEn": "Rain - Continuous Heavy",
+    "family": "weather",
+    "group": "Rain",
+    "groupFa": "باران",
+    "hierarchy": [
+      "Atmospheric",
+      "Static",
+      "Winds",
+      "Weather Symbols",
+      "Rain",
+      "Rain - Continuous Heavy"
+    ],
+    "geometry": "Point",
+    "minPoints": 1,
+    "maxPoints": 1
+  },
+  {
+    "id": "WAS-WSR-LCP----",
+    "sidc": "WAS-WSR-LCP----",
+    "label": "باران - پیوسته سبک",
+    "labelEn": "Rain - Continuous Light",
+    "family": "weather",
+    "group": "Rain",
+    "groupFa": "باران",
+    "hierarchy": [
+      "Atmospheric",
+      "Static",
+      "Winds",
+      "Weather Symbols",
+      "Rain",
+      "Rain - Continuous Light"
+    ],
+    "geometry": "Point",
+    "minPoints": 1,
+    "maxPoints": 1
+  },
+  {
+    "id": "WAS-WSR-MCP----",
+    "sidc": "WAS-WSR-MCP----",
+    "label": "باران - پیوسته متوسط",
+    "labelEn": "Rain - Continuous Moderate",
+    "family": "weather",
+    "group": "Rain",
+    "groupFa": "باران",
+    "hierarchy": [
+      "Atmospheric",
+      "Static",
+      "Winds",
+      "Weather Symbols",
+      "Rain",
+      "Rain - Continuous Moderate"
+    ],
+    "geometry": "Point",
+    "minPoints": 1,
+    "maxPoints": 1
+  },
+  {
+    "id": "WAS-WSR-HIP----",
+    "sidc": "WAS-WSR-HIP----",
+    "label": "باران - متناوب شدید",
+    "labelEn": "Rain - Intermittent Heavy",
+    "family": "weather",
+    "group": "Rain",
+    "groupFa": "باران",
+    "hierarchy": [
+      "Atmospheric",
+      "Static",
+      "Winds",
+      "Weather Symbols",
+      "Rain",
+      "Rain - Intermittent Heavy"
+    ],
+    "geometry": "Point",
+    "minPoints": 1,
+    "maxPoints": 1
+  },
+  {
+    "id": "WAS-WSR-LIP----",
+    "sidc": "WAS-WSR-LIP----",
+    "label": "باران - متناوب سبک",
+    "labelEn": "Rain - Intermittent Light",
+    "family": "weather",
+    "group": "Rain",
+    "groupFa": "باران",
+    "hierarchy": [
+      "Atmospheric",
+      "Static",
+      "Winds",
+      "Weather Symbols",
+      "Rain",
+      "Rain - Intermittent Light"
+    ],
+    "geometry": "Point",
+    "minPoints": 1,
+    "maxPoints": 1
+  },
+  {
+    "id": "WAS-WSR-MIP----",
+    "sidc": "WAS-WSR-MIP----",
+    "label": "باران - متناوب متوسط",
+    "labelEn": "Rain - Intermittent Moderate",
+    "family": "weather",
+    "group": "Rain",
+    "groupFa": "باران",
+    "hierarchy": [
+      "Atmospheric",
+      "Static",
+      "Winds",
+      "Weather Symbols",
+      "Rain",
+      "Rain - Intermittent Moderate"
+    ],
+    "geometry": "Point",
+    "minPoints": 1,
+    "maxPoints": 1
+  },
+  {
+    "id": "WAS-WSMSL-P----",
+    "sidc": "WAS-WSMSL-P----",
+    "label": "رگبار باران و برف - سبک",
+    "labelEn": "Rain And Snow Showers - Light",
+    "family": "weather",
+    "group": "Rain And Snow Mixed",
+    "groupFa": "باران و برف مختلط",
+    "hierarchy": [
+      "Atmospheric",
+      "Static",
+      "Winds",
+      "Weather Symbols",
+      "Rain And Snow Mixed",
+      "Rain And Snow Showers - Light"
+    ],
+    "geometry": "Point",
+    "minPoints": 1,
+    "maxPoints": 1
+  },
+  {
+    "id": "WAS-WSMSMHP----",
+    "sidc": "WAS-WSMSMHP----",
+    "label": "رگبار باران و برف - متوسط تا شدید",
+    "labelEn": "Rain And Snow Showers - Moderate/Heavy",
+    "family": "weather",
+    "group": "Rain And Snow Mixed",
+    "groupFa": "باران و برف مختلط",
+    "hierarchy": [
+      "Atmospheric",
+      "Static",
+      "Winds",
+      "Weather Symbols",
+      "Rain And Snow Mixed",
+      "Rain And Snow Showers - Moderate/Heavy"
+    ],
+    "geometry": "Point",
+    "minPoints": 1,
+    "maxPoints": 1
+  },
+  {
+    "id": "WAS-WSM-L-P----",
+    "sidc": "WAS-WSM-L-P----",
+    "label": "باران یا نم‌نم باران همراه برف - سبک",
+    "labelEn": "Rain Or Drizzle And Snow - Light",
+    "family": "weather",
+    "group": "Rain And Snow Mixed",
+    "groupFa": "باران و برف مختلط",
+    "hierarchy": [
+      "Atmospheric",
+      "Static",
+      "Winds",
+      "Weather Symbols",
+      "Rain And Snow Mixed",
+      "Rain or Drizzle And Snow - Light"
+    ],
+    "geometry": "Point",
+    "minPoints": 1,
+    "maxPoints": 1
+  },
+  {
+    "id": "WAS-WSM-MHP----",
+    "sidc": "WAS-WSM-MHP----",
+    "label": "باران یا نم‌نم باران همراه برف - متوسط تا شدید",
+    "labelEn": "Rain Or Drizzle And Snow - Moderate/Heavy",
+    "family": "weather",
+    "group": "Rain And Snow Mixed",
+    "groupFa": "باران و برف مختلط",
+    "hierarchy": [
+      "Atmospheric",
+      "Static",
+      "Winds",
+      "Weather Symbols",
+      "Rain And Snow Mixed",
+      "Rain or Drizzle And Snow - Moderate/Heavy"
+    ],
+    "geometry": "Point",
+    "minPoints": 1,
+    "maxPoints": 1
+  },
+  {
+    "id": "WAS-WSRSL-P----",
+    "sidc": "WAS-WSRSL-P----",
+    "label": "رگبار باران - سبک",
+    "labelEn": "Rain Showers - Light",
+    "family": "weather",
+    "group": "Rain Showers",
+    "groupFa": "رگبار باران",
+    "hierarchy": [
+      "Atmospheric",
+      "Static",
+      "Winds",
+      "Weather Symbols",
+      "Rain",
+      "Rain Showers",
+      "Rain Showers - Light"
+    ],
+    "geometry": "Point",
+    "minPoints": 1,
+    "maxPoints": 1
+  },
+  {
+    "id": "WAS-WSRSMHP----",
+    "sidc": "WAS-WSRSMHP----",
+    "label": "رگبار باران - متوسط تا شدید",
+    "labelEn": "Rain Showers - Moderate/Heavy",
+    "family": "weather",
+    "group": "Rain Showers",
+    "groupFa": "رگبار باران",
+    "hierarchy": [
+      "Atmospheric",
+      "Static",
+      "Winds",
+      "Weather Symbols",
+      "Rain",
+      "Rain Showers",
+      "Rain Showers - Moderate/Heavy"
+    ],
+    "geometry": "Point",
+    "minPoints": 1,
+    "maxPoints": 1
+  },
+  {
+    "id": "WAS-WSRST-P----",
+    "sidc": "WAS-WSRST-P----",
+    "label": "رگبار باران - سیل‌آسا",
+    "labelEn": "Rain Showers - Torrential",
+    "family": "weather",
+    "group": "Rain Showers",
+    "groupFa": "رگبار باران",
+    "hierarchy": [
+      "Atmospheric",
+      "Static",
+      "Winds",
+      "Weather Symbols",
+      "Rain",
+      "Rain Showers",
+      "Rain Showers - Torrential"
+    ],
+    "geometry": "Point",
+    "minPoints": 1,
+    "maxPoints": 1
+  },
+  {
+    "id": "WAS-IRL---P----",
+    "sidc": "WAS-IRL---P----",
+    "label": "یخ‌زدگی برفکی - سبک",
+    "labelEn": "Rime Icing - Light",
+    "family": "weather",
+    "group": "Rime Icing",
+    "groupFa": "یخ‌زدگی برفکی",
+    "hierarchy": [
+      "Atmospheric",
+      "Static",
+      "Icing",
+      "Rime Icing",
+      "Rime Icing - Light"
+    ],
+    "geometry": "Point",
+    "minPoints": 1,
+    "maxPoints": 1
+  },
+  {
+    "id": "WAS-IRM---P----",
+    "sidc": "WAS-IRM---P----",
+    "label": "یخ‌زدگی برفکی - متوسط",
+    "labelEn": "Rime Icing - Moderate",
+    "family": "weather",
+    "group": "Rime Icing",
+    "groupFa": "یخ‌زدگی برفکی",
+    "hierarchy": [
+      "Atmospheric",
+      "Static",
+      "Icing",
+      "Rime Icing",
+      "Rime Icing - Moderate"
+    ],
+    "geometry": "Point",
+    "minPoints": 1,
+    "maxPoints": 1
+  },
+  {
+    "id": "WAS-IRS---P----",
+    "sidc": "WAS-IRS---P----",
+    "label": "یخ‌زدگی برفکی - شدید",
+    "labelEn": "Rime Icing - Severe",
+    "family": "weather",
+    "group": "Rime Icing",
+    "groupFa": "یخ‌زدگی برفکی",
+    "hierarchy": [
+      "Atmospheric",
+      "Static",
+      "Icing",
+      "Rime Icing",
+      "Rime Icing - Severe"
+    ],
+    "geometry": "Point",
+    "minPoints": 1,
+    "maxPoints": 1
+  },
+  {
+    "id": "WAS-WSSBH-P----",
+    "sidc": "WAS-WSSBH-P----",
+    "label": "برف بادآورده - شدید",
+    "labelEn": "Blowing Snow - Heavy",
+    "family": "weather",
+    "group": "Snow",
+    "groupFa": "برف",
+    "hierarchy": [
+      "Atmospheric",
+      "Static",
+      "Winds",
+      "Weather Symbols",
+      "Snow",
+      "Blowing Snow - Heavy"
+    ],
+    "geometry": "Point",
+    "minPoints": 1,
+    "maxPoints": 1
+  },
+  {
+    "id": "WAS-WSSBLMP----",
+    "sidc": "WAS-WSSBLMP----",
+    "label": "برف بادآورده - سبک/متوسط",
+    "labelEn": "Blowing Snow - Light/Moderate",
+    "family": "weather",
+    "group": "Snow",
+    "groupFa": "برف",
+    "hierarchy": [
+      "Atmospheric",
+      "Static",
+      "Winds",
+      "Weather Symbols",
+      "Snow",
+      "Blowing Snow - Light/Moderate"
+    ],
+    "geometry": "Point",
+    "minPoints": 1,
+    "maxPoints": 1
+  },
+  {
+    "id": "WAS-WSS-HCP----",
+    "sidc": "WAS-WSS-HCP----",
+    "label": "برف - پیوسته شدید",
+    "labelEn": "Snow - Continuous Heavy",
+    "family": "weather",
+    "group": "Snow",
+    "groupFa": "برف",
+    "hierarchy": [
+      "Atmospheric",
+      "Static",
+      "Winds",
+      "Weather Symbols",
+      "Snow",
+      "Snow - Continuous Heavy"
+    ],
+    "geometry": "Point",
+    "minPoints": 1,
+    "maxPoints": 1
+  },
+  {
+    "id": "WAS-WSS-LCP----",
+    "sidc": "WAS-WSS-LCP----",
+    "label": "برف - پیوسته سبک",
+    "labelEn": "Snow - Continuous Light",
+    "family": "weather",
+    "group": "Snow",
+    "groupFa": "برف",
+    "hierarchy": [
+      "Atmospheric",
+      "Static",
+      "Winds",
+      "Weather Symbols",
+      "Snow",
+      "Snow - Continuous Light"
+    ],
+    "geometry": "Point",
+    "minPoints": 1,
+    "maxPoints": 1
+  },
+  {
+    "id": "WAS-WSS-MCP----",
+    "sidc": "WAS-WSS-MCP----",
+    "label": "برف - پیوسته متوسط",
+    "labelEn": "Snow - Continuous Moderate",
+    "family": "weather",
+    "group": "Snow",
+    "groupFa": "برف",
+    "hierarchy": [
+      "Atmospheric",
+      "Static",
+      "Winds",
+      "Weather Symbols",
+      "Snow",
+      "Snow - Continuous Moderate"
+    ],
+    "geometry": "Point",
+    "minPoints": 1,
+    "maxPoints": 1
+  },
+  {
+    "id": "WAS-WSS-HIP----",
+    "sidc": "WAS-WSS-HIP----",
+    "label": "برف - متناوب شدید",
+    "labelEn": "Snow - Intermittent Heavy",
+    "family": "weather",
+    "group": "Snow",
+    "groupFa": "برف",
+    "hierarchy": [
+      "Atmospheric",
+      "Static",
+      "Winds",
+      "Weather Symbols",
+      "Snow",
+      "Snow - Intermittent Heavy"
+    ],
+    "geometry": "Point",
+    "minPoints": 1,
+    "maxPoints": 1
+  },
+  {
+    "id": "WAS-WSS-LIP----",
+    "sidc": "WAS-WSS-LIP----",
+    "label": "برف - متناوب سبک",
+    "labelEn": "Snow - Intermittent Light",
+    "family": "weather",
+    "group": "Snow",
+    "groupFa": "برف",
+    "hierarchy": [
+      "Atmospheric",
+      "Static",
+      "Winds",
+      "Weather Symbols",
+      "Snow",
+      "Snow - Intermittent Light"
+    ],
+    "geometry": "Point",
+    "minPoints": 1,
+    "maxPoints": 1
+  },
+  {
+    "id": "WAS-WSS-MIP----",
+    "sidc": "WAS-WSS-MIP----",
+    "label": "برف - متناوب متوسط",
+    "labelEn": "Snow - Intermittent Moderate",
+    "family": "weather",
+    "group": "Snow",
+    "groupFa": "برف",
+    "hierarchy": [
+      "Atmospheric",
+      "Static",
+      "Winds",
+      "Weather Symbols",
+      "Snow",
+      "Snow - Intermittent Moderate"
+    ],
+    "geometry": "Point",
+    "minPoints": 1,
+    "maxPoints": 1
+  },
+  {
+    "id": "WAS-WSSG--P----",
+    "sidc": "WAS-WSSG--P----",
+    "label": "دانه‌های برف",
+    "labelEn": "Snow Grains",
+    "family": "weather",
+    "group": "Snow",
+    "groupFa": "برف",
+    "hierarchy": [
+      "Atmospheric",
+      "Static",
+      "Winds",
+      "Weather Symbols",
+      "Snow",
+      "Snow Grains"
+    ],
+    "geometry": "Point",
+    "minPoints": 1,
+    "maxPoints": 1
+  },
+  {
+    "id": "WAS-WSSSL-P----",
+    "sidc": "WAS-WSSSL-P----",
+    "label": "رگبار برف - سبک",
+    "labelEn": "Snow Showers - Light",
+    "family": "weather",
+    "group": "Snow Showers",
+    "groupFa": "رگبار برف",
+    "hierarchy": [
+      "Atmospheric",
+      "Static",
+      "Winds",
+      "Weather Symbols",
+      "Snow",
+      "Snow Showers",
+      "Snow Showers - Light"
+    ],
+    "geometry": "Point",
+    "minPoints": 1,
+    "maxPoints": 1
+  },
+  {
+    "id": "WAS-WSSSMHP----",
+    "sidc": "WAS-WSSSMHP----",
+    "label": "رگبار برف - متوسط تا شدید",
+    "labelEn": "Snow Showers - Moderate/Heavy",
+    "family": "weather",
+    "group": "Snow Showers",
+    "groupFa": "رگبار برف",
+    "hierarchy": [
+      "Atmospheric",
+      "Static",
+      "Winds",
+      "Weather Symbols",
+      "Snow",
+      "Snow Showers",
+      "Snow Showers - Moderate/Heavy"
+    ],
+    "geometry": "Point",
+    "minPoints": 1,
+    "maxPoints": 1
+  },
+  {
+    "id": "WAS-WST-FCP----",
+    "sidc": "WAS-WST-FCP----",
+    "label": "ابر قیفی (گردباد/گردباد دریایی)",
+    "labelEn": "Funnel Cloud (Tornado/Waterspout)",
+    "family": "weather",
+    "group": "Storms",
+    "groupFa": "توفان‌ها",
+    "hierarchy": [
+      "Atmospheric",
+      "Static",
+      "Winds",
+      "Weather Symbols",
+      "Storms",
+      "Funnel Cloud (Tornado/Waterspout)"
+    ],
+    "geometry": "Point",
+    "minPoints": 1,
+    "maxPoints": 1
+  },
+  {
+    "id": "WAS-WST-LGP----",
+    "sidc": "WAS-WST-LGP----",
+    "label": "صاعقه",
+    "labelEn": "Lightning",
+    "family": "weather",
+    "group": "Storms",
+    "groupFa": "توفان‌ها",
+    "hierarchy": [
+      "Atmospheric",
+      "Static",
+      "Winds",
+      "Weather Symbols",
+      "Storms",
+      "Lightning"
+    ],
+    "geometry": "Point",
+    "minPoints": 1,
+    "maxPoints": 1
+  },
+  {
+    "id": "WAS-WST-SQP----",
+    "sidc": "WAS-WST-SQP----",
+    "label": "تندباد",
+    "labelEn": "Squall",
+    "family": "weather",
+    "group": "Storms",
+    "groupFa": "توفان‌ها",
+    "hierarchy": [
+      "Atmospheric",
+      "Static",
+      "Winds",
+      "Weather Symbols",
+      "Storms",
+      "Squall"
+    ],
+    "geometry": "Point",
+    "minPoints": 1,
+    "maxPoints": 1
+  },
+  {
+    "id": "WAS-WST-NPP----",
+    "sidc": "WAS-WST-NPP----",
+    "label": "توفان تندری - بدون بارش",
+    "labelEn": "Thunderstorm - No Precipitation",
+    "family": "weather",
+    "group": "Storms",
+    "groupFa": "توفان‌ها",
+    "hierarchy": [
+      "Atmospheric",
+      "Static",
+      "Winds",
+      "Weather Symbols",
+      "Storms",
+      "Thunderstorm - No Precipitation"
+    ],
+    "geometry": "Point",
+    "minPoints": 1,
+    "maxPoints": 1
+  },
+  {
+    "id": "WAS-WSTHH-P----",
+    "sidc": "WAS-WSTHH-P----",
+    "label": "توفان تندری شدید - همراه تگرگ",
+    "labelEn": "Thunderstorm Heavy - With Hail",
+    "family": "weather",
+    "group": "Storms",
+    "groupFa": "توفان‌ها",
+    "hierarchy": [
+      "Atmospheric",
+      "Static",
+      "Winds",
+      "Weather Symbols",
+      "Storms",
+      "Thunderstorm Heavy - With Hail"
+    ],
+    "geometry": "Point",
+    "minPoints": 1,
+    "maxPoints": 1
+  },
+  {
+    "id": "WAS-WSTHR-P----",
+    "sidc": "WAS-WSTHR-P----",
+    "label": "توفان تندری شدید همراه باران یا برف - بدون تگرگ",
+    "labelEn": "Thunderstorm Heavy With Rain/Snow - No Hail",
+    "family": "weather",
+    "group": "Storms",
+    "groupFa": "توفان‌ها",
+    "hierarchy": [
+      "Atmospheric",
+      "Static",
+      "Winds",
+      "Weather Symbols",
+      "Storms",
+      "Thunderstorm Heavy With Rain/Snow - No Hail"
+    ],
+    "geometry": "Point",
+    "minPoints": 1,
+    "maxPoints": 1
+  },
+  {
+    "id": "WAS-WSTMH-P----",
+    "sidc": "WAS-WSTMH-P----",
+    "label": "توفان تندری سبک تا متوسط - همراه تگرگ",
+    "labelEn": "Thunderstorm Light To Moderate - With Hail",
+    "family": "weather",
+    "group": "Storms",
+    "groupFa": "توفان‌ها",
+    "hierarchy": [
+      "Atmospheric",
+      "Static",
+      "Winds",
+      "Weather Symbols",
+      "Storms",
+      "Thunderstorm Light To Moderate - With Hail"
+    ],
+    "geometry": "Point",
+    "minPoints": 1,
+    "maxPoints": 1
+  },
+  {
+    "id": "WAS-WSTMR-P----",
+    "sidc": "WAS-WSTMR-P----",
+    "label": "توفان تندری سبک تا متوسط همراه باران یا برف - بدون تگرگ",
+    "labelEn": "Thunderstorm Light To Moderate With Rain/Snow - No Hail",
+    "family": "weather",
+    "group": "Storms",
+    "groupFa": "توفان‌ها",
+    "hierarchy": [
+      "Atmospheric",
+      "Static",
+      "Winds",
+      "Weather Symbols",
+      "Storms",
+      "Thunderstorm Light To Moderate With Rain/Snow - No Hail"
+    ],
+    "geometry": "Point",
+    "minPoints": 1,
+    "maxPoints": 1
+  },
+  {
+    "id": "WAS-WST-LVP----",
+    "sidc": "WAS-WST-LVP----",
+    "label": "تروپوپاز سطح",
+    "labelEn": "Tropopause Level",
+    "family": "weather",
+    "group": "Storms",
+    "groupFa": "توفان‌ها",
+    "hierarchy": [
+      "Atmospheric",
+      "Static",
+      "Winds",
+      "Weather Symbols",
+      "Storms",
+      "Tropopause Level"
+    ],
+    "geometry": "Point",
+    "minPoints": 1,
+    "maxPoints": 1
+  },
+  {
+    "id": "WA-DBATB----A--",
+    "sidc": "WA-DBATB----A--",
+    "label": "تلاطم",
+    "labelEn": "Turbulence",
+    "family": "weather",
+    "group": "Thunderstorms",
+    "groupFa": "توفان‌های تندری",
+    "hierarchy": [
+      "Atmospheric",
+      "Dynamic",
+      "Bounded Areas of Weather",
+      "Thunderstorms",
+      "Turbulence"
+    ],
+    "geometry": "Polygon",
+    "minPoints": 3,
+    "maxPoints": 10000
+  },
+  {
+    "id": "WAS-WSTSH-P----",
+    "sidc": "WAS-WSTSH-P----",
+    "label": "توفند یا تیفون",
+    "labelEn": "Hurricane/Typhoon",
+    "family": "weather",
+    "group": "Tropical Storm Systems",
+    "groupFa": "توفان حاره‌ای سامانه‌ها",
+    "hierarchy": [
+      "Atmospheric",
+      "Static",
+      "Winds",
+      "Weather Symbols",
+      "Storms",
+      "Tropical Storm Systems",
+      "Hurricane/Typhoon"
+    ],
+    "geometry": "Point",
+    "minPoints": 1,
+    "maxPoints": 1
+  },
+  {
+    "id": "WAS-WSTSD-P----",
+    "sidc": "WAS-WSTSD-P----",
+    "label": "کم‌فشار حاره‌ای",
+    "labelEn": "Tropical Depression",
+    "family": "weather",
+    "group": "Tropical Storm Systems",
+    "groupFa": "توفان حاره‌ای سامانه‌ها",
+    "hierarchy": [
+      "Atmospheric",
+      "Static",
+      "Winds",
+      "Weather Symbols",
+      "Storms",
+      "Tropical Storm Systems",
+      "Tropical Depression"
+    ],
+    "geometry": "Point",
+    "minPoints": 1,
+    "maxPoints": 1
+  },
+  {
+    "id": "WAS-WSTSS-P----",
+    "sidc": "WAS-WSTSS-P----",
+    "label": "توفان حاره‌ای",
+    "labelEn": "Tropical Storm",
+    "family": "weather",
+    "group": "Tropical Storm Systems",
+    "groupFa": "توفان حاره‌ای سامانه‌ها",
+    "hierarchy": [
+      "Atmospheric",
+      "Static",
+      "Winds",
+      "Weather Symbols",
+      "Storms",
+      "Tropical Storm Systems",
+      "Tropical Storm"
+    ],
+    "geometry": "Point",
+    "minPoints": 1,
+    "maxPoints": 1
+  },
+  {
+    "id": "WAS-T-MW--P----",
+    "sidc": "WAS-T-MW--P----",
+    "label": "امواج کوهستانی",
+    "labelEn": "Mountain Waves",
+    "family": "weather",
+    "group": "Turbulence",
+    "groupFa": "تلاطم",
+    "hierarchy": [
+      "Atmospheric",
+      "Static",
+      "Turbulence",
+      "Mountain Waves"
+    ],
+    "geometry": "Point",
+    "minPoints": 1,
+    "maxPoints": 1
+  },
+  {
+    "id": "WAS-TE----P----",
+    "sidc": "WAS-TE----P----",
+    "label": "تلاطم - حدی",
+    "labelEn": "Turbulence - Extreme",
+    "family": "weather",
+    "group": "Turbulence",
+    "groupFa": "تلاطم",
+    "hierarchy": [
+      "Atmospheric",
+      "Static",
+      "Turbulence",
+      "Turbulence - Extreme"
+    ],
+    "geometry": "Point",
+    "minPoints": 1,
+    "maxPoints": 1
+  },
+  {
+    "id": "WAS-TL----P----",
+    "sidc": "WAS-TL----P----",
+    "label": "تلاطم - سبک",
+    "labelEn": "Turbulence - Light",
+    "family": "weather",
+    "group": "Turbulence",
+    "groupFa": "تلاطم",
+    "hierarchy": [
+      "Atmospheric",
+      "Static",
+      "Turbulence",
+      "Turbulence - Light"
+    ],
+    "geometry": "Point",
+    "minPoints": 1,
+    "maxPoints": 1
+  },
+  {
+    "id": "WAS-TM----P----",
+    "sidc": "WAS-TM----P----",
+    "label": "تلاطم - متوسط",
+    "labelEn": "Turbulence - Moderate",
+    "family": "weather",
+    "group": "Turbulence",
+    "groupFa": "تلاطم",
+    "hierarchy": [
+      "Atmospheric",
+      "Static",
+      "Turbulence",
+      "Turbulence - Moderate"
+    ],
+    "geometry": "Point",
+    "minPoints": 1,
+    "maxPoints": 1
+  },
+  {
+    "id": "WAS-TS----P----",
+    "sidc": "WAS-TS----P----",
+    "label": "تلاطم - شدید",
+    "labelEn": "Turbulence - Severe",
+    "family": "weather",
+    "group": "Turbulence",
+    "groupFa": "تلاطم",
+    "hierarchy": [
+      "Atmospheric",
+      "Static",
+      "Turbulence",
+      "Turbulence - Severe"
+    ],
+    "geometry": "Point",
+    "minPoints": 1,
+    "maxPoints": 1
+  },
+  {
+    "id": "WAS-WSF-LVP----",
+    "sidc": "WAS-WSF-LVP----",
+    "label": "یخ‌زن سطح",
+    "labelEn": "Freezing Level",
+    "family": "weather",
+    "group": "Weather Symbols",
+    "groupFa": "نمادهای هواشناسی",
+    "hierarchy": [
+      "Atmospheric",
+      "Static",
+      "Winds",
+      "Weather Symbols",
+      "Freezing Level"
+    ],
+    "geometry": "Point",
+    "minPoints": 1,
+    "maxPoints": 1
+  },
+  {
+    "id": "WAS-WSHZ--P----",
+    "sidc": "WAS-WSHZ--P----",
+    "label": "غبار",
+    "labelEn": "Haze",
+    "family": "weather",
+    "group": "Weather Symbols",
+    "groupFa": "نمادهای هواشناسی",
+    "hierarchy": [
+      "Atmospheric",
+      "Static",
+      "Winds",
+      "Weather Symbols",
+      "Haze"
+    ],
+    "geometry": "Point",
+    "minPoints": 1,
+    "maxPoints": 1
+  },
+  {
+    "id": "WAS-WSIC--P----",
+    "sidc": "WAS-WSIC--P----",
+    "label": "بلورهای یخ (الماسی گرد و خاک)",
+    "labelEn": "Ice Crystals (Diamond Dust)",
+    "family": "weather",
+    "group": "Weather Symbols",
+    "groupFa": "نمادهای هواشناسی",
+    "hierarchy": [
+      "Atmospheric",
+      "Static",
+      "Winds",
+      "Weather Symbols",
+      "Ice Crystals (Diamond Dust)"
+    ],
+    "geometry": "Point",
+    "minPoints": 1,
+    "maxPoints": 1
+  },
+  {
+    "id": "WAS-WSBR--P----",
+    "sidc": "WAS-WSBR--P----",
+    "label": "مه رقیق",
+    "labelEn": "Mist",
+    "family": "weather",
+    "group": "Weather Symbols",
+    "groupFa": "نمادهای هواشناسی",
+    "hierarchy": [
+      "Atmospheric",
+      "Static",
+      "Winds",
+      "Weather Symbols",
+      "Mist"
+    ],
+    "geometry": "Point",
+    "minPoints": 1,
+    "maxPoints": 1
+  },
+  {
+    "id": "WAS-WSUKP-P----",
+    "sidc": "WAS-WSUKP-P----",
+    "label": "بارش با نوع و شدت نامشخص",
+    "labelEn": "Precipitation Of Unknown Type And Intensity",
+    "family": "weather",
+    "group": "Weather Symbols",
+    "groupFa": "نمادهای هواشناسی",
+    "hierarchy": [
+      "Atmospheric",
+      "Static",
+      "Winds",
+      "Weather Symbols",
+      "Precipitation of Unknown Type And Intensity"
+    ],
+    "geometry": "Point",
+    "minPoints": 1,
+    "maxPoints": 1
+  },
+  {
+    "id": "WAS-WSFU--P----",
+    "sidc": "WAS-WSFU--P----",
+    "label": "دود",
+    "labelEn": "Smoke",
+    "family": "weather",
+    "group": "Weather Symbols",
+    "groupFa": "نمادهای هواشناسی",
+    "hierarchy": [
+      "Atmospheric",
+      "Static",
+      "Winds",
+      "Weather Symbols",
+      "Smoke"
+    ],
+    "geometry": "Point",
+    "minPoints": 1,
+    "maxPoints": 1
+  },
+  {
+    "id": "WAS-WSVA--P----",
+    "sidc": "WAS-WSVA--P----",
+    "label": "خاکستر آتشفشانی",
+    "labelEn": "Volcanic Ash",
+    "family": "weather",
+    "group": "Weather Symbols",
+    "groupFa": "نمادهای هواشناسی",
+    "hierarchy": [
+      "Atmospheric",
+      "Static",
+      "Winds",
+      "Weather Symbols",
+      "Volcanic Ash"
+    ],
+    "geometry": "Point",
+    "minPoints": 1,
+    "maxPoints": 1
+  },
+  {
+    "id": "WAS-WSVE--P----",
+    "sidc": "WAS-WSVE--P----",
+    "label": "فوران آتشفشانی",
+    "labelEn": "Volcanic Eruption",
+    "family": "weather",
+    "group": "Weather Symbols",
+    "groupFa": "نمادهای هواشناسی",
+    "hierarchy": [
+      "Atmospheric",
+      "Static",
+      "Winds",
+      "Weather Symbols",
+      "Volcanic Eruption"
+    ],
+    "geometry": "Point",
+    "minPoints": 1,
+    "maxPoints": 1
+  },
+  {
+    "id": "WAS-WC----P----",
+    "sidc": "WAS-WC----P----",
+    "label": "باد آرام",
+    "labelEn": "Calm Winds",
+    "family": "wind",
+    "group": "Winds",
+    "groupFa": "بادها",
+    "hierarchy": [
+      "Atmospheric",
+      "Static",
+      "Winds",
+      "Calm Winds"
+    ],
+    "geometry": "Point",
+    "minPoints": 1,
+    "maxPoints": 1
+  },
+  {
+    "id": "WA-DWJ-----L---",
+    "sidc": "WA-DWJ-----L---",
+    "label": "جت‌استریم",
+    "labelEn": "Jet Stream",
+    "family": "wind",
+    "group": "Winds",
+    "groupFa": "بادها",
+    "hierarchy": [
+      "Atmospheric",
+      "Dynamic",
+      "Winds",
+      "Jet Stream"
+    ],
+    "geometry": "LineString",
+    "minPoints": 2,
+    "maxPoints": 10000
+  },
+  {
+    "id": "WA-DWS-----L---",
+    "sidc": "WA-DWS-----L---",
+    "label": "خط جریان",
+    "labelEn": "Stream Line",
+    "family": "wind",
+    "group": "Winds",
+    "groupFa": "بادها",
+    "hierarchy": [
+      "Atmospheric",
+      "Dynamic",
+      "Winds",
+      "Stream Line"
+    ],
+    "geometry": "LineString",
+    "minPoints": 2,
+    "maxPoints": 10000
+  },
+  {
+    "id": "WA-DBAD-----A--",
+    "sidc": "WA-DBAD-----A--",
+    "label": "گرد و خاک یا شن",
+    "labelEn": "Dust Or Sand",
+    "family": "lines",
+    "group": "Bounded Areas of Weather",
+    "groupFa": "محدوده‌های پدیده جوی",
+    "hierarchy": [
+      "Atmospheric",
+      "Dynamic",
+      "Bounded Areas of Weather",
+      "Dust or Sand"
+    ],
+    "geometry": "Polygon",
+    "minPoints": 3,
+    "maxPoints": 10000
+  },
+  {
+    "id": "WA-DBAFG----A--",
+    "sidc": "WA-DBAFG----A--",
+    "label": "مه",
+    "labelEn": "Fog",
+    "family": "lines",
+    "group": "Bounded Areas of Weather",
+    "groupFa": "محدوده‌های پدیده جوی",
+    "hierarchy": [
+      "Atmospheric",
+      "Dynamic",
+      "Bounded Areas of Weather",
+      "Fog"
+    ],
+    "geometry": "Polygon",
+    "minPoints": 3,
+    "maxPoints": 10000
+  },
+  {
+    "id": "WA-DBAFP----A--",
+    "sidc": "WA-DBAFP----A--",
+    "label": "بارش یخ‌زن یا منجمد",
+    "labelEn": "Freezing/Frozen Precipitation",
+    "family": "lines",
+    "group": "Bounded Areas of Weather",
+    "groupFa": "محدوده‌های پدیده جوی",
+    "hierarchy": [
+      "Atmospheric",
+      "Dynamic",
+      "Bounded Areas of Weather",
+      "Freezing/Frozen Precipitation"
+    ],
+    "geometry": "Polygon",
+    "minPoints": 3,
+    "maxPoints": 10000
+  },
+  {
+    "id": "WA-DBALPC---A--",
+    "sidc": "WA-DBALPC---A--",
+    "label": "بارش مایع - همرفتی",
+    "labelEn": "Liquid Precipitation - Convective",
+    "family": "lines",
+    "group": "Bounded Areas of Weather",
+    "groupFa": "محدوده‌های پدیده جوی",
+    "hierarchy": [
+      "Atmospheric",
+      "Dynamic",
+      "Bounded Areas of Weather",
+      "Liquid Precipitation - Convective"
+    ],
+    "geometry": "Polygon",
+    "minPoints": 3,
+    "maxPoints": 10000
+  },
+  {
+    "id": "WA-DBALPNC--A--",
+    "sidc": "WA-DBALPNC--A--",
+    "label": "بارش مایع - غیر-همرفتی پیوسته یا متناوب",
+    "labelEn": "Liquid Precipitation - Non-Convective Continuous Or Intermittent",
+    "family": "lines",
+    "group": "Bounded Areas of Weather",
+    "groupFa": "محدوده‌های پدیده جوی",
+    "hierarchy": [
+      "Atmospheric",
+      "Dynamic",
+      "Bounded Areas of Weather",
+      "Liquid Precipitation - Non-Convective Continuous or Intermittent"
+    ],
+    "geometry": "Polygon",
+    "minPoints": 3,
+    "maxPoints": 10000
+  },
+  {
+    "id": "WA-DBAMV----A--",
+    "sidc": "WA-DBAMV----A--",
+    "label": "قواعد پرواز دیداری حاشیه‌ای (MVFR)",
+    "labelEn": "Marginal Visual Flight Rule (Mvfr)",
+    "family": "lines",
+    "group": "Bounded Areas of Weather",
+    "groupFa": "محدوده‌های پدیده جوی",
+    "hierarchy": [
+      "Atmospheric",
+      "Dynamic",
+      "Bounded Areas of Weather",
+      "Marginal Visual Flight Rule (Mvfr)"
+    ],
+    "geometry": "Polygon",
+    "minPoints": 3,
+    "maxPoints": 10000
+  },
+  {
+    "id": "WA-DBAFF----A--",
+    "sidc": "WA-DBAFF----A--",
+    "label": "شکل آزاد تعریف‌شده توسط کاربر",
+    "labelEn": "Operator-Defined Freeform",
+    "family": "lines",
+    "group": "Bounded Areas of Weather",
+    "groupFa": "محدوده‌های پدیده جوی",
+    "hierarchy": [
+      "Atmospheric",
+      "Dynamic",
+      "Bounded Areas of Weather",
+      "Operator-Defined Freeform"
+    ],
+    "geometry": "Polygon",
+    "minPoints": 3,
+    "maxPoints": 10000
+  },
+  {
+    "id": "WA-DBAT-----A--",
+    "sidc": "WA-DBAT-----A--",
+    "label": "توفان‌های تندری",
+    "labelEn": "Thunderstorms",
+    "family": "lines",
+    "group": "Bounded Areas of Weather",
+    "groupFa": "محدوده‌های پدیده جوی",
+    "hierarchy": [
+      "Atmospheric",
+      "Dynamic",
+      "Bounded Areas of Weather",
+      "Thunderstorms"
+    ],
+    "geometry": "Polygon",
+    "minPoints": 3,
+    "maxPoints": 10000
+  },
+  {
+    "id": "WA-DIPCO---L---",
+    "sidc": "WA-DIPCO---L---",
+    "label": "خط تراز جو بالا",
+    "labelEn": "Contour - Upper Air",
+    "family": "lines",
+    "group": "Isopleths",
+    "groupFa": "خطوط هم‌مقدار",
+    "hierarchy": [
+      "Atmospheric",
+      "Dynamic",
+      "Isopleths",
+      "Contour - Upper Air"
+    ],
+    "geometry": "LineString",
+    "minPoints": 2,
+    "maxPoints": 10000
+  },
+  {
+    "id": "WA-DIPIB---L---",
+    "sidc": "WA-DIPIB---L---",
+    "label": "خط هم‌فشار سطحی",
+    "labelEn": "Isobar - Surface",
+    "family": "lines",
+    "group": "Isopleths",
+    "groupFa": "خطوط هم‌مقدار",
+    "hierarchy": [
+      "Atmospheric",
+      "Dynamic",
+      "Isopleths",
+      "Isobar - Surface"
+    ],
+    "geometry": "LineString",
+    "minPoints": 2,
+    "maxPoints": 10000
+  },
+  {
+    "id": "WA-DIPID---L---",
+    "sidc": "WA-DIPID---L---",
+    "label": "خط هم‌نقطه شبنم",
+    "labelEn": "Isodrosotherm",
+    "family": "lines",
+    "group": "Isopleths",
+    "groupFa": "خطوط هم‌مقدار",
+    "hierarchy": [
+      "Atmospheric",
+      "Dynamic",
+      "Isopleths",
+      "Isodrosotherm"
+    ],
+    "geometry": "LineString",
+    "minPoints": 2,
+    "maxPoints": 10000
+  },
+  {
+    "id": "WA-DIPIT---L---",
+    "sidc": "WA-DIPIT---L---",
+    "label": "خط هم‌سرعت باد",
+    "labelEn": "Isotach",
+    "family": "lines",
+    "group": "Isopleths",
+    "groupFa": "خطوط هم‌مقدار",
+    "hierarchy": [
+      "Atmospheric",
+      "Dynamic",
+      "Isopleths",
+      "Isotach"
+    ],
+    "geometry": "LineString",
+    "minPoints": 2,
+    "maxPoints": 10000
+  },
+  {
+    "id": "WA-DIPIS---L---",
+    "sidc": "WA-DIPIS---L---",
+    "label": "خط هم‌دما",
+    "labelEn": "Isotherm",
+    "family": "lines",
+    "group": "Isopleths",
+    "groupFa": "خطوط هم‌مقدار",
+    "hierarchy": [
+      "Atmospheric",
+      "Dynamic",
+      "Isopleths",
+      "Isotherm"
+    ],
+    "geometry": "LineString",
+    "minPoints": 2,
+    "maxPoints": 10000
+  },
+  {
+    "id": "WA-DIPFF---L---",
+    "sidc": "WA-DIPFF---L---",
+    "label": "شکل آزاد تعریف‌شده توسط کاربر",
+    "labelEn": "Operator-Defined Freeform",
+    "family": "lines",
+    "group": "Isopleths",
+    "groupFa": "خطوط هم‌مقدار",
+    "hierarchy": [
+      "Atmospheric",
+      "Dynamic",
+      "Isopleths",
+      "Operator-Defined Freeform"
+    ],
+    "geometry": "LineString",
+    "minPoints": 2,
+    "maxPoints": 10000
+  },
+  {
+    "id": "WA-DIPTH---L---",
+    "sidc": "WA-DIPTH---L---",
+    "label": "خط ضخامت لایه",
+    "labelEn": "Thickness",
+    "family": "lines",
+    "group": "Isopleths",
+    "groupFa": "خطوط هم‌مقدار",
+    "hierarchy": [
+      "Atmospheric",
+      "Dynamic",
+      "Isopleths",
+      "Thickness"
+    ],
+    "geometry": "LineString",
+    "minPoints": 2,
+    "maxPoints": 10000
+  },
+  {
+    "id": "WA-DPXCV---L---",
+    "sidc": "WA-DPXCV---L---",
+    "label": "خط همگرایی",
+    "labelEn": "Convergance Line",
+    "family": "lines",
+    "group": "Lines",
+    "groupFa": "خطوط",
+    "hierarchy": [
+      "Atmospheric",
+      "Dynamic",
+      "Pressure Systems",
+      "Lines",
+      "Convergance Line"
+    ],
+    "geometry": "LineString",
+    "minPoints": 2,
+    "maxPoints": 10000
+  },
+  {
+    "id": "WA-DPXIL---L---",
+    "sidc": "WA-DPXIL---L---",
+    "label": "خط ناپایداری",
+    "labelEn": "Instability Line",
+    "family": "lines",
+    "group": "Lines",
+    "groupFa": "خطوط",
+    "hierarchy": [
+      "Atmospheric",
+      "Dynamic",
+      "Pressure Systems",
+      "Lines",
+      "Instability Line"
+    ],
+    "geometry": "LineString",
+    "minPoints": 2,
+    "maxPoints": 10000
+  },
+  {
+    "id": "WA-DPXITCZ-L---",
+    "sidc": "WA-DPXITCZ-L---",
+    "label": "منطقه همگرایی بین‌حاره‌ای",
+    "labelEn": "Inter-Tropical Convergance Zone",
+    "family": "lines",
+    "group": "Lines",
+    "groupFa": "خطوط",
+    "hierarchy": [
+      "Atmospheric",
+      "Dynamic",
+      "Pressure Systems",
+      "Lines",
+      "Inter-Tropical Convergance Zone"
+    ],
+    "geometry": "LineString",
+    "minPoints": 2,
+    "maxPoints": 10000
+  },
+  {
+    "id": "WA-DPXITD--L---",
+    "sidc": "WA-DPXITD--L---",
+    "label": "ناپیوستگی بین‌حاره‌ای",
+    "labelEn": "Inter-Tropical Discontinuity",
+    "family": "lines",
+    "group": "Lines",
+    "groupFa": "خطوط",
+    "hierarchy": [
+      "Atmospheric",
+      "Dynamic",
+      "Pressure Systems",
+      "Lines",
+      "Inter-Tropical Discontinuity"
+    ],
+    "geometry": "LineString",
+    "minPoints": 2,
+    "maxPoints": 10000
+  },
+  {
+    "id": "WA-DPXR----L---",
+    "sidc": "WA-DPXR----L---",
+    "label": "محور پشته",
+    "labelEn": "Ridge Axis",
+    "family": "lines",
+    "group": "Lines",
+    "groupFa": "خطوط",
+    "hierarchy": [
+      "Atmospheric",
+      "Dynamic",
+      "Pressure Systems",
+      "Lines",
+      "Ridge Axis"
+    ],
+    "geometry": "LineString",
+    "minPoints": 2,
+    "maxPoints": 10000
+  },
+  {
+    "id": "WA-DPXSQ---L---",
+    "sidc": "WA-DPXSQ---L---",
+    "label": "خط تندباد شدید",
+    "labelEn": "Severe Squall Line",
+    "family": "lines",
+    "group": "Lines",
+    "groupFa": "خطوط",
+    "hierarchy": [
+      "Atmospheric",
+      "Dynamic",
+      "Pressure Systems",
+      "Lines",
+      "Severe Squall Line"
+    ],
+    "geometry": "LineString",
+    "minPoints": 2,
+    "maxPoints": 10000
+  },
+  {
+    "id": "WA-DPXSH---L---",
+    "sidc": "WA-DPXSH---L---",
+    "label": "خط برش باد",
+    "labelEn": "Shear Line",
+    "family": "lines",
+    "group": "Lines",
+    "groupFa": "خطوط",
+    "hierarchy": [
+      "Atmospheric",
+      "Dynamic",
+      "Pressure Systems",
+      "Lines",
+      "Shear Line"
+    ],
+    "geometry": "LineString",
+    "minPoints": 2,
+    "maxPoints": 10000
+  },
+  {
+    "id": "WA-DPXT----L---",
+    "sidc": "WA-DPXT----L---",
+    "label": "محور ناوه",
+    "labelEn": "Trough Axis",
+    "family": "lines",
+    "group": "Lines",
+    "groupFa": "خطوط",
+    "hierarchy": [
+      "Atmospheric",
+      "Dynamic",
+      "Pressure Systems",
+      "Lines",
+      "Trough Axis"
+    ],
+    "geometry": "LineString",
+    "minPoints": 2,
+    "maxPoints": 10000
+  },
+  {
+    "id": "WOS-HABA--P----",
+    "sidc": "WOS-HABA--P----",
+    "label": "چراغ راهنما",
+    "labelEn": "Beacon",
+    "family": "oceanic",
+    "group": "Aids To Navigation",
+    "groupFa": "علائم کمک‌ناوبری",
+    "hierarchy": [
+      "Oceanic",
+      "Static",
+      "Hydrography",
+      "Aids To Navigation",
+      "Beacon"
+    ],
+    "geometry": "Point",
+    "minPoints": 1,
+    "maxPoints": 1
+  },
+  {
+    "id": "WOS-HABB--P----",
+    "sidc": "WOS-HABB--P----",
+    "label": "شناور راهنما پیش‌فرض",
+    "labelEn": "Buoy Default",
+    "family": "oceanic",
+    "group": "Aids To Navigation",
+    "groupFa": "علائم کمک‌ناوبری",
+    "hierarchy": [
+      "Oceanic",
+      "Static",
+      "Hydrography",
+      "Aids To Navigation",
+      "Buoy Default"
+    ],
+    "geometry": "Point",
+    "minPoints": 1,
+    "maxPoints": 1
+  },
+  {
+    "id": "WOS-HAL---P----",
+    "sidc": "WOS-HAL---P----",
+    "label": "چراغ دریایی",
+    "labelEn": "Light",
+    "family": "oceanic",
+    "group": "Aids To Navigation",
+    "groupFa": "علائم کمک‌ناوبری",
+    "hierarchy": [
+      "Oceanic",
+      "Static",
+      "Hydrography",
+      "Aids To Navigation",
+      "Light"
+    ],
+    "geometry": "Point",
+    "minPoints": 1,
+    "maxPoints": 1
+  },
+  {
+    "id": "WOS-HABM--P----",
+    "sidc": "WOS-HABM--P----",
+    "label": "نشانک",
+    "labelEn": "Marker",
+    "family": "oceanic",
+    "group": "Aids To Navigation",
+    "groupFa": "علائم کمک‌ناوبری",
+    "hierarchy": [
+      "Oceanic",
+      "Static",
+      "Hydrography",
+      "Aids To Navigation",
+      "Marker"
+    ],
+    "geometry": "Point",
+    "minPoints": 1,
+    "maxPoints": 1
+  },
+  {
+    "id": "WO-DBSF-----A--",
+    "sidc": "WO-DBSF-----A--",
+    "label": "تخت",
+    "labelEn": "Flat",
+    "family": "oceanic",
+    "group": "Beach Slope",
+    "groupFa": "شیب ساحل",
+    "hierarchy": [
+      "Oceanic",
+      "Dynamic",
+      "Beach Slope",
+      "Flat"
+    ],
+    "geometry": "Polygon",
+    "minPoints": 3,
+    "maxPoints": 10000
+  },
+  {
+    "id": "WO-DBSG-----A--",
+    "sidc": "WO-DBSG-----A--",
+    "label": "ملایم",
+    "labelEn": "Gentle",
+    "family": "oceanic",
+    "group": "Beach Slope",
+    "groupFa": "شیب ساحل",
+    "hierarchy": [
+      "Oceanic",
+      "Dynamic",
+      "Beach Slope",
+      "Gentle"
+    ],
+    "geometry": "Polygon",
+    "minPoints": 3,
+    "maxPoints": 10000
+  },
+  {
+    "id": "WO-DBSM-----A--",
+    "sidc": "WO-DBSM-----A--",
+    "label": "متوسط",
+    "labelEn": "Moderate",
+    "family": "oceanic",
+    "group": "Beach Slope",
+    "groupFa": "شیب ساحل",
+    "hierarchy": [
+      "Oceanic",
+      "Dynamic",
+      "Beach Slope",
+      "Moderate"
+    ],
+    "geometry": "Polygon",
+    "minPoints": 3,
+    "maxPoints": 10000
+  },
+  {
+    "id": "WO-DBST-----A--",
+    "sidc": "WO-DBST-----A--",
+    "label": "تند",
+    "labelEn": "Steep",
+    "family": "oceanic",
+    "group": "Beach Slope",
+    "groupFa": "شیب ساحل",
+    "hierarchy": [
+      "Oceanic",
+      "Dynamic",
+      "Beach Slope",
+      "Steep"
+    ],
+    "geometry": "Polygon",
+    "minPoints": 3,
+    "maxPoints": 10000
+  },
+  {
+    "id": "WOS-IBBBM-P----",
+    "sidc": "WOS-IBBBM-P----",
+    "label": "متعدد قطعات کوه یخ قطعات",
+    "labelEn": "Many Bergy Bits",
+    "family": "oceanic",
+    "group": "Bergy Bit",
+    "groupFa": "قطعات کوه یخ قطعه",
+    "hierarchy": [
+      "Oceanic",
+      "Static",
+      "Ice Systems",
+      "Icebergs",
+      "Bergy Bit",
+      "Many Bergy Bits"
+    ],
+    "geometry": "Point",
+    "minPoints": 1,
+    "maxPoints": 1
+  },
+  {
+    "id": "WO-DOBVA----A--",
+    "sidc": "WO-DOBVA----A--",
+    "label": "VDR سطح 1-2",
+    "labelEn": "Vdr Level 1-2",
+    "family": "oceanic",
+    "group": "Bioluminescence",
+    "groupFa": "زیست‌تابی",
+    "hierarchy": [
+      "Oceanic",
+      "Dynamic",
+      "Oceanography",
+      "Bioluminescence",
+      "Vdr Level 1-2"
+    ],
+    "geometry": "Polygon",
+    "minPoints": 3,
+    "maxPoints": 10000
+  },
+  {
+    "id": "WO-DOBVB----A--",
+    "sidc": "WO-DOBVB----A--",
+    "label": "VDR سطح 2-3",
+    "labelEn": "Vdr Level 2-3",
+    "family": "oceanic",
+    "group": "Bioluminescence",
+    "groupFa": "زیست‌تابی",
+    "hierarchy": [
+      "Oceanic",
+      "Dynamic",
+      "Oceanography",
+      "Bioluminescence",
+      "Vdr Level 2-3"
+    ],
+    "geometry": "Polygon",
+    "minPoints": 3,
+    "maxPoints": 10000
+  },
+  {
+    "id": "WO-DOBVC----A--",
+    "sidc": "WO-DOBVC----A--",
+    "label": "VDR سطح 3-4",
+    "labelEn": "Vdr Level 3-4",
+    "family": "oceanic",
+    "group": "Bioluminescence",
+    "groupFa": "زیست‌تابی",
+    "hierarchy": [
+      "Oceanic",
+      "Dynamic",
+      "Oceanography",
+      "Bioluminescence",
+      "Vdr Level 3-4"
+    ],
+    "geometry": "Polygon",
+    "minPoints": 3,
+    "maxPoints": 10000
+  },
+  {
+    "id": "WO-DOBVD----A--",
+    "sidc": "WO-DOBVD----A--",
+    "label": "VDR سطح 4-5",
+    "labelEn": "Vdr Level 4-5",
+    "family": "oceanic",
+    "group": "Bioluminescence",
+    "groupFa": "زیست‌تابی",
+    "hierarchy": [
+      "Oceanic",
+      "Dynamic",
+      "Oceanography",
+      "Bioluminescence",
+      "Vdr Level 4-5"
+    ],
+    "geometry": "Polygon",
+    "minPoints": 3,
+    "maxPoints": 10000
+  },
+  {
+    "id": "WO-DOBVE----A--",
+    "sidc": "WO-DOBVE----A--",
+    "label": "VDR سطح 5-6",
+    "labelEn": "Vdr Level 5-6",
+    "family": "oceanic",
+    "group": "Bioluminescence",
+    "groupFa": "زیست‌تابی",
+    "hierarchy": [
+      "Oceanic",
+      "Dynamic",
+      "Oceanography",
+      "Bioluminescence",
+      "Vdr Level 5-6"
+    ],
+    "geometry": "Polygon",
+    "minPoints": 3,
+    "maxPoints": 10000
+  },
+  {
+    "id": "WO-DOBVF----A--",
+    "sidc": "WO-DOBVF----A--",
+    "label": "VDR سطح 6-7",
+    "labelEn": "Vdr Level 6-7",
+    "family": "oceanic",
+    "group": "Bioluminescence",
+    "groupFa": "زیست‌تابی",
+    "hierarchy": [
+      "Oceanic",
+      "Dynamic",
+      "Oceanography",
+      "Bioluminescence",
+      "Vdr Level 6-7"
+    ],
+    "geometry": "Polygon",
+    "minPoints": 3,
+    "maxPoints": 10000
+  },
+  {
+    "id": "WO-DOBVG----A--",
+    "sidc": "WO-DOBVG----A--",
+    "label": "VDR سطح 7-8",
+    "labelEn": "Vdr Level 7-8",
+    "family": "oceanic",
+    "group": "Bioluminescence",
+    "groupFa": "زیست‌تابی",
+    "hierarchy": [
+      "Oceanic",
+      "Dynamic",
+      "Oceanography",
+      "Bioluminescence",
+      "Vdr Level 7-8"
+    ],
+    "geometry": "Polygon",
+    "minPoints": 3,
+    "maxPoints": 10000
+  },
+  {
+    "id": "WO-DOBVH----A--",
+    "sidc": "WO-DOBVH----A--",
+    "label": "VDR سطح 8-9",
+    "labelEn": "Vdr Level 8-9",
+    "family": "oceanic",
+    "group": "Bioluminescence",
+    "groupFa": "زیست‌تابی",
+    "hierarchy": [
+      "Oceanic",
+      "Dynamic",
+      "Oceanography",
+      "Bioluminescence",
+      "Vdr Level 8-9"
+    ],
+    "geometry": "Polygon",
+    "minPoints": 3,
+    "maxPoints": 10000
+  },
+  {
+    "id": "WO-DOBVI----A--",
+    "sidc": "WO-DOBVI----A--",
+    "label": "VDR سطح 9-10",
+    "labelEn": "Vdr Level 9-10",
+    "family": "oceanic",
+    "group": "Bioluminescence",
+    "groupFa": "زیست‌تابی",
+    "hierarchy": [
+      "Oceanic",
+      "Dynamic",
+      "Oceanography",
+      "Bioluminescence",
+      "Vdr Level 9-10"
+    ],
+    "geometry": "Polygon",
+    "minPoints": 3,
+    "maxPoints": 10000
+  },
+  {
+    "id": "WOS-BFC-CLP----",
+    "sidc": "WOS-BFC-CLP----",
+    "label": "رس",
+    "labelEn": "Clay",
+    "family": "oceanic",
+    "group": "Bottom Characteristics",
+    "groupFa": "مشخصات بستر",
+    "hierarchy": [
+      "Oceanic",
+      "Static",
+      "Bottom Features",
+      "Bottom Characteristics",
+      "Clay"
+    ],
+    "geometry": "Point",
+    "minPoints": 1,
+    "maxPoints": 1
+  },
+  {
+    "id": "WOS-BFC-CBP----",
+    "sidc": "WOS-BFC-CBP----",
+    "label": "قلوه‌سنگ",
+    "labelEn": "Cobbles",
+    "family": "oceanic",
+    "group": "Bottom Characteristics",
+    "groupFa": "مشخصات بستر",
+    "hierarchy": [
+      "Oceanic",
+      "Static",
+      "Bottom Features",
+      "Bottom Characteristics",
+      "Cobbles"
+    ],
+    "geometry": "Point",
+    "minPoints": 1,
+    "maxPoints": 1
+  },
+  {
+    "id": "WOS-BFC-COP----",
+    "sidc": "WOS-BFC-COP----",
+    "label": "مرجان",
+    "labelEn": "Coral",
+    "family": "oceanic",
+    "group": "Bottom Characteristics",
+    "groupFa": "مشخصات بستر",
+    "hierarchy": [
+      "Oceanic",
+      "Static",
+      "Bottom Features",
+      "Bottom Characteristics",
+      "Coral"
+    ],
+    "geometry": "Point",
+    "minPoints": 1,
+    "maxPoints": 1
+  },
+  {
+    "id": "WOS-BFC-G-P----",
+    "sidc": "WOS-BFC-G-P----",
+    "label": "شن درشت",
+    "labelEn": "Gravel",
+    "family": "oceanic",
+    "group": "Bottom Characteristics",
+    "groupFa": "مشخصات بستر",
+    "hierarchy": [
+      "Oceanic",
+      "Static",
+      "Bottom Features",
+      "Bottom Characteristics",
+      "Gravel"
+    ],
+    "geometry": "Point",
+    "minPoints": 1,
+    "maxPoints": 1
+  },
+  {
+    "id": "WOS-BFC-M-P----",
+    "sidc": "WOS-BFC-M-P----",
+    "label": "گل",
+    "labelEn": "Mud",
+    "family": "oceanic",
+    "group": "Bottom Characteristics",
+    "groupFa": "مشخصات بستر",
+    "hierarchy": [
+      "Oceanic",
+      "Static",
+      "Bottom Features",
+      "Bottom Characteristics",
+      "Mud"
+    ],
+    "geometry": "Point",
+    "minPoints": 1,
+    "maxPoints": 1
+  },
+  {
+    "id": "WOS-BFC-P-P----",
+    "sidc": "WOS-BFC-P-P----",
+    "label": "ریگ",
+    "labelEn": "Pebbles",
+    "family": "oceanic",
+    "group": "Bottom Characteristics",
+    "groupFa": "مشخصات بستر",
+    "hierarchy": [
+      "Oceanic",
+      "Static",
+      "Bottom Features",
+      "Bottom Characteristics",
+      "Pebbles"
+    ],
+    "geometry": "Point",
+    "minPoints": 1,
+    "maxPoints": 1
+  },
+  {
+    "id": "WOS-BFC-R-P----",
+    "sidc": "WOS-BFC-R-P----",
+    "label": "صخره",
+    "labelEn": "Rock",
+    "family": "oceanic",
+    "group": "Bottom Characteristics",
+    "groupFa": "مشخصات بستر",
+    "hierarchy": [
+      "Oceanic",
+      "Static",
+      "Bottom Features",
+      "Bottom Characteristics",
+      "Rock"
+    ],
+    "geometry": "Point",
+    "minPoints": 1,
+    "maxPoints": 1
+  },
+  {
+    "id": "WOS-BFC-S-P----",
+    "sidc": "WOS-BFC-S-P----",
+    "label": "شن",
+    "labelEn": "Sand",
+    "family": "oceanic",
+    "group": "Bottom Characteristics",
+    "groupFa": "مشخصات بستر",
+    "hierarchy": [
+      "Oceanic",
+      "Static",
+      "Bottom Features",
+      "Bottom Characteristics",
+      "Sand"
+    ],
+    "geometry": "Point",
+    "minPoints": 1,
+    "maxPoints": 1
+  },
+  {
+    "id": "WO-DHCB-----A--",
+    "sidc": "WO-DHCB-----A--",
+    "label": "ساحل",
+    "labelEn": "Beach",
+    "family": "oceanic",
+    "group": "Coastal Hydrography",
+    "groupFa": "آب‌نگاری ساحلی",
+    "hierarchy": [
+      "Oceanic",
+      "Dynamic",
+      "Hydrography",
+      "Coastal Hydrography",
+      "Beach"
+    ],
+    "geometry": "Polygon",
+    "minPoints": 3,
+    "maxPoints": 10000
+  },
+  {
+    "id": "WO-DHCC----L---",
+    "sidc": "WO-DHCC----L---",
+    "label": "خط ساحلی",
+    "labelEn": "Coastline",
+    "family": "oceanic",
+    "group": "Coastal Hydrography",
+    "groupFa": "آب‌نگاری ساحلی",
+    "hierarchy": [
+      "Oceanic",
+      "Dynamic",
+      "Hydrography",
+      "Coastal Hydrography",
+      "Coastline"
+    ],
+    "geometry": "LineString",
+    "minPoints": 2,
+    "maxPoints": 10000
+  },
+  {
+    "id": "WO-DHCI-----A--",
+    "sidc": "WO-DHCI-----A--",
+    "label": "جزیره",
+    "labelEn": "Island",
+    "family": "oceanic",
+    "group": "Coastal Hydrography",
+    "groupFa": "آب‌نگاری ساحلی",
+    "hierarchy": [
+      "Oceanic",
+      "Dynamic",
+      "Hydrography",
+      "Coastal Hydrography",
+      "Island"
+    ],
+    "geometry": "Polygon",
+    "minPoints": 3,
+    "maxPoints": 10000
+  },
+  {
+    "id": "WO-DHCW-----A--",
+    "sidc": "WO-DHCW-----A--",
+    "label": "آب",
+    "labelEn": "Water",
+    "family": "oceanic",
+    "group": "Coastal Hydrography",
+    "groupFa": "آب‌نگاری ساحلی",
+    "hierarchy": [
+      "Oceanic",
+      "Dynamic",
+      "Hydrography",
+      "Coastal Hydrography",
+      "Water"
+    ],
+    "geometry": "Polygon",
+    "minPoints": 3,
+    "maxPoints": 10000
+  },
+  {
+    "id": "WO-DIOCS---L---",
+    "sidc": "WO-DIOCS---L---",
+    "label": "شکاف در موقعیت مشخص",
+    "labelEn": "Cracks At A Specific Location",
+    "family": "oceanic",
+    "group": "Cracks",
+    "groupFa": "شکاف‌ها",
+    "hierarchy": [
+      "Oceanic",
+      "Dynamic",
+      "Ice Systems",
+      "Openings In the Ice",
+      "Cracks",
+      "Cracks At A Specific Location"
+    ],
+    "geometry": "LineString",
+    "minPoints": 2,
+    "maxPoints": 10000
+  },
+  {
+    "id": "WOS-HHDE--P----",
+    "sidc": "WOS-HHDE--P----",
+    "label": "گردابه، شکست جریان یا جریان شکافنده",
+    "labelEn": "Eddies/Overfalls/Tide Rips",
+    "family": "oceanic",
+    "group": "Dangers/Hazards",
+    "groupFa": "خطرها و موانع",
+    "hierarchy": [
+      "Oceanic",
+      "Static",
+      "Hydrography",
+      "Dangers/Hazards",
+      "Eddies/Overfalls/Tide Rips"
+    ],
+    "geometry": "Point",
+    "minPoints": 1,
+    "maxPoints": 1
+  },
+  {
+    "id": "WOS-HHDR---L---",
+    "sidc": "WOS-HHDR---L---",
+    "label": "آب‌سنگ",
+    "labelEn": "Reef",
+    "family": "oceanic",
+    "group": "Dangers/Hazards",
+    "groupFa": "خطرها و موانع",
+    "hierarchy": [
+      "Oceanic",
+      "Static",
+      "Hydrography",
+      "Dangers/Hazards",
+      "Reef"
+    ],
+    "geometry": "LineString",
+    "minPoints": 2,
+    "maxPoints": 10000
+  },
+  {
+    "id": "WOS-HHRA--P----",
+    "sidc": "WOS-HHRA--P----",
+    "label": "صخره هم‌سطح آب",
+    "labelEn": "Rock Awashed",
+    "family": "oceanic",
+    "group": "Dangers/Hazards",
+    "groupFa": "خطرها و موانع",
+    "hierarchy": [
+      "Oceanic",
+      "Static",
+      "Hydrography",
+      "Dangers/Hazards",
+      "Rock Awashed"
+    ],
+    "geometry": "Point",
+    "minPoints": 1,
+    "maxPoints": 1
+  },
+  {
+    "id": "WOS-HHRS--P----",
+    "sidc": "WOS-HHRS--P----",
+    "label": "صخره غوطه‌ور",
+    "labelEn": "Rock Submergered",
+    "family": "oceanic",
+    "group": "Dangers/Hazards",
+    "groupFa": "خطرها و موانع",
+    "hierarchy": [
+      "Oceanic",
+      "Static",
+      "Hydrography",
+      "Dangers/Hazards",
+      "Rock Submergered"
+    ],
+    "geometry": "Point",
+    "minPoints": 1,
+    "maxPoints": 1
+  },
+  {
+    "id": "WOS-HHDS--P----",
+    "sidc": "WOS-HHDS--P----",
+    "label": "کنده‌ها و موانع چوبی",
+    "labelEn": "Snags/Stumps",
+    "family": "oceanic",
+    "group": "Dangers/Hazards",
+    "groupFa": "خطرها و موانع",
+    "hierarchy": [
+      "Oceanic",
+      "Static",
+      "Hydrography",
+      "Dangers/Hazards",
+      "Snags/Stumps"
+    ],
+    "geometry": "Point",
+    "minPoints": 1,
+    "maxPoints": 1
+  },
+  {
+    "id": "WOS-HHDWB-P----",
+    "sidc": "WOS-HHDWB-P----",
+    "label": "لاشه غرق‌شده",
+    "labelEn": "Wreck (Submerged)",
+    "family": "oceanic",
+    "group": "Dangers/Hazards",
+    "groupFa": "خطرها و موانع",
+    "hierarchy": [
+      "Oceanic",
+      "Static",
+      "Hydrography",
+      "Dangers/Hazards",
+      "Wreck (Submerged)"
+    ],
+    "geometry": "Point",
+    "minPoints": 1,
+    "maxPoints": 1
+  },
+  {
+    "id": "WO-DHDDA----A--",
+    "sidc": "WO-DHDDA----A--",
+    "label": "عمق منطقه",
+    "labelEn": "Depth Area",
+    "family": "oceanic",
+    "group": "Depth",
+    "groupFa": "عمق",
+    "hierarchy": [
+      "Oceanic",
+      "Dynamic",
+      "Hydrography",
+      "Depth",
+      "Depth Area"
+    ],
+    "geometry": "Polygon",
+    "minPoints": 3,
+    "maxPoints": 10000
+  },
+  {
+    "id": "WO-DHDDC---L---",
+    "sidc": "WO-DHDDC---L---",
+    "label": "عمق خط تراز",
+    "labelEn": "Depth Contour",
+    "family": "oceanic",
+    "group": "Depth",
+    "groupFa": "عمق",
+    "hierarchy": [
+      "Oceanic",
+      "Dynamic",
+      "Hydrography",
+      "Depth",
+      "Depth Contour"
+    ],
+    "geometry": "LineString",
+    "minPoints": 2,
+    "maxPoints": 10000
+  },
+  {
+    "id": "WO-DHDDL---L---",
+    "sidc": "WO-DHDDL---L---",
+    "label": "منحنی عمق",
+    "labelEn": "Depth Curve",
+    "family": "oceanic",
+    "group": "Depth",
+    "groupFa": "عمق",
+    "hierarchy": [
+      "Oceanic",
+      "Dynamic",
+      "Hydrography",
+      "Depth",
+      "Depth Curve"
+    ],
+    "geometry": "LineString",
+    "minPoints": 2,
+    "maxPoints": 10000
+  },
+  {
+    "id": "WOS-HDS---P----",
+    "sidc": "WOS-HDS---P----",
+    "label": "نقاط عمق‌سنجی",
+    "labelEn": "Soundings",
+    "family": "oceanic",
+    "group": "Depth",
+    "groupFa": "عمق",
+    "hierarchy": [
+      "Oceanic",
+      "Static",
+      "Hydrography",
+      "Depth",
+      "Soundings"
+    ],
+    "geometry": "Point",
+    "minPoints": 1,
+    "maxPoints": 1
+  },
+  {
+    "id": "WOS-IDC---P----",
+    "sidc": "WOS-IDC---P----",
+    "label": "همگرایی",
+    "labelEn": "Convergence",
+    "family": "oceanic",
+    "group": "Dynamic Processes",
+    "groupFa": "فرایندهای پویا",
+    "hierarchy": [
+      "Oceanic",
+      "Static",
+      "Ice Systems",
+      "Dynamic Processes",
+      "Convergence"
+    ],
+    "geometry": "Point",
+    "minPoints": 1,
+    "maxPoints": 1
+  },
+  {
+    "id": "WOS-IDD---P----",
+    "sidc": "WOS-IDD---P----",
+    "label": "واگرایی",
+    "labelEn": "Divergence",
+    "family": "oceanic",
+    "group": "Dynamic Processes",
+    "groupFa": "فرایندهای پویا",
+    "hierarchy": [
+      "Oceanic",
+      "Static",
+      "Ice Systems",
+      "Dynamic Processes",
+      "Divergence"
+    ],
+    "geometry": "Point",
+    "minPoints": 1,
+    "maxPoints": 1
+  },
+  {
+    "id": "WO-DIDID--P----",
+    "sidc": "WO-DIDID--P----",
+    "label": "جهت رانش یخ",
+    "labelEn": "Ice Drift (Direction)",
+    "family": "oceanic",
+    "group": "Dynamic Processes",
+    "groupFa": "فرایندهای پویا",
+    "hierarchy": [
+      "Oceanic",
+      "Dynamic",
+      "Ice Systems",
+      "Dynamic Processes",
+      "Ice Drift (Direction)"
+    ],
+    "geometry": "Point",
+    "minPoints": 1,
+    "maxPoints": 1
+  },
+  {
+    "id": "WO-DIDID---L---",
+    "sidc": "WO-DIDID---L---",
+    "label": "جهت رانش یخ",
+    "labelEn": "Ice Drift (Direction)",
+    "family": "oceanic",
+    "group": "Dynamic Processes",
+    "groupFa": "فرایندهای پویا",
+    "hierarchy": [
+      "Oceanic",
+      "Dynamic",
+      "Ice Systems",
+      "Dynamic Processes",
+      "Ice Drift (Direction)"
+    ],
+    "geometry": "Point",
+    "minPoints": 1,
+    "maxPoints": 1
+  },
+  {
+    "id": "WOS-IDS---P----",
+    "sidc": "WOS-IDS---P----",
+    "label": "برش یا منطقه برشی",
+    "labelEn": "Shearing Or Shear Zone",
+    "family": "oceanic",
+    "group": "Dynamic Processes",
+    "groupFa": "فرایندهای پویا",
+    "hierarchy": [
+      "Oceanic",
+      "Static",
+      "Ice Systems",
+      "Dynamic Processes",
+      "Shearing or Shear Zone"
+    ],
+    "geometry": "Point",
+    "minPoints": 1,
+    "maxPoints": 1
+  },
+  {
+    "id": "WOS-HPM-CC-L---",
+    "sidc": "WOS-HPM-CC-L---",
+    "label": "گذرگاه قایق کابلی",
+    "labelEn": "Cable Ferry Crossing",
+    "family": "oceanic",
+    "group": "Facilities",
+    "groupFa": "تأسیسات",
+    "hierarchy": [
+      "Oceanic",
+      "Static",
+      "Hydrography",
+      "Ports And Harbors",
+      "Facilities",
+      "Cable Ferry Crossing"
+    ],
+    "geometry": "Point",
+    "minPoints": 1,
+    "maxPoints": 1
+  },
+  {
+    "id": "WO-DHPMD----A--",
+    "sidc": "WO-DHPMD----A--",
+    "label": "حوض خشک",
+    "labelEn": "Drydock",
+    "family": "oceanic",
+    "group": "Facilities",
+    "groupFa": "تأسیسات",
+    "hierarchy": [
+      "Oceanic",
+      "Dynamic",
+      "Hydrography",
+      "Ports And Harbors",
+      "Facilities",
+      "Drydock"
+    ],
+    "geometry": "Polygon",
+    "minPoints": 3,
+    "maxPoints": 10000
+  },
+  {
+    "id": "WOS-HPM-FC-L---",
+    "sidc": "WOS-HPM-FC-L---",
+    "label": "گذرگاه قایق",
+    "labelEn": "Ferry Crossing",
+    "family": "oceanic",
+    "group": "Facilities",
+    "groupFa": "تأسیسات",
+    "hierarchy": [
+      "Oceanic",
+      "Static",
+      "Hydrography",
+      "Ports And Harbors",
+      "Facilities",
+      "Ferry Crossing"
+    ],
+    "geometry": "Point",
+    "minPoints": 1,
+    "maxPoints": 1
+  },
+  {
+    "id": "WOS-HPML--P----",
+    "sidc": "WOS-HPML--P----",
+    "label": "محل پیاده‌شدن",
+    "labelEn": "Landing Place",
+    "family": "oceanic",
+    "group": "Facilities",
+    "groupFa": "تأسیسات",
+    "hierarchy": [
+      "Oceanic",
+      "Static",
+      "Hydrography",
+      "Ports And Harbors",
+      "Facilities",
+      "Landing Place"
+    ],
+    "geometry": "Point",
+    "minPoints": 1,
+    "maxPoints": 1
+  },
+  {
+    "id": "WOS-HPM-R-P----",
+    "sidc": "WOS-HPM-R-P----",
+    "label": "حلقه پهلوگیری",
+    "labelEn": "Landing Ring",
+    "family": "oceanic",
+    "group": "Facilities",
+    "groupFa": "تأسیسات",
+    "hierarchy": [
+      "Oceanic",
+      "Static",
+      "Hydrography",
+      "Ports And Harbors",
+      "Facilities",
+      "Landing Ring"
+    ],
+    "geometry": "Point",
+    "minPoints": 1,
+    "maxPoints": 1
+  },
+  {
+    "id": "WO-DHPMO--P----",
+    "sidc": "WO-DHPMO--P----",
+    "label": "تأسیسات بارگیری فراساحلی",
+    "labelEn": "Offshore Loading Facility",
+    "family": "oceanic",
+    "group": "Facilities",
+    "groupFa": "تأسیسات",
+    "hierarchy": [
+      "Oceanic",
+      "Dynamic",
+      "Hydrography",
+      "Ports And Harbors",
+      "Facilities",
+      "Offshore Loading Facility"
+    ],
+    "geometry": "Point",
+    "minPoints": 1,
+    "maxPoints": 1
+  },
+  {
+    "id": "WO-DHPMO---L---",
+    "sidc": "WO-DHPMO---L---",
+    "label": "تأسیسات بارگیری فراساحلی",
+    "labelEn": "Offshore Loading Facility",
+    "family": "oceanic",
+    "group": "Facilities",
+    "groupFa": "تأسیسات",
+    "hierarchy": [
+      "Oceanic",
+      "Dynamic",
+      "Hydrography",
+      "Ports And Harbors",
+      "Facilities",
+      "Offshore Loading Facility"
+    ],
+    "geometry": "LineString",
+    "minPoints": 1,
+    "maxPoints": 10000
+  },
+  {
+    "id": "WO-DHPMO----A--",
+    "sidc": "WO-DHPMO----A--",
+    "label": "تأسیسات بارگیری فراساحلی",
+    "labelEn": "Offshore Loading Facility",
+    "family": "oceanic",
+    "group": "Facilities",
+    "groupFa": "تأسیسات",
+    "hierarchy": [
+      "Oceanic",
+      "Dynamic",
+      "Hydrography",
+      "Ports And Harbors",
+      "Facilities",
+      "Offshore Loading Facility"
+    ],
+    "geometry": "Polygon",
+    "minPoints": 3,
+    "maxPoints": 10000
+  },
+  {
+    "id": "WO-DHPMRA--L---",
+    "sidc": "WO-DHPMRA--L---",
+    "label": "رمپ بالای آب",
+    "labelEn": "Ramp (Above Water)",
+    "family": "oceanic",
+    "group": "Facilities",
+    "groupFa": "تأسیسات",
+    "hierarchy": [
+      "Oceanic",
+      "Dynamic",
+      "Hydrography",
+      "Ports And Harbors",
+      "Facilities",
+      "Ramp (Above Water)"
+    ],
+    "geometry": "LineString",
+    "minPoints": 2,
+    "maxPoints": 10000
+  },
+  {
+    "id": "WO-DHPMRB--L---",
+    "sidc": "WO-DHPMRB--L---",
+    "label": "رمپ زیر آب",
+    "labelEn": "Ramp (Below Water)",
+    "family": "oceanic",
+    "group": "Facilities",
+    "groupFa": "تأسیسات",
+    "hierarchy": [
+      "Oceanic",
+      "Dynamic",
+      "Hydrography",
+      "Ports And Harbors",
+      "Facilities",
+      "Ramp (Below Water)"
+    ],
+    "geometry": "LineString",
+    "minPoints": 2,
+    "maxPoints": 10000
+  },
+  {
+    "id": "WOS-HPFS--P----",
+    "sidc": "WOS-HPFS--P----",
+    "label": "پایه‌ها، تله‌ها و توربندهای ماهیگیری",
+    "labelEn": "Fish Stakes/Traps/Weirs",
+    "family": "oceanic",
+    "group": "Fishing",
+    "groupFa": "ماهیگیری",
+    "hierarchy": [
+      "Oceanic",
+      "Static",
+      "Hydrography",
+      "Ports And Harbors",
+      "Fishing",
+      "Fish Stakes/Traps/Weirs"
+    ],
+    "geometry": "Point",
+    "minPoints": 1,
+    "maxPoints": 1
+  },
+  {
+    "id": "WOS-HPFS---L---",
+    "sidc": "WOS-HPFS---L---",
+    "label": "پایه‌ها، تله‌ها و توربندهای ماهیگیری",
+    "labelEn": "Fish Stakes/Traps/Weirs",
+    "family": "oceanic",
+    "group": "Fishing",
+    "groupFa": "ماهیگیری",
+    "hierarchy": [
+      "Oceanic",
+      "Static",
+      "Hydrography",
+      "Ports And Harbors",
+      "Fishing",
+      "Fish Stakes/Traps/Weirs"
+    ],
+    "geometry": "Point",
+    "minPoints": 1,
+    "maxPoints": 1
+  },
+  {
+    "id": "WOS-HPFF----A--",
+    "sidc": "WOS-HPFF----A--",
+    "label": "پایه‌ها، تله‌ها و توربندهای ماهیگیری",
+    "labelEn": "Fish Stakes/Traps/Weirs",
+    "family": "oceanic",
+    "group": "Fishing",
+    "groupFa": "ماهیگیری",
+    "hierarchy": [
+      "Oceanic",
+      "Static",
+      "Hydrography",
+      "Ports And Harbors",
+      "Fishing",
+      "Fish Stakes/Traps/Weirs"
+    ],
+    "geometry": "Polygon",
+    "minPoints": 3,
+    "maxPoints": 10000
+  },
+  {
+    "id": "WOS-HPFH--P----",
+    "sidc": "WOS-HPFH--P----",
+    "label": "بندر ماهیگیری",
+    "labelEn": "Fishing Harbor",
+    "family": "oceanic",
+    "group": "Fishing",
+    "groupFa": "ماهیگیری",
+    "hierarchy": [
+      "Oceanic",
+      "Static",
+      "Hydrography",
+      "Ports And Harbors",
+      "Fishing",
+      "Fishing Harbor"
+    ],
+    "geometry": "Point",
+    "minPoints": 1,
+    "maxPoints": 1
+  },
+  {
+    "id": "WO-DHCF----L---",
+    "sidc": "WO-DHCF----L---",
+    "label": "پیش‌ساحل",
+    "labelEn": "Foreshore",
+    "family": "oceanic",
+    "group": "Foreshore",
+    "groupFa": "پیش‌ساحل",
+    "hierarchy": [
+      "Oceanic",
+      "Dynamic",
+      "Hydrography",
+      "Coastal Hydrography",
+      "Foreshore",
+      "Foreshore"
+    ],
+    "geometry": "LineString",
+    "minPoints": 2,
+    "maxPoints": 10000
+  },
+  {
+    "id": "WO-DHCF-----A--",
+    "sidc": "WO-DHCF-----A--",
+    "label": "پیش‌ساحل",
+    "labelEn": "Foreshore",
+    "family": "oceanic",
+    "group": "Foreshore",
+    "groupFa": "پیش‌ساحل",
+    "hierarchy": [
+      "Oceanic",
+      "Dynamic",
+      "Hydrography",
+      "Coastal Hydrography",
+      "Foreshore",
+      "Foreshore"
+    ],
+    "geometry": "Polygon",
+    "minPoints": 3,
+    "maxPoints": 10000
+  },
+  {
+    "id": "WOS-HHDF--P----",
+    "sidc": "WOS-HHDF--P----",
+    "label": "بستر نامناسب",
+    "labelEn": "Foul Ground",
+    "family": "oceanic",
+    "group": "Foul Ground",
+    "groupFa": "بستر نامناسب",
+    "hierarchy": [
+      "Oceanic",
+      "Static",
+      "Hydrography",
+      "Dangers/Hazards",
+      "Foul Ground",
+      "Foul Ground"
+    ],
+    "geometry": "Point",
+    "minPoints": 1,
+    "maxPoints": 1
+  },
+  {
+    "id": "WOS-IBGLM-P----",
+    "sidc": "WOS-IBGLM-P----",
+    "label": "متعدد قطعات کوچک کوه یخ",
+    "labelEn": "Many Growlers",
+    "family": "oceanic",
+    "group": "Growler",
+    "groupFa": "قطعه کوچک کوه یخ",
+    "hierarchy": [
+      "Oceanic",
+      "Static",
+      "Ice Systems",
+      "Icebergs",
+      "Iceberg - General",
+      "Growler",
+      "Many Growlers"
+    ],
+    "geometry": "Point",
+    "minPoints": 1,
+    "maxPoints": 1
+  },
+  {
+    "id": "WO-DHHDB---L---",
+    "sidc": "WO-DHHDB---L---",
+    "label": "موج‌های شکننده",
+    "labelEn": "Breakers",
+    "family": "oceanic",
+    "group": "Hydrography",
+    "groupFa": "آب‌نگاری",
+    "hierarchy": [
+      "Oceanic",
+      "Dynamic",
+      "Hydrography",
+      "Breakers"
+    ],
+    "geometry": "LineString",
+    "minPoints": 2,
+    "maxPoints": 10000
+  },
+  {
+    "id": "WO-DHHDD----A--",
+    "sidc": "WO-DHHDD----A--",
+    "label": "آب تغییررنگ‌یافته",
+    "labelEn": "Discolored Water",
+    "family": "oceanic",
+    "group": "Hydrography",
+    "groupFa": "آب‌نگاری",
+    "hierarchy": [
+      "Oceanic",
+      "Dynamic",
+      "Hydrography",
+      "Discolored Water"
+    ],
+    "geometry": "Polygon",
+    "minPoints": 3,
+    "maxPoints": 10000
+  },
+  {
+    "id": "WO-DHHDF----A--",
+    "sidc": "WO-DHHDF----A--",
+    "label": "بستر نامناسب",
+    "labelEn": "Foul Ground",
+    "family": "oceanic",
+    "group": "Hydrography",
+    "groupFa": "آب‌نگاری",
+    "hierarchy": [
+      "Oceanic",
+      "Dynamic",
+      "Hydrography",
+      "Foul Ground"
+    ],
+    "geometry": "Polygon",
+    "minPoints": 3,
+    "maxPoints": 10000
+  },
+  {
+    "id": "WO-DHALLA--L---",
+    "sidc": "WO-DHALLA--L---",
+    "label": "خط هدایت دریایی",
+    "labelEn": "Leading Line",
+    "family": "oceanic",
+    "group": "Hydrography",
+    "groupFa": "آب‌نگاری",
+    "hierarchy": [
+      "Oceanic",
+      "Dynamic",
+      "Hydrography",
+      "Leading Line"
+    ],
+    "geometry": "LineString",
+    "minPoints": 2,
+    "maxPoints": 10000
+  },
+  {
+    "id": "WO-DHHD-----A--",
+    "sidc": "WO-DHHD-----A--",
+    "label": "خطر یا مانع زیرآبی",
+    "labelEn": "Underwater Danger/Hazard",
+    "family": "oceanic",
+    "group": "Hydrography",
+    "groupFa": "آب‌نگاری",
+    "hierarchy": [
+      "Oceanic",
+      "Dynamic",
+      "Hydrography",
+      "Underwater Danger/Hazard"
+    ],
+    "geometry": "Polygon",
+    "minPoints": 3,
+    "maxPoints": 10000
+  },
+  {
+    "id": "WOS-ICWB--P----",
+    "sidc": "WOS-ICWB--P----",
+    "label": "آب دارای قطعات کوه یخ",
+    "labelEn": "Bergy Water",
+    "family": "oceanic",
+    "group": "Ice Concentration",
+    "groupFa": "تراکم یخ",
+    "hierarchy": [
+      "Oceanic",
+      "Static",
+      "Ice Systems",
+      "Ice Concentration",
+      "Bergy Water"
+    ],
+    "geometry": "Point",
+    "minPoints": 1,
+    "maxPoints": 1
+  },
+  {
+    "id": "WOS-ICIF--P----",
+    "sidc": "WOS-ICIF--P----",
+    "label": "یخ بدون یخ",
+    "labelEn": "Ice Free",
+    "family": "oceanic",
+    "group": "Ice Concentration",
+    "groupFa": "تراکم یخ",
+    "hierarchy": [
+      "Oceanic",
+      "Static",
+      "Ice Systems",
+      "Ice Concentration",
+      "Ice Free"
+    ],
+    "geometry": "Point",
+    "minPoints": 1,
+    "maxPoints": 1
+  },
+  {
+    "id": "WOS-ICWR--P----",
+    "sidc": "WOS-ICWR--P----",
+    "label": "آب دارای اهداف راداری",
+    "labelEn": "Water With Radar Targets",
+    "family": "oceanic",
+    "group": "Ice Concentration",
+    "groupFa": "تراکم یخ",
+    "hierarchy": [
+      "Oceanic",
+      "Static",
+      "Ice Systems",
+      "Ice Concentration",
+      "Water With Radar Targets"
+    ],
+    "geometry": "Point",
+    "minPoints": 1,
+    "maxPoints": 1
+  },
+  {
+    "id": "WOS-ISS---P----",
+    "sidc": "WOS-ISS---P----",
+    "label": "موجک برفی جهت‌دار",
+    "labelEn": "Sastrugi (With Orientation)",
+    "family": "oceanic",
+    "group": "Ice Systems",
+    "groupFa": "سامانه‌های یخی",
+    "hierarchy": [
+      "Oceanic",
+      "Static",
+      "Ice Systems",
+      "Sastrugi (With Orientation)"
+    ],
+    "geometry": "Point",
+    "minPoints": 1,
+    "maxPoints": 1
+  },
+  {
+    "id": "WOS-II----P----",
+    "sidc": "WOS-II----P----",
+    "label": "دریا یخ",
+    "labelEn": "Sea Ice",
+    "family": "oceanic",
+    "group": "Ice Systems",
+    "groupFa": "سامانه‌های یخی",
+    "hierarchy": [
+      "Oceanic",
+      "Static",
+      "Ice Systems",
+      "Sea Ice"
+    ],
+    "geometry": "Point",
+    "minPoints": 1,
+    "maxPoints": 1
+  },
+  {
+    "id": "WOS-ISC---P----",
+    "sidc": "WOS-ISC---P----",
+    "label": "پوشش برف",
+    "labelEn": "Snow Cover",
+    "family": "oceanic",
+    "group": "Ice Systems",
+    "groupFa": "سامانه‌های یخی",
+    "hierarchy": [
+      "Oceanic",
+      "Static",
+      "Ice Systems",
+      "Snow Cover"
+    ],
+    "geometry": "Point",
+    "minPoints": 1,
+    "maxPoints": 1
+  },
+  {
+    "id": "WOS-IBGL--P----",
+    "sidc": "WOS-IBGL--P----",
+    "label": "قطعه کوچک کوه یخ",
+    "labelEn": "Growler",
+    "family": "oceanic",
+    "group": "Iceberg - General",
+    "groupFa": "کوه یخ - عمومی",
+    "hierarchy": [
+      "Oceanic",
+      "Static",
+      "Ice Systems",
+      "Icebergs",
+      "Iceberg - General",
+      "Growler"
+    ],
+    "geometry": "Point",
+    "minPoints": 1,
+    "maxPoints": 1
+  },
+  {
+    "id": "WOS-IBBS--P----",
+    "sidc": "WOS-IBBS--P----",
+    "label": "نوارها و کمربندهای یخ",
+    "labelEn": "Belts And Strips",
+    "family": "oceanic",
+    "group": "Icebergs",
+    "groupFa": "کوه‌های یخ",
+    "hierarchy": [
+      "Oceanic",
+      "Static",
+      "Ice Systems",
+      "Icebergs",
+      "Belts And Strips"
+    ],
+    "geometry": "Point",
+    "minPoints": 1,
+    "maxPoints": 1
+  },
+  {
+    "id": "WOS-IBBB--P----",
+    "sidc": "WOS-IBBB--P----",
+    "label": "قطعات کوه یخ قطعه",
+    "labelEn": "Bergy Bit",
+    "family": "oceanic",
+    "group": "Icebergs",
+    "groupFa": "کوه‌های یخ",
+    "hierarchy": [
+      "Oceanic",
+      "Static",
+      "Ice Systems",
+      "Icebergs",
+      "Bergy Bit"
+    ],
+    "geometry": "Point",
+    "minPoints": 1,
+    "maxPoints": 1
+  },
+  {
+    "id": "WOS-IBF---P----",
+    "sidc": "WOS-IBF---P----",
+    "label": "قطعه یخ شناور",
+    "labelEn": "Floeberg",
+    "family": "oceanic",
+    "group": "Icebergs",
+    "groupFa": "کوه‌های یخ",
+    "hierarchy": [
+      "Oceanic",
+      "Static",
+      "Ice Systems",
+      "Icebergs",
+      "Floeberg"
+    ],
+    "geometry": "Point",
+    "minPoints": 1,
+    "maxPoints": 1
+  },
+  {
+    "id": "WOS-IBII--P----",
+    "sidc": "WOS-IBII--P----",
+    "label": "جزیره یخی",
+    "labelEn": "Ice Island",
+    "family": "oceanic",
+    "group": "Icebergs",
+    "groupFa": "کوه‌های یخ",
+    "hierarchy": [
+      "Oceanic",
+      "Static",
+      "Ice Systems",
+      "Icebergs",
+      "Ice Island"
+    ],
+    "geometry": "Point",
+    "minPoints": 1,
+    "maxPoints": 1
+  },
+  {
+    "id": "WOS-IBG---P----",
+    "sidc": "WOS-IBG---P----",
+    "label": "کوه یخ - عمومی",
+    "labelEn": "Iceberg - General",
+    "family": "oceanic",
+    "group": "Icebergs",
+    "groupFa": "کوه‌های یخ",
+    "hierarchy": [
+      "Oceanic",
+      "Static",
+      "Ice Systems",
+      "Icebergs",
+      "Iceberg - General"
+    ],
+    "geometry": "Point",
+    "minPoints": 1,
+    "maxPoints": 1
+  },
+  {
+    "id": "WOS-IBM---P----",
+    "sidc": "WOS-IBM---P----",
+    "label": "کوه‌های یخ متعدد",
+    "labelEn": "Many Icebergs",
+    "family": "oceanic",
+    "group": "Icebergs",
+    "groupFa": "کوه‌های یخ",
+    "hierarchy": [
+      "Oceanic",
+      "Static",
+      "Ice Systems",
+      "Icebergs",
+      "Many Icebergs"
+    ],
+    "geometry": "Point",
+    "minPoints": 1,
+    "maxPoints": 1
+  },
+  {
+    "id": "WO-DHHDK--P----",
+    "sidc": "WO-DHHDK--P----",
+    "label": "کلپ یا جلبک دریایی",
+    "labelEn": "Kelp/Seaweed",
+    "family": "oceanic",
+    "group": "Kelp/Seaweed",
+    "groupFa": "کلپ یا جلبک دریایی",
+    "hierarchy": [
+      "Oceanic",
+      "Dynamic",
+      "Hydrography",
+      "Kelp/Seaweed",
+      "Kelp/Seaweed"
+    ],
+    "geometry": "Point",
+    "minPoints": 1,
+    "maxPoints": 1
+  },
+  {
+    "id": "WO-DHHDK----A--",
+    "sidc": "WO-DHHDK----A--",
+    "label": "کلپ یا جلبک دریایی",
+    "labelEn": "Kelp/Seaweed",
+    "family": "oceanic",
+    "group": "Kelp/Seaweed",
+    "groupFa": "کلپ یا جلبک دریایی",
+    "hierarchy": [
+      "Oceanic",
+      "Dynamic",
+      "Hydrography",
+      "Kelp/Seaweed",
+      "Kelp/Seaweed"
+    ],
+    "geometry": "Polygon",
+    "minPoints": 3,
+    "maxPoints": 10000
+  },
+  {
+    "id": "WO-DIOLF---L---",
+    "sidc": "WO-DIOLF---L---",
+    "label": "آبراه یخ‌زده",
+    "labelEn": "Frozen Lead",
+    "family": "oceanic",
+    "group": "Lead",
+    "groupFa": "آبراه یخی",
+    "hierarchy": [
+      "Oceanic",
+      "Dynamic",
+      "Ice Systems",
+      "Openings In the Ice",
+      "Lead",
+      "Frozen Lead"
+    ],
+    "geometry": "LineString",
+    "minPoints": 2,
+    "maxPoints": 10000
+  },
+  {
+    "id": "WOS-HALV--P----",
+    "sidc": "WOS-HALV--P----",
+    "label": "کشتی چراغ‌دار",
+    "labelEn": "Light Vessel/Lightship",
+    "family": "oceanic",
+    "group": "Light",
+    "groupFa": "چراغ دریایی",
+    "hierarchy": [
+      "Oceanic",
+      "Static",
+      "Hydrography",
+      "Aids To Navigation",
+      "Light",
+      "Light Vessel/Lightship"
+    ],
+    "geometry": "Point",
+    "minPoints": 1,
+    "maxPoints": 1
+  },
+  {
+    "id": "WOS-HALH--P----",
+    "sidc": "WOS-HALH--P----",
+    "label": "فانوس دریایی",
+    "labelEn": "Lighthouse",
+    "family": "oceanic",
+    "group": "Light",
+    "groupFa": "چراغ دریایی",
+    "hierarchy": [
+      "Oceanic",
+      "Static",
+      "Hydrography",
+      "Aids To Navigation",
+      "Light",
+      "Lighthouse"
+    ],
+    "geometry": "Point",
+    "minPoints": 1,
+    "maxPoints": 1
+  },
+  {
+    "id": "WO-DILIEE--L---",
+    "sidc": "WO-DILIEE--L---",
+    "label": "لبه یا مرز برآوردی یخ",
+    "labelEn": "Estimated Ice Edge Or Boundary",
+    "family": "oceanic",
+    "group": "Limits",
+    "groupFa": "محدوده‌ها",
+    "hierarchy": [
+      "Oceanic",
+      "Dynamic",
+      "Ice Systems",
+      "Limits",
+      "Estimated Ice Edge or Boundary"
+    ],
+    "geometry": "LineString",
+    "minPoints": 2,
+    "maxPoints": 10000
+  },
+  {
+    "id": "WO-DILIER--L---",
+    "sidc": "WO-DILIER--L---",
+    "label": "لبه یا مرز یخ بر اساس رادار",
+    "labelEn": "Ice Edge Or Boundary From Radar",
+    "family": "oceanic",
+    "group": "Limits",
+    "groupFa": "محدوده‌ها",
+    "hierarchy": [
+      "Oceanic",
+      "Dynamic",
+      "Ice Systems",
+      "Limits",
+      "Ice Edge or Boundary From Radar"
+    ],
+    "geometry": "LineString",
+    "minPoints": 2,
+    "maxPoints": 10000
+  },
+  {
+    "id": "WO-DILOR---L---",
+    "sidc": "WO-DILOR---L---",
+    "label": "حد مشاهده راداری",
+    "labelEn": "Limit Of Radar Observation",
+    "family": "oceanic",
+    "group": "Limits",
+    "groupFa": "محدوده‌ها",
+    "hierarchy": [
+      "Oceanic",
+      "Dynamic",
+      "Ice Systems",
+      "Limits",
+      "Limit of Radar Observation"
+    ],
+    "geometry": "LineString",
+    "minPoints": 2,
+    "maxPoints": 10000
+  },
+  {
+    "id": "WO-DILUC---L---",
+    "sidc": "WO-DILUC---L---",
+    "label": "حد پوشش ابر زیرین",
+    "labelEn": "Limit Of Undercast",
+    "family": "oceanic",
+    "group": "Limits",
+    "groupFa": "محدوده‌ها",
+    "hierarchy": [
+      "Oceanic",
+      "Dynamic",
+      "Ice Systems",
+      "Limits",
+      "Limit of Undercast"
+    ],
+    "geometry": "LineString",
+    "minPoints": 2,
+    "maxPoints": 10000
+  },
+  {
+    "id": "WO-DILOV---L---",
+    "sidc": "WO-DILOV---L---",
+    "label": "حد مشاهده دیداری",
+    "labelEn": "Limit Of Visual Observation",
+    "family": "oceanic",
+    "group": "Limits",
+    "groupFa": "محدوده‌ها",
+    "hierarchy": [
+      "Oceanic",
+      "Dynamic",
+      "Ice Systems",
+      "Limits",
+      "Limit of Visual Observation"
+    ],
+    "geometry": "LineString",
+    "minPoints": 2,
+    "maxPoints": 10000
+  },
+  {
+    "id": "WO-DL-MA----A--",
+    "sidc": "WO-DL-MA----A--",
+    "label": "دریایی منطقه",
+    "labelEn": "Maritime Area",
+    "family": "oceanic",
+    "group": "Limits",
+    "groupFa": "محدوده‌ها",
+    "hierarchy": [
+      "Oceanic",
+      "Dynamic",
+      "Limits",
+      "Maritime Area"
+    ],
+    "geometry": "Polygon",
+    "minPoints": 3,
+    "maxPoints": 10000
+  },
+  {
+    "id": "WO-DL-ML---L---",
+    "sidc": "WO-DL-ML---L---",
+    "label": "مرز محدوده دریایی",
+    "labelEn": "Maritime Limit Boundary",
+    "family": "oceanic",
+    "group": "Limits",
+    "groupFa": "محدوده‌ها",
+    "hierarchy": [
+      "Oceanic",
+      "Dynamic",
+      "Limits",
+      "Maritime Limit Boundary"
+    ],
+    "geometry": "LineString",
+    "minPoints": 2,
+    "maxPoints": 10000
+  },
+  {
+    "id": "WO-DILIEO--L---",
+    "sidc": "WO-DILIEO--L---",
+    "label": "لبه یا مرز مشاهده‌شده یخ",
+    "labelEn": "Observed Ice Edge Or Boundary",
+    "family": "oceanic",
+    "group": "Limits",
+    "groupFa": "محدوده‌ها",
+    "hierarchy": [
+      "Oceanic",
+      "Dynamic",
+      "Ice Systems",
+      "Limits",
+      "Observed Ice Edge or Boundary"
+    ],
+    "geometry": "LineString",
+    "minPoints": 2,
+    "maxPoints": 10000
+  },
+  {
+    "id": "WO-DL-O-----A--",
+    "sidc": "WO-DL-O-----A--",
+    "label": "تعریف‌شده توسط کاربر",
+    "labelEn": "Operator-Defined",
+    "family": "oceanic",
+    "group": "Limits",
+    "groupFa": "محدوده‌ها",
+    "hierarchy": [
+      "Oceanic",
+      "Dynamic",
+      "Limits",
+      "Operator-Defined"
+    ],
+    "geometry": "Polygon",
+    "minPoints": 3,
+    "maxPoints": 10000
+  },
+  {
+    "id": "WO-DL-RA---L---",
+    "sidc": "WO-DL-RA---L---",
+    "label": "منطقه محدود",
+    "labelEn": "Restricted Area",
+    "family": "oceanic",
+    "group": "Limits",
+    "groupFa": "محدوده‌ها",
+    "hierarchy": [
+      "Oceanic",
+      "Dynamic",
+      "Limits",
+      "Restricted Area"
+    ],
+    "geometry": "LineString",
+    "minPoints": 2,
+    "maxPoints": 10000
+  },
+  {
+    "id": "WO-DL-SA----A--",
+    "sidc": "WO-DL-SA----A--",
+    "label": "منطقه پاک‌سازی‌شده",
+    "labelEn": "Swept Area",
+    "family": "oceanic",
+    "group": "Limits",
+    "groupFa": "محدوده‌ها",
+    "hierarchy": [
+      "Oceanic",
+      "Dynamic",
+      "Limits",
+      "Swept Area"
+    ],
+    "geometry": "Polygon",
+    "minPoints": 3,
+    "maxPoints": 10000
+  },
+  {
+    "id": "WO-DL-TA----A--",
+    "sidc": "WO-DL-TA----A--",
+    "label": "منطقه آموزشی",
+    "labelEn": "Training Area",
+    "family": "oceanic",
+    "group": "Limits",
+    "groupFa": "محدوده‌ها",
+    "hierarchy": [
+      "Oceanic",
+      "Dynamic",
+      "Limits",
+      "Training Area"
+    ],
+    "geometry": "Polygon",
+    "minPoints": 3,
+    "maxPoints": 10000
+  },
+  {
+    "id": "WO-DMCD----L---",
+    "sidc": "WO-DMCD----L---",
+    "label": "کانال",
+    "labelEn": "Canal",
+    "family": "oceanic",
+    "group": "Man-Made Structures",
+    "groupFa": "سازه‌های مصنوعی",
+    "hierarchy": [
+      "Oceanic",
+      "Dynamic",
+      "Man-Made Structures",
+      "Canal"
+    ],
+    "geometry": "LineString",
+    "minPoints": 2,
+    "maxPoints": 10000
+  },
+  {
+    "id": "WOS-MF----P----",
+    "sidc": "WOS-MF----P----",
+    "label": "آب‌گذر",
+    "labelEn": "Ford",
+    "family": "oceanic",
+    "group": "Man-Made Structures",
+    "groupFa": "سازه‌های مصنوعی",
+    "hierarchy": [
+      "Oceanic",
+      "Static",
+      "Man-Made Structures",
+      "Ford"
+    ],
+    "geometry": "Point",
+    "minPoints": 1,
+    "maxPoints": 1
+  },
+  {
+    "id": "WOS-ML----P----",
+    "sidc": "WOS-ML----P----",
+    "label": "آب‌بند",
+    "labelEn": "Lock",
+    "family": "oceanic",
+    "group": "Man-Made Structures",
+    "groupFa": "سازه‌های مصنوعی",
+    "hierarchy": [
+      "Oceanic",
+      "Static",
+      "Man-Made Structures",
+      "Lock"
+    ],
+    "geometry": "Point",
+    "minPoints": 1,
+    "maxPoints": 1
+  },
+  {
+    "id": "WOS-MOA---P----",
+    "sidc": "WOS-MOA---P----",
+    "label": "سکوی نفت یا گاز",
+    "labelEn": "Oil/Gas Rig",
+    "family": "oceanic",
+    "group": "Man-Made Structures",
+    "groupFa": "سازه‌های مصنوعی",
+    "hierarchy": [
+      "Oceanic",
+      "Static",
+      "Man-Made Structures",
+      "Oil/Gas Rig"
+    ],
+    "geometry": "Point",
+    "minPoints": 1,
+    "maxPoints": 1
+  },
+  {
+    "id": "WO-DMOA-----A--",
+    "sidc": "WO-DMOA-----A--",
+    "label": "میدان سکوهای نفت یا گاز",
+    "labelEn": "Oil/Gas Rig Field",
+    "family": "oceanic",
+    "group": "Man-Made Structures",
+    "groupFa": "سازه‌های مصنوعی",
+    "hierarchy": [
+      "Oceanic",
+      "Dynamic",
+      "Man-Made Structures",
+      "Oil/Gas Rig Field"
+    ],
+    "geometry": "Polygon",
+    "minPoints": 3,
+    "maxPoints": 10000
+  },
+  {
+    "id": "WOS-MPA---P----",
+    "sidc": "WOS-MPA---P----",
+    "label": "شمع یا پایه",
+    "labelEn": "Pile/Piling/Post",
+    "family": "oceanic",
+    "group": "Man-Made Structures",
+    "groupFa": "سازه‌های مصنوعی",
+    "hierarchy": [
+      "Oceanic",
+      "Static",
+      "Man-Made Structures",
+      "Pile/Piling/Post"
+    ],
+    "geometry": "Point",
+    "minPoints": 1,
+    "maxPoints": 1
+  },
+  {
+    "id": "WO-DMPA----L---",
+    "sidc": "WO-DMPA----L---",
+    "label": "خط لوله",
+    "labelEn": "Pipelines/Pipe",
+    "family": "oceanic",
+    "group": "Man-Made Structures",
+    "groupFa": "سازه‌های مصنوعی",
+    "hierarchy": [
+      "Oceanic",
+      "Dynamic",
+      "Man-Made Structures",
+      "Pipelines/Pipe"
+    ],
+    "geometry": "LineString",
+    "minPoints": 2,
+    "maxPoints": 10000
+  },
+  {
+    "id": "WO-DMCA----L---",
+    "sidc": "WO-DMCA----L---",
+    "label": "کابل زیردریایی",
+    "labelEn": "Submarine Cable",
+    "family": "oceanic",
+    "group": "Man-Made Structures",
+    "groupFa": "سازه‌های مصنوعی",
+    "hierarchy": [
+      "Oceanic",
+      "Dynamic",
+      "Man-Made Structures",
+      "Submarine Cable"
+    ],
+    "geometry": "LineString",
+    "minPoints": 2,
+    "maxPoints": 10000
+  },
+  {
+    "id": "WO-DMCC-----A--",
+    "sidc": "WO-DMCC-----A--",
+    "label": "سازه مشبک غوطه‌ور",
+    "labelEn": "Submerged Crib",
+    "family": "oceanic",
+    "group": "Man-Made Structures",
+    "groupFa": "سازه‌های مصنوعی",
+    "hierarchy": [
+      "Oceanic",
+      "Dynamic",
+      "Man-Made Structures",
+      "Submerged Crib"
+    ],
+    "geometry": "Polygon",
+    "minPoints": 3,
+    "maxPoints": 10000
+  },
+  {
+    "id": "WOS-IBMG--P----",
+    "sidc": "WOS-IBMG--P----",
+    "label": "کوه‌های یخ متعدد - عمومی",
+    "labelEn": "Many Icebergs - General",
+    "family": "oceanic",
+    "group": "Many Icebergs",
+    "groupFa": "کوه‌های یخ متعدد",
+    "hierarchy": [
+      "Oceanic",
+      "Static",
+      "Ice Systems",
+      "Icebergs",
+      "Many Icebergs",
+      "Many Icebergs - General"
+    ],
+    "geometry": "Point",
+    "minPoints": 1,
+    "maxPoints": 1
+  },
+  {
+    "id": "WOS-HHDMDFP----",
+    "sidc": "WOS-HHDMDFP----",
+    "label": "مین دریایی (قطعی)",
+    "labelEn": "Mine-Naval (Definite)",
+    "family": "oceanic",
+    "group": "Mine-Naval",
+    "groupFa": "مین دریایی",
+    "hierarchy": [
+      "Oceanic",
+      "Static",
+      "Hydrography",
+      "Dangers/Hazards",
+      "Mine-Naval",
+      "Mine-Naval (Definite)"
+    ],
+    "geometry": "Point",
+    "minPoints": 1,
+    "maxPoints": 1
+  },
+  {
+    "id": "WOS-HHDMDBP----",
+    "sidc": "WOS-HHDMDBP----",
+    "label": "مین دریایی (مشکوک)",
+    "labelEn": "Mine-Naval (Doubtful)",
+    "family": "oceanic",
+    "group": "Mine-Naval",
+    "groupFa": "مین دریایی",
+    "hierarchy": [
+      "Oceanic",
+      "Static",
+      "Hydrography",
+      "Dangers/Hazards",
+      "Mine-Naval",
+      "Mine-Naval (Doubtful)"
+    ],
+    "geometry": "Point",
+    "minPoints": 1,
+    "maxPoints": 1
+  },
+  {
+    "id": "WOS-HPD---P----",
+    "sidc": "WOS-HPD---P----",
+    "label": "پایه مهاربندی دریایی",
+    "labelEn": "Dolphin",
+    "family": "oceanic",
+    "group": "Oceanic",
+    "groupFa": "اقیانوسی",
+    "hierarchy": [
+      "Oceanic",
+      "Dolphin"
+    ],
+    "geometry": "Point",
+    "minPoints": 1,
+    "maxPoints": 1
+  },
+  {
+    "id": "WOS-IB----P----",
+    "sidc": "WOS-IB----P----",
+    "label": "کوه‌های یخ",
+    "labelEn": "Icebergs",
+    "family": "oceanic",
+    "group": "Oceanic",
+    "groupFa": "اقیانوسی",
+    "hierarchy": [
+      "Oceanic",
+      "Icebergs"
+    ],
+    "geometry": "Point",
+    "minPoints": 1,
+    "maxPoints": 1
+  },
+  {
+    "id": "WO-DIOC----L---",
+    "sidc": "WO-DIOC----L---",
+    "label": "شکاف‌ها",
+    "labelEn": "Cracks",
+    "family": "oceanic",
+    "group": "Openings In the Ice",
+    "groupFa": "شکاف‌های یخ",
+    "hierarchy": [
+      "Oceanic",
+      "Dynamic",
+      "Ice Systems",
+      "Openings In the Ice",
+      "Cracks"
+    ],
+    "geometry": "LineString",
+    "minPoints": 2,
+    "maxPoints": 10000
+  },
+  {
+    "id": "WO-DIOL----L---",
+    "sidc": "WO-DIOL----L---",
+    "label": "آبراه یخی",
+    "labelEn": "Lead",
+    "family": "oceanic",
+    "group": "Openings In the Ice",
+    "groupFa": "شکاف‌های یخ",
+    "hierarchy": [
+      "Oceanic",
+      "Dynamic",
+      "Ice Systems",
+      "Openings In the Ice",
+      "Lead"
+    ],
+    "geometry": "LineString",
+    "minPoints": 2,
+    "maxPoints": 10000
+  },
+  {
+    "id": "WOS-HABP--P----",
+    "sidc": "WOS-HABP--P----",
+    "label": "نشانک‌ها یا پایه‌ها",
+    "labelEn": "Perches/Stakes",
+    "family": "oceanic",
+    "group": "Perches/Stakes",
+    "groupFa": "نشانک‌ها یا پایه‌ها",
+    "hierarchy": [
+      "Oceanic",
+      "Static",
+      "Hydrography",
+      "Aids To Navigation",
+      "Perches/Stakes",
+      "Perches/Stakes"
+    ],
+    "geometry": "Point",
+    "minPoints": 1,
+    "maxPoints": 1
+  },
+  {
+    "id": "WO-DHABP----A--",
+    "sidc": "WO-DHABP----A--",
+    "label": "نشانک‌ها یا پایه‌ها",
+    "labelEn": "Perches/Stakes",
+    "family": "oceanic",
+    "group": "Perches/Stakes",
+    "groupFa": "نشانک‌ها یا پایه‌ها",
+    "hierarchy": [
+      "Oceanic",
+      "Dynamic",
+      "Hydrography",
+      "Perches/Stakes",
+      "Perches/Stakes"
+    ],
+    "geometry": "Polygon",
+    "minPoints": 3,
+    "maxPoints": 10000
+  },
+  {
+    "id": "WOS-HPBA--P----",
+    "sidc": "WOS-HPBA--P----",
+    "label": "لنگرگاه",
+    "labelEn": "Anchorage",
+    "family": "oceanic",
+    "group": "Ports",
+    "groupFa": "بنادر",
+    "hierarchy": [
+      "Oceanic",
+      "Static",
+      "Hydrography",
+      "Ports And Harbors",
+      "Ports",
+      "Anchorage"
+    ],
+    "geometry": "Point",
+    "minPoints": 1,
+    "maxPoints": 1
+  },
+  {
+    "id": "WO-DHPBA---L---",
+    "sidc": "WO-DHPBA---L---",
+    "label": "لنگرگاه",
+    "labelEn": "Anchorage",
+    "family": "oceanic",
+    "group": "Ports",
+    "groupFa": "بنادر",
+    "hierarchy": [
+      "Oceanic",
+      "Dynamic",
+      "Hydrography",
+      "Ports And Harbors",
+      "Ports",
+      "Anchorage"
+    ],
+    "geometry": "LineString",
+    "minPoints": 2,
+    "maxPoints": 10000
+  },
+  {
+    "id": "WO-DHPBA----A--",
+    "sidc": "WO-DHPBA----A--",
+    "label": "لنگرگاه",
+    "labelEn": "Anchorage",
+    "family": "oceanic",
+    "group": "Ports",
+    "groupFa": "بنادر",
+    "hierarchy": [
+      "Oceanic",
+      "Dynamic",
+      "Hydrography",
+      "Ports And Harbors",
+      "Ports",
+      "Anchorage"
+    ],
+    "geometry": "Polygon",
+    "minPoints": 3,
+    "maxPoints": 10000
+  },
+  {
+    "id": "WOS-HPB-A-P----",
+    "sidc": "WOS-HPB-A-P----",
+    "label": "محل پهلوگیری با لنگر",
+    "labelEn": "Berths (Anchor)",
+    "family": "oceanic",
+    "group": "Ports",
+    "groupFa": "بنادر",
+    "hierarchy": [
+      "Oceanic",
+      "Static",
+      "Hydrography",
+      "Ports And Harbors",
+      "Ports",
+      "Berths (Anchor)"
+    ],
+    "geometry": "Point",
+    "minPoints": 1,
+    "maxPoints": 1
+  },
+  {
+    "id": "WOS-HPB-O-P----",
+    "sidc": "WOS-HPB-O-P----",
+    "label": "محل پهلوگیری ساحلی",
+    "labelEn": "Berths (Onshore)",
+    "family": "oceanic",
+    "group": "Ports",
+    "groupFa": "بنادر",
+    "hierarchy": [
+      "Oceanic",
+      "Static",
+      "Hydrography",
+      "Ports And Harbors",
+      "Ports",
+      "Berths (Onshore)"
+    ],
+    "geometry": "Point",
+    "minPoints": 1,
+    "maxPoints": 1
+  },
+  {
+    "id": "WO-DHPBP---L---",
+    "sidc": "WO-DHPBP---L---",
+    "label": "اسکله یا بارانداز",
+    "labelEn": "Pier/Wharf/Quay",
+    "family": "oceanic",
+    "group": "Ports",
+    "groupFa": "بنادر",
+    "hierarchy": [
+      "Oceanic",
+      "Dynamic",
+      "Hydrography",
+      "Ports And Harbors",
+      "Ports",
+      "Pier/Wharf/Quay"
+    ],
+    "geometry": "LineString",
+    "minPoints": 2,
+    "maxPoints": 10000
+  },
+  {
+    "id": "WOS-HPCP--P----",
+    "sidc": "WOS-HPCP--P----",
+    "label": "نقطه اعلام ورود",
+    "labelEn": "Call In Point",
+    "family": "oceanic",
+    "group": "Ports And Harbors",
+    "groupFa": "بنادر و لنگرگاه‌ها",
+    "hierarchy": [
+      "Oceanic",
+      "Static",
+      "Hydrography",
+      "Ports And Harbors",
+      "Call In Point"
+    ],
+    "geometry": "Point",
+    "minPoints": 1,
+    "maxPoints": 1
+  },
+  {
+    "id": "WOS-BFQ-C-P----",
+    "sidc": "WOS-BFQ-C-P----",
+    "label": "درشت",
+    "labelEn": "Coarse",
+    "family": "oceanic",
+    "group": "Qualifying Terms",
+    "groupFa": "ویژگی‌های توصیفی",
+    "hierarchy": [
+      "Oceanic",
+      "Static",
+      "Bottom Features",
+      "Qualifying Terms",
+      "Coarse"
+    ],
+    "geometry": "Point",
+    "minPoints": 1,
+    "maxPoints": 1
+  },
+  {
+    "id": "WOS-BFQ-F-P----",
+    "sidc": "WOS-BFQ-F-P----",
+    "label": "ریز",
+    "labelEn": "Fine",
+    "family": "oceanic",
+    "group": "Qualifying Terms",
+    "groupFa": "ویژگی‌های توصیفی",
+    "hierarchy": [
+      "Oceanic",
+      "Static",
+      "Bottom Features",
+      "Qualifying Terms",
+      "Fine"
+    ],
+    "geometry": "Point",
+    "minPoints": 1,
+    "maxPoints": 1
+  },
+  {
+    "id": "WOS-BFQ-M-P----",
+    "sidc": "WOS-BFQ-M-P----",
+    "label": "متوسط",
+    "labelEn": "Medium",
+    "family": "oceanic",
+    "group": "Qualifying Terms",
+    "groupFa": "ویژگی‌های توصیفی",
+    "hierarchy": [
+      "Oceanic",
+      "Static",
+      "Bottom Features",
+      "Qualifying Terms",
+      "Medium"
+    ],
+    "geometry": "Point",
+    "minPoints": 1,
+    "maxPoints": 1
+  },
+  {
+    "id": "WOS-ITRH--P----",
+    "sidc": "WOS-ITRH--P----",
+    "label": "پشته‌ها یا برآمدگی‌های یخی",
+    "labelEn": "Ridges Or Hummocks",
+    "family": "oceanic",
+    "group": "Rafting",
+    "groupFa": "تجمع ورقه‌های یخ",
+    "hierarchy": [
+      "Oceanic",
+      "Static",
+      "Ice Systems",
+      "Topographical Features",
+      "Rafting",
+      "Ridges or Hummocks"
+    ],
+    "geometry": "Point",
+    "minPoints": 1,
+    "maxPoints": 1
+  },
+  {
+    "id": "WOS-BFC-SHP----",
+    "sidc": "WOS-BFC-SHP----",
+    "label": "صدف",
+    "labelEn": "Shell",
+    "family": "oceanic",
+    "group": "Sand",
+    "groupFa": "شن",
+    "hierarchy": [
+      "Oceanic",
+      "Static",
+      "Bottom Features",
+      "Bottom Characteristics",
+      "Sand",
+      "Shell"
+    ],
+    "geometry": "Point",
+    "minPoints": 1,
+    "maxPoints": 1
+  },
+  {
+    "id": "WOS-BFC-SIP----",
+    "sidc": "WOS-BFC-SIP----",
+    "label": "لای",
+    "labelEn": "Silt",
+    "family": "oceanic",
+    "group": "Sand",
+    "groupFa": "شن",
+    "hierarchy": [
+      "Oceanic",
+      "Static",
+      "Bottom Features",
+      "Bottom Characteristics",
+      "Sand",
+      "Silt"
+    ],
+    "geometry": "Point",
+    "minPoints": 1,
+    "maxPoints": 1
+  },
+  {
+    "id": "WOS-BFC-STP----",
+    "sidc": "WOS-BFC-STP----",
+    "label": "سنگ‌ها",
+    "labelEn": "Stones",
+    "family": "oceanic",
+    "group": "Sand",
+    "groupFa": "شن",
+    "hierarchy": [
+      "Oceanic",
+      "Static",
+      "Bottom Features",
+      "Bottom Characteristics",
+      "Sand",
+      "Stones"
+    ],
+    "geometry": "Point",
+    "minPoints": 1,
+    "maxPoints": 1
+  },
+  {
+    "id": "WOS-IITE--P----",
+    "sidc": "WOS-IITE--P----",
+    "label": "ضخامت یخ (برآوردشده)",
+    "labelEn": "Ice Thickness (Estimated)",
+    "family": "oceanic",
+    "group": "Sea Ice",
+    "groupFa": "دریا یخ",
+    "hierarchy": [
+      "Oceanic",
+      "Static",
+      "Ice Systems",
+      "Sea Ice",
+      "Ice Thickness (Estimated)"
+    ],
+    "geometry": "Point",
+    "minPoints": 1,
+    "maxPoints": 1
+  },
+  {
+    "id": "WOS-IITM--P----",
+    "sidc": "WOS-IITM--P----",
+    "label": "ضخامت یخ (مشاهده‌شده)",
+    "labelEn": "Ice Thickness (Observed)",
+    "family": "oceanic",
+    "group": "Sea Ice",
+    "groupFa": "دریا یخ",
+    "hierarchy": [
+      "Oceanic",
+      "Static",
+      "Ice Systems",
+      "Sea Ice",
+      "Ice Thickness (Observed)"
+    ],
+    "geometry": "Point",
+    "minPoints": 1,
+    "maxPoints": 1
+  },
+  {
+    "id": "WOS-IIP---P----",
+    "sidc": "WOS-IIP---P----",
+    "label": "گودال‌های ذوب یا یخ آب‌گرفته",
+    "labelEn": "Melt Puddles Or Flooded Ice",
+    "family": "oceanic",
+    "group": "Sea Ice",
+    "groupFa": "دریا یخ",
+    "hierarchy": [
+      "Oceanic",
+      "Static",
+      "Ice Systems",
+      "Sea Ice",
+      "Melt Puddles or Flooded Ice"
+    ],
+    "geometry": "Point",
+    "minPoints": 1,
+    "maxPoints": 1
+  },
+  {
+    "id": "WO-DHPSPA--L---",
+    "sidc": "WO-DHPSPA--L---",
+    "label": "موج‌شکن، آب‌شکن یا اسکله (بالای آب)",
+    "labelEn": "Breakwater/Groin/Jetty (Above Water)",
+    "family": "oceanic",
+    "group": "Shoreline Protection",
+    "groupFa": "سازه‌های حفاظت ساحلی",
+    "hierarchy": [
+      "Oceanic",
+      "Dynamic",
+      "Hydrography",
+      "Ports And Harbors",
+      "Shoreline Protection",
+      "Breakwater/Groin/Jetty (Above Water)"
+    ],
+    "geometry": "LineString",
+    "minPoints": 2,
+    "maxPoints": 10000
+  },
+  {
+    "id": "WO-DHPSPB--L---",
+    "sidc": "WO-DHPSPB--L---",
+    "label": "موج‌شکن، آب‌شکن یا اسکله (زیر آب)",
+    "labelEn": "Breakwater/Groin/Jetty (Below Water)",
+    "family": "oceanic",
+    "group": "Shoreline Protection",
+    "groupFa": "سازه‌های حفاظت ساحلی",
+    "hierarchy": [
+      "Oceanic",
+      "Dynamic",
+      "Hydrography",
+      "Ports And Harbors",
+      "Shoreline Protection",
+      "Breakwater/Groin/Jetty (Below Water)"
+    ],
+    "geometry": "LineString",
+    "minPoints": 2,
+    "maxPoints": 10000
+  },
+  {
+    "id": "WO-DHPSPS--L---",
+    "sidc": "WO-DHPSPS--L---",
+    "label": "دیوار ساحلی",
+    "labelEn": "Seawall",
+    "family": "oceanic",
+    "group": "Shoreline Protection",
+    "groupFa": "سازه‌های حفاظت ساحلی",
+    "hierarchy": [
+      "Oceanic",
+      "Dynamic",
+      "Hydrography",
+      "Ports And Harbors",
+      "Shoreline Protection",
+      "Seawall"
+    ],
+    "geometry": "LineString",
+    "minPoints": 2,
+    "maxPoints": 10000
+  },
+  {
+    "id": "WO-DTCCCFE-L---",
+    "sidc": "WO-DTCCCFE-L---",
+    "label": "جهت جریان - فروکشند",
+    "labelEn": "Current Flow - Ebb",
+    "family": "oceanic",
+    "group": "Tide And Current",
+    "groupFa": "جزرومد و جریان",
+    "hierarchy": [
+      "Oceanic",
+      "Dynamic",
+      "Tide And Current",
+      "Current Flow - Ebb"
+    ],
+    "geometry": "LineString",
+    "minPoints": 2,
+    "maxPoints": 10000
+  },
+  {
+    "id": "WO-DTCCCFF-L---",
+    "sidc": "WO-DTCCCFF-L---",
+    "label": "جهت جریان - مد",
+    "labelEn": "Current Flow - Flood",
+    "family": "oceanic",
+    "group": "Tide And Current",
+    "groupFa": "جزرومد و جریان",
+    "hierarchy": [
+      "Oceanic",
+      "Dynamic",
+      "Tide And Current",
+      "Current Flow - Flood"
+    ],
+    "geometry": "LineString",
+    "minPoints": 2,
+    "maxPoints": 10000
+  },
+  {
+    "id": "WOS-TCCTD-P----",
+    "sidc": "WOS-TCCTD-P----",
+    "label": "نقطه داده جزرومد",
+    "labelEn": "Tide Data Point",
+    "family": "oceanic",
+    "group": "Tide And Current",
+    "groupFa": "جزرومد و جریان",
+    "hierarchy": [
+      "Oceanic",
+      "Static",
+      "Tide And Current",
+      "Tide Data Point"
+    ],
+    "geometry": "Point",
+    "minPoints": 1,
+    "maxPoints": 1
+  },
+  {
+    "id": "WOS-TCCTG-P----",
+    "sidc": "WOS-TCCTG-P----",
+    "label": "جزرومدسنج",
+    "labelEn": "Tide Gauge",
+    "family": "oceanic",
+    "group": "Tide And Current",
+    "groupFa": "جزرومد و جریان",
+    "hierarchy": [
+      "Oceanic",
+      "Static",
+      "Tide And Current",
+      "Tide Gauge"
+    ],
+    "geometry": "Point",
+    "minPoints": 1,
+    "maxPoints": 1
+  },
+  {
+    "id": "WOS-TCCW--P----",
+    "sidc": "WOS-TCCW--P----",
+    "label": "تلاطم آب",
+    "labelEn": "Water Turbulence",
+    "family": "oceanic",
+    "group": "Tide And Current",
+    "groupFa": "جزرومد و جریان",
+    "hierarchy": [
+      "Oceanic",
+      "Static",
+      "Tide And Current",
+      "Water Turbulence"
+    ],
+    "geometry": "Point",
+    "minPoints": 1,
+    "maxPoints": 1
+  },
+  {
+    "id": "WOS-ITBB--P----",
+    "sidc": "WOS-ITBB--P----",
+    "label": "سد خرده‌یخ فشرده",
+    "labelEn": "Jammed Brash Barrier",
+    "family": "oceanic",
+    "group": "Topographical Features",
+    "groupFa": "عوارض توپوگرافی",
+    "hierarchy": [
+      "Oceanic",
+      "Static",
+      "Ice Systems",
+      "Topographical Features",
+      "Jammed Brash Barrier"
+    ],
+    "geometry": "Point",
+    "minPoints": 1,
+    "maxPoints": 1
+  },
+  {
+    "id": "WOS-ITR---P----",
+    "sidc": "WOS-ITR---P----",
+    "label": "تجمع ورقه‌های یخ",
+    "labelEn": "Rafting",
+    "family": "oceanic",
+    "group": "Topographical Features",
+    "groupFa": "عوارض توپوگرافی",
+    "hierarchy": [
+      "Oceanic",
+      "Static",
+      "Ice Systems",
+      "Topographical Features",
+      "Rafting"
+    ],
+    "geometry": "Point",
+    "minPoints": 1,
+    "maxPoints": 1
+  },
+  {
+    "id": "WOS-HHDWA-P----",
+    "sidc": "WOS-HHDWA-P----",
+    "label": "لاشه نمایان‌شونده",
+    "labelEn": "Wreck (Uncovers)",
+    "family": "oceanic",
+    "group": "Wreck",
+    "groupFa": "لاشه",
+    "hierarchy": [
+      "Oceanic",
+      "Static",
+      "Hydrography",
+      "Dangers/Hazards",
+      "Wreck",
+      "Wreck (Uncovers)"
+    ],
+    "geometry": "Point",
+    "minPoints": 1,
+    "maxPoints": 1
+  },
+  {
+    "id": "WO-DGMRM----A--",
+    "sidc": "WO-DGMRM----A--",
+    "label": "متوسط",
+    "labelEn": "Moderate",
+    "family": "geophysics",
+    "group": "Bottom Roughness",
+    "groupFa": "ناهمواری بستر",
+    "hierarchy": [
+      "Oceanic",
+      "Dynamic",
+      "Geophysics/Acoustics",
+      "Mine Warfare Bottom Descriptors",
+      "Bottom Roughness",
+      "Moderate"
+    ],
+    "geometry": "Polygon",
+    "minPoints": 3,
+    "maxPoints": 10000
+  },
+  {
+    "id": "WO-DGMRR----A--",
+    "sidc": "WO-DGMRR----A--",
+    "label": "ناهموار",
+    "labelEn": "Rough",
+    "family": "geophysics",
+    "group": "Bottom Roughness",
+    "groupFa": "ناهمواری بستر",
+    "hierarchy": [
+      "Oceanic",
+      "Dynamic",
+      "Geophysics/Acoustics",
+      "Mine Warfare Bottom Descriptors",
+      "Bottom Roughness",
+      "Rough"
+    ],
+    "geometry": "Polygon",
+    "minPoints": 3,
+    "maxPoints": 10000
+  },
+  {
+    "id": "WO-DGMRS----A--",
+    "sidc": "WO-DGMRS----A--",
+    "label": "صاف",
+    "labelEn": "Smooth",
+    "family": "geophysics",
+    "group": "Bottom Roughness",
+    "groupFa": "ناهمواری بستر",
+    "hierarchy": [
+      "Oceanic",
+      "Dynamic",
+      "Geophysics/Acoustics",
+      "Mine Warfare Bottom Descriptors",
+      "Bottom Roughness",
+      "Smooth"
+    ],
+    "geometry": "Polygon",
+    "minPoints": 3,
+    "maxPoints": 10000
+  },
+  {
+    "id": "WO-DGMCH----A--",
+    "sidc": "WO-DGMCH----A--",
+    "label": "زیاد",
+    "labelEn": "High",
+    "family": "geophysics",
+    "group": "Clutter (Bottom)",
+    "groupFa": "نوفه بستر",
+    "hierarchy": [
+      "Oceanic",
+      "Dynamic",
+      "Geophysics/Acoustics",
+      "Mine Warfare Bottom Descriptors",
+      "Clutter (Bottom)",
+      "High"
+    ],
+    "geometry": "Polygon",
+    "minPoints": 3,
+    "maxPoints": 10000
+  },
+  {
+    "id": "WO-DGMCL----A--",
+    "sidc": "WO-DGMCL----A--",
+    "label": "کم",
+    "labelEn": "Low",
+    "family": "geophysics",
+    "group": "Clutter (Bottom)",
+    "groupFa": "نوفه بستر",
+    "hierarchy": [
+      "Oceanic",
+      "Dynamic",
+      "Geophysics/Acoustics",
+      "Mine Warfare Bottom Descriptors",
+      "Clutter (Bottom)",
+      "Low"
+    ],
+    "geometry": "Polygon",
+    "minPoints": 3,
+    "maxPoints": 10000
+  },
+  {
+    "id": "WO-DGMCM----A--",
+    "sidc": "WO-DGMCM----A--",
+    "label": "متوسط",
+    "labelEn": "Medium",
+    "family": "geophysics",
+    "group": "Clutter (Bottom)",
+    "groupFa": "نوفه بستر",
+    "hierarchy": [
+      "Oceanic",
+      "Dynamic",
+      "Geophysics/Acoustics",
+      "Mine Warfare Bottom Descriptors",
+      "Clutter (Bottom)",
+      "Medium"
+    ],
+    "geometry": "Polygon",
+    "minPoints": 3,
+    "maxPoints": 10000
+  },
+  {
+    "id": "WO-DGMIBE---A--",
+    "sidc": "WO-DGMIBE---A--",
+    "label": ">75%",
+    "labelEn": ">75%",
+    "family": "geophysics",
+    "group": "Impact Burial",
+    "groupFa": "میزان دفن بر اثر برخورد",
+    "hierarchy": [
+      "Oceanic",
+      "Dynamic",
+      "Geophysics/Acoustics",
+      "Mine Warfare Bottom Descriptors",
+      "Impact Burial",
+      "Impact Burial",
+      ">75%"
+    ],
+    "geometry": "Polygon",
+    "minPoints": 3,
+    "maxPoints": 10000
+  },
+  {
+    "id": "WO-DGMIBB---A--",
+    "sidc": "WO-DGMIBB---A--",
+    "label": "0-10%",
+    "labelEn": "0-10%",
+    "family": "geophysics",
+    "group": "Impact Burial",
+    "groupFa": "میزان دفن بر اثر برخورد",
+    "hierarchy": [
+      "Oceanic",
+      "Dynamic",
+      "Geophysics/Acoustics",
+      "Mine Warfare Bottom Descriptors",
+      "Impact Burial",
+      "Impact Burial",
+      "0-10%"
+    ],
+    "geometry": "Polygon",
+    "minPoints": 3,
+    "maxPoints": 10000
+  },
+  {
+    "id": "WO-DGMIBA---A--",
+    "sidc": "WO-DGMIBA---A--",
+    "label": "0%",
+    "labelEn": "0%",
+    "family": "geophysics",
+    "group": "Impact Burial",
+    "groupFa": "میزان دفن بر اثر برخورد",
+    "hierarchy": [
+      "Oceanic",
+      "Dynamic",
+      "Geophysics/Acoustics",
+      "Mine Warfare Bottom Descriptors",
+      "Impact Burial",
+      "Impact Burial",
+      "0%"
+    ],
+    "geometry": "Polygon",
+    "minPoints": 3,
+    "maxPoints": 10000
+  },
+  {
+    "id": "WO-DGMIBC---A--",
+    "sidc": "WO-DGMIBC---A--",
+    "label": "10-20%",
+    "labelEn": "10-20%",
+    "family": "geophysics",
+    "group": "Impact Burial",
+    "groupFa": "میزان دفن بر اثر برخورد",
+    "hierarchy": [
+      "Oceanic",
+      "Dynamic",
+      "Geophysics/Acoustics",
+      "Mine Warfare Bottom Descriptors",
+      "Impact Burial",
+      "Impact Burial",
+      "10-20%"
+    ],
+    "geometry": "Polygon",
+    "minPoints": 3,
+    "maxPoints": 10000
+  },
+  {
+    "id": "WO-DGMIBD---A--",
+    "sidc": "WO-DGMIBD---A--",
+    "label": "20-75%",
+    "labelEn": "20-75%",
+    "family": "geophysics",
+    "group": "Impact Burial",
+    "groupFa": "میزان دفن بر اثر برخورد",
+    "hierarchy": [
+      "Oceanic",
+      "Dynamic",
+      "Geophysics/Acoustics",
+      "Mine Warfare Bottom Descriptors",
+      "Impact Burial",
+      "Impact Burial",
+      "20-75%"
+    ],
+    "geometry": "Polygon",
+    "minPoints": 3,
+    "maxPoints": 10000
+  },
+  {
+    "id": "WO-DGML-----A--",
+    "sidc": "WO-DGML-----A--",
+    "label": "خشکی",
+    "labelEn": "Land",
+    "family": "geophysics",
+    "group": "Mine Warfare Bottom Descriptors",
+    "groupFa": "توصیفگرهای بستر برای جنگ مین",
+    "hierarchy": [
+      "Oceanic",
+      "Dynamic",
+      "Geophysics/Acoustics",
+      "Mine Warfare Bottom Descriptors",
+      "Land"
+    ],
+    "geometry": "Polygon",
+    "minPoints": 3,
+    "maxPoints": 10000
+  },
+  {
+    "id": "WO-DGMN-----A--",
+    "sidc": "WO-DGMN-----A--",
+    "label": "بدون داده",
+    "labelEn": "No Data",
+    "family": "geophysics",
+    "group": "Mine Warfare Bottom Descriptors",
+    "groupFa": "توصیفگرهای بستر برای جنگ مین",
+    "hierarchy": [
+      "Oceanic",
+      "Dynamic",
+      "Geophysics/Acoustics",
+      "Mine Warfare Bottom Descriptors",
+      "No Data"
+    ],
+    "geometry": "Polygon",
+    "minPoints": 3,
+    "maxPoints": 10000
+  },
+  {
+    "id": "WO-DGMBCA---A--",
+    "sidc": "WO-DGMBCA---A--",
+    "label": "یک",
+    "labelEn": "A",
+    "family": "geophysics",
+    "group": "Miw Bottom Category",
+    "groupFa": "رده بستر جنگ مین",
+    "hierarchy": [
+      "Oceanic",
+      "Dynamic",
+      "Geophysics/Acoustics",
+      "Mine Warfare Bottom Descriptors",
+      "Miw Bottom Category",
+      "Miw Bottom Category",
+      "A"
+    ],
+    "geometry": "Polygon",
+    "minPoints": 3,
+    "maxPoints": 10000
+  },
+  {
+    "id": "WO-DGMBCB---A--",
+    "sidc": "WO-DGMBCB---A--",
+    "label": "رده ب",
+    "labelEn": "B",
+    "family": "geophysics",
+    "group": "Miw Bottom Category",
+    "groupFa": "رده بستر جنگ مین",
+    "hierarchy": [
+      "Oceanic",
+      "Dynamic",
+      "Geophysics/Acoustics",
+      "Mine Warfare Bottom Descriptors",
+      "Miw Bottom Category",
+      "Miw Bottom Category",
+      "B"
+    ],
+    "geometry": "Polygon",
+    "minPoints": 3,
+    "maxPoints": 10000
+  },
+  {
+    "id": "WO-DGMBCC---A--",
+    "sidc": "WO-DGMBCC---A--",
+    "label": "رده ج",
+    "labelEn": "C",
+    "family": "geophysics",
+    "group": "Miw Bottom Category",
+    "groupFa": "رده بستر جنگ مین",
+    "hierarchy": [
+      "Oceanic",
+      "Dynamic",
+      "Geophysics/Acoustics",
+      "Mine Warfare Bottom Descriptors",
+      "Miw Bottom Category",
+      "Miw Bottom Category",
+      "C"
+    ],
+    "geometry": "Polygon",
+    "minPoints": 3,
+    "maxPoints": 10000
+  },
+  {
+    "id": "WO-DGMBTA---A--",
+    "sidc": "WO-DGMBTA---A--",
+    "label": "یک1",
+    "labelEn": "A1",
+    "family": "geophysics",
+    "group": "Miw Bottom Type",
+    "groupFa": "نوع بستر جنگ مین",
+    "hierarchy": [
+      "Oceanic",
+      "Dynamic",
+      "Geophysics/Acoustics",
+      "Mine Warfare Bottom Descriptors",
+      "Miw Bottom Category",
+      "Miw Bottom Type",
+      "A1"
+    ],
+    "geometry": "Polygon",
+    "minPoints": 3,
+    "maxPoints": 10000
+  },
+  {
+    "id": "WO-DGMBTB---A--",
+    "sidc": "WO-DGMBTB---A--",
+    "label": "یک2",
+    "labelEn": "A2",
+    "family": "geophysics",
+    "group": "Miw Bottom Type",
+    "groupFa": "نوع بستر جنگ مین",
+    "hierarchy": [
+      "Oceanic",
+      "Dynamic",
+      "Geophysics/Acoustics",
+      "Mine Warfare Bottom Descriptors",
+      "Miw Bottom Category",
+      "Miw Bottom Type",
+      "A2"
+    ],
+    "geometry": "Polygon",
+    "minPoints": 3,
+    "maxPoints": 10000
+  },
+  {
+    "id": "WO-DGMBTC---A--",
+    "sidc": "WO-DGMBTC---A--",
+    "label": "یک3",
+    "labelEn": "A3",
+    "family": "geophysics",
+    "group": "Miw Bottom Type",
+    "groupFa": "نوع بستر جنگ مین",
+    "hierarchy": [
+      "Oceanic",
+      "Dynamic",
+      "Geophysics/Acoustics",
+      "Mine Warfare Bottom Descriptors",
+      "Miw Bottom Category",
+      "Miw Bottom Type",
+      "A3"
+    ],
+    "geometry": "Polygon",
+    "minPoints": 3,
+    "maxPoints": 10000
+  },
+  {
+    "id": "WO-DGMBTD---A--",
+    "sidc": "WO-DGMBTD---A--",
+    "label": "نوع ب ۱",
+    "labelEn": "B1",
+    "family": "geophysics",
+    "group": "Miw Bottom Type",
+    "groupFa": "نوع بستر جنگ مین",
+    "hierarchy": [
+      "Oceanic",
+      "Dynamic",
+      "Geophysics/Acoustics",
+      "Mine Warfare Bottom Descriptors",
+      "Miw Bottom Category",
+      "Miw Bottom Type",
+      "B1"
+    ],
+    "geometry": "Polygon",
+    "minPoints": 3,
+    "maxPoints": 10000
+  },
+  {
+    "id": "WO-DGMBTE---A--",
+    "sidc": "WO-DGMBTE---A--",
+    "label": "نوع ب ۲",
+    "labelEn": "B2",
+    "family": "geophysics",
+    "group": "Miw Bottom Type",
+    "groupFa": "نوع بستر جنگ مین",
+    "hierarchy": [
+      "Oceanic",
+      "Dynamic",
+      "Geophysics/Acoustics",
+      "Mine Warfare Bottom Descriptors",
+      "Miw Bottom Category",
+      "Miw Bottom Type",
+      "B2"
+    ],
+    "geometry": "Polygon",
+    "minPoints": 3,
+    "maxPoints": 10000
+  },
+  {
+    "id": "WO-DGMBTF---A--",
+    "sidc": "WO-DGMBTF---A--",
+    "label": "نوع ب ۳",
+    "labelEn": "B3",
+    "family": "geophysics",
+    "group": "Miw Bottom Type",
+    "groupFa": "نوع بستر جنگ مین",
+    "hierarchy": [
+      "Oceanic",
+      "Dynamic",
+      "Geophysics/Acoustics",
+      "Mine Warfare Bottom Descriptors",
+      "Miw Bottom Category",
+      "Miw Bottom Type",
+      "B3"
+    ],
+    "geometry": "Polygon",
+    "minPoints": 3,
+    "maxPoints": 10000
+  },
+  {
+    "id": "WO-DGMBTG---A--",
+    "sidc": "WO-DGMBTG---A--",
+    "label": "نوع ج ۱",
+    "labelEn": "C1",
+    "family": "geophysics",
+    "group": "Miw Bottom Type",
+    "groupFa": "نوع بستر جنگ مین",
+    "hierarchy": [
+      "Oceanic",
+      "Dynamic",
+      "Geophysics/Acoustics",
+      "Mine Warfare Bottom Descriptors",
+      "Miw Bottom Category",
+      "Miw Bottom Type",
+      "C1"
+    ],
+    "geometry": "Polygon",
+    "minPoints": 3,
+    "maxPoints": 10000
+  },
+  {
+    "id": "WO-DGMBTH---A--",
+    "sidc": "WO-DGMBTH---A--",
+    "label": "نوع ج ۲",
+    "labelEn": "C2",
+    "family": "geophysics",
+    "group": "Miw Bottom Type",
+    "groupFa": "نوع بستر جنگ مین",
+    "hierarchy": [
+      "Oceanic",
+      "Dynamic",
+      "Geophysics/Acoustics",
+      "Mine Warfare Bottom Descriptors",
+      "Miw Bottom Category",
+      "Miw Bottom Type",
+      "C2"
+    ],
+    "geometry": "Polygon",
+    "minPoints": 3,
+    "maxPoints": 10000
+  },
+  {
+    "id": "WO-DGMBTI---A--",
+    "sidc": "WO-DGMBTI---A--",
+    "label": "نوع ج ۳",
+    "labelEn": "C3",
+    "family": "geophysics",
+    "group": "Miw Bottom Type",
+    "groupFa": "نوع بستر جنگ مین",
+    "hierarchy": [
+      "Oceanic",
+      "Dynamic",
+      "Geophysics/Acoustics",
+      "Mine Warfare Bottom Descriptors",
+      "Miw Bottom Category",
+      "Miw Bottom Type",
+      "C3"
+    ],
+    "geometry": "Polygon",
+    "minPoints": 3,
+    "maxPoints": 10000
+  },
+  {
+    "id": "WO-DGMSB----A--",
+    "sidc": "WO-DGMSB----A--",
+    "label": "تخته‌سنگ‌ها",
+    "labelEn": "Boulders",
+    "family": "geophysics",
+    "group": "Miw-Bottom Sediments",
+    "groupFa": "رسوبات بستر جنگ مین",
+    "hierarchy": [
+      "Oceanic",
+      "Dynamic",
+      "Geophysics/Acoustics",
+      "Mine Warfare Bottom Descriptors",
+      "Miw-Bottom Sediments",
+      "Boulders"
+    ],
+    "geometry": "Polygon",
+    "minPoints": 3,
+    "maxPoints": 10000
+  },
+  {
+    "id": "WO-DGMSC----A--",
+    "sidc": "WO-DGMSC----A--",
+    "label": "رس",
+    "labelEn": "Clay",
+    "family": "geophysics",
+    "group": "Miw-Bottom Sediments",
+    "groupFa": "رسوبات بستر جنگ مین",
+    "hierarchy": [
+      "Oceanic",
+      "Dynamic",
+      "Geophysics/Acoustics",
+      "Mine Warfare Bottom Descriptors",
+      "Miw-Bottom Sediments",
+      "Clay"
+    ],
+    "geometry": "Polygon",
+    "minPoints": 3,
+    "maxPoints": 10000
+  },
+  {
+    "id": "WO-DGMSSC---A--",
+    "sidc": "WO-DGMSSC---A--",
+    "label": "ماسه درشت",
+    "labelEn": "Coarse Sand",
+    "family": "geophysics",
+    "group": "Miw-Bottom Sediments",
+    "groupFa": "رسوبات بستر جنگ مین",
+    "hierarchy": [
+      "Oceanic",
+      "Dynamic",
+      "Geophysics/Acoustics",
+      "Mine Warfare Bottom Descriptors",
+      "Miw-Bottom Sediments",
+      "Coarse Sand"
+    ],
+    "geometry": "Polygon",
+    "minPoints": 3,
+    "maxPoints": 10000
+  },
+  {
+    "id": "WO-DGMSIC---A--",
+    "sidc": "WO-DGMSIC---A--",
+    "label": "لای درشت",
+    "labelEn": "Coarse Silt",
+    "family": "geophysics",
+    "group": "Miw-Bottom Sediments",
+    "groupFa": "رسوبات بستر جنگ مین",
+    "hierarchy": [
+      "Oceanic",
+      "Dynamic",
+      "Geophysics/Acoustics",
+      "Mine Warfare Bottom Descriptors",
+      "Miw-Bottom Sediments",
+      "Coarse Silt"
+    ],
+    "geometry": "Polygon",
+    "minPoints": 3,
+    "maxPoints": 10000
+  },
+  {
+    "id": "WO-DGMS-CO--A--",
+    "sidc": "WO-DGMS-CO--A--",
+    "label": "قلوه‌سنگ و صدف خوراکی",
+    "labelEn": "Cobbles, Oyster Shells",
+    "family": "geophysics",
+    "group": "Miw-Bottom Sediments",
+    "groupFa": "رسوبات بستر جنگ مین",
+    "hierarchy": [
+      "Oceanic",
+      "Dynamic",
+      "Geophysics/Acoustics",
+      "Mine Warfare Bottom Descriptors",
+      "Miw-Bottom Sediments",
+      "Cobbles, Oyster Shells"
+    ],
+    "geometry": "Polygon",
+    "minPoints": 3,
+    "maxPoints": 10000
+  },
+  {
+    "id": "WO-DGMSSF---A--",
+    "sidc": "WO-DGMSSF---A--",
+    "label": "ماسه ریز",
+    "labelEn": "Fine Sand",
+    "family": "geophysics",
+    "group": "Miw-Bottom Sediments",
+    "groupFa": "رسوبات بستر جنگ مین",
+    "hierarchy": [
+      "Oceanic",
+      "Dynamic",
+      "Geophysics/Acoustics",
+      "Mine Warfare Bottom Descriptors",
+      "Miw-Bottom Sediments",
+      "Fine Sand"
+    ],
+    "geometry": "Polygon",
+    "minPoints": 3,
+    "maxPoints": 10000
+  },
+  {
+    "id": "WO-DGMSIF---A--",
+    "sidc": "WO-DGMSIF---A--",
+    "label": "لای ریز",
+    "labelEn": "Fine Silt",
+    "family": "geophysics",
+    "group": "Miw-Bottom Sediments",
+    "groupFa": "رسوبات بستر جنگ مین",
+    "hierarchy": [
+      "Oceanic",
+      "Dynamic",
+      "Geophysics/Acoustics",
+      "Mine Warfare Bottom Descriptors",
+      "Miw-Bottom Sediments",
+      "Fine Silt"
+    ],
+    "geometry": "Polygon",
+    "minPoints": 3,
+    "maxPoints": 10000
+  },
+  {
+    "id": "WO-DGMSSM---A--",
+    "sidc": "WO-DGMSSM---A--",
+    "label": "ماسه متوسط",
+    "labelEn": "Medium Sand",
+    "family": "geophysics",
+    "group": "Miw-Bottom Sediments",
+    "groupFa": "رسوبات بستر جنگ مین",
+    "hierarchy": [
+      "Oceanic",
+      "Dynamic",
+      "Geophysics/Acoustics",
+      "Mine Warfare Bottom Descriptors",
+      "Miw-Bottom Sediments",
+      "Medium Sand"
+    ],
+    "geometry": "Polygon",
+    "minPoints": 3,
+    "maxPoints": 10000
+  },
+  {
+    "id": "WO-DGMSIM---A--",
+    "sidc": "WO-DGMSIM---A--",
+    "label": "لای متوسط",
+    "labelEn": "Medium Silt",
+    "family": "geophysics",
+    "group": "Miw-Bottom Sediments",
+    "groupFa": "رسوبات بستر جنگ مین",
+    "hierarchy": [
+      "Oceanic",
+      "Dynamic",
+      "Geophysics/Acoustics",
+      "Mine Warfare Bottom Descriptors",
+      "Miw-Bottom Sediments",
+      "Medium Silt"
+    ],
+    "geometry": "Polygon",
+    "minPoints": 3,
+    "maxPoints": 10000
+  },
+  {
+    "id": "WO-DGMS-PH--A--",
+    "sidc": "WO-DGMS-PH--A--",
+    "label": "ریگ و صدف",
+    "labelEn": "Pebbles, Shells",
+    "family": "geophysics",
+    "group": "Miw-Bottom Sediments",
+    "groupFa": "رسوبات بستر جنگ مین",
+    "hierarchy": [
+      "Oceanic",
+      "Dynamic",
+      "Geophysics/Acoustics",
+      "Mine Warfare Bottom Descriptors",
+      "Miw-Bottom Sediments",
+      "Pebbles, Shells"
+    ],
+    "geometry": "Polygon",
+    "minPoints": 3,
+    "maxPoints": 10000
+  },
+  {
+    "id": "WO-DGMS-SH--A--",
+    "sidc": "WO-DGMS-SH--A--",
+    "label": "ماسه و صدف",
+    "labelEn": "Sand And Shells",
+    "family": "geophysics",
+    "group": "Miw-Bottom Sediments",
+    "groupFa": "رسوبات بستر جنگ مین",
+    "hierarchy": [
+      "Oceanic",
+      "Dynamic",
+      "Geophysics/Acoustics",
+      "Mine Warfare Bottom Descriptors",
+      "Miw-Bottom Sediments",
+      "Sand And Shells"
+    ],
+    "geometry": "Polygon",
+    "minPoints": 3,
+    "maxPoints": 10000
+  },
+  {
+    "id": "WO-DGMSR----A--",
+    "sidc": "WO-DGMSR----A--",
+    "label": "سنگ یکپارچه",
+    "labelEn": "Solid Rock",
+    "family": "geophysics",
+    "group": "Miw-Bottom Sediments",
+    "groupFa": "رسوبات بستر جنگ مین",
+    "hierarchy": [
+      "Oceanic",
+      "Dynamic",
+      "Geophysics/Acoustics",
+      "Mine Warfare Bottom Descriptors",
+      "Miw-Bottom Sediments",
+      "Solid Rock"
+    ],
+    "geometry": "Polygon",
+    "minPoints": 3,
+    "maxPoints": 10000
+  },
+  {
+    "id": "WO-DGMSSVS--A--",
+    "sidc": "WO-DGMSSVS--A--",
+    "label": "ماسه بسیار درشت",
+    "labelEn": "Very Coarse Sand",
+    "family": "geophysics",
+    "group": "Miw-Bottom Sediments",
+    "groupFa": "رسوبات بستر جنگ مین",
+    "hierarchy": [
+      "Oceanic",
+      "Dynamic",
+      "Geophysics/Acoustics",
+      "Mine Warfare Bottom Descriptors",
+      "Miw-Bottom Sediments",
+      "Very Coarse Sand"
+    ],
+    "geometry": "Polygon",
+    "minPoints": 3,
+    "maxPoints": 10000
+  },
+  {
+    "id": "WO-DGMSSVF--A--",
+    "sidc": "WO-DGMSSVF--A--",
+    "label": "ماسه بسیار ریز",
+    "labelEn": "Very Fine Sand",
+    "family": "geophysics",
+    "group": "Miw-Bottom Sediments",
+    "groupFa": "رسوبات بستر جنگ مین",
+    "hierarchy": [
+      "Oceanic",
+      "Dynamic",
+      "Geophysics/Acoustics",
+      "Mine Warfare Bottom Descriptors",
+      "Miw-Bottom Sediments",
+      "Very Fine Sand"
+    ],
+    "geometry": "Polygon",
+    "minPoints": 3,
+    "maxPoints": 10000
+  },
+  {
+    "id": "WO-DGMSIVF--A--",
+    "sidc": "WO-DGMSIVF--A--",
+    "label": "لای بسیار ریز",
+    "labelEn": "Very Fine Silt",
+    "family": "geophysics",
+    "group": "Miw-Bottom Sediments",
+    "groupFa": "رسوبات بستر جنگ مین",
+    "hierarchy": [
+      "Oceanic",
+      "Dynamic",
+      "Geophysics/Acoustics",
+      "Mine Warfare Bottom Descriptors",
+      "Miw-Bottom Sediments",
+      "Very Fine Silt"
+    ],
+    "geometry": "Polygon",
+    "minPoints": 3,
+    "maxPoints": 10000
+  },
+  {
+    "id": "WAS-GSSCH-P----",
+    "sidc": "WAS-GSSCH-P----",
+    "label": "برف فشرده یا خیس (با یا بدون یخ) با پوشش دست‌کم نیمی از زمین، اما زمین کاملاً پوشیده نیست",
+    "labelEn": "Compact Or Wet Snow (With Or Without Ice) Covering At Least One-Half Ground, But Ground Not Completely Covered",
+    "family": "ground",
+    "group": "With Snow or Measurable Ice Cover",
+    "groupFa": "با پوشش قابل‌اندازه‌گیری برف یا یخ",
+    "hierarchy": [
+      "Atmospheric",
+      "Static",
+      "State of the Ground",
+      "With Snow or Measurable Ice Cover",
+      "Compact or Wet Snow (With or Without Ice) Covering At Least One-Half Ground, But Ground Not Completely Covered"
+    ],
+    "geometry": "Point",
+    "minPoints": 1,
+    "maxPoints": 1
+  },
+  {
+    "id": "WAS-GSSCL-P----",
+    "sidc": "WAS-GSSCL-P----",
+    "label": "برف فشرده یا خیس (با یا بدون یخ) با پوشش کمتر از نیمی از زمین",
+    "labelEn": "Compact Or Wet Snow (With Or Without Ice) Covering Less Than One-Half Of Ground",
+    "family": "ground",
+    "group": "With Snow or Measurable Ice Cover",
+    "groupFa": "با پوشش قابل‌اندازه‌گیری برف یا یخ",
+    "hierarchy": [
+      "Atmospheric",
+      "Static",
+      "State of the Ground",
+      "With Snow or Measurable Ice Cover",
+      "Compact or Wet Snow (With or Without Ice) Covering Less than One-Half of Ground"
+    ],
+    "geometry": "Point",
+    "minPoints": 1,
+    "maxPoints": 1
+  },
+  {
+    "id": "WAS-GSSCCEP----",
+    "sidc": "WAS-GSSCCEP----",
+    "label": "لایه یکنواخت از برف فشرده یا خیس با پوشش کامل زمین",
+    "labelEn": "Even Layer Of Compact Or Wet Snow Covering Ground Completely",
+    "family": "ground",
+    "group": "With Snow or Measurable Ice Cover",
+    "groupFa": "با پوشش قابل‌اندازه‌گیری برف یا یخ",
+    "hierarchy": [
+      "Atmospheric",
+      "Static",
+      "State of the Ground",
+      "With Snow or Measurable Ice Cover",
+      "Even Layer of Compact or Wet Snow Covering Ground Completely"
+    ],
+    "geometry": "Point",
+    "minPoints": 1,
+    "maxPoints": 1
+  },
+  {
+    "id": "WAS-GSSLCEP----",
+    "sidc": "WAS-GSSLCEP----",
+    "label": "لایه یکنواخت از برف خشک و سست با پوشش کامل زمین",
+    "labelEn": "Even Layer Of Loose Dry Snow Covering Ground Completely",
+    "family": "ground",
+    "group": "With Snow or Measurable Ice Cover",
+    "groupFa": "با پوشش قابل‌اندازه‌گیری برف یا یخ",
+    "hierarchy": [
+      "Atmospheric",
+      "Static",
+      "State of the Ground",
+      "With Snow or Measurable Ice Cover",
+      "Even Layer of Loose Dry Snow Covering Ground Completely"
+    ],
+    "geometry": "Point",
+    "minPoints": 1,
+    "maxPoints": 1
+  },
+  {
+    "id": "WAS-GSSLH-P----",
+    "sidc": "WAS-GSSLH-P----",
+    "label": "برف خشک و سست با پوشش دست‌کم نیمی از زمین، اما زمین کاملاً پوشیده نیست",
+    "labelEn": "Loose Dry Snow Covering At Least One-Half Ground, But Ground Not Completely Covered",
+    "family": "ground",
+    "group": "With Snow or Measurable Ice Cover",
+    "groupFa": "با پوشش قابل‌اندازه‌گیری برف یا یخ",
+    "hierarchy": [
+      "Atmospheric",
+      "Static",
+      "State of the Ground",
+      "With Snow or Measurable Ice Cover",
+      "Loose Dry Snow Covering At Least One-Half Ground, But Ground Not Completely Covered"
+    ],
+    "geometry": "Point",
+    "minPoints": 1,
+    "maxPoints": 1
+  },
+  {
+    "id": "WAS-GSSLL-P----",
+    "sidc": "WAS-GSSLL-P----",
+    "label": "برف خشک و سست با پوشش کمتر از نیمی از زمین",
+    "labelEn": "Loose Dry Snow Covering Less Than One-Half Of Ground",
+    "family": "ground",
+    "group": "With Snow or Measurable Ice Cover",
+    "groupFa": "با پوشش قابل‌اندازه‌گیری برف یا یخ",
+    "hierarchy": [
+      "Atmospheric",
+      "Static",
+      "State of the Ground",
+      "With Snow or Measurable Ice Cover",
+      "Loose Dry Snow Covering Less than One-Half of Ground"
+    ],
+    "geometry": "Point",
+    "minPoints": 1,
+    "maxPoints": 1
+  },
+  {
+    "id": "WAS-GSI---P----",
+    "sidc": "WAS-GSI---P----",
+    "label": "عمدتاً پوشیده از یخ",
+    "labelEn": "Predominately Ice Covered",
+    "family": "ground",
+    "group": "With Snow or Measurable Ice Cover",
+    "groupFa": "با پوشش قابل‌اندازه‌گیری برف یا یخ",
+    "hierarchy": [
+      "Atmospheric",
+      "Static",
+      "State of the Ground",
+      "With Snow or Measurable Ice Cover",
+      "Predominately Ice Covered"
+    ],
+    "geometry": "Point",
+    "minPoints": 1,
+    "maxPoints": 1
+  },
+  {
+    "id": "WAS-GSSDC-P----",
+    "sidc": "WAS-GSSDC-P----",
+    "label": "برف با پوشش کامل زمین; توده‌های برفی عمیق",
+    "labelEn": "Snow Covering Ground Completely; Deep Drifts",
+    "family": "ground",
+    "group": "With Snow or Measurable Ice Cover",
+    "groupFa": "با پوشش قابل‌اندازه‌گیری برف یا یخ",
+    "hierarchy": [
+      "Atmospheric",
+      "Static",
+      "State of the Ground",
+      "With Snow or Measurable Ice Cover",
+      "Snow Covering Ground Completely; Deep Drifts"
+    ],
+    "geometry": "Point",
+    "minPoints": 1,
+    "maxPoints": 1
+  },
+  {
+    "id": "WAS-GSSCCUP----",
+    "sidc": "WAS-GSSCCUP----",
+    "label": "لایه ناهموار از برف فشرده یا خیس با پوشش کامل زمین",
+    "labelEn": "Uneven Layer Of Compact Or Wet Snow Covering Ground Completely",
+    "family": "ground",
+    "group": "With Snow or Measurable Ice Cover",
+    "groupFa": "با پوشش قابل‌اندازه‌گیری برف یا یخ",
+    "hierarchy": [
+      "Atmospheric",
+      "Static",
+      "State of the Ground",
+      "With Snow or Measurable Ice Cover",
+      "Uneven Layer of Compact or Wet Snow Covering Ground Completely"
+    ],
+    "geometry": "Point",
+    "minPoints": 1,
+    "maxPoints": 1
+  },
+  {
+    "id": "WAS-GSSLCUP----",
+    "sidc": "WAS-GSSLCUP----",
+    "label": "لایه ناهموار از برف خشک و سست با پوشش کامل زمین",
+    "labelEn": "Uneven Layer Of Loose Dry Snow Covering Ground Completely",
+    "family": "ground",
+    "group": "With Snow or Measurable Ice Cover",
+    "groupFa": "با پوشش قابل‌اندازه‌گیری برف یا یخ",
+    "hierarchy": [
+      "Atmospheric",
+      "Static",
+      "State of the Ground",
+      "With Snow or Measurable Ice Cover",
+      "Uneven Layer of Loose Dry Snow Covering Ground Completely"
+    ],
+    "geometry": "Point",
+    "minPoints": 1,
+    "maxPoints": 1
+  },
+  {
+    "id": "WAS-GNDEWCP----",
+    "sidc": "WAS-GNDEWCP----",
+    "label": "بسیار خشک و ترک‌خورده",
+    "labelEn": "Extremely Dry With Cracks",
+    "family": "ground",
+    "group": "Without Snow or Measurable Ice Cover",
+    "groupFa": "بدون پوشش قابل‌اندازه‌گیری برف یا یخ",
+    "hierarchy": [
+      "Atmospheric",
+      "Static",
+      "State of the Ground",
+      "Without Snow or Measurable Ice Cover",
+      "Extremely Dry With Cracks"
+    ],
+    "geometry": "Point",
+    "minPoints": 1,
+    "maxPoints": 1
+  },
+  {
+    "id": "WAS-GNG-TIP----",
+    "sidc": "WAS-GNG-TIP----",
+    "label": "لایه نازک یخ روی زمین",
+    "labelEn": "Glaze (Thin Ice) On Ground",
+    "family": "ground",
+    "group": "Without Snow or Measurable Ice Cover",
+    "groupFa": "بدون پوشش قابل‌اندازه‌گیری برف یا یخ",
+    "hierarchy": [
+      "Atmospheric",
+      "Static",
+      "State of the Ground",
+      "Without Snow or Measurable Ice Cover",
+      "Glaze (Thin Ice) on Ground"
+    ],
+    "geometry": "Point",
+    "minPoints": 1,
+    "maxPoints": 1
+  },
+  {
+    "id": "WAS-GNLDN-P----",
+    "sidc": "WAS-GNLDN-P----",
+    "label": "گرد و خاک یا شن خشک و سست نه با پوشش کامل زمین",
+    "labelEn": "Loose Dry Dust Or Sand Not Covering Ground Completely",
+    "family": "ground",
+    "group": "Without Snow or Measurable Ice Cover",
+    "groupFa": "بدون پوشش قابل‌اندازه‌گیری برف یا یخ",
+    "hierarchy": [
+      "Atmospheric",
+      "Static",
+      "State of the Ground",
+      "Without Snow or Measurable Ice Cover",
+      "Loose Dry Dust or Sand Not Covering Ground Completely"
+    ],
+    "geometry": "Point",
+    "minPoints": 1,
+    "maxPoints": 1
+  },
+  {
+    "id": "WAS-GNLDMCP----",
+    "sidc": "WAS-GNLDMCP----",
+    "label": "متوسط/ضخیم گرد و خاک یا شن خشک و سست با پوشش کامل زمین",
+    "labelEn": "Moderate/Thick Loose Dry Dust Or Sand Covering Ground Completely",
+    "family": "ground",
+    "group": "Without Snow or Measurable Ice Cover",
+    "groupFa": "بدون پوشش قابل‌اندازه‌گیری برف یا یخ",
+    "hierarchy": [
+      "Atmospheric",
+      "Static",
+      "State of the Ground",
+      "Without Snow or Measurable Ice Cover",
+      "Moderate/Thick Loose Dry Dust or Sand Covering Ground Completely"
+    ],
+    "geometry": "Point",
+    "minPoints": 1,
+    "maxPoints": 1
+  },
+  {
+    "id": "WAS-GND-NCP----",
+    "sidc": "WAS-GND-NCP----",
+    "label": "سطح خشک، بدون ترک یا گرد و خاک و شن سست قابل‌توجه",
+    "labelEn": "Surface Dry Without Cracks Or Appreciable Dust Or Loose Sand",
+    "family": "ground",
+    "group": "Without Snow or Measurable Ice Cover",
+    "groupFa": "بدون پوشش قابل‌اندازه‌گیری برف یا یخ",
+    "hierarchy": [
+      "Atmospheric",
+      "Static",
+      "State of the Ground",
+      "Without Snow or Measurable Ice Cover",
+      "Surface Dry Without Cracks or Appreciable Dust or Loose Sand"
+    ],
+    "geometry": "Point",
+    "minPoints": 1,
+    "maxPoints": 1
+  },
+  {
+    "id": "WAS-GNFL--P----",
+    "sidc": "WAS-GNFL--P----",
+    "label": "سطح آب‌گرفته",
+    "labelEn": "Surface Flooded",
+    "family": "ground",
+    "group": "Without Snow or Measurable Ice Cover",
+    "groupFa": "بدون پوشش قابل‌اندازه‌گیری برف یا یخ",
+    "hierarchy": [
+      "Atmospheric",
+      "Static",
+      "State of the Ground",
+      "Without Snow or Measurable Ice Cover",
+      "Surface Flooded"
+    ],
+    "geometry": "Point",
+    "minPoints": 1,
+    "maxPoints": 1
+  },
+  {
+    "id": "WAS-GNFZ--P----",
+    "sidc": "WAS-GNFZ--P----",
+    "label": "سطح یخ‌زده",
+    "labelEn": "Surface Frozen",
+    "family": "ground",
+    "group": "Without Snow or Measurable Ice Cover",
+    "groupFa": "بدون پوشش قابل‌اندازه‌گیری برف یا یخ",
+    "hierarchy": [
+      "Atmospheric",
+      "Static",
+      "State of the Ground",
+      "Without Snow or Measurable Ice Cover",
+      "Surface Frozen"
+    ],
+    "geometry": "Point",
+    "minPoints": 1,
+    "maxPoints": 1
+  },
+  {
+    "id": "WAS-GNM---P----",
+    "sidc": "WAS-GNM---P----",
+    "label": "سطح نمناک",
+    "labelEn": "Surface Moist",
+    "family": "ground",
+    "group": "Without Snow or Measurable Ice Cover",
+    "groupFa": "بدون پوشش قابل‌اندازه‌گیری برف یا یخ",
+    "hierarchy": [
+      "Atmospheric",
+      "Static",
+      "State of the Ground",
+      "Without Snow or Measurable Ice Cover",
+      "Surface Moist"
+    ],
+    "geometry": "Point",
+    "minPoints": 1,
+    "maxPoints": 1
+  },
+  {
+    "id": "WAS-GNW-SWP----",
+    "sidc": "WAS-GNW-SWP----",
+    "label": "سطح خیس با آب ایستاده در گودال‌های کوچک یا بزرگ",
+    "labelEn": "Surface Wet, Standing Water In Small Or Large Pools",
+    "family": "ground",
+    "group": "Without Snow or Measurable Ice Cover",
+    "groupFa": "بدون پوشش قابل‌اندازه‌گیری برف یا یخ",
+    "hierarchy": [
+      "Atmospheric",
+      "Static",
+      "State of the Ground",
+      "Without Snow or Measurable Ice Cover",
+      "Surface Wet, Standing Water In Small or Large Pools"
+    ],
+    "geometry": "Point",
+    "minPoints": 1,
+    "maxPoints": 1
+  },
+  {
+    "id": "WAS-GNLDTCP----",
+    "sidc": "WAS-GNLDTCP----",
+    "label": "لایه نازک گردوخاک یا شن خشک و سست با پوشش کامل زمین",
+    "labelEn": "Thin Loose Dry Dust Or Sand Covering Ground Completely",
+    "family": "ground",
+    "group": "Without Snow or Measurable Ice Cover",
+    "groupFa": "بدون پوشش قابل‌اندازه‌گیری برف یا یخ",
+    "hierarchy": [
+      "Atmospheric",
+      "Static",
+      "State of the Ground",
+      "Without Snow or Measurable Ice Cover",
+      "Thin Loose Dry Dust or Sand Covering Ground Completely"
+    ],
+    "geometry": "Point",
+    "minPoints": 1,
+    "maxPoints": 1
+  }
+]

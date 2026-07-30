@@ -1,6 +1,7 @@
 import type { EnvironmentalCondition } from '@/types';
 
 export const ENVIRONMENTAL_KIND_LABELS: Record<string, string> = {
+  metoc: 'نماد هواشناسی و محیطی',
   precipitation: 'بارش',
   visibility: 'دید',
   wind: 'باد',
@@ -25,6 +26,16 @@ export const ENVIRONMENTAL_KIND_LABELS: Record<string, string> = {
   bridge_condition: 'وضعیت پل',
   water_crossing: 'گذرگاه آبی',
   elevation: 'ارتفاع',
+};
+
+const LEGACY_METOC_SIDC_ALIASES: Record<string, string> = {
+  'W-S-WSR-LI': 'WAS-WSR-MCP----',
+  'W-S-WSS-LI': 'WAS-WSS-MCP----',
+  'W-S-WSGRL-': 'WAS-WSGRMHP----',
+  'W-S-WSTMH-': 'WAS-WSTMH-P----',
+  'W-S-WSDSLM': 'WAS-WSDSLMP----',
+  'W-S-WSFGSO': 'WAS-WSFGSOP----',
+  'W-S-WSD-LI': 'WAS-GND-NCP----',
 };
 
 export const DEFAULT_ENVIRONMENT_SIDC: Record<string, string> = {
@@ -161,11 +172,11 @@ function formatParameterValue(key: string, value: string | number) {
 }
 
 export function environmentalSidc(condition: EnvironmentalCondition) {
-  return (
+  const sidc =
     condition.metocSidc ??
     DEFAULT_ENVIRONMENT_SIDC[condition.kind ?? ''] ??
-    'S-G-UCFOO-'
-  );
+    'WAS-WSR-MCP----';
+  return LEGACY_METOC_SIDC_ALIASES[sidc] ?? sidc;
 }
 
 export function environmentalKindLabel(condition: EnvironmentalCondition) {

@@ -358,6 +358,7 @@ export interface EnvironmentalCondition {
   /** Legacy dashboard category. New scenarios use `kind`. */
   type?: EnvironmentalFactorType;
   kind?:
+    | 'metoc'
     | 'precipitation'
     | 'visibility'
     | 'wind'

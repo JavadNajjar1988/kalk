@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onUnmounted, ref } from "vue";
+import { computed, onUnmounted, ref, watch } from "vue";
 import {
   PhX as CloseIcon,
   PhPolygon as AreaIcon,
@@ -21,14 +21,25 @@ import { useMainToolbarStore } from "@/stores/mainToolbarStore";
 import { symbolGenerator } from "@/symbology/milsymbwrapper";
 import PersianDateTimeField from "@/components/PersianDateTimeField.vue";
 import { ENVIRONMENT_PRESETS, type EnvironmentPreset } from "./environmentPresets";
+import MetocSymbolPicker from "./MetocSymbolPicker.vue";
+import {
+  DEFAULT_METOC_SYMBOL,
+  findMetocSymbol,
+  metocSymbolAsPreset,
+} from "./metocCatalog";
 
 const toolbarStore = useMainToolbarStore();
 const scenario = injectStrict(activeScenarioKey);
 const mapRef = injectStrict(activeMapKey);
-const selectedPresetId = ref("rain");
-const activeCategory = ref<EnvironmentPreset["category"]>("atmosphere");
+type EnvironmentDomain = "metoc" | "terrain" | "infrastructure";
+
+const selectedPresetId = ref("dry-ground");
+const selectedMetocSidc = ref(DEFAULT_METOC_SYMBOL.sidc);
+const activeDomain = ref<EnvironmentDomain>("metoc");
 const scope = ref<"global" | "area">("area");
-const geometryMode = ref<"Polygon" | "LineString" | "Point">("Polygon");
+const geometryMode = ref<"Polygon" | "LineString" | "Point">(
+  DEFAULT_METOC_SYMBOL.geometry,
+);
 const drawing = ref(false);
 
 function toInput(timestamp: number) {
@@ -40,13 +51,55 @@ function toInput(timestamp: number) {
 
 const startTime = ref(toInput(scenario.store.state.currentTime));
 const endTime = ref(toInput(scenario.store.state.currentTime + 3 * 60 * 60 * 1000));
-const selectedPreset = computed(
-  () =>
-    ENVIRONMENT_PRESETS.find((preset) => preset.id === selectedPresetId.value) ??
-    ENVIRONMENT_PRESETS[0],
+const selectedMetocSymbol = computed(
+  () => findMetocSymbol(selectedMetocSidc.value) ?? DEFAULT_METOC_SYMBOL,
 );
+const selectedPreset = computed(() => {
+  if (activeDomain.value === "metoc") {
+    return metocSymbolAsPreset(selectedMetocSymbol.value);
+  }
+  return (
+    ENVIRONMENT_PRESETS.find(
+      (preset) =>
+        preset.id === selectedPresetId.value && preset.category === activeDomain.value,
+    ) ??
+    ENVIRONMENT_PRESETS.find((preset) => preset.category === activeDomain.value) ??
+    ENVIRONMENT_PRESETS[0]
+  );
+});
 const visiblePresets = computed(() =>
-  ENVIRONMENT_PRESETS.filter((preset) => preset.category === activeCategory.value),
+  ENVIRONMENT_PRESETS.filter((preset) => preset.category === activeDomain.value),
+);
+
+watch(
+  selectedMetocSymbol,
+  (symbol) => {
+    if (drawing.value) cancelDraw();
+    geometryMode.value = symbol.geometry;
+    scope.value = "area";
+  },
+  { immediate: true },
+);
+
+function selectDomain(domain: EnvironmentDomain) {
+  cancelDraw();
+  activeDomain.value = domain;
+  if (domain === "metoc") {
+    scope.value = "area";
+    geometryMode.value = selectedMetocSymbol.value.geometry;
+    return;
+  }
+  const first = ENVIRONMENT_PRESETS.find((preset) => preset.category === domain);
+  if (first) selectedPresetId.value = first.id;
+}
+
+const geometryLabel = computed(
+  () =>
+    ({
+      Point: "نقطه",
+      LineString: "خط",
+      Polygon: "سطح",
+    })[geometryMode.value],
 );
 
 function presetSvg(preset: EnvironmentPreset) {
@@ -136,16 +189,16 @@ onUnmounted(cancelDraw);
       <button
         type="button"
         class="flex-1 rounded px-2 py-1 text-[11px]"
-        :class="{ 'bg-white shadow dark:bg-slate-700': activeCategory === 'atmosphere' }"
-        @click="activeCategory = 'atmosphere'"
+        :class="{ 'bg-white shadow dark:bg-slate-700': activeDomain === 'metoc' }"
+        @click="selectDomain('metoc')"
       >
-        جو و هوا
+        نمادهای METOC
       </button>
       <button
         type="button"
         class="flex-1 rounded px-2 py-1 text-[11px]"
-        :class="{ 'bg-white shadow dark:bg-slate-700': activeCategory === 'terrain' }"
-        @click="activeCategory = 'terrain'"
+        :class="{ 'bg-white shadow dark:bg-slate-700': activeDomain === 'terrain' }"
+        @click="selectDomain('terrain')"
       >
         زمین
       </button>
@@ -153,14 +206,15 @@ onUnmounted(cancelDraw);
         type="button"
         class="flex-1 rounded px-2 py-1 text-[11px]"
         :class="{
-          'bg-white shadow dark:bg-slate-700': activeCategory === 'infrastructure',
+          'bg-white shadow dark:bg-slate-700': activeDomain === 'infrastructure',
         }"
-        @click="activeCategory = 'infrastructure'"
+        @click="selectDomain('infrastructure')"
       >
         راه و زیرساخت
       </button>
     </div>
-    <div class="flex max-w-full items-center gap-1 overflow-x-auto pb-1">
+    <MetocSymbolPicker v-if="activeDomain === 'metoc'" v-model="selectedMetocSidc" />
+    <div v-else class="flex max-w-full items-center gap-1 overflow-x-auto pb-1">
       <button
         v-for="preset in visiblePresets"
         :key="preset.id"
@@ -181,7 +235,13 @@ onUnmounted(cancelDraw);
     <div class="flex flex-wrap items-end gap-2 border-t pt-2">
       <PersianDateTimeField v-model="startTime" label="شروع" required />
       <PersianDateTimeField v-model="endTime" label="پایان" required />
-      <div class="flex rounded border p-0.5">
+      <div
+        v-if="activeDomain === 'metoc'"
+        class="rounded border border-sky-200 bg-sky-50 px-3 py-2 text-xs text-sky-800 dark:border-sky-900 dark:bg-sky-950 dark:text-sky-100"
+      >
+        هندسه استاندارد نماد: {{ geometryLabel }}
+      </div>
+      <div v-else class="flex rounded border p-0.5">
         <button
           type="button"
           class="flex items-center gap-1 rounded px-2 py-1.5 text-xs"

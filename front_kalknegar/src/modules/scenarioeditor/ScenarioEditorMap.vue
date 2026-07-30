@@ -247,6 +247,7 @@ import { useGeoStore } from "@/stores/geoStore";
 import type { StoryboardShowMode } from "@/types/scenarioModels";
 import { advanceScenarioPlaybackTime } from "@/modules/scenarioeditor/scenarioPlayback";
 import { createEnvironmentMapLayer } from "@/modules/scenarioeditor/environmentMapLayer";
+import { getPointResolution } from "ol/proj";
 
 const emit = defineEmits(["showExport", "showLoad", "show-settings"]);
 const activeScenario = injectStrict(activeScenarioKey);
@@ -314,6 +315,23 @@ const breakpoints = useBreakpoints(breakpointsTailwind);
 
 const isMobile = breakpoints.smallerOrEqual("md");
 
+function refreshEnvironmentLayer() {
+  const map = mapRef.value;
+  if (!map) return;
+  const view = map.getView();
+  const projection = view.getProjection();
+  const resolution = view.getResolution() ?? 1;
+  const center = view.getCenter() ?? [0, 0];
+  const metersPerPixel = getPointResolution(projection, resolution, center, "m");
+  const scale = (metersPerPixel * 96) / 0.0254;
+  environmentMapLayer.refresh(
+    state.environmentalConditions,
+    state.currentTime,
+    projection.getCode(),
+    scale,
+  );
+}
+
 function onMapReady({
   olMap,
   featureSelectInteraction,
@@ -324,11 +342,8 @@ function onMapReady({
   mapRef.value = olMap;
   featureSelectInteractionRef.value = featureSelectInteraction;
   olMap.addLayer(environmentMapLayer.layer);
-  environmentMapLayer.refresh(
-    state.environmentalConditions,
-    state.currentTime,
-    olMap.getView().getProjection().getCode(),
-  );
+  olMap.on("moveend", refreshEnvironmentLayer);
+  refreshEnvironmentLayer();
 }
 
 const {
@@ -371,19 +386,15 @@ watch([showLeftPanel, orbatPanelWidth, showDetailsPanel, detailsWidth, isMobile]
 watch(
   [() => state.environmentalConditions, () => state.currentTime],
   () => {
-    const map = mapRef.value;
-    if (!map) return;
-    environmentMapLayer.refresh(
-      state.environmentalConditions,
-      state.currentTime,
-      map.getView().getProjection().getCode(),
-    );
+    refreshEnvironmentLayer();
   },
   { deep: true },
 );
 
 onUnmounted(() => {
-  mapRef.value?.removeLayer(environmentMapLayer.layer);
+  const map = mapRef.value;
+  map?.un("moveend", refreshEnvironmentLayer);
+  map?.removeLayer(environmentMapLayer.layer);
   activeUnitStore.clearActiveUnit();
   playback.playbackRunning = false;
 });

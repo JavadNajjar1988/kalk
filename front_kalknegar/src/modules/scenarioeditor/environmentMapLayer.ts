@@ -15,6 +15,8 @@ import {
 } from "@/scenariostore/environment";
 import { symbolGenerator } from "@/symbology/milsymbwrapper";
 import { presetForCondition } from "./environmentPresets";
+import { findMetocSymbol, metocSymbolAsPreset } from "./metocCatalog";
+import { renderMetocGeometry, renderMetocIcon } from "./metocRenderer";
 
 function iconSource(condition: EnvironmentalCondition) {
   try {
@@ -24,6 +26,15 @@ function iconSource(condition: EnvironmentalCondition) {
   } catch {
     return undefined;
   }
+}
+
+function colorWithOpacity(color: string | undefined, opacity = 1) {
+  if (!color) return undefined;
+  if (!color.startsWith("#") || color.length !== 7) return color;
+  const red = Number.parseInt(color.slice(1, 3), 16);
+  const green = Number.parseInt(color.slice(3, 5), 16);
+  const blue = Number.parseInt(color.slice(5, 7), 16);
+  return `rgba(${red}, ${green}, ${blue}, ${opacity})`;
 }
 
 function markerCoordinate(geometry: SimpleGeometry) {
@@ -36,16 +47,47 @@ function markerCoordinate(geometry: SimpleGeometry) {
 
 export function createEnvironmentMapLayer() {
   const source = new VectorSource();
+  let refreshRevision = 0;
   const layer = new VectorLayer({
     source,
     zIndex: 35,
     properties: { title: "شرایط محیطی", environmentalOverlay: true },
     style: (feature) => {
       const condition = feature.get("condition") as EnvironmentalCondition;
-      const preset = presetForCondition(condition.kind, condition.parameters);
+      const standardSymbol = findMetocSymbol(condition.metocSidc);
+      const preset = standardSymbol
+        ? metocSymbolAsPreset(standardSymbol)
+        : presetForCondition(condition.kind, condition.parameters, condition.metocSidc);
       const color = preset.color;
+      if (feature.get("metocRendered")) {
+        const strokeColor =
+          colorWithOpacity(
+            feature.get("strokeColor"),
+            Number(feature.get("lineOpacity") ?? 1),
+          ) ?? color;
+        const fillColor = colorWithOpacity(
+          feature.get("fillColor"),
+          Number(feature.get("fillOpacity") ?? 0.25),
+        );
+        const label = String(feature.get("label") ?? "");
+        return new Style({
+          fill: fillColor ? new Fill({ color: fillColor }) : undefined,
+          stroke: new Stroke({
+            color: strokeColor,
+            width: Number(feature.get("strokeWidth") ?? feature.get("strokeWeight") ?? 2),
+          }),
+          text: label
+            ? new Text({
+                text: label,
+                fill: new Fill({ color: strokeColor }),
+                backgroundFill: new Fill({ color: "rgba(255,255,255,0.82)" }),
+                padding: [2, 3, 2, 3],
+              })
+            : undefined,
+        });
+      }
       if (feature.getGeometry() instanceof Point) {
-        const src = iconSource(condition);
+        const src = feature.get("metocIcon") ?? iconSource(condition);
         return new Style({
           image: src ? new Icon({ src, anchor: [0.5, 0.5], scale: 0.9 }) : undefined,
           text: src
@@ -70,7 +112,9 @@ export function createEnvironmentMapLayer() {
     conditions: EnvironmentalCondition[],
     timestamp: number,
     projection: string,
+    scale: number,
   ) {
+    const revision = ++refreshRevision;
     source.clear();
     conditions
       .filter(
@@ -80,12 +124,50 @@ export function createEnvironmentMapLayer() {
           isEnvironmentalConditionActive(condition, timestamp),
       )
       .forEach((condition) => {
+        const standardSymbol = findMetocSymbol(condition.metocSidc);
         const geometry = format.readGeometry(condition.geometry!, {
           dataProjection: "EPSG:4326",
           featureProjection: projection,
         });
         if (!("getExtent" in geometry)) return;
-        source.addFeature(new Feature({ geometry, condition }));
+        const fallbackFeature = new Feature({ geometry, condition });
+        source.addFeature(fallbackFeature);
+
+        if (geometry instanceof Point && standardSymbol) {
+          renderMetocIcon(standardSymbol.sidc, 36)
+            .then((src) => {
+              if (revision !== refreshRevision) return;
+              fallbackFeature.set("metocIcon", src);
+              fallbackFeature.changed();
+            })
+            .catch(() => undefined);
+          return;
+        }
+
+        if (!(geometry instanceof Point) && standardSymbol) {
+          renderMetocGeometry(
+            standardSymbol.sidc,
+            condition.geometry!,
+            standardSymbol.geometry,
+            scale,
+          )
+            .then((rendered) => {
+              if (revision !== refreshRevision || !rendered?.features.length) return;
+              source.removeFeature(fallbackFeature);
+              const renderedFeatures = format.readFeatures(rendered, {
+                dataProjection: "EPSG:4326",
+                featureProjection: projection,
+              });
+              renderedFeatures.forEach((feature) => {
+                feature.set("condition", condition);
+                feature.set("metocRendered", true);
+              });
+              source.addFeatures(renderedFeatures);
+            })
+            .catch(() => undefined);
+          return;
+        }
+
         if (!(geometry instanceof Point)) {
           source.addFeature(
             new Feature({

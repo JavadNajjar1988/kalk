@@ -23,7 +23,7 @@ describe('environment presentation', () => {
     };
 
     expect(environmentalKindLabel(condition)).toBe('بارش');
-    expect(environmentalSidc(condition)).toBe('W-S-WSR-LI');
+    expect(environmentalSidc(condition)).toBe('WAS-WSR-MCP----');
     expect(environmentalParameters(condition)).toEqual([
       { key: 'mode', label: 'نوع بارش', value: 'باران' },
       { key: 'intensity', label: 'شدت', value: '۶۰ درصد' },
@@ -33,5 +33,17 @@ describe('environment presentation', () => {
         value: '۸ میلی‌متر بر ساعت',
       },
     ]);
+  });
+
+  it('preserves a current 15-character METOC SIDC', () => {
+    const condition = {
+      id: 'storm-1',
+      kind: 'metoc' as const,
+      startTime: 0,
+      parameters: {},
+      metocSidc: 'WAS-WSTMH-P----',
+    };
+
+    expect(environmentalSidc(condition)).toBe('WAS-WSTMH-P----');
   });
 });

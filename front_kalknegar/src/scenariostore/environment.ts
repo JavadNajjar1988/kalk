@@ -14,6 +14,7 @@ export interface EnvironmentalValidationIssue {
 }
 
 export const DEFAULT_METOC_SIDC: Record<EnvironmentalKind, string> = {
+  metoc: "WAS-WSR-MHP----",
   precipitation: "W-S-WSR-LI",
   visibility: "W-S-WSFGSO",
   wind: "W-S-WSTSS-",

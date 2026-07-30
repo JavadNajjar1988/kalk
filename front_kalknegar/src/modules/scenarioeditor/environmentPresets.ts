@@ -474,8 +474,10 @@ export const ENVIRONMENT_PRESETS: EnvironmentPreset[] =
 export function presetForCondition(
   kind: EnvironmentalKind,
   parameters: EnvironmentalParameters,
+  metocSidc?: string,
 ) {
   return (
+    ENVIRONMENT_PRESETS.find((preset) => preset.metocSidc === metocSidc) ??
     ENVIRONMENT_PRESETS.find((preset) => {
       if (preset.kind !== kind) return false;
       if (preset.parameters.mode && parameters.mode) {
@@ -485,6 +487,7 @@ export function presetForCondition(
         return preset.parameters.condition === parameters.condition;
       }
       return true;
-    }) ?? ENVIRONMENT_PRESETS[0]
+    }) ??
+    ENVIRONMENT_PRESETS[0]
   );
 }

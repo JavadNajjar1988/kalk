@@ -430,6 +430,7 @@ export interface ScenarioPhase {
 }
 
 export type EnvironmentalKind =
+  | "metoc"
   | "precipitation"
   | "visibility"
   | "wind"

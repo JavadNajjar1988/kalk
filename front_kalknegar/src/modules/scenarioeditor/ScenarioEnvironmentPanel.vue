@@ -24,6 +24,14 @@ import {
   presetForCondition,
   type EnvironmentPreset,
 } from "./environmentPresets";
+import MetocSymbolIcon from "./MetocSymbolIcon.vue";
+import MetocSymbolPicker from "./MetocSymbolPicker.vue";
+import {
+  DEFAULT_METOC_SYMBOL,
+  findMetocSymbol,
+  metocSymbolAsPreset,
+  type MetocSymbol,
+} from "./metocCatalog";
 
 const scenario = injectStrict(activeScenarioKey);
 const mapRef = inject(activeMapKey);
@@ -34,16 +42,30 @@ const editingId = ref<string>();
 const formOpen = ref(false);
 const drawing = ref(false);
 
-const activeCategory = ref<EnvironmentPreset["category"]>("atmosphere");
-const selectedPresetId = ref("rain");
+type EnvironmentDomain = "metoc" | "terrain" | "infrastructure";
+
+const activeDomain = ref<EnvironmentDomain>("metoc");
+const selectedPresetId = ref("dry-ground");
+const selectedMetocSidc = ref(DEFAULT_METOC_SYMBOL.sidc);
 const parameterValues = reactive<EnvironmentalParameters>({});
-const selectedPreset = computed(
-  () =>
-    ENVIRONMENT_PRESETS.find((preset) => preset.id === selectedPresetId.value) ??
-    ENVIRONMENT_PRESETS[0],
+const selectedMetocSymbol = computed(
+  () => findMetocSymbol(selectedMetocSidc.value) ?? DEFAULT_METOC_SYMBOL,
 );
+const selectedPreset = computed(() => {
+  if (activeDomain.value === "metoc") {
+    return metocSymbolAsPreset(selectedMetocSymbol.value);
+  }
+  return (
+    ENVIRONMENT_PRESETS.find(
+      (preset) =>
+        preset.id === selectedPresetId.value && preset.category === activeDomain.value,
+    ) ??
+    ENVIRONMENT_PRESETS.find((preset) => preset.category === activeDomain.value) ??
+    ENVIRONMENT_PRESETS[0]
+  );
+});
 const visiblePresets = computed(() =>
-  ENVIRONMENT_PRESETS.filter((preset) => preset.category === activeCategory.value),
+  ENVIRONMENT_PRESETS.filter((preset) => preset.category === activeDomain.value),
 );
 
 const form = reactive({
@@ -85,11 +107,22 @@ function resetForm(condition?: EnvironmentalCondition) {
     condition?.geometry?.type === "LineString" || condition?.geometry?.type === "Point"
       ? condition.geometry.type
       : "Polygon";
+  const standardSymbol = findMetocSymbol(condition?.metocSidc);
   const preset = condition
-    ? presetForCondition(condition.kind, condition.parameters)
-    : ENVIRONMENT_PRESETS[0];
-  selectedPresetId.value = preset.id;
-  activeCategory.value = preset.category;
+    ? presetForCondition(condition.kind, condition.parameters, condition.metocSidc)
+    : metocSymbolAsPreset(DEFAULT_METOC_SYMBOL);
+  if (!condition || standardSymbol) {
+    const symbol = standardSymbol ?? DEFAULT_METOC_SYMBOL;
+    activeDomain.value = "metoc";
+    selectedMetocSidc.value = symbol.sidc;
+    form.kind = "metoc";
+    form.scope = "area";
+    form.geometryMode = symbol.geometry;
+  } else {
+    selectedPresetId.value = preset.id;
+    activeDomain.value =
+      preset.category === "infrastructure" ? "infrastructure" : "terrain";
+  }
   Object.keys(parameterValues).forEach((key) => delete parameterValues[key]);
   Object.assign(parameterValues, condition?.parameters ?? preset.parameters);
   formOpen.value = true;
@@ -100,6 +133,7 @@ function buildParameters(): EnvironmentalParameters {
 }
 
 function choosePreset(preset: EnvironmentPreset) {
+  stopDrawing();
   selectedPresetId.value = preset.id;
   form.kind = preset.kind;
   if (!form.name || ENVIRONMENT_PRESETS.some((item) => item.label === form.name)) {
@@ -107,6 +141,36 @@ function choosePreset(preset: EnvironmentPreset) {
   }
   Object.keys(parameterValues).forEach((key) => delete parameterValues[key]);
   Object.assign(parameterValues, preset.parameters);
+}
+
+function chooseMetocSymbol(symbol: MetocSymbol) {
+  stopDrawing();
+  selectedMetocSidc.value = symbol.sidc;
+  form.kind = "metoc";
+  form.scope = "area";
+  form.geometryMode = symbol.geometry;
+  form.geometry = undefined;
+  form.name = symbol.label || symbol.labelEn;
+  Object.keys(parameterValues).forEach((key) => delete parameterValues[key]);
+  Object.assign(parameterValues, metocSymbolAsPreset(symbol).parameters);
+}
+
+const metocSelection = computed({
+  get: () => selectedMetocSidc.value,
+  set: (sidc: string) => {
+    const symbol = findMetocSymbol(sidc);
+    if (symbol) chooseMetocSymbol(symbol);
+  },
+});
+
+function selectDomain(domain: EnvironmentDomain) {
+  activeDomain.value = domain;
+  if (domain === "metoc") {
+    chooseMetocSymbol(selectedMetocSymbol.value);
+    return;
+  }
+  const first = ENVIRONMENT_PRESETS.find((preset) => preset.category === domain);
+  if (first) choosePreset(first);
 }
 
 function isPresetSelected(preset: EnvironmentPreset) {
@@ -187,17 +251,11 @@ function parameterSummary(condition: EnvironmentalCondition) {
     .join(" · ");
 }
 
-function metocSvg(condition: EnvironmentalCondition) {
-  try {
-    const sidc = condition.metocSidc ?? DEFAULT_METOC_SIDC[condition.kind];
-    return symbolGenerator(sidc, { size: 28 }).asSVG();
-  } catch {
-    return "";
-  }
-}
-
 function conditionPreset(condition: EnvironmentalCondition) {
-  return presetForCondition(condition.kind, condition.parameters);
+  const standard = findMetocSymbol(condition.metocSidc);
+  return standard
+    ? metocSymbolAsPreset(standard)
+    : presetForCondition(condition.kind, condition.parameters, condition.metocSidc);
 }
 
 onUnmounted(stopDrawing);
@@ -239,10 +297,13 @@ onUnmounted(stopDrawing);
       :style="`border-right: 5px solid ${conditionPreset(condition).color}; background: linear-gradient(135deg, ${conditionPreset(condition).color}12, transparent 55%);`"
     >
       <div class="flex items-start gap-2">
-        <span
-          class="h-12 w-12 shrink-0 rounded-lg bg-white/80 p-1 shadow-sm"
-          v-html="metocSvg(condition)"
-        />
+        <span class="h-12 w-12 shrink-0 rounded-lg bg-white/80 p-1 shadow-sm">
+          <MetocSymbolIcon
+            :sidc="condition.metocSidc ?? DEFAULT_METOC_SIDC[condition.kind]"
+            :size="38"
+            :label="condition.name"
+          />
+        </span>
         <div class="min-w-0 flex-1">
           <div class="font-medium">
             {{ condition.name || conditionPreset(condition).label }}
@@ -298,17 +359,17 @@ onUnmounted(stopDrawing);
             type="button"
             class="flex-1 rounded px-2 py-1 text-xs"
             :class="{
-              'bg-white shadow dark:bg-slate-700': activeCategory === 'atmosphere',
+              'bg-white shadow dark:bg-slate-700': activeDomain === 'metoc',
             }"
-            @click="activeCategory = 'atmosphere'"
+            @click="selectDomain('metoc')"
           >
-            جو و هوا
+            نمادهای METOC
           </button>
           <button
             type="button"
             class="flex-1 rounded px-2 py-1 text-xs"
-            :class="{ 'bg-white shadow dark:bg-slate-700': activeCategory === 'terrain' }"
-            @click="activeCategory = 'terrain'"
+            :class="{ 'bg-white shadow dark:bg-slate-700': activeDomain === 'terrain' }"
+            @click="selectDomain('terrain')"
           >
             زمین
           </button>
@@ -316,14 +377,15 @@ onUnmounted(stopDrawing);
             type="button"
             class="flex-1 rounded px-2 py-1 text-xs"
             :class="{
-              'bg-white shadow dark:bg-slate-700': activeCategory === 'infrastructure',
+              'bg-white shadow dark:bg-slate-700': activeDomain === 'infrastructure',
             }"
-            @click="activeCategory = 'infrastructure'"
+            @click="selectDomain('infrastructure')"
           >
             راه و زیرساخت
           </button>
         </div>
-        <div class="grid grid-cols-3 gap-1 sm:grid-cols-5">
+        <MetocSymbolPicker v-if="activeDomain === 'metoc'" v-model="metocSelection" />
+        <div v-else class="grid grid-cols-3 gap-1 sm:grid-cols-5">
           <button
             v-for="preset in visiblePresets"
             :key="preset.id"
@@ -354,6 +416,7 @@ onUnmounted(stopDrawing);
           >دامنه
           <select
             v-model="form.scope"
+            :disabled="activeDomain === 'metoc'"
             class="mt-1 w-full rounded border bg-transparent p-2"
           >
             <option value="global">سراسری</option>
@@ -395,7 +458,10 @@ onUnmounted(stopDrawing);
             class="mt-1 w-full rounded border bg-transparent p-2"
         /></label>
       </div>
-      <label v-if="form.scope === 'area'" class="block text-xs">
+      <label
+        v-if="form.scope === 'area' && activeDomain !== 'metoc'"
+        class="block text-xs"
+      >
         نوع هندسه
         <select
           v-model="form.geometryMode"
@@ -406,6 +472,19 @@ onUnmounted(stopDrawing);
           <option value="Point">نقطه</option>
         </select>
       </label>
+      <div
+        v-if="activeDomain === 'metoc'"
+        class="rounded border border-sky-200 bg-sky-50 p-2 text-xs text-sky-800 dark:border-sky-900 dark:bg-sky-950 dark:text-sky-100"
+      >
+        نوع ترسیم بر اساس استاندارد نماد تعیین شده است:
+        {{
+          form.geometryMode === "Point"
+            ? "نقطه"
+            : form.geometryMode === "LineString"
+              ? "خط"
+              : "سطح"
+        }}
+      </div>
       <button
         v-if="form.scope === 'area'"
         type="button"
