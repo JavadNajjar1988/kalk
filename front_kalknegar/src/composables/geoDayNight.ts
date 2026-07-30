@@ -6,7 +6,6 @@ import { Fill } from "ol/style";
 import { injectStrict } from "@/utils";
 import { activeScenarioKey } from "@/components/injects";
 import { watch } from "vue";
-import { watchPausable } from "@vueuse/core";
 import { storeToRefs } from "pinia";
 import { useMapSettingsStore } from "@/stores/mapSettingsStore";
 import { syncDayNightWithTimeline } from "@/composables/dayNightTimeline";
@@ -33,7 +32,7 @@ export function useDayNightLayer() {
     }),
   });
 
-  const { pause, resume } = watchPausable(
+  watch(
     () => state.currentTime,
     (time) => {
       syncDayNightWithTimeline(vectorSource, time);
@@ -44,12 +43,6 @@ export function useDayNightLayer() {
   watch(
     showDayNightTerminator,
     (show) => {
-      if (show) {
-        syncDayNightWithTimeline(vectorSource, state.currentTime);
-        resume();
-      } else {
-        pause();
-      }
       layer.setVisible(show);
     },
     { immediate: true },
