@@ -27,12 +27,6 @@ import {
   InputLabel,
   Select,
   MenuItem,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
 } from '@mui/material';
 import {
   Edit,
@@ -82,9 +76,9 @@ import {
   showErrorNotification,
 } from '@/store/slices/uiSlice';
 import ScenarioIntroSettingsPanel from '@/modules/dashboard/components/ScenarioIntroSettingsPanel';
+import ScenarioHistoryTab from '@/modules/dashboard/components/ScenarioHistoryTab';
 import { selectUser } from '@/store/slices/authSlice';
 import { canAccessFeature } from '@/security/roleAccess';
-import { scenarioApiService } from '@/services/api/scenarioApiService';
 import {
   environmentalKindLabel,
   environmentalParameters,
@@ -110,7 +104,11 @@ function TabPanel(props: TabPanelProps) {
       style={{ width: '100%' }}
       {...other}
     >
-      {value === index && <Box p={3}>{children}</Box>}
+      {value === index && (
+        <Box sx={{ px: { xs: 1, sm: 2, md: 3 }, py: { xs: 2, md: 3 } }}>
+          {children}
+        </Box>
+      )}
     </div>
   );
 }
@@ -559,114 +557,6 @@ const EnvironmentalConditionsManager: React.FC<{
             ))}
         </Grid>
       )}
-    </Box>
-  );
-};
-
-// ---------- History tab ----------
-const ScenarioHistoryTab: React.FC<{ scenarioId: string }> = ({
-  scenarioId,
-}) => {
-  const { t } = useTranslation();
-  const [logs, setLogs] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [loadError, setLoadError] = useState(false);
-
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      try {
-        setLoadError(false);
-        const data = await scenarioApiService.getScenarioHistory(scenarioId);
-        if (!cancelled) setLogs(data.items);
-      } catch {
-        if (!cancelled) setLoadError(true);
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [scenarioId]);
-
-  if (loading) return <LinearProgress />;
-
-  if (loadError) {
-    return (
-      <Alert severity="error">دریافت تاریخچهٔ تغییرات سناریو انجام نشد.</Alert>
-    );
-  }
-
-  if (logs.length === 0) {
-    return (
-      <Box sx={{ textAlign: 'center', py: 6 }}>
-        <History sx={{ fontSize: 48, color: 'text.secondary', mb: 2 }} />
-        <Typography color="text.secondary">
-          {t('scenarios.history.noHistory')}
-        </Typography>
-      </Box>
-    );
-  }
-
-  return (
-    <Box>
-      <Typography variant="h6" gutterBottom>
-        {t('scenarios.history.title')}
-      </Typography>
-      <TableContainer component={Paper} variant="outlined">
-        <Table size="small">
-          <TableHead>
-            <TableRow>
-              <TableCell>{t('scenarios.history.action')}</TableCell>
-              <TableCell>{t('scenarios.history.actor')}</TableCell>
-              <TableCell>{t('scenarios.history.date')}</TableCell>
-              <TableCell>{t('scenarios.history.details')}</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {logs.map(log => (
-              <TableRow key={log.id}>
-                <TableCell>
-                  <Chip
-                    label={
-                      t(`scenarios.history.actions.${log.action}`) || log.action
-                    }
-                    size="small"
-                    color={
-                      log.action === 'delete'
-                        ? 'error'
-                        : log.action === 'archive'
-                          ? 'warning'
-                          : log.action === 'create'
-                            ? 'success'
-                            : 'default'
-                    }
-                    variant="outlined"
-                  />
-                </TableCell>
-                <TableCell>{log.actor_user_id || '—'}</TableCell>
-                <TableCell>
-                  {new Date(log.created_at).toLocaleString('fa-IR')}
-                </TableCell>
-                <TableCell>
-                  {log.payload_diff ? (
-                    <Typography
-                      variant="caption"
-                      component="code"
-                      sx={{ whiteSpace: 'pre-wrap' }}
-                    >
-                      {JSON.stringify(log.payload_diff, null, 1)}
-                    </Typography>
-                  ) : (
-                    '—'
-                  )}
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </TableContainer>
     </Box>
   );
 };
