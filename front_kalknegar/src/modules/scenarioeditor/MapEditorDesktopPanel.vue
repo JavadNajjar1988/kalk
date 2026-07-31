@@ -2,7 +2,7 @@
   <!-- pt-24 هم‌تراز با هدر نقشه (MapTimeController + padding)؛ ارتفاع بقیهٔ ستون تا بالای breadcrumbs/timeline -->
   <div class="box-border flex h-full min-h-0 shrink-0 flex-col pt-12">
     <aside
-      class="bg-sidebar border-sidebar-border pointer-events-auto relative flex min-h-0 flex-1 shrink-0 flex-col overflow-hidden text-right shadow-sm"
+      class="bg-sidebar border-sidebar-border pointer-events-auto relative flex min-h-0 flex-1 shrink-0 flex-col overflow-hidden text-right"
       :class="afterMap ? 'border-l' : 'border-r'"
       dir="rtl"
       :style="{ width: orbatPanelWidth + 'px', minWidth: '250px', maxWidth: '50vw' }"
@@ -14,9 +14,9 @@
         @change="changeTab"
       >
         <TabList
-          class="border-sidebar-border bg-sidebar sticky top-0 z-20 flex w-full flex-none justify-between border-b rtl:flex-row-reverse"
+          class="border-sidebar-border bg-sidebar sticky top-0 z-20 flex w-full flex-none items-center border-b rtl:flex-row-reverse"
         >
-          <div class="flex w-full items-center gap-0">
+          <div class="flex min-w-0 flex-1 items-center overflow-x-auto">
             <Tab
               as="template"
               v-for="tab in [
@@ -37,34 +37,34 @@
                   selected
                     ? 'text-foreground border-foreground'
                     : 'text-muted-foreground hover:text-foreground',
-                  'border-b-2 border-transparent px-3 py-2.5 text-center text-sm font-medium transition-colors duration-150',
+                  'shrink-0 border-b-2 border-transparent px-2 py-2 text-center text-xs font-medium transition-colors duration-150',
                 ]"
               >
                 {{ tab }}
               </button>
             </Tab>
           </div>
-          <CloseButton @click="emit('close')" class="mt-1 mr-1" />
+          <CloseButton compact @click="emit('close')" class="mx-1 shrink-0" />
         </TabList>
         <TabPanels class="bg-sidebar min-h-0 flex-1 overflow-y-auto text-sm">
-          <TabPanel :unmount="false" class="pb-10">
+          <TabPanel :unmount="false" class="pb-4">
             <OrbatPanel />
           </TabPanel>
-          <TabPanel class="p-2 pb-6">
+          <TabPanel class="p-1.5 pb-3">
             <ScenarioEventsPanel @event-click="onEventClick" />
           </TabPanel>
-          <TabPanel class="p-2 pb-6">
+          <TabPanel class="p-1.5 pb-3">
             <ScenarioPhasesPanel />
           </TabPanel>
-          <TabPanel class="p-2 pb-6">
+          <TabPanel class="p-1.5 pb-3">
             <ScenarioEnvironmentPanel />
           </TabPanel>
-          <TabPanel class="p-2 pb-6">
+          <TabPanel class="p-1.5 pb-3">
             <StoryboardPanel />
           </TabPanel>
-          <TabPanel class="p-2 pb-6"><ScenarioLayersTabPanel /></TabPanel>
-          <TabPanel class="p-2 pb-6"><ScenarioSettingsPanel /></TabPanel>
-          <TabPanel :unmount="false" class="p-2 pb-6"
+          <TabPanel class="p-1.5 pb-3"><ScenarioLayersTabPanel /></TabPanel>
+          <TabPanel class="p-1.5 pb-3"><ScenarioSettingsPanel /></TabPanel>
+          <TabPanel :unmount="false" class="p-1.5 pb-3"
             ><ScenarioFiltersTabPanel
           /></TabPanel>
         </TabPanels>

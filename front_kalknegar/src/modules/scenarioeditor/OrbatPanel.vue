@@ -1,5 +1,5 @@
 <template>
-  <div class="space-y-1 pt-2 text-sm leading-6">
+  <div class="space-y-0.5 pt-1 text-sm leading-5">
     <slot name="header" />
     <OrbatSide
       v-for="side in sides"
@@ -10,11 +10,16 @@
       @side-action="onSideAction"
       :hide-filter="hideFilter"
     />
-    <OrbatPanelAddSide v-if="sides.length < 2" :simple="sides.length >= 1" class="mt-8" @add="addSide()" />
+    <OrbatPanelAddSide
+      v-if="sides.length < 2"
+      :simple="sides.length >= 1"
+      class="mt-4"
+      @add="addSide()"
+    />
   </div>
   <div
     v-if="isDragging && isCopying"
-    class="bg-blue-100 dark:bg-blue-900/50 fixed top-4 right-1/2 z-50 rounded-xl border border-blue-300 dark:border-blue-600 bg-white dark:bg-slate-800 p-3 text-center text-sm text-blue-800 dark:text-blue-200 shadow-lg"
+    class="fixed top-4 right-1/2 z-50 rounded-xl border border-blue-300 bg-blue-100 bg-white p-3 text-center text-sm text-blue-800 shadow-lg dark:border-blue-600 dark:bg-blue-900/50 dark:bg-slate-800 dark:text-blue-200"
   >
     <p>حالت کپی کشیدن <span v-if="isCopyingState">(شامل وضعیت)</span></p>
   </div>
@@ -22,7 +27,9 @@
     v-if="showHierarchyDragStatus"
     class="fixed top-4 right-1/2 z-50 translate-x-1/2 rounded-xl border border-red-300 bg-red-50 p-3 text-center text-sm text-red-900 shadow-lg dark:border-red-700 dark:bg-red-950/80 dark:text-red-100"
   >
-    <p>ضبط سلسله‌مراتب فعال است؛ رها کردن واحد، جابجایی زمانی در آرایش نبرد ثبت می‌شود.</p>
+    <p>
+      ضبط سلسله‌مراتب فعال است؛ رها کردن واحد، جابجایی زمانی در آرایش نبرد ثبت می‌شود.
+    </p>
   </div>
 </template>
 
@@ -40,10 +47,7 @@ import { useEventBus, useEventListener } from "@vueuse/core";
 import { orbatUnitClick } from "@/components/eventKeys";
 import { useSelectedItems } from "@/stores/selectedStore";
 import { inputEventFilter } from "@/components/helpers";
-import {
-  addUnitHierarchy,
-  parseApplicationOrbat,
-} from "@/importexport/convertUtils";
+import { addUnitHierarchy, parseApplicationOrbat } from "@/importexport/convertUtils";
 import {
   createOrbatClipboardData,
   getInternalOrbatClipboardData,

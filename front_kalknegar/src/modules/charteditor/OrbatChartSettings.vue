@@ -4,9 +4,11 @@
       تنظیمات طرح‌بندی نمودار
     </h3>
     <TabView
+      :compact="chartMode"
       v-model:current-tab="currentTab"
       extra-class="px-4 -mx-4 lg:mx-0"
-      tab-class="mx-2 lg:mx-4"
+      :tab-class="chartMode ? '!mt-3 mx-0 pb-2' : 'mx-2 lg:mx-4'"
+      :gap="chartMode ? 'gap-x-4' : undefined"
       class="min-h-0 flex-auto"
     >
       <TabItem label="نمودار" class="mx-4">

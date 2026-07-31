@@ -1,9 +1,11 @@
 <template>
-  <SlideOver v-model="open" title="تنظیمات" width-class="sm:max-w-[460px]">
-    <p class="text-muted-foreground mb-2 text-sm leading-6">
-      ظاهر نقشه، لایه‌ها و شیوه نمایش زمان را از اینجا تنظیم کنید.
-    </p>
-    <TabView gap="gap-x-4">
+  <SlideOver v-model="open" title="تنظیمات" width-class="sm:max-w-[440px]">
+    <TabView
+      compact
+      gap="gap-x-3"
+      extra-class="-mx-4 px-4"
+      tab-class="!mt-3 pb-2"
+    >
       <TabItem label="نمای نقشه">
         <MapSettingsPanel />
       </TabItem>
@@ -11,13 +13,10 @@
         <LayersPanel />
       </TabItem>
       <TabItem label="آرایش نبرد">
-        <div class="space-y-4 py-4">
-          <section class="bg-card rounded-xl border p-4 shadow-sm">
+        <div class="space-y-3 py-3">
+          <section class="bg-card rounded-md border p-3">
             <h3 class="text-foreground text-sm font-semibold">ظاهر نمادها</h3>
-            <p class="text-muted-foreground mt-1 text-xs leading-5">
-              اندازه نمادها را جداگانه برای نقشه و درخت آرایش نبرد تعیین کنید.
-            </p>
-            <div class="mt-4 space-y-4">
+            <div class="mt-3 grid grid-cols-2 gap-3">
               <NumberInputGroup
                 InputGroup
                 label="اندازه نماد نقشه"
@@ -30,7 +29,7 @@
               />
             </div>
           </section>
-          <section class="bg-card rounded-xl border p-4 shadow-sm">
+          <section class="bg-card rounded-md border p-3">
             <h3 class="text-foreground text-sm font-semibold">برچسب و وضعیت</h3>
             <div class="mt-3 space-y-2">
               <CheckboxField v-model="settings.orbatShortName">
@@ -45,9 +44,6 @@
       </TabItem>
       <TabItem label="زمان و تاریخ">
         <TimeDateSettingsPanel />
-      </TabItem>
-      <TabItem label="تنظیمات سناریو">
-        <ScenarioSettingsPanel class="py-4" />
       </TabItem>
       <TabItem label="تنظیمات چارت">
         <OrbatChartSettings class="py-4" chart-mode />
@@ -67,7 +63,6 @@ import NumberInputGroup from "./NumberInputGroup.vue";
 import MapSettingsPanel from "@/components/MapSettingsPanel.vue";
 import CheckboxField from "@/components/CheckboxField.vue";
 import TimeDateSettingsPanel from "@/components/TimeDateSettingsPanel.vue";
-import ScenarioSettingsPanel from "@/modules/scenarioeditor/ScenarioSettingsPanel.vue";
 import OrbatChartSettings from "@/modules/charteditor/OrbatChartSettings.vue";
 
 const props = defineProps({ modelValue: Boolean });

@@ -68,37 +68,45 @@
               v-if="rtlPanels && !showDetailsPanel"
               type="button"
               @click="onOpenDetailsPanel()"
-              title="نمایش پنل"
-              class="panel-toggle-edge pointer-events-auto absolute top-[45%] left-0 h-11 w-5 -translate-y-1/2 rounded-l-none rounded-r-md border border-l-0 px-0"
+              title="نمایش جزئیات سناریو"
+              aria-label="نمایش جزئیات سناریو از سمت چپ"
+              data-edge="left"
+              class="panel-toggle-edge pointer-events-auto absolute top-[45%] left-0 h-12 w-8 -translate-y-1/2 rounded-l-none rounded-r-md border border-l-0 p-0"
             >
-              <ShowPanelIcon class="h-6 w-6" />
+              <OpenFromLeftIcon class="h-4 w-4" aria-hidden="true" />
             </button>
             <button
               v-if="rtlPanels && !showLeftPanel"
               type="button"
               @click="toggleLeftPanel()"
               title="نمایش پنل آرایش نبرد"
-              class="panel-toggle-edge pointer-events-auto absolute top-[45%] right-0 h-11 w-5 -translate-y-1/2 rounded-l-md rounded-r-none border border-r-0 px-0"
+              aria-label="نمایش پنل آرایش نبرد از سمت راست"
+              data-edge="right"
+              class="panel-toggle-edge pointer-events-auto absolute top-[45%] right-0 h-12 w-8 -translate-y-1/2 rounded-l-md rounded-r-none border border-r-0 p-0"
             >
-              <ShowPanelIcon class="h-6 w-6 rotate-180" />
+              <OpenFromRightIcon class="h-4 w-4" aria-hidden="true" />
             </button>
             <button
               v-if="!rtlPanels && !showLeftPanel"
               type="button"
               @click="toggleLeftPanel()"
-              title="نمایش پنل"
-              class="panel-toggle-edge pointer-events-auto absolute top-[45%] left-0 h-11 w-5 -translate-y-1/2 rounded-l-none rounded-r-md border border-l-0 px-0"
+              title="نمایش پنل آرایش نبرد"
+              aria-label="نمایش پنل آرایش نبرد از سمت چپ"
+              data-edge="left"
+              class="panel-toggle-edge pointer-events-auto absolute top-[45%] left-0 h-12 w-8 -translate-y-1/2 rounded-l-none rounded-r-md border border-l-0 p-0"
             >
-              <ShowPanelIcon class="h-6 w-6" />
+              <OpenFromLeftIcon class="h-4 w-4" aria-hidden="true" />
             </button>
             <button
               v-if="!rtlPanels && !showDetailsPanel"
               type="button"
               @click="onOpenDetailsPanel()"
-              title="نمایش پنل"
-              class="panel-toggle-edge pointer-events-auto absolute top-[45%] right-0 h-11 w-5 -translate-y-1/2 rounded-l-md rounded-r-none border border-r-0 px-0"
+              title="نمایش جزئیات سناریو"
+              aria-label="نمایش جزئیات سناریو از سمت راست"
+              data-edge="right"
+              class="panel-toggle-edge pointer-events-auto absolute top-[45%] right-0 h-12 w-8 -translate-y-1/2 rounded-l-md rounded-r-none border border-r-0 p-0"
             >
-              <ShowPanelIcon class="h-6 w-6 rotate-180" />
+              <OpenFromRightIcon class="h-4 w-4" aria-hidden="true" />
             </button>
           </template>
         </main>
@@ -208,7 +216,10 @@ import {
   activeScenarioKey,
   timeModalKey,
 } from "@/components/injects";
-import { PhSidebarSimple as ShowPanelIcon } from "@phosphor-icons/vue";
+import {
+  PhCaretLeft as OpenFromRightIcon,
+  PhCaretRight as OpenFromLeftIcon,
+} from "@phosphor-icons/vue";
 import { injectStrict } from "@/utils";
 import MapTimeController from "@/components/MapTimeController.vue";
 import MapEditorMainToolbar from "@/modules/scenarioeditor/MapEditorMainToolbar.vue";
@@ -512,6 +523,10 @@ watch(
 </script>
 <style scoped>
 .panel-toggle-edge {
+  z-index: 55;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   border-color: var(--surface-border);
   background-color: var(--surface-panel);
   color: hsl(var(--foreground));
@@ -531,7 +546,11 @@ watch(
   box-shadow: 0 4px 12px rgba(2, 6, 23, 0.35);
 }
 
-.panel-toggle-edge:active {
+.panel-toggle-edge[data-edge="left"]:active {
   transform: translateY(-50%) translateX(1px);
+}
+
+.panel-toggle-edge[data-edge="right"]:active {
+  transform: translateY(-50%) translateX(-1px);
 }
 </style>

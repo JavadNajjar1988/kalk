@@ -1,11 +1,8 @@
 <template>
-  <div class="space-y-4 py-4">
-    <section class="bg-card rounded-xl border p-4 shadow-sm">
+  <div class="space-y-3 py-3">
+    <section class="bg-card rounded-md border p-3">
       <h3 class="text-foreground text-sm font-semibold">اجزای رابط نقشه</h3>
-      <p class="text-muted-foreground mt-1 text-xs leading-5">
-        مواردی را که هنگام کار با نقشه لازم دارید روشن یا خاموش کنید.
-      </p>
-      <div class="mt-3 space-y-2">
+      <div class="mt-2 space-y-1.5">
         <CheckboxField v-model="uiSettings.showToolbar">نمایش نوار ابزار</CheckboxField>
         <CheckboxField v-model="uiSettings.showTimeline">نمایش خط زمان</CheckboxField>
         <CheckboxField v-model="uiSettings.showOrbatBreadcrumbs">
@@ -18,9 +15,9 @@
       </div>
     </section>
 
-    <section class="bg-card rounded-xl border p-4 shadow-sm">
+    <section class="bg-card rounded-md border p-3">
       <h3 class="text-foreground text-sm font-semibold">مختصات و اندازه‌گیری</h3>
-      <div class="mt-4 space-y-5">
+      <div class="mt-3 space-y-3">
         <div>
           <p class="text-foreground mb-2 text-sm font-medium">فرمت مختصات</p>
           <RadioGroupList

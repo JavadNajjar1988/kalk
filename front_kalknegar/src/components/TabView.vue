@@ -15,7 +15,9 @@
                 index === state.selectedIndex
                   ? 'border-army text-army dark:border-amber-600 dark:text-amber-600'
                   : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 dark:text-gray-400',
-                'border-b-2 px-1 py-4 text-sm font-medium whitespace-nowrap',
+                compact
+                  ? 'border-b-2 px-1 py-2.5 text-xs font-medium whitespace-nowrap'
+                  : 'border-b-2 px-1 py-4 text-sm font-medium whitespace-nowrap',
               ]"
               :aria-current="index === state.selectedIndex ? 'page' : undefined"
             >
@@ -43,6 +45,7 @@ interface Props {
   extraClass?: string;
   tabClass?: string;
   gap?: string;
+  compact?: boolean;
 }
 
 const props = withDefaults(defineProps<Props>(), { gap: "gap-x-8" });

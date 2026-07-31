@@ -1,21 +1,14 @@
 <template>
-  <div class="">
-    <header class="pr-4 text-right">
+  <div>
+    <header class="pr-7 text-right">
       <EditableLabel
         v-model="scenarioName"
         text-class="text-base font-semibold leading-6 text-foreground text-right"
         @update-value="updateScenarioInfo({ name: $event })"
       />
     </header>
-    <div class="-mx-4 mt-2">
-      <div class="border-sidebar-border border-b px-4">
-        <span class="text-foreground border-foreground inline-flex border-b-2 px-1 py-2 text-sm font-medium">
-          جزئیات
-        </span>
-      </div>
-      <div class="px-4 pt-4">
-        <ScenarioInfoDetails />
-      </div>
+    <div class="mt-2">
+      <ScenarioInfoDetails />
     </div>
   </div>
 </template>

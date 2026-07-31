@@ -1,15 +1,19 @@
 <template>
   <div
     class="pointer-events-auto absolute z-20 max-h-[82vh]"
-    :class="side === 'left' ? 'left-4 top-24' : 'right-4 top-24'"
+    :class="side === 'left' ? 'top-24 left-2' : 'top-24 right-2'"
     dir="rtl"
   >
     <aside
-      class="bg-sidebar border-sidebar-border relative flex max-h-[70vh] flex-col overflow-clip rounded-md border text-right shadow-sm"
-      :style="{ width: widthStore.detailsWidth + 'px' }"
+      class="bg-sidebar border-sidebar-border relative flex max-h-[70vh] flex-col overflow-clip rounded-md border text-right"
+      :style="{
+        width: widthStore.detailsWidth + 'px',
+        minWidth: '300px',
+        maxWidth: '44vw',
+      }"
     >
-      <CloseButton class="absolute right-1 top-1 z-[99]" @click="emit('close')" />
-      <div class="flex-auto overflow-auto p-4 text-sm leading-6 text-foreground">
+      <CloseButton compact class="absolute top-1 right-1 z-[99]" @click="emit('close')" />
+      <div class="text-foreground flex-auto overflow-auto p-3 text-sm leading-5">
         <slot />
       </div>
       <PanelResizeHandle
@@ -44,7 +48,7 @@ const widthStore = useWidthStore();
 function applyPadding() {
   const padding = mapRef.value.getView().padding || [0, 0, 0, 0];
   const [top, right, bottom, left] = padding;
-  const panelPadding = Math.max(360, Number(widthStore.detailsWidth) || 360) + 20;
+  const panelPadding = Math.max(300, Number(widthStore.detailsWidth) || 340) + 12;
   if (props.side === "left") {
     mapRef.value.getView().padding = [top, panelPadding, bottom, left];
   } else {

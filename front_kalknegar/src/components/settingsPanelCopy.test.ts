@@ -16,11 +16,11 @@ describe("settings panel copy", () => {
     expect(source).not.toContain("debugMode");
   });
 
-  it("explains timeline-driven day and night in the layers panel", () => {
+  it("keeps the timeline-driven day and night control in the compact layers panel", () => {
     const source = readFileSync(resolve(__dirname, "LayersPanel.vue"), "utf8");
 
     expect(source).toContain('v-model="mapSettings.showDayNightTerminator"');
-    expect(source).toContain("بر اساس زمان خط زمان");
+    expect(source).not.toContain("سایه شب بر اساس زمان خط زمان");
   });
 
   it("keeps the day and night source synchronized while the layer is hidden", () => {
@@ -46,11 +46,11 @@ describe("settings panel copy", () => {
     expect(mainSettings).toContain("ظاهر نمادها");
   });
 
-  it("exposes scenario and chart settings in the main settings panel", () => {
+  it("removes duplicate scenario settings and keeps chart settings", () => {
     const source = readFileSync(resolve(__dirname, "MainViewSlideOver.vue"), "utf8");
 
-    expect(source).toContain('label="تنظیمات سناریو"');
-    expect(source).toContain("<ScenarioSettingsPanel");
+    expect(source).not.toContain('label="تنظیمات سناریو"');
+    expect(source).not.toContain("<ScenarioSettingsPanel");
     expect(source).toContain('label="تنظیمات چارت"');
     expect(source).toContain("<OrbatChartSettings");
   });

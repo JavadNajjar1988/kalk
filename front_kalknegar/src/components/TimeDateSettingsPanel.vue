@@ -1,6 +1,4 @@
 <script setup lang="ts">
-import PanelHeading from "@/components/PanelHeading.vue";
-import HeadingDesciption from "@/components/HeadingDescription.vue";
 import { useTimeFormatSettingsStore, useTimeFormatStore } from "@/stores/timeFormatStore";
 import { useActiveScenario } from "@/composables/scenarioUtils";
 import { storeToRefs } from "pinia";
@@ -32,22 +30,14 @@ const mapTimePreview = computed(() => {
 });
 </script>
 <template>
-  <div class="space-y-4 py-4">
-    <section class="bg-card rounded-xl border p-4 shadow-sm">
-      <PanelHeading>زمان و تاریخ</PanelHeading>
-      <HeadingDesciption>
-        قالب نمایش زمان سناریو و نوشته‌های روی نقشه را جداگانه انتخاب کنید.
-      </HeadingDesciption>
-      <div class="mt-4 border-t pt-4">
+  <div class="space-y-3 py-3">
+    <section class="bg-card rounded-md border p-3">
+      <div>
         <p class="text-foreground text-sm font-medium">موقعیت زمانی سناریو</p>
-        <p class="text-muted-foreground mt-1 mb-3 text-xs leading-5">
-          کشور و نزدیک‌ترین شهر را انتخاب کنید. ساعت نقشه و سایه شب‌و‌روز با این انتخاب
-          هماهنگ می‌شوند.
-        </p>
-        <TimezoneLocationSelect v-model="scenarioTimeZone" />
+        <TimezoneLocationSelect class="mt-2" v-model="scenarioTimeZone" />
       </div>
     </section>
-    <div class="bg-card overflow-hidden rounded-xl border shadow-sm">
+    <div class="bg-card overflow-hidden rounded-md border">
       <AccordionPanel label="فرمت زمان و تاریخ سناریو">
         <template #closedContent>
           <span class="text-sm leading-7 text-gray-600">

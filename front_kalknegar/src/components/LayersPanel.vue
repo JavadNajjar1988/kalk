@@ -1,25 +1,19 @@
 <template>
-  <div class="space-y-4 py-4">
-    <section class="bg-card rounded-xl border p-4 shadow-sm">
+  <div class="space-y-3 py-3">
+    <section class="bg-card rounded-md border p-3">
       <h3 class="text-foreground text-sm font-semibold">نقشه پایه</h3>
-      <p class="text-muted-foreground mt-1 text-xs leading-5">
-        پس‌زمینه مناسب سناریو را انتخاب کنید.
-      </p>
       <BaseLayerSwitcher
-        class="mt-4"
+        class="mt-2"
         :settings="baseLayers"
         v-model="activeBaseLayer"
         @update:layer-opacity="updateOpacity"
       />
     </section>
 
-    <section class="bg-card rounded-xl border p-4 shadow-sm">
+    <section class="bg-card rounded-md border p-3">
       <div class="flex items-start justify-between gap-4">
         <div>
           <h3 class="text-foreground text-sm font-semibold">شب و روز</h3>
-          <p class="text-muted-foreground mt-1 text-xs leading-5">
-            سایه شب بر اساس زمان خط زمان جابه‌جا می‌شود.
-          </p>
         </div>
         <CheckboxField v-model="mapSettings.showDayNightTerminator">
           نمایش
@@ -29,9 +23,9 @@
 
     <section v-if="vectorLayers.length">
       <h3 class="text-foreground mb-2 px-1 text-sm font-semibold">لایه‌های دیگر</h3>
-      <div class="layers-panel-container overflow-hidden rounded-xl border shadow-sm">
+      <div class="layers-panel-container overflow-hidden rounded-md border">
         <ul class="layers-panel-list divide-y">
-          <li v-for="layer in vectorLayers" :key="layer.id" class="px-4 py-3">
+          <li v-for="layer in vectorLayers" :key="layer.id" class="px-3 py-2">
             <div class="flex items-center justify-between">
               <p class="flex-auto truncate text-sm">{{ layer.title }}</p>
               <div class="ml-2 flex shrink-0 items-center">
