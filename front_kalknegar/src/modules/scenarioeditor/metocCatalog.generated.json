@@ -3727,7 +3727,7 @@
       "Offshore Loading Facility"
     ],
     "geometry": "LineString",
-    "minPoints": 1,
+    "minPoints": 2,
     "maxPoints": 10000
   },
   {

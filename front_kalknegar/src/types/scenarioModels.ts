@@ -463,6 +463,21 @@ export type EnvironmentalParameters = Record<
   string | number | boolean | undefined
 >;
 
+export interface EnvironmentalEraseZone {
+  mode: "fade" | "cut";
+  coordinates: Position[];
+  radiusMeters: number;
+}
+
+export interface SymbolRenderReference {
+  version: 1;
+  renderer: "mission-command" | "milsymbol" | "tactical-2525c" | "custom";
+  authoredResolution: number;
+  authoredScale: number;
+  pointSizeMeters?: number;
+  artifact?: GeoJSON.FeatureCollection;
+}
+
 /**
  * Time-bound METOC/environmental state authored in Kalknegar.
  * Legacy fields remain optional so older dashboard scenarios can be opened and
@@ -485,6 +500,8 @@ export interface EnvironmentalCondition {
   enabled?: boolean;
   description?: string;
   metocSidc?: string;
+  renderReference?: SymbolRenderReference;
+  eraseZones?: EnvironmentalEraseZone[];
   type?: string;
   value?: number;
   affectedArea?: GeoArea;

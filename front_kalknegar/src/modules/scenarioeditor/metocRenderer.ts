@@ -3,6 +3,7 @@ import singlePointFontUrl from "@io.github.missioncommand/mil-sym-js/dist/fonts/
 import tacticalGraphicsFontUrl from "@io.github.missioncommand/mil-sym-js/dist/fonts/TacticalGraphics.woff2?url";
 import unitFontUrl from "@io.github.missioncommand/mil-sym-js/dist/fonts/UnitFont.woff2?url";
 import type { MetocGeometry } from "./metocCatalog";
+import { sanitizeMetocFeatureCollection } from "./metocGeoJson";
 
 interface MissionImageInfo {
   toDataUrl(): string;
@@ -177,5 +178,7 @@ export async function renderMetocGeometry(
   );
   if (!output) return undefined;
   const parsed = JSON.parse(output) as GeoJSON.FeatureCollection;
-  return parsed.type === "FeatureCollection" ? parsed : undefined;
+  return parsed.type === "FeatureCollection"
+    ? sanitizeMetocFeatureCollection(parsed)
+    : undefined;
 }

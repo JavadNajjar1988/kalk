@@ -16,6 +16,7 @@ import type {
   EnvironmentalKind,
   EnvironmentalParameters,
   EnvironmentalScope,
+  SymbolRenderReference,
 } from "@/types/scenarioModels";
 import { symbolGenerator } from "@/symbology/milsymbwrapper";
 import PersianDateTimeField from "@/components/PersianDateTimeField.vue";
@@ -32,6 +33,8 @@ import {
   metocSymbolAsPreset,
   type MetocSymbol,
 } from "./metocCatalog";
+import { captureSymbolRenderReference } from "./symbolRenderReference";
+import { createMetocLivePreview } from "./metocLivePreview";
 
 const scenario = injectStrict(activeScenarioKey);
 const mapRef = inject(activeMapKey);
@@ -79,6 +82,7 @@ const form = reactive({
   description: "",
   geometry: undefined as EnvironmentalCondition["geometry"],
   geometryMode: "Polygon" as "Polygon" | "LineString" | "Point",
+  renderReference: undefined as SymbolRenderReference | undefined,
 });
 
 function toLocalInput(value?: number) {
@@ -103,6 +107,7 @@ function resetForm(condition?: EnvironmentalCondition) {
   form.enabled = condition?.enabled ?? true;
   form.description = condition?.description ?? "";
   form.geometry = condition?.geometry;
+  form.renderReference = condition?.renderReference;
   form.geometryMode =
     condition?.geometry?.type === "LineString" || condition?.geometry?.type === "Point"
       ? condition.geometry.type
@@ -150,6 +155,7 @@ function chooseMetocSymbol(symbol: MetocSymbol) {
   form.scope = "area";
   form.geometryMode = symbol.geometry;
   form.geometry = undefined;
+  form.renderReference = undefined;
   form.name = symbol.label || symbol.labelEn;
   Object.keys(parameterValues).forEach((key) => delete parameterValues[key]);
   Object.assign(parameterValues, metocSymbolAsPreset(symbol).parameters);
@@ -196,6 +202,7 @@ function save() {
     enabled: form.enabled,
     description: form.description.trim() || undefined,
     metocSidc: selectedPreset.value.metocSidc ?? DEFAULT_METOC_SIDC[form.kind],
+    renderReference: form.scope === "area" ? form.renderReference : undefined,
   };
   if (editingId.value) scenario.environment.updateCondition(editingId.value, payload);
   else scenario.environment.addCondition(payload);
@@ -204,13 +211,16 @@ function save() {
 
 let drawInteraction: Draw | undefined;
 let drawLayer: VectorLayer<VectorSource> | undefined;
+let livePreview: ReturnType<typeof createMetocLivePreview> | undefined;
 
 function stopDrawing() {
   const map = mapRef?.value;
   if (map && drawInteraction) map.removeInteraction(drawInteraction);
   if (map && drawLayer) map.removeLayer(drawLayer);
+  livePreview?.dispose();
   drawInteraction = undefined;
   drawLayer = undefined;
+  livePreview = undefined;
   drawing.value = false;
 }
 
@@ -227,14 +237,37 @@ function drawArea() {
     }),
   });
   map.addLayer(drawLayer);
-  drawInteraction = new Draw({ source, type: form.geometryMode });
+  const symbol = activeDomain.value === "metoc" ? selectedMetocSymbol.value : undefined;
+  const renderReference = captureSymbolRenderReference(
+    map,
+    symbol ? "mission-command" : "milsymbol",
+  );
+  drawInteraction = new Draw({
+    source,
+    type: form.geometryMode,
+    minPoints: symbol?.minPoints,
+    maxPoints: symbol?.maxPoints,
+  });
+  if (symbol) {
+    livePreview = createMetocLivePreview({
+      map,
+      symbol,
+      reference: renderReference,
+      name: form.name,
+      parameters: buildParameters(),
+    });
+    livePreview.watch(drawInteraction);
+  }
   map.addInteraction(drawInteraction);
   drawing.value = true;
-  drawInteraction.once("drawend", (event) => {
+  drawInteraction.once("drawend", async (event) => {
     form.geometry = new GeoJSON().writeGeometryObject(event.feature.getGeometry()!, {
       featureProjection: map.getView().getProjection(),
       dataProjection: "EPSG:4326",
     });
+    const artifact = await livePreview?.finalize(event.feature);
+    if (artifact) renderReference.artifact = artifact;
+    form.renderReference = renderReference;
     window.setTimeout(stopDrawing, 0);
   });
 }
@@ -322,7 +355,7 @@ onUnmounted(stopDrawing);
             {{ condition.scope === "area" ? "محدوده‌ای" : "سراسری" }}
           </div>
         </div>
-        <div class="flex gap-1">
+        <div class="flex flex-wrap gap-1">
           <button
             class="rounded border px-2 py-1 text-xs"
             @click="
@@ -336,6 +369,15 @@ onUnmounted(stopDrawing);
           </button>
           <button class="rounded border px-2 py-1 text-xs" @click="resetForm(condition)">
             ویرایش
+          </button>
+          <button
+            v-if="condition.eraseZones?.length"
+            class="rounded border border-amber-300 px-2 py-1 text-xs text-amber-700"
+            @click="
+              scenario.environment.updateCondition(condition.id, { eraseZones: [] })
+            "
+          >
+            بازنشانی محو/برش
           </button>
           <button
             class="rounded border border-red-300 px-2 py-1 text-xs text-red-600"

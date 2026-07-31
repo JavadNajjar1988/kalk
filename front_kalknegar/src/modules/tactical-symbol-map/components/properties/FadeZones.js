@@ -12,11 +12,16 @@ export default props => {
   const { store } = useServices()
   const featureIds = Object.keys(props.features || {})
 
-  const zones = React.useMemo(() => {
+  const fadeState = React.useMemo(() => {
     const values = featureIds.map(id => props.features[id]?.properties?.fadeZones)
     const unique = R.uniq(values.map(z => JSON.stringify(normalizeFadeZones(z))))
-    if (unique.length !== 1) return null
-    return normalizeFadeZones(values[0])
+    const spatialValues = featureIds.map(id => props.features[id]?.properties?.spatialFades || [])
+    const uniqueSpatial = R.uniq(spatialValues.map(value => JSON.stringify(value)))
+    if (unique.length !== 1 || uniqueSpatial.length !== 1) return null
+    return {
+      zones: normalizeFadeZones(values[0]),
+      spatialCount: spatialValues[0].length
+    }
   }, [props.features, featureIds])
 
   if (featureIds.length !== 1) return null
@@ -26,21 +31,25 @@ export default props => {
       ...feature,
       properties: {
         ...feature.properties,
-        fadeZones: undefined
+        fadeZones: undefined,
+        spatialFades: undefined
       }
     }))
   }
 
-  if (!zones?.length) return null
+  if (!fadeState || (!fadeState.zones.length && !fadeState.spatialCount)) return null
 
   return (
     <ColSpan2>
       <div className='bf12-fade-zones'>
         <label>نواحی محو‌شده</label>
         <ul style={{ fontSize: '0.85rem', margin: '0.25rem 0 0.5rem 1rem', color: '#555' }}>
-          {zones.map((zone, index) => (
+          {fadeState.zones.map((zone, index) => (
             <li key={index}>{formatZone(zone)}</li>
           ))}
+          {fadeState.spatialCount > 0 && (
+            <li>{fadeState.spatialCount} ناحیه محوشده با قلم</li>
+          )}
         </ul>
         <button type='button' disabled={props.disabled} onClick={clearZones}>
           پاک کردن همه محوها

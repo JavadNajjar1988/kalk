@@ -247,6 +247,8 @@ import { useGeoStore } from "@/stores/geoStore";
 import type { StoryboardShowMode } from "@/types/scenarioModels";
 import { advanceScenarioPlaybackTime } from "@/modules/scenarioeditor/scenarioPlayback";
 import { createEnvironmentMapLayer } from "@/modules/scenarioeditor/environmentMapLayer";
+import { createEnvironmentEraseInteraction } from "@/modules/scenarioeditor/environmentEraseInteraction";
+import { useServicesStore } from "@/modules/tactical-symbol-map/stores/services.js";
 import { getPointResolution } from "ol/proj";
 
 const emit = defineEmits(["showExport", "showLoad", "show-settings"]);
@@ -304,6 +306,10 @@ const rtlPanels = true;
 
 const mapRef = shallowRef<OLMap>();
 const environmentMapLayer = createEnvironmentMapLayer();
+const tacticalServicesStore = useServicesStore();
+let environmentEraseController:
+  | ReturnType<typeof createEnvironmentEraseInteraction>
+  | undefined;
 const featureSelectInteractionRef = shallowRef<Select>();
 provide(activeMapKey, mapRef as ShallowRef<OLMap>);
 provide(
@@ -342,6 +348,21 @@ function onMapReady({
   mapRef.value = olMap;
   featureSelectInteractionRef.value = featureSelectInteraction;
   olMap.addLayer(environmentMapLayer.layer);
+  environmentEraseController?.dispose();
+  environmentEraseController = createEnvironmentEraseInteraction({
+    map: olMap,
+    environmentLayer: environmentMapLayer.layer,
+    applyZone(conditionId, zone) {
+      const condition = state.environmentalConditions.find(
+        (candidate) => candidate.id === conditionId,
+      );
+      if (!condition) return;
+      activeScenario.environment.updateCondition(conditionId, {
+        eraseZones: [...(condition.eraseZones ?? []), zone],
+      });
+    },
+  });
+  environmentEraseController.bindEmitter(tacticalServicesStore.getServices()?.emitter);
   olMap.on("moveend", refreshEnvironmentLayer);
   refreshEnvironmentLayer();
 }
@@ -384,6 +405,12 @@ watch([showLeftPanel, orbatPanelWidth, showDetailsPanel, detailsWidth, isMobile]
 });
 
 watch(
+  () => tacticalServicesStore.getServices()?.emitter,
+  (emitter) => environmentEraseController?.bindEmitter(emitter),
+  { immediate: true },
+);
+
+watch(
   [() => state.environmentalConditions, () => state.currentTime],
   () => {
     refreshEnvironmentLayer();
@@ -394,6 +421,8 @@ watch(
 onUnmounted(() => {
   const map = mapRef.value;
   map?.un("moveend", refreshEnvironmentLayer);
+  environmentEraseController?.dispose();
+  environmentEraseController = undefined;
   map?.removeLayer(environmentMapLayer.layer);
   activeUnitStore.clearActiveUnit();
   playback.playbackRunning = false;

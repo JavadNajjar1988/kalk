@@ -27,6 +27,9 @@ import {
   findMetocSymbol,
   metocSymbolAsPreset,
 } from "./metocCatalog";
+import { captureSymbolRenderReference } from "./symbolRenderReference";
+import { createMetocLivePreview } from "./metocLivePreview";
+import type { SymbolRenderReference } from "@/types/scenarioModels";
 
 const toolbarStore = useMainToolbarStore();
 const scenario = injectStrict(activeScenarioKey);
@@ -112,17 +115,23 @@ function presetSvg(preset: EnvironmentPreset) {
 
 let drawInteraction: Draw | undefined;
 let drawLayer: VectorLayer<VectorSource> | undefined;
+let livePreview: ReturnType<typeof createMetocLivePreview> | undefined;
 
 function cancelDraw() {
   const map = mapRef.value;
   if (drawInteraction) map.removeInteraction(drawInteraction);
   if (drawLayer) map.removeLayer(drawLayer);
+  livePreview?.dispose();
   drawInteraction = undefined;
   drawLayer = undefined;
+  livePreview = undefined;
   drawing.value = false;
 }
 
-function addCondition(geometry?: GeoJSON.Geometry) {
+function addCondition(
+  geometry?: GeoJSON.Geometry,
+  renderReference?: SymbolRenderReference,
+) {
   const preset = selectedPreset.value;
   const start = new Date(startTime.value).getTime();
   const end = new Date(endTime.value).getTime();
@@ -138,6 +147,7 @@ function addCondition(geometry?: GeoJSON.Geometry) {
     enabled: true,
     priority: 0,
     metocSidc: preset.metocSidc,
+    renderReference,
   });
 }
 
@@ -159,15 +169,37 @@ function apply() {
     }),
   });
   map.addLayer(drawLayer);
-  drawInteraction = new Draw({ source, type: geometryMode.value });
+  const symbol = activeDomain.value === "metoc" ? selectedMetocSymbol.value : undefined;
+  const renderReference = captureSymbolRenderReference(
+    map,
+    symbol ? "mission-command" : "milsymbol",
+  );
+  drawInteraction = new Draw({
+    source,
+    type: geometryMode.value,
+    minPoints: symbol?.minPoints,
+    maxPoints: symbol?.maxPoints,
+  });
+  if (symbol) {
+    livePreview = createMetocLivePreview({
+      map,
+      symbol,
+      reference: renderReference,
+      name: selectedPreset.value.label,
+      parameters: klona(selectedPreset.value.parameters),
+    });
+    livePreview.watch(drawInteraction);
+  }
   map.addInteraction(drawInteraction);
   drawing.value = true;
-  drawInteraction.once("drawend", (event) => {
+  drawInteraction.once("drawend", async (event) => {
     const geometry = new GeoJSON().writeGeometryObject(event.feature.getGeometry()!, {
       featureProjection: map.getView().getProjection(),
       dataProjection: "EPSG:4326",
     });
-    addCondition(geometry);
+    const artifact = await livePreview?.finalize(event.feature);
+    if (artifact) renderReference.artifact = artifact;
+    addCondition(geometry, renderReference);
     window.setTimeout(cancelDraw, 0);
   });
 }

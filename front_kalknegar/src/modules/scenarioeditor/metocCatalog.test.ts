@@ -31,6 +31,16 @@ describe("MIL-STD-2525C METOC catalog", () => {
     expect(geometries).toEqual(new Set(["Point", "LineString", "Polygon"]));
   });
 
+  it("declares a valid drawing contract for every symbol", () => {
+    for (const symbol of METOC_SYMBOLS) {
+      const expectedMinimum =
+        symbol.geometry === "Point" ? 1 : symbol.geometry === "Polygon" ? 3 : 2;
+      expect(symbol.minPoints).toBeGreaterThanOrEqual(expectedMinimum);
+      expect(symbol.maxPoints).toBeGreaterThanOrEqual(symbol.minPoints);
+      if (symbol.geometry === "Point") expect(symbol.maxPoints).toBe(1);
+    }
+  });
+
   it("migrates legacy short weather identifiers", () => {
     expect(findMetocSymbol("W-S-WSR-LI")?.sidc).toBe("WAS-WSR-MCP----");
     expect(findMetocSymbol("W-S-WSFGSO")?.sidc).toBe("WAS-WSFGSOP----");

@@ -119,6 +119,12 @@ function geometryFor(drawCategory) {
   return "LineString";
 }
 
+function effectiveMinPoints(geometry, reportedMinPoints) {
+  if (geometry === "Point") return 1;
+  if (geometry === "Polygon") return Math.max(3, reportedMinPoints);
+  return Math.max(2, reportedMinPoints);
+}
+
 const definitions = loadSymbolDefinitions();
 const hierarchyByFunctionId = await loadHierarchyByFunctionId();
 const catalog = definitions
@@ -129,6 +135,7 @@ const catalog = definitions
       (definition.symbolID.startsWith("WO")
         ? ["Oceanic", definition.description]
         : ["Atmospheric", definition.description]);
+    const geometry = geometryFor(definition.drawCategory);
     return {
       id: definition.symbolID,
       sidc: definition.symbolID,
@@ -138,8 +145,8 @@ const catalog = definitions
       group: hierarchy.at(-2) ?? hierarchy[0],
       groupFa: translateMetocText(hierarchy.at(-2) ?? hierarchy[0]),
       hierarchy,
-      geometry: geometryFor(definition.drawCategory),
-      minPoints: definition.minPoints,
+      geometry,
+      minPoints: effectiveMinPoints(geometry, definition.minPoints),
       maxPoints: definition.maxPoints,
     };
   })
