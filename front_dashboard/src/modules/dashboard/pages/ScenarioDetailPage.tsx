@@ -82,6 +82,7 @@ import {
   environmentalKindLabel,
   environmentalParameters,
   environmentalSidc,
+  environmentalSpatialLabel,
 } from '@/modules/dashboard/utils/environmentPresentation';
 import EnvironmentMetocSymbol from '@/modules/dashboard/components/EnvironmentMetocSymbol';
 
@@ -385,12 +386,15 @@ const environmentLabel = (condition: EnvironmentalCondition) =>
       ? ENVIRONMENTAL_TYPE_LABELS[condition.type]
       : 'شرایط محیطی';
 
+const environmentCardTitle = (condition: EnvironmentalCondition) =>
+  `${condition.name || environmentLabel(condition)} ـ ${environmentalSpatialLabel(condition)}`;
+
 const EnvironmentMilitarySymbol: React.FC<{
   condition: EnvironmentalCondition;
 }> = ({ condition }) => (
   <EnvironmentMetocSymbol
     sidc={environmentalSidc(condition)}
-    label={condition.name || environmentLabel(condition)}
+    label={environmentCardTitle(condition)}
   />
 );
 
@@ -431,14 +435,32 @@ const EnvironmentalConditionsManager: React.FC<{
                 >
                   <CardHeader
                     avatar={<EnvironmentMilitarySymbol condition={condition} />}
-                    title={condition.name || environmentLabel(condition)}
-                    subheader={`${new Date(condition.startTime).toLocaleString(
-                      'fa-IR'
-                    )} تا ${
-                      condition.endTime
-                        ? new Date(condition.endTime).toLocaleString('fa-IR')
-                        : 'ادامه‌دار'
-                    }`}
+                    title={environmentCardTitle(condition)}
+                    subheader={
+                      <Box
+                        component="span"
+                        sx={{
+                          display: 'flex',
+                          flexDirection: 'column',
+                          mt: 0.5,
+                        }}
+                      >
+                        <Typography component="span" variant="caption">
+                          شروع:{' '}
+                          {new Date(condition.startTime).toLocaleString(
+                            'fa-IR'
+                          )}
+                        </Typography>
+                        <Typography component="span" variant="caption">
+                          پایان:{' '}
+                          {condition.endTime
+                            ? new Date(condition.endTime).toLocaleString(
+                                'fa-IR'
+                              )
+                            : 'ادامه‌دار'}
+                        </Typography>
+                      </Box>
+                    }
                     action={
                       <Chip
                         size="small"

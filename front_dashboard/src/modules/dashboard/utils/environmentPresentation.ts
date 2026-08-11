@@ -186,6 +186,20 @@ export function environmentalKindLabel(condition: EnvironmentalCondition) {
   );
 }
 
+export function environmentalSpatialLabel(condition: EnvironmentalCondition) {
+  switch (condition.geometry?.type) {
+    case 'Point':
+      return 'نقطه‌ای';
+    case 'LineString':
+      return 'مسیری';
+    case 'Polygon':
+    case 'MultiPolygon':
+      return 'محدوده‌ای';
+    default:
+      return condition.scope === 'area' ? 'محدوده‌ای' : 'سراسری';
+  }
+}
+
 export function environmentalParameters(
   condition: EnvironmentalCondition
 ): EnvironmentParameterPresentation[] {

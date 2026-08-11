@@ -7,7 +7,7 @@ import {
 } from './persianTacticalLabels.js'
 
 describe('Persian tactical labels', () => {
-  it('uses either reviewed Persian or the unchanged source label', () => {
+  it('provides a searchable Persian label for every 2525C and SKKM entry', () => {
     const hierarchyLabels = new Set(
       [...symbols2525c, ...symbolsSkkm]
         .flatMap(descriptor => descriptor.hierarchy || [])
@@ -15,11 +15,10 @@ describe('Persian tactical labels', () => {
 
     expect(hierarchyLabels.size).toBeGreaterThan(0)
     for (const label of hierarchyLabels) {
-      const translated = ensurePersianTacticalLabel(label)
       expect(
-        translated === label || !/[A-Za-z]/.test(translated),
-        `Partially translated tactical label: ${label} => ${translated}`
-      ).toBe(true)
+        ensurePersianTacticalLabel(label),
+        `English leaked from tactical label: ${label}`
+      ).not.toMatch(/[A-Za-z]/)
     }
   })
 
@@ -44,7 +43,14 @@ describe('Persian tactical labels', () => {
       .toBe('هواگرد غیرنظامی - سبک‌تر از هوا')
     expect(ensurePersianTacticalLabel('Warfighting Symbols • Air Track'))
       .toBe('نمادهای رزم • رد هوایی')
-    expect(ensurePersianTacticalLabel('Unreviewed Tactical Phrase'))
-      .toBe('Unreviewed Tactical Phrase')
+    expect(ensurePersianTacticalLabel('Agricultural Laboratory'))
+      .toBe('آزمایشگاه کشاورزی')
+    expect(ensurePersianTacticalLabel('No Fire Area (NFA) - Circular'))
+      .toBe('منطقه آتش ممنوع (اِن‌اِف‌اِی) - دایره‌ای')
+    expect(ensurePersianTacticalLabel('Waypoint')).toBe('نقطه راه')
+    expect(ensurePersianTacticalLabel('SOF Unit Attack'))
+      .toBe('یگان تهاجمی نیروهای عملیات ویژه')
+    expect(ensurePersianTacticalLabel('CBRN'))
+      .toBe('دفاع شیمیایی، زیستی، پرتوی و هسته‌ای')
   })
 })

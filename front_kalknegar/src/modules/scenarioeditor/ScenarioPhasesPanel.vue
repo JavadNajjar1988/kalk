@@ -7,7 +7,7 @@ import { PhaseStatus, type ScenarioPhase } from "@/types/scenarioModels";
 import { validateScenarioPhases } from "@/scenariostore/phases";
 import PersianDateTimeField from "@/components/PersianDateTimeField.vue";
 
-const { store, phases: phaseActions } = injectStrict(activeScenarioKey);
+const { store, phases: phaseActions, time } = injectStrict(activeScenarioKey);
 
 type PhaseForm = {
   name: string;
@@ -16,6 +16,7 @@ type PhaseForm = {
   endTime: string;
   status: PhaseStatus;
   objectives: string;
+  eventIds: string[];
 };
 
 const emptyForm = (): PhaseForm => ({
@@ -25,6 +26,7 @@ const emptyForm = (): PhaseForm => ({
   endTime: "",
   status: PhaseStatus.PLANNED,
   objectives: "",
+  eventIds: [],
 });
 
 const form = reactive<PhaseForm>(emptyForm());
@@ -34,6 +36,11 @@ const formError = ref("");
 
 const sortedPhases = computed(() =>
   [...store.state.phases].sort((a, b) => (a.order ?? 0) - (b.order ?? 0)),
+);
+const scenarioEvents = computed(() =>
+  store.state.events
+    .map((id) => store.state.eventMap[id])
+    .filter((event) => event?._type === "scenario"),
 );
 const issues = computed(() => validateScenarioPhases(sortedPhases.value));
 
@@ -68,6 +75,7 @@ function openEdit(phase: ScenarioPhase) {
     endTime: phase.endTime !== undefined ? toDateTimeLocal(phase.endTime) : "",
     status: phase.status,
     objectives: phase.objectives.join("\n"),
+    eventIds: eventsForPhase(phase.id).map((event) => event.id),
   });
   formError.value = "";
   formOpen.value = true;
@@ -110,11 +118,13 @@ function submitForm() {
         : [],
   };
 
-  if (editingId.value) {
-    phaseActions.updatePhase(editingId.value, payload);
+  let phaseId = editingId.value;
+  if (phaseId) {
+    phaseActions.updatePhase(phaseId, payload);
   } else {
-    phaseActions.addPhase(payload);
+    phaseId = phaseActions.addPhase(payload);
   }
+  phaseActions.setPhaseEvents(phaseId, form.eventIds);
   closeForm();
 }
 
@@ -128,8 +138,16 @@ function removePhase(phase: ScenarioPhase) {
 }
 
 function countEvents(phaseId: string) {
-  return Object.values(store.state.eventMap).filter((event) => event.phaseId === phaseId)
-    .length;
+  return eventsForPhase(phaseId).length;
+}
+
+function eventsForPhase(phaseId: string) {
+  return scenarioEvents.value.filter((event) => event.phaseId === phaseId);
+}
+
+function openEvent(eventId: string) {
+  const event = store.state.eventMap[eventId];
+  if (event) time.goToScenarioEvent(event);
 }
 
 function phaseHasIssue(phaseId: string) {
@@ -220,6 +238,34 @@ function statusLabel(status: PhaseStatus) {
           class="bg-background mt-1 w-full rounded-md border px-3 py-2"
         />
       </label>
+      <fieldset class="space-y-2 rounded-md border p-3">
+        <legend class="px-1 text-xs font-medium">رویدادهای این فاز</legend>
+        <p v-if="!scenarioEvents.length" class="text-muted-foreground text-xs">
+          هنوز رویدادی برای اتصال وجود ندارد.
+        </p>
+        <label
+          v-for="event in scenarioEvents"
+          :key="event.id"
+          class="hover:bg-muted/60 flex cursor-pointer items-start gap-2 rounded px-2 py-1.5 text-xs"
+        >
+          <input
+            v-model="form.eventIds"
+            type="checkbox"
+            :value="event.id"
+            class="mt-0.5"
+          />
+          <span class="min-w-0">
+            <span class="block truncate font-medium">{{ event.title }}</span>
+            <span class="text-muted-foreground block">
+              {{ new Date(event.startTime).toLocaleString("fa-IR") }}
+            </span>
+          </span>
+        </label>
+        <p v-if="scenarioEvents.length" class="text-muted-foreground text-xs">
+          هر رویداد فقط به یک فاز تعلق می‌گیرد. انتخاب آن در این فاز، اتصال قبلی را
+          جابه‌جا می‌کند.
+        </p>
+      </fieldset>
       <p v-if="formError" class="text-xs text-red-600">{{ formError }}</p>
       <div class="flex justify-end gap-2">
         <Button type="button" size="sm" variant="ghost" @click="closeForm"> لغو </Button>
@@ -292,6 +338,26 @@ function statusLabel(status: PhaseStatus) {
           {{ objective }}
         </li>
       </ul>
+      <div class="bg-muted/30 mt-3 rounded-md border p-2">
+        <p class="text-muted-foreground mb-2 text-xs font-medium">رویدادهای زیرمجموعه</p>
+        <p v-if="!eventsForPhase(phase.id).length" class="text-muted-foreground text-xs">
+          رویدادی به این فاز متصل نشده است.
+        </p>
+        <ul v-else class="space-y-1">
+          <li v-for="event in eventsForPhase(phase.id)" :key="event.id">
+            <button
+              type="button"
+              class="hover:bg-muted flex w-full items-center justify-between gap-3 rounded px-2 py-1.5 text-right text-xs"
+              @click="openEvent(event.id)"
+            >
+              <span class="min-w-0 truncate font-medium">{{ event.title }}</span>
+              <span class="text-muted-foreground shrink-0">
+                {{ new Date(event.startTime).toLocaleString("fa-IR") }}
+              </span>
+            </button>
+          </li>
+        </ul>
+      </div>
     </article>
   </section>
 </template>

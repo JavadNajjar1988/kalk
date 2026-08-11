@@ -60,6 +60,48 @@ describe("scenario phases", () => {
     expect(scenario.value.store.state.eventMap["event-1"].phaseId).toBeUndefined();
   });
 
+  it("assigns multiple events to a phase and removes deselected associations", () => {
+    const source = scenarioWithPhases();
+    source.events.push({
+      id: "event-2",
+      _type: "scenario",
+      title: "Second event",
+      startTime: 1_500,
+    });
+    const { scenario } = useScenario();
+    scenario.value.io.loadFromObject(source);
+
+    scenario.value.phases.setPhaseEvents("phase-1", ["event-1", "event-2"]);
+
+    expect(scenario.value.store.state.eventMap["event-1"].phaseId).toBe("phase-1");
+    expect(scenario.value.store.state.eventMap["event-2"].phaseId).toBe("phase-1");
+
+    scenario.value.phases.setPhaseEvents("phase-1", ["event-2"]);
+
+    expect(scenario.value.store.state.eventMap["event-1"].phaseId).toBeUndefined();
+    expect(scenario.value.store.state.eventMap["event-2"].phaseId).toBe("phase-1");
+  });
+
+  it("moves an event from its previous phase when assigning it to another phase", () => {
+    const source = scenarioWithPhases();
+    source.phases!.push({
+      id: "phase-2",
+      name: "Second phase",
+      startTime: 2_000,
+      endTime: 3_000,
+      objectives: [],
+      tasks: [],
+      status: PhaseStatus.PLANNED,
+      order: 1,
+    });
+    const { scenario } = useScenario();
+    scenario.value.io.loadFromObject(source);
+
+    scenario.value.phases.setPhaseEvents("phase-2", ["event-1"]);
+
+    expect(scenario.value.store.state.eventMap["event-1"].phaseId).toBe("phase-2");
+  });
+
   it("detects invalid ranges and phase overlaps", () => {
     const phases = scenarioWithPhases().phases!;
     const issues = validateScenarioPhases([

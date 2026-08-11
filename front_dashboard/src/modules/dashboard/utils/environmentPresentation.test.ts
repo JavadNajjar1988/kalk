@@ -4,6 +4,7 @@ import {
   environmentalKindLabel,
   environmentalParameters,
   environmentalSidc,
+  environmentalSpatialLabel,
 } from './environmentPresentation';
 
 describe('environment presentation', () => {
@@ -45,5 +46,31 @@ describe('environment presentation', () => {
     };
 
     expect(environmentalSidc(condition)).toBe('WAS-WSTMH-P----');
+  });
+
+  it('distinguishes environmental cards by their spatial shape', () => {
+    const base = {
+      id: 'wind-1',
+      kind: 'wind' as const,
+      startTime: 0,
+    };
+
+    expect(
+      environmentalSpatialLabel({
+        ...base,
+        scope: 'area',
+        geometry: { type: 'Polygon', coordinates: [] },
+      })
+    ).toBe('محدوده‌ای');
+    expect(
+      environmentalSpatialLabel({
+        ...base,
+        scope: 'area',
+        geometry: { type: 'LineString', coordinates: [] },
+      })
+    ).toBe('مسیری');
+    expect(environmentalSpatialLabel({ ...base, scope: 'global' })).toBe(
+      'سراسری'
+    );
   });
 });

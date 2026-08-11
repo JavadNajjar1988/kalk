@@ -12,6 +12,7 @@
     "preview": "vite preview",
     "test:unit": "vitest",
     "generate:metoc": "node scripts/generate-metoc-catalog.mjs",
+    "generate:tactical-labels": "vite-node scripts/generate-legacy-tactical-labels.mts",
     "validate:metoc": "node scripts/validate-metoc-renderer.mjs",
     "build-only": "vite build",
     "type-check": "vue-tsc --noEmit -p tsconfig.release.json",

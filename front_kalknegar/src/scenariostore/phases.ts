@@ -111,5 +111,26 @@ export function useScenarioPhases(store: NewScenarioStore) {
     );
   }
 
-  return { addPhase, updatePhase, deletePhase, movePhase };
+  function setPhaseEvents(phaseId: string, eventIds: string[]) {
+    store.update(
+      (state) => {
+        if (!state.phases.some((phase) => phase.id === phaseId)) return;
+        const selectedIds = new Set(eventIds);
+
+        state.events.forEach((eventId) => {
+          const event = state.eventMap[eventId];
+          if (!event || event._type !== "scenario") return;
+
+          if (selectedIds.has(eventId)) {
+            event.phaseId = phaseId;
+          } else if (event.phaseId === phaseId) {
+            event.phaseId = undefined;
+          }
+        });
+      },
+      { label: "setPhaseEvents", value: phaseId },
+    );
+  }
+
+  return { addPhase, updatePhase, deletePhase, movePhase, setPhaseEvents };
 }

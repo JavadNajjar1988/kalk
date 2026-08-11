@@ -1,4 +1,5 @@
 import { findReviewedEntityTranslation } from '../../symbology/translations'
+import { generatedLegacyTacticalLabels } from './generatedLegacyTacticalLabels.js'
 
 // High-frequency MIL-STD-2525 / SKKM vocabulary used at every hierarchy level.
 export const tacticalWordTranslations = {
@@ -168,6 +169,175 @@ export const tacticalWordTranslations = {
 }
 
 export const tacticalPhraseTranslations = {
+  'Agriculture and Food Infrastructure': 'زیرساخت کشاورزی و غذا',
+  'Agricultural Laboratory': 'آزمایشگاه کشاورزی',
+  'Animal Feedlot': 'مرکز نگهداری و پرواربندی دام',
+  'Commercial Food Distribution Center': 'مرکز تجاری توزیع مواد غذایی',
+  'Farm / Ranch': 'مزرعه / دامداری',
+  'Food Production Center': 'مرکز تولید مواد غذایی',
+  'Food Retail': 'خرده‌فروشی مواد غذایی',
+  'Grain Storage': 'انبار غلات',
+  'Banking Finance and Insurance Infrastructure': 'زیرساخت بانکی، مالی و بیمه',
+  'Bullion Storage': 'خزانه شمش',
+  'Federal Reserve Bank': 'بانک ذخیره فدرال',
+  'Financial Exchange': 'بورس مالی',
+  'Financial Services Other': 'سایر خدمات مالی',
+  'Commercial Infrastructure': 'زیرساخت تجاری',
+  'Chemical Plant': 'کارخانه صنایع شیمیایی',
+  'Firearms Manufacturer': 'کارخانه تولید سلاح گرم',
+  'Firearms Retailer': 'فروشگاه سلاح گرم',
+  'Hazardous Material Production': 'مرکز تولید مواد خطرناک',
+  'Hazardous Material Storage': 'انبار مواد خطرناک',
+  'Industrial Site': 'محوطه صنعتی',
+  'Contaminated Hazardous Waste Site': 'محل پسماند خطرناک آلوده',
+  'Toxic Release Inventory': 'مخزن مواد سمی رهاشونده',
+  'Educational Facilities Infrastructure': 'زیرساخت مراکز آموزشی',
+  'College University': 'دانشکده یا دانشگاه',
+  'Energy Facilities Infrastructure': 'زیرساخت تأسیسات انرژی',
+  'Generation Station': 'نیروگاه تولید برق',
+  'Natural Gas Facility': 'تأسیسات گاز طبیعی',
+  'Propane Facility': 'تأسیسات پروپان',
+  'Government Site Infrastructure': 'زیرساخت مراکز دولتی',
+  'Military Infrastructure': 'زیرساخت نظامی',
+  'Military Armory': 'اسلحه‌خانه نظامی',
+  'Postal Service Infrastructure': 'زیرساخت خدمات پستی',
+  'Postal Distribution Center': 'مرکز توزیع مرسولات پستی',
+  'Post Office': 'اداره پست',
+  'Public Venues Infrastructure': 'زیرساخت اماکن عمومی',
+  'Enclosed Facility': 'تأسیسات محصور',
+  'Open Facility': 'تأسیسات روباز',
+  'Recreational Area': 'منطقه تفریحی',
+  'Religious Institution': 'مرکز مذهبی',
+  'Special Needs Infrastructure': 'زیرساخت خدمات افراد با نیازهای ویژه',
+  'Adult Day Care': 'مرکز نگهداری روزانه بزرگسالان',
+  'Child Day Care': 'مرکز نگهداری روزانه کودکان',
+  'Elder Care': 'مرکز نگهداری سالمندان',
+  'Telecommunications Infrastructure': 'زیرساخت مخابراتی',
+  'Telecommunications Tower': 'دکل مخابراتی',
+  'Transportation Infrastructure': 'زیرساخت حمل‌ونقل',
+  'Air Traffic Control Facility': 'تأسیسات کنترل ترافیک هوایی',
+  'Bus Station': 'پایانه اتوبوس',
+  'Ferry Terminal': 'پایانه کشتی مسافربری',
+  'Helicopter Landing Site': 'محل فرود بالگرد',
+  'Maintenance Facility': 'تأسیسات تعمیر و نگهداری',
+  'Rail Station': 'ایستگاه راه‌آهن',
+  'Rest Stop': 'توقفگاه بین‌راهی',
+  'Toll Facility': 'تأسیسات اخذ عوارض',
+  'Traffic Inspection Facility': 'مرکز بازرسی ترافیک',
+  'Water Supply Infrastructure': 'زیرساخت تأمین آب',
+  'Control Valve': 'شیر کنترل',
+  'Discharge Outfall': 'خروجی تخلیه',
+  'Ground Water Well': 'چاه آب زیرزمینی',
+  'Pumping Station': 'ایستگاه پمپاژ',
+  'Storage Tower': 'برج ذخیره آب',
+  'Surface Water Intake': 'آبگیر آب سطحی',
+  'Wastewater Treatment Facility': 'تصفیه‌خانه فاضلاب',
+  'Civil Disturbance Incident': 'حادثه ناآرامی مدنی',
+  'Civil Rioting': 'شورش مدنی',
+  'Criminal Activity Incident': 'حادثه فعالیت مجرمانه',
+  'Bomb Threat': 'تهدید بمب‌گذاری',
+  'Fire Incident': 'حادثه آتش‌سوزی',
+  'Hot Spot': 'نقطه داغ',
+  'Non-residential Fire': 'آتش‌سوزی ساختمان غیرمسکونی',
+  'Origin (of Fire)': 'کانون آتش‌سوزی',
+  'Residential Fire': 'آتش‌سوزی ساختمان مسکونی',
+  'School Fire': 'آتش‌سوزی مدرسه',
+  'Special Needs Fire': 'آتش‌سوزی مرکز افراد با نیازهای ویژه',
+  'Wild Fire': 'آتش‌سوزی عرصه طبیعی',
+  'Hazardous Material Incident': 'حادثه مواد خطرناک',
+  'Hazardous When Wet': 'خطرناک در تماس با آب',
+  'Non-flammable Gas': 'گاز غیرقابل اشتعال',
+  'Spontaneously Combustible': 'خودبه‌خود آتش‌گیر',
+  'Toxic and Infectious': 'سمی و عفونی',
+  'Unexploded Ordnance': 'مهمات منفجرنشده',
+  'Air Incident': 'حادثه هوایی',
+  'Air Accident': 'سانحه هوایی',
+  'Marine Incident': 'حادثه دریایی',
+  'Marine Accident': 'سانحه دریایی',
+  'Rail Incident': 'حادثه ریلی',
+  'Rail Accident': 'سانحه ریلی',
+  'Rail Hijacking': 'ربایش قطار',
+  'Vehicle Incident': 'حادثه خودرویی',
+  'Vehicle Accident': 'سانحه خودرویی',
+  'Natural Events': 'رویدادهای طبیعی',
+  'Earthquake Epicenter': 'مرکز سطحی زمین‌لرزه',
+  'Volcanic Threat': 'تهدید آتشفشانی',
+  'Hydro-meteorological': 'آب‌وهواشناختی',
+  'Bird Infestation': 'هجوم آفت پرندگان',
+  'Insect Infestation': 'هجوم آفت حشرات',
+  'Microbial Infestation': 'آلودگی میکروبی',
+  'Reptile Infestation': 'هجوم خزندگان',
+  'Rodent Infestation': 'هجوم جوندگان',
+  'Emergency Medical Operation': 'عملیات فوریت‌های پزشکی',
+  'Emergency Medical Operation Equipment': 'تجهیزات عملیات فوریت‌های پزشکی',
+  'Emergency Medical Operation Installation': 'تأسیسات عملیات فوریت‌های پزشکی',
+  'EMT Station Location': 'محل ایستگاه فوریت‌های پزشکی',
+  'Medical Evacuation Helicopter': 'بالگرد تخلیه پزشکی',
+  'Health Department Facility': 'تأسیسات مرکز بهداشت',
+  'Medical Facilities Out Patient': 'مرکز درمان سرپایی',
+  'Emergency Operation': 'عملیات اضطراری',
+  'Emergency Operation Equipment': 'تجهیزات عملیات اضطراری',
+  'Emergency Operation Installation': 'تأسیسات عملیات اضطراری',
+  'Emergency Incident Command Center': 'مرکز فرماندهی حادثه اضطراری',
+  'Emergency Operations Center': 'مرکز عملیات اضطراری',
+  'Emergency Public Information Center': 'مرکز اطلاع‌رسانی عمومی اضطراری',
+  'Emergency Collection Evacuation Point': 'نقطه تجمع و تخلیه اضطراری',
+  'Emergency Shelter': 'پناهگاه اضطراری',
+  'Emergency Staging Area': 'منطقه آماده‌سازی اضطراری',
+  'Emergency Team': 'تیم واکنش اضطراری',
+  'Emergency Water Distribution Center': 'مرکز توزیع اضطراری آب',
+  'Emergency Food Distribution Center': 'مرکز توزیع اضطراری غذا',
+  'Fire Fighting Operation': 'عملیات آتش‌نشانی',
+  'Fire Fighting Operation Equipment': 'تجهیزات عملیات آتش‌نشانی',
+  'Fire Hydrant': 'شیر آتش‌نشانی',
+  'Other Water Supply Location': 'سایر محل‌های تأمین آب',
+  'Fire Station': 'ایستگاه آتش‌نشانی',
+  'Law Enforcement Operation': 'عملیات اجرای قانون',
+  'Law Enforcement Operation Equipment': 'تجهیزات عملیات اجرای قانون',
+  'Law Enforcement Operation Installation': 'تأسیسات عملیات اجرای قانون',
+  'Command & Control Areas': 'مناطق فرماندهی و کنترل',
+  'Command & Control Lines': 'خطوط فرماندهی و کنترل',
+  'Command & Control Points': 'نقاط فرماندهی و کنترل',
+  'Airspace Coordination Area (ACA)': 'منطقه هماهنگی فضای هوایی (اِی‌سی‌اِی)',
+  'Target Build-up Area (TBA)': 'منطقه تجمع هدف (تی‌بی‌اِی)',
+  'Dead Space Area (DA)': 'منطقه کور (دی‌اِی)',
+  'Sensor Zone': 'منطقه پوشش حسگر',
+  'Free Fire Area (FFA)': 'منطقه آتش آزاد (اِف‌اِف‌اِی)',
+  'No Fire Area (NFA)': 'منطقه آتش ممنوع (اِن‌اِف‌اِی)',
+  'Position Area For Artillery (PAA)': 'منطقه موضع توپخانه (پی‌اِی‌اِی)',
+  'Restrictive Fire Area (RFA)': 'منطقه آتش محدود (آر‌اِف‌اِی)',
+  'Fire Support Area (FSA)': 'منطقه پشتیبانی آتش (اِف‌اِس‌اِی)',
+  'Critical Friendly Zone (CFZ)': 'منطقه حساس نیروهای خودی (سی‌اِف‌زِد)',
+  'Call For Fire Zone (CFFZ)': 'منطقه درخواست آتش (سی‌اِف‌اِف‌زِد)',
+  'Coordinated Fire Line (CFL)': 'خط آتش هماهنگ‌شده (سی‌اِف‌اِل)',
+  'Fire Support Coordination Line (FSCL)': 'خط هماهنگی پشتیبانی آتش (اِف‌اِس‌سی‌اِل)',
+  'No-fire Line (NFL)': 'خط آتش ممنوع (اِن‌اِف‌اِل)',
+  'Restrictive Fire Line (RFL)': 'خط آتش محدود (آر‌اِف‌اِل)',
+  'Final Protective Fire (FPF)': 'آتش حفاظتی نهایی (اِف‌پی‌اِف)',
+  'Terminally Guided Munition Footprint (TGMF)': 'محدوده اصابت مهمات هدایت پایانی (تی‌جی‌اِم‌اِف)',
+  'Target Value Area (TVAR)': 'منطقه اهداف باارزش (تی‌وی‌اِی‌آر)',
+  'Zone of Responsibility (ZOR)': 'حوزه مسئولیت (زِد‌اُ‌آر)',
+  'Waypoint': 'نقطه راه',
+  'Main Attack': 'تک اصلی',
+  'Supporting Attack': 'تک پشتیبانی',
+  'Fix': 'تثبیت',
+  'Explosion': 'انفجار',
+  'SOF Unit Attack': 'یگان تهاجمی نیروهای عملیات ویژه',
+  'SOF Unit Utility': 'یگان پشتیبانی نیروهای عملیات ویژه',
+  'SOF Unit Utility (Light)': 'یگان پشتیبانی سبک نیروهای عملیات ویژه',
+  'SOF Unit Utility (Medium)': 'یگان پشتیبانی متوسط نیروهای عملیات ویژه',
+  'Utility Vehicle': 'خودروی چندمنظوره',
+  'Transporter Erector Launcher and Radar (TELAR)': 'حامل، برافرازنده، پرتابگر و رادار (تِلار)',
+  'Transporter Launcher and Radar (TLAR)': 'حامل، پرتابگر و رادار (تِلار)',
+  'Multiple Rocket Launcher': 'پرتابگر چندگانه راکت',
+  'Single Rocket Launcher': 'پرتابگر تک‌راکت',
+  'Reconnaissance': 'شناسایی',
+  'Aviation': 'هوانوردی',
+  'CBRN': 'دفاع شیمیایی، زیستی، پرتوی و هسته‌ای',
+  'Decontamination (DECON)': 'رفع آلودگی (دیکان)',
+  'Sensor': 'حسگر',
+  'Line': 'خط',
+  'Ferry': 'شناور عبور',
   'Armored Reconnaissance Unit': 'یگان شناسایی زرهی',
   'Emergency Medical Operation Unit': 'یگان عملیات پزشکی اضطراری',
   'Emergency Operation Unit': 'یگان عملیات اضطراری',
@@ -244,26 +414,33 @@ function transliterateWord(word) {
   return result.replace(/ِ+/g, 'ِ')
 }
 
-const separatorPattern = /(\s+[•/]\s+|\s+-\s+)/
-const isSeparator = value => separatorPattern.test(value)
 const reviewedTranslation = value =>
-  tacticalPhraseTranslations[value] || findReviewedEntityTranslation(value)
+  tacticalPhraseTranslations[value] ||
+  generatedLegacyTacticalLabels[value] ||
+  findReviewedEntityTranslation(value)
 
-// Unknown labels remain in their source language until a reviewed phrase is
-// added. This avoids presenting transliteration as if it were a translation.
+// Exact reviewed phrases take precedence. Remaining catalogue labels are built
+// from the tactical term dictionary so every visible label is Persian and can
+// be found through the Persian search index. Unknown proper names and doctrinal
+// abbreviations are transliterated instead of leaking Latin text into the UI.
 export function ensurePersianTacticalLabel(value) {
   if (!value) return value
 
   const exact = reviewedTranslation(value)
-  if (exact) return exact
+  if (exact) {
+    return exact.replace(/[A-Za-z]+(?:-[A-Za-z]+)*/g, word => {
+      return tacticalWordTranslations[word.toLowerCase()] || transliterateWord(word)
+    })
+  }
 
-  const parts = value.split(separatorPattern)
-  if (parts.length === 1) return value
+  const translatedPhrases = Object.entries(tacticalPhraseTranslations)
+    .sort(([a], [b]) => b.length - a.length)
+    .reduce((label, [phrase, translation]) => {
+      const escaped = phrase.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+      return label.replace(new RegExp(escaped, 'gi'), translation)
+    }, value)
 
-  const labels = parts.filter(part => !isSeparator(part))
-  if (!labels.every(part => reviewedTranslation(part))) return value
-
-  return parts
-    .map(part => isSeparator(part) ? part : reviewedTranslation(part))
-    .join('')
+  return translatedPhrases.replace(/[A-Za-z]+(?:-[A-Za-z]+)*/g, word => {
+    return tacticalWordTranslations[word.toLowerCase()] || transliterateWord(word)
+  })
 }

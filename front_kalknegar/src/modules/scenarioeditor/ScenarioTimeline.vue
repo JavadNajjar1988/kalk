@@ -131,6 +131,18 @@ const timelineWidth = computed(() => {
   return majorTicks.value.length * majorWidth.value;
 });
 
+const phaseIds = computed(() => new Set(phases.value.map((phase) => phase.id)));
+
+const eventsWithoutPhase = computed(() =>
+  eventsWithX.value.filter(
+    ({ event }) => !event.phaseId || !phaseIds.value.has(event.phaseId),
+  ),
+);
+
+function eventsInPhase(phaseId: string) {
+  return eventsWithX.value.filter(({ event }) => event.phaseId === phaseId);
+}
+
 const totalXOffset = computed(() => {
   return xOffset.value + draggedDiff.value;
 });
@@ -472,7 +484,7 @@ function onContextMenuAction(action: string) {
       >
         <div class="flex justify-center">
           <div
-            class="relative h-14 flex-none text-center"
+            class="relative h-16 flex-none text-center"
             :style="`width: ${timelineWidth}px`"
           >
             <div
@@ -490,16 +502,35 @@ function onContextMenuAction(action: string) {
               v-for="{ x, width: phaseWidth, phase } in phasesWithX"
               :key="`phase-${phase.id}`"
               data-testid="scenario-phase-band"
-              class="absolute top-5 h-4 overflow-hidden rounded-sm border border-emerald-700/40 bg-emerald-500/25 px-1 text-[10px] leading-4 text-emerald-950 dark:text-emerald-100"
+              class="absolute top-5 h-6 overflow-hidden rounded-sm border border-emerald-700/50 bg-emerald-500/25 text-[10px] leading-6 text-emerald-950 dark:text-emerald-100"
               :style="`left: ${x}px; width: ${phaseWidth}px;`"
               :title="`فاز: ${phase.name}`"
             >
-              <span v-if="phaseWidth > 48">{{ phase.name }}</span>
+              <span
+                v-if="phaseWidth > 48"
+                class="pointer-events-none block truncate px-1"
+              >
+                {{ phase.name }}
+              </span>
+              <button
+                v-for="{ x: eventX, event } in eventsInPhase(phase.id)"
+                type="button"
+                :key="event.id"
+                data-testid="scenario-event-marker"
+                data-phase-event="true"
+                class="absolute top-1/2 z-10 h-4 w-4 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-emerald-950 bg-amber-400 shadow-sm hover:bg-red-700 dark:border-emerald-100"
+                :style="`left: ${eventX - x}px;`"
+                :title="`${event.title} — فاز ${phase.name}`"
+                @pointerdown.stop
+                @pointerup.stop
+                @mousemove.stop
+                @click.stop="onEventClick(event)"
+              />
             </div>
             <div
               v-for="{ x, count } in binsWithX"
               :key="x"
-              class="absolute top-11 h-2 w-4 rounded border border-gray-500"
+              class="absolute top-14 h-2 w-4 rounded border border-gray-500"
               :style="`left: ${x}px; width: ${Math.max(
                 majorWidth / 24,
                 8,
@@ -508,11 +539,11 @@ function onContextMenuAction(action: string) {
               :title="`${count} رویداد واحد`"
             ></div>
             <button
-              v-for="{ x, event } in eventsWithX"
+              v-for="{ x, event } in eventsWithoutPhase"
               type="button"
               :key="event.id"
               data-testid="scenario-event-marker"
-              class="absolute top-10 h-4 w-4 -translate-x-1/2 rounded-full border border-gray-500 bg-amber-500 hover:bg-red-900"
+              class="absolute top-12 h-4 w-4 -translate-x-1/2 rounded-full border border-gray-500 bg-amber-500 hover:bg-red-900"
               :style="`left: ${x}px;`"
               @mousemove.stop
               :title="event.title"
@@ -522,7 +553,7 @@ function onContextMenuAction(action: string) {
               v-for="{ x, count } in tacticalMarkersWithX"
               :key="`tactical-${x}-${count}`"
               data-testid="tactical-timeline-marker"
-              class="absolute top-10 h-3 w-3 -translate-x-1/2 rounded-full border border-blue-800 bg-blue-500 shadow-sm shadow-blue-900/30"
+              class="absolute top-12 h-3 w-3 -translate-x-1/2 rounded-full border border-blue-800 bg-blue-500 shadow-sm shadow-blue-900/30"
               :style="`left: ${x}px;`"
               @mousemove.stop
               :title="

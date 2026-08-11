@@ -1,9 +1,17 @@
 import * as R from 'ramda'
 import MiniSearch from 'minisearch'
 
+const normalizeSearchText = value => value
+  .replace(/[يى]/g, 'ی')
+  .replace(/ك/g, 'ک')
+  .replace(/[أإ]/g, 'ا')
+  .replace(/ة/g, 'ه')
+  .replace(/\u200c/g, ' ')
+
 export const createIndex = () => new MiniSearch({
   fields: ['text', 'tags', 'scope'],
   tokenize: string => {
+    string = normalizeSearchText(string)
     const tokens = R.uniq([
       ...string.split(/[\s-/]/), // A: el clásico
       ...string.split(/([/]?["\w]+[.]?)|[ /]/), // B: leading '/' and trailing '.'

@@ -575,6 +575,7 @@ export type ActionLabel =
   | "updatePhase"
   | "deletePhase"
   | "movePhase"
+  | "setPhaseEvents"
   | "addEnvironmentalCondition"
   | "updateEnvironmentalCondition"
   | "deleteEnvironmentalCondition";

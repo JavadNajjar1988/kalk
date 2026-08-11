@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   collectTacticalTimelineMarkers,
+  mapEventsToX,
   mapPhasesToX,
   mapEnvironmentToX,
   mapTacticalMarkersToX,
@@ -48,6 +49,29 @@ describe("scenario timeline tactical markers", () => {
 });
 
 describe("scenario timeline phases", () => {
+  it("preserves phase associations while mapping events to the timeline", () => {
+    const events = mapEventsToX({
+      events: [
+        {
+          id: "event-1",
+          _type: "scenario",
+          title: "Phase event",
+          startTime: 43_200_000,
+          phaseId: "phase-1",
+        },
+      ],
+      histogram: [],
+      minTimestamp: 0,
+      maxTimestamp: 86_400_000,
+      majorWidth: 240,
+      tzOffsetMinutes: 0,
+    });
+
+    expect(events).toHaveLength(1);
+    expect(events[0].x).toBe(120);
+    expect(events[0].event.phaseId).toBe("phase-1");
+  });
+
   it("clips phase bands to the visible timeline range", () => {
     const phases = mapPhasesToX({
       events: [],
