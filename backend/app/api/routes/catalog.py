@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
+from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, UploadFile
 from fastapi.responses import FileResponse, JSONResponse
 import hashlib
 import json
@@ -22,6 +22,10 @@ from app.services.catalog_vector_upload import (
     write_geojson_file,
 )
 from app.services.sdi.publish import _public_catalog_path, generate_layers_json
+from app.services.map_scenario_assignments import (
+    filter_catalog_for_scenario,
+    validate_scenario_ids,
+)
 
 
 router = APIRouter(prefix="/catalog", tags=["catalog"])
@@ -44,7 +48,7 @@ def _compute_version_from_bytes(b: bytes) -> str:
 
 
 @router.get("/layers.json")
-async def get_layers_catalog():
+async def get_layers_catalog(scenario_id: str | None = Query(None)):
     path = settings.CATALOG_PATH
     # If file missing, return empty catalog
     if not os.path.exists(path):
@@ -63,7 +67,7 @@ async def get_layers_catalog():
             for layer in payload.get("layers") or []:
                 if isinstance(layer, dict) and isinstance(layer.get("path"), str):
                     layer["path"] = _public_catalog_path(layer["path"])
-        return JSONResponse(payload)
+        return JSONResponse(filter_catalog_for_scenario(payload, scenario_id))
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"failed_to_read_catalog: {e}")
 
@@ -127,9 +131,20 @@ async def upload_catalog_vector_layer(
     title: str = Form(...),
     file: UploadFile = File(...),
     crs_epsg: str | None = Form(None),
+    scenario_ids: str = Form("[]"),
     session: DbSession = None,
 ):
     """آپلود لایهٔ برداری، ذخیره، ثبت SDIMap منتشرشده و بازتولید layers.json برای کلک‌نگار."""
+    try:
+        parsed_scenario_ids = json.loads(scenario_ids)
+    except json.JSONDecodeError as exc:
+        raise HTTPException(status_code=400, detail="فهرست سناریوها معتبر نیست") from exc
+    if not isinstance(parsed_scenario_ids, list) or not all(
+        isinstance(value, str) for value in parsed_scenario_ids
+    ):
+        raise HTTPException(status_code=400, detail="فهرست سناریوها معتبر نیست")
+    assigned_scenario_ids = await validate_scenario_ids(session, parsed_scenario_ids)
+
     raw = await file.read()
     if len(raw) > 80 * 1024 * 1024:
         raise HTTPException(status_code=413, detail="فایل خیلی بزرگ است")
@@ -208,6 +223,7 @@ async def upload_catalog_vector_layer(
         hash=file_hash,
         status="published",
         roles=None,
+        scenario_ids=assigned_scenario_ids,
         category="uploaded-vector",
         extra_metadata={"original_filename": file.filename},
     )
@@ -222,4 +238,3 @@ async def upload_catalog_vector_layer(
         layer_url=layer_url,
         source_type=source_type,
     )
-

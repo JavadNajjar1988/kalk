@@ -33,7 +33,7 @@ const { scenario, isReady } = useScenario();
 async function applyPublishedCatalogMapLayers() {
   await nextTick();
   try {
-    await mergePublishedCatalogMapLayers(scenario.value.geo);
+    await mergePublishedCatalogMapLayers(scenario.value.geo, props.scenarioId);
   } catch (e) {
     console.warn("[ScenarioEditorWrapper] catalog map layers merge skipped:", e);
   }

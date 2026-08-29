@@ -64,6 +64,14 @@ function updateData(formData: ScenarioTileJSONLayerUpdate | ScenarioXYZLayerUpda
       <DescriptionItem :label="urlLabel" dd-class="truncate">{{
         layer.url || "تنظیم نشده"
       }}</DescriptionItem>
+      <div v-if="layer.type === 'XYZLayer'" class="mt-4 grid grid-cols-2 gap-3">
+        <DescriptionItem label="کمینه بزرگ‌نمایی">{{
+          layer.tileLayerOptions?.minZoom ?? "تنظیم نشده"
+        }}</DescriptionItem>
+        <DescriptionItem label="بیشینه بزرگ‌نمایی">{{
+          layer.tileLayerOptions?.maxZoom ?? "تنظیم نشده"
+        }}</DescriptionItem>
+      </div>
       <footer class="mt-4 flex justify-end space-x-2">
         <Button variant="outline" size="sm" @click="editMode = true">ویرایش</Button>
       </footer>

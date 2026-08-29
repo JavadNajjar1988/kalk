@@ -18,6 +18,7 @@ from app.schemas.sdi import (
 )
 from app.core.config import settings
 from app.services.sdi.publish import generate_layers_json
+from app.services.map_scenario_assignments import validate_scenario_ids
 from app.core.security import get_current_user, require_roles
 from app.services.sdi.harvest import (
     harvest_offline_mbtiles,
@@ -53,6 +54,7 @@ async def list_sdi_maps(
 
 @router.post("/maps", response_model=SDIMapResponse, dependencies=[Depends(require_roles("ADMIN"))])
 async def create_sdi_map(payload: SDIMapCreate, session: DbSession = None):
+    scenario_ids = await validate_scenario_ids(session, payload.scenario_ids)
     obj = SDIMap(
         server_id=payload.server_id,
         title=payload.title,
@@ -68,6 +70,7 @@ async def create_sdi_map(payload: SDIMapCreate, session: DbSession = None):
         version=payload.version,
         status=payload.status,
         roles=payload.roles,
+        scenario_ids=scenario_ids,
         category=payload.category,
         extra_metadata=payload.extra_metadata,
     )
@@ -334,7 +337,13 @@ async def update_sdi_map(map_id: int, payload: SDIMapUpdate, session: DbSession 
     if not obj:
         raise HTTPException(status_code=404, detail="sdi_map_not_found")
 
-    for field, value in payload.model_dump(exclude_unset=True).items():
+    update_values = payload.model_dump(exclude_unset=True)
+    if "scenario_ids" in update_values:
+        update_values["scenario_ids"] = await validate_scenario_ids(
+            session,
+            update_values["scenario_ids"],
+        )
+    for field, value in update_values.items():
         setattr(obj, field, value)
     await session.commit()
     await session.refresh(obj)

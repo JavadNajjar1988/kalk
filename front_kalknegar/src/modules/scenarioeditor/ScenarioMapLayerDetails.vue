@@ -25,6 +25,7 @@ import WmsMapLayerSettings from "@/modules/scenarioeditor/WmsMapLayerSettings.vu
 import { type LayerUpdateOptions } from "@/composables/geoMapLayers";
 import { useUiStore } from "@/stores/uiStore";
 import MapLayerMetaSettings from "@/modules/scenarioeditor/MapLayerMetaSettings.vue";
+import VectorMapLayerSettings from "@/modules/scenarioeditor/VectorMapLayerSettings.vue";
 import TabWrapper from "@/components/TabWrapper.vue";
 
 interface Props {
@@ -164,6 +165,11 @@ function toggleLayerVisibility() {
           :layer="mapLayer"
           @update="updateLayer"
           @action="onAuxMapLayerSettingsAction"
+        />
+        <VectorMapLayerSettings
+          v-else-if="mapLayer.type === 'GeoJSONLayer' || mapLayer.type === 'KMLLayer'"
+          :layer="mapLayer"
+          @update="updateLayer"
         />
       </TabPanel>
       <TabPanel v-if="uiStore.debugMode" class="prose prose-sm max-w-none">

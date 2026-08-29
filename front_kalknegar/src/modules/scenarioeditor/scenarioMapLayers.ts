@@ -292,6 +292,8 @@ export function useScenarioMapLayers(olMap: OLMap) {
     const source = new XYZ({
       url: data.url,
       attributions: data.attributions,
+      minZoom: data.tileLayerOptions?.minZoom,
+      maxZoom: data.tileLayerOptions?.maxZoom,
     });
 
     const newLayer = new TileLayer({

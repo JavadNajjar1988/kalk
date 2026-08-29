@@ -6,7 +6,7 @@ import uuid
 from typing import Any
 
 import httpx
-from fastapi import APIRouter, Depends, File, HTTPException, Response, UploadFile, status
+from fastapi import APIRouter, Depends, File, Form, HTTPException, Response, UploadFile, status
 from fastapi.responses import StreamingResponse
 from openpyxl import load_workbook
 
@@ -14,6 +14,7 @@ from app.core.config import settings
 from app.core.response import success
 from app.core.security import require_roles
 from app.deps import DbSession
+from app.models.scenario import Scenario
 from app.services.excel_scenario_import import (
     build_template_workbook,
     export_content_to_workbook,
@@ -23,6 +24,7 @@ from app.services.excel_scenario_import import (
 )
 from app.services.scenario_import import (
     broadcast_scenario_import,
+    merge_scenario_content,
     scenario_import_response_data,
     upsert_scenario_from_import,
 )
@@ -89,6 +91,8 @@ async def preview_scenario_excel(file: UploadFile = File(...)):
                 "sidesCount": len(content.get("sides") or []),
                 "equipmentCount": len(content.get("equipment") or []),
                 "personnelCount": len(content.get("personnel") or []),
+                "featuresCount": sum(len(layer.get("features") or []) for layer in content.get("layers") or []),
+                "storyboardScenesCount": len((content.get("storyboard") or {}).get("scenes") or []),
             },
             "content": content if content else None,
         }
@@ -100,7 +104,13 @@ async def preview_scenario_excel(file: UploadFile = File(...)):
     response_model=dict,
     dependencies=[Depends(require_roles("SUPER_ADMIN", "COMMANDER"))],
 )
-async def import_scenario_excel(db: DbSession, response: Response, file: UploadFile = File(...)):
+async def import_scenario_excel(
+    db: DbSession,
+    response: Response,
+    file: UploadFile = File(...),
+    target_scenario_id: str | None = Form(default=None),
+    merge_mode: str = Form(default="merge"),
+):
     raw = await _read_upload(file)
     try:
         wb = load_workbook(io.BytesIO(raw), read_only=False, data_only=True)
@@ -115,12 +125,23 @@ async def import_scenario_excel(db: DbSession, response: Response, file: UploadF
     if not content or not content.get("name"):
         raise HTTPException(status_code=400, detail="Could not build scenario from file")
 
-    scenario_id = content.get("id") or str(uuid.uuid4())
+    if merge_mode not in {"merge", "replace"}:
+        raise HTTPException(status_code=400, detail="merge_mode must be merge or replace")
+
+    existing = None
+    if target_scenario_id:
+        existing = await db.get(Scenario, target_scenario_id)
+        if existing is None:
+            raise HTTPException(status_code=404, detail="Target scenario not found")
+        if merge_mode == "merge":
+            content = merge_scenario_content(existing.content or {}, content)
+
+    scenario_id = target_scenario_id or content.get("id") or str(uuid.uuid4())
     if len(scenario_id) > 36:
         scenario_id = str(uuid.uuid4())
     content["id"] = scenario_id
 
-    name = (content.get("name") or "Imported")[:200]
+    name = (content.get("name") or (existing.name if existing else None) or "Imported")[:200]
     desc = content.get("description")
     if desc and len(str(desc)) > 2000:
         desc = str(desc)[:2000]

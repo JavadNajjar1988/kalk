@@ -4,6 +4,7 @@ export interface TacticalFeatureLayerItem {
   id: string;
   name: string;
   isHidden: boolean;
+  isLocked: boolean;
   order: number;
   features: TacticalFeatureItem[];
 }
@@ -14,6 +15,7 @@ export interface TacticalFeatureItem {
   name: string;
   sidc?: string;
   isHidden: boolean;
+  isLocked: boolean;
   order: number;
 }
 
@@ -26,7 +28,9 @@ export type TacticalFeatureDragItem = {
   feature: TacticalFeatureItem;
 };
 
-export function getTacticalFeatureDragItem(feature: TacticalFeatureItem): TacticalFeatureDragItem {
+export function getTacticalFeatureDragItem(
+  feature: TacticalFeatureItem,
+): TacticalFeatureDragItem {
   return {
     [tacticalFeatureDragKey]: true,
     feature,
@@ -47,6 +51,8 @@ const TACTICAL_LAYER_TUPLE_SCOPES = [
   FEATURE_SCOPE,
   `${HIDDEN_SCOPE}${LAYER_SCOPE}`,
   `${HIDDEN_SCOPE}${FEATURE_SCOPE}`,
+  `locked+${LAYER_SCOPE}`,
+  `locked+${FEATURE_SCOPE}`,
 ];
 
 function toPersianNumber(value: number) {
@@ -191,11 +197,18 @@ export async function writeTacticalPanelOrder(
   await store.update(keys, newValues, oldValues);
 }
 
-export function buildTacticalLayerItems(tuples: TacticalTuple[]): TacticalFeatureLayerItem[] {
+export function buildTacticalLayerItems(
+  tuples: TacticalTuple[],
+): TacticalFeatureLayerItem[] {
   const hiddenIds = new Set(
     tuples
       .map(([id]) => getHiddenTargetId(id))
       .filter((id): id is string => typeof id === "string" && id.length > 0),
+  );
+  const lockedIds = new Set(
+    tuples
+      .filter(([id]) => id.startsWith("locked+"))
+      .map(([id]) => id.slice("locked+".length)),
   );
   const layerValues = new Map<string, any>();
   const featureValues = new Map<string, Record<string, any>>();
@@ -223,6 +236,7 @@ export function buildTacticalLayerItems(tuples: TacticalTuple[]): TacticalFeatur
       id: layerId,
       name: getLayerName(layerValues.get(layerId), layerFallbackIndex),
       isHidden: hiddenIds.has(layerId),
+      isLocked: lockedIds.has(layerId),
       order: getPanelOrder(layerValues.get(layerId), layerFallbackIndex),
       features: [],
     };
@@ -241,6 +255,7 @@ export function buildTacticalLayerItems(tuples: TacticalTuple[]): TacticalFeatur
       sidc:
         typeof value.properties?.sidc === "string" ? value.properties.sidc : undefined,
       isHidden: hiddenIds.has(featureId),
+      isLocked: lockedIds.has(featureId),
       order: getPanelOrder(value, featureFallbackIndex),
     });
   }

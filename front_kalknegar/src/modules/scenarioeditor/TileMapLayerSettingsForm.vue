@@ -22,16 +22,32 @@ const advancedSettings = ref("");
 
 const { focusId } = useFocusOnMount();
 
-const formData = ref({
+const formData = ref<{
+  url?: string;
+  attributions?: string;
+  minZoom?: number | string;
+  maxZoom?: number | string;
+  _isNew: boolean;
+}>({
   url: props.layer.url,
   attributions: props.layer.attributions,
+  minZoom:
+    props.layer.type === "XYZLayer" ? props.layer.tileLayerOptions?.minZoom : undefined,
+  maxZoom:
+    props.layer.type === "XYZLayer" ? props.layer.tileLayerOptions?.maxZoom : undefined,
   _isNew: false,
 });
 
 watch(
   () => props.layer,
   (v) => {
-    formData.value = { url: v.url, attributions: v.attributions, _isNew: false };
+    formData.value = {
+      url: v.url,
+      attributions: v.attributions,
+      minZoom: v.type === "XYZLayer" ? v.tileLayerOptions?.minZoom : undefined,
+      maxZoom: v.type === "XYZLayer" ? v.tileLayerOptions?.maxZoom : undefined,
+      _isNew: false,
+    };
   },
   { immediate: true },
 );
@@ -52,7 +68,20 @@ function updateData() {
     loadAdvanced();
     return;
   }
-  const diff = getChangedValues({ ...formData.value }, props.layer);
+  const { minZoom, maxZoom, ...baseData } = formData.value;
+  const data =
+    props.layer.type === "XYZLayer"
+      ? {
+          ...baseData,
+          tileLayerOptions: {
+            minZoom:
+              minZoom === undefined || minZoom === "" ? undefined : Number(minZoom),
+            maxZoom:
+              maxZoom === undefined || maxZoom === "" ? undefined : Number(maxZoom),
+          },
+        }
+      : baseData;
+  const diff = getChangedValues(data, props.layer);
   if (diff.attributions) {
     diff.attributions = sanitizeHTML(diff.attributions);
   }
@@ -108,6 +137,22 @@ function loadAdvanced() {
           v-model="formData.url"
           required
         />
+        <div v-if="layer.type === 'XYZLayer'" class="grid grid-cols-2 gap-3">
+          <InputGroup
+            v-model="formData.minZoom"
+            label="کمینه بزرگ‌نمایی"
+            type="number"
+            min="0"
+            max="30"
+          />
+          <InputGroup
+            v-model="formData.maxZoom"
+            label="بیشینه بزرگ‌نمایی"
+            type="number"
+            min="0"
+            max="30"
+          />
+        </div>
         <InputGroup
           v-if="layer.type === 'XYZLayer' || layer.type === 'ImageLayer'"
           label="Attributions"

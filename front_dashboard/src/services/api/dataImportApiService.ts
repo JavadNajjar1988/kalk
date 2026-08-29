@@ -10,6 +10,8 @@ export interface ScenarioExcelPreviewData {
     sidesCount: number;
     equipmentCount: number;
     personnelCount: number;
+    featuresCount: number;
+    storyboardScenesCount: number;
   };
   content: Record<string, unknown> | null;
 }
@@ -76,8 +78,18 @@ class DataImportApiService extends BaseApiClient {
     return handleApiResponse(response);
   }
 
-  async importScenarioExcel(file: File): Promise<Record<string, unknown>> {
-    const response = await this.uploadFile<Record<string, unknown>>('/data-import/scenario/import', file);
+  async importScenarioExcel(
+    file: File,
+    options?: { targetScenarioId?: string; mergeMode?: 'merge' | 'replace' },
+  ): Promise<Record<string, unknown>> {
+    const response = await this.uploadFile<Record<string, unknown>>(
+      '/data-import/scenario/import',
+      file,
+      {
+        target_scenario_id: options?.targetScenarioId || '',
+        merge_mode: options?.mergeMode || 'merge',
+      },
+    );
     return handleApiResponse(response);
   }
 

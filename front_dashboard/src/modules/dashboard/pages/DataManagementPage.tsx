@@ -16,6 +16,11 @@ import {
   Stack,
   alpha,
   ThemeProvider,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  FormHelperText,
 } from '@mui/material';
 import {
   CloudUpload as CloudUploadIcon,
@@ -29,7 +34,7 @@ import {
 import { createTheme } from '@mui/material/styles';
 import { useAppDispatch, useAppSelector } from '@/store';
 import { useNavigate } from 'react-router-dom';
-import { fetchScenarios } from '@/store/slices/scenariosSlice';
+import { fetchScenarios, selectScenarios } from '@/store/slices/scenariosSlice';
 import {
   fetchTabItems,
   mergeImportedResources,
@@ -56,6 +61,7 @@ const DataManagementPage: React.FC = () => {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const themeState = useAppSelector(selectTheme);
+  const scenarios = useAppSelector(selectScenarios);
   const muiTheme = createAppTheme(
     themeState.mode,
     themeState.backgroundTheme,
@@ -103,6 +109,8 @@ const DataManagementPage: React.FC = () => {
 
   const [scenarioFile, setScenarioFile] = useState<File | null>(null);
   const [scenarioPreview, setScenarioPreview] = useState<ScenarioExcelPreviewData | null>(null);
+  const [targetScenarioId, setTargetScenarioId] = useState('');
+  const [mergeMode, setMergeMode] = useState<'merge' | 'replace'>('merge');
 
   const [resourcesFile, setResourcesFile] = useState<File | null>(null);
   const [resourcesResult, setResourcesResult] = useState<string | null>(null);
@@ -116,11 +124,12 @@ const DataManagementPage: React.FC = () => {
   const aiInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
+    dispatch(fetchScenarios());
     dataImportApiService
       .getAiConfig()
       .then((c) => setAiEnabled(!!c.enabled))
       .catch(() => setAiEnabled(false));
-  }, []);
+  }, [dispatch]);
 
   const handleDownloadTemplate = async () => {
     setLoading(true);
@@ -157,9 +166,13 @@ const DataManagementPage: React.FC = () => {
     if (!scenarioFile) return;
     setLoading(true);
     try {
-      await dataImportApiService.importScenarioExcel(scenarioFile);
+      const result = await dataImportApiService.importScenarioExcel(scenarioFile, {
+        targetScenarioId: targetScenarioId || undefined,
+        mergeMode,
+      });
       await dispatch(fetchScenarios()).unwrap();
-      dispatch(showSuccessNotification('سناریو از اکسل ایجاد شد'));
+      const updated = result.importAction === 'updated';
+      dispatch(showSuccessNotification(updated ? 'سناریوی انتخاب‌شده از اکسل تکمیل شد' : 'سناریو از اکسل ایجاد شد'));
       setScenarioFile(null);
       setScenarioPreview(null);
       if (scenarioInputRef.current) scenarioInputRef.current.value = '';
@@ -395,6 +408,38 @@ const DataManagementPage: React.FC = () => {
                 انتخاب فایل اکسل
               </Button>
             </Stack>
+            <Stack direction={{ xs: 'column', md: 'row' }} spacing={2} sx={{ mt: 2, maxWidth: 900 }}>
+              <FormControl fullWidth>
+                <InputLabel id="target-scenario-label">سناریوی مقصد</InputLabel>
+                <Select
+                  labelId="target-scenario-label"
+                  value={targetScenarioId}
+                  label="سناریوی مقصد"
+                  onChange={(event) => setTargetScenarioId(event.target.value)}
+                >
+                  <MenuItem value="">ساخت سناریوی تازه</MenuItem>
+                  {scenarios.map((scenario) => (
+                    <MenuItem key={scenario.id} value={scenario.id}>
+                      {scenario.name}
+                    </MenuItem>
+                  ))}
+                </Select>
+                <FormHelperText>برای تکمیل یک سناریوی موجود، آن را از این فهرست انتخاب کنید.</FormHelperText>
+              </FormControl>
+              <FormControl fullWidth disabled={!targetScenarioId}>
+                <InputLabel id="merge-mode-label">روش اعمال داده</InputLabel>
+                <Select
+                  labelId="merge-mode-label"
+                  value={mergeMode}
+                  label="روش اعمال داده"
+                  onChange={(event) => setMergeMode(event.target.value as 'merge' | 'replace')}
+                >
+                  <MenuItem value="merge">افزودن و به‌روزرسانی بدون حذف</MenuItem>
+                  <MenuItem value="replace">جایگزینی کامل محتوای سناریو</MenuItem>
+                </Select>
+                <FormHelperText>روش پیش‌فرض، داده‌های غایب از فایل را نگه می‌دارد.</FormHelperText>
+              </FormControl>
+            </Stack>
             {scenarioFile && (
               <Typography variant="body2" sx={{ mt: 1 }}>
                 فایل: {scenarioFile.name}
@@ -412,8 +457,8 @@ const DataManagementPage: React.FC = () => {
                   </ListItem>
                   <ListItem>
                     <ListItemText
-                      primary="تعداد رویداد / طرف‌ها / تجهیز / پرسنل"
-                      secondary={`${scenarioPreview.preview?.eventsCount ?? 0} / ${scenarioPreview.preview?.sidesCount ?? 0} / ${scenarioPreview.preview?.equipmentCount ?? 0} / ${scenarioPreview.preview?.personnelCount ?? 0}`}
+                      primary="تعداد رویداد / طرف‌ها / تجهیز / پرسنل / عارضه"
+                      secondary={`${scenarioPreview.preview?.eventsCount ?? 0} / ${scenarioPreview.preview?.sidesCount ?? 0} / ${scenarioPreview.preview?.equipmentCount ?? 0} / ${scenarioPreview.preview?.personnelCount ?? 0} / ${scenarioPreview.preview?.featuresCount ?? 0}`}
                     />
                   </ListItem>
                 </List>
@@ -443,7 +488,7 @@ const DataManagementPage: React.FC = () => {
                   disabled={!scenarioPreview.valid || loading}
                   onClick={handleScenarioImport}
                 >
-                  تأیید و ایجاد سناریو
+                  {targetScenarioId ? 'تأیید و تکمیل سناریوی انتخاب‌شده' : 'تأیید و ایجاد سناریو'}
                 </Button>
               </>
             )}
@@ -486,7 +531,7 @@ const DataManagementPage: React.FC = () => {
 
           <TabPanel value={tab} index={2}>
             <Typography variant="body2" sx={{ mb: 2 }}>
-              قالب شامل شیت‌های: سناریو، حوادث، یگان‌ها، تجهیزات، پرسنل — با ردیف نمونه و هدر انگلیسی.
+              قالب شامل شیت‌های سناریو، حوادث، یگان‌ها، تجهیزات، پرسنل و عوارض است و برای هر بخش یک ردیف نمونه دارد.
               جزئیات ستون‌ها در فایل{' '}
               <code>docs/EXCEL_IMPORT.md</code> در ریپو.
             </Typography>

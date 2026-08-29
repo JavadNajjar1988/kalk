@@ -200,7 +200,13 @@ interface CatalogLayer {
   bbox?: number[];
   path?: string;
   adminMapId?: number;
+  scenarioIds: string[];
   ui?: { visibleByDefault?: boolean; defaultOpacity?: number };
+}
+
+interface ScenarioOption {
+  id: string;
+  name: string;
 }
 
 // Helper component for TabPanel
@@ -569,6 +575,34 @@ const MapsTab: React.FC = () => {
   const { t } = useTranslation();
   const apiBase = useMemo(resolveApiBase, []);
   const mapLayers = useAppSelector(selectMapLayers);
+  const [scenarioOptions, setScenarioOptions] = useState<ScenarioOption[]>([]);
+  const [scenariosLoading, setScenariosLoading] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+    setScenariosLoading(true);
+    authFetch(apiBase, '/scenarios?include_archived=true')
+      .then(async (response) => {
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const payload = await response.json();
+        const items = Array.isArray(payload?.data) ? payload.data : [];
+        if (!active) return;
+        setScenarioOptions(items
+          .filter((item: unknown): item is { id: string; name: string } => (
+            typeof item === 'object' && item !== null &&
+            typeof (item as { id?: unknown }).id === 'string' &&
+            typeof (item as { name?: unknown }).name === 'string'
+          ))
+          .map((item: { id: string; name: string }) => ({ id: item.id, name: item.name })));
+      })
+      .catch(() => {
+        if (active) setScenarioOptions([]);
+      })
+      .finally(() => {
+        if (active) setScenariosLoading(false);
+      });
+    return () => { active = false; };
+  }, [apiBase]);
   
   // Stepper state برای workflow
   const [activeStep, setActiveStep] = useState(0); // 0: افزودن منبع, 1: همگام‌سازی, 2: بازبینی و انتشار
@@ -729,6 +763,7 @@ const MapsTab: React.FC = () => {
     minzoom: string;
     maxzoom: string;
     status: 'draft' | 'published' | 'retired';
+    scenarioIds: string[];
   } | null>(null);
 
   // بارگذاری کاتالوگ از layers.json
@@ -753,6 +788,9 @@ const MapsTab: React.FC = () => {
           bbox: Array.isArray(l.bbox) ? l.bbox : undefined,
           path: typeof l.path === 'string' ? l.path : undefined,
           adminMapId: typeof l.admin === 'object' && l.admin && typeof l.admin.map_id === 'number' ? l.admin.map_id : undefined,
+          scenarioIds: typeof l.admin === 'object' && l.admin && Array.isArray(l.admin.scenario_ids)
+            ? l.admin.scenario_ids.filter((id: unknown): id is string => typeof id === 'string')
+            : [],
         })));
       }
       // همچنین Draftها را از SDI بخوانیم و به لیست اضافه کنیم
@@ -769,6 +807,9 @@ const MapsTab: React.FC = () => {
             adminMapId: Number(m.id),
             path: String(m.url_or_path || ''),
             srs: String(m.srs || ''),
+            scenarioIds: Array.isArray(m.scenario_ids)
+              ? m.scenario_ids.filter((id: unknown): id is string => typeof id === 'string')
+              : [],
           }));
           setCatalogLayers(prev => {
             const publishedIds = new Set(prev.map(p => p.id));
@@ -951,6 +992,9 @@ const MapsTab: React.FC = () => {
           minzoom: data.minzoom === null || data.minzoom === undefined ? '' : String(data.minzoom),
           maxzoom: data.maxzoom === null || data.maxzoom === undefined ? '' : String(data.maxzoom),
           status: (data.status as any) === 'published' ? 'published' : (data.status as any) === 'retired' ? 'retired' : 'draft',
+          scenarioIds: Array.isArray(data.scenario_ids)
+            ? data.scenario_ids.filter((id: unknown): id is string => typeof id === 'string')
+            : [],
         });
       } catch (e) {
         setEditLayerError(e instanceof Error ? e.message : 'خطا در بارگذاری');
@@ -970,6 +1014,7 @@ const MapsTab: React.FC = () => {
   const [vectorUploadLoading, setVectorUploadLoading] = useState(false);
   /** بدون فایل .prj در ZIP شیپ؛ کد عددی EPSG برای تبدیل به WGS84 (مثل 32639) */
   const [vectorCrsEpsg, setVectorCrsEpsg] = useState('');
+  const [uploadScenarioIds, setUploadScenarioIds] = useState<string[]>([]);
   
   const [openDialog, setOpenDialog] = useState(false);
   const [dialogMode, setDialogMode] = useState<'serverLayer' | 'upload' | 'offline' | 'filesystem'>('serverLayer');
@@ -1466,6 +1511,7 @@ const MapsTab: React.FC = () => {
     setFilesystemFoldersError(null);
     setUploadError(null);
     setVectorCrsEpsg('');
+    setUploadScenarioIds([]);
   };
 
   const handleSave = async () => {
@@ -1509,6 +1555,7 @@ const MapsTab: React.FC = () => {
         if (vectorCrsEpsg.trim()) {
           fd.append('crs_epsg', vectorCrsEpsg.trim());
         }
+        fd.append('scenario_ids', JSON.stringify(uploadScenarioIds));
         const res = await authFetch(apiBase, '/catalog/upload-vector', { method: 'POST', body: fd });
         if (!res.ok) {
           let msg = `آپلود ناموفق بود (HTTP ${res.status}).`;
@@ -2393,6 +2440,7 @@ const MapsTab: React.FC = () => {
                     <TableCell>نوع</TableCell>
                     <TableCell>min/maxZoom</TableCell>
                     <TableCell>SRS</TableCell>
+                    <TableCell>سناریوها</TableCell>
                     <TableCell>تاریخ به‌روزرسانی</TableCell>
                     <TableCell>وضعیت</TableCell>
                     <TableCell align="center">عملیات</TableCell>
@@ -2430,6 +2478,11 @@ const MapsTab: React.FC = () => {
                           : '-'}
                       </TableCell>
                       <TableCell>{layer.srs || '-'}</TableCell>
+                      <TableCell>
+                        {layer.scenarioIds.length > 0
+                          ? `${layer.scenarioIds.length.toLocaleString('fa-IR')} سناریو`
+                          : 'بدون تخصیص'}
+                      </TableCell>
                       <TableCell>{layer.updated || '-'}</TableCell>
                       <TableCell>
                         <Chip 
@@ -3198,6 +3251,24 @@ const MapsTab: React.FC = () => {
                         </Typography>
                       )}
                     </Grid>
+                    <Grid item xs={12}>
+                      <Autocomplete
+                        multiple
+                        loading={scenariosLoading}
+                        options={scenarioOptions}
+                        value={scenarioOptions.filter(option => uploadScenarioIds.includes(option.id))}
+                        isOptionEqualToValue={(option, value) => option.id === value.id}
+                        getOptionLabel={(option) => option.name}
+                        onChange={(_, values) => setUploadScenarioIds(values.map(value => value.id))}
+                        renderInput={(params) => (
+                          <TextField
+                            {...params}
+                            label="سناریوهای مجاز"
+                            helperText="این لایه فقط در سناریوهای انتخاب‌شده نمایش داده می‌شود. بدون انتخاب، لایه در هیچ سناریویی نمایش داده نخواهد شد."
+                          />
+                        )}
+                      />
+                    </Grid>
                   </>
                 )}
               </>
@@ -3762,6 +3833,27 @@ const MapsTab: React.FC = () => {
                   onChange={(e) => setEditLayerForm({ ...editLayerForm, description: e.target.value })}
                 />
               </Grid>
+              <Grid item xs={12}>
+                <Autocomplete
+                  multiple
+                  loading={scenariosLoading}
+                  options={scenarioOptions}
+                  value={scenarioOptions.filter(option => editLayerForm.scenarioIds.includes(option.id))}
+                  isOptionEqualToValue={(option, value) => option.id === value.id}
+                  getOptionLabel={(option) => option.name}
+                  onChange={(_, values) => setEditLayerForm({
+                    ...editLayerForm,
+                    scenarioIds: values.map(value => value.id),
+                  })}
+                  renderInput={(params) => (
+                    <TextField
+                      {...params}
+                      label="سناریوهای مجاز"
+                      helperText="لایه فقط در سناریوهای انتخاب‌شده در دسترس خواهد بود."
+                    />
+                  )}
+                />
+              </Grid>
             </Grid>
           )}
         </DialogContent>
@@ -3785,6 +3877,7 @@ const MapsTab: React.FC = () => {
                   format: editLayerForm.format || null,
                   srs: editLayerForm.srs || null,
                   status: editLayerForm.status,
+                  scenario_ids: editLayerForm.scenarioIds,
                   minzoom: editLayerForm.minzoom.trim() === '' ? null : Number(editLayerForm.minzoom),
                   maxzoom: editLayerForm.maxzoom.trim() === '' ? null : Number(editLayerForm.maxzoom),
                 };

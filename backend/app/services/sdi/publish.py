@@ -70,6 +70,7 @@ async def generate_layers_json(session: AsyncSession) -> dict[str, Any]:
                 "version": m.version or "v1",
                 "checksum": m.hash or None,
                 "roles": m.roles or settings.DEFAULT_ROLES,
+                "scenario_ids": m.scenario_ids or [],
             },
             "bbox": m.bbox,
         }

@@ -471,9 +471,12 @@ const EditableDashboardWorkspace: React.FC<Props> = ({
                 </Stack>
                 <Box sx={{ flex: 1 }} />
                 <Button
+                  component="a"
+                  href={`/kalknegar/scenario/${latest.id}?integration=react`}
+                  target="_blank"
+                  rel="noopener noreferrer"
                   variant="contained"
                   startIcon={<OpenInNewOutlined />}
-                  onClick={() => openKalk(latest.id)}
                   disabled={!canAccessFeature(user?.role, 'kalknegar.access')}
                   sx={{ alignSelf: 'flex-start' }}
                 >

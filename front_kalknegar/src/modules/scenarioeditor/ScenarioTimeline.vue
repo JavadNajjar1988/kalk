@@ -119,6 +119,10 @@ const currentTimestamp = ref(0);
 const animate = ref(false);
 const hoveredX = ref(0);
 const showHoverMarker = ref(false);
+type TimelineFilterMode = "all" | "day" | "week" | "month" | "custom";
+const filterMode = ref<TimelineFilterMode>("all");
+const customFrom = ref("");
+const customTo = ref("");
 
 const { activeScenarioEventId } = useSelectedItems();
 const servicesStore = useServicesStore();
@@ -306,8 +310,33 @@ function onWheel(e: WheelEvent) {
   }
 }
 
+const allEvents = computed(() =>
+  store.state.events.map((id) => store.state.eventMap[id]),
+);
+
+const filterBounds = computed(() => {
+  if (filterMode.value === "all") return null;
+  if (filterMode.value === "custom") {
+    const from = customFrom.value ? new Date(customFrom.value).valueOf() : Number.NEGATIVE_INFINITY;
+    const to = customTo.value ? new Date(customTo.value).valueOf() : Number.POSITIVE_INFINITY;
+    return { from, to };
+  }
+  const current = scenarioTime.value;
+  if (filterMode.value === "day") {
+    return { from: current.startOf("day").valueOf(), to: current.endOf("day").valueOf() };
+  }
+  if (filterMode.value === "week") {
+    return { from: current.startOf("week").valueOf(), to: current.endOf("week").valueOf() };
+  }
+  return { from: current.startOf("month").valueOf(), to: current.endOf("month").valueOf() };
+});
+
 const events = computed(() => {
-  return store.state.events.map((id) => store.state.eventMap[id]);
+  const bounds = filterBounds.value;
+  if (!bounds) return allEvents.value;
+  return allEvents.value.filter(
+    (event) => event.startTime >= bounds.from && event.startTime <= bounds.to,
+  );
 });
 const phases = computed(() => store.state.phases);
 const environmentalConditions = computed(() => store.state.environmentalConditions);
@@ -457,7 +486,37 @@ function onContextMenuAction(action: string) {
     v-slot="{ onContextMenu }"
     :formattedHoveredDate="formattedHoveredDate"
   >
-    <div
+    <div class="relative">
+      <div
+        class="flex flex-wrap items-center gap-2 border-t px-2 py-1 text-xs"
+        style="direction: rtl"
+        @pointerdown.stop
+        @pointerup.stop
+        @wheel.stop
+      >
+        <label for="timeline-filter">نمایش رویدادها</label>
+        <select
+          id="timeline-filter"
+          v-model="filterMode"
+          class="rounded border bg-transparent px-2 py-1"
+        >
+          <option value="all">همه زمان‌ها</option>
+          <option value="day">روز جاری</option>
+          <option value="week">هفته جاری</option>
+          <option value="month">ماه جاری</option>
+          <option value="custom">بازه دلخواه</option>
+        </select>
+        <template v-if="filterMode === 'custom'">
+          <input v-model="customFrom" type="datetime-local" class="rounded border bg-transparent px-2 py-1" />
+          <span>تا</span>
+          <input v-model="customTo" type="datetime-local" class="rounded border bg-transparent px-2 py-1" />
+        </template>
+        <span class="text-muted-foreground">
+          {{ toPersianDigits(String(events.length)) }} رویداد از
+          {{ toPersianDigits(String(allEvents.length)) }} رویداد
+        </span>
+      </div>
+      <div
       ref="el"
       data-testid="scenario-timeline"
       class="scenario-timeline relative mb-2 w-full transform overflow-x-hidden border-t text-sm transition-all select-none"
@@ -608,6 +667,7 @@ function onContextMenuAction(action: string) {
         class="hover-hover:flex absolute top-0 bottom-0 w-0.5 bg-red-900/50 dark:bg-red-600/50"
         :style="`left: ${hoveredX}px`"
       />
+      </div>
     </div>
   </TimelineContextMenu>
 </template>

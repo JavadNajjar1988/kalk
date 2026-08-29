@@ -49,6 +49,7 @@ class SDIMap(Base):
     hash = Column(String(128), nullable=True)
     status = Column(String(32), nullable=False, default="draft")
     roles = Column(JSON, nullable=True)
+    scenario_ids = Column(JSON, nullable=False, default=list)
     category = Column(String(128), nullable=True)
     extra_metadata = Column(JSON, nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())

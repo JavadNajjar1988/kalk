@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from typing import Optional, List, Any
 from datetime import datetime
 
@@ -52,6 +52,7 @@ class SDIMapBase(BaseModel):
     bbox: Optional[list[float]] = None
     version: Optional[str] = None
     roles: Optional[list[str]] = None
+    scenario_ids: list[str] = Field(default_factory=list)
     category: Optional[str] = None
     extra_metadata: Optional[dict[str, Any]] = None
 
@@ -76,6 +77,7 @@ class SDIMapUpdate(BaseModel):
     hash: Optional[str] = None
     status: Optional[str] = None
     roles: Optional[list[str]] = None
+    scenario_ids: Optional[list[str]] = None
     category: Optional[str] = None
     extra_metadata: Optional[dict[str, Any]] = None
 

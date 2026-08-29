@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, onUnmounted, ref } from "vue";
+import { computed, onMounted, onUnmounted, ref } from "vue";
 import {
   IconDrag,
   IconEye,
@@ -44,26 +44,36 @@ const props = defineProps<{
   selected: boolean;
   editing: boolean;
   editableName: string;
+  locked: boolean;
 }>();
 
 const emit = defineEmits<{
   (e: "feature-click", feature: TacticalFeatureItem, event: MouseEvent): void;
-  (e: "feature-action", feature: TacticalFeatureItem, action: TacticalFeatureAction): void;
+  (
+    e: "feature-action",
+    feature: TacticalFeatureItem,
+    action: TacticalFeatureAction,
+  ): void;
   (e: "feature-visibility", feature: TacticalFeatureItem): void;
-  (e: "feature-drop", source: TacticalFeatureItem, destination: TacticalFeatureItem, edge: Edge): void;
+  (
+    e: "feature-drop",
+    source: TacticalFeatureItem,
+    destination: TacticalFeatureItem,
+    edge: Edge,
+  ): void;
   (e: "update-editable-name", value: string): void;
   (e: "update-feature-name", feature: TacticalFeatureItem, value: string): void;
 }>();
 
-const featureMenuItems: MenuItemData<TacticalFeatureAction>[] = [
+const featureMenuItems = computed<MenuItemData<TacticalFeatureAction>[]>(() => [
   { label: "بزرگ‌نمایی به", action: "zoom" },
   { label: "حرکت به", action: "pan" },
-  { label: "تغییر نام", action: "rename" },
-  { label: "حرکت به بالا", action: "moveUp" },
-  { label: "حرکت به پایین", action: "moveDown" },
-  { label: "حذف", action: "delete" },
-  { label: "تکرار", action: "duplicate" },
-];
+  { label: "تغییر نام", action: "rename", disabled: props.locked },
+  { label: "حرکت به بالا", action: "moveUp", disabled: props.locked },
+  { label: "حرکت به پایین", action: "moveDown", disabled: props.locked },
+  { label: "حذف", action: "delete", disabled: props.locked },
+  { label: "تکرار", action: "duplicate", disabled: props.locked },
+]);
 
 const elRef = ref<HTMLElement | null>(null);
 const handleRef = ref<HTMLElement | null>(null);
@@ -76,6 +86,7 @@ onMounted(() => {
     draggable({
       element: elRef.value,
       dragHandle: handleRef.value,
+      canDrag: () => !props.locked,
       getInitialData: () => getTacticalFeatureDragItem(props.feature),
       onDragStart: () => {
         itemState.value = { type: "dragging" };
@@ -89,6 +100,7 @@ onMounted(() => {
       canDrop: ({ source }) => {
         const data = source.data;
         return (
+          !props.locked &&
           isTacticalFeatureDragItem(data) &&
           data.feature.id !== props.feature.id &&
           data.feature.layerId === props.feature.layerId
@@ -145,9 +157,10 @@ onUnmounted(() => {
       itemState.type === 'dragging' ? 'opacity-20' : '',
     ]"
   >
-    <span ref="handleRef">
+    <span ref="handleRef" :title="locked ? 'این لایه قفل است' : 'جابه‌جایی نماد'">
       <IconDrag
-        class="h-6 w-6 cursor-move text-gray-400 group-focus-within:opacity-100 group-hover:opacity-100 sm:opacity-0"
+        class="h-6 w-6 text-gray-400 group-focus-within:opacity-100 group-hover:opacity-100 sm:opacity-0"
+        :class="locked ? 'cursor-not-allowed opacity-30' : 'cursor-move'"
       />
     </span>
     <div
@@ -170,9 +183,9 @@ onUnmounted(() => {
       />
       <span
         v-else
-        class="group-hover:text-accent-foreground mr-2 truncate text-sm text-foreground"
+        class="group-hover:text-accent-foreground text-foreground mr-2 truncate text-sm"
         :class="{ 'font-bold': selected, 'opacity-50': feature.isHidden || layerHidden }"
-        @dblclick.stop="emit('feature-action', feature, 'rename')"
+        @dblclick.stop="!locked && emit('feature-action', feature, 'rename')"
       >
         {{ feature.name }}
       </span>

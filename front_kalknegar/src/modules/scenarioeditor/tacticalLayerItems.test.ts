@@ -8,7 +8,8 @@ import {
   writeTacticalPanelOrder,
 } from "./tacticalLayerItems";
 
-const PERSIAN_DEFAULT_LAYER_NAME = "\u0644\u0627\u06cc\u0647 \u062a\u0627\u06a9\u062a\u06cc\u06a9\u0627\u0644 \u06f1";
+const PERSIAN_DEFAULT_LAYER_NAME =
+  "\u0644\u0627\u06cc\u0647 \u062a\u0627\u06a9\u062a\u06cc\u06a9\u0627\u0644 \u06f1";
 const PERSIAN_DEFAULT_FEATURE_NAME =
   "\u0646\u0645\u0627\u062f \u062a\u0627\u06a9\u062a\u06cc\u06a9\u0627\u0644 \u06f1";
 
@@ -40,6 +41,7 @@ describe("tactical layer items", () => {
         id: "layer:alpha",
         name: "Tactical layer",
         isHidden: true,
+        isLocked: false,
         order: 1,
         features: [
           {
@@ -48,6 +50,7 @@ describe("tactical layer items", () => {
             name: "Contact line",
             sidc: "GFGPOLK----X",
             isHidden: false,
+            isLocked: false,
             order: 1,
           },
           {
@@ -56,6 +59,7 @@ describe("tactical layer items", () => {
             name: "Alpha",
             sidc: "SFGPUCI----K",
             isHidden: true,
+            isLocked: false,
             order: 2,
           },
         ],
@@ -106,7 +110,14 @@ describe("tactical layer items", () => {
       ["hidden+layer:alpha", true],
       ["hidden+feature:alpha/one", true],
     ]);
-    expect(calls).toEqual(["layer:", "feature:", "hidden+layer:", "hidden+feature:"]);
+    expect(calls).toEqual([
+      "layer:",
+      "feature:",
+      "hidden+layer:",
+      "hidden+feature:",
+      "locked+layer:",
+      "locked+feature:",
+    ]);
   });
 
   it("keeps explicit tactical layers even when they do not have symbols yet", () => {
@@ -119,10 +130,23 @@ describe("tactical layer items", () => {
         id: "layer:alpha",
         name: "Empty layer",
         isHidden: false,
+        isLocked: false,
         order: 2,
         features: [],
       },
     ]);
+  });
+
+  it("reports locked tactical layers and symbols", () => {
+    const layers = buildTacticalLayerItems([
+      ["layer:alpha", { name: "Alpha" }],
+      ["feature:alpha/one", { name: "One" }],
+      ["locked+layer:alpha", true],
+      ["locked+feature:alpha/one", true],
+    ]);
+
+    expect(layers[0]?.isLocked).toBe(true);
+    expect(layers[0]?.features[0]?.isLocked).toBe(true);
   });
 
   it("sorts tactical layers and features by their layer panel order", () => {

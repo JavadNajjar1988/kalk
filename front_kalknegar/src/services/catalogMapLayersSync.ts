@@ -30,18 +30,22 @@ function catalogLayerId(raw: CatalogLayerJson): string {
   return `sdi-cat-${slug}`;
 }
 
-function resolveCatalogUrl(base: string): string {
+function resolveCatalogUrl(base: string, scenarioId: string): string {
   const b = String(base ?? "/api").replace(/\/+$/, "");
+  const query = `?scenario_id=${encodeURIComponent(scenarioId)}`;
   if (b.startsWith("http://") || b.startsWith("https://")) {
-    return `${b}/catalog/layers.json`;
+    return `${b}/catalog/layers.json${query}`;
   }
   const path = b.startsWith("/") ? b : `/${b}`;
-  return `${path}/catalog/layers.json`;
+  return `${path}/catalog/layers.json${query}`;
 }
 
-export async function mergePublishedCatalogMapLayers(geo: TGeo): Promise<void> {
+export async function mergePublishedCatalogMapLayers(
+  geo: TGeo,
+  scenarioId: string,
+): Promise<void> {
   const rawBase = (scenarioApiService as any)?.baseUrl ?? "/api";
-  const url = resolveCatalogUrl(rawBase);
+  const url = resolveCatalogUrl(rawBase, scenarioId);
   let res: Response;
   try {
     res = await fetch(url);
@@ -60,6 +64,14 @@ export async function mergePublishedCatalogMapLayers(geo: TGeo): Promise<void> {
     return;
   }
   const layers = Array.isArray(data.layers) ? data.layers : [];
+  const allowedIds = new Set(layers.map(catalogLayerId));
+
+  for (const existingLayer of [...geo.mapLayers.value]) {
+    const existingId = String(existingLayer.id);
+    if (existingId.startsWith("sdi-cat-") && !allowedIds.has(existingId)) {
+      geo.deleteMapLayer(existingLayer.id);
+    }
+  }
 
   for (const raw of layers) {
     if (!raw || raw.status !== "published") continue;
