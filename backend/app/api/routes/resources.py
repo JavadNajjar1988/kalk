@@ -17,6 +17,7 @@ from app.core.response import success
 from app.core.security import require_roles
 from app.db.session import get_session
 from app.models.resource import Resource, ResourceMedia
+from app.models.scenario import Scenario
 from app.schemas.resource import (
     RESOURCE_TYPES,
     ResourceBulkImportRequest,
@@ -28,8 +29,18 @@ from app.schemas.resource import (
     ResourceResponse,
     ResourceSearchResult,
     ResourceUpdate,
+    LegacyResourceLinkRequest,
+    UnitResourceLinkRequest,
 )
 from app.services.notifications import publish_notification
+from app.services.resource_import import upsert_resource_import_items
+from app.services.resource_usage import build_resource_usage_graph
+from app.services.unit_resource_reconciliation import (
+    collect_unlinked_resource_occurrences,
+    collect_unlinked_unit_occurrences,
+    link_resource_occurrence,
+    link_unit_occurrence,
+)
 
 
 router = APIRouter(prefix="/resources", tags=["resources"])
@@ -173,6 +184,181 @@ async def search_resources(
     return success(payload)
 
 
+@router.get("/units/reconciliation")
+async def preview_unit_resource_reconciliation(
+    session: AsyncSession = Depends(get_session),
+):
+    scenario_result = await session.execute(
+        select(Scenario).where(Scenario.archived_at.is_(None)).order_by(Scenario.name.asc())
+    )
+    occurrences: list[dict] = []
+    for scenario in scenario_result.scalars().all():
+        occurrences.extend(
+            collect_unlinked_unit_occurrences(
+                scenario.id,
+                scenario.name,
+                scenario.content or {},
+            )
+        )
+    resource_result = await session.execute(
+        select(Resource).where(Resource.type == "units").order_by(Resource.name.asc())
+    )
+    unit_resources = resource_result.scalars().all()
+    return success(
+        {
+            "occurrences": occurrences,
+            "resources": [
+                {
+                    "id": item.id,
+                    "name": item.name,
+                    "code": item.code,
+                    "sidc": (item.metadata_ or {}).get("sidc"),
+                }
+                for item in unit_resources
+            ],
+            "summary": {
+                "unlinkedOccurrences": len(occurrences),
+                "canonicalUnits": len(unit_resources),
+            },
+        }
+    )
+
+
+@router.post(
+    "/units/reconciliation",
+    dependencies=[Depends(require_roles("SUPER_ADMIN", "COMMANDER", "OPERATOR"))],
+)
+async def apply_unit_resource_reconciliation(
+    payload: UnitResourceLinkRequest,
+    session: AsyncSession = Depends(get_session),
+):
+    scenario_ids = {item.scenario_id for item in payload.assignments}
+    resource_ids = {item.resource_id for item in payload.assignments}
+    scenario_result = await session.execute(select(Scenario).where(Scenario.id.in_(scenario_ids)))
+    scenarios = {item.id: item for item in scenario_result.scalars().all()}
+    resource_result = await session.execute(
+        select(Resource).where(Resource.id.in_(resource_ids), Resource.type == "units")
+    )
+    resources = {item.id: item for item in resource_result.scalars().all()}
+
+    linked = 0
+    skipped: list[dict[str, str]] = []
+    for assignment in payload.assignments:
+        scenario = scenarios.get(assignment.scenario_id)
+        resource = resources.get(assignment.resource_id)
+        if scenario is None or resource is None:
+            skipped.append(assignment.model_dump())
+            continue
+        content = dict(scenario.content or {})
+        if link_unit_occurrence(
+            content,
+            assignment.unit_id,
+            resource.id,
+            resource.name,
+        ):
+            scenario.content = content
+            scenario.modified = datetime.now(timezone.utc)
+            linked += 1
+        else:
+            skipped.append(assignment.model_dump())
+    await session.commit()
+    return success({"linked": linked, "skipped": skipped})
+
+
+@router.get("/reconciliation/{resource_type}")
+async def preview_legacy_resource_reconciliation(
+    resource_type: str,
+    session: AsyncSession = Depends(get_session),
+):
+    if resource_type not in {"equipment", "personnel"}:
+        raise HTTPException(status_code=400, detail="تطبیق فقط برای تجهیزات و پرسنل پشتیبانی می‌شود")
+    scenario_result = await session.execute(
+        select(Scenario).where(Scenario.archived_at.is_(None)).order_by(Scenario.name.asc())
+    )
+    occurrences: list[dict] = []
+    for scenario in scenario_result.scalars().all():
+        occurrences.extend(
+            collect_unlinked_resource_occurrences(
+                scenario.id,
+                scenario.name,
+                scenario.content or {},
+                resource_type,
+            )
+        )
+    resource_result = await session.execute(
+        select(Resource).where(Resource.type == resource_type).order_by(Resource.name.asc())
+    )
+    resources = resource_result.scalars().all()
+    return success(
+        {
+            "resourceType": resource_type,
+            "occurrences": occurrences,
+            "resources": [
+                {"id": item.id, "name": item.name, "code": item.code}
+                for item in resources
+            ],
+            "summary": {
+                "unlinkedGroups": len(occurrences),
+                "unlinkedReferences": sum(item["occurrenceCount"] for item in occurrences),
+                "canonicalResources": len(resources),
+            },
+        }
+    )
+
+
+@router.post(
+    "/reconciliation/{resource_type}",
+    dependencies=[Depends(require_roles("SUPER_ADMIN", "COMMANDER", "OPERATOR"))],
+)
+async def apply_legacy_resource_reconciliation(
+    resource_type: str,
+    payload: LegacyResourceLinkRequest,
+    session: AsyncSession = Depends(get_session),
+):
+    if resource_type not in {"equipment", "personnel"}:
+        raise HTTPException(status_code=400, detail="تطبیق فقط برای تجهیزات و پرسنل پشتیبانی می‌شود")
+    scenario_ids = {item.scenario_id for item in payload.assignments}
+    resource_ids = {item.resource_id for item in payload.assignments}
+    scenario_result = await session.execute(select(Scenario).where(Scenario.id.in_(scenario_ids)))
+    scenarios = {item.id: item for item in scenario_result.scalars().all()}
+    resource_result = await session.execute(
+        select(Resource).where(Resource.id.in_(resource_ids), Resource.type == resource_type)
+    )
+    resources = {item.id: item for item in resource_result.scalars().all()}
+
+    linked_references = 0
+    linked_groups = 0
+    skipped: list[dict[str, str]] = []
+    for assignment in payload.assignments:
+        scenario = scenarios.get(assignment.scenario_id)
+        resource = resources.get(assignment.resource_id)
+        if scenario is None or resource is None:
+            skipped.append(assignment.model_dump())
+            continue
+        content = dict(scenario.content or {})
+        linked = link_resource_occurrence(
+            content,
+            resource_type,
+            assignment.occurrence_key,
+            resource.id,
+        )
+        if linked:
+            scenario.content = content
+            scenario.modified = datetime.now(timezone.utc)
+            linked_groups += 1
+            linked_references += linked
+        else:
+            skipped.append(assignment.model_dump())
+    await session.commit()
+    return success(
+        {
+            "linkedGroups": linked_groups,
+            "linkedReferences": linked_references,
+            "skipped": skipped,
+        }
+    )
+
+
 @router.get("/{resource_id}")
 async def get_resource(resource_id: str, session: AsyncSession = Depends(get_session)):
     res = await session.execute(select(Resource).where(Resource.id == resource_id))
@@ -180,6 +366,23 @@ async def get_resource(resource_id: str, session: AsyncSession = Depends(get_ses
     if not item:
         raise HTTPException(status_code=404, detail="منبع یافت نشد")
     return success(_resource_to_response(item).model_dump(mode="json"))
+
+
+@router.get("/{resource_id}/usage-graph")
+async def get_resource_usage_graph(
+    resource_id: str,
+    session: AsyncSession = Depends(get_session),
+):
+    resource_result = await session.execute(select(Resource).where(Resource.id == resource_id))
+    item = resource_result.scalar_one_or_none()
+    if not item:
+        raise HTTPException(status_code=404, detail="منبع یافت نشد")
+
+    scenario_result = await session.execute(
+        select(Scenario).where(Scenario.archived_at.is_(None)).order_by(Scenario.start_time.asc())
+    )
+    graph = build_resource_usage_graph(item, scenario_result.scalars().all())
+    return success(graph)
 
 
 @router.post("", status_code=status.HTTP_201_CREATED, dependencies=[Depends(require_roles("SUPER_ADMIN", "COMMANDER", "OPERATOR"))])
@@ -305,57 +508,13 @@ async def bulk_import_resources(
     اگر کد منبع از قبل موجود باشد، رکورد به‌روزرسانی می‌شود؛ در غیر این صورت ایجاد می‌شود.
     """
 
-    created = 0
-    updated = 0
-    skipped = 0
-    for raw in payload.items:
-        if raw.type not in RESOURCE_TYPES:
-            skipped += 1
-            continue
-        if not raw.name:
-            skipped += 1
-            continue
-
-        existing = None
-        if raw.code:
-            r = await session.execute(
-                select(Resource).where(
-                    Resource.type == raw.type, Resource.code == raw.code
-                )
-            )
-            existing = r.scalar_one_or_none()
-
-        if existing:
-            existing.name = raw.name
-            existing.description = raw.description
-            existing.status = raw.status
-            if raw.metadata is not None:
-                existing.metadata_ = {**(existing.metadata_ or {}), **raw.metadata}
-            updated += 1
-        else:
-            new_id = f"{raw.type}-{uuid.uuid4().hex}"
-            session.add(
-                Resource(
-                    id=new_id,
-                    type=raw.type,
-                    name=raw.name,
-                    code=raw.code,
-                    description=raw.description,
-                    status=raw.status,
-                    metadata_=raw.metadata,
-                )
-            )
-            created += 1
-
     try:
-        await session.commit()
+        result = await upsert_resource_import_items(session, payload.items)
     except SQLAlchemyError as e:
         await session.rollback()
         raise HTTPException(status_code=500, detail=f"خطای پایگاه داده: {e}")
     return success(
-        ResourceBulkImportResponse(
-            created=created, updated=updated, skipped=skipped
-        ).model_dump(mode="json")
+        ResourceBulkImportResponse(**result).model_dump(mode="json")
     )
 
 

@@ -201,6 +201,7 @@ const onFormSubmit = () => {
 
     <ResourcePicker
       v-model:open="showPicker"
+      :type="isUnit ? 'units' : undefined"
       title="انتخاب منبع داخلی برای این واحد/رخداد"
       @select="onPickResource"
     />

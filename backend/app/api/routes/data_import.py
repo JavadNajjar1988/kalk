@@ -7,15 +7,18 @@ from typing import Any
 
 import httpx
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Response, UploadFile, status
-from fastapi.responses import StreamingResponse
+from fastapi.responses import FileResponse, StreamingResponse
 from openpyxl import load_workbook
+from sqlalchemy import select
 
 from app.core.config import settings
 from app.core.response import success
 from app.core.security import require_roles
 from app.deps import DbSession
 from app.models.scenario import Scenario
+from app.models.resource import Resource
 from app.services.excel_scenario_import import (
+    BUNDLED_GRAPHIC_TEMPLATE,
     build_template_workbook,
     export_content_to_workbook,
     parse_excel_workbook,
@@ -28,6 +31,13 @@ from app.services.scenario_import import (
     scenario_import_response_data,
     upsert_scenario_from_import,
 )
+from app.services.resource_import import (
+    link_scenario_content_to_resources,
+    scenario_units_to_bulk_items,
+    upsert_resource_import_items,
+    workbook_resources_to_bulk_items,
+)
+from app.services.scenario_import_impact import build_scenario_import_impact
 
 router = APIRouter(prefix="/data-import", tags=["data-import"])
 
@@ -49,6 +59,12 @@ async def _read_upload(file: UploadFile, max_size: int = MAX_EXCEL_BYTES) -> byt
     dependencies=[Depends(require_roles("SUPER_ADMIN", "COMMANDER", "VIEWER"))],
 )
 async def download_excel_template():
+    if BUNDLED_GRAPHIC_TEMPLATE.is_file():
+        return FileResponse(
+            BUNDLED_GRAPHIC_TEMPLATE,
+            media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            filename="scenario_import_template_fa.xlsx",
+        )
     wb = build_template_workbook()
     buf = io.BytesIO()
     wb.save(buf)
@@ -74,16 +90,63 @@ async def ai_config():
     response_model=dict,
     dependencies=[Depends(require_roles("SUPER_ADMIN", "COMMANDER"))],
 )
-async def preview_scenario_excel(file: UploadFile = File(...)):
+async def preview_scenario_excel(
+    db: DbSession,
+    file: UploadFile = File(...),
+    target_scenario_id: str | None = Form(default=None),
+    merge_mode: str = Form(default="merge"),
+):
     raw = await _read_upload(file)
     try:
         wb = load_workbook(io.BytesIO(raw), read_only=False, data_only=True)
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Invalid Excel file: {e}") from e
     content, errors = parse_excel_workbook(wb)
+    personnel, equipment, _, resource_errors = parse_resources_workbook(wb)
+    unit_resources = scenario_units_to_bulk_items(content)
+    if merge_mode not in {"merge", "replace"}:
+        raise HTTPException(status_code=400, detail="merge_mode must be merge or replace")
+    existing = None
+    if target_scenario_id:
+        existing = await db.get(Scenario, target_scenario_id)
+        if existing is None:
+            raise HTTPException(status_code=404, detail="Target scenario not found")
+    impact = build_scenario_import_impact(
+        existing.content if existing else None,
+        content,
+        merge_mode,
+    )
+    resource_items = [
+        *workbook_resources_to_bulk_items(personnel, equipment),
+        *unit_resources,
+    ]
+    keyed_resources = {
+        (item.type, str(item.code)) for item in resource_items if item.code not in (None, "")
+    }
+    existing_resource_keys: set[tuple[str, str]] = set()
+    if keyed_resources:
+        result = await db.execute(
+            select(Resource.type, Resource.code).where(
+                Resource.type.in_({item[0] for item in keyed_resources}),
+                Resource.code.in_({item[1] for item in keyed_resources}),
+            )
+        )
+        existing_resource_keys = {
+            (str(resource_type), str(code))
+            for resource_type, code in result.all()
+            if code not in (None, "")
+        }
+    unkeyed_count = sum(1 for item in resource_items if item.code in (None, ""))
+    impact["resources"] = {
+        "incoming": len(resource_items),
+        "created": len(keyed_resources - existing_resource_keys) + unkeyed_count,
+        "updated": len(keyed_resources & existing_resource_keys),
+        "warnings": len(resource_errors),
+    }
     return success(
         {
             "errors": errors,
+            "resourceErrors": resource_errors,
             "valid": len(errors) == 0,
             "preview": {
                 "name": content.get("name"),
@@ -93,8 +156,13 @@ async def preview_scenario_excel(file: UploadFile = File(...)):
                 "personnelCount": len(content.get("personnel") or []),
                 "featuresCount": sum(len(layer.get("features") or []) for layer in content.get("layers") or []),
                 "storyboardScenesCount": len((content.get("storyboard") or {}).get("scenes") or []),
+                "resourceEquipmentRowsCount": len(equipment),
+                "resourcePersonnelRowsCount": len(personnel),
+                "resourceUnitRowsCount": len(unit_resources),
+                "equipmentQuantityTotal": sum(int(item.get("quantity") or 0) for item in equipment),
             },
             "content": content if content else None,
+            "impact": impact,
         }
     )
 
@@ -110,6 +178,7 @@ async def import_scenario_excel(
     file: UploadFile = File(...),
     target_scenario_id: str | None = Form(default=None),
     merge_mode: str = Form(default="merge"),
+    import_resources: bool = Form(default=True),
 ):
     raw = await _read_upload(file)
     try:
@@ -127,6 +196,13 @@ async def import_scenario_excel(
 
     if merge_mode not in {"merge", "replace"}:
         raise HTTPException(status_code=400, detail="merge_mode must be merge or replace")
+
+    personnel, equipment, _, resource_errors = parse_resources_workbook(wb)
+    resource_items = [
+        *workbook_resources_to_bulk_items(personnel, equipment),
+        *scenario_units_to_bulk_items(content),
+    ]
+    unit_rows_count = len(scenario_units_to_bulk_items(content))
 
     existing = None
     if target_scenario_id:
@@ -150,6 +226,22 @@ async def import_scenario_excel(
         image = str(image)[:500]
 
     try:
+        resource_result: dict[str, Any] = {"created": 0, "updated": 0, "skipped": 0}
+        if import_resources and resource_items:
+            resource_result = await upsert_resource_import_items(
+                db,
+                resource_items,
+                commit=False,
+                include_resource_ids=True,
+            )
+            resource_ids = resource_result.pop("resourceIds", {})
+            link_scenario_content_to_resources(
+                content,
+                personnel,
+                equipment,
+                resource_ids,
+            )
+
         obj, created = await upsert_scenario_from_import(
             db,
             scenario_id=scenario_id,
@@ -157,13 +249,31 @@ async def import_scenario_excel(
             description=desc,
             image=image,
             content=content,
+            commit=False,
         )
+        await db.commit()
+        await db.refresh(obj)
     except Exception as e:
+        await db.rollback()
         raise HTTPException(status_code=500, detail=f"Failed to save scenario: {e}") from e
 
     await broadcast_scenario_import(obj, created)
     response.status_code = status.HTTP_201_CREATED if created else status.HTTP_200_OK
-    return success(scenario_import_response_data(obj, created))
+    return success(
+        {
+            **scenario_import_response_data(obj, created),
+            "resourceImport": {
+                "requested": import_resources,
+                "persisted": bool(import_resources),
+                "personnelRows": len(personnel),
+                "equipmentRows": len(equipment),
+                "unitRows": unit_rows_count,
+                "equipmentQuantityTotal": sum(int(item.get("quantity") or 0) for item in equipment),
+                "errors": resource_errors,
+                **resource_result,
+            },
+        }
+    )
 
 
 @router.post(
@@ -171,16 +281,44 @@ async def import_scenario_excel(
     response_model=dict,
     dependencies=[Depends(require_roles("SUPER_ADMIN", "COMMANDER"))],
 )
-async def import_resources_excel(file: UploadFile = File(...)):
+async def import_resources_excel(db: DbSession, file: UploadFile = File(...)):
     raw = await _read_upload(file)
     try:
         wb = load_workbook(io.BytesIO(raw), read_only=False, data_only=True)
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Invalid Excel file: {e}") from e
-    personnel, equipment, errors = parse_resources_workbook(wb)
-    if errors and not personnel and not equipment:
+    personnel, equipment, units, errors = parse_resources_workbook(wb)
+    if errors and not personnel and not equipment and not units:
         raise HTTPException(status_code=400, detail=errors[0].get("message", "Parse error"))
-    return success({"personnel": personnel, "equipment": equipment, "errors": errors})
+    items = workbook_resources_to_bulk_items(personnel, equipment, units)
+    keyed = {(item.type, str(item.code)) for item in items if item.code not in (None, "")}
+    existing_keys: set[tuple[str, str]] = set()
+    if keyed:
+        result = await db.execute(
+            select(Resource.type, Resource.code).where(
+                Resource.type.in_({item[0] for item in keyed}),
+                Resource.code.in_({item[1] for item in keyed}),
+            )
+        )
+        existing_keys = {
+            (str(resource_type), str(code))
+            for resource_type, code in result.all()
+            if code not in (None, "")
+        }
+    return success(
+        {
+            "personnel": personnel,
+            "equipment": equipment,
+            "units": [item.model_dump(mode="json") for item in items if item.type == "units"],
+            "errors": errors,
+            "impact": {
+                "created": len(keyed - existing_keys)
+                + sum(1 for item in items if item.code in (None, "")),
+                "updated": len(keyed & existing_keys),
+                "warnings": len(errors),
+            },
+        }
+    )
 
 
 @router.post(

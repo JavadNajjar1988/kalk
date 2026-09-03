@@ -10,6 +10,7 @@ from pydantic import BaseModel, ConfigDict, Field
 RESOURCE_TYPES = (
     "personnel",
     "equipment",
+    "units",
     "ammunition",
     "logistics",
     "ranks",
@@ -103,3 +104,23 @@ class ResourceBulkImportResponse(BaseModel):
     created: int
     updated: int
     skipped: int
+
+
+class UnitResourceLinkAssignment(BaseModel):
+    scenario_id: str
+    unit_id: str
+    resource_id: str
+
+
+class UnitResourceLinkRequest(BaseModel):
+    assignments: list[UnitResourceLinkAssignment]
+
+
+class LegacyResourceLinkAssignment(BaseModel):
+    scenario_id: str
+    occurrence_key: str
+    resource_id: str
+
+
+class LegacyResourceLinkRequest(BaseModel):
+    assignments: list[LegacyResourceLinkAssignment]

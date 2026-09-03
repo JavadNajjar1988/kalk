@@ -32,6 +32,7 @@ const initialFormData = {
   equipmentCode: '',
   name: '',
   type: 'سلاح',
+  quantity: 1,
   model: '',
   manufacturer: '',
   serialNumber: '',
@@ -99,6 +100,16 @@ const EquipmentModal: React.FC<EquipmentModalProps> = ({
               label="کد تجهیز"
               value={formData.equipmentCode || ''}
               onChange={(e) => handleChange('equipmentCode', e.target.value)}
+            />
+          </Grid>
+          <Grid item xs={12} sm={6}>
+            <TextField
+              fullWidth
+              type="number"
+              label="تعداد"
+              inputProps={{ min: 0, step: 1 }}
+              value={formData.quantity ?? 1}
+              onChange={(e) => handleChange('quantity', Math.max(0, Number(e.target.value) || 0))}
             />
           </Grid>
           <Grid item xs={12} sm={6}>

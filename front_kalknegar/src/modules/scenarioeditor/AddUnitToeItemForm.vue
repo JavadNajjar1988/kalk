@@ -56,6 +56,7 @@ const { form, handleSubmit } = useForm<Form>(
   {
     id: "",
     count: 1,
+    participationStatus: "planned",
   },
   modelValue,
 );
@@ -82,14 +83,30 @@ const pickerType = computed(() =>
   props.mode === "equipment" ? "equipment" : "personnel",
 );
 
+const participationStatuses = [
+  { value: "planned", label: "برنامه‌ریزی‌شده" },
+  { value: "deployed", label: "اعزام‌شده" },
+  { value: "active", label: "فعال در عملیات" },
+  { value: "completed", label: "پایان‌یافته" },
+  { value: "cancelled", label: "لغوشده" },
+  { value: "unavailable", label: "خارج از دسترس" },
+];
+
 function openPicker() {
   showPicker.value = true;
 }
 
 function onPickResource(r: ResourceSearchResultDto) {
-  // اطمینان از وجود رکورد در equipmentMap / personnelMap لوکال سناریو با ID = resourceId
+  // اگر این منبع قبلاً به سناریو پیوند خورده، همان دسته داخلی را دوباره استفاده کن.
+  // شناسه داخلی پس از بازکردن دوباره سناریو لزوماً با resourceId برابر نیست.
   const map =
     props.mode === "equipment" ? store.state.equipmentMap : store.state.personnelMap;
+  const linkedItem = Object.values(map).find((item) => item.resourceId === r.id);
+  if (linkedItem) {
+    form.value.id = linkedItem.id;
+    return;
+  }
+
   if (!map[r.id]) {
     if (props.mode === "equipment") {
       store.update((s) => {
@@ -128,6 +145,11 @@ function onPickResource(r: ResourceSearchResultDto) {
           :items="itemCategories"
         />
         <InputGroup label="مقدار اولیه" type="number" v-model="form.count" />
+        <SimpleSelect
+          label="وضعیت در این عملیات"
+          v-model="form.participationStatus"
+          :items="participationStatuses"
+        />
       </div>
 
       <div class="flex items-center gap-2">

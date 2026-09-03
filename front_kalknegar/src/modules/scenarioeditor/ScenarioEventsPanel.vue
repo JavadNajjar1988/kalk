@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { injectStrict } from "@/utils";
 import { activeScenarioKey, timeModalKey } from "@/components/injects";
-import { computed } from "vue";
+import { computed, ref } from "vue";
 import type { NScenarioEvent } from "@/types/internalModels";
 import PanelHeading from "@/components/PanelHeading.vue";
 import { useTimeFormatStore } from "@/stores/timeFormatStore";
@@ -10,6 +10,12 @@ import type { ScenarioEventAction } from "@/types/constants";
 import { useSelectedItems } from "@/stores/selectedStore";
 import { Button } from "@/components/ui/button";
 import dayjs from "@/dayjs";
+import { toPersianDigits } from "@/utils/persianNumbers";
+import {
+  filterScenarioEventsByTime,
+  getEventTimeFilterBounds,
+  type EventTimeFilterMode,
+} from "./scenarioEventTimeFilter";
 
 interface Props {
   selectOnly?: boolean;
@@ -29,8 +35,20 @@ const {
 const { getModalTimestamp } = injectStrict(timeModalKey);
 const { activeScenarioEventId } = useSelectedItems();
 const fmt = useTimeFormatStore();
-const events = computed(() => store.state.events.map((id) => store.state.eventMap[id]));
 const t = computed(() => store.state.currentTime);
+const allEvents = computed(() => store.state.events.map((id) => store.state.eventMap[id]));
+const filterMode = ref<EventTimeFilterMode>("all");
+const customFrom = ref("");
+const customTo = ref("");
+const filterBounds = computed(() =>
+  getEventTimeFilterBounds({
+    mode: filterMode.value,
+    currentTime: t.value,
+    customFrom: customFrom.value,
+    customTo: customTo.value,
+  }),
+);
+const events = computed(() => filterScenarioEventsByTime(allEvents.value, filterBounds.value));
 
 function onEventClick(event: NScenarioEvent) {
   if (!props.selectOnly) goToScenarioEvent(event);
@@ -67,7 +85,36 @@ function addEvent() {
   <div class="p-0.5">
     <PanelHeading>رویدادهای سناریو</PanelHeading>
 
+    <div class="mt-3 space-y-2 rounded-md border p-2 text-xs">
+      <div class="flex flex-wrap items-center gap-2">
+        <label for="events-panel-time-filter">بازه نمایش</label>
+        <select
+          id="events-panel-time-filter"
+          v-model="filterMode"
+          class="rounded border bg-transparent px-2 py-1"
+        >
+          <option value="all">همه زمان‌ها</option>
+          <option value="day">روز جاری</option>
+          <option value="week">هفته جاری</option>
+          <option value="month">ماه جاری</option>
+          <option value="custom">بازه دلخواه</option>
+        </select>
+        <span class="text-muted-foreground">
+          {{ toPersianDigits(String(events.length)) }} از
+          {{ toPersianDigits(String(allEvents.length)) }} رویداد
+        </span>
+      </div>
+      <div v-if="filterMode === 'custom'" class="flex flex-wrap items-center gap-2">
+        <input v-model="customFrom" type="datetime-local" class="rounded border bg-transparent px-2 py-1" />
+        <span>تا</span>
+        <input v-model="customTo" type="datetime-local" class="rounded border bg-transparent px-2 py-1" />
+      </div>
+    </div>
+
     <div class="flow-root">
+      <p v-if="events.length === 0" class="mt-4 text-sm text-muted-foreground">
+        در این بازه زمانی رویدادی وجود ندارد.
+      </p>
       <ul class="mt-4">
         <li v-for="(event, eventIdx) in events" :key="event.id" class="group flex">
           <div class="relative flex-auto pb-4">

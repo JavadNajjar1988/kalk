@@ -26,6 +26,8 @@ import {
   Search as SearchIcon,
   Inventory as EquipmentIcon,
   ImageNotSupported as NoImageIcon,
+  Hub as HistoryIcon,
+  Link as LinkIcon,
 } from '@mui/icons-material';
 import resourceApiService from '@/services/api/resourceApiService';
 import { applyPrimaryImageChanges, PrimaryImageChanges } from '@/modules/dashboard/pages/resources/components/primaryImageHelpers';
@@ -47,6 +49,8 @@ import {
 } from '@/store/slices/tabularResourcesSlice';
 import EquipmentModal from '@/modules/dashboard/pages/resources/modals/EquipmentModal';
 import EquipmentDeleteConfirmModal from '@/modules/dashboard/pages/resources/EquipmentDeleteConfirmModal';
+import ResourceUsageGraphDialog from '@/modules/dashboard/pages/resources/components/ResourceUsageGraphDialog';
+import LegacyResourceReconciliationDialog from './components/LegacyResourceReconciliationDialog';
 
 // Import equipment data
 import equipmentData from '@/data/resources/equipment.json';
@@ -65,6 +69,8 @@ const EquipmentTab: React.FC = () => {
   // Local state
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedEquipment, setSelectedEquipment] = useState<EquipmentItem | null>(null);
+  const [usageEquipment, setUsageEquipment] = useState<EquipmentItem | null>(null);
+  const [reconcileOpen, setReconcileOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState(filters.search || '');
   const [statusFilter, setStatusFilter] = useState<string>(filters.status || 'all');
   const [typeFilter, setTypeFilter] = useState<string>((filters as any).type || 'all');
@@ -237,24 +243,29 @@ const EquipmentTab: React.FC = () => {
             مدیریت تجهیزات و سامانه‌ها
           </Typography>
         </Box>
-        <Button
-          variant="contained"
-          startIcon={<AddIcon />}
-          onClick={() => handleOpenModal()}
-          sx={{ 
-            borderRadius: 2,
-            px: 3,
-            py: 1,
-            boxShadow: 2,
-            '&:hover': {
-              boxShadow: 4,
-              transform: 'translateY(-1px)'
-            },
-            transition: 'all 0.2s ease'
-          }}
-        >
-          افزودن تجهیز جدید
-        </Button>
+        <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+          <Button variant="outlined" startIcon={<LinkIcon />} onClick={() => setReconcileOpen(true)}>
+            تطبیق تجهیزات قدیمی
+          </Button>
+          <Button
+            variant="contained"
+            startIcon={<AddIcon />}
+            onClick={() => handleOpenModal()}
+            sx={{
+              borderRadius: 2,
+              px: 3,
+              py: 1,
+              boxShadow: 2,
+              '&:hover': {
+                boxShadow: 4,
+                transform: 'translateY(-1px)'
+              },
+              transition: 'all 0.2s ease'
+            }}
+          >
+            افزودن تجهیز جدید
+          </Button>
+        </Box>
       </Box>
 
       {/* Filters */}
@@ -325,6 +336,7 @@ const EquipmentTab: React.FC = () => {
                 <TableCell>کد تجهیز</TableCell>
                 <TableCell>نام تجهیز</TableCell>
                 <TableCell>نوع</TableCell>
+                <TableCell>تعداد</TableCell>
                 <TableCell>مودل</TableCell>
                 <TableCell>وضعیت</TableCell>
                 <TableCell>شرایط</TableCell>
@@ -336,7 +348,12 @@ const EquipmentTab: React.FC = () => {
               {filteredEquipment
                 .slice(pagination.page * pagination.pageSize, pagination.page * pagination.pageSize + pagination.pageSize)
                 .map((item) => (
-                <TableRow key={item.id} hover>
+                <TableRow
+                  key={item.id}
+                  hover
+                  onClick={() => setUsageEquipment(item)}
+                  sx={{ cursor: 'pointer' }}
+                >
                   <TableCell>
                     {item.primaryMediaId ? (
                       <Avatar
@@ -356,6 +373,7 @@ const EquipmentTab: React.FC = () => {
                   <TableCell>{item.equipmentCode}</TableCell>
                   <TableCell>{item.name}</TableCell>
                   <TableCell>{item.type}</TableCell>
+                  <TableCell>{item.quantity ?? 1}</TableCell>
                   <TableCell>{item.model || '-'}</TableCell>
                   <TableCell>
                     <Chip
@@ -375,17 +393,27 @@ const EquipmentTab: React.FC = () => {
                   <TableCell align="center">
                     <IconButton
                       size="small"
-                      onClick={() => handleOpenModal(item)}
+                      onClick={(event) => { event.stopPropagation(); handleOpenModal(item); }}
                       color="primary"
+                      title="ویرایش"
                     >
                       <EditIcon />
                     </IconButton>
                     <IconButton
                       size="small"
-                      onClick={() => handleDelete(item.id)}
+                      onClick={(event) => { event.stopPropagation(); handleDelete(item.id); }}
                       color="error"
+                      title="حذف"
                     >
                       <DeleteIcon />
+                    </IconButton>
+                    <IconButton
+                      size="small"
+                      onClick={(event) => { event.stopPropagation(); setUsageEquipment(item); }}
+                      color="secondary"
+                      title="سابقه عملیات"
+                    >
+                      <HistoryIcon />
                     </IconButton>
                   </TableCell>
                 </TableRow>
@@ -421,6 +449,19 @@ const EquipmentTab: React.FC = () => {
         onClose={() => { setDeleteOpen(false); setPendingDeleteEquipment(null); }}
         onConfirm={confirmDelete}
         isDeleting={isDeleting}
+      />
+
+      <ResourceUsageGraphDialog
+        open={Boolean(usageEquipment)}
+        resourceId={usageEquipment?.id || null}
+        resourceName={usageEquipment?.name}
+        onClose={() => setUsageEquipment(null)}
+      />
+      <LegacyResourceReconciliationDialog
+        open={reconcileOpen}
+        type="equipment"
+        onClose={() => setReconcileOpen(false)}
+        onApplied={() => dispatch(fetchTabItems({ tabType: 'equipment', filters }))}
       />
     </Box>
   );

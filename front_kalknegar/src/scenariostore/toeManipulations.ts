@@ -10,6 +10,7 @@ import { klona } from "klona";
 import type { EntityId } from "@/types/base";
 import { updateCurrentUnitState } from "@/scenariostore/time";
 import { removeUnusedUnitStateEntries } from "@/scenariostore/unitStateManipulations";
+import type { ResourceParticipationStatus } from "@/types/scenarioModels";
 
 export function useToeManipulations(store: NewScenarioStore) {
   const { state, update, groupUpdate } = store;
@@ -111,7 +112,15 @@ export function useToeManipulations(store: NewScenarioStore) {
   function updateUnitEquipment(
     unitId: EntityId,
     equipmentId: string,
-    { count, onHand }: { count: number; onHand?: number },
+    {
+      count,
+      onHand,
+      participationStatus,
+    }: {
+      count: number;
+      onHand?: number;
+      participationStatus?: ResourceParticipationStatus;
+    },
   ) {
     update((s) => {
       const unit = s.unitMap[unitId];
@@ -123,9 +132,14 @@ export function useToeManipulations(store: NewScenarioStore) {
         const equipment = unit.equipment?.find((e) => e.id === equipmentId);
         if (!equipment) {
           if (unit.equipment === undefined) unit.equipment = [];
-          unit.equipment.push({ id: equipmentId, count, onHand });
+          unit.equipment.push({
+            id: equipmentId,
+            count,
+            onHand,
+            participationStatus,
+          });
         } else {
-          Object.assign(equipment, { count, onHand });
+          Object.assign(equipment, { count, onHand, participationStatus });
         }
       }
     });
@@ -135,7 +149,15 @@ export function useToeManipulations(store: NewScenarioStore) {
   function updateUnitPersonnel(
     unitId: EntityId,
     personnelId: string,
-    { count, onHand }: { count: number; onHand?: number },
+    {
+      count,
+      onHand,
+      participationStatus,
+    }: {
+      count: number;
+      onHand?: number;
+      participationStatus?: ResourceParticipationStatus;
+    },
   ) {
     update((s) => {
       const unit = s.unitMap[unitId];
@@ -147,9 +169,14 @@ export function useToeManipulations(store: NewScenarioStore) {
         const personnel = unit.personnel?.find((e) => e.id === personnelId);
         if (!personnel) {
           if (unit.personnel === undefined) unit.personnel = [];
-          unit.personnel.push({ id: personnelId, count });
+          unit.personnel.push({
+            id: personnelId,
+            count,
+            onHand,
+            participationStatus,
+          });
         } else {
-          Object.assign(personnel, { count, onHand });
+          Object.assign(personnel, { count, onHand, participationStatus });
         }
       }
     });

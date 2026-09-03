@@ -101,6 +101,9 @@ export function mapReinforcedStatus2Field(
 export interface Unit {
   id: EntityId;
   name: string;
+  /** ارجاع پایدار به رکورد یگان در کاتالوگ مدیریت منابع. */
+  linkedResourceId?: string;
+  linkedResourceLabel?: string;
   sidc: string;
   shortName?: string;
   description?: string;
@@ -162,6 +165,8 @@ export interface UnitEquipment {
   onHand?: number;
   /** ارجاع به کاتالوگ منابع (resource.id با type=equipment). */
   resourceId?: string;
+  /** وضعیت همین منبع در این عملیات، مستقل از وضعیت کلی کاتالوگ. */
+  participationStatus?: ResourceParticipationStatus;
 }
 
 export interface UnitPersonnel {
@@ -171,7 +176,17 @@ export interface UnitPersonnel {
   onHand?: number;
   /** ارجاع به کاتالوگ منابع (resource.id با type=personnel). */
   resourceId?: string;
+  /** وضعیت همین منبع در این عملیات، مستقل از وضعیت کلی کاتالوگ. */
+  participationStatus?: ResourceParticipationStatus;
 }
+
+export type ResourceParticipationStatus =
+  | "planned"
+  | "deployed"
+  | "active"
+  | "completed"
+  | "cancelled"
+  | "unavailable";
 
 export interface UnitSupply {
   count: number;

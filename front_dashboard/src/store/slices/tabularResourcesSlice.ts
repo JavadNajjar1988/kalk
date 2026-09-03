@@ -3,6 +3,7 @@ import { RootState } from '@/store';
 import resourceApiService, {
   ResourceDto,
   ResourceType as ApiResourceType,
+  ResourceBulkImportItem,
 } from '@/services/api/resourceApiService';
 
 import personnelData from '@/data/resources/personnel.json';
@@ -37,6 +38,7 @@ export interface EquipmentItem {
   equipmentCode: string;
   name: string;
   type: string;
+  quantity?: number;
   model?: string;
   manufacturer?: string;
   serialNumber?: string;
@@ -171,7 +173,8 @@ const initialState: TabularResourcesState = {
   maps: initialTabState<MapItem>(),
 };
 
-export type ResourceType = ApiResourceType;
+// تب یگان‌ها مستقیماً از سرویس عمومی منابع استفاده می‌کند و در این اسلایس قدیمی نیست.
+export type ResourceType = Exclude<ApiResourceType, 'units'>;
 export type ResourceItem =
   | PersonnelItem
   | EquipmentItem
@@ -201,6 +204,7 @@ const TAB_DOMAIN_KEYS: Record<ResourceType, string[]> = {
   ],
   equipment: [
     'type',
+    'quantity',
     'model',
     'manufacturer',
     'serialNumber',
@@ -528,9 +532,11 @@ export const mergeImportedResources = createAsyncThunk(
   async ({
     personnel,
     equipment,
+    units = [],
   }: {
     personnel: PersonnelItem[];
     equipment: EquipmentItem[];
+    units?: ResourceBulkImportItem[];
   }) => {
     const items: any[] = [];
     for (const p of personnel) {
@@ -539,10 +545,11 @@ export const mergeImportedResources = createAsyncThunk(
     for (const e of equipment) {
       items.push(itemToCreatePayload('equipment', e as any));
     }
+    items.push(...units);
     if (items.length) {
       try {
         await resourceApiService.bulkImport(items);
-      } catch {
+      } catch (error) {
         // در صورت خطای API، fallback به cache محلی برای حداقل تجربه کاربر
         if (personnel.length) {
           const existing = loadCacheOrSeed('personnel') as PersonnelItem[];
@@ -552,11 +559,17 @@ export const mergeImportedResources = createAsyncThunk(
           const existing = loadCacheOrSeed('equipment') as EquipmentItem[];
           cacheToStorage('equipment', [...equipment, ...existing]);
         }
+        throw new Error(
+          error instanceof Error
+            ? `ثبت منابع در سرور انجام نشد: ${error.message}`
+            : 'ثبت منابع در سرور انجام نشد و فقط یک نسخه محلی نگهداری شد',
+        );
       }
     }
     return {
       personnelCount: personnel.length,
       equipmentCount: equipment.length,
+      unitCount: units.length,
     };
   },
 );

@@ -3,6 +3,7 @@ import { BaseApiClient, handleApiResponse, ApiClientError } from './baseApiClien
 export type ResourceType =
   | 'personnel'
   | 'equipment'
+  | 'units'
   | 'ammunition'
   | 'logistics'
   | 'ranks'
@@ -80,6 +81,79 @@ export interface ResourceBulkImportResponse {
   skipped: number;
 }
 
+export interface ResourceUsageAssignment {
+  kind: 'equipment' | 'personnel' | 'unit' | 'positioned-equipment';
+  unitId?: string | null;
+  unitName: string;
+  parentUnitName?: string | null;
+  sideName?: string | null;
+  status: string;
+  quantity?: number | null;
+  onHand?: number | null;
+  location?: number[] | null;
+  startTime?: string | number | null;
+  endTime?: string | number | null;
+}
+
+export interface ResourceUsageOperation {
+  scenarioId: string;
+  scenarioName: string;
+  scenarioStatus: string;
+  startTime?: string | null;
+  endTime?: string | null;
+  assignments: ResourceUsageAssignment[];
+}
+
+export interface ResourceUsageGraph {
+  resource: {
+    id: string;
+    type: ResourceType;
+    name: string;
+    code?: string | null;
+    status?: string | null;
+  };
+  summary: { operationsCount: number; assignmentsCount: number };
+  operations: ResourceUsageOperation[];
+}
+
+export interface UnitReconciliationOccurrence {
+  scenarioId: string;
+  scenarioName: string;
+  unitId: string;
+  unitName: string;
+  sidc?: string | null;
+  sideName?: string | null;
+  parentUnitName?: string | null;
+}
+
+export interface UnitReconciliationData {
+  occurrences: UnitReconciliationOccurrence[];
+  resources: Array<{ id: string; name: string; code?: string | null; sidc?: string | null }>;
+  summary: { unlinkedOccurrences: number; canonicalUnits: number };
+}
+
+export interface LegacyResourceReconciliationOccurrence {
+  scenarioId: string;
+  scenarioName: string;
+  occurrenceKey: string;
+  resourceType: 'equipment' | 'personnel';
+  itemName: string;
+  sourceCode?: string | null;
+  unitNames: string[];
+  occurrenceCount: number;
+}
+
+export interface LegacyResourceReconciliationData {
+  resourceType: 'equipment' | 'personnel';
+  occurrences: LegacyResourceReconciliationOccurrence[];
+  resources: Array<{ id: string; name: string; code?: string | null }>;
+  summary: {
+    unlinkedGroups: number;
+    unlinkedReferences: number;
+    canonicalResources: number;
+  };
+}
+
 class ResourceApiService extends BaseApiClient {
   constructor() {
     super(((import.meta as any).env?.VITE_API_URL as string) || '/api');
@@ -112,6 +186,49 @@ class ResourceApiService extends BaseApiClient {
 
   async getById(id: string): Promise<ResourceDto> {
     const response = await this.get<ResourceDto>(`/resources/${encodeURIComponent(id)}`);
+    return handleApiResponse(response);
+  }
+
+  async getUsageGraph(id: string): Promise<ResourceUsageGraph> {
+    const response = await this.get<ResourceUsageGraph>(
+      `/resources/${encodeURIComponent(id)}/usage-graph`,
+    );
+    return handleApiResponse(response);
+  }
+
+  async getUnitReconciliation(): Promise<UnitReconciliationData> {
+    const response = await this.get<UnitReconciliationData>('/resources/units/reconciliation');
+    return handleApiResponse(response);
+  }
+
+  async applyUnitReconciliation(
+    assignments: Array<{ scenario_id: string; unit_id: string; resource_id: string }>,
+  ): Promise<{ linked: number; skipped: Array<Record<string, string>> }> {
+    const response = await this.post<{ linked: number; skipped: Array<Record<string, string>> }>(
+      '/resources/units/reconciliation',
+      { assignments },
+    );
+    return handleApiResponse(response);
+  }
+
+  async getLegacyReconciliation(
+    type: 'equipment' | 'personnel',
+  ): Promise<LegacyResourceReconciliationData> {
+    const response = await this.get<LegacyResourceReconciliationData>(
+      `/resources/reconciliation/${type}`,
+    );
+    return handleApiResponse(response);
+  }
+
+  async applyLegacyReconciliation(
+    type: 'equipment' | 'personnel',
+    assignments: Array<{ scenario_id: string; occurrence_key: string; resource_id: string }>,
+  ): Promise<{ linkedGroups: number; linkedReferences: number; skipped: Array<Record<string, string>> }> {
+    const response = await this.post<{
+      linkedGroups: number;
+      linkedReferences: number;
+      skipped: Array<Record<string, string>>;
+    }>(`/resources/reconciliation/${type}`, { assignments });
     return handleApiResponse(response);
   }
 

@@ -77,6 +77,8 @@ const typeLabel = computed(() => {
       return "پرسنل";
     case "equipment":
       return "تجهیزات";
+    case "units":
+      return "یگان‌ها";
     case "ammunition":
       return "مهمات";
     case "logistics":

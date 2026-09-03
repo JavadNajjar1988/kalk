@@ -14,7 +14,10 @@ import { activeScenarioKey } from "@/components/injects";
 import { useSelectedItems } from "@/stores/selectedStore";
 import type { EntityId } from "@/types/base";
 import { useEquipmentEditStore, usePersonnelEditStore } from "@/stores/toeStore";
-import type { StateAdd } from "@/types/scenarioModels";
+import type {
+  ResourceParticipationStatus,
+  StateAdd,
+} from "@/types/scenarioModels";
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import ToeGridHeader from "@/modules/scenarioeditor/ToeGridHeader.vue";
@@ -106,8 +109,22 @@ watch(
     () => state.settingsStateCounter,
   ],
   () => {
-    const aggEquipment: Record<string, { count: number; onHand: number }> = {};
-    const aggPersonnel: Record<string, { count: number; onHand: number }> = {};
+    const aggEquipment: Record<
+      string,
+      {
+        count: number;
+        onHand: number;
+        participationStatus?: ResourceParticipationStatus;
+      }
+    > = {};
+    const aggPersonnel: Record<
+      string,
+      {
+        count: number;
+        onHand: number;
+        participationStatus?: ResourceParticipationStatus;
+      }
+    > = {};
     const allUnitIds = new Set<EntityId>();
     selectedUnitIds.value.forEach((unitId) => {
       if (includeSubordinates.value) {
@@ -129,45 +146,57 @@ watch(
       equipment?.forEach((e) => {
         const count = (aggEquipment[e.id]?.count ?? 0) + e.count;
         const onHand = (aggEquipment[e.id]?.onHand ?? 0) + (e?.onHand ?? e.count);
-        aggEquipment[e.id] = { count, onHand };
+        aggEquipment[e.id] = {
+          count,
+          onHand,
+          participationStatus:
+            aggEquipment[e.id]?.participationStatus ?? e.participationStatus,
+        };
       });
       personnel?.forEach((p) => {
         const count = (aggPersonnel[p.id]?.count ?? 0) + p.count;
         const onHand = (aggPersonnel[p.id]?.onHand ?? 0) + (p?.onHand ?? p.count);
-        aggPersonnel[p.id] = { count, onHand };
+        aggPersonnel[p.id] = {
+          count,
+          onHand,
+          participationStatus:
+            aggPersonnel[p.id]?.participationStatus ?? p.participationStatus,
+        };
       });
     });
 
     aggregatedEquipment.value = Object.entries(aggEquipment).map(
-      ([id, { count, onHand }]) => ({
+      ([id, { count, onHand, participationStatus }]) => ({
         id,
         name: equipmentMap[id]?.name ?? id,
         description: equipmentMap[id]?.description ?? "",
         count,
         onHand,
+        participationStatus,
       }),
     );
     aggregatedPersonnel.value = Object.entries(aggPersonnel).map(
-      ([id, { count, onHand }]) => ({
+      ([id, { count, onHand, participationStatus }]) => ({
         id,
         name: personnelMap[id]?.name ?? id,
         description: personnelMap[id]?.description ?? "",
         count,
         onHand,
+        participationStatus,
       }),
     );
   },
   { immediate: true, deep: true },
 );
 
-function onAddSubmit(toeMode: ToeMode, formData: NUnitSupply) {
-  const { id, count, onHand } = formData;
+function onAddSubmit(toeMode: ToeMode, formData: NUnitEquipment | NUnitPersonnel) {
+  const { id, count, onHand, participationStatus } = formData;
   groupUpdate(() => {
     selectedUnitIds.value.forEach((unitId) => {
       if (toeMode === "equipment") {
-        updateUnitEquipment(unitId, id, { count, onHand });
+        updateUnitEquipment(unitId, id, { count, onHand, participationStatus });
       } else if (toeMode === "personnel") {
-        updateUnitPersonnel(unitId, id, { count, onHand });
+        updateUnitPersonnel(unitId, id, { count, onHand, participationStatus });
       }
     });
   });
@@ -178,14 +207,14 @@ function onAddSubmit(toeMode: ToeMode, formData: NUnitSupply) {
 
 function updateItemCount(
   toeMode: ToeMode,
-  { id: itemId, count }: NUnitEquipment | NUnitPersonnel,
+  { id: itemId, count, participationStatus }: NUnitEquipment | NUnitPersonnel,
 ) {
   groupUpdate(() => {
     selectedUnitIds.value.forEach((unitId) => {
       if (toeMode === "equipment") {
-        updateUnitEquipment(unitId, itemId, { count });
+        updateUnitEquipment(unitId, itemId, { count, participationStatus });
       } else if (toeMode === "personnel") {
-        updateUnitPersonnel(unitId, itemId, { count });
+        updateUnitPersonnel(unitId, itemId, { count, participationStatus });
       }
     });
   });

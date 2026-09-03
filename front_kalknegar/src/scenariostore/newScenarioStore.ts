@@ -150,6 +150,8 @@ export function prepareScenario(newScenario: Scenario): ScenarioState {
   const supplyUoMMap: Record<string, NSupplyUoM> = {};
   const tempEquipmentIdMap: Record<string, string> = {};
   const tempPersonnelIdMap: Record<string, string> = {};
+  const tempEquipmentResourceIdMap: Record<string, string> = {};
+  const tempPersonnelResourceIdMap: Record<string, string> = {};
   const tempSuppliesIdMap: Record<string, string> = {};
   const tempRangeRingGroupIdMap: Record<string, string> = {};
   const tempUnitStatusIdMap: Record<string, string> = {};
@@ -246,14 +248,20 @@ export function prepareScenario(newScenario: Scenario): ScenarioState {
     const supplies: NUnitSupply[] = [];
     const rangeRings: RangeRing[] = [];
 
-    unit.equipment?.forEach(({ name, count }) => {
-      const id = tempEquipmentIdMap[name] || addEquipment({ name });
-      equipment.push({ id, count });
+    unit.equipment?.forEach(({ name, count, onHand, resourceId }) => {
+      const id =
+        (resourceId && tempEquipmentResourceIdMap[resourceId]) ||
+        tempEquipmentIdMap[name] ||
+        addEquipment({ name, resourceId });
+      equipment.push({ id, count, onHand, resourceId });
     });
 
-    unit.personnel?.forEach(({ name, count }) => {
-      const id = tempPersonnelIdMap[name] || addPersonnel({ name });
-      personnel.push({ id, count });
+    unit.personnel?.forEach(({ name, count, onHand, resourceId }) => {
+      const id =
+        (resourceId && tempPersonnelResourceIdMap[resourceId]) ||
+        tempPersonnelIdMap[name] ||
+        addPersonnel({ name, resourceId });
+      personnel.push({ id, count, onHand, resourceId });
     });
 
     unit.supplies?.forEach((s) => {
@@ -297,11 +305,19 @@ export function prepareScenario(newScenario: Scenario): ScenarioState {
         ? {
             equipment: update.equipment?.map((e) => {
               const { name, ...rest } = e;
-              return { id: tempEquipmentIdMap[name] ?? name, ...rest };
+              const id =
+                (e.resourceId && tempEquipmentResourceIdMap[e.resourceId]) ||
+                tempEquipmentIdMap[name] ||
+                name;
+              return { id, ...rest };
             }),
             personnel: update.personnel?.map((p) => {
               const { name, ...rest } = p;
-              return { id: tempPersonnelIdMap[name] ?? name, ...rest };
+              const id =
+                (p.resourceId && tempPersonnelResourceIdMap[p.resourceId]) ||
+                tempPersonnelIdMap[name] ||
+                name;
+              return { id, ...rest };
             }),
             supplies: update.supplies?.map((s) => {
               const { name, ...rest } = s;
@@ -313,11 +329,19 @@ export function prepareScenario(newScenario: Scenario): ScenarioState {
         ? {
             equipment: diff.equipment?.map((e) => {
               const { name, ...rest } = e;
-              return { id: tempEquipmentIdMap[name] ?? name, ...rest };
+              const id =
+                (e.resourceId && tempEquipmentResourceIdMap[e.resourceId]) ||
+                tempEquipmentIdMap[name] ||
+                name;
+              return { id, ...rest };
             }),
             personnel: diff.personnel?.map((p) => {
               const { name, ...rest } = p;
-              return { id: tempPersonnelIdMap[name] ?? name, ...rest };
+              const id =
+                (p.resourceId && tempPersonnelResourceIdMap[p.resourceId]) ||
+                tempPersonnelIdMap[name] ||
+                name;
+              return { id, ...rest };
             }),
             supplies: diff.supplies?.map((s) => {
               const { name, ...rest } = s;
@@ -366,6 +390,7 @@ export function prepareScenario(newScenario: Scenario): ScenarioState {
   function addPersonnel(p: PersonnelData) {
     const id = nanoid();
     tempPersonnelIdMap[p.name] = id;
+    if (p.resourceId) tempPersonnelResourceIdMap[p.resourceId] = id;
     personnelMap[id] = { ...p, id };
     return id;
   }
@@ -373,6 +398,7 @@ export function prepareScenario(newScenario: Scenario): ScenarioState {
   function addEquipment(e: EquipmentData) {
     const id = nanoid();
     tempEquipmentIdMap[e.name] = id;
+    if (e.resourceId) tempEquipmentResourceIdMap[e.resourceId] = id;
     equipmentMap[id] = { ...e, id };
     return id;
   }

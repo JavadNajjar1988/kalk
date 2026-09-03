@@ -38,6 +38,8 @@ import {
   Search as SearchIcon,
   Groups as PersonnelIcon,
   ImageNotSupported as NoImageIcon,
+  Hub as HistoryIcon,
+  Link as LinkIcon,
 } from '@mui/icons-material';
 import resourceApiService from '@/services/api/resourceApiService';
 import PrimaryImageField from './components/PrimaryImageField';
@@ -61,6 +63,8 @@ import {
 import PersianCalendarField from '@/components/common/PersianCalendarField';
 import { toLocalDateInput } from '@/utils/dateUtils';
 import PersonnelDeleteConfirmModal from './PersonnelDeleteConfirmModal';
+import ResourceUsageGraphDialog from './components/ResourceUsageGraphDialog';
+import LegacyResourceReconciliationDialog from './components/LegacyResourceReconciliationDialog';
 
 const PersonnelTab: React.FC = () => {
   const theme = useTheme();
@@ -82,6 +86,8 @@ const PersonnelTab: React.FC = () => {
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedPersonnel, setSelectedPersonnel] =
     useState<PersonnelItem | null>(null);
+  const [usagePersonnel, setUsagePersonnel] = useState<PersonnelItem | null>(null);
+  const [reconcileOpen, setReconcileOpen] = useState(false);
   const [personnelForm, setPersonnelForm] = useState({
     personalCode: '',
     firstName: '',
@@ -327,14 +333,19 @@ const PersonnelTab: React.FC = () => {
             مدیریت اشخاص
           </Typography>
         </Box>
-        <Button
-          variant="contained"
-          startIcon={<AddIcon />}
-          onClick={() => handleOpenModal()}
-          sx={{ borderRadius: 2 }}
-        >
-          افزودن شخص جدید
-        </Button>
+        <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+          <Button variant="outlined" startIcon={<LinkIcon />} onClick={() => setReconcileOpen(true)}>
+            تطبیق پرسنل قدیمی
+          </Button>
+          <Button
+            variant="contained"
+            startIcon={<AddIcon />}
+            onClick={() => handleOpenModal()}
+            sx={{ borderRadius: 2 }}
+          >
+            افزودن شخص جدید
+          </Button>
+        </Box>
       </Box>
 
       {/* Filters */}
@@ -447,7 +458,12 @@ const PersonnelTab: React.FC = () => {
                   pagination.page * pagination.pageSize + pagination.pageSize
                 )
                 .map(person => (
-                  <TableRow key={person.id} hover>
+                  <TableRow
+                    key={person.id}
+                    hover
+                    onClick={() => setUsagePersonnel(person)}
+                    sx={{ cursor: 'pointer' }}
+                  >
                     <TableCell>
                       {person.primaryMediaId ? (
                         <Avatar
@@ -539,7 +555,7 @@ const PersonnelTab: React.FC = () => {
                     <TableCell align="center">
                       <IconButton
                         size="small"
-                        onClick={() => handleOpenModal(person)}
+                        onClick={(event) => { event.stopPropagation(); handleOpenModal(person); }}
                         color="primary"
                         title="ویرایش"
                       >
@@ -547,11 +563,19 @@ const PersonnelTab: React.FC = () => {
                       </IconButton>
                       <IconButton
                         size="small"
-                        onClick={() => handleDelete(person.id)}
+                        onClick={(event) => { event.stopPropagation(); handleDelete(person.id); }}
                         color="error"
                         title="حذف"
                       >
                         <DeleteIcon />
+                      </IconButton>
+                      <IconButton
+                        size="small"
+                        onClick={(event) => { event.stopPropagation(); setUsagePersonnel(person); }}
+                        color="secondary"
+                        title="سابقه عملیات"
+                      >
+                        <HistoryIcon />
                       </IconButton>
                     </TableCell>
                   </TableRow>
@@ -752,6 +776,19 @@ const PersonnelTab: React.FC = () => {
         }}
         onConfirm={confirmDelete}
         isDeleting={isDeleting}
+      />
+
+      <ResourceUsageGraphDialog
+        open={Boolean(usagePersonnel)}
+        resourceId={usagePersonnel?.id || null}
+        resourceName={usagePersonnel ? `${usagePersonnel.firstName} ${usagePersonnel.lastName}` : undefined}
+        onClose={() => setUsagePersonnel(null)}
+      />
+      <LegacyResourceReconciliationDialog
+        open={reconcileOpen}
+        type="personnel"
+        onClose={() => setReconcileOpen(false)}
+        onApplied={() => dispatch(fetchTabItems({ tabType: 'personnel', filters }))}
       />
     </Box>
   );

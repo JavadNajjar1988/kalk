@@ -3,6 +3,7 @@ import { BaseApiClient, handleApiResponse } from './baseApiClient';
 export type ResourceType =
   | 'personnel'
   | 'equipment'
+  | 'units'
   | 'ammunition'
   | 'logistics'
   | 'ranks'

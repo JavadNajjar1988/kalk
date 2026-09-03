@@ -1,5 +1,5 @@
 import fs from "node:fs/promises";
-import { FileBlob, SpreadsheetFile } from "file:///C:/Users/AI/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/@oai/artifact-tool/dist/artifact_tool.mjs";
+import { FileBlob, SpreadsheetFile } from "@oai/artifact-tool";
 import sharp from "sharp";
 import ms from "file:///C:/Users/AI/Documents/GitHub/kalk/front_kalknegar/node_modules/milsymbol/index.js";
 
@@ -104,6 +104,17 @@ function jalaliToGregorian(jy, jm, jd) {
   return [gy, gm, gd];
 }
 
+function jalaliMonthLength(year, month) {
+  if (month <= 6) return 31;
+  if (month <= 11) return 30;
+  const [startYear, startMonth, startDay] = jalaliToGregorian(year, 1, 1);
+  const [nextYear, nextMonth, nextDay] = jalaliToGregorian(year + 1, 1, 1);
+  const yearDays = (
+    Date.UTC(nextYear, nextMonth - 1, nextDay) - Date.UTC(startYear, startMonth - 1, startDay)
+  ) / 86400000;
+  return yearDays === 366 ? 30 : 29;
+}
+
 function persianDateParts(date, timeZone = "Asia/Tehran") {
   const formatter = new Intl.DateTimeFormat("en-US-u-ca-persian-nu-latn", {
     timeZone,
@@ -165,8 +176,15 @@ function replaceSheet(name, headers, rows) {
   if (!sheet) sheet = workbook.worksheets.add(name);
   const used = sheet.getUsedRange(true);
   if (used) used.clear({ applyTo: "all" });
+  // Imported source sheets can carry validation rules far beyond their used
+  // cells. Clear each reserved input column using the same row span as the
+  // source template; broad rectangular clears do not remove imported rules
+  // reliably when their ranges only partially overlap.
+  for (let column = 0; column < 26; column += 1) {
+    sheet.getRangeByIndexes(1, column, 500, 1).dataValidation = null;
+  }
   headers.forEach((header, index) => {
-    if (["نماد", "کد_نماد_پیشرفته", "کد_ملی"].includes(header)) {
+    if (["نماد", "کد_نماد_پیشرفته", "کد_مرجع_یگان", "کد_ملی"].includes(header)) {
       sheet.getRangeByIndexes(1, index, 500, 1).format.numberFormat = "@";
     }
   });
@@ -184,11 +202,18 @@ const eventData = eventRows.map((row, index) => [
   row.unit_ids || (index === 0 ? "d2" : ""), row.equipment_ids || (index === 0 ? "eq1" : ""), row.lon, row.lat,
 ]);
 const unitData = [
-  ["u1", "لشکر ۱۶", "خودی", "لشکر", "پیاده‌نظام", "", "حاضر", "", "", "", ""],
-  ["u2", "تیپ ۱", "خودی", "تیپ", "پیاده‌نظام مکانیزه", "u1", "حاضر", "", "", "", ""],
-  ["u3", "گردان ۲۳۲", "خودی", "گردان / اسکادران", "زرهی", "u2", "حاضر", timeEntries[0][0], 48.05, 31.61, ""],
-  ["d1", "لشکر ۵", "دشمن", "لشکر", "زرهی", "", "حاضر", "", "", "", ""],
-  ["d2", "تیپ ۱۲", "دشمن", "تیپ", "پیاده‌نظام", "d1", "حاضر", timeEntries[0][0], 48.1531212, 31.6395122, ""],
+  ["u1", "لشکر ۱۶", "خودی", "لشکر", "پیاده‌نظام", "", "حاضر", "", "", "", "", "UNIT-16"],
+  ["u2", "تیپ ۱", "خودی", "تیپ", "پیاده‌نظام مکانیزه", "u1", "حاضر", "", "", "", "", "UNIT-16-BDE-1"],
+  ["u3", "گردان ۲۳۲", "خودی", "گردان / اسکادران", "زرهی", "u2", "حاضر", timeEntries[0][0], 48.05, 31.61, "", "UNIT-232"],
+  ["d1", "لشکر ۵", "دشمن", "لشکر", "زرهی", "", "حاضر", "", "", "", "", "HOSTILE-DIV-5"],
+  ["d2", "تیپ ۱۲", "دشمن", "تیپ", "پیاده‌نظام", "d1", "حاضر", timeEntries[0][0], 48.1531212, 31.6395122, "", "HOSTILE-BDE-12"],
+];
+const unitProfileData = [
+  ["UNIT-16", "لشکر ۱۶", "نیروی زمینی", "", "", "", "", "", "فرماندهی، پشتیبانی", "", "بالا", "", "", "", "1981-09-22", "", ""],
+  ["UNIT-16-BDE-1", "تیپ ۱", "نیروی زمینی", "UNIT-16", "لشکر ۱۶", "", "", "", "مکانیزه، ضدزره", "", "بالا", "", "", "", "", "", ""],
+  ["UNIT-232", "گردان ۲۳۲", "نیروی زمینی", "UNIT-16-BDE-1", "تیپ ۱", "خوزستان", "اهواز", "پادگان نمونه", "زرهی، راکت‌انداز، تحرک بالا", "۵۰۰", "متوسط", "محور عملیاتی نمونه", "", "", "", "", "نمونه قابل ویرایش"],
+  ["HOSTILE-DIV-5", "لشکر ۵", "نیروی زمینی دشمن", "", "", "", "", "", "زرهی", "", "", "", "", "", "", "", ""],
+  ["HOSTILE-BDE-12", "تیپ ۱۲", "نیروی زمینی دشمن", "HOSTILE-DIV-5", "لشکر ۵", "", "", "", "پیاده‌نظام", "", "", "", "", "", "", "", ""],
 ];
 const equipmentData = equipmentRows.map((row, index) => [
   row.id, row.name, row.type, row.quantity || 1, index === 0 ? "d2" : (row.unit_id || ""), registerTime(row.start_time), row.lon, row.lat,
@@ -206,7 +231,8 @@ const featureData = featureRows.length > 0
 
 replaceSheet("سناریو", ["نام", "توضیحات", "شناسه_زمان_شروع", "ناحیه_زمانی", "استاندارد_نماد"], scenarioData);
 replaceSheet("حوادث", ["شناسه", "عنوان", "زیرعنوان", "شناسه_زمان_شروع", "شناسه_زمان_پایان", "طرف", "شناسه_یگان", "شناسه_تجهیزات", "طول_جغرافیایی", "عرض_جغرافیایی"], eventData);
-replaceSheet("یگان‌ها", ["شناسه", "نام", "طرف", "رده_یگان", "نوع_نماد", "شناسه_والد", "وضعیت_نماد", "شناسه_زمان", "طول", "عرض", "کد_نماد_پیشرفته"], unitData);
+replaceSheet("یگان‌ها", ["شناسه", "نام", "طرف", "رده_یگان", "نوع_نماد", "شناسه_والد", "وضعیت_نماد", "شناسه_زمان", "طول", "عرض", "کد_نماد_پیشرفته", "کد_مرجع_یگان"], unitData);
+replaceSheet("شناسنامه یگان‌ها", ["کد_مرجع_یگان", "عنوان_کوتاه", "وابستگی_سازمانی", "کد_یگان_بالادست", "نام_یگان_بالادست", "استان", "شهر_استقرار", "نام_پادگان", "توانمندی‌ها", "استعداد_اسمی", "آمادگی_پایه", "محدوده_مسئولیت", "فرمانده", "اطلاعات_تماس", "تاریخ_تشکیل", "تاریخ_پایان_فعالیت", "توضیحات"], unitProfileData);
 replaceSheet("تجهیزات", ["شناسه", "نام", "نوع", "تعداد", "شناسه_یگان", "شناسه_زمان_شروع", "طول", "عرض"], equipmentData);
 replaceSheet("پرسنل", ["شناسه", "نام", "نام_خانوادگی", "درجه", "تخصص", "کد_ملی", "شناسه_یگان"], personnelData);
 replaceSheet("عوارض", ["شناسه", "نام", "نوع", "طول", "عرض", "شعاع_متر", "شناسه_زمان_شروع", "شناسه_زمان_پایان", "شناسه_رویداد"], featureData);
@@ -238,11 +264,14 @@ listsSheet.getRange("F2:F6").values = zones.map((value) => [value]);
 listsSheet.getRange("G2:G9").values = symbolCatalog.map((item) => [item.name]);
 listsSheet.getRange("H2:H10").values = mainEchelons.map((item) => [item.name]);
 listsSheet.getRange("I2:I5").values = symbolStatuses.map((value) => [value]);
+listsSheet.getRange("L1:M1").values = [["سال_شمسی", "تعداد_روز_اسفند"]];
+listsSheet.getRange("L2:L82").values = years.map((value) => [value]);
+listsSheet.getRange("M2:M82").values = years.map((value) => [jalaliMonthLength(value, 12)]);
 
 const calendarRows = [];
 for (const year of years) {
   for (let month = 1; month <= 12; month += 1) {
-    const maxDay = month <= 6 ? 31 : 30;
+    const maxDay = jalaliMonthLength(year, month);
     for (let day = 1; day <= maxDay; day += 1) {
       const [gy, gm, gd] = jalaliToGregorian(year, month, day);
       calendarRows.push([`${year}/${String(month).padStart(2, "0")}/${String(day).padStart(2, "0")}`, new Date(Date.UTC(gy, gm - 1, gd))]);
@@ -264,13 +293,18 @@ timingSheet.getRange("H2:H100").format.numberFormat = "yyyy-mm-dd hh:mm";
 for (const [range, formula1] of [
   ["B2:B500", "'فهرست‌های انتخاب'!$A$2:$A$82"],
   ["C2:C500", "'فهرست‌های انتخاب'!$B$2:$B$13"],
-  ["D2:D500", "'فهرست‌های انتخاب'!$C$2:$C$32"],
   ["E2:E500", "'فهرست‌های انتخاب'!$D$2:$D$25"],
   ["F2:F500", "'فهرست‌های انتخاب'!$E$2:$E$61"],
   ["G2:G500", "'فهرست‌های انتخاب'!$F$2:$F$6"],
 ]) {
   timingSheet.getRange(range).dataValidation = { rule: { type: "list", formula1 } };
 }
+timingSheet.getRange("D2:D500").dataValidation = {
+  rule: {
+    type: "list",
+    formula1: "OFFSET('فهرست‌های انتخاب'!$C$2,0,0,IF($C2<=6,31,IF($C2<=11,30,INDEX('فهرست‌های انتخاب'!$M$2:$M$82,MATCH($B2,'فهرست‌های انتخاب'!$L$2:$L$82,0)))),1)",
+  },
+};
 
 const timeIdFormula = "'زمان‌بندی'!$A$2:$A$500";
 for (const [sheetName, headers] of [
@@ -295,6 +329,7 @@ getSheet("یگان‌ها").getRange("C2:C500").dataValidation = { rule: { type:
 getSheet("یگان‌ها").getRange("D2:D500").dataValidation = { rule: { type: "list", formula1: "'فهرست‌های انتخاب'!$H$2:$H$10" } };
 getSheet("یگان‌ها").getRange("E2:E500").dataValidation = { rule: { type: "list", formula1: "'فهرست‌های انتخاب'!$G$2:$G$9" } };
 getSheet("یگان‌ها").getRange("G2:G500").dataValidation = { rule: { type: "list", formula1: "'فهرست‌های انتخاب'!$I$2:$I$5" } };
+getSheet("شناسنامه یگان‌ها").getRange("K2:K500").dataValidation = { rule: { type: "list", values: ["خیلی بالا", "بالا", "متوسط", "پایین"] } };
 
 let symbolGuide = getSheet("راهنمای نمادها");
 if (!symbolGuide) symbolGuide = workbook.worksheets.add("راهنمای نمادها");
@@ -337,13 +372,15 @@ let guide = getSheet("راهنما");
 if (!guide) guide = workbook.worksheets.add("راهنما");
 const guideUsed = guide.getUsedRange(true);
 if (guideUsed) guideUsed.clear({ applyTo: "all" });
-guide.getRange("C2:C14").format.numberFormat = "@";
-guide.getRange("A1:D14").values = [
+guide.getRange("C2:C16").format.numberFormat = "@";
+guide.getRange("A1:D16").values = [
   ["بخش", "کار کاربر", "نمونه", "نتیجه در کالک‌نگار"],
-  ["زمان‌بندی", "سال، ماه، روز، ساعت و ناحیه زمانی را از فهرست انتخاب کنید.", "۱۴۰۵/۰۶/۰۷", "تاریخ میلادی به‌صورت خودکار نمایش داده می‌شود."],
+  ["زمان‌بندی", "سال و ماه را انتخاب کنید؛ فهرست روز بر اساس ماه و کبیسه بودن سال تنظیم می‌شود.", "۱۴۰۵/۰۶/۰۷", "تاریخ میلادی به‌صورت خودکار نمایش داده می‌شود."],
   ["شناسه زمان", "شناسه ساخته‌شده را در کاربرگ رویداد یا تجهیز انتخاب کنید.", "زمان-۰۰۱", "واردساز تاریخ شمسی را به زمان استاندارد تبدیل می‌کند."],
   ["یگان‌ها", "طرف، رده، نوع و شناسه والد را انتخاب کنید.", "خودی / تیپ / u1", "اسکلت اصلی آرایش نبرد ساخته می‌شود."],
   ["نماد یگان", "ابتدا رده‌های اصلی مانند لشکر، تیپ و گردان را انتخاب کنید.", "زرهی / گردان / حاضر", "جزئیات نماد بعداً در کالک‌نگار قابل ویرایش است."],
+  ["کد مرجع یگان", "برای یک یگان واقعی در همه عملیات‌ها یک کد ثابت وارد کنید.", "UNIT-232", "سابقه همان یگان در چند سناریو به هم متصل می‌شود."],
+  ["اطلاعات پایه یگان", "وابستگی، یگان بالادست، استقرار، توانمندی، استعداد و تاریخچه را در شناسنامه وارد کنید.", "نیروی زمینی / اهواز / زرهی / ۵۰۰", "شناسنامه یگان در مدیریت منابع تکمیل می‌شود."],
   ["راهنمای نمادها", "شکل رده‌های خودی و دشمن را پیش از انتخاب ببینید.", "لشکر، تیپ، گردان", "انتخاب در کاربرگ یگان‌ها با نام فارسی انجام می‌شود."],
   ["کد نماد پیشرفته", "فقط برای نماد خارج از فهرست، کد بیست‌رقمی را وارد کنید.", protectLongDigits("10031000161211000000"), "کد پیشرفته بر انتخاب‌های فارسی اولویت دارد."],
   ["تجهیزات", "شناسه یگان را انتخاب کنید.", "u3", "تجهیز به یگان متصل می‌شود."],
@@ -362,7 +399,8 @@ const theme = {
 const widths = {
   "سناریو": [30, 58, 24, 20, 20],
   "حوادث": [15, 68, 28, 24, 24, 14, 22, 24, 18, 18],
-  "یگان‌ها": [15, 28, 14, 24, 28, 18, 20, 20, 16, 16, 28],
+  "یگان‌ها": [15, 28, 14, 24, 28, 18, 20, 20, 16, 16, 28, 22],
+  "شناسنامه یگان‌ها": [22, 22, 24, 24, 26, 18, 20, 24, 34, 18, 18, 30, 24, 24, 18, 20, 42],
   "تجهیزات": [15, 24, 22, 12, 18, 24, 16, 16],
   "پرسنل": [15, 18, 24, 18, 26, 20, 18],
   "عوارض": [18, 38, 18, 16, 16, 16, 24, 24, 20],
@@ -372,6 +410,7 @@ const widths = {
 };
 const tableNames = {
   "سناریو": "ScenarioFaTable", "حوادث": "EventsFaTable", "یگان‌ها": "UnitsFaTable",
+  "شناسنامه یگان‌ها": "UnitProfilesFaTable",
   "تجهیزات": "EquipmentFaTable", "پرسنل": "PersonnelFaTable", "عوارض": "FeaturesFaTable",
   "زمان‌بندی": "TimesFaTable", "راهنما": "GuideFaTable",
 };
@@ -424,10 +463,15 @@ for (const sheetName of ["سناریو", "حوادث", "یگان‌ها", "تج�
   });
 }
 const unitsSheet = getSheet("یگان‌ها");
-unitsSheet.getRange("K2:K500").format.numberFormat = "@";
+unitsSheet.getRange("K2:L500").format.numberFormat = "@";
 unitsSheet.getRange("C2:E500").format.fill = theme.paleGold;
 unitsSheet.getRange("G2:G500").format.fill = theme.paleGold;
 unitsSheet.getRange("K2:K500").format.fill = "#F3F4F6";
+unitsSheet.getRange("L2:L500").format.fill = theme.paleBlue;
+getSheet("شناسنامه یگان‌ها").getRange("A2:A500").format.numberFormat = "@";
+getSheet("شناسنامه یگان‌ها").getRange("A2:A500").format.fill = theme.paleBlue;
+getSheet("شناسنامه یگان‌ها").getRange("B2:Q500").format.fill = theme.paleGold;
+getSheet("شناسنامه یگان‌ها").getRange("O2:P500").format.numberFormat = "yyyy-mm-dd";
 unitsSheet.getRange("C2:C500").conditionalFormats.add("containsText", {
   text: "خودی", format: { fill: "#DBEAFE", font: { color: "#1E3A8A" } },
 });
@@ -437,10 +481,12 @@ unitsSheet.getRange("C2:C500").conditionalFormats.add("containsText", {
 getSheet("پرسنل").getRange("F2:F500").format.numberFormat = "@";
 listsSheet.getRange("A1:I1").format = { fill: theme.teal, font: { bold: true, color: "#FFFFFF" } };
 listsSheet.getRange("J1:K1").format = { fill: theme.teal, font: { bold: true, color: "#FFFFFF" } };
+listsSheet.getRange("L1:M1").format = { fill: theme.teal, font: { bold: true, color: "#FFFFFF" } };
 listsSheet.getRange("A1:I20").format.columnWidth = 18;
 listsSheet.getRange("G1:H20").format.columnWidth = 28;
 listsSheet.getRange("I1:I20").format.columnWidth = 22;
 listsSheet.getRange("J1:K20").format.columnWidth = 22;
+listsSheet.getRange("L1:M82").format.columnWidth = 20;
 listsSheet.showGridLines = false;
 listsSheet.freezePanes.freezeRows(1);
 
@@ -474,9 +520,9 @@ const xlsx = await SpreadsheetFile.exportXlsx(workbook);
 await xlsx.save(outputPath);
 
 const renderRanges = {
-  "سناریو": "A1:E4", "حوادث": "A1:J14", "یگان‌ها": "A1:K6",
+  "سناریو": "A1:E4", "حوادث": "A1:J14", "یگان‌ها": "A1:L6", "شناسنامه یگان‌ها": "A1:Q6",
   "تجهیزات": "A1:H14", "پرسنل": "A1:G5", "عوارض": "A1:I5",
-  "زمان‌بندی": "A1:H16", "راهنما": "A1:D14", "راهنمای نمادها": "A1:E22", "فهرست‌های انتخاب": "A1:K14",
+  "زمان‌بندی": "A1:H16", "راهنما": "A1:D16", "راهنمای نمادها": "A1:E22", "فهرست‌های انتخاب": "A1:M14",
 };
 for (const sheet of workbook.worksheets.items) {
   const preview = await workbook.render({

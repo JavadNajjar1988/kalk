@@ -6,10 +6,6 @@ import {
   Typography,
   Paper,
   alpha,
-  Button,
-  Card,
-  CardContent,
-  Grid,
   ThemeProvider,
 } from '@mui/material';
 import { createTheme } from '@mui/material/styles';
@@ -17,7 +13,7 @@ import {
   Groups as GroupsIcon,
   Map as MapIcon,
   Inventory as EquipmentIcon,
-  WorkspacePremium as RanksIcon,
+  AccountTree as UnitsIcon,
 } from '@mui/icons-material';
 import { useLocation, useNavigate } from 'react-router-dom';
 
@@ -25,7 +21,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import {
   PersonnelTab,
   EquipmentTab,
-  RanksTab,
+  UnitsTab,
   MapsTab
 } from './resources';
 import { useAppSelector } from '@/store';
@@ -116,6 +112,7 @@ const ResourcesPage: React.FC = () => {
     const tabMap: { [key: string]: number } = {
       'personnel': 0,
       'equipment': 1, 
+      'units': 2,
       'ranks': 2,
       'maps': 3
     };
@@ -126,7 +123,7 @@ const ResourcesPage: React.FC = () => {
   
   // بروزرسانی URL وقتی تب تغییر میکند
   useEffect(() => {
-    const tabNames = ['personnel', 'equipment', 'ranks', 'maps'];
+    const tabNames = ['personnel', 'equipment', 'units', 'maps'];
     const newURL = `${location.pathname}?tab=${tabNames[value]}`;
     navigate(newURL, { replace: true });
   }, [value, location.pathname, navigate]);
@@ -144,7 +141,7 @@ const ResourcesPage: React.FC = () => {
   const tabs = [
     { label: t('resources.tabs.personnel'), icon: <GroupsIcon /> },
     { label: t('resources.tabs.equipment'), icon: <EquipmentIcon /> },
-    { label: t('resources.tabs.ranks'), icon: <RanksIcon /> },
+    { label: 'یگان‌ها', icon: <UnitsIcon /> },
     { label: t('resources.tabs.maps'), icon: <MapIcon /> },
   ];
 
@@ -244,7 +241,7 @@ const ResourcesPage: React.FC = () => {
               <EquipmentTab />
             </TabPanel>
             <TabPanel value={value} index={2}>
-              <RanksTab />
+              <UnitsTab />
             </TabPanel>
             <TabPanel value={value} index={3}>
               <MapsTab />

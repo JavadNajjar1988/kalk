@@ -15,6 +15,7 @@ import FormFooter from "@/modules/scenarioeditor/FormFooter.vue";
 import InputCheckbox from "@/components/InputCheckbox.vue";
 import { type ToeEditStore } from "@/stores/toeStore";
 import { useTimeFormatStore } from "@/stores/timeFormatStore";
+import SimpleSelect from "@/components/SimpleSelect.vue";
 
 type Form = NUnitEquipment | NUnitPersonnel;
 
@@ -55,6 +56,15 @@ const { form } = useForm<Form>(
   modelValue,
 );
 
+const participationStatuses = [
+  { value: "planned", label: "برنامه‌ریزی‌شده" },
+  { value: "deployed", label: "اعزام‌شده" },
+  { value: "active", label: "فعال در عملیات" },
+  { value: "completed", label: "پایان‌یافته" },
+  { value: "cancelled", label: "لغوشده" },
+  { value: "unavailable", label: "خارج از دسترس" },
+];
+
 function resetForm() {
   modelValue.value = klona(props.itemData);
 }
@@ -80,7 +90,11 @@ function onSubmit(e: KeyboardEvent | Event) {
       });
     }
   } else {
-    emit("updateCount", { id: form.value.id, count: form.value.count });
+    emit("updateCount", {
+      id: form.value.id,
+      count: form.value.count,
+      participationStatus: form.value.participationStatus,
+    });
   }
 }
 
@@ -115,6 +129,12 @@ watch([() => props.editStore.isOnHandMode, () => props.editStore.isDiffMode], ()
         v-model="form.count"
         min="0"
         :autofocus="!editStore.isOnHandMode"
+      />
+      <SimpleSelect
+        v-if="!editStore.isOnHandMode"
+        label="وضعیت در این عملیات"
+        v-model="form.participationStatus"
+        :items="participationStatuses"
       />
       <InputGroup
         label="موجود / در دسترس"

@@ -137,7 +137,7 @@ async def test_resource_bulk_import(client: AsyncClient):
             "type": "equipment",
             "name": "خودرو زرهی",
             "code": "EQ-A1",
-            "metadata": {"type": "armor"},
+            "metadata": {"type": "armor", "quantity": 12},
         },
         {
             "type": "invalid_type",
@@ -152,6 +152,14 @@ async def test_resource_bulk_import(client: AsyncClient):
     result = resp.json()["data"]
     assert result["created"] == 2
     assert result["skipped"] >= 1
+
+    listing = await client.get(
+        f"{settings.API_PREFIX}/resources",
+        params={"type": "equipment"},
+    )
+    assert listing.status_code == 200, listing.text
+    imported = next(item for item in listing.json()["data"]["items"] if item["code"] == "EQ-A1")
+    assert imported["metadata"]["quantity"] == 12
 
 
 @pytest.mark.asyncio

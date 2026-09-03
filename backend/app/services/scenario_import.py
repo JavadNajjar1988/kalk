@@ -182,6 +182,7 @@ async def upsert_scenario_from_import(
     description: str | None,
     image: str | None,
     content: dict,
+    commit: bool = True,
 ) -> tuple[Scenario, bool]:
     """
     Insert a new scenario or update an existing one by id.
@@ -216,8 +217,11 @@ async def upsert_scenario_from_import(
         created = False
 
     try:
-        await db.commit()
-        await db.refresh(obj)
+        if commit:
+            await db.commit()
+            await db.refresh(obj)
+        else:
+            await db.flush()
     except Exception:
         await db.rollback()
         raise

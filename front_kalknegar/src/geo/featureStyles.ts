@@ -9,6 +9,10 @@ import type { FeatureLike } from "ol/Feature";
 import type { FeatureId } from "@/types/scenarioGeoModels";
 import type { TGeo } from "@/scenariostore";
 import View from "ol/View";
+import { symbolGenerator } from "@/symbology/milsymbwrapper";
+import { createMilSymbolStyle } from "./unitStyles";
+import { useSettingsStore, useSymbolSettingsStore } from "@/stores/settingsStore";
+import type { SymbolOptions } from "milsymbol";
 
 let zoomResolutions: number[] = [];
 
@@ -33,6 +37,8 @@ const defaultStyle = new Style({
 
 export function useFeatureStyles(geo: TGeo) {
   const styleCache = new Map<any, Style>();
+  const settingsStore = useSettingsStore();
+  const symbolSettings = useSymbolSettingsStore();
 
   function clearCache() {
     styleCache.clear();
@@ -58,7 +64,25 @@ export function useFeatureStyles(geo: TGeo) {
       },
     } = scenarioFeature;
     if (!style) {
-      style = createSimpleStyle(scenarioFeature.style || {}) || defaultStyle;
+      const militarySymbolSidc = (
+        scenarioFeature.style as typeof scenarioFeature.style & {
+          militarySymbolSidc?: string;
+        }
+      )?.militarySymbolSidc;
+      if (militarySymbolSidc) {
+        const quantity = Number(scenarioFeature.properties?.quantity);
+        const milSymbol = symbolGenerator(militarySymbolSidc, {
+          size: settingsStore.mapIconSize * (window.devicePixelRatio || 1),
+          quantity:
+            Number.isFinite(quantity) && quantity > 1 ? String(quantity) : undefined,
+          outlineColor: "white",
+          outlineWidth: 8,
+          ...symbolSettings.symbolOptions,
+        } as SymbolOptions);
+        style = createMilSymbolStyle(milSymbol);
+      } else {
+        style = createSimpleStyle(scenarioFeature.style || {}) || defaultStyle;
+      }
       // @ts-ignore
       feature.set("_zIndex", scenarioFeature.meta._zIndex, true);
       styleCache.set(featureId, style);

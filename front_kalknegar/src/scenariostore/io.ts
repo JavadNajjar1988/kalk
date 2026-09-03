@@ -180,13 +180,13 @@ export function serializeUnit(
   const { newId = false, includeSubUnits = true } = options;
   const nUnit = scnState.unitMap[unitId];
   let equipment = nUnit.equipment?.map(({ id, count, onHand }) => {
-    const { name } = scnState.equipmentMap[id];
-    return { name, count, onHand };
+    const { name, resourceId } = scnState.equipmentMap[id];
+    return { name, count, onHand, resourceId };
   });
   if (equipment?.length === 0) equipment = undefined;
   let personnel = nUnit.personnel?.map(({ id, count, onHand }) => {
-    const { name } = scnState.personnelMap[id];
-    return { name, count, onHand };
+    const { name, resourceId } = scnState.personnelMap[id];
+    return { name, count, onHand, resourceId };
   });
   if (personnel?.length === 0) personnel = undefined;
 
@@ -224,13 +224,25 @@ export function serializeUnit(
           if (s.diff) {
             if (s.diff.equipment) {
               diffEquipment = s.diff.equipment.map(({ id, count, onHand }) => {
-                return { name: scnState.equipmentMap[id]?.name ?? id, count, onHand };
+                const item = scnState.equipmentMap[id];
+                return {
+                  name: item?.name ?? id,
+                  count,
+                  onHand,
+                  resourceId: item?.resourceId,
+                };
               });
             }
 
             if (s.diff?.personnel) {
               diffPersonnel = s.diff.personnel.map(({ id, count, onHand }) => {
-                return { name: scnState.personnelMap[id]?.name ?? id, count, onHand };
+                const item = scnState.personnelMap[id];
+                return {
+                  name: item?.name ?? id,
+                  count,
+                  onHand,
+                  resourceId: item?.resourceId,
+                };
               });
             }
 
@@ -255,12 +267,24 @@ export function serializeUnit(
 
             if (s.update.equipment) {
               updateEquipment = s.update.equipment.map(({ id, count, onHand }) => {
-                return { name: scnState.equipmentMap[id]?.name ?? id, count, onHand };
+                const item = scnState.equipmentMap[id];
+                return {
+                  name: item?.name ?? id,
+                  count,
+                  onHand,
+                  resourceId: item?.resourceId,
+                };
               });
             }
             if (s.update.personnel) {
               updatePersonnel = s.update.personnel.map(({ id, count, onHand }) => {
-                return { name: scnState.personnelMap[id]?.name ?? id, count, onHand };
+                const item = scnState.personnelMap[id];
+                return {
+                  name: item?.name ?? id,
+                  count,
+                  onHand,
+                  resourceId: item?.resourceId,
+                };
               });
             }
 
@@ -305,18 +329,24 @@ function getMapLayers(state: ScenarioState): ScenarioMapLayer[] {
 }
 
 function getEquipment(state: ScenarioState): EquipmentData[] {
-  return Object.values(state.equipmentMap).map(({ name, description, sidc }) => ({
-    name,
-    description,
-    sidc,
-  }));
+  return Object.values(state.equipmentMap).map(
+    ({ name, description, sidc, resourceId }) => ({
+      name,
+      description,
+      sidc,
+      resourceId,
+    }),
+  );
 }
 
 function getPersonnel(state: ScenarioState): PersonnelData[] {
-  return Object.values(state.personnelMap).map(({ name, description }) => ({
-    name,
-    description,
-  }));
+  return Object.values(state.personnelMap).map(
+    ({ name, description, resourceId }) => ({
+      name,
+      description,
+      resourceId,
+    }),
+  );
 }
 
 function getSupplyCategories(state: ScenarioState): SupplyCategory[] {

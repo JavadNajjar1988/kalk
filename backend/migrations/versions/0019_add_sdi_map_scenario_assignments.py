@@ -1,6 +1,6 @@
 """add scenario assignments to SDI maps
 
-Revision ID: 0019_add_sdi_map_scenario_assignments
+Revision ID: 0019_sdi_scenario_ids
 Revises: 0018_add_scenario_schedule
 """
 
@@ -8,7 +8,7 @@ from alembic import op
 import sqlalchemy as sa
 
 
-revision = "0019_add_sdi_map_scenario_assignments"
+revision = "0019_sdi_scenario_ids"
 down_revision = "0018_add_scenario_schedule"
 branch_labels = None
 depends_on = None

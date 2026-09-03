@@ -31,6 +31,11 @@ import {
   type TimelineAction,
   type TimelineRenderInputs,
 } from "./scenarioTimelineMath";
+import {
+  filterScenarioEventsByTime,
+  getEventTimeFilterBounds,
+  type EventTimeFilterMode,
+} from "./scenarioEventTimeFilter";
 
 const HOURS_PER_DAY = MS_PER_DAY / MS_PER_HOUR;
 
@@ -119,8 +124,7 @@ const currentTimestamp = ref(0);
 const animate = ref(false);
 const hoveredX = ref(0);
 const showHoverMarker = ref(false);
-type TimelineFilterMode = "all" | "day" | "week" | "month" | "custom";
-const filterMode = ref<TimelineFilterMode>("all");
+const filterMode = ref<EventTimeFilterMode>("all");
 const customFrom = ref("");
 const customTo = ref("");
 
@@ -315,29 +319,15 @@ const allEvents = computed(() =>
 );
 
 const filterBounds = computed(() => {
-  if (filterMode.value === "all") return null;
-  if (filterMode.value === "custom") {
-    const from = customFrom.value ? new Date(customFrom.value).valueOf() : Number.NEGATIVE_INFINITY;
-    const to = customTo.value ? new Date(customTo.value).valueOf() : Number.POSITIVE_INFINITY;
-    return { from, to };
-  }
-  const current = scenarioTime.value;
-  if (filterMode.value === "day") {
-    return { from: current.startOf("day").valueOf(), to: current.endOf("day").valueOf() };
-  }
-  if (filterMode.value === "week") {
-    return { from: current.startOf("week").valueOf(), to: current.endOf("week").valueOf() };
-  }
-  return { from: current.startOf("month").valueOf(), to: current.endOf("month").valueOf() };
+  return getEventTimeFilterBounds({
+    mode: filterMode.value,
+    currentTime: scenarioTime.value.valueOf(),
+    customFrom: customFrom.value,
+    customTo: customTo.value,
+  });
 });
 
-const events = computed(() => {
-  const bounds = filterBounds.value;
-  if (!bounds) return allEvents.value;
-  return allEvents.value.filter(
-    (event) => event.startTime >= bounds.from && event.startTime <= bounds.to,
-  );
-});
+const events = computed(() => filterScenarioEventsByTime(allEvents.value, filterBounds.value));
 const phases = computed(() => store.state.phases);
 const environmentalConditions = computed(() => store.state.environmentalConditions);
 
