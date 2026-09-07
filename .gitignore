@@ -70,8 +70,20 @@ ehthumbs.db
 # Temporary files
 .tmp/
 .temp/
+tmp/
+output/
+outputs/
 .worktrees/
 *.tmp
+backend/static/document-imports/
+
+# Runtime-generated uploads and bundled tooling
+backend/static/scenarios/images/
+backend/.docker-cli/
+
+# Internal design and planning artifacts
+docs/dashboard-mockups/
+docs/superpowers/
 
 # Cache
 .cache/
