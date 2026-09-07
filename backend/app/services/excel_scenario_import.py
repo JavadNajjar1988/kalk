@@ -1,7 +1,7 @@
 """
 Parse standard multi-sheet Excel into ORBAT-mapper scenario dict + validation errors.
 Sheet names (case-insensitive, trimmed): سناریو|scenario, حوادث|events, یگان‌ها|units,
-تجهیزات|equipment, پرسنل|personnel
+تجهیزات|equipment, پرسنل|personnel, وضعیت‌های زمانی یگان‌ها|unit_states
 """
 
 from __future__ import annotations
@@ -24,6 +24,11 @@ BUNDLED_GRAPHIC_TEMPLATE = (
     Path(__file__).resolve().parents[1]
     / "templates"
     / "scenario_import_template_graphic_fa_main_orbat.xlsx"
+)
+BUNDLED_COMPLETE_EXAMPLE = (
+    Path(__file__).resolve().parents[1]
+    / "templates"
+    / "scenario_import_example_complete_fa.xlsx"
 )
 
 # Default 20-digit APP-6D / MIL-STD-2525D SIDC: friendly land infantry,
@@ -446,6 +451,25 @@ def _parse_time_references(wb, errors: list[dict[str, Any]]) -> dict[str, str]:
         time_id = _cell(row, headers, "id", "time_id", "شناسه", "شناسه_زمان")
         if not time_id:
             continue
+        gregorian = _cell_raw(
+            row,
+            headers,
+            "gregorian_datetime",
+            "datetime",
+            "تاریخ_و_ساعت_میلادی",
+            "تاریخ_میلادی",
+        )
+        if gregorian is not None and str(gregorian).strip():
+            parsed = _parse_iso_or_ms(
+                gregorian,
+                errors,
+                ws.title,
+                row_index,
+                "gregorian_datetime",
+            )
+            if parsed is not None:
+                result[time_id] = str(parsed)
+            continue
         try:
             jy = int(float(_cell(row, headers, "jalali_year", "سال_شمسی", "سال")))
             jm = int(float(_cell(row, headers, "jalali_month", "ماه_شمسی", "ماه")))
@@ -517,6 +541,19 @@ def _resolve_row_time(
         )
         return None
     return time_refs[reference]
+
+
+def _scenario_time_sort_key(value: Any) -> float:
+    if isinstance(value, (int, float)):
+        return float(value)
+    text = str(value or "").strip()
+    try:
+        return float(text)
+    except ValueError:
+        try:
+            return datetime.fromisoformat(text.replace("Z", "+00:00")).timestamp() * 1000
+        except ValueError:
+            return float("inf")
 
 
 def _read_unit_profiles(wb) -> dict[str, dict[str, Any]]:
@@ -604,9 +641,34 @@ def parse_excel_workbook(wb) -> tuple[dict[str, Any], list[dict[str, Any]]]:
     scenario_ws = _find_sheet(wb, "سناریو", "scenario")
     events_ws = _find_sheet(wb, "حوادث", "events")
     units_ws = _find_sheet(wb, "یگان", "یگان‌ها", "یگان ها", "units", "orbat")
+    unit_states_ws = _find_sheet(
+        wb,
+        "وضعیت‌های زمانی یگان‌ها",
+        "وضعیت های زمانی یگان ها",
+        "مسیر یگان‌ها",
+        "مسیر یگان ها",
+        "unit_states",
+        "unit states",
+        "unit_tracks",
+        "unit tracks",
+    )
     equip_ws = _find_sheet(wb, "تجهیزات", "equipment")
     pers_ws = _find_sheet(wb, "پرسنل", "personnel")
     features_ws = _find_sheet(wb, "عوارض", "عارضه", "features", "map_features")
+
+    review_ws = _find_sheet(wb, "کالک‌یار")
+    is_document_draft = bool(
+        review_ws
+        and any(
+            str(cell.value or "").strip() == "DOCUMENT_REVIEW_DRAFT_V1"
+            for row in review_ws.iter_rows()
+            for cell in row
+        )
+    )
+
+    def require_draft_value(ws, row_number, row, headers, keys, message):
+        if is_document_draft and not _cell(row, headers, *keys):
+            errors.append({"sheet": ws.title, "row": row_number, "message": message})
 
     if not scenario_ws:
         errors.append(
@@ -625,6 +687,24 @@ def parse_excel_workbook(wb) -> tuple[dict[str, Any], list[dict[str, Any]]]:
             }
         )
     row1 = srows[0] if srows else tuple()
+
+    if row1:
+        require_draft_value(
+            scenario_ws,
+            2,
+            row1,
+            sh,
+            (
+                "start_time",
+                "starttime",
+                "زمان_شروع",
+                "زمان_شروع_میلادی",
+                "تاریخ_شروع",
+                "start_time_id",
+                "شناسه_زمان_شروع",
+            ),
+            "زمان شروع سناریو در پیش‌نویس کالک‌یار باید از روی سند تکمیل شود",
+        )
 
     name = _cell(row1, sh, "name", "نام", "عنوان")
     if not name:
@@ -665,6 +745,23 @@ def parse_excel_workbook(wb) -> tuple[dict[str, Any], list[dict[str, Any]]]:
     if events_ws:
         eh, _ = _header_map(events_ws)
         for i, er in enumerate(_read_rows(events_ws), start=2):
+            require_draft_value(
+                events_ws,
+                i,
+                er,
+                eh,
+                (
+                    "start_time",
+                    "starttime",
+                    "زمان_شروع",
+                    "زمان_شروع_میلادی",
+                    "زمان",
+                    "تاریخ",
+                    "start_time_id",
+                    "شناسه_زمان_شروع",
+                ),
+                "زمان رویداد در پیش‌نویس کالک‌یار باید از روی سند تکمیل شود",
+            )
             eid = _cell(er, eh, "id", "شناسه") or f"ev-{uuid.uuid4().hex[:12]}"
             title = _cell(er, eh, "title", "عنوان")
             if not title:
@@ -744,6 +841,38 @@ def parse_excel_workbook(wb) -> tuple[dict[str, Any], list[dict[str, Any]]]:
     if units_ws:
         uh, _ = _header_map(units_ws)
         for i, ur in enumerate(_read_rows(units_ws), start=2):
+            require_draft_value(
+                units_ws,
+                i,
+                ur,
+                uh,
+                ("side", "طرف", "جبهه"),
+                "طرف یگان در پیش‌نویس کالک‌یار باید تعیین شود",
+            )
+            require_draft_value(
+                units_ws,
+                i,
+                ur,
+                uh,
+                ("unit_type", "type", "نوع", "نوع_واحد", "نوع_نماد"),
+                "نوع یگان در پیش‌نویس کالک‌یار باید تعیین شود",
+            )
+            require_draft_value(
+                units_ws,
+                i,
+                ur,
+                uh,
+                ("echelon", "unit_echelon", "رده", "رده_یگان", "رده_سازمانی"),
+                "رده یگان در پیش‌نویس کالک‌یار باید تعیین شود",
+            )
+            require_draft_value(
+                units_ws,
+                i,
+                ur,
+                uh,
+                ("resource_code", "unit_code", "کد_مرجع_یگان", "کد_مرجع"),
+                "کد مرجع یگان برای تطبیق کاتالوگ باید تعیین شود",
+            )
             uid = _cell(ur, uh, "id", "شناسه")
             uname = _cell(ur, uh, "name", "نام")
             if not uname:
@@ -824,7 +953,7 @@ def parse_excel_workbook(wb) -> tuple[dict[str, Any], list[dict[str, Any]]]:
                     {
                         "t": t_parsed or now,
                         "location": loc,
-                        "id": f"s-{uuid.uuid4().hex[:10]}",
+                        "id": f"excel-state-{uid}-initial",
                     }
                 )
             raw_units.append(
@@ -884,6 +1013,220 @@ def parse_excel_workbook(wb) -> tuple[dict[str, Any], list[dict[str, Any]]]:
                     "personnel": [],
                 }
             )
+
+        unit_by_id = {str(unit["id"]): unit for unit in raw_units}
+        if unit_states_ws:
+            state_headers, _ = _header_map(unit_states_ws)
+            for row_number, state_row in enumerate(
+                _read_rows(unit_states_ws), start=2
+            ):
+                unit_id = _cell(
+                    state_row,
+                    state_headers,
+                    "unit_id",
+                    "شناسه_یگان",
+                    "یگان",
+                )
+                if not unit_id:
+                    errors.append(
+                        {
+                            "sheet": unit_states_ws.title,
+                            "row": row_number,
+                            "message": "شناسه یگان برای وضعیت زمانی الزامی است",
+                        }
+                    )
+                    continue
+                unit = unit_by_id.get(unit_id)
+                if unit is None:
+                    errors.append(
+                        {
+                            "sheet": unit_states_ws.title,
+                            "row": row_number,
+                            "message": f"یگان با شناسه {unit_id} یافت نشد",
+                        }
+                    )
+                    continue
+
+                state_time = _resolve_row_time(
+                    state_row,
+                    state_headers,
+                    errors,
+                    unit_states_ws.title,
+                    row_number,
+                    "time",
+                    time_refs,
+                    direct_keys=("time", "t", "زمان", "زمان_میلادی", "زمان_مقصد"),
+                    reference_keys=(
+                        "time_id",
+                        "شناسه_زمان",
+                        "شناسه_زمان_مقصد",
+                    ),
+                )
+                if state_time is None:
+                    errors.append(
+                        {
+                            "sheet": unit_states_ws.title,
+                            "row": row_number,
+                            "message": "زمان مقصد برای وضعیت یگان الزامی است",
+                        }
+                    )
+
+                lon_raw = _cell(
+                    state_row,
+                    state_headers,
+                    "lon",
+                    "longitude",
+                    "طول",
+                    "طول_جغرافیایی",
+                )
+                lat_raw = _cell(
+                    state_row,
+                    state_headers,
+                    "lat",
+                    "latitude",
+                    "عرض",
+                    "عرض_جغرافیایی",
+                )
+                lon, lat = _validate_lon_lat(
+                    lon_raw,
+                    lat_raw,
+                    errors,
+                    unit_states_ws.title,
+                    row_number,
+                )
+                if lon is None or lat is None or state_time is None:
+                    if lon is None and lat is None and not lon_raw and not lat_raw:
+                        errors.append(
+                            {
+                                "sheet": unit_states_ws.title,
+                                "row": row_number,
+                                "message": "مختصات وضعیت زمانی یگان الزامی است",
+                            }
+                        )
+                    continue
+
+                transfer_raw = _norm_key(
+                    _cell(
+                        state_row,
+                        state_headers,
+                        "transfer_mode",
+                        "movement_mode",
+                        "روش_انتقال",
+                        "نوع_حرکت",
+                    )
+                    or "پیوسته"
+                )
+                continuous_values = {
+                    "پیوسته",
+                    "حرکت_پیوسته",
+                    "continuous",
+                    "interpolate",
+                    "بله",
+                    "yes",
+                    "true",
+                    "1",
+                }
+                jump_values = {
+                    "پرش",
+                    "جابجایی_آنی",
+                    "جابه_جایی_آنی",
+                    "jump",
+                    "instant",
+                    "خیر",
+                    "no",
+                    "false",
+                    "0",
+                }
+                if transfer_raw not in continuous_values | jump_values:
+                    errors.append(
+                        {
+                            "sheet": unit_states_ws.title,
+                            "row": row_number,
+                            "message": "روش انتقال باید «پیوسته» یا «پرش» باشد",
+                        }
+                    )
+                    continue
+
+                path_raw = _norm_key(
+                    _cell(
+                        state_row,
+                        state_headers,
+                        "path_mode",
+                        "نوع_مسیر",
+                    )
+                    or "مستقیم"
+                )
+                path_modes = {
+                    "مستقیم": "straight",
+                    "straight": "straight",
+                    "خطی": "straight",
+                    "منحنی": "curved",
+                    "curved": "curved",
+                }
+                if path_raw not in path_modes:
+                    errors.append(
+                        {
+                            "sheet": unit_states_ws.title,
+                            "row": row_number,
+                            "message": "نوع مسیر باید «مستقیم» یا «منحنی» باشد",
+                        }
+                    )
+                    continue
+
+                movement_start = _resolve_row_time(
+                    state_row,
+                    state_headers,
+                    errors,
+                    unit_states_ws.title,
+                    row_number,
+                    "movement_start_time",
+                    time_refs,
+                    direct_keys=(
+                        "movement_start_time",
+                        "زمان_شروع_حرکت",
+                        "زمان_شروع_حرکت_میلادی",
+                    ),
+                    reference_keys=(
+                        "movement_start_time_id",
+                        "شناسه_زمان_شروع_حرکت",
+                    ),
+                )
+                state_key = _cell(
+                    state_row,
+                    state_headers,
+                    "id",
+                    "state_id",
+                    "شناسه",
+                    "شناسه_وضعیت",
+                ) or str(row_number - 1)
+                state_id = f"excel-state-{unit_id}-{state_key}"
+                state: dict[str, Any] = {
+                    "id": state_id,
+                    "t": state_time,
+                    "location": [lon, lat],
+                    "interpolate": transfer_raw in continuous_values,
+                    "pathMode": path_modes[path_raw],
+                }
+                if movement_start is not None:
+                    if _scenario_time_sort_key(movement_start) > _scenario_time_sort_key(
+                        state_time
+                    ):
+                        errors.append(
+                            {
+                                "sheet": unit_states_ws.title,
+                                "row": row_number,
+                                "message": "زمان شروع حرکت نمی‌تواند بعد از زمان مقصد باشد",
+                            }
+                        )
+                        continue
+                    state["viaStartTime"] = movement_start
+                unit.setdefault("state", []).append(state)
+
+            for unit in raw_units:
+                unit["state"] = sorted(
+                    unit.get("state") or [],
+                    key=lambda state: _scenario_time_sort_key(state.get("t")),
+                )
 
         by_id = {u["id"]: u for u in raw_units}
         for u in raw_units:
@@ -950,6 +1293,30 @@ def parse_excel_workbook(wb) -> tuple[dict[str, Any], list[dict[str, Any]]]:
         )
         eh, _ = _header_map(equip_ws)
         for i, er in enumerate(_read_rows(equip_ws), start=2):
+            require_draft_value(
+                equip_ws,
+                i,
+                er,
+                eh,
+                ("type", "نوع"),
+                "نوع تجهیز در پیش‌نویس کالک‌یار باید تعیین شود",
+            )
+            require_draft_value(
+                equip_ws,
+                i,
+                er,
+                eh,
+                ("quantity", "تعداد", "count"),
+                "تعداد تجهیز در پیش‌نویس کالک‌یار باید از روی سند تکمیل شود",
+            )
+            require_draft_value(
+                equip_ws,
+                i,
+                er,
+                eh,
+                ("equipment_code", "کد", "equipmentcode"),
+                "کد مرجع تجهیز برای تطبیق کاتالوگ باید تعیین شود",
+            )
             ename = _cell(er, eh, "name", "نام")
             if not ename:
                 continue
@@ -1071,6 +1438,14 @@ def parse_excel_workbook(wb) -> tuple[dict[str, Any], list[dict[str, Any]]]:
     if pers_ws:
         ph, _ = _header_map(pers_ws)
         for i, pr in enumerate(_read_rows(pers_ws), start=2):
+            require_draft_value(
+                pers_ws,
+                i,
+                pr,
+                ph,
+                ("personal_code", "کد_پرسنلی", "personalcode"),
+                "کد مرجع شخص برای تطبیق کاتالوگ باید تعیین شود",
+            )
             fn = _cell(pr, ph, "first_name", "نام")
             ln = _cell(pr, ph, "last_name", "نام_خانوادگی", "فامیلی")
             full = _cell(pr, ph, "full_name", "نام_کامل")
@@ -1100,6 +1475,14 @@ def parse_excel_workbook(wb) -> tuple[dict[str, Any], list[dict[str, Any]]]:
     if features_ws:
         fh, _ = _header_map(features_ws)
         for i, fr in enumerate(_read_rows(features_ws), start=2):
+            require_draft_value(
+                features_ws,
+                i,
+                fr,
+                fh,
+                ("type", "نوع"),
+                "نوع عارضه در پیش‌نویس کالک‌یار باید تعیین شود",
+            )
             feature_id = (
                 _cell(fr, fh, "id", "شناسه") or f"feature-{uuid.uuid4().hex[:10]}"
             )
@@ -1274,7 +1657,7 @@ def parse_excel_workbook(wb) -> tuple[dict[str, Any], list[dict[str, Any]]]:
     return content, errors
 
 
-def build_template_workbook() -> Workbook:
+def build_template_workbook(*, include_example: bool = False) -> Workbook:
     wb = Workbook()
     ws0 = wb.active
     ws0.title = "سناریو"
@@ -1328,6 +1711,32 @@ def build_template_workbook() -> Workbook:
             "عرض",
             "کد_نماد_پیشرفته",
             "کد_مرجع_یگان",
+        ]
+    )
+
+    ws_unit_states = wb.create_sheet("وضعیت‌های زمانی یگان‌ها")
+    ws_unit_states.append(
+        [
+            "شناسه_وضعیت",
+            "شناسه_یگان",
+            "شناسه_زمان_مقصد",
+            "طول",
+            "عرض",
+            "روش_انتقال",
+            "نوع_مسیر",
+            "شناسه_زمان_شروع_حرکت",
+        ]
+    )
+    ws_unit_states.append(
+        [
+            "حرکت-u3-01",
+            "u3",
+            "زمان-002",
+            51.46,
+            35.74,
+            "پیوسته",
+            "مستقیم",
+            "زمان-001",
         ]
     )
     ws2.append(
@@ -1602,9 +2011,18 @@ def build_template_workbook() -> Workbook:
         ]
     )
     ws_time.append(["زمان-001", 1405, 6, 7, 8, 0, "Asia/Tehran", None])
+    ws_time.append(["زمان-002", 1405, 6, 7, 10, 0, "Asia/Tehran", None])
 
     ws_guide = wb.create_sheet("راهنما")
     ws_guide.append(["بخش", "کار کاربر", "نمونه", "نتیجه در کالک‌نگار"])
+    ws_guide.append(
+        [
+            "مسیر پایه یگان",
+            "برای هر مقصد یک ردیف زمان‌دار وارد کنید؛ موقعیت اولیه در برگه یگان‌ها باقی می‌ماند.",
+            "u3، زمان-002، پیوسته، مستقیم",
+            "حرکت پایه ساخته می‌شود و اصلاح دقیق مسیر در کالک‌نگار انجام می‌شود.",
+        ]
+    )
     ws_guide.append(
         [
             "زمان‌بندی",
@@ -1662,6 +2080,23 @@ def build_template_workbook() -> Workbook:
         ]
     )
 
+    ws_guide.append(
+        [
+            "نوع فایل",
+            (
+                "نمونه تکمیل‌شده آموزشی است؛ برای ورود واقعی از قالب خالی استفاده کنید."
+                if include_example
+                else "قالب خالی برای ورود واقعی است؛ داده‌های سناریو را از ردیف دوم وارد کنید."
+            ),
+            "دارای داده نمونه" if include_example else "بدون داده نمونه",
+            (
+                "این فایل را بدون جایگزینی داده‌های نمونه به‌عنوان سناریوی واقعی وارد نکنید."
+                if include_example
+                else "پس از تکمیل، ابتدا پیش‌نمایش ورود را بررسی و سپس ثبت را تأیید کنید."
+            ),
+        ]
+    )
+
     ws_symbol_guide = wb.create_sheet("راهنمای نمادها")
     ws_symbol_guide.append(["بخش", "عنوان", "کاربرد پیشنهادی", "کد پایه نمونه"])
     for echelon_name in MAIN_ECHELONS:
@@ -1698,6 +2133,8 @@ def build_template_workbook() -> Workbook:
             "نوع_نماد",
             "رده_یگان",
             "وضعیت_نماد",
+            "روش_انتقال",
+            "نوع_مسیر",
             "کلید_تاریخ_شمسی",
             "تاریخ_میلادی",
         ]
@@ -1737,20 +2174,26 @@ def build_template_workbook() -> Workbook:
         ["حاضر", "برنامه‌ریزی‌شده", "آسیب‌دیده", "نابودشده"], start=2
     ):
         ws_lists.cell(index, 9, value)
+    for index, value in enumerate(["پیوسته", "پرش"], start=2):
+        ws_lists.cell(index, 10, value)
+    for index, value in enumerate(["مستقیم", "منحنی"], start=2):
+        ws_lists.cell(index, 11, value)
 
     calendar_row = 2
     for year in years:
         for month in range(1, 13):
             for day in range(1, _jalali_month_length(year, month) + 1):
                 gy, gm, gd = _jalali_to_gregorian(year, month, day)
-                ws_lists.cell(calendar_row, 10, f"{year:04d}/{month:02d}/{day:02d}")
-                ws_lists.cell(calendar_row, 11, datetime(gy, gm, gd))
-                ws_lists.cell(calendar_row, 11).number_format = "yyyy-mm-dd"
+                ws_lists.cell(calendar_row, 12, f"{year:04d}/{month:02d}/{day:02d}")
+                ws_lists.cell(calendar_row, 13, datetime(gy, gm, gd))
+                ws_lists.cell(calendar_row, 13).number_format = "yyyy-mm-dd"
                 calendar_row += 1
 
     ws_time["H2"] = (
-        f'=IFERROR(INDEX(\'فهرست‌های انتخاب\'!$K$2:$K${calendar_row - 1},MATCH(TEXT(B2,"0000")&"/"&TEXT(C2,"00")&"/"&TEXT(D2,"00"),\'فهرست‌های انتخاب\'!$J$2:$J${calendar_row - 1},0))+TIME(E2,F2,0),"")'
+        f'=IFERROR(INDEX(\'فهرست‌های انتخاب\'!$M$2:$M${calendar_row - 1},MATCH(TEXT(B2,"0000")&"/"&TEXT(C2,"00")&"/"&TEXT(D2,"00"),\'فهرست‌های انتخاب\'!$L$2:$L${calendar_row - 1},0))+TIME(E2,F2,0),"")'
     )
+    ws_time["H3"] = ws_time["H2"].value.replace("B2", "B3").replace("C2", "C3").replace("D2", "D3").replace("E2", "E3").replace("F2", "F3")
+    ws_time["H3"].number_format = "yyyy-mm-dd hh:mm"
     ws_time["H2"].number_format = "yyyy-mm-dd hh:mm"
 
     for cell_range, formula in [
@@ -1769,6 +2212,7 @@ def build_template_workbook() -> Workbook:
         (ws0, ["C2:C500"]),
         (ws1, ["D2:E500"]),
         (ws2, ["H2:H500"]),
+        (ws_unit_states, ["C2:C500", "H2:H500"]),
         (ws3, ["F2:F500"]),
         (ws5, ["G2:H500"]),
     ]:
@@ -1778,6 +2222,17 @@ def build_template_workbook() -> Workbook:
         sheet.add_data_validation(time_validation)
         for cell_range in ranges:
             time_validation.add(cell_range)
+
+    movement_validation = DataValidation(
+        type="list", formula1="'فهرست‌های انتخاب'!$J$2:$J$3", allow_blank=False
+    )
+    ws_unit_states.add_data_validation(movement_validation)
+    movement_validation.add("F2:F500")
+    path_validation = DataValidation(
+        type="list", formula1="'فهرست‌های انتخاب'!$K$2:$K$3", allow_blank=False
+    )
+    ws_unit_states.add_data_validation(path_validation)
+    path_validation.add("G2:G500")
 
     for cell_range, formula in [
         ("E2:E500", "'فهرست‌های انتخاب'!$G$2:$G$9"),
@@ -1850,6 +2305,7 @@ def build_template_workbook() -> Workbook:
         "سناریو": [30, 55, 24, 20, 20],
         "حوادث": [15, 65, 28, 24, 24, 14, 22, 24, 18, 18],
         "یگان‌ها": [15, 28, 14, 24, 28, 18, 20, 20, 16, 16, 28, 22],
+        "وضعیت‌های زمانی یگان‌ها": [20, 18, 24, 16, 16, 18, 18, 28],
         "شناسنامه یگان‌ها": [
             22,
             22,
@@ -1874,13 +2330,40 @@ def build_template_workbook() -> Workbook:
         "عوارض": [18, 38, 18, 16, 16, 16, 24, 24, 20],
         "زمان‌بندی": [18, 14, 14, 14, 12, 12, 20, 26],
         "راهنما": [22, 60, 30, 60],
-        "فهرست‌های انتخاب": [14, 10, 10, 10, 10, 20, 28, 28, 22, 22, 22],
+        "فهرست‌های انتخاب": [14, 10, 10, 10, 10, 20, 28, 28, 22, 18, 18, 22, 22],
         "راهنمای نمادها": [20, 30, 50, 30],
     }
     for sheet_name, sheet_widths in widths.items():
         ws = wb[sheet_name]
         for index, width in enumerate(sheet_widths, start=1):
             ws.column_dimensions[chr(64 + index)].width = width
+
+    if not include_example:
+        for data_sheet, max_column in [
+            (ws0, 5),
+            (ws1, 10),
+            (ws2, 12),
+            (ws_unit_states, 8),
+            (ws_unit_profiles, 17),
+            (ws3, 10),
+            (ws4, 7),
+            (ws5, 9),
+        ]:
+            for row in data_sheet.iter_rows(
+                min_row=2,
+                max_row=data_sheet.max_row,
+                max_col=max_column,
+            ):
+                for cell in row:
+                    cell.value = None
+        for row in ws_time.iter_rows(
+            min_row=2,
+            max_row=ws_time.max_row,
+            min_col=1,
+            max_col=7,
+        ):
+            for cell in row:
+                cell.value = None
 
     return wb
 
@@ -1923,6 +2406,16 @@ _STANDARD_SHEETS: dict[str, list[str]] = {
         "lat",
         "resource_code",
     ],
+    "unit_states": [
+        "id",
+        "unit_id",
+        "time",
+        "lon",
+        "lat",
+        "transfer_mode",
+        "path_mode",
+        "movement_start_time",
+    ],
     "equipment": [
         "id",
         "name",
@@ -1962,10 +2455,113 @@ _TARGET_TO_SHEET_TITLE: dict[str, str] = {
     "scenario": "سناریو",
     "events": "حوادث",
     "units": "یگان‌ها",
+    "unit_states": "وضعیت‌های زمانی یگان‌ها",
     "equipment": "تجهیزات",
     "personnel": "پرسنل",
     "features": "عوارض",
 }
+
+
+def inspect_source_table_layout(
+    worksheet: Any,
+    *,
+    max_scan_rows: int = 15,
+    max_columns: int = 50,
+) -> dict[str, Any]:
+    """Find a likely table header and return stable labels for mapped columns."""
+
+    column_limit = min(max(worksheet.max_column, 1), max_columns)
+    row_limit = min(max(worksheet.max_row, 1), max_scan_rows)
+
+    def row_values(row: int) -> list[Any]:
+        return [worksheet.cell(row=row, column=column).value for column in range(1, column_limit + 1)]
+
+    def present(value: Any) -> bool:
+        return value is not None and str(value).strip() != ""
+
+    candidates: list[tuple[float, int]] = []
+    for row in range(1, row_limit + 1):
+        values = row_values(row)
+        nonempty = sum(1 for value in values if present(value))
+        text_cells = sum(
+            1 for value in values if isinstance(value, str) and value.strip()
+        )
+        following_support = 0
+        for next_row in range(row + 1, min(worksheet.max_row, row + 3) + 1):
+            following_nonempty = sum(
+                1 for value in row_values(next_row) if present(value)
+            )
+            if following_nonempty >= max(1, min(2, nonempty)):
+                following_support += 1
+        score = nonempty * 4 + text_cells * 2 + following_support * 3 + row * 0.05
+        if nonempty < 2:
+            score -= 20
+        candidates.append((score, row))
+
+    header_row = max(candidates, key=lambda item: item[0])[1]
+    child_values = row_values(header_row)
+    child_nonempty = sum(1 for value in child_values if present(value))
+
+    parent_row = header_row - 1
+    parent_values = row_values(parent_row) if parent_row >= 1 else []
+    parent_nonempty = sum(1 for value in parent_values if present(value))
+    merged_parent = False
+    merged_ranges = getattr(getattr(worksheet, "merged_cells", None), "ranges", [])
+    for merged_range in merged_ranges:
+        if (
+            merged_range.min_row <= parent_row <= merged_range.max_row
+            and merged_range.max_col > merged_range.min_col
+        ):
+            merged_parent = True
+            break
+    header_depth = 2 if (
+        parent_row >= 1
+        and parent_nonempty > 0
+        and (merged_parent or 2 <= parent_nonempty < child_nonempty)
+    ) else 1
+
+    expanded_parents: list[str] = []
+    current_parent = ""
+    if header_depth == 2:
+        for value in parent_values:
+            if present(value):
+                current_parent = str(value).strip()
+            expanded_parents.append(current_parent)
+
+    last_header_column = 0
+    for index, value in enumerate(child_values, start=1):
+        if present(value) or (
+            header_depth == 2 and index <= len(expanded_parents) and expanded_parents[index - 1]
+        ):
+            last_header_column = index
+
+    headers: list[str] = []
+    columns: dict[str, int] = {}
+    duplicate_counts: dict[str, int] = {}
+    for column in range(1, last_header_column + 1):
+        child = str(child_values[column - 1]).strip() if present(child_values[column - 1]) else ""
+        parent = expanded_parents[column - 1] if header_depth == 2 else ""
+        label = (
+            f"{parent} / {child}"
+            if parent and child and parent != child
+            else child or parent
+        )
+        if not label:
+            headers.append("")
+            continue
+        count = duplicate_counts.get(label, 0) + 1
+        duplicate_counts[label] = count
+        unique_label = label if count == 1 else f"{label} [ستون {column}]"
+        headers.append(unique_label)
+        columns[_norm_key(unique_label)] = column
+
+    return {
+        "headerRow": header_row,
+        "headerDepth": header_depth,
+        "dataStartRow": header_row + 1,
+        "headers": headers,
+        "columns": columns,
+    }
 
 
 def transform_workbook_with_mapping(wb, mapping: dict[str, Any]) -> Workbook:
@@ -2031,18 +2627,15 @@ def transform_workbook_with_mapping(wb, mapping: dict[str, Any]) -> Workbook:
         if source_ws is None:
             continue
 
-        # Read source headers
-        src_headers: dict[str, int] = {}
-        for col in range(1, source_ws.max_column + 1):
-            val = source_ws.cell(row=1, column=col).value
-            key = _norm_key(str(val) if val is not None else "")
-            if key:
-                src_headers[key] = col
+        source_layout = inspect_source_table_layout(source_ws)
+        src_headers: dict[str, int] = source_layout["columns"]
 
         field_map = col_map_for_target.get(target_key) or {}
 
         # For each source data row, build a standard row
-        for row_cells in source_ws.iter_rows(min_row=2, values_only=True):
+        for row_cells in source_ws.iter_rows(
+            min_row=source_layout["dataStartRow"], values_only=True
+        ):
             if all(x is None or str(x).strip() == "" for x in row_cells):
                 continue
             row_list = list(row_cells)
@@ -2112,6 +2705,19 @@ def export_content_to_workbook(content: dict[str, Any]) -> Workbook:
     # --- یگان‌ها ---
     ws2 = wb.create_sheet("یگان‌ها")
     ws2.append(["id", "name", "parent_id", "side", "unit_type", "time", "lon", "lat"])
+    ws_states = wb.create_sheet("وضعیت‌های زمانی یگان‌ها")
+    ws_states.append(
+        [
+            "id",
+            "unit_id",
+            "time",
+            "lon",
+            "lat",
+            "transfer_mode",
+            "path_mode",
+            "movement_start_time",
+        ]
+    )
     _side_std_to_label = {"3": "friend", "6": "hostile", "4": "neutral", "0": "unknown"}
 
     def _flatten_units(units: list, parent_id: str = "") -> None:
@@ -2146,6 +2752,22 @@ def export_content_to_workbook(content: dict[str, Any]) -> Workbook:
                     lat,
                 ]
             )
+            for state in (u.get("state") or [])[1:]:
+                state_location = state.get("location") or []
+                ws_states.append(
+                    [
+                        state.get("id") or "",
+                        u.get("id") or "",
+                        state.get("t") or "",
+                        state_location[0] if len(state_location) >= 2 else "",
+                        state_location[1] if len(state_location) >= 2 else "",
+                        "continuous"
+                        if state.get("interpolate") is not False
+                        else "jump",
+                        state.get("pathMode") or "straight",
+                        state.get("viaStartTime") or "",
+                    ]
+                )
             _flatten_units(u.get("subUnits") or [], u.get("id") or "")
 
     for side in content.get("sides") or []:

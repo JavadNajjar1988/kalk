@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useRef } from 'react';
 import { CalendarMonth } from '@mui/icons-material';
 import { InputAdornment, TextField } from '@mui/material';
 import DatePicker, { DateObject } from 'react-multi-date-picker';
@@ -20,6 +20,31 @@ interface PersianCalendarFieldProps {
 }
 
 const pad = (value: number) => String(value).padStart(2, '0');
+
+interface CalendarNavigationButtonProps {
+  direction: string;
+  onClick?: React.MouseEventHandler<HTMLButtonElement>;
+  onKeyDown?: React.KeyboardEventHandler<HTMLButtonElement>;
+  disabled?: boolean;
+}
+
+const CalendarNavigationButton = ({
+  direction,
+  onClick,
+  onKeyDown,
+  disabled,
+}: CalendarNavigationButtonProps) => (
+  <button
+    type="button"
+    className={`rmdp-arrow-container ${direction} ${disabled ? 'disabled' : ''}`}
+    aria-label={direction.includes('left') ? 'ماه بعد' : 'ماه قبل'}
+    onClick={onClick}
+    onKeyDown={onKeyDown}
+    disabled={disabled}
+  >
+    <i className="rmdp-arrow" aria-hidden="true" />
+  </button>
+);
 
 function parseLocalValue(value?: string) {
   if (!value) return undefined;
@@ -58,6 +83,7 @@ const PersianCalendarField: React.FC<PersianCalendarFieldProps> = ({
   disabled,
   fullWidth = true,
 }) => {
+  const userSelectedDate = useRef(false);
   const calendarValue = useMemo(() => {
     const parsed = parseLocalValue(value);
     if (!parsed) return null;
@@ -68,13 +94,25 @@ const PersianCalendarField: React.FC<PersianCalendarFieldProps> = ({
 
   return (
     <DatePicker
-      value={calendarValue}
+      value={calendarValue ?? ''}
       calendar={persian}
       locale={persianFa}
       format={dateOnly ? 'YYYY/MM/DD' : 'YYYY/MM/DD HH:mm'}
       calendarPosition="bottom-right"
       editable={false}
       disabled={disabled}
+      renderButton={<CalendarNavigationButton direction="" />}
+      mapDays={({ date }) => ({
+        'aria-label': `انتخاب ${date.format('dddd DD MMMM YYYY')}`,
+        onClick: () => {
+          userSelectedDate.current = true;
+        },
+        onKeyDown: (event: React.KeyboardEvent) => {
+          if (event.key === 'Enter' || event.key === ' ') {
+            userSelectedDate.current = true;
+          }
+        },
+      })}
       plugins={
         dateOnly
           ? []
@@ -82,6 +120,8 @@ const PersianCalendarField: React.FC<PersianCalendarFieldProps> = ({
       }
       containerStyle={{ width: fullWidth ? '100%' : undefined }}
       onChange={selectedDate => {
+        if (!calendarValue && !userSelectedDate.current) return;
+        userSelectedDate.current = false;
         if (!selectedDate) {
           onChange('');
           return;
@@ -92,7 +132,8 @@ const PersianCalendarField: React.FC<PersianCalendarFieldProps> = ({
         <TextField
           fullWidth={fullWidth}
           label={`${label} (شمسی)`}
-          value={displayValue}
+          value={calendarValue ? displayValue : ''}
+          placeholder="انتخاب تاریخ شمسی"
           onClick={openCalendar}
           required={required}
           error={error}

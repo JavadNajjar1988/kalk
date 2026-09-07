@@ -9,7 +9,8 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_asyn
 from starlette.routing import Mount
 
 TEST_ADMIN_PASSWORD = "Test-only-admin-password-2026"
-os.environ.setdefault("ADMIN_BOOTSTRAP_PASSWORD", TEST_ADMIN_PASSWORD)
+# آزمون باید مستقل از گذرواژه واقعی محیط داکر باشد.
+os.environ["ADMIN_BOOTSTRAP_PASSWORD"] = TEST_ADMIN_PASSWORD
 os.environ["DISABLE_AUTH"] = "false"
 
 from app.main import app

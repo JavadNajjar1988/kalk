@@ -112,6 +112,15 @@ function clearValue() {
   emit("update:modelValue", "");
   open.value = false;
 }
+
+function dayLabel(day: number) {
+  const date = dayjs()
+    .calendar("jalali")
+    .year(viewYear.value)
+    .month(viewMonth.value)
+    .date(day);
+  return `انتخاب ${toPersianDigits(date.locale("fa").format("dddd D MMMM YYYY"))}`;
+}
 </script>
 
 <template>
@@ -136,6 +145,7 @@ function clearValue() {
       <div class="mb-2 flex items-center justify-between">
         <button
           type="button"
+          aria-label="ماه بعد"
           class="rounded p-1 hover:bg-slate-100"
           @click="moveMonth(1)"
         >
@@ -144,6 +154,7 @@ function clearValue() {
         <strong>{{ monthNames[viewMonth] }} {{ toPersianDigits(viewYear) }}</strong>
         <button
           type="button"
+          aria-label="ماه قبل"
           class="rounded p-1 hover:bg-slate-100"
           @click="moveMonth(-1)"
         >
@@ -162,6 +173,7 @@ function clearValue() {
           <button
             v-if="day"
             type="button"
+            :aria-label="dayLabel(day)"
             class="aspect-square w-full rounded text-xs hover:bg-sky-100"
             :class="{
               'bg-sky-600 text-white hover:bg-sky-600': day === selectedDay,

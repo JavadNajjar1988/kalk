@@ -2,13 +2,18 @@ from __future__ import annotations
 
 import io
 import json
+import math
+import shutil
 import uuid
-from typing import Any
+from datetime import datetime, timezone
+from pathlib import Path
+from typing import Any, Literal
 
 import httpx
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Response, UploadFile, status
 from fastapi.responses import FileResponse, StreamingResponse
 from openpyxl import load_workbook
+from pydantic import BaseModel, Field
 from sqlalchemy import select
 
 from app.core.config import settings
@@ -16,11 +21,14 @@ from app.core.response import success
 from app.core.security import require_roles
 from app.deps import DbSession
 from app.models.scenario import Scenario
+from app.models.scenario_audit_log import ScenarioAuditLog
 from app.models.resource import Resource
 from app.services.excel_scenario_import import (
+    BUNDLED_COMPLETE_EXAMPLE,
     BUNDLED_GRAPHIC_TEMPLATE,
     build_template_workbook,
     export_content_to_workbook,
+    inspect_source_table_layout,
     parse_excel_workbook,
     parse_resources_workbook,
     transform_workbook_with_mapping,
@@ -38,10 +46,397 @@ from app.services.resource_import import (
     workbook_resources_to_bulk_items,
 )
 from app.services.scenario_import_impact import build_scenario_import_impact
+from starlette.concurrency import run_in_threadpool
+from app.services.document_extraction import (
+    build_document_review_workbook,
+    document_model_status,
+    document_page_count,
+    extract_page,
+    read_page,
+    stream_document,
+)
+from app.services.document_jobs import (
+    create_job,
+    detect_map_pages,
+    get_job,
+    get_job_page,
+    get_map_page_path,
+    list_jobs,
+    public_job,
+    request_cancel,
+    resume_job,
+)
 
 router = APIRouter(prefix="/data-import", tags=["data-import"])
 
 MAX_EXCEL_BYTES = 25 * 1024 * 1024
+
+
+def _scenario_unit_movement_counts(content: dict[str, Any]) -> tuple[int, int]:
+    moving_units = 0
+    movement_states = 0
+
+    def visit(units: list[dict[str, Any]]) -> None:
+        nonlocal moving_units, movement_states
+        for unit in units or []:
+            states = unit.get("state") or []
+            imported_movements = [
+                state
+                for state in states
+                if str(state.get("id") or "").startswith("excel-state-")
+                and not str(state.get("id") or "").endswith("-initial")
+            ]
+            if imported_movements:
+                moving_units += 1
+                movement_states += len(imported_movements)
+            visit(unit.get("subUnits") or [])
+
+    for side in content.get("sides") or []:
+        for group in side.get("groups") or []:
+            visit(group.get("subUnits") or [])
+    return moving_units, movement_states
+
+
+class DocumentWorkbookProposal(BaseModel):
+    id: str = Field(min_length=1, max_length=100)
+    kind: Literal['scenario', 'person', 'unit', 'equipment', 'place', 'event']
+    name: str = Field(min_length=1, max_length=300)
+    evidence: str = Field(min_length=3, max_length=2000)
+    sourcePage: int = Field(ge=1, le=2000)
+    sourceMethod: str = Field(min_length=1, max_length=50)
+    documentId: str = Field(min_length=1, max_length=128)
+    reviewStatus: Literal['pending', 'accepted', 'rejected']
+    startTime: str | None = Field(default=None, max_length=80)
+    longitude: float | None = Field(default=None, ge=-180, le=180)
+    latitude: float | None = Field(default=None, ge=-90, le=90)
+    side: str | None = Field(default=None, max_length=50)
+    unitType: str | None = Field(default=None, max_length=100)
+    echelon: str | None = Field(default=None, max_length=100)
+    parentUnitId: str | None = Field(default=None, max_length=100)
+    equipmentType: str | None = Field(default=None, max_length=150)
+    quantity: int | None = Field(default=None, ge=0, le=1_000_000)
+    unitId: str | None = Field(default=None, max_length=100)
+    rank: str | None = Field(default=None, max_length=100)
+    specialty: str | None = Field(default=None, max_length=150)
+    placeType: str | None = Field(default=None, max_length=100)
+    radiusMeters: float | None = Field(default=None, ge=0, le=10_000_000)
+    resourceCode: str | None = Field(default=None, max_length=150)
+    matchedResourceId: str | None = Field(default=None, max_length=150)
+    matchedResourceName: str | None = Field(default=None, max_length=300)
+
+
+class DocumentWorkbookRequest(BaseModel):
+    filename: str = Field(min_length=1, max_length=255)
+    documentId: str = Field(min_length=1, max_length=128)
+    pageCount: int = Field(ge=1, le=2000)
+    mainScenarioId: str = Field(min_length=1, max_length=100)
+    items: list[DocumentWorkbookProposal] = Field(max_length=6000)
+
+
+class DocumentMapLayerRequest(BaseModel):
+    scenarioId: str = Field(min_length=1, max_length=128)
+    layerName: str = Field(min_length=1, max_length=200)
+    rotationDegrees: Literal[0, 90, 180, 270] = 0
+
+
+@router.get('/document/status', dependencies=[Depends(require_roles('SUPER_ADMIN', 'COMMANDER'))])
+async def document_status():
+    return success(await document_model_status(settings))
+
+
+def _document_owner(user: dict[str, Any]) -> str:
+    return str(user.get("user_id") or user.get("username") or "local")
+
+
+@router.post('/document/jobs')
+async def create_document_job(
+    file: UploadFile = File(...),
+    force_ocr: bool = Form(False),
+    user: dict[str, Any] = Depends(require_roles('SUPER_ADMIN', 'COMMANDER')),
+):
+    filename = file.filename or ''
+    try:
+        raw = await file.read(MAX_EXCEL_BYTES + 1)
+    finally:
+        await file.close()
+    if not raw or len(raw) > MAX_EXCEL_BYTES:
+        raise HTTPException(400, 'فایل خالی یا بزرگ‌تر از ۲۵ مگابایت است.')
+    if not (settings.DOCUMENT_LLM_BASE_URL or settings.INTERNAL_LLM_BASE_URL):
+        raise HTTPException(503, 'سرویس هوش مصنوعی داخلی پیکربندی نشده است.')
+    try:
+        job = await run_in_threadpool(
+            create_job, raw, filename, _document_owner(user), force_ocr
+        )
+        return success(public_job(job))
+    except ValueError as exc:
+        raise HTTPException(422, str(exc)) from exc
+
+
+@router.get('/document/jobs')
+async def document_jobs(
+    user: dict[str, Any] = Depends(require_roles('SUPER_ADMIN', 'COMMANDER')),
+):
+    return success(await run_in_threadpool(list_jobs, _document_owner(user)))
+
+
+@router.get('/document/jobs/{job_id}')
+async def document_job(
+    job_id: str,
+    user: dict[str, Any] = Depends(require_roles('SUPER_ADMIN', 'COMMANDER')),
+):
+    try:
+        return success(public_job(await run_in_threadpool(get_job, job_id, _document_owner(user))))
+    except FileNotFoundError as exc:
+        raise HTTPException(404, str(exc)) from exc
+    except PermissionError as exc:
+        raise HTTPException(403, str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(422, str(exc)) from exc
+
+
+@router.get('/document/jobs/{job_id}/pages/{page}')
+async def document_job_page(
+    job_id: str,
+    page: int,
+    user: dict[str, Any] = Depends(require_roles('SUPER_ADMIN', 'COMMANDER')),
+):
+    try:
+        return success(
+            await run_in_threadpool(get_job_page, job_id, page, _document_owner(user))
+        )
+    except FileNotFoundError as exc:
+        raise HTTPException(404, 'نتیجه این صفحه هنوز آماده نیست.') from exc
+    except PermissionError as exc:
+        raise HTTPException(403, str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(422, str(exc)) from exc
+
+
+@router.post('/document/jobs/{job_id}/cancel')
+async def cancel_document_job(
+    job_id: str,
+    user: dict[str, Any] = Depends(require_roles('SUPER_ADMIN', 'COMMANDER')),
+):
+    try:
+        job = await run_in_threadpool(request_cancel, job_id, _document_owner(user))
+        return success(public_job(job))
+    except FileNotFoundError as exc:
+        raise HTTPException(404, str(exc)) from exc
+    except PermissionError as exc:
+        raise HTTPException(403, str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(422, str(exc)) from exc
+
+
+@router.post('/document/jobs/{job_id}/resume')
+async def resume_document_job(
+    job_id: str,
+    user: dict[str, Any] = Depends(require_roles('SUPER_ADMIN', 'COMMANDER')),
+):
+    try:
+        job = await run_in_threadpool(resume_job, job_id, _document_owner(user))
+        return success(public_job(job))
+    except FileNotFoundError as exc:
+        raise HTTPException(404, str(exc)) from exc
+    except PermissionError as exc:
+        raise HTTPException(403, str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(422, str(exc)) from exc
+
+
+@router.post('/document/jobs/{job_id}/map-pages/detect')
+async def detect_document_map_pages(
+    job_id: str,
+    user: dict[str, Any] = Depends(require_roles('SUPER_ADMIN', 'COMMANDER')),
+):
+    try:
+        job = await run_in_threadpool(
+            detect_map_pages, job_id, _document_owner(user)
+        )
+        return success(public_job(job))
+    except FileNotFoundError as exc:
+        raise HTTPException(404, str(exc)) from exc
+    except PermissionError as exc:
+        raise HTTPException(403, str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(422, str(exc)) from exc
+
+
+@router.get('/document/jobs/{job_id}/map-pages/{page}/image')
+async def document_map_page_image(
+    job_id: str,
+    page: int,
+    user: dict[str, Any] = Depends(require_roles('SUPER_ADMIN', 'COMMANDER')),
+):
+    try:
+        path = await run_in_threadpool(
+            get_map_page_path, job_id, page, _document_owner(user)
+        )
+        return FileResponse(path, media_type='image/webp', filename=path.name)
+    except FileNotFoundError as exc:
+        raise HTTPException(404, str(exc)) from exc
+    except PermissionError as exc:
+        raise HTTPException(403, str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(422, str(exc)) from exc
+
+
+@router.post('/document/jobs/{job_id}/map-pages/{page}/attach')
+async def attach_document_map_page(
+    job_id: str,
+    page: int,
+    payload: DocumentMapLayerRequest,
+    db: DbSession,
+    user: dict[str, Any] = Depends(require_roles('SUPER_ADMIN', 'COMMANDER')),
+):
+    """Persist a reviewed page image and stage it for manual placement in KalkNegar."""
+    try:
+        job = await run_in_threadpool(get_job, job_id, _document_owner(user))
+        source = await run_in_threadpool(
+            get_map_page_path, job_id, page, _document_owner(user)
+        )
+    except FileNotFoundError as exc:
+        raise HTTPException(404, str(exc)) from exc
+    except PermissionError as exc:
+        raise HTTPException(403, str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(422, str(exc)) from exc
+
+    scenario = await db.get(Scenario, payload.scenarioId)
+    if scenario is None or scenario.archived_at is not None:
+        raise HTTPException(404, 'سناریوی مقصد پیدا نشد.')
+
+    images_dir = Path(settings.SCENARIO_IMAGE_DIR)
+    if not images_dir.is_absolute():
+        images_dir = Path.cwd() / images_dir
+    images_dir.mkdir(parents=True, exist_ok=True)
+    digest = str(job['documentId'])[:16]
+    filename = f"document-map-{digest}-{page}.webp"
+    target = images_dir / filename
+    temporary = images_dir / f".{filename}.{uuid.uuid4().hex}.tmp"
+    await run_in_threadpool(shutil.copyfile, source, temporary)
+    temporary.replace(target)
+
+    content = dict(scenario.content or {})
+    layers = list(content.get('mapLayers') or [])
+    layer_id = f"document-map-{digest}-{page}"
+    layer = {
+        'id': layer_id,
+        'type': 'ImageLayer',
+        'name': payload.layerName.strip(),
+        'url': f"/api/scenarios/images/{filename}",
+        'opacity': 0.7,
+        'imageRotate': math.radians(payload.rotationDegrees),
+        'requiresPlacement': True,
+        'sourceDocumentId': job['documentId'],
+        'sourcePage': page,
+        '_status': 'uninitialized',
+        '_isNew': True,
+    }
+    existing_index = next(
+        (index for index, item in enumerate(layers) if isinstance(item, dict) and item.get('id') == layer_id),
+        None,
+    )
+    if existing_index is None:
+        layers.append(layer)
+    else:
+        layers[existing_index] = {**layers[existing_index], **layer}
+    content['mapLayers'] = layers
+    scenario.content = content
+    scenario.modified = datetime.now(timezone.utc)
+    db.add(
+        ScenarioAuditLog(
+            scenario_id=scenario.id,
+            actor_user_id=user.get('user_id') or None,
+            action='document_map_layer_attached',
+            payload_diff={
+                'layerId': layer_id,
+                'documentId': job['documentId'],
+                'sourcePage': page,
+                'requiresPlacement': True,
+            },
+        )
+    )
+    await db.commit()
+    return success(
+        {
+            'scenarioId': scenario.id,
+            'layerId': layer_id,
+            'imageUrl': layer['url'],
+            'requiresPlacement': True,
+            'kalknegarUrl': f"/kalknegar/scenario/{scenario.id}?integration=react",
+        }
+    )
+
+
+@router.post('/document/workbook', dependencies=[Depends(require_roles('SUPER_ADMIN', 'COMMANDER'))])
+async def document_workbook(payload: DocumentWorkbookRequest):
+    try:
+        workbook = await run_in_threadpool(
+            build_document_review_workbook,
+            filename=payload.filename,
+            document_id=payload.documentId,
+            page_count=payload.pageCount,
+            main_scenario_id=payload.mainScenarioId,
+            items=[item.model_dump() for item in payload.items],
+        )
+        output = io.BytesIO()
+        await run_in_threadpool(workbook.save, output)
+    except ValueError as exc:
+        raise HTTPException(422, str(exc)) from exc
+    output.seek(0)
+    return Response(
+        content=output.getvalue(),
+        media_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        headers={'Content-Disposition': 'attachment; filename="document_review_draft.xlsx"'},
+    )
+
+
+@router.post('/document/preview-all', dependencies=[Depends(require_roles('SUPER_ADMIN', 'COMMANDER'))])
+async def preview_whole_document(file: UploadFile = File(...), force_ocr: bool = Form(False), skip_pages: str = Form('[]')):
+    try:
+        raw = await file.read(MAX_EXCEL_BYTES + 1)
+    finally:
+        await file.close()
+    if not raw or len(raw) > MAX_EXCEL_BYTES:
+        raise HTTPException(400, 'فایل خالی یا بزرگ‌تر از ۲۵ مگابایت است.')
+    if not (settings.DOCUMENT_LLM_BASE_URL or settings.INTERNAL_LLM_BASE_URL):
+        raise HTTPException(503, 'سرویس هوش مصنوعی داخلی پیکربندی نشده است.')
+    try:
+        total = await run_in_threadpool(document_page_count, raw, file.filename or '')
+        skip = json.loads(skip_pages)
+        if not isinstance(skip, list) or len(skip) > total or any(type(n) is not int or n < 1 or n > total for n in skip):
+            raise ValueError('فهرست صفحه‌های پردازش‌شده معتبر نیست.')
+    except Exception as exc:
+        raise HTTPException(422, str(exc) if isinstance(exc, ValueError) else 'ساختار سند قابل خواندن نیست.') from exc
+
+    async def events():
+        async for event in stream_document(raw, file.filename or '', total, set(skip), force_ocr, settings):
+            yield json.dumps(event, ensure_ascii=False) + '\n'
+    return StreamingResponse(events(), media_type='application/x-ndjson',
+                             headers={'Cache-Control': 'no-store', 'X-Accel-Buffering': 'no'})
+
+
+@router.post("/document/preview", dependencies=[Depends(require_roles("SUPER_ADMIN", "COMMANDER"))])
+async def preview_document(file: UploadFile = File(...), page: int = Form(1), force_ocr: bool = Form(False)):
+    """Extract one page into evidence-backed proposals, without database writes."""
+    try:
+        raw = await file.read(MAX_EXCEL_BYTES + 1)
+    finally:
+        await file.close()
+    if not raw or len(raw) > MAX_EXCEL_BYTES:
+        raise HTTPException(400, "فایل خالی یا بزرگ‌تر از ۲۵ مگابایت است.")
+    if not (settings.DOCUMENT_LLM_BASE_URL or settings.INTERNAL_LLM_BASE_URL):
+        raise HTTPException(503, "سرویس هوش مصنوعی داخلی پیکربندی نشده است.")
+    try:
+        page_data = await run_in_threadpool(read_page, raw, file.filename or "", page, force_ocr)
+        return success(await extract_page(page_data, raw, file.filename or "", settings))
+    except ValueError as exc:
+        raise HTTPException(422, str(exc)) from exc
+    except httpx.HTTPError as exc:
+        raise HTTPException(502, "ارتباط با مدل محلی ناموفق بود؛ بارگذاری مدل و پشتیبانی تصویر را بررسی کنید.") from exc
+    except Exception as exc:
+        raise HTTPException(422, "پردازش سند ناموفق بود؛ ساختار فایل یا پاسخ مدل قابل خواندن نیست.") from exc
 
 
 async def _read_upload(file: UploadFile, max_size: int = MAX_EXCEL_BYTES) -> bytes:
@@ -58,21 +453,29 @@ async def _read_upload(file: UploadFile, max_size: int = MAX_EXCEL_BYTES) -> byt
     "/excel-template",
     dependencies=[Depends(require_roles("SUPER_ADMIN", "COMMANDER", "VIEWER"))],
 )
-async def download_excel_template():
-    if BUNDLED_GRAPHIC_TEMPLATE.is_file():
+async def download_excel_template(variant: Literal["blank", "example"] = "blank"):
+    source = (
+        BUNDLED_COMPLETE_EXAMPLE if variant == "example" else BUNDLED_GRAPHIC_TEMPLATE
+    )
+    filename = (
+        "scenario_import_example_complete_fa.xlsx"
+        if variant == "example"
+        else "scenario_import_template_blank_fa.xlsx"
+    )
+    if source.is_file():
         return FileResponse(
-            BUNDLED_GRAPHIC_TEMPLATE,
+            source,
             media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-            filename="scenario_import_template_fa.xlsx",
+            filename=filename,
         )
-    wb = build_template_workbook()
+    wb = build_template_workbook(include_example=variant == "example")
     buf = io.BytesIO()
     wb.save(buf)
     buf.seek(0)
     return StreamingResponse(
         buf,
         media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-        headers={"Content-Disposition": 'attachment; filename="scenario_import_template.xlsx"'},
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
     )
 
 
@@ -81,8 +484,57 @@ async def download_excel_template():
     dependencies=[Depends(require_roles("SUPER_ADMIN", "COMMANDER", "VIEWER"))],
 )
 async def ai_config():
-    enabled = bool(getattr(settings, "INTERNAL_LLM_BASE_URL", None))
-    return success({"enabled": enabled})
+    base = (getattr(settings, "INTERNAL_LLM_BASE_URL", None) or "").rstrip("/")
+    model = getattr(settings, "INTERNAL_LLM_MODEL", None) or "gpt-4o-mini"
+    if not base:
+        return success(
+            {
+                "enabled": False,
+                "configured": False,
+                "reachable": False,
+                "modelAvailable": False,
+                "model": model,
+                "message": "سرویس استانداردسازی اکسل پیکربندی نشده است.",
+            }
+        )
+
+    reachable = False
+    model_available = False
+    message = "ارتباط با مدل محلی برقرار نشد."
+    try:
+        headers: dict[str, str] = {}
+        key = getattr(settings, "INTERNAL_LLM_API_KEY", None)
+        if key:
+            headers["Authorization"] = f"Bearer {key}"
+        async with httpx.AsyncClient(timeout=5.0) as client:
+            response = await client.get(f"{base}/v1/models", headers=headers)
+            response.raise_for_status()
+            body = response.json()
+        reachable = True
+        available_models = {
+            str(item.get("id"))
+            for item in body.get("data", [])
+            if isinstance(item, dict) and item.get("id")
+        }
+        model_available = model in available_models
+        message = (
+            "مدل استانداردسازی در دسترس است؛ آمادگی نهایی هنگام تحلیل فایل بررسی می‌شود."
+            if model_available
+            else "سرویس در دسترس است، اما مدل انتخاب‌شده بارگذاری نشده است."
+        )
+    except (httpx.HTTPError, ValueError, TypeError):
+        pass
+
+    return success(
+        {
+            "enabled": reachable and model_available,
+            "configured": True,
+            "reachable": reachable,
+            "modelAvailable": model_available,
+            "model": model,
+            "message": message,
+        }
+    )
 
 
 @router.post(
@@ -143,6 +595,9 @@ async def preview_scenario_excel(
         "updated": len(keyed_resources & existing_resource_keys),
         "warnings": len(resource_errors),
     }
+    moving_units_count, unit_movement_states_count = _scenario_unit_movement_counts(
+        content
+    )
     return success(
         {
             "errors": errors,
@@ -156,6 +611,8 @@ async def preview_scenario_excel(
                 "personnelCount": len(content.get("personnel") or []),
                 "featuresCount": sum(len(layer.get("features") or []) for layer in content.get("layers") or []),
                 "storyboardScenesCount": len((content.get("storyboard") or {}).get("scenes") or []),
+                "movingUnitsCount": moving_units_count,
+                "unitMovementStatesCount": unit_movement_states_count,
                 "resourceEquipmentRowsCount": len(equipment),
                 "resourcePersonnelRowsCount": len(personnel),
                 "resourceUnitRowsCount": len(unit_resources),
@@ -333,33 +790,25 @@ async def ai_suggest_mapping(file: UploadFile = File(...)):
 
     raw = await _read_upload(file)
     try:
-        wb = load_workbook(io.BytesIO(raw), read_only=True, data_only=True)
+        wb = load_workbook(io.BytesIO(raw), read_only=False, data_only=True)
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Invalid Excel file: {e}") from e
 
-    sheet_samples: list[dict[str, Any]] = []
     try:
-        for name in wb.sheetnames[:12]:
-            ws = wb[name]
-            headers: list[str] = []
-            sample_rows: list[list[str]] = []
-            for i, row in enumerate(ws.iter_rows(min_row=1, max_row=6, values_only=True)):
-                cells = [str(c) if c is not None else "" for c in row[:20]]
-                if i == 0:
-                    headers = cells
-                else:
-                    if any(x.strip() for x in cells):
-                        sample_rows.append(cells)
-            sheet_samples.append({"sheet": name, "headers": headers, "sampleRows": sample_rows[:5]})
+        sheet_samples = _build_sheet_samples(wb)
     finally:
         wb.close()
 
     model = getattr(settings, "INTERNAL_LLM_MODEL", None) or "gpt-4o-mini"
+    standard_schema = {
+        key: sorted(fields) for key, fields in AI_STANDARD_FIELDS.items()
+    }
     prompt = (
         "You map Excel sheets to our standard schema. Reply with JSON only, no markdown.\n"
-        "Standard sheet names: سناریو|scenario, حوادث|events, یگان‌ها|units, تجهیزات|equipment, پرسنل|personnel.\n"
-        "Output shape: {\"sheetMappings\":[{\"sourceSheet\":\"...\",\"targetSheet\":\"scenario|events|units|equipment|personnel\",\"confidence\":0-1}],"
-        '"columnMaps":[{"targetSheet":"events","mappings":[{"fromHeader":"...","toField":"title|start_time|lon|lat|..."}]}]}\n'
+        f"Allowed target sheets and fields: {json.dumps(standard_schema, ensure_ascii=False)}\n"
+        "Output shape: {\"sheetMappings\":[{\"sourceSheet\":\"...\",\"targetSheet\":\"scenario|events|units|unit_states|equipment|personnel|features\",\"confidence\":0-1}],"
+        '"columnMaps":[{"targetSheet":"events","mappings":[{"fromHeader":"...","toField":"one allowed field"}]}]}\n'
+        "Use source headers exactly as provided. Do not invent sheets, headers, or target fields.\n"
         f"Input: {json.dumps(sheet_samples, ensure_ascii=False)[:12000]}"
     )
 
@@ -379,7 +828,7 @@ async def ai_suggest_mapping(file: UploadFile = File(...)):
     }
 
     try:
-        async with httpx.AsyncClient(timeout=60.0) as client:
+        async with httpx.AsyncClient(timeout=180.0) as client:
             resp = await client.post(url, headers=headers, json=payload)
             resp.raise_for_status()
             body = resp.json()
@@ -388,10 +837,20 @@ async def ai_suggest_mapping(file: UploadFile = File(...)):
         if text.startswith("```"):
             text = text.split("\n", 1)[-1].rsplit("```", 1)[0].strip()
         parsed = json.loads(text)
+    except httpx.TimeoutException as e:
+        raise HTTPException(
+            status_code=504,
+            detail="مدل محلی در زمان مقرر پاسخ نداد؛ ممکن است درگیر پردازش دیگری باشد.",
+        ) from e
     except Exception as e:
         raise HTTPException(status_code=502, detail=f"LLM request failed: {e}") from e
 
-    return success({"suggestion": parsed, "sheetSamples": sheet_samples})
+    return success(
+        {
+            "suggestion": _validate_ai_mapping(parsed, sheet_samples),
+            "sheetSamples": sheet_samples,
+        }
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -401,6 +860,88 @@ async def ai_suggest_mapping(file: UploadFile = File(...)):
 
 MIN_CONFIDENCE = 0.45
 
+AI_STANDARD_FIELDS: dict[str, set[str]] = {
+    "scenario": {"name", "description", "start_time", "time_zone", "symbology_standard"},
+    "events": {"id", "title", "subtitle", "start_time", "end_time", "side", "unit_ids", "equipment_ids", "lon", "lat"},
+    "units": {"id", "name", "parent_id", "side", "symbol_type", "echelon", "symbol_status", "advanced_sidc", "time", "lon", "lat", "resource_code"},
+    "unit_states": {"id", "unit_id", "time", "lon", "lat", "transfer_mode", "path_mode", "movement_start_time"},
+    "equipment": {"id", "name", "type", "quantity", "unit_id", "start_time", "lon", "lat", "side", "advanced_sidc"},
+    "personnel": {"id", "first_name", "last_name", "rank", "specialty", "national_id", "unit_id"},
+    "features": {"id", "name", "type", "lon", "lat", "radius_m", "start_time", "end_time", "event_id"},
+}
+
+
+def _validate_ai_mapping(mapping: Any, sheet_samples: list[dict[str, Any]]) -> dict[str, Any]:
+    if not isinstance(mapping, dict):
+        raise HTTPException(status_code=422, detail="ساختار نگاشت معتبر نیست.")
+    raw_sheet_mappings = mapping.get("sheetMappings")
+    raw_column_maps = mapping.get("columnMaps")
+    if not isinstance(raw_sheet_mappings, list) or not raw_sheet_mappings:
+        raise HTTPException(status_code=422, detail="حداقل یک برگه باید نگاشت شود.")
+    if len(raw_sheet_mappings) > 20 or not isinstance(raw_column_maps, list) or len(raw_column_maps) > 20:
+        raise HTTPException(status_code=422, detail="تعداد نگاشت‌های فایل از حد مجاز بیشتر است.")
+
+    source_headers_by_sheet = {
+        str(sample.get("sheet") or ""): {
+            str(header)
+            for header in sample.get("headers", [])
+            if str(header).strip()
+        }
+        for sample in sheet_samples
+    }
+    source_sheets = set(source_headers_by_sheet)
+    clean_sheet_mappings: list[dict[str, Any]] = []
+    mapped_targets: set[str] = set()
+    mapped_sources: set[str] = set()
+    source_for_target: dict[str, str] = {}
+    for item in raw_sheet_mappings:
+        if not isinstance(item, dict):
+            raise HTTPException(status_code=422, detail="یکی از نگاشت‌های برگه معتبر نیست.")
+        source = str(item.get("sourceSheet") or "").strip()
+        target = str(item.get("targetSheet") or "").strip().lower()
+        if source not in source_sheets or target not in AI_STANDARD_FIELDS:
+            raise HTTPException(status_code=422, detail="برگه مبدأ یا مقصد نگاشت معتبر نیست.")
+        if source in mapped_sources or target in mapped_targets:
+            raise HTTPException(
+                status_code=422,
+                detail="هر برگه مبدأ و مقصد فقط یک‌بار قابل استفاده است.",
+            )
+        try:
+            confidence = float(item.get("confidence", 0))
+        except (TypeError, ValueError) as exc:
+            raise HTTPException(status_code=422, detail="میزان اطمینان نگاشت معتبر نیست.") from exc
+        clean_sheet_mappings.append(
+            {"sourceSheet": source, "targetSheet": target, "confidence": max(0.0, min(1.0, confidence))}
+        )
+        mapped_targets.add(target)
+        mapped_sources.add(source)
+        source_for_target[target] = source
+
+    clean_column_maps: list[dict[str, Any]] = []
+    for column_map in raw_column_maps:
+        if not isinstance(column_map, dict):
+            raise HTTPException(status_code=422, detail="یکی از نگاشت‌های ستون معتبر نیست.")
+        target = str(column_map.get("targetSheet") or "").strip().lower()
+        mappings = column_map.get("mappings")
+        if target not in mapped_targets or not isinstance(mappings, list) or len(mappings) > 100:
+            raise HTTPException(status_code=422, detail="نگاشت ستون با برگه مقصد سازگار نیست.")
+        clean_mappings: list[dict[str, str]] = []
+        for item in mappings:
+            if not isinstance(item, dict):
+                raise HTTPException(status_code=422, detail="یکی از ستون‌های نگاشت‌شده معتبر نیست.")
+            source_header = str(item.get("fromHeader") or "").strip()
+            target_field = str(item.get("toField") or "").strip().lower()
+            source_sheet = source_for_target[target]
+            if (
+                source_header not in source_headers_by_sheet[source_sheet]
+                or target_field not in AI_STANDARD_FIELDS[target]
+            ):
+                raise HTTPException(status_code=422, detail="ستون مبدأ یا فیلد مقصد معتبر نیست.")
+            clean_mappings.append({"fromHeader": source_header, "toField": target_field})
+        clean_column_maps.append({"targetSheet": target, "mappings": clean_mappings})
+
+    return {"sheetMappings": clean_sheet_mappings, "columnMaps": clean_column_maps}
+
 
 async def _call_llm_for_mapping(sheet_samples: list[dict[str, Any]], settings_obj: Any) -> dict[str, Any]:
     """Reusable helper: call LLM and return parsed mapping dict."""
@@ -409,11 +950,15 @@ async def _call_llm_for_mapping(sheet_samples: list[dict[str, Any]], settings_ob
         raise HTTPException(status_code=503, detail="سرویس هوش مصنوعی داخلی پیکربندی نشده است")
 
     model = getattr(settings_obj, "INTERNAL_LLM_MODEL", None) or "gpt-4o-mini"
+    standard_schema = {
+        key: sorted(fields) for key, fields in AI_STANDARD_FIELDS.items()
+    }
     prompt = (
         "You map Excel sheets to our standard schema. Reply with JSON only, no markdown.\n"
-        "Standard sheet names: سناریو|scenario, حوادث|events, یگان‌ها|units, تجهیزات|equipment, پرسنل|personnel.\n"
-        "Output shape: {\"sheetMappings\":[{\"sourceSheet\":\"...\",\"targetSheet\":\"scenario|events|units|equipment|personnel\",\"confidence\":0-1}],"
-        "\"columnMaps\":[{\"targetSheet\":\"events\",\"mappings\":[{\"fromHeader\":\"...\",\"toField\":\"title|start_time|lon|lat|...\"}]}]}\n"
+        f"Allowed target sheets and fields: {json.dumps(standard_schema, ensure_ascii=False)}\n"
+        "Output shape: {\"sheetMappings\":[{\"sourceSheet\":\"...\",\"targetSheet\":\"scenario|events|units|unit_states|equipment|personnel|features\",\"confidence\":0-1}],"
+        "\"columnMaps\":[{\"targetSheet\":\"events\",\"mappings\":[{\"fromHeader\":\"...\",\"toField\":\"one allowed field\"}]}]}\n"
+        "Use source headers exactly as provided. Do not invent sheets, headers, or target fields.\n"
         f"Input: {json.dumps(sheet_samples, ensure_ascii=False)[:12000]}"
     )
 
@@ -433,7 +978,7 @@ async def _call_llm_for_mapping(sheet_samples: list[dict[str, Any]], settings_ob
     }
 
     try:
-        async with httpx.AsyncClient(timeout=60.0) as client:
+        async with httpx.AsyncClient(timeout=180.0) as client:
             resp = await client.post(url, headers=req_headers, json=payload)
             resp.raise_for_status()
             body = resp.json()
@@ -441,6 +986,11 @@ async def _call_llm_for_mapping(sheet_samples: list[dict[str, Any]], settings_ob
         if text.startswith("```"):
             text = text.split("\n", 1)[-1].rsplit("```", 1)[0].strip()
         return json.loads(text)
+    except httpx.TimeoutException as e:
+        raise HTTPException(
+            status_code=504,
+            detail="مدل محلی در زمان مقرر پاسخ نداد؛ ممکن است درگیر پردازش دیگری باشد.",
+        ) from e
     except Exception as e:
         raise HTTPException(status_code=502, detail=f"LLM request failed: {e}") from e
 
@@ -449,16 +999,26 @@ def _build_sheet_samples(wb) -> list[dict[str, Any]]:
     sheet_samples: list[dict[str, Any]] = []
     for name in wb.sheetnames[:12]:
         ws = wb[name]
-        headers: list[str] = []
+        layout = inspect_source_table_layout(ws)
+        headers = layout["headers"][:20]
         sample_rows: list[list[str]] = []
-        for i, row in enumerate(ws.iter_rows(min_row=1, max_row=6, values_only=True)):
+        for row in ws.iter_rows(
+            min_row=layout["dataStartRow"],
+            max_row=min(ws.max_row, layout["dataStartRow"] + 4),
+            values_only=True,
+        ):
             cells = [str(c) if c is not None else "" for c in row[:20]]
-            if i == 0:
-                headers = cells
-            else:
-                if any(x.strip() for x in cells):
-                    sample_rows.append(cells)
-        sheet_samples.append({"sheet": name, "headers": headers, "sampleRows": sample_rows[:5]})
+            if any(x.strip() for x in cells):
+                sample_rows.append(cells)
+        sheet_samples.append(
+            {
+                "sheet": name,
+                "headerRow": layout["headerRow"],
+                "headerDepth": layout["headerDepth"],
+                "headers": headers,
+                "sampleRows": sample_rows[:5],
+            }
+        )
     return sheet_samples
 
 
@@ -470,6 +1030,7 @@ async def ai_auto_import_scenario(
     db: DbSession,
     response: Response,
     file: UploadFile = File(...),
+    mapping_json: str | None = Form(default=None),
     download_excel: bool = False,
     min_confidence: float = MIN_CONFIDENCE,
 ):
@@ -490,8 +1051,17 @@ async def ai_auto_import_scenario(
     sheet_samples = _build_sheet_samples(wb_source)
     wb_source.close()
 
-    # Step 2 – Ask LLM for mapping
-    mapping = await _call_llm_for_mapping(sheet_samples, settings)
+    # Step 2 – Use the reviewed mapping when supplied; otherwise ask the LLM.
+    if mapping_json:
+        try:
+            supplied_mapping = json.loads(mapping_json)
+        except json.JSONDecodeError as exc:
+            raise HTTPException(status_code=422, detail="ساختار نگاشت قابل خواندن نیست.") from exc
+        mapping = _validate_ai_mapping(supplied_mapping, sheet_samples)
+    else:
+        mapping = _validate_ai_mapping(
+            await _call_llm_for_mapping(sheet_samples, settings), sheet_samples
+        )
 
     # Step 3 – Validate confidence
     sheet_mappings: list[dict[str, Any]] = mapping.get("sheetMappings") or []

@@ -6,6 +6,13 @@ import { type FeatureId } from "@/types/scenarioGeoModels";
 export const orbatUnitClick = Symbol() as EventBusKey<Unit | NUnit>;
 export const mapUnitClick = Symbol() as EventBusKey<Unit | NUnit>;
 export const imageLayerAction = Symbol() as EventBusKey<{
-  action: "zoom" | "startTransform" | "endTransform";
+  action:
+    | "zoom"
+    | "startTransform"
+    | "endTransform"
+    | "scaleUp"
+    | "scaleDown"
+    | "rotateLeft"
+    | "rotateRight";
   id: FeatureId;
 }>;

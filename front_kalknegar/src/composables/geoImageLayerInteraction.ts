@@ -8,6 +8,8 @@ import { fromExtent } from "ol/geom/Polygon";
 import Feature from "ol/Feature";
 import { boundingExtent, getCenter, getHeight, getWidth } from "ol/extent";
 import { Collection } from "ol";
+import PointerInteraction from "ol/interaction/Pointer";
+import type Interaction from "ol/interaction/Interaction";
 import { useOlEvent } from "@/composables/openlayersHelpers";
 import type { FeatureId } from "@/types/scenarioGeoModels";
 
@@ -32,8 +34,12 @@ export function useImageLayerTransformInteraction(
   const features = new Collection<Feature>();
   const overlayLayer = createOverlayLayer();
   const interaction = new TransformInteraction({
-    translateFeature: false,
-    // noFlip: true,
+    // Allow users to move an imported map by dragging anywhere inside it.
+    // The previous center-handle-only behavior was too hard to discover.
+    translateFeature: true,
+    translateBBox: true,
+    hitTolerance: 10,
+    noFlip: true,
     features,
     selection: false,
     keepRectangle: true,
@@ -41,7 +47,9 @@ export function useImageLayerTransformInteraction(
   interaction.setActive(false);
   olMap.addInteraction(interaction);
   olMap.addLayer(overlayLayer);
+  const suspendedInteractions = new Set<Interaction>();
   onUnmounted(() => {
+    endTransform();
     olMap.removeInteraction(interaction);
     interaction.setMap(null);
   });
@@ -121,6 +129,7 @@ export function useImageLayerTransformInteraction(
   );
 
   function startTransform(newLayer: any, layerId: FeatureId) {
+    suspendCompetingPointerInteractions();
     isActive.value = true;
     currentLayerId = layerId;
     currentLayer = newLayer;
@@ -141,6 +150,28 @@ export function useImageLayerTransformInteraction(
     interaction.setActive(false);
     overlayLayer.getSource()?.clear();
     features.clear();
+    restoreCompetingPointerInteractions();
+  }
+
+  function suspendCompetingPointerInteractions() {
+    olMap
+      .getInteractions()
+      .getArray()
+      .forEach((candidate) => {
+        if (
+          candidate !== interaction &&
+          candidate instanceof PointerInteraction &&
+          candidate.getActive()
+        ) {
+          candidate.setActive(false);
+          suspendedInteractions.add(candidate);
+        }
+      });
+  }
+
+  function restoreCompetingPointerInteractions() {
+    suspendedInteractions.forEach((candidate) => candidate.setActive(true));
+    suspendedInteractions.clear();
   }
 
   return { startTransform, endTransform, isActive };

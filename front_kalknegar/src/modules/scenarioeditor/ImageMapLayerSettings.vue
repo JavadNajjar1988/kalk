@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { ScenarioImageLayer } from "@/types/scenarioGeoModels";
-import { onMounted, onUnmounted, ref, watch } from "vue";
+import { onUnmounted, ref, watch } from "vue";
 import type {
   ScenarioImageLayerUpdate,
   ScenarioMapLayerUpdate,
@@ -22,29 +22,31 @@ const emit = defineEmits<{
 }>();
 
 const bus = useEventBus(imageLayerAction);
-const editMode = ref((props.layer._isNew && !props.layer._isTemporary) ?? false);
+const detailsEditMode = ref(
+  (props.layer._isNew && !props.layer._isTemporary) ?? false,
+);
+const mapEditMode = ref(false);
 
 const { layerTypeLabel, status, isInitialized } = useMapLayerInfo(props.layer);
 
 watch(status, (v) => {
-  if (v === "initialized") {
+  if (v === "initialized" && mapEditMode.value) {
     bus.emit({ action: "zoom", id: props.layer.id });
     bus.emit({ action: "startTransform", id: props.layer.id });
   }
 });
 
-onMounted(() => {
-  if (isInitialized.value) bus.emit({ action: "startTransform", id: props.layer.id });
-});
-
 onUnmounted(() => {
-  bus.emit({ action: "endTransform", id: props.layer.id });
+  if (mapEditMode.value) {
+    bus.emit({ action: "endTransform", id: props.layer.id });
+  }
 });
 
 watch(
   () => props.layer.id,
-  (v) => {
-    bus.emit({ action: "endTransform", id: v });
+  (v, previousId) => {
+    if (!mapEditMode.value) return;
+    bus.emit({ action: "endTransform", id: previousId });
     bus.emit({ action: "startTransform", id: v });
   },
 );
@@ -52,7 +54,29 @@ watch(
 function updateData(formData: ScenarioImageLayerUpdate) {
   const diff = getChangedValues({ ...formData }, props.layer);
   emit("update", diff);
-  editMode.value = false;
+  detailsEditMode.value = false;
+}
+
+function transform(action: "scaleUp" | "scaleDown" | "rotateLeft" | "rotateRight") {
+  bus.emit({ action, id: props.layer.id });
+}
+
+function startMapEdit() {
+  detailsEditMode.value = false;
+  mapEditMode.value = true;
+  if (!isInitialized.value) return;
+  bus.emit({ action: "zoom", id: props.layer.id });
+  bus.emit({ action: "startTransform", id: props.layer.id });
+}
+
+function endMapEdit() {
+  bus.emit({ action: "endTransform", id: props.layer.id });
+  mapEditMode.value = false;
+}
+
+function startDetailsEdit() {
+  endMapEdit();
+  detailsEditMode.value = true;
 }
 </script>
 
@@ -62,13 +86,28 @@ function updateData(formData: ScenarioImageLayerUpdate) {
       <span class="badge">{{ layerTypeLabel }}</span>
     </header>
     <TileMapLayerSettingsForm
-      v-if="editMode"
+      v-if="detailsEditMode"
       :key="layer.id"
       :layer="layer"
-      @cancel="editMode = false"
+      @cancel="detailsEditMode = false"
       @update="updateData"
     />
     <div v-else>
+      <div
+        v-if="mapEditMode"
+        class="mb-4 rounded border border-blue-300 bg-blue-50 p-3 text-sm text-blue-900"
+      >
+        حالت ویرایش روی نقشه فعال است. برای جابه‌جایی، داخل تصویر را بکشید؛
+        برای تغییر اندازه، دستگیره‌های گوشه را بکشید و برای چرخش از دستگیرهٔ
+        گرد بیرون کادر استفاده کنید.
+      </div>
+      <div
+        v-else-if="layer.requiresPlacement"
+        class="mb-4 rounded border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900"
+      >
+        این کالک هنوز جانمایی نشده است. دکمهٔ «ویرایش روی نقشه» را بزنید و
+        محل، اندازه و زاویهٔ آن را تنظیم کنید.
+      </div>
       <DescriptionItem label="URL تصویر"
         ><span class="break-all">{{ layer.url || "تنظیم نشده" }}</span></DescriptionItem
       >
@@ -77,8 +116,44 @@ function updateData(formData: ScenarioImageLayerUpdate) {
           layer.attributions || "تنظیم نشده"
         }}</span></DescriptionItem
       >
-      <footer class="mt-4 flex justify-end space-x-2 pb-1">
-        <BaseButton small type="button" @click="editMode = true">ویرایش</BaseButton>
+      <div v-if="mapEditMode" class="mt-4 grid grid-cols-2 gap-2">
+        <BaseButton small type="button" @click="transform('scaleUp')">
+          بزرگ‌تر
+        </BaseButton>
+        <BaseButton small type="button" @click="transform('scaleDown')">
+          کوچک‌تر
+        </BaseButton>
+        <BaseButton small type="button" @click="transform('rotateRight')">
+          چرخش ۹۰ درجه راست
+        </BaseButton>
+        <BaseButton small type="button" @click="transform('rotateLeft')">
+          چرخش ۹۰ درجه چپ
+        </BaseButton>
+      </div>
+      <footer class="mt-4 flex flex-wrap justify-end gap-2 pb-1">
+        <BaseButton
+          v-if="mapEditMode"
+          primary
+          small
+          type="button"
+          @click="endMapEdit"
+        >
+          پایان ویرایش
+        </BaseButton>
+        <template v-else>
+          <BaseButton secondary small type="button" @click="startDetailsEdit">
+            ویرایش مشخصات
+          </BaseButton>
+          <BaseButton
+            primary
+            small
+            type="button"
+            :disabled="!isInitialized"
+            @click="startMapEdit"
+          >
+            ویرایش روی نقشه
+          </BaseButton>
+        </template>
       </footer>
     </div>
     <p v-if="!isInitialized" class="mt-2 text-sm text-gray-500">

@@ -473,6 +473,30 @@ export function useScenarioMapLayers(olMap: OLMap) {
       startTransform(olLayer, id);
     } else if (action === "endTransform") {
       endTransform();
+    } else if (action === "scaleUp" || action === "scaleDown") {
+      const current = (olLayer as any).getSource().getScale();
+      const scale = Array.isArray(current) ? current : [current, current];
+      const factor = action === "scaleUp" ? 1.25 : 0.8;
+      scn.geo.updateMapLayer(
+        id,
+        { imageScale: [scale[0] * factor, scale[1] * factor] },
+        { undoable: true },
+      );
+      endTransform();
+      startTransform(olLayer, id);
+    } else if (action === "rotateLeft" || action === "rotateRight") {
+      const current = (olLayer as any).getSource().getRotation() || 0;
+      const quarterTurn = Math.PI / 2;
+      scn.geo.updateMapLayer(
+        id,
+        {
+          imageRotate:
+            current + (action === "rotateRight" ? quarterTurn : -quarterTurn),
+        },
+        { undoable: true },
+      );
+      endTransform();
+      startTransform(olLayer, id);
     }
   });
 
@@ -481,7 +505,12 @@ export function useScenarioMapLayers(olMap: OLMap) {
 
     scn.geo.updateMapLayer(
       id,
-      { imageRotate: rotation, imageCenter: toLonLat(center), imageScale: scale },
+      {
+        imageRotate: rotation,
+        imageCenter: toLonLat(center),
+        imageScale: scale,
+        ...(!active ? { requiresPlacement: false } : {}),
+      },
       { emitOnly: active, undoable: !active },
     );
   }

@@ -43,6 +43,9 @@ const PersianDatePickerField: React.FC<PersianDatePickerFieldProps> = ({
       format="YYYY/MM/DD"
       calendarPosition="bottom-right"
       editable={false}
+      mapDays={({ date }) => ({
+        'aria-label': `انتخاب ${date.format('dddd DD MMMM YYYY')}`,
+      })}
       containerStyle={{ width: '100%' }}
       onChange={(selectedDate) => {
         if (!selectedDate) return;

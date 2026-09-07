@@ -56,6 +56,12 @@ class Settings(BaseSettings):
     INTERNAL_LLM_BASE_URL: str = ""
     INTERNAL_LLM_API_KEY: str = ""
     INTERNAL_LLM_MODEL: str = "gpt-4o-mini"
+    DOCUMENT_LLM_MODEL: str = "qwen/qwen3.5-9b"
+    DOCUMENT_LLM_BASE_URL: str = ""
+    DOCUMENT_OCR_MODEL: str = "paddlepaddle/paddleocr-vl-1.5-gguf/paddleocr-vl-1.5.gguf"
+    DOCUMENT_OCR_BASE_URL: str = ""
+    DOCUMENT_OCR_PIPELINE_URL: str = ""
+    DOCUMENT_JOB_DIR: str = "backend/static/document-imports"
 
     @field_validator("DISABLE_AUTH", mode="before")
     def _coerce_bool(cls, v):  # type: ignore[no-redef]

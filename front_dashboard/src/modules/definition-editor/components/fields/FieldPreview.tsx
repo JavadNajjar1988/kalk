@@ -25,10 +25,7 @@ import {
   AccordionSummary,
   AccordionDetails
 } from '@mui/material';
-import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
-import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
-import { DatePicker } from '@mui/x-date-pickers/DatePicker';
-import faIR from 'date-fns/locale/fa-IR';
+import PersianCalendarField from '@/components/common/PersianCalendarField';
 
 // Icons
 import PreviewIcon from '@mui/icons-material/Preview';
@@ -904,14 +901,16 @@ const FieldPreview: React.FC<FieldPreviewProps> = ({
         
       case 'date':
         return (
-          <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={faIR}>
-            <DatePicker
-              label={displayName}
-              value={value || null}
-              onChange={(newValue) => handleChange(field.id, newValue)}
-              renderInput={(params) => <TextField {...params} fullWidth helperText={fieldHelperText} />}
-            />
-          </LocalizationProvider>
+          <PersianCalendarField
+            label={displayName}
+            value={typeof value === 'string' ? value : ''}
+            onChange={newValue => handleChange(field.id, newValue)}
+            dateOnly
+            required={field.isRequired}
+            disabled={readOnly}
+            error={error}
+            helperText={fieldHelperText || field.helpText}
+          />
         );
         
       case 'select':

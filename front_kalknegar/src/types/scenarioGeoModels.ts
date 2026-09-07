@@ -104,6 +104,9 @@ export interface ScenarioImageLayer extends ScenarioMapLayerBase {
   imageCenter?: number[];
   imageScale?: number | number[];
   imageRotate?: number;
+  requiresPlacement?: boolean;
+  sourceDocumentId?: string;
+  sourcePage?: number;
 }
 
 export interface ScenarioKMLLayer extends ScenarioMapLayerBase {

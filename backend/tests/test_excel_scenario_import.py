@@ -8,6 +8,7 @@ from app.db.base import Base
 from app.models.resource import Resource, ResourceMedia
 from app.models.scenario import Scenario
 from app.services.excel_scenario_import import (
+    BUNDLED_COMPLETE_EXAMPLE,
     BUNDLED_GRAPHIC_TEMPLATE,
     build_template_workbook,
     parse_excel_workbook,
@@ -124,6 +125,115 @@ def test_parser_builds_orbat_attachments_features_and_storyboard():
     assert content["storyboard"]["scenes"][0]["camera"]["type"] == "eventWhere"
 
 
+def test_parser_adds_sorted_unit_movement_states_for_kalknegar_playback():
+    workbook = _workbook()
+    states = workbook.create_sheet("وضعیت‌های زمانی یگان‌ها")
+    states.append(
+        [
+            "شناسه_وضعیت",
+            "شناسه_یگان",
+            "زمان_مقصد",
+            "طول",
+            "عرض",
+            "روش_انتقال",
+            "نوع_مسیر",
+            "زمان_شروع_حرکت",
+        ]
+    )
+    states.append(
+        [
+            "move-2",
+            "u1",
+            "2026-01-01T12:00:00+00:00",
+            51.8,
+            36.0,
+            "پیوسته",
+            "منحنی",
+            "2026-01-01T10:00:00+00:00",
+        ]
+    )
+    states.append(
+        [
+            "move-1",
+            "u1",
+            "2026-01-01T10:00:00+00:00",
+            51.6,
+            35.8,
+            "پرش",
+            "مستقیم",
+            "",
+        ]
+    )
+
+    content, errors = parse_excel_workbook(workbook)
+
+    assert errors == []
+    unit = content["sides"][0]["groups"][0]["subUnits"][0]
+    assert [state["id"] for state in unit["state"]] == [
+        "excel-state-u1-initial",
+        "excel-state-u1-move-1",
+        "excel-state-u1-move-2",
+    ]
+    assert unit["state"][1] == {
+        "id": "excel-state-u1-move-1",
+        "t": "2026-01-01T10:00:00+00:00",
+        "location": [51.6, 35.8],
+        "interpolate": False,
+        "pathMode": "straight",
+    }
+    assert unit["state"][2]["interpolate"] is True
+    assert unit["state"][2]["pathMode"] == "curved"
+    assert unit["state"][2]["viaStartTime"] == "2026-01-01T10:00:00+00:00"
+
+
+def test_parser_rejects_invalid_unit_movement_rows():
+    workbook = _workbook()
+    states = workbook.create_sheet("وضعیت‌های زمانی یگان‌ها")
+    states.append(
+        [
+            "شناسه_وضعیت",
+            "شناسه_یگان",
+            "زمان_مقصد",
+            "طول",
+            "عرض",
+            "روش_انتقال",
+            "نوع_مسیر",
+            "زمان_شروع_حرکت",
+        ]
+    )
+    states.append(
+        [
+            "bad-1",
+            "missing-unit",
+            "2026-01-01T10:00:00+00:00",
+            51.6,
+            35.8,
+            "پیوسته",
+            "مستقیم",
+            "",
+        ]
+    )
+    states.append(
+        [
+            "bad-2",
+            "u1",
+            "2026-01-01T10:00:00+00:00",
+            51.6,
+            35.8,
+            "ناشناخته",
+            "مستقیم",
+            "",
+        ]
+    )
+
+    _, errors = parse_excel_workbook(workbook)
+
+    assert [error["message"] for error in errors] == [
+        "یگان با شناسه missing-unit یافت نشد",
+        "روش انتقال باید «پیوسته» یا «پرش» باشد",
+    ]
+
+
 def test_merge_updates_matching_ids_and_preserves_absent_records():
     existing = {
         "id": "scenario-1",
@@ -157,6 +267,63 @@ def test_merge_updates_matching_ids_and_preserves_absent_records():
     assert [event["id"] for event in merged["events"]] == ["ev-old", "ev1"]
     assert merged["events"][1]["title"] == "به‌روز"
     assert merged["mapLayers"] == [{"id": "map-1"}]
+
+
+def test_merge_preserves_existing_unit_states_and_upserts_matching_state_ids():
+    existing = {
+        "id": "scenario-1",
+        "sides": [
+            {
+                "id": "excel-side-3",
+                "standardIdentity": "3",
+                "groups": [
+                    {
+                        "id": "excel-group-3",
+                        "subUnits": [
+                            {
+                                "id": "u1",
+                                "state": [
+                                    {"id": "old", "t": "2026-01-01T09:00:00Z"},
+                                    {"id": "shared", "t": "2026-01-01T10:00:00Z"},
+                                ],
+                                "subUnits": [],
+                            }
+                        ],
+                    }
+                ],
+            }
+        ],
+    }
+    incoming = {
+        "id": "temporary",
+        "sides": [
+            {
+                "id": "excel-side-3",
+                "standardIdentity": "3",
+                "groups": [
+                    {
+                        "id": "excel-group-3",
+                        "subUnits": [
+                            {
+                                "id": "u1",
+                                "state": [
+                                    {"id": "shared", "t": "2026-01-01T11:00:00Z"},
+                                    {"id": "new", "t": "2026-01-01T12:00:00Z"},
+                                ],
+                                "subUnits": [],
+                            }
+                        ],
+                    }
+                ],
+            }
+        ],
+    }
+
+    merged = merge_scenario_content(existing, incoming)
+    states = merged["sides"][0]["groups"][0]["subUnits"][0]["state"]
+
+    assert [state["id"] for state in states] == ["old", "shared", "new"]
+    assert states[1]["t"] == "2026-01-01T11:00:00Z"
 
 
 def test_equipment_symbols_use_explicit_inferred_and_advanced_identities():
@@ -301,6 +468,7 @@ def test_download_template_includes_new_columns_and_features_sheet():
 
     assert "عوارض" in wb.sheetnames
     assert "زمان‌بندی" in wb.sheetnames
+    assert "وضعیت‌های زمانی یگان‌ها" in wb.sheetnames
     assert [cell.value for cell in wb["تجهیزات"][1]] == [
         "شناسه",
         "نام",
@@ -349,12 +517,30 @@ def test_download_template_includes_new_columns_and_features_sheet():
     ]
     assert len(wb["یگان‌ها"].data_validations.dataValidation) >= 4
     assert len(wb["تجهیزات"].data_validations.dataValidation) >= 2
-    assert wb["یگان‌ها"][2][1].value == "لشکر ۱۶"
-    assert wb["یگان‌ها"][4][5].value == "u2"
-    assert wb["یگان‌ها"][5][2].value == "دشمن"
+    assert all(cell.value is None for cell in wb["سناریو"][2])
+    assert all(cell.value is None for cell in wb["یگان‌ها"][2])
+    assert all(cell.value is None for cell in wb["وضعیت‌های زمانی یگان‌ها"][2])
     echelon_values = [wb["فهرست‌های انتخاب"].cell(row, 8).value for row in range(2, 11)]
     assert echelon_values[:4] == ["ارتش", "سپاه", "لشکر", "تیپ"]
     assert wb["زمان‌بندی"]["H2"].value.startswith("=IFERROR")
+    assert wb["زمان‌بندی"]["H3"].value.startswith("=IFERROR")
+    assert [cell.value for cell in wb["وضعیت‌های زمانی یگان‌ها"][1]] == [
+        "شناسه_وضعیت",
+        "شناسه_یگان",
+        "شناسه_زمان_مقصد",
+        "طول",
+        "عرض",
+        "روش_انتقال",
+        "نوع_مسیر",
+        "شناسه_زمان_شروع_حرکت",
+    ]
+    assert len(wb["وضعیت‌های زمانی یگان‌ها"].data_validations.dataValidation) == 3
+
+    example = build_template_workbook(include_example=True)
+    assert example["یگان‌ها"][2][1].value == "لشکر ۱۶"
+    assert example["یگان‌ها"][4][5].value == "u2"
+    assert example["یگان‌ها"][5][2].value == "دشمن"
+    assert example["راهنما"][10][2].value == "دارای داده نمونه"
 
 
 def test_persian_symbol_selections_generate_sidc_and_advanced_code_overrides():
@@ -743,9 +929,34 @@ def test_legacy_personnel_reconciliation_keeps_different_names_separate():
     assert "resourceId" not in content["personnel"][1]
 
 
-def test_bundled_graphic_template_is_the_valid_download_source():
+def test_bundled_blank_template_and_complete_example_are_distinct():
     assert BUNDLED_GRAPHIC_TEMPLATE.is_file()
-    wb = load_workbook(BUNDLED_GRAPHIC_TEMPLATE, data_only=True)
+    assert BUNDLED_COMPLETE_EXAMPLE.is_file()
+
+    blank = load_workbook(BUNDLED_GRAPHIC_TEMPLATE, data_only=False)
+    for sheet_name, max_column in [
+        ("سناریو", 5),
+        ("حوادث", 10),
+        ("یگان‌ها", 11),
+        ("تجهیزات", 10),
+        ("پرسنل", 7),
+        ("عوارض", 9),
+        ("وضعیت‌های زمانی یگان‌ها", 8),
+    ]:
+        assert all(
+            blank[sheet_name].cell(row, column).value is None
+            for row in range(2, 501)
+            for column in range(1, max_column + 1)
+        )
+    assert all(
+        blank["زمان‌بندی"].cell(row, column).value is None
+        for row in range(2, 501)
+        for column in range(1, 8)
+    )
+    assert blank["راهنما"][17][2].value == "بدون داده نمونه"
+    assert len(blank["وضعیت‌های زمانی یگان‌ها"].data_validations.dataValidation) == 5
+
+    wb = load_workbook(BUNDLED_COMPLETE_EXAMPLE, data_only=True)
     content, errors = parse_excel_workbook(wb)
     personnel, equipment, _, resource_errors = parse_resources_workbook(wb)
 
@@ -756,6 +967,7 @@ def test_bundled_graphic_template_is_the_valid_download_source():
     assert len(equipment) == 33
     assert sum(item["quantity"] for item in equipment) == 183
     assert len(personnel) == 1
+    assert wb["راهنما"][17][2].value == "دارای داده نمونه"
     equipment_features = next(
         layer
         for layer in content["layers"]

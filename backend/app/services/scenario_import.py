@@ -11,6 +11,19 @@ from app.realtime.manager import manager
 from app.schemas.scenario import ScenarioOut
 
 
+def _state_time_sort_key(value: Any) -> float:
+    if isinstance(value, (int, float)):
+        return float(value)
+    text = str(value or "").strip()
+    try:
+        return float(text)
+    except ValueError:
+        try:
+            return datetime.fromisoformat(text.replace("Z", "+00:00")).timestamp() * 1000
+        except ValueError:
+            return float("inf")
+
+
 def _merge_units(existing: list[dict[str, Any]], incoming: list[dict[str, Any]]) -> list[dict[str, Any]]:
     result = deepcopy(existing or [])
     positions = {str(unit.get("id")): index for index, unit in enumerate(result) if unit.get("id")}
@@ -20,6 +33,12 @@ def _merge_units(existing: list[dict[str, Any]], incoming: list[dict[str, Any]])
             index = positions[key]
             current = result[index]
             merged = {**current, **deepcopy(imported)}
+            merged["state"] = _upsert_items(
+                current.get("state") or [], imported.get("state") or [], keys=("id",)
+            )
+            merged["state"].sort(
+                key=lambda state: _state_time_sort_key(state.get("t"))
+            )
             merged["subUnits"] = _merge_units(current.get("subUnits") or [], imported.get("subUnits") or [])
             result[index] = merged
         else:

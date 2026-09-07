@@ -34,17 +34,24 @@ from app.api.routes import tile_roots as tile_roots_routes
 from app.api.routes import dashboard as dashboard_routes
 from app.api.routes import notifications as notifications_routes
 from app.services.system_notification_monitor import notification_monitor_loop
+from app.services.document_jobs import document_job_worker_loop
 
 
 @asynccontextmanager
 async def lifespan(_: FastAPI):
     monitor_task = asyncio.create_task(notification_monitor_loop())
+    document_task = asyncio.create_task(document_job_worker_loop())
     try:
         yield
     finally:
         monitor_task.cancel()
+        document_task.cancel()
         try:
             await monitor_task
+        except asyncio.CancelledError:
+            pass
+        try:
+            await document_task
         except asyncio.CancelledError:
             pass
 

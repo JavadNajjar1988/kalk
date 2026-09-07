@@ -13,6 +13,7 @@ import { useSelectedItems } from "@/stores/selectedStore";
 import { MS_PER_DAY, MS_PER_HOUR } from "@/utils/time";
 import dayjs from "@/dayjs";
 import { toPersianDigits } from "@/utils/persianNumbers";
+import PersianDateTimeField from "@/components/PersianDateTimeField.vue";
 import { useServicesStore } from "@/modules/tactical-symbol-map/stores/services.js";
 import {
   buildTimelineRenderData,
@@ -497,9 +498,13 @@ function onContextMenuAction(action: string) {
           <option value="custom">بازه دلخواه</option>
         </select>
         <template v-if="filterMode === 'custom'">
-          <input v-model="customFrom" type="datetime-local" class="rounded border bg-transparent px-2 py-1" />
+          <div class="min-w-52">
+            <PersianDateTimeField v-model="customFrom" label="از تاریخ" />
+          </div>
           <span>تا</span>
-          <input v-model="customTo" type="datetime-local" class="rounded border bg-transparent px-2 py-1" />
+          <div class="min-w-52">
+            <PersianDateTimeField v-model="customTo" label="تا تاریخ" />
+          </div>
         </template>
         <span class="text-muted-foreground">
           {{ toPersianDigits(String(events.length)) }} رویداد از

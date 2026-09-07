@@ -11,6 +11,7 @@ import { useSelectedItems } from "@/stores/selectedStore";
 import { Button } from "@/components/ui/button";
 import dayjs from "@/dayjs";
 import { toPersianDigits } from "@/utils/persianNumbers";
+import PersianDateTimeField from "@/components/PersianDateTimeField.vue";
 import {
   filterScenarioEventsByTime,
   getEventTimeFilterBounds,
@@ -105,9 +106,13 @@ function addEvent() {
         </span>
       </div>
       <div v-if="filterMode === 'custom'" class="flex flex-wrap items-center gap-2">
-        <input v-model="customFrom" type="datetime-local" class="rounded border bg-transparent px-2 py-1" />
+        <div class="min-w-52 flex-1">
+          <PersianDateTimeField v-model="customFrom" label="از تاریخ" />
+        </div>
         <span>تا</span>
-        <input v-model="customTo" type="datetime-local" class="rounded border bg-transparent px-2 py-1" />
+        <div class="min-w-52 flex-1">
+          <PersianDateTimeField v-model="customTo" label="تا تاریخ" />
+        </div>
       </div>
     </div>
 

@@ -27,6 +27,7 @@ services:
     volumes:
       - ./backend/static/maps:/app/backend/static/maps
       - ./backend/static/scenarios:/app/backend/static/scenarios
+      - ./backend/static/document-imports:/app/backend/static/document-imports
       # برای استفاده از هارد خارجی (10+ ترابایت):
       # 1. در فایل .env متغیر EXTERNAL_MAPS_PATH را تنظیم کنید
       # 2. مثال Windows: EXTERNAL_MAPS_PATH=D:/maps
@@ -46,6 +47,12 @@ services:
       INTERNAL_LLM_BASE_URL: ${INTERNAL_LLM_BASE_URL:-}
       INTERNAL_LLM_API_KEY: ${INTERNAL_LLM_API_KEY:-}
       INTERNAL_LLM_MODEL: ${INTERNAL_LLM_MODEL:-gpt-4o-mini}
+      DOCUMENT_LLM_MODEL: ${DOCUMENT_LLM_MODEL:-qwen/qwen3.5-9b}
+      DOCUMENT_LLM_BASE_URL: ${DOCUMENT_LLM_BASE_URL:-http://host.docker.internal:1234}
+      DOCUMENT_OCR_MODEL: ${DOCUMENT_OCR_MODEL:-paddlepaddle/paddleocr-vl-1.5-gguf/paddleocr-vl-1.5.gguf}
+      DOCUMENT_OCR_BASE_URL: ${DOCUMENT_OCR_BASE_URL:-http://host.docker.internal:1234}
+      DOCUMENT_OCR_PIPELINE_URL: ${DOCUMENT_OCR_PIPELINE_URL:-}
+      DOCUMENT_JOB_DIR: ${DOCUMENT_JOB_DIR:-/app/backend/static/document-imports}
       # استفاده از مسیر خارجی یا مسیر محلی
       # اگر EXTERNAL_MAPS_PATH در .env تنظیم شده باشد، از /mnt/external-maps استفاده می‌شود
       # در غیر این صورت از backend/static/maps (مسیر محلی) استفاده می‌شود

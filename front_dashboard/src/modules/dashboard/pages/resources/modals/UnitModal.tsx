@@ -22,6 +22,7 @@ import {
 import { alpha } from '@mui/material/styles';
 import type { ResourceDto } from '@/services/api/resourceApiService';
 import PrimaryImageField from '../components/PrimaryImageField';
+import PersianCalendarField from '@/components/common/PersianCalendarField';
 import type { PrimaryImageChanges } from '../components/primaryImageHelpers';
 import {
   buildResourcesFormDialogSx,
@@ -389,24 +390,20 @@ const UnitModal: React.FC<UnitModalProps> = ({ open, unit, units, saving, onClos
                 </FormControl>
               </Grid>
               <Grid item xs={12} md={6}>
-                <TextField
-                  fullWidth
-                  type="date"
+                <PersianCalendarField
                   label="تاریخ تشکیل"
                   value={form.formedOn}
-                  onChange={event => setField('formedOn', event.target.value)}
-                  InputLabelProps={{ shrink: true }}
-                  helperText="تاریخ استاندارد برای نگهداری در سامانه"
+                  onChange={value => setField('formedOn', value)}
+                  dateOnly
+                  helperText="تاریخ به‌صورت شمسی انتخاب و در سامانه با قالب استاندارد نگهداری می‌شود."
                 />
               </Grid>
               <Grid item xs={12} md={6}>
-                <TextField
-                  fullWidth
-                  type="date"
+                <PersianCalendarField
                   label="تاریخ پایان فعالیت"
                   value={form.deactivatedOn}
-                  onChange={event => setField('deactivatedOn', event.target.value)}
-                  InputLabelProps={{ shrink: true }}
+                  onChange={value => setField('deactivatedOn', value)}
+                  dateOnly
                 />
               </Grid>
               <Grid item xs={12}>
