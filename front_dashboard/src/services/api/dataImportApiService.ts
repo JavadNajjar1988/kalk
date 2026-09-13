@@ -125,6 +125,8 @@ export interface DocumentProposal {
   resourceCode?: string;
   matchedResourceId?: string;
   matchedResourceName?: string;
+  canonicalName?: string;
+  entityDraftId?: string;
 }
 
 export interface DocumentPagePreview {
@@ -134,17 +136,38 @@ export interface DocumentPagePreview {
   pageCount: number;
   method: string;
   text: string;
+  nativeText?: string;
+  ocrText?: string;
+  pageKinds?: Array<'text' | 'image' | 'table' | 'military-map'>;
   warnings: string[];
   items: DocumentProposal[];
   persisted: boolean;
   pageKind?: 'military-map';
+  reviewStatus?: 'pending' | 'reviewed' | 'no_relevant_data';
+  mapCandidate?: Omit<DocumentMapPage, 'page'>;
 }
 
 export interface DocumentMapPage {
   page: number;
-  status: 'needs_placement';
+  status: 'needs_placement' | 'attached' | 'ignored';
   rotationDegrees: 0 | 90 | 180 | 270;
   reason: string;
+  confidence?: number;
+  scenarioId?: string;
+  layerId?: string;
+  reviewedAt?: string;
+}
+
+export interface DocumentPageCoverage {
+  page: number;
+  pageKinds: Array<'text' | 'image' | 'table' | 'military-map'>;
+  status: 'pending_review' | 'reviewed' | 'no_relevant_data' | 'error';
+  itemCount: number;
+  acceptedCount: number;
+  rejectedCount: number;
+  pendingCount: number;
+  mapStatus?: DocumentMapPage['status'];
+  warnings: string[];
 }
 
 export interface DocumentJob {
@@ -177,6 +200,8 @@ export interface DocumentWorkbookDraft {
   pageCount: number;
   mainScenarioId: string;
   items: DocumentProposal[];
+  coverage?: DocumentPageCoverage[];
+  finalized?: boolean;
 }
 
 export type DocumentStreamEvent =
@@ -446,6 +471,18 @@ class DataImportApiService extends BaseApiClient {
     }>(
       `/data-import/document/jobs/${encodeURIComponent(jobId)}/map-pages/${page}/attach`,
       payload
+    );
+    return handleApiResponse(response);
+  }
+
+  async decideDocumentMapPage(
+    jobId: string,
+    page: number,
+    decision: 'ignored' | 'needs_placement'
+  ): Promise<DocumentJob> {
+    const response = await this.post<DocumentJob>(
+      `/data-import/document/jobs/${encodeURIComponent(jobId)}/map-pages/${page}/decision`,
+      { decision }
     );
     return handleApiResponse(response);
   }

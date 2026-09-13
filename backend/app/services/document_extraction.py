@@ -17,17 +17,82 @@ from openpyxl.styles import Alignment, Font, PatternFill
 from PIL import Image, ImageOps
 
 from app.services.excel_scenario_import import build_template_workbook
+from app.services.resource_codes import build_document_resource_reference_code
 
 KINDS = {"scenario", "person", "unit", "equipment", "place", "event"}
 MAX_TEXT = 18000
+MAP_ERROR_MARKERS = (
+    "نقشه یا تصویر پرجزئیات",
+    "برای نقشه از برش نوشته‌ها",
+)
+
+PERSIAN_NAME_TRANSLATION = str.maketrans({
+    "ي": "ی", "ى": "ی", "ك": "ک", "ۀ": "ه", "ة": "ه",
+    "أ": "ا", "إ": "ا", "ؤ": "و",
+})
+PERSON_TITLE_PATTERN = re.compile(
+    r"^(?:شهید|امیر|سردار|سپهبد|سرلشکر|سرتیپ(?:\s+دوم)?|سرهنگ|"
+    r"سرگرد|سروان|ستوان(?:\s+(?:یکم|دوم|سوم))?|دریادار|"
+    r"ناخدا(?:\s+(?:یکم|دوم|سوم))?|حاج(?:ی)?|دکتر|مهندس|"
+    r"آیت\s*الله|حجت\s*الاسلام(?:\s+والمسلمین)?|جناب(?:\s+آقای)?|"
+    r"آقای|خانم)\s+",
+    re.IGNORECASE,
+)
 
 
 def compact_name(value: str) -> str:
-    return re.sub(r"[\s\u200c\-_]+", "", value).casefold()
+    normalized = unicodedata.normalize("NFKC", value).translate(PERSIAN_NAME_TRANSLATION)
+    return re.sub(r"[\s\u200c\-_،,:؛;()\[\]{}]+", "", normalized).casefold()
+
+
+def canonical_entity_name(kind: str, value: str) -> str:
+    """Return a conservative display name while retaining the original mention as evidence."""
+    normalized = re.sub(
+        r"\s+", " ",
+        unicodedata.normalize("NFKC", value).translate(PERSIAN_NAME_TRANSLATION),
+    ).strip(" \t\r\n،,:؛;()[]{}")
+    if kind != "person":
+        return normalized
+    previous = None
+    while normalized and normalized != previous:
+        previous = normalized
+        normalized = PERSON_TITLE_PATTERN.sub("", normalized, count=1).strip()
+    return normalized or re.sub(r"\s+", " ", value).strip()
+
+
+def entity_draft_id(document_id: str, kind: str, name: str) -> str:
+    """Build a document-scoped identity that survives page and display-name changes."""
+    canonical = compact_name(canonical_entity_name(kind, name))
+    digest = hashlib.sha256(
+        f"{document_id}:{kind}:{canonical}".encode("utf-8")
+    ).hexdigest()[:24]
+    return f"draft-{digest}"
+
+
+def proposed_resource_reference_code(kind: str, draft_id: str) -> str | None:
+    """Return a stable human-facing code without deriving it from a person's name."""
+    return build_document_resource_reference_code(kind, str(draft_id))
+
+
+def proposal_entity_key(item: dict) -> tuple[str, str]:
+    """Prefer reviewed catalog identity, then stable code, then a conservative name key."""
+    kind = str(item.get("kind") or "")
+    matched_id = str(item.get("matchedResourceId") or "").strip()
+    if matched_id:
+        return kind, f"resource:{matched_id.casefold()}"
+    resource_code = str(item.get("resourceCode") or "").strip()
+    if resource_code:
+        return kind, f"code:{resource_code.casefold()}"
+    draft_id = str(item.get("entityDraftId") or "").strip()
+    if draft_id:
+        return kind, f"draft:{draft_id.casefold()}"
+    canonical = canonical_entity_name(kind, str(item.get("canonicalName") or item.get("name") or ""))
+    return kind, f"name:{compact_name(canonical)}"
 
 
 def build_document_review_workbook(
-    *, filename: str, document_id: str, page_count: int, main_scenario_id: str, items: list[dict]
+    *, filename: str, document_id: str, page_count: int, main_scenario_id: str,
+    items: list[dict], coverage: list[dict] | None = None, finalized: bool = False
 ) -> Workbook:
     """Build an editable standard workbook. It is still a review draft, never a DB write."""
     accepted = [item for item in items if item.get("reviewStatus") == "accepted"]
@@ -48,17 +113,52 @@ def build_document_review_workbook(
     if selected is None:
         raise ValueError("یک سناریوی تأییدشده را به‌عنوان سناریوی اصلی انتخاب کنید.")
 
+    stable_keys_by_name: dict[tuple[str, str], set[tuple[str, str]]] = {}
+    for item in accepted:
+        name_key = (
+            str(item.get("kind") or ""),
+            compact_name(canonical_entity_name(
+                str(item.get("kind") or ""), str(item.get("name") or "")
+            )),
+        )
+        stable_key = proposal_entity_key(item)
+        if stable_key[1].startswith(("resource:", "code:")):
+            stable_keys_by_name.setdefault(name_key, set()).add(stable_key)
+
+    def resolved_entity_key(item: dict) -> tuple[str, str]:
+        key = proposal_entity_key(item)
+        if key[1].startswith(("resource:", "code:")):
+            return key
+        name_key = (
+            str(item.get("kind") or ""),
+            compact_name(canonical_entity_name(
+                str(item.get("kind") or ""), str(item.get("name") or "")
+            )),
+        )
+        known = stable_keys_by_name.get(name_key) or set()
+        return next(iter(known)) if len(known) == 1 else key
+
     unique: dict[tuple[str, str], dict] = {}
     for item in accepted:
-        key = (str(item.get("kind")), compact_name(str(item.get("name") or "")))
+        key = resolved_entity_key(item)
         if key not in unique:
-            unique[key] = dict(item)
+            original_name = str(item.get("name") or "").strip()
+            unique[key] = {
+                **item,
+                "name": str(item.get("matchedResourceName") or "").strip()
+                or str(item.get("canonicalName") or "").strip()
+                or canonical_entity_name(str(item.get("kind") or ""), str(item.get("name") or "")),
+                "aliases": [original_name] if original_name else [],
+            }
             continue
+        original_name = str(item.get("name") or "").strip()
+        if original_name and original_name not in unique[key].setdefault("aliases", []):
+            unique[key]["aliases"].append(original_name)
         for field, value in item.items():
             if value not in (None, "") and unique[key].get(field) in (None, ""):
                 unique[key][field] = value
     unique_items = list(unique.values())
-    selected = unique[("scenario", compact_name(str(selected.get("name") or "")))]
+    selected = unique[resolved_entity_key(selected)]
 
     workbook = build_template_workbook()
     data_sheets = {
@@ -103,10 +203,18 @@ def build_document_review_workbook(
     }
     workbook["تجهیزات"].cell(1, 11, "کد")
     workbook["پرسنل"].cell(1, 8, "کد_پرسنلی")
+    workbook["پرسنل"].cell(1, 9, "نام‌های_جایگزین")
     for item in unique_items:
         kind = item.get("kind")
         item_id = f"doc-{str(item.get('id') or '')[:24]}"
         name = str(item.get("name") or "").strip()
+        reference_code = str(item.get("resourceCode") or "").strip() or (
+            proposed_resource_reference_code(
+                str(kind or ""),
+                str(item.get("entityDraftId") or item.get("id") or ""),
+            )
+            or ""
+        )
         evidence = str(item.get("evidence") or "").strip()
         if not name or kind not in kind_sheets:
             continue
@@ -125,7 +233,7 @@ def build_document_review_workbook(
                 time_ids.get(str(item.get("id")), ""),
                 item.get("longitude") if item.get("longitude") is not None else "",
                 item.get("latitude") if item.get("latitude") is not None else "", "",
-                item.get("resourceCode") or "",
+                reference_code,
             ])
         elif kind == "equipment":
             workbook["تجهیزات"].append([
@@ -134,12 +242,17 @@ def build_document_review_workbook(
                 item.get("unitId") or "", time_ids.get(str(item.get("id")), ""),
                 item.get("longitude") if item.get("longitude") is not None else "",
                 item.get("latitude") if item.get("latitude") is not None else "",
-                item.get("side") or "", "", item.get("resourceCode") or "",
+                item.get("side") or "", "", reference_code,
             ])
         elif kind == "person":
+            aliases = [
+                alias for alias in item.get("aliases") or []
+                if compact_name(str(alias)) != compact_name(name)
+            ]
             workbook["پرسنل"].append([
                 item_id, name, "", item.get("rank") or "", item.get("specialty") or "",
-                "", item.get("unitId") or "", item.get("resourceCode") or "",
+                "", item.get("unitId") or "", reference_code,
+                " | ".join(dict.fromkeys(aliases)),
             ])
         elif kind == "place":
             workbook["عوارض"].append([
@@ -155,16 +268,29 @@ def build_document_review_workbook(
     review = workbook.create_sheet("کالک‌یار", 1)
     review.sheet_view.rightToLeft = True
     review.sheet_properties.tabColor = "7C3AED"
-    review.append(["نوع", "نام یا عنوان", "شاهد سند", "صفحه", "روش خواندن", "شناسه پیشنهاد"])
-    for item in accepted:
+    review.append([
+        "نوع", "نام درج‌شده در سند", "نام معیار", "شاهد سند", "صفحه",
+        "روش خواندن", "شناسه پیشنهاد", "تصمیم بازبینی", "شناسه گروه موجودیت",
+    ])
+    for item in items:
+        canonical_name = (
+            str(item.get("matchedResourceName") or "").strip()
+            or str(item.get("canonicalName") or "").strip()
+            or canonical_entity_name(
+                str(item.get("kind") or ""), str(item.get("name") or "")
+            )
+        )
         review.append(
             [
                 item.get("kind"),
                 item.get("name"),
+                canonical_name,
                 item.get("evidence"),
                 item.get("sourcePage"),
                 item.get("sourceMethod"),
                 item.get("id"),
+                item.get("reviewStatus"),
+                item.get("entityDraftId") or "|".join(proposal_entity_key(item)),
             ]
         )
     review.append([])
@@ -172,10 +298,15 @@ def build_document_review_workbook(
     review.append(["شناسه سند", document_id])
     review.append(["نام فایل", filename])
     review.append(["تعداد صفحه", page_count])
-    review.append(["وضعیت", "پیش‌نویس قابل تکمیل؛ هنوز آماده ثبت نهایی نیست"])
+    review.append([
+        "وضعیت",
+        "آماده ورود یکپارچه؛ کنترل پوشش و ساختار انجام شده است"
+        if finalized
+        else "پیش‌نویس قابل تکمیل؛ هنوز آماده ثبت نهایی نیست",
+    ])
     review.freeze_panes = "A2"
-    review.auto_filter.ref = f"A1:F{max(1, len(accepted) + 1)}"
-    widths = [18, 34, 90, 12, 22, 30]
+    review.auto_filter.ref = f"A1:I{max(1, len(items) + 1)}"
+    widths = [18, 34, 34, 90, 12, 22, 30, 20, 42]
     for index, width in enumerate(widths, start=1):
         review.column_dimensions[chr(64 + index)].width = width
     header_fill = PatternFill("solid", fgColor="5B21B6")
@@ -184,6 +315,39 @@ def build_document_review_workbook(
         cell.font = Font(color="FFFFFF", bold=True)
         cell.alignment = Alignment(horizontal="center", vertical="center")
     for row in review.iter_rows(min_row=2):
+        for cell in row:
+            cell.alignment = Alignment(vertical="top", wrap_text=True)
+
+    if "پوشش سند" in workbook.sheetnames:
+        del workbook["پوشش سند"]
+    coverage_sheet = workbook.create_sheet("پوشش سند", 2)
+    coverage_sheet.sheet_view.rightToLeft = True
+    coverage_sheet.sheet_properties.tabColor = "0EA5E9"
+    coverage_sheet.append([
+        "صفحه", "نوع محتوا", "وضعیت بازبینی", "تعداد پیشنهاد",
+        "تأییدشده", "کنارگذاشته‌شده", "در انتظار", "وضعیت کالک", "هشدارها",
+    ])
+    for entry in sorted(coverage or [], key=lambda value: int(value.get("page") or 0)):
+        coverage_sheet.append([
+            entry.get("page"),
+            "، ".join(entry.get("pageKinds") or []),
+            entry.get("status"),
+            entry.get("itemCount", 0),
+            entry.get("acceptedCount", 0),
+            entry.get("rejectedCount", 0),
+            entry.get("pendingCount", 0),
+            entry.get("mapStatus") or "",
+            " | ".join(entry.get("warnings") or []),
+        ])
+    coverage_sheet.freeze_panes = "A2"
+    coverage_sheet.auto_filter.ref = f"A1:I{max(1, len(coverage or []) + 1)}"
+    for index, width in enumerate([10, 28, 22, 16, 14, 18, 14, 18, 70], start=1):
+        coverage_sheet.column_dimensions[chr(64 + index)].width = width
+    for cell in coverage_sheet[1]:
+        cell.fill = PatternFill("solid", fgColor="0369A1")
+        cell.font = Font(color="FFFFFF", bold=True)
+        cell.alignment = Alignment(horizontal="center", vertical="center")
+    for row in coverage_sheet.iter_rows(min_row=2):
         for cell in row:
             cell.alignment = Alignment(vertical="top", wrap_text=True)
 
@@ -252,7 +416,19 @@ def normalize_native_text(text: str) -> str:
 
 def read_page(raw: bytes, filename: str, page: int, force_ocr: bool = False) -> dict:
     suffix = Path(filename).suffix.lower()
-    result = {"page": page, "pageCount": 1, "text": "", "image": None, "method": "native", "warnings": []}
+    result = {
+        "page": page,
+        "pageCount": 1,
+        "text": "",
+        "nativeText": "",
+        "ocrText": "",
+        "pageKinds": [],
+        "image": None,
+        "visualImage": None,
+        "hasSignificantImage": False,
+        "method": "native",
+        "warnings": [],
+    }
     if suffix == ".pdf":
         if not raw.startswith(b"%PDF-"):
             raise ValueError("ساختار فایل پی‌دی‌اف معتبر نیست.")
@@ -264,9 +440,26 @@ def read_page(raw: bytes, filename: str, page: int, force_ocr: bool = False) -> 
             if selected.width * selected.height > 4_000_000:
                 raise ValueError("ابعاد صفحه بیش از حد مجاز است.")
             result["text"] = normalize_native_text(selected.extract_text() or "")
+            result["nativeText"] = result["text"]
+            if result["text"].strip():
+                result["pageKinds"].append("text")
+            significant_image = False
             if selected.images:
                 result["warnings"].append("صفحه تصویر دارد؛ متن استخراج‌شده لزوماً شامل نوشته‌های داخل تصویر نیست.")
-            if force_ocr or len(result["text"].strip()) < 200:
+                page_area = max(float(selected.width * selected.height), 1.0)
+                significant_image = any(
+                    max(0.0, float(image.get("width") or 0))
+                    * max(0.0, float(image.get("height") or 0))
+                    / page_area
+                    >= 0.12
+                    for image in selected.images
+                )
+                result["pageKinds"].append("image")
+                result["hasSignificantImage"] = significant_image
+            # Every PDF page gets a lightweight visual pass. OCR remains limited to
+            # pages that actually need it, so native text is not needlessly replaced.
+            result["visualImage"] = selected.to_image(resolution=96).original.copy()
+            if force_ocr or len(result["text"].strip()) < 200 or significant_image:
                 result["image"] = selected.to_image(resolution=150).original.copy()
     elif suffix in {".png", ".jpg", ".jpeg"}:
         if page != 1:
@@ -275,14 +468,19 @@ def read_page(raw: bytes, filename: str, page: int, force_ocr: bool = False) -> 
             if img.width * img.height > 25_000_000:
                 raise ValueError("ابعاد تصویر بیش از حد مجاز است.")
             result["image"] = img.convert("RGB")
+            result["visualImage"] = result["image"].copy()
+            result["hasSignificantImage"] = True
+        result["pageKinds"] = ["image"]
     elif suffix == ".txt":
         if page != 1:
             raise ValueError("فایل متنی فقط یک صفحه دارد.")
         result["text"] = raw.decode("utf-8-sig")
+        result["nativeText"] = result["text"]
+        result["pageKinds"] = ["text"] if result["text"].strip() else []
     else:
         raise ValueError("فقط پی‌دی‌اف، تصویر و متن با کدگذاری UTF-8 پذیرفته می‌شود.")
     if result["image"] is not None:
-        result["method"] = "ocr"
+        result["method"] = "hybrid" if result["nativeText"].strip() else "ocr"
         result["warnings"].append("بازشناسی تصویری ممکن است نام‌ها و اعداد را اشتباه بخواند؛ با اصل صفحه تطبیق دهید.")
     return result
 
@@ -452,7 +650,10 @@ def validate_proposals(items: object, text: str, document_id: str, page: int, me
             continue
         seen.add(key)
         proposal_id = hashlib.sha256(f"{document_id}:{page}:{key}".encode()).hexdigest()[:24]
+        canonical_name = canonical_entity_name(kind, name.strip())[:300]
         clean.append({"id": proposal_id, "kind": kind, "name": name.strip()[:300],
+                      "canonicalName": canonical_name,
+                      "entityDraftId": entity_draft_id(document_id, kind, canonical_name),
                       "evidence": evidence.strip()[:2000], "sourcePage": page,
                       "sourceMethod": method, "documentId": document_id,
                       "reviewStatus": "pending"})
@@ -555,12 +756,15 @@ async def pipeline_ocr(client: httpx.AsyncClient, settings, image_bytes: bytes) 
 
 
 async def completion(client: httpx.AsyncClient, settings, model: str, messages: list, *, structured=False,
-                     purpose: str = "llm") -> str:
+                     purpose: str = "llm", max_tokens: int = 5000,
+                     reasoning_effort: str | None = None) -> str:
     base = service_base(settings, purpose)
     if not base:
         raise ValueError("نشانی سرویس محلی هوش مصنوعی تنظیم نشده است.")
     url = base + ("/chat/completions" if base.endswith("/v1") else "/v1/chat/completions")
-    payload = {"model": model, "temperature": 0, "max_tokens": 5000, "messages": messages}
+    payload = {"model": model, "temperature": 0, "max_tokens": max_tokens, "messages": messages}
+    if reasoning_effort:
+        payload["reasoning_effort"] = reasoning_effort
     if structured:
         payload.update(reasoning_effort="none", response_format={"type": "json_schema", "json_schema": {
             "name": "document_proposals", "strict": True, "schema": {
@@ -593,10 +797,105 @@ async def completion(client: httpx.AsyncClient, settings, model: str, messages: 
     return text
 
 
+def merge_page_text(native_text: str, ocr_text: str) -> str:
+    """Preserve both sources without duplicating an identical full-page reading."""
+    native = native_text.strip()
+    ocr = ocr_text.strip()
+    if not native:
+        return ocr
+    if not ocr:
+        return native
+    compact_native = re.sub(r"\s+", "", native)
+    compact_ocr = re.sub(r"\s+", "", ocr)
+    if compact_native in compact_ocr:
+        return ocr
+    if compact_ocr in compact_native:
+        return native
+    return f"[متن داخلی صفحه]\n{native}\n\n[متن خوانده‌شده از تصویر]\n{ocr}"
+
+
+def visual_page_analysis(value: str) -> dict:
+    cleaned = re.sub(r"^```(?:json)?\s*|\s*```$", "", value.strip())
+    parsed = json.loads(cleaned)
+    if not isinstance(parsed, dict):
+        raise ValueError("پاسخ تشخیص نوع صفحه معتبر نیست.")
+    allowed = {"text", "image", "table", "military-map"}
+    kinds = [kind for kind in parsed.get("pageKinds", []) if kind in allowed]
+    confidence = parsed.get("mapConfidence", 0)
+    if not isinstance(confidence, (int, float)):
+        confidence = 0
+    rotation = parsed.get("rotationDegrees", 0)
+    if rotation not in {0, 90, 180, 270}:
+        rotation = 0
+    return {
+        "pageKinds": list(dict.fromkeys(kinds)),
+        "mapConfidence": max(0.0, min(1.0, float(confidence))),
+        "rotationDegrees": rotation,
+    }
+
+
+async def classify_visual_page(
+    client: httpx.AsyncClient, settings, image_bytes: bytes
+) -> dict:
+    data_url = "data:image/png;base64," + base64.b64encode(image_bytes).decode()
+    prompt = (
+        'Classify this document page. Return JSON only: '
+        '{"pageKinds":["text|image|table|military-map"],'
+        '"mapConfidence":0.0,"rotationDegrees":0}. '
+        'Use military-map only when the page contains a geographic or tactical map, '
+        'not merely a diagram, logo or ordinary photograph. rotationDegrees must be '
+        '0, 90, 180 or 270 and describe the clockwise correction needed for readable content.'
+    )
+    output = await completion(
+        client,
+        settings,
+        settings.DOCUMENT_LLM_MODEL,
+        [{"role": "user", "content": [
+            {"type": "text", "text": prompt},
+            {"type": "image_url", "image_url": {"url": data_url}},
+        ]}],
+        purpose="llm",
+        max_tokens=1200,
+        reasoning_effort="none",
+    )
+    return visual_page_analysis(output)
+
+
 async def extract_page(page_data: dict, raw: bytes, filename: str, settings) -> dict:
-    text = page_data["text"]
+    native_text = page_data.get("nativeText", page_data.get("text", ""))
+    text = native_text
+    ocr_text = ""
+    visual = {"pageKinds": list(page_data.get("pageKinds") or []), "mapConfidence": 0.0, "rotationDegrees": 0}
+    map_reason = ""
     async with httpx.AsyncClient(timeout=180) as client:
         image = page_data.pop("image")
+        visual_image = page_data.pop("visualImage", None)
+        visual_image_bytes = b""
+        if visual_image is not None:
+            prepared_visual = None
+            try:
+                prepared_visual = prepare_ocr_image(visual_image, max_side=1400)
+                visual_buffer = io.BytesIO()
+                prepared_visual.save(visual_buffer, format="PNG")
+                visual_image_bytes = visual_buffer.getvalue()
+            finally:
+                if prepared_visual is not None:
+                    prepared_visual.close()
+                visual_image.close()
+            try:
+                classified = await classify_visual_page(
+                    client, settings, visual_image_bytes
+                )
+                visual["pageKinds"] = list(dict.fromkeys([
+                    *visual["pageKinds"], *classified["pageKinds"]
+                ]))
+                visual["mapConfidence"] = classified["mapConfidence"]
+                visual["rotationDegrees"] = classified["rotationDegrees"]
+            except (httpx.HTTPError, ValueError, KeyError, json.JSONDecodeError):
+                page_data["warnings"].append(
+                    "تشخیص مستقل نوع تصویر کامل نشد؛ متن و نتیجه‌های قابل استفاده صفحه همچنان حفظ شدند."
+                )
+
         if image is not None:
             prepared = None
             try:
@@ -609,27 +908,89 @@ async def extract_page(page_data: dict, raw: bytes, filename: str, settings) -> 
                     prepared.close()
                 image.close()
             pipeline_url = getattr(settings, "DOCUMENT_OCR_PIPELINE_URL", "") or ""
-            if pipeline_url:
-                try:
-                    text = await pipeline_ocr(client, settings, image_bytes)
-                    page_data["method"] = "ocr-pipeline"
-                    page_data["warnings"].append(
-                        "متن با زنجیره کامل تشخیص صفحه‌آرایی و بازشناسی تصویر خوانده شد."
-                    )
-                except (httpx.HTTPError, ValueError):
+            try:
+                if pipeline_url:
+                    try:
+                        text = await pipeline_ocr(client, settings, image_bytes)
+                        page_data["method"] = "ocr-pipeline"
+                        page_data["warnings"].append(
+                            "متن با زنجیره کامل تشخیص صفحه‌آرایی و بازشناسی تصویر خوانده شد."
+                        )
+                    except (httpx.HTTPError, ValueError):
+                        page_data["warnings"].append(
+                            "زنجیره کامل بازشناسی در دسترس نبود؛ این صفحه با بخش بینایی مدل خوانده شد."
+                        )
+                        page_data["method"] = "ocr-vlm-fallback"
+                        data_url = "data:image/png;base64," + base64.b64encode(image_bytes).decode()
+                        text = await completion(client, settings, settings.DOCUMENT_OCR_MODEL, [{"role": "user", "content": [
+                            {"type": "text", "text": "OCR:"}, {"type": "image_url", "image_url": {"url": data_url}}
+                        ]}], purpose="ocr")
+                else:
                     page_data["method"] = "ocr-vlm-fallback"
-                    page_data["warnings"].append(
-                        "زنجیره کامل بازشناسی در دسترس نبود؛ این صفحه با بخش بینایی مدل خوانده شد."
-                    )
-            if page_data["method"] != "ocr-pipeline":
-                data_url = "data:image/png;base64," + base64.b64encode(image_bytes).decode()
-                text = await completion(client, settings, settings.DOCUMENT_OCR_MODEL, [{"role": "user", "content": [
-                    {"type": "text", "text": "OCR:"}, {"type": "image_url", "image_url": {"url": data_url}}
-                ]}], purpose="ocr")
+                    data_url = "data:image/png;base64," + base64.b64encode(image_bytes).decode()
+                    text = await completion(client, settings, settings.DOCUMENT_OCR_MODEL, [{"role": "user", "content": [
+                        {"type": "text", "text": "OCR:"}, {"type": "image_url", "image_url": {"url": data_url}}
+                    ]}], purpose="ocr")
+                ocr_text = text
+            except (httpx.HTTPError, ValueError) as exc:
+                map_reason = str(exc)
+                if any(marker in map_reason for marker in MAP_ERROR_MARKERS):
+                    if "military-map" not in visual["pageKinds"]:
+                        visual["pageKinds"].append("military-map")
+                    visual["mapConfidence"] = max(visual["mapConfidence"], 0.6)
+                if not native_text.strip() and "military-map" not in visual["pageKinds"]:
+                    raise
+                page_data["warnings"].append(
+                    "خواندن نوشته‌های داخل تصویر کامل نشد؛ متن داخلی صفحه حذف نشد و تصویر برای بازبینی نگه داشته شد."
+                )
+            text = merge_page_text(native_text, ocr_text)
+            if native_text.strip() and ocr_text.strip():
+                page_data["method"] = f"native+{page_data['method']}"
+        page_data["nativeText"] = native_text
+        page_data["ocrText"] = ocr_text
+        page_data["pageKinds"] = list(dict.fromkeys(visual["pageKinds"]))
+        if (
+            page_data.pop("hasSignificantImage", False)
+            and "military-map" not in page_data["pageKinds"]
+        ):
+            # Never silently discard a substantial page image when the classifier
+            # is uncertain. The user decides whether it is a map, photo, or logo.
+            page_data["mapCandidate"] = {
+                "status": "needs_placement",
+                "rotationDegrees": visual["rotationDegrees"],
+                "confidence": visual["mapConfidence"],
+                "reason": "این صفحه تصویر مهمی دارد؛ نوع تصویر و ارتباط آن با سناریو باید بررسی شود.",
+            }
+        if "military-map" in page_data["pageKinds"]:
+            page_data["mapCandidate"] = {
+                "status": "needs_placement",
+                "rotationDegrees": visual["rotationDegrees"],
+                "confidence": visual["mapConfidence"],
+                "reason": map_reason or "نوع تصویر صفحه به‌عنوان نقشه یا کالک تشخیص داده شد.",
+            }
         if repetition_detected(text):
-            raise ValueError("بازشناسی صفحه دچار تکرار شده است؛ برای نقشه از برش نوشته‌ها و بازبینی دستی استفاده کنید.")
+            if "military-map" in page_data["pageKinds"] and native_text.strip():
+                text = native_text.strip()
+                page_data["ocrText"] = ""
+                page_data["warnings"].append(
+                    "خروجی تکراری تصویر کنار گذاشته شد و متن داخلی صفحه حفظ شد."
+                )
+            else:
+                raise ValueError("بازشناسی صفحه دچار تکرار شده است؛ برای نقشه از برش نوشته‌ها و بازبینی دستی استفاده کنید.")
         if len(text) > MAX_TEXT:
             raise ValueError("متن این صفحه بیش از ظرفیت یک نوبت است؛ آن را به فایل‌های متنی کوچک‌تر تقسیم کنید.")
+        if not text.strip():
+            if "military-map" in page_data["pageKinds"]:
+                return {
+                    **page_data,
+                    "text": "",
+                    "documentId": hashlib.sha256(raw).hexdigest(),
+                    "filename": filename,
+                    "items": [],
+                    "persisted": False,
+                    "reviewStatus": "pending",
+                }
+            raise ValueError("از این صفحه متن قابل استفاده‌ای استخراج نشد.")
         prompt = (
             'Extract explicit historical document mentions. Return {"items":[{"kind":"scenario|person|unit|equipment|place|event",'
             '"name":"Persian name or concise event title","evidence":"exact verbatim contiguous quote"}]}. '
@@ -653,4 +1014,4 @@ async def extract_page(page_data: dict, raw: bytes, filename: str, settings) -> 
     if rejected:
         page_data["warnings"].append(f"{rejected} پیشنهاد فاقد شاهد معتبر حذف شد.")
     return {**page_data, "text": text, "documentId": document_id, "filename": filename,
-            "items": items, "persisted": False}
+            "items": items, "persisted": False, "reviewStatus": "pending"}

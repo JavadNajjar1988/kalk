@@ -125,6 +125,48 @@ async def test_resource_crud_flow(client: AsyncClient):
 
 
 @pytest.mark.asyncio
+async def test_resource_without_code_gets_stable_kalk_reference_code(client: AsyncClient):
+    response = await client.post(
+        f"{settings.API_PREFIX}/resources",
+        json={"type": "personnel", "name": "شخص نمونه"},
+    )
+    assert response.status_code == 201, response.text
+    created = response.json()["data"]
+    assert created["code"].startswith("PER-")
+    assert len(created["code"]) == 14
+
+    fetched = await client.get(
+        f"{settings.API_PREFIX}/resources/{created['id']}"
+    )
+    assert fetched.status_code == 200
+    assert fetched.json()["data"]["code"] == created["code"]
+
+
+@pytest.mark.asyncio
+async def test_resource_search_finds_a_person_by_stored_alias(client: AsyncClient):
+    response = await client.post(
+        f"{settings.API_PREFIX}/resources",
+        json={
+            "type": "personnel",
+            "name": "علی صیاد شیرازی",
+            "code": "PERSON-SAYYAD",
+            "metadata": {
+                "aliases": ["شهید علی صیاد شیرازی", "سپهبد علی صیاد شیرازی"]
+            },
+        },
+    )
+    assert response.status_code == 201, response.text
+    resource_id = response.json()["data"]["id"]
+
+    response = await client.get(
+        f"{settings.API_PREFIX}/resources/search",
+        params={"q": "شهید علی صیاد شیرازی", "type": "personnel"},
+    )
+    assert response.status_code == 200, response.text
+    assert any(item["id"] == resource_id for item in response.json()["data"])
+
+
+@pytest.mark.asyncio
 async def test_resource_bulk_import(client: AsyncClient):
     items = [
         {

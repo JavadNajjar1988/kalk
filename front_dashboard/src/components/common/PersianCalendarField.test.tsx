@@ -42,7 +42,49 @@ it('keeps an empty field visibly empty and localizes calendar controls', () => {
   fireEvent.click(input);
 
   expect(input).toHaveValue('');
-  expect(screen.getByRole('button', { name: 'ماه بعد' })).toBeInTheDocument();
-  expect(screen.getByRole('button', { name: 'ماه قبل' })).toBeInTheDocument();
+  expect(screen.getByRole('button', { name: 'ماه بعد' })).toHaveClass(
+    'rmdp-right'
+  );
+  expect(screen.getByRole('button', { name: 'ماه قبل' })).toHaveClass(
+    'rmdp-left'
+  );
   expect(screen.getAllByLabelText(/^انتخاب /).length).toBeGreaterThan(20);
+});
+
+it('navigates from Farvardin to the previous Persian year', () => {
+  render(
+    <PersianCalendarField
+      label="تاریخ آزمایشی"
+      value="2025-03-21"
+      dateOnly
+      onChange={vi.fn()}
+    />
+  );
+
+  fireEvent.click(screen.getByLabelText('تاریخ آزمایشی شمسی'));
+  fireEvent.click(screen.getByRole('button', { name: 'ماه قبل' }));
+
+  expect(
+    screen.getAllByLabelText(/انتخاب .* اسفند ۱۴۰۳/).length
+  ).toBeGreaterThan(20);
+});
+
+it('allows navigating back to Persian year 1345', () => {
+  render(
+    <PersianCalendarField
+      label="تاریخ آزمایشی"
+      value="2025-03-21"
+      dateOnly
+      onChange={vi.fn()}
+    />
+  );
+
+  fireEvent.click(screen.getByLabelText('تاریخ آزمایشی شمسی'));
+  fireEvent.click(screen.getAllByText('۱۴۰۴')[0]);
+
+  for (let page = 0; page < 5; page += 1) {
+    fireEvent.click(screen.getByRole('button', { name: 'ماه قبل' }));
+  }
+
+  expect(screen.getByText('۱۳۴۵')).toBeInTheDocument();
 });

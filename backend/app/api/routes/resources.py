@@ -9,7 +9,7 @@ from typing import Optional
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, UploadFile, status
 from fastapi.responses import FileResponse
 from sqlalchemy import delete as sa_delete
-from sqlalchemy import func, or_, select
+from sqlalchemy import String, cast, func, or_, select
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -34,6 +34,7 @@ from app.schemas.resource import (
 )
 from app.services.notifications import publish_notification
 from app.services.resource_import import upsert_resource_import_items
+from app.services.resource_codes import build_resource_reference_code
 from app.services.resource_usage import build_resource_usage_graph
 from app.services.unit_resource_reconciliation import (
     collect_unlinked_resource_occurrences,
@@ -132,6 +133,7 @@ async def list_resources(
             Resource.name.ilike(like),
             Resource.code.ilike(like),
             Resource.description.ilike(like),
+            cast(Resource.metadata_["aliases"], String).ilike(like),
         )
         stmt = stmt.where(cond)
         count_stmt = count_stmt.where(cond)
@@ -160,17 +162,36 @@ async def search_resources(
 
     like = f"%{q}%"
     stmt = select(Resource).where(
-        or_(
-            Resource.name.ilike(like),
-            Resource.code.ilike(like),
-        )
+        or_(Resource.name.ilike(like), Resource.code.ilike(like))
     )
     if type:
         _validate_type(type)
         stmt = stmt.where(Resource.type == type)
     stmt = stmt.order_by(Resource.name.asc()).limit(limit)
     res = await session.execute(stmt)
-    items = res.scalars().all()
+    items = list(res.scalars().all())
+    if len(items) < limit:
+        alias_stmt = select(Resource).where(Resource.metadata_.is_not(None))
+        if type:
+            alias_stmt = alias_stmt.where(Resource.type == type)
+        alias_result = await session.execute(
+            alias_stmt.order_by(Resource.name.asc()).limit(1000)
+        )
+        existing_ids = {item.id for item in items}
+        normalized_query = q.translate(str.maketrans({"ي": "ی", "ى": "ی", "ك": "ک"})).casefold()
+        for candidate in alias_result.scalars().all():
+            aliases = (candidate.metadata_ or {}).get("aliases") or []
+            if candidate.id in existing_ids or not any(
+                normalized_query in str(alias).translate(
+                    str.maketrans({"ي": "ی", "ى": "ی", "ك": "ک"})
+                ).casefold()
+                for alias in aliases
+            ):
+                continue
+            items.append(candidate)
+            existing_ids.add(candidate.id)
+            if len(items) >= limit:
+                break
     payload = [
         ResourceSearchResult(
             id=r.id,
@@ -395,11 +416,21 @@ async def create_resource(payload: ResourceCreate, session: AsyncSession = Depen
         if existing.scalar_one_or_none():
             raise HTTPException(status_code=400, detail="شناسه منبع تکراری است")
 
+    code = str(payload.code or "").strip() or build_resource_reference_code(
+        payload.type, new_id
+    )
+    if code:
+        duplicate_code = await session.execute(
+            select(Resource).where(Resource.type == payload.type, Resource.code == code)
+        )
+        if duplicate_code.scalar_one_or_none():
+            raise HTTPException(status_code=409, detail="کد مرجع این نوع منبع تکراری است")
+
     item = Resource(
         id=new_id,
         type=payload.type,
         name=payload.name,
-        code=payload.code,
+        code=code,
         description=payload.description,
         status=payload.status,
         metadata_=payload.metadata,
@@ -437,6 +468,20 @@ async def update_resource(
         raise HTTPException(status_code=404, detail="منبع یافت نشد")
 
     update_data = payload.model_dump(exclude_unset=True)
+    if "code" in update_data:
+        requested_code = str(update_data["code"] or "").strip()
+        update_data["code"] = requested_code or build_resource_reference_code(
+            item.type, item.id
+        )
+        duplicate_code = await session.execute(
+            select(Resource).where(
+                Resource.type == item.type,
+                Resource.code == update_data["code"],
+                Resource.id != item.id,
+            )
+        )
+        if duplicate_code.scalar_one_or_none():
+            raise HTTPException(status_code=409, detail="کد مرجع این نوع منبع تکراری است")
     if "metadata" in update_data:
         item.metadata_ = update_data.pop("metadata")
     for key, value in update_data.items():

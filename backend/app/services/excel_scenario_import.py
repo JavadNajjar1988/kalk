@@ -1459,11 +1459,24 @@ def parse_excel_workbook(wb) -> tuple[dict[str, Any], list[dict[str, Any]]]:
             full_name = " ".join(part for part in (fn, ln) if part).strip()
             rank = _cell(pr, ph, "rank", "درجه")
             specialty = _cell(pr, ph, "specialty", "position", "تخصص", "سمت")
+            aliases = [
+                value.strip()
+                for value in re.split(
+                    r"\s*[|؛;،]\s*",
+                    _cell(pr, ph, "aliases", "نام_های_جایگزین", "نام‌های_جایگزین") or "",
+                )
+                if value.strip() and value.strip() != full_name
+            ]
             description_parts = [part for part in (rank, specialty) if part]
             description = "، ".join(description_parts)
             personnel_by_name.setdefault(
                 full_name,
-                {"name": full_name, "description": description, "sourceId": pid},
+                {
+                    "name": full_name,
+                    "description": description,
+                    "sourceId": pid,
+                    "aliases": list(dict.fromkeys(aliases)),
+                },
             )
             unit_id = _cell(pr, ph, "unit_id", "id_یگان", "شناسه_یگان", "یگان")
             if unit_id and unit_id in unit_by_id:
@@ -3048,6 +3061,17 @@ def parse_resources_workbook(
                     or "",
                     "position": _cell(pr, ph, "specialty", "position", "تخصص", "سمت")
                     or None,
+                    "aliases": [
+                        value.strip()
+                        for value in re.split(
+                            r"\s*[|؛;،]\s*",
+                            _cell(
+                                pr, ph, "aliases", "نام_های_جایگزین",
+                                "نام‌های_جایگزین",
+                            ) or "",
+                        )
+                        if value.strip()
+                    ],
                     "phoneNumber": _cell(pr, ph, "phone", "تلفن") or None,
                     "email": _cell(pr, ph, "email", "ایمیل") or None,
                     "status": "active",

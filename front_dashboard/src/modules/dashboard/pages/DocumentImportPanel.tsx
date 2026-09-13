@@ -19,6 +19,7 @@ import dataImportApiService, {
   DocumentJob,
   DocumentMapPage,
   DocumentModelStatus,
+  DocumentPageCoverage,
   DocumentPagePreview,
   DocumentProposal,
 } from '@/services/api/dataImportApiService';
@@ -40,16 +41,83 @@ const labels: Record<DocumentProposal['kind'], string> = {
   event: 'رویداد',
 };
 
+const pageKindLabels: Record<
+  NonNullable<DocumentPagePreview['pageKinds']>[number],
+  string
+> = {
+  text: 'متن',
+  image: 'تصویر',
+  table: 'جدول',
+  'military-map': 'کالک یا نقشه نظامی',
+};
+
 const resourceKind: Partial<Record<DocumentProposal['kind'], ResourceType>> = {
   person: 'personnel',
   unit: 'units',
   equipment: 'equipment',
 };
 
-const mentionKey = (item: DocumentProposal) =>
-  `${item.kind}:${item.name
-    .replace(/[\s\u200c_-]+/g, '')
-    .toLocaleLowerCase('fa')}`;
+const personTitlePattern =
+  /^(?:شهید|امیر|سردار|سپهبد|سرلشکر|سرتیپ(?:\s+دوم)?|سرهنگ|سرگرد|سروان|ستوان(?:\s+(?:یکم|دوم|سوم))?|دریادار|ناخدا(?:\s+(?:یکم|دوم|سوم))?|حاج(?:ی)?|دکتر|مهندس|آیت\s*الله|حجت\s*الاسلام(?:\s+والمسلمین)?|جناب(?:\s+آقای)?|آقای|خانم)\s+/i;
+
+const normalizePersianName = (value: string) =>
+  value
+    .normalize('NFKC')
+    .replace(/[يى]/g, 'ی')
+    .replace(/ك/g, 'ک')
+    .replace(/[ۀة]/g, 'ه')
+    .replace(/[أإ]/g, 'ا')
+    .replace(/ؤ/g, 'و')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+export const canonicalEntityName = (item: DocumentProposal) => {
+  if (item.matchedResourceName?.trim()) return item.matchedResourceName.trim();
+  if (item.canonicalName?.trim()) return normalizePersianName(item.canonicalName);
+  let name = normalizePersianName(item.name);
+  if (item.kind === 'person') {
+    let previous = '';
+    while (name && name !== previous) {
+      previous = name;
+      name = name.replace(personTitlePattern, '').trim();
+    }
+  }
+  return name || normalizePersianName(item.name);
+};
+
+const compactEntityName = (value: string) =>
+  normalizePersianName(value)
+    .replace(/[\s\u200c\-_،,:؛;()[\]{}]+/g, '')
+    .toLocaleLowerCase('fa');
+
+export const mentionKey = (item: DocumentProposal) => {
+  if (item.matchedResourceId)
+    return `${item.kind}:resource:${item.matchedResourceId.toLocaleLowerCase()}`;
+  if (item.resourceCode)
+    return `${item.kind}:code:${item.resourceCode.trim().toLocaleLowerCase()}`;
+  if (item.entityDraftId)
+    return `${item.kind}:draft:${item.entityDraftId.toLocaleLowerCase()}`;
+  return `${item.kind}:name:${compactEntityName(canonicalEntityName(item))}`;
+};
+
+const referencePrefixes: Partial<Record<DocumentProposal['kind'], string>> = {
+  person: 'PER',
+  unit: 'UNT',
+  equipment: 'EQP',
+};
+
+export const automaticReferenceCode = (item: DocumentProposal) => {
+  const prefix = referencePrefixes[item.kind];
+  if (!prefix || !item.entityDraftId) return '';
+  const identityParts = item.entityDraftId.split('-');
+  const source = identityParts[identityParts.length - 1].replace(
+    /[^0-9a-f]/gi,
+    ''
+  );
+  if (source.length < 10) return '';
+  const suffix = source.slice(0, 10).toUpperCase();
+  return `${prefix}-${suffix}`;
+};
 
 const missingFields = (item: DocumentProposal): string[] => {
   if (item.reviewStatus !== 'accepted') return [];
@@ -60,15 +128,13 @@ const missingFields = (item: DocumentProposal): string[] => {
       !item.side && 'طرف',
       !item.unitType && 'نوع یگان',
       !item.echelon && 'رده',
-      !item.resourceCode && 'کد مرجع',
     ].filter(Boolean) as string[];
   if (item.kind === 'equipment')
     return [
       !item.equipmentType && 'نوع تجهیز',
       item.quantity === undefined && 'تعداد',
-      !item.resourceCode && 'کد مرجع',
     ].filter(Boolean) as string[];
-  if (item.kind === 'person') return item.resourceCode ? [] : ['کد مرجع'];
+  if (item.kind === 'person') return [];
   if (item.kind === 'place')
     return [
       !item.placeType && 'نوع عارضه',
@@ -93,6 +159,7 @@ interface DocumentReviewDraft {
   items: DocumentProposal[];
   mainScenarioId?: string;
   jobId?: string;
+  mapPages?: Record<string, DocumentMapPage>;
 }
 
 function MapPagePreviewImage({
@@ -334,12 +401,66 @@ export default function DocumentImportPanel({
   const incompleteAccepted = uniqueAcceptedItems.filter(
     item => missingFields(item).length > 0
   );
+  const coverage = useMemo<DocumentPageCoverage[]>(() => {
+    if (!count) return [];
+    return Array.from({ length: count }, (_value, index) => {
+      const pageNumber = index + 1;
+      const pageResult = pages.find(result => result.page === pageNumber);
+      const pageItems = items.filter(item => item.sourcePage === pageNumber);
+      const mapPage = mapPages[String(pageNumber)];
+      const acceptedCount = pageItems.filter(
+        item => item.reviewStatus === 'accepted'
+      ).length;
+      const rejectedCount = pageItems.filter(
+        item => item.reviewStatus === 'rejected'
+      ).length;
+      const pendingCount = pageItems.filter(
+        item => item.reviewStatus === 'pending'
+      ).length;
+      const fallbackKinds: DocumentPageCoverage['pageKinds'] = pageResult?.text
+        ? ['text']
+        : [];
+      if (
+        pageResult?.pageKind === 'military-map' &&
+        !fallbackKinds.includes('military-map')
+      ) {
+        fallbackKinds.push('military-map');
+      }
+      return {
+        page: pageNumber,
+        pageKinds: pageResult?.pageKinds || fallbackKinds,
+        status: failures[pageNumber]
+          ? 'error'
+          : pageResult?.reviewStatus === 'reviewed'
+            ? 'reviewed'
+            : pageResult?.reviewStatus === 'no_relevant_data'
+              ? 'no_relevant_data'
+              : 'pending_review',
+        itemCount: pageItems.length,
+        acceptedCount,
+        rejectedCount,
+        pendingCount,
+        mapStatus: mapPage?.status,
+        warnings: pageResult?.warnings || [],
+      };
+    });
+  }, [count, failures, items, mapPages, pages]);
+  const unresolvedCoverage = coverage.filter(
+    entry =>
+      !['reviewed', 'no_relevant_data'].includes(entry.status) ||
+      entry.pendingCount > 0 ||
+      entry.mapStatus === 'needs_placement'
+  );
+  const coverageReady =
+    !!count &&
+    coverage.length === count &&
+    unresolvedCoverage.length === 0 &&
+    incompleteAccepted.length === 0 &&
+    hasSelectedMainScenario;
   const duplicateMentions = Math.max(
     0,
     acceptedItems.length -
-      new Set(
-        acceptedItems.map(item => mentionKey(item))
-      ).size
+      new Set(acceptedItems.map(item => mentionKey(item))).size
   );
   const filteredItems = useMemo(() => {
     const query = reviewQuery.trim().toLocaleLowerCase('fa');
@@ -383,6 +504,13 @@ export default function DocumentImportPanel({
   const currentPageItems = showFailedOnly
     ? []
     : filteredItems.filter(item => item.sourcePage === page);
+  const allCurrentPageItems = items.filter(item => item.sourcePage === page);
+  const currentMapPage = mapPages[String(page)];
+  const canReviewCurrentPage =
+    !!selected &&
+    !failures[page] &&
+    allCurrentPageItems.every(item => item.reviewStatus !== 'pending') &&
+    currentMapPage?.status !== 'needs_placement';
   const moveBetweenMatchingPages = (offset: number) => {
     if (!matchingPages.length) return;
     const currentIndex = matchingPages.indexOf(page);
@@ -392,18 +520,50 @@ export default function DocumentImportPanel({
     );
     setPage(matchingPages[nextIndex]);
   };
-  const update = (id: string, patch: Partial<DocumentProposal>) =>
-    setItems(previous => {
-      const target = previous.find(item => item.id === id);
-      if (!target) return previous;
+  const update = (id: string, patch: Partial<DocumentProposal>) => {
+    const target = items.find(item => item.id === id);
+    if (target) {
       const targetKey = mentionKey(target);
-      const identityChanged = 'name' in patch || 'kind' in patch;
+      const affectedPages = new Set(
+        items
+          .filter(item => item.id === id || mentionKey(item) === targetKey)
+          .map(item => item.sourcePage)
+      );
+      setPages(previous =>
+        previous.map(result =>
+          affectedPages.has(result.page)
+            ? { ...result, reviewStatus: 'pending' }
+            : result
+        )
+      );
+    }
+    setItems(previous => {
+      const current = previous.find(item => item.id === id);
+      if (!current) return previous;
+      const targetKey = mentionKey(current);
       return previous.map(item =>
-        item.id === id || (!identityChanged && mentionKey(item) === targetKey)
+        item.id === id || mentionKey(item) === targetKey
           ? { ...item, ...patch }
           : item
       );
     });
+  };
+  const setCurrentPageReview = (reviewed: boolean) => {
+    setPages(previous =>
+      previous.map(result =>
+        result.page === page
+          ? {
+              ...result,
+              reviewStatus: reviewed
+                ? allCurrentPageItems.length
+                  ? 'reviewed'
+                  : 'no_relevant_data'
+                : 'pending',
+            }
+          : result
+      )
+    );
+  };
   const searchCatalog = async (item: DocumentProposal, query: string) => {
     const type = resourceKind[item.kind];
     if (!type || query.trim().length < 2) return;
@@ -420,11 +580,17 @@ export default function DocumentImportPanel({
   const receivePage = (result: DocumentPagePreview) => {
     loadedJobPages.current.add(result.page);
     setTotalPages(result.pageCount);
-    setPages(previous =>
-      [...previous.filter(p => p.page !== result.page), result].sort(
+    setPages(previous => {
+      const existing = previous.find(p => p.page === result.page);
+      const next = {
+        ...result,
+        reviewStatus:
+          existing?.reviewStatus || result.reviewStatus || ('pending' as const),
+      };
+      return [...previous.filter(p => p.page !== result.page), next].sort(
         (a, b) => a.page - b.page
-      )
-    );
+      );
+    });
     setItems(previous => [
       ...previous.filter(p => p.sourcePage !== result.page),
       ...result.items,
@@ -613,6 +779,7 @@ export default function DocumentImportPanel({
       items,
       mainScenarioId,
       jobId: jobId || undefined,
+      mapPages,
     };
     const url = URL.createObjectURL(
       new Blob([JSON.stringify(draft, null, 2)], { type: 'application/json' })
@@ -636,7 +803,14 @@ export default function DocumentImportPanel({
         );
       }
       setDraftFilename(draft.filename);
-      setPages([...draft.pages].sort((a, b) => a.page - b.page));
+      setPages(
+        draft.pages
+          .map(result => ({
+            ...result,
+            reviewStatus: result.reviewStatus || ('pending' as const),
+          }))
+          .sort((a, b) => a.page - b.page)
+      );
       setItems(draft.items);
       setTotalPages(draft.pageCount);
       setFailures(
@@ -647,6 +821,7 @@ export default function DocumentImportPanel({
           ])
         )
       );
+      setMapPages(draft.mapPages || {});
       setWholeDone(draft.pages.length === draft.pageCount);
       setPage(draft.pages[0]?.page || 1);
       setActivePage(undefined);
@@ -670,12 +845,15 @@ export default function DocumentImportPanel({
       );
     }
   };
-  const createWorkbook = async (continueToImport = false) => {
+  const createWorkbook = async (
+    finalized = false,
+    continueToImport = false
+  ) => {
     if (!sourceFilename || !count || !hasSelectedMainScenario || workbookBusy)
       return;
-    if (continueToImport && incompleteAccepted.length) {
+    if (finalized && !coverageReady) {
       setError(
-        'پیش از ورود یکپارچه، فیلدهای الزامی پیشنهادهای تأییدشده را تکمیل کنید.'
+        'پیش از ساخت اکسل نهایی، همه صفحه‌ها، پیشنهادها، خطاها و کالک‌ها را تعیین تکلیف کنید.'
       );
       return;
     }
@@ -687,11 +865,17 @@ export default function DocumentImportPanel({
         documentId: pages[0]?.documentId || '',
         pageCount: count,
         mainScenarioId,
-        items: acceptedItems,
+        items,
+        coverage,
+        finalized,
       });
-      const workbook = new File([blob], 'document_review_draft.xlsx', {
-        type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-      });
+      const workbook = new File(
+        [blob],
+        finalized ? 'document_import_final.xlsx' : 'document_review_draft.xlsx',
+        {
+          type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        }
+      );
       if (continueToImport && onContinueWithWorkbook) {
         await onContinueWithWorkbook(workbook);
       } else {
@@ -730,10 +914,59 @@ export default function DocumentImportPanel({
           rotationDegrees: placement.rotationDegrees,
         }
       );
+      setMapPages(previous => ({
+        ...previous,
+        [String(mapPage.page)]: {
+          ...mapPage,
+          status: 'attached',
+          scenarioId: result.scenarioId,
+          layerId: result.layerId,
+        },
+      }));
       window.open(result.kalknegarUrl, '_blank', 'noopener,noreferrer');
     } catch (err) {
       setError(
         err instanceof Error ? err.message : 'افزودن کالک به سناریو ناموفق بود.'
+      );
+    } finally {
+      setAttachingMapPage(undefined);
+    }
+  };
+
+  const ignoreMapPage = async (mapPage: DocumentMapPage) => {
+    if (!jobId || attachingMapPage) return;
+    setAttachingMapPage(mapPage.page);
+    setError('');
+    try {
+      const job = await dataImportApiService.decideDocumentMapPage(
+        jobId,
+        mapPage.page,
+        'ignored'
+      );
+      setMapPages(job.mapPages || {});
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : 'کنارگذاشتن کالک ناموفق بود.'
+      );
+    } finally {
+      setAttachingMapPage(undefined);
+    }
+  };
+
+  const reopenMapPage = async (mapPage: DocumentMapPage) => {
+    if (!jobId || attachingMapPage) return;
+    setAttachingMapPage(mapPage.page);
+    setError('');
+    try {
+      const job = await dataImportApiService.decideDocumentMapPage(
+        jobId,
+        mapPage.page,
+        'needs_placement'
+      );
+      setMapPages(job.mapPages || {});
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : 'بازگشایی تصمیم کالک ناموفق بود.'
       );
     } finally {
       setAttachingMapPage(undefined);
@@ -789,13 +1022,21 @@ export default function DocumentImportPanel({
           <TextField
             size="small"
             label="کد مرجع منبع"
-            value={item.resourceCode || ''}
+            value={item.resourceCode || automaticReferenceCode(item)}
             onChange={event =>
               update(item.id, {
-                resourceCode: event.target.value,
+                resourceCode:
+                  event.target.value === automaticReferenceCode(item)
+                    ? undefined
+                    : event.target.value,
                 matchedResourceId: undefined,
                 matchedResourceName: undefined,
               })
+            }
+            helperText={
+              item.matchedResourceId
+                ? 'کد منبع موجود حفظ می‌شود.'
+                : 'کد پیشنهادی هنگام ثبت نهایی صادر می‌شود و به نام وابسته نیست.'
             }
           />
         )}
@@ -1190,7 +1431,7 @@ export default function DocumentImportPanel({
               ? 'تلاش دوباره برای صفحه‌های خطادار'
               : jobId && ['failed', 'cancelled'].includes(jobStatus || '')
                 ? 'ادامه پردازش'
-              : 'پردازش کل سند'}
+                : 'پردازش کل سند'}
           </Button>
         </Stack>
         {file && (
@@ -1326,7 +1567,9 @@ export default function DocumentImportPanel({
       {busy && (
         <>
           <LinearProgress
-            variant={count && !retryingFailures ? 'determinate' : 'indeterminate'}
+            variant={
+              count && !retryingFailures ? 'determinate' : 'indeterminate'
+            }
             value={
               count && !retryingFailures
                 ? ((pages.length + Object.keys(failures).length) / count) * 100
@@ -1362,17 +1605,43 @@ export default function DocumentImportPanel({
         </Alert>
       )}
       {count && (
-        <Typography variant="body2" sx={{ mb: 2 }}>
-          {pages.length} صفحه از {count} صفحه پردازش شده است. پیشنهادها نیازمند
-          بازبینی هستند.
-        </Typography>
+        <Paper variant="outlined" sx={{ mb: 2, p: 2, borderRadius: 2 }}>
+          <Typography fontWeight={700}>پوشش و کنترل کامل‌بودن سند</Typography>
+          <Stack
+            direction={{ xs: 'column', sm: 'row' }}
+            spacing={1}
+            sx={{ mt: 1, flexWrap: 'wrap' }}
+          >
+            <Chip label={`${pages.length} از ${count} صفحه پردازش شده`} />
+            <Chip
+              color={unresolvedCoverage.length ? 'warning' : 'success'}
+              label={`${unresolvedCoverage.length} صفحه تعیین‌تکلیف‌نشده`}
+            />
+            <Chip
+              color={
+                items.some(item => item.reviewStatus === 'pending')
+                  ? 'warning'
+                  : 'success'
+              }
+              label={`${items.filter(item => item.reviewStatus === 'pending').length} پیشنهاد در انتظار`}
+            />
+            <Chip
+              color={Object.keys(failures).length ? 'error' : 'success'}
+              label={`${Object.keys(failures).length} صفحه خطادار`}
+            />
+          </Stack>
+          <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+            اکسل نهایی زمانی فعال می‌شود که همه صفحه‌ها بررسی، همه پیشنهادها
+            تأیید یا کنار گذاشته، و همه کالک‌ها متصل یا رد شده باشند.
+          </Typography>
+        </Paper>
       )}
       {Object.keys(mapPages).length > 0 && jobId && (
         <Paper variant="outlined" sx={{ mb: 2, p: 2, borderRadius: 2 }}>
           <Typography fontWeight={700}>کالک‌های شناسایی‌شده</Typography>
           <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-            این صفحه‌ها داده مکانی قطعی ندارند. جهت تصویر را انتخاب کنید و آن
-            را به سناریو بفرستید؛ تصویر در مرکز نمای فعلی باز می‌شود و جای دقیق،
+            این صفحه‌ها داده مکانی قطعی ندارند. جهت تصویر را انتخاب کنید و آن را
+            به سناریو بفرستید؛ تصویر در مرکز نمای فعلی باز می‌شود و جای دقیق،
             مقیاس و چرخش آن باید در کالک‌نگار تنظیم شود.
           </Typography>
           <Stack spacing={2}>
@@ -1395,7 +1664,12 @@ export default function DocumentImportPanel({
                       fontWeight={700}
                       sx={{ cursor: 'pointer' }}
                     >
-                      کالک صفحه {mapPage.page} · نیازمند تعیین جهت و جانمایی
+                      تصویر یا کالک صفحه {mapPage.page} ·{' '}
+                      {mapPage.status === 'attached'
+                        ? 'به سناریو افزوده شده'
+                        : mapPage.status === 'ignored'
+                          ? 'با تصمیم کاربر کنار گذاشته شده'
+                          : 'نیازمند تعیین جهت و جانمایی'}
                     </Typography>
                     <Stack
                       direction={{ xs: 'column', md: 'row' }}
@@ -1403,7 +1677,9 @@ export default function DocumentImportPanel({
                       alignItems={{ md: 'center' }}
                       sx={{ mt: 1.5 }}
                     >
-                      <Box sx={{ width: { xs: '100%', md: 300 }, flexShrink: 0 }}>
+                      <Box
+                        sx={{ width: { xs: '100%', md: 300 }, flexShrink: 0 }}
+                      >
                         <MapPagePreviewImage
                           jobId={jobId}
                           page={mapPage.page}
@@ -1416,6 +1692,7 @@ export default function DocumentImportPanel({
                           size="small"
                           label="سناریوی مقصد"
                           value={placement.scenarioId}
+                          disabled={mapPage.status !== 'needs_placement'}
                           onChange={event =>
                             setMapPlacement(previous => ({
                               ...previous,
@@ -1437,6 +1714,7 @@ export default function DocumentImportPanel({
                           size="small"
                           label="چرخش اولیه تصویر"
                           value={placement.rotationDegrees}
+                          disabled={mapPage.status !== 'needs_placement'}
                           onChange={event =>
                             setMapPlacement(previous => ({
                               ...previous,
@@ -1459,6 +1737,7 @@ export default function DocumentImportPanel({
                         <Button
                           variant="contained"
                           disabled={
+                            mapPage.status !== 'needs_placement' ||
                             !placement.scenarioId ||
                             attachingMapPage === mapPage.page
                           }
@@ -1468,6 +1747,24 @@ export default function DocumentImportPanel({
                             ? 'در حال افزودن…'
                             : 'افزودن و جانمایی در کالک‌نگار'}
                         </Button>
+                        {mapPage.status === 'needs_placement' ? (
+                          <Button
+                            variant="text"
+                            color="inherit"
+                            disabled={attachingMapPage === mapPage.page}
+                            onClick={() => void ignoreMapPage(mapPage)}
+                          >
+                            این تصویر کالک مرتبط نیست
+                          </Button>
+                        ) : (
+                          <Button
+                            variant="text"
+                            disabled={attachingMapPage === mapPage.page}
+                            onClick={() => void reopenMapPage(mapPage)}
+                          >
+                            تغییر تصمیم کالک
+                          </Button>
+                        )}
                         <Typography variant="caption" color="text.secondary">
                           افزودن این لایه به معنی تأیید موقعیت آن نیست؛ لایه با
                           وضعیت نیازمند جانمایی ثبت می‌شود.
@@ -1527,9 +1824,7 @@ export default function DocumentImportPanel({
               sx={{ minWidth: 170 }}
               onChange={event =>
                 setReviewStatus(
-                  event.target.value as
-                    | 'all'
-                    | DocumentProposal['reviewStatus']
+                  event.target.value as 'all' | DocumentProposal['reviewStatus']
                 )
               }
             >
@@ -1636,13 +1931,73 @@ export default function DocumentImportPanel({
       )}
       {selected && (
         <>
+          {!!selected.pageKinds?.length && (
+            <Stack direction="row" spacing={1} sx={{ my: 1, flexWrap: 'wrap' }}>
+              {selected.pageKinds.map(kind => (
+                <Chip key={kind} size="small" label={pageKindLabels[kind]} />
+              ))}
+            </Stack>
+          )}
           {selected.warnings.map((warning, i) => (
             <Alert key={i} severity="warning" sx={{ my: 1 }}>
               {warning}
             </Alert>
           ))}
+          {selected.mapCandidate && !jobId && (
+            <Alert severity="info" sx={{ my: 1 }}>
+              این صفحه احتمالاً کالک است. متن و پیشنهادها حفظ شده‌اند؛ برای
+              ذخیره تصویر کالک و افزودن آن به کالک‌نگار، فایل را با گزینه
+              «پردازش کل سند» پردازش کنید.
+            </Alert>
+          )}
+          <Paper variant="outlined" sx={{ my: 2, p: 1.5, borderRadius: 2 }}>
+            <Stack
+              direction={{ xs: 'column', sm: 'row' }}
+              spacing={1}
+              alignItems={{ sm: 'center' }}
+            >
+              <Typography variant="body2" sx={{ flexGrow: 1 }}>
+                وضعیت صفحه {page}:{' '}
+                {selected.reviewStatus === 'reviewed'
+                  ? 'بررسی و تأیید شده'
+                  : selected.reviewStatus === 'no_relevant_data'
+                    ? 'بررسی شده؛ داده مرتبط ندارد'
+                    : 'نیازمند تعیین تکلیف'}
+              </Typography>
+              {selected.reviewStatus === 'reviewed' ||
+              selected.reviewStatus === 'no_relevant_data' ? (
+                <Button
+                  size="small"
+                  onClick={() => setCurrentPageReview(false)}
+                >
+                  بازگشایی بازبینی صفحه
+                </Button>
+              ) : (
+                <Button
+                  size="small"
+                  variant="contained"
+                  disabled={!canReviewCurrentPage}
+                  onClick={() => setCurrentPageReview(true)}
+                >
+                  تعیین تکلیف این صفحه
+                </Button>
+              )}
+            </Stack>
+            {!canReviewCurrentPage && selected.reviewStatus === 'pending' && (
+              <Typography variant="caption" color="text.secondary">
+                ابتدا همه پیشنهادهای این صفحه و در صورت وجود، وضعیت کالک آن را
+                مشخص کنید.
+              </Typography>
+            )}
+          </Paper>
           <Box component="details" sx={{ my: 2 }}>
             <summary>متن خوانده‌شده این صفحه</summary>
+            {!!selected.nativeText && (
+              <Typography variant="caption" color="text.secondary">
+                متن داخلی سند و متن خوانده‌شده از تصویر، بدون حذف یکدیگر، در این
+                بخش کنار هم نگه داشته می‌شوند.
+              </Typography>
+            )}
             <Typography
               sx={{
                 whiteSpace: 'pre-wrap',
@@ -1701,14 +2056,23 @@ export default function DocumentImportPanel({
                     <TextField
                       fullWidth
                       size="small"
-                      label="نام یا عنوان پیشنهادی"
+                      label="عبارت ثبت‌شده در سند"
                       value={item.name}
+                      InputProps={{ readOnly: true }}
+                      helperText="برای حفظ شاهد سند، این عبارت تغییر نمی‌کند."
+                    />
+                    <TextField
+                      fullWidth
+                      size="small"
+                      label="نام معیار برای نمایش"
+                      value={canonicalEntityName(item)}
                       onChange={e =>
                         update(item.id, {
-                          name: e.target.value,
+                          canonicalName: e.target.value,
                           reviewStatus: 'pending',
                         })
                       }
+                      helperText="تغییر این نام روی همه تکرارهای همین موجودیت اعمال می‌شود."
                     />
                     <TextField
                       select
@@ -1724,7 +2088,10 @@ export default function DocumentImportPanel({
                       }
                     >
                       <MenuItem value="pending">نیازمند بررسی</MenuItem>
-                      <MenuItem value="accepted" disabled={!item.name.trim()}>
+                      <MenuItem
+                        value="accepted"
+                        disabled={!canonicalEntityName(item).trim()}
+                      >
                         تأیید خوانش
                       </MenuItem>
                       <MenuItem value="rejected">کنار گذاشته شود</MenuItem>
@@ -1738,7 +2105,8 @@ export default function DocumentImportPanel({
                   </Typography>
                   {repeatedMentions.length > 1 && (
                     <Alert severity="info" sx={{ mt: 1.5 }}>
-                      این نام {repeatedMentions.length} بار در صفحه‌های{' '}
+                      این موجودیت با نام معیار «{canonicalEntityName(item)}»،{' '}
+                      {repeatedMentions.length} بار در صفحه‌های{' '}
                       {Array.from(
                         new Set(
                           repeatedMentions.map(mention => mention.sourcePage)
@@ -1746,8 +2114,12 @@ export default function DocumentImportPanel({
                       )
                         .sort((a, b) => a - b)
                         .join('، ')}{' '}
-                      آمده است. نتیجه بازبینی و اطلاعات تکمیلی این مورد روی همه
-                      ذکرهای هم‌نام اعمال می‌شود؛ شاهد هر صفحه جداگانه حفظ خواهد
+                      آمده است. شکل‌های ثبت‌شده در سند:{' '}
+                      {Array.from(
+                        new Set(repeatedMentions.map(mention => mention.name))
+                      ).join('، ')}
+                      . نتیجه بازبینی و اطلاعات تکمیلی این مورد روی همه ذکرهای
+                      گروه اعمال می‌شود؛ عبارت و شاهد هر صفحه جداگانه حفظ خواهد
                       شد.
                     </Alert>
                   )}
@@ -1801,23 +2173,30 @@ export default function DocumentImportPanel({
             <Button
               variant="contained"
               disabled={!hasSelectedMainScenario || workbookBusy}
-              onClick={() => void createWorkbook(false)}
+              onClick={() => void createWorkbook(false, false)}
               sx={{ minWidth: 220, alignSelf: 'flex-start' }}
             >
-              {workbookBusy ? 'در حال ساخت…' : 'دریافت اکسل قابل تکمیل'}
+              {workbookBusy ? 'در حال ساخت…' : 'دریافت پیش‌نویس اکسل'}
+            </Button>
+            <Button
+              variant="contained"
+              color="success"
+              disabled={!coverageReady || workbookBusy}
+              onClick={() => void createWorkbook(true, false)}
+              sx={{ minWidth: 210, alignSelf: 'flex-start' }}
+            >
+              {workbookBusy ? 'در حال کنترل…' : 'دریافت اکسل نهایی'}
             </Button>
             {onContinueWithWorkbook && (
               <Button
                 variant="outlined"
                 disabled={
-                  !hasSelectedMainScenario ||
-                  workbookBusy ||
-                  incompleteAccepted.length > 0
+                  !hasSelectedMainScenario || workbookBusy || !coverageReady
                 }
-                onClick={() => void createWorkbook(true)}
+                onClick={() => void createWorkbook(true, true)}
                 sx={{ minWidth: 250, alignSelf: 'flex-start' }}
               >
-                ساخت اکسل و ادامه در ورود یکپارچه
+                ساخت اکسل نهایی و ادامه در ورود یکپارچه
               </Button>
             )}
           </Stack>
@@ -1828,7 +2207,8 @@ export default function DocumentImportPanel({
           {duplicateMentions > 0 && (
             <Alert severity="info" sx={{ mt: 1 }}>
               {duplicateMentions} ذکر تکراری بر اساس نوع و نام در فایل خروجی
-              ادغام می‌شود؛ همه شاهدها در شیت «کالک‌یار» باقی می‌مانند.
+              معیار، شناسه منبع یا کد مرجع ادغام می‌شود؛ همه نام‌های درج‌شده،
+              صفحه‌ها و شاهدها در شیت «کالک‌یار» باقی می‌مانند.
             </Alert>
           )}
           {incompleteAccepted.length > 0 && (

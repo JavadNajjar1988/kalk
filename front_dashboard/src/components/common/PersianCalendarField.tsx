@@ -23,22 +23,22 @@ const pad = (value: number) => String(value).padStart(2, '0');
 
 interface CalendarNavigationButtonProps {
   direction: string;
-  onClick?: React.MouseEventHandler<HTMLButtonElement>;
+  handleClick?: React.MouseEventHandler<HTMLButtonElement>;
   onKeyDown?: React.KeyboardEventHandler<HTMLButtonElement>;
   disabled?: boolean;
 }
 
 const CalendarNavigationButton = ({
   direction,
-  onClick,
+  handleClick,
   onKeyDown,
   disabled,
 }: CalendarNavigationButtonProps) => (
   <button
     type="button"
-    className={`rmdp-arrow-container ${direction} ${disabled ? 'disabled' : ''}`}
-    aria-label={direction.includes('left') ? 'ماه بعد' : 'ماه قبل'}
-    onClick={onClick}
+    className={`rmdp-arrow-container rmdp-${direction} ${disabled ? 'disabled' : ''}`}
+    aria-label={direction.includes('left') ? 'ماه قبل' : 'ماه بعد'}
+    onClick={handleClick}
     onKeyDown={onKeyDown}
     disabled={disabled}
   >

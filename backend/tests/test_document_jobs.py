@@ -107,6 +107,88 @@ async def test_document_job_worker_persists_each_page(tmp_path, monkeypatch):
     assert page["persisted"] is True
 
 
+@pytest.mark.asyncio
+async def test_document_job_keeps_text_result_and_persists_detected_map(tmp_path, monkeypatch):
+    monkeypatch.setattr(settings, "DOCUMENT_JOB_DIR", str(tmp_path))
+
+    async def fake_extract(page_data, raw, filename, settings_obj):
+        return {
+            **page_data,
+            "image": None,
+            "documentId": "doc",
+            "filename": filename,
+            "text": "توضیح متنی صفحه",
+            "nativeText": "توضیح متنی صفحه",
+            "pageKinds": ["text", "image", "military-map"],
+            "items": [{"id": "event-1", "kind": "event", "name": "رویداد"}],
+            "mapCandidate": {
+                "status": "needs_placement", "rotationDegrees": 90,
+                "confidence": .9, "reason": "کالک شناسایی شد",
+            },
+            "persisted": True,
+        }
+
+    def fake_persist(job, raw, page):
+        path = document_jobs._map_page_path(job["id"], page)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        Image.new("RGB", (20, 20), "white").save(path, format="WEBP")
+
+    monkeypatch.setattr(document_jobs, "extract_page", fake_extract)
+    monkeypatch.setattr(document_jobs, "_persist_map_page", fake_persist)
+    job = document_jobs.create_job("متن سند".encode(), "report.txt", "user-1", False)
+    await document_jobs._process_job(job["id"])
+
+    stored = document_jobs.get_job(job["id"], "user-1")
+    assert stored["mapPages"]["1"]["rotationDegrees"] == 90
+    page = document_jobs.get_job_page(job["id"], 1, "user-1")
+    assert page["text"] == "توضیح متنی صفحه"
+    assert page["items"][0]["kind"] == "event"
+
+
+def test_map_page_decision_can_be_resolved_and_reopened(tmp_path, monkeypatch):
+    monkeypatch.setattr(settings, "DOCUMENT_JOB_DIR", str(tmp_path))
+    job = document_jobs.create_job(b"document", "maps.txt", "user-1", False)
+    stored = document_jobs.get_job(job["id"], "user-1")
+    stored["mapPages"] = {
+        "1": {"page": 1, "status": "needs_placement", "rotationDegrees": 0}
+    }
+    document_jobs._write_json(document_jobs._metadata_path(job["id"]), stored)
+
+    ignored = document_jobs.set_map_page_decision(job["id"], 1, "user-1", "ignored")
+    assert ignored["mapPages"]["1"]["status"] == "ignored"
+    assert ignored["mapPages"]["1"]["reviewedAt"]
+    reopened = document_jobs.set_map_page_decision(
+        job["id"], 1, "user-1", "needs_placement"
+    )
+    assert reopened["mapPages"]["1"]["status"] == "needs_placement"
+    assert "reviewedAt" not in reopened["mapPages"]["1"]
+
+
+def test_final_workbook_requires_complete_page_coverage():
+    proposal = data_import.DocumentWorkbookProposal(
+        id="scenario-1", kind="scenario", name="عملیات نمونه",
+        evidence="عملیات نمونه", sourcePage=1, sourceMethod="native",
+        documentId="doc-1", reviewStatus="accepted",
+    )
+    payload = data_import.DocumentWorkbookRequest(
+        filename="report.pdf", documentId="doc-1", pageCount=2,
+        mainScenarioId="scenario-1", items=[proposal], finalized=True,
+        coverage=[data_import.DocumentPageCoverage(
+            page=1, pageKinds=["text"], status="reviewed", itemCount=1,
+            acceptedCount=1, rejectedCount=0, pendingCount=0,
+        )],
+    )
+    with pytest.raises(ValueError, match="تمام صفحه"):
+        data_import._validate_final_document_coverage(payload)
+
+    payload.coverage.append(data_import.DocumentPageCoverage(
+        page=2, pageKinds=["image", "military-map"], status="no_relevant_data",
+        itemCount=0, acceptedCount=0, rejectedCount=0, pendingCount=0,
+        mapStatus="ignored",
+    ))
+    data_import._validate_final_document_coverage(payload)
+
+
 def test_detect_map_pages_promotes_reviewable_image_and_keeps_other_failures(
     tmp_path, monkeypatch
 ):
@@ -124,17 +206,13 @@ def test_detect_map_pages_promotes_reviewable_image_and_keeps_other_failures(
     )
     document_jobs._write_json(document_jobs._metadata_path(job["id"]), stored)
 
-    def fake_read_page(raw, filename, page, force_ocr):
-        return {
-            "page": page,
-            "pageCount": 2,
-            "text": "",
-            "image": Image.new("RGB", (320, 200), "white"),
-            "method": "ocr",
-            "warnings": [],
-        }
+    def fake_persist_map_page(job_data, raw, page):
+        target = document_jobs._map_page_path(job_data["id"], page)
+        target.parent.mkdir(parents=True, exist_ok=True)
+        Image.new("RGB", (320, 200), "white").save(target, format="WEBP")
+        return target
 
-    monkeypatch.setattr(document_jobs, "read_page", fake_read_page)
+    monkeypatch.setattr(document_jobs, "_persist_map_page", fake_persist_map_page)
     promoted = document_jobs.detect_map_pages(job["id"], "user-1")
 
     assert promoted["processedPages"] == [1]

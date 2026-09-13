@@ -11,12 +11,15 @@ from pathlib import Path
 from typing import Any
 from uuid import UUID, uuid4
 
+import pdfplumber
 from PIL import Image
 
 from app.core.config import settings
 from app.services.document_extraction import (
     document_page_count,
+    entity_draft_id,
     extract_page,
+    canonical_entity_name,
     normalize_proposal_semantics,
     read_page,
 )
@@ -27,6 +30,7 @@ MAP_PAGE_ERROR_MARKERS = (
     "نقشه یا تصویر پرجزئیات",
     "برای نقشه از برش نوشته‌ها",
 )
+MAP_PAGE_STATUSES = {"needs_placement", "attached", "ignored"}
 
 
 def _now() -> str:
@@ -61,8 +65,44 @@ def _map_page_path(job_id: str, page: int) -> Path:
 
 
 def _persist_map_page(job: dict[str, Any], raw: bytes, page: int) -> Path:
-    page_data = read_page(raw, str(job["filename"]), page, True)
-    image = page_data.get("image")
+    filename = str(job["filename"])
+    image: Image.Image | None = None
+    if Path(filename).suffix.lower() == ".pdf":
+        with pdfplumber.open(io.BytesIO(raw)) as pdf:
+            selected = pdf.pages[page - 1]
+            rendered = selected.to_image(resolution=150).original.copy()
+            page_area = max(float(selected.width * selected.height), 1.0)
+            primary = max(
+                selected.images,
+                key=lambda item: float(item.get("width") or 0)
+                * float(item.get("height") or 0),
+                default=None,
+            )
+            primary_ratio = (
+                float(primary.get("width") or 0)
+                * float(primary.get("height") or 0)
+                / page_area
+                if primary
+                else 0
+            )
+            if primary and primary_ratio >= 0.12:
+                scale = 150 / 72
+                box = (
+                    max(0, round(float(primary.get("x0") or 0) * scale)),
+                    max(0, round(float(primary.get("top") or 0) * scale)),
+                    min(rendered.width, round(float(primary.get("x1") or selected.width) * scale)),
+                    min(rendered.height, round(float(primary.get("bottom") or selected.height) * scale)),
+                )
+                image = rendered.crop(box)
+                rendered.close()
+            else:
+                image = rendered
+    else:
+        page_data = read_page(raw, filename, page, True)
+        image = page_data.get("image")
+        visual_image = page_data.get("visualImage")
+        if isinstance(visual_image, Image.Image):
+            visual_image.close()
     if not isinstance(image, Image.Image):
         raise ValueError("تصویر کامل این صفحه برای بازبینی در دسترس نیست.")
     prepared: Image.Image | None = None
@@ -107,7 +147,61 @@ def _promote_map_page(
         "status": "needs_placement",
         "rotationDegrees": 0,
         "reason": reason[:1000],
+        "confidence": 0.6,
     }
+
+
+def _persist_detected_map_page(
+    job: dict[str, Any], raw: bytes, result: dict[str, Any]
+) -> dict[str, Any] | None:
+    candidate = result.get("mapCandidate")
+    if not isinstance(candidate, dict) or candidate.get("status") != "needs_placement":
+        return None
+    page = int(result["page"])
+    _persist_map_page(job, raw, page)
+    return {
+        "page": page,
+        "status": "needs_placement",
+        "rotationDegrees": candidate.get("rotationDegrees", 0),
+        "confidence": candidate.get("confidence", 0),
+        "reason": str(candidate.get("reason") or "نقشه یا کالک تصویری شناسایی شد.")[:1000],
+    }
+
+
+def set_map_page_decision(
+    job_id: str,
+    page: int,
+    owner: str,
+    status: str,
+    *,
+    scenario_id: str | None = None,
+    layer_id: str | None = None,
+) -> dict[str, Any]:
+    if status not in MAP_PAGE_STATUSES:
+        raise ValueError("تصمیم کالک معتبر نیست.")
+    job = get_job(job_id, owner)
+    map_pages = dict(job.get("mapPages") or {})
+    current = map_pages.get(str(page))
+    if not isinstance(current, dict):
+        raise FileNotFoundError("کالک این صفحه ثبت نشده است.")
+    resolved = {
+        **current,
+        "status": status,
+        "reviewedAt": _now(),
+    }
+    if status == "needs_placement":
+        resolved.pop("scenarioId", None)
+        resolved.pop("layerId", None)
+        resolved.pop("reviewedAt", None)
+    else:
+        if scenario_id:
+            resolved["scenarioId"] = scenario_id
+        if layer_id:
+            resolved["layerId"] = layer_id
+    map_pages[str(page)] = resolved
+    job.update(mapPages=map_pages, updatedAt=_now())
+    _write_json(_metadata_path(job_id), job)
+    return job
 
 
 def detect_map_pages(job_id: str, owner: str) -> dict[str, Any]:
@@ -260,7 +354,17 @@ def get_job_page(job_id: str, page: int, owner: str) -> dict[str, Any]:
             removed += 1
             continue
         kind, name = normalized
-        clean_items.append({**item, "kind": kind, "name": name})
+        canonical_name = str(item.get("canonicalName") or "").strip() or canonical_entity_name(
+            kind, name
+        )
+        clean_items.append({
+            **item,
+            "kind": kind,
+            "name": name,
+            "canonicalName": canonical_name,
+            "entityDraftId": str(item.get("entityDraftId") or "").strip()
+            or entity_draft_id(str(result.get("documentId") or ""), kind, canonical_name),
+        })
     warnings = list(result.get("warnings") or [])
     if removed:
         warnings.append(f"{removed} پیشنهاد نامعتبر در پالایش معنایی حذف شد.")
@@ -316,6 +420,11 @@ async def _process_job(job_id: str) -> None:
                 )
                 result = await extract_page(page_data, raw, job["filename"], settings)
                 result["persisted"] = True
+                detected_map = await asyncio.to_thread(
+                    _persist_detected_map_page, job, raw, result
+                )
+                if detected_map:
+                    map_pages[str(page)] = detected_map
                 latest = get_job(job_id)
                 if latest.get("workerId") != worker_id:
                     return

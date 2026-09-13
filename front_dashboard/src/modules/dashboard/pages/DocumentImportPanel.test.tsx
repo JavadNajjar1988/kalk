@@ -1,6 +1,10 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, expect, it, vi } from 'vitest';
-import DocumentImportPanel from './DocumentImportPanel';
+import DocumentImportPanel, {
+  canonicalEntityName,
+  automaticReferenceCode,
+  mentionKey,
+} from './DocumentImportPanel';
 import api from '@/services/api/dataImportApiService';
 
 vi.mock('@/services/api/dataImportApiService', () => ({
@@ -14,6 +18,7 @@ vi.mock('@/services/api/dataImportApiService', () => ({
     detectDocumentMapPages: vi.fn(),
     getDocumentMapPageImage: vi.fn(),
     attachDocumentMapPage: vi.fn(),
+    decideDocumentMapPage: vi.fn(),
     cancelDocumentJob: vi.fn(),
     resumeDocumentJob: vi.fn(),
     createDocumentWorkbook: vi.fn(),
@@ -43,6 +48,44 @@ vi.mock('@/services/api/scenarioApiService', () => ({
 beforeEach(() => {
   vi.clearAllMocks();
   localStorage.clear();
+});
+
+it('groups person titles under one canonical identity', () => {
+  const base = {
+    kind: 'person' as const,
+    evidence: 'شاهد',
+    sourcePage: 1,
+    sourceMethod: 'native',
+    documentId: 'doc',
+    reviewStatus: 'pending' as const,
+  };
+  const martyr = { ...base, id: 'p1', name: 'شهید علی صیاد شیرازی' };
+  const general = { ...base, id: 'p2', name: 'سپهبد علی صیاد شیرازی' };
+  expect(canonicalEntityName(martyr)).toBe('علی صیاد شیرازی');
+  expect(mentionKey(martyr)).toBe(mentionKey(general));
+  expect(mentionKey({ ...general, resourceCode: 'PERSON-SAYYAD' })).toContain(
+    'code:person-sayyad'
+  );
+});
+
+it('keeps the draft identity while the reviewed display name and code change', () => {
+  const item = {
+    id: 'mention-1',
+    kind: 'person' as const,
+    name: 'شهید علی صیاد شیرازی',
+    canonicalName: 'علی صیاد شیرازی',
+    entityDraftId: 'draft-1234567890abcdef12345678',
+    evidence: 'شهید علی صیاد شیرازی',
+    sourcePage: 1,
+    sourceMethod: 'native',
+    documentId: 'doc',
+    reviewStatus: 'pending' as const,
+  };
+  expect(mentionKey(item)).toContain('draft:draft-1234567890abcdef12345678');
+  expect(mentionKey({ ...item, canonicalName: 'سپهبد علی صیاد شیرازی' })).toBe(
+    mentionKey(item)
+  );
+  expect(automaticReferenceCode(item)).toBe('PER-1234567890');
 });
 
 it('offers whole-document processing and resumes without replacing completed pages', async () => {
@@ -177,7 +220,9 @@ it('offers recovery for the latest completed server job', async () => {
     expect(api.getDocumentJob).toHaveBeenCalledWith('job-completed')
   );
   expect(
-    await screen.findByText(/نتیجه پردازش «employer-report.pdf» از سرور بازیابی شد/)
+    await screen.findByText(
+      /نتیجه پردازش «employer-report.pdf» از سرور بازیابی شد/
+    )
   ).toBeInTheDocument();
   expect(localStorage.getItem('kalkyar-active-document-job')).toBe(
     'job-completed'
@@ -240,23 +285,35 @@ it('sends the reviewed document workbook to unified preview', async () => {
     target: { files: [new File(['sample'], 'report.pdf')] },
   });
   fireEvent.click(screen.getByRole('button', { name: 'پردازش کل سند' }));
-  await screen.findByDisplayValue('عملیات نمونه');
+  await screen.findByRole('textbox', { name: 'عبارت ثبت‌شده در سند' });
   fireEvent.mouseDown(screen.getByRole('combobox', { name: 'نتیجه بازبینی' }));
   fireEvent.click(screen.getByRole('option', { name: 'تأیید خوانش' }));
-  expect(
-    screen.getByLabelText('زمان شروع سناریو شمسی')
-  ).toBeInTheDocument();
+  expect(screen.getByLabelText('زمان شروع سناریو شمسی')).toBeInTheDocument();
   fireEvent.mouseDown(
     screen.getByRole('combobox', { name: 'سناریوی اصلی فایل' })
   );
   fireEvent.click(screen.getByRole('option', { name: 'عملیات نمونه' }));
+  fireEvent.click(screen.getByRole('button', { name: 'تعیین تکلیف این صفحه' }));
   fireEvent.click(
     screen.getByRole('button', {
-      name: 'ساخت اکسل و ادامه در ورود یکپارچه',
+      name: 'ساخت اکسل نهایی و ادامه در ورود یکپارچه',
     })
   );
   await waitFor(() => expect(onContinue).toHaveBeenCalledTimes(1));
   expect(onContinue.mock.calls[0][0]).toBeInstanceOf(File);
+  expect(api.createDocumentWorkbook).toHaveBeenCalledWith(
+    expect.objectContaining({
+      finalized: true,
+      coverage: [
+        expect.objectContaining({
+          page: 1,
+          status: 'reviewed',
+          acceptedCount: 1,
+          pendingCount: 0,
+        }),
+      ],
+    })
+  );
 });
 
 it('restores a saved review draft without writing data', async () => {
@@ -304,7 +361,7 @@ it('restores a saved review draft without writing data', async () => {
   const inputs = container.querySelectorAll('input[type=file]');
   fireEvent.change(inputs[1], { target: { files: [draft] } });
   expect(
-    await screen.findByDisplayValue('عملیات بازیابی‌شده')
+    await screen.findByRole('textbox', { name: 'عبارت ثبت‌شده در سند' })
   ).toBeInTheDocument();
   expect(
     screen.getByText(/پیش‌نویس «report.pdf» بازیابی شد/)
@@ -364,7 +421,9 @@ it('filters proposals and applies review decisions to repeated mentions', async 
     target: { files: [draft] },
   });
 
-  expect(await screen.findAllByText(/این نام 2 بار/)).toHaveLength(2);
+  expect(await screen.findAllByText(/این موجودیت با نام معیار/)).toHaveLength(
+    2
+  );
   const reviewSelectors = screen.getAllByRole('combobox', {
     name: 'نتیجه بازبینی',
   });
@@ -385,7 +444,7 @@ it('filters proposals and applies review decisions to repeated mentions', async 
   fireEvent.mouseDown(typeSelectors[0]);
   fireEvent.click(screen.getByRole('option', { name: 'شخص' }));
   await waitFor(() => {
-    expect(screen.queryByDisplayValue('عملیات تکراری')).not.toBeInTheDocument();
-    expect(screen.getByDisplayValue('شخص نمونه')).toBeInTheDocument();
+    expect(screen.queryAllByDisplayValue('عملیات تکراری')).toHaveLength(0);
+    expect(screen.getAllByDisplayValue('شخص نمونه').length).toBeGreaterThan(0);
   });
 });

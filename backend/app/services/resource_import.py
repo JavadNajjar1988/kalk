@@ -9,6 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.resource import Resource
 from app.schemas.resource import RESOURCE_TYPES, ResourceBulkImportItem
+from app.services.resource_codes import build_resource_reference_code
 
 
 def workbook_resources_to_bulk_items(
@@ -159,9 +160,10 @@ async def upsert_resource_import_items(
             continue
 
         existing = None
-        if raw.code:
+        code = str(raw.code or "").strip() or None
+        if code:
             result = await session.execute(
-                select(Resource).where(Resource.type == raw.type, Resource.code == raw.code)
+                select(Resource).where(Resource.type == raw.type, Resource.code == code)
             )
             existing = result.scalar_one_or_none()
 
@@ -170,24 +172,34 @@ async def upsert_resource_import_items(
             existing.description = raw.description
             existing.status = raw.status
             if raw.metadata is not None:
-                existing.metadata_ = {**(existing.metadata_ or {}), **raw.metadata}
-            if raw.code and raw.type in resource_ids:
-                resource_ids[raw.type][raw.code] = existing.id
+                merged_metadata = {**(existing.metadata_ or {}), **raw.metadata}
+                old_aliases = (existing.metadata_ or {}).get("aliases") or []
+                new_aliases = raw.metadata.get("aliases") or []
+                if old_aliases or new_aliases:
+                    merged_metadata["aliases"] = list(dict.fromkeys([
+                        *[str(value).strip() for value in old_aliases if str(value).strip()],
+                        *[str(value).strip() for value in new_aliases if str(value).strip()],
+                    ]))
+                existing.metadata_ = merged_metadata
+            if code and raw.type in resource_ids:
+                resource_ids[raw.type][code] = existing.id
             updated += 1
             continue
 
+        resource_id = f"{raw.type}-{uuid.uuid4().hex}"
+        code = code or build_resource_reference_code(raw.type, resource_id)
         resource = Resource(
-            id=f"{raw.type}-{uuid.uuid4().hex}",
+            id=resource_id,
             type=raw.type,
             name=raw.name,
-            code=raw.code,
+            code=code,
             description=raw.description,
             status=raw.status,
             metadata_=raw.metadata,
         )
         session.add(resource)
-        if raw.code and raw.type in resource_ids:
-            resource_ids[raw.type][raw.code] = resource.id
+        if code and raw.type in resource_ids:
+            resource_ids[raw.type][code] = resource.id
         created += 1
 
     if commit:

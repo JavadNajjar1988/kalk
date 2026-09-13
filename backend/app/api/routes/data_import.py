@@ -65,6 +65,7 @@ from app.services.document_jobs import (
     public_job,
     request_cancel,
     resume_job,
+    set_map_page_decision,
 )
 
 router = APIRouter(prefix="/data-import", tags=["data-import"])
@@ -123,6 +124,20 @@ class DocumentWorkbookProposal(BaseModel):
     resourceCode: str | None = Field(default=None, max_length=150)
     matchedResourceId: str | None = Field(default=None, max_length=150)
     matchedResourceName: str | None = Field(default=None, max_length=300)
+    canonicalName: str | None = Field(default=None, max_length=300)
+    entityDraftId: str | None = Field(default=None, min_length=8, max_length=100)
+
+
+class DocumentPageCoverage(BaseModel):
+    page: int = Field(ge=1, le=2000)
+    pageKinds: list[Literal['text', 'image', 'table', 'military-map']] = Field(default_factory=list, max_length=4)
+    status: Literal['pending_review', 'reviewed', 'no_relevant_data', 'error']
+    itemCount: int = Field(default=0, ge=0, le=6000)
+    acceptedCount: int = Field(default=0, ge=0, le=6000)
+    rejectedCount: int = Field(default=0, ge=0, le=6000)
+    pendingCount: int = Field(default=0, ge=0, le=6000)
+    mapStatus: Literal['needs_placement', 'attached', 'ignored'] | None = None
+    warnings: list[str] = Field(default_factory=list, max_length=20)
 
 
 class DocumentWorkbookRequest(BaseModel):
@@ -131,12 +146,18 @@ class DocumentWorkbookRequest(BaseModel):
     pageCount: int = Field(ge=1, le=2000)
     mainScenarioId: str = Field(min_length=1, max_length=100)
     items: list[DocumentWorkbookProposal] = Field(max_length=6000)
+    coverage: list[DocumentPageCoverage] = Field(default_factory=list, max_length=2000)
+    finalized: bool = False
 
 
 class DocumentMapLayerRequest(BaseModel):
     scenarioId: str = Field(min_length=1, max_length=128)
     layerName: str = Field(min_length=1, max_length=200)
     rotationDegrees: Literal[0, 90, 180, 270] = 0
+
+
+class DocumentMapDecisionRequest(BaseModel):
+    decision: Literal['ignored', 'needs_placement']
 
 
 @router.get('/document/status', dependencies=[Depends(require_roles('SUPER_ADMIN', 'COMMANDER'))])
@@ -292,6 +313,11 @@ async def attach_document_map_page(
     """Persist a reviewed page image and stage it for manual placement in KalkNegar."""
     try:
         job = await run_in_threadpool(get_job, job_id, _document_owner(user))
+        map_page = (job.get('mapPages') or {}).get(str(page))
+        if not isinstance(map_page, dict):
+            raise FileNotFoundError('کالک این صفحه ثبت نشده است.')
+        if map_page.get('status') != 'needs_placement':
+            raise ValueError('برای افزودن دوباره کالک، ابتدا تصمیم قبلی را بازگشایی کنید.')
         source = await run_in_threadpool(
             get_map_page_path, job_id, page, _document_owner(user)
         )
@@ -358,6 +384,15 @@ async def attach_document_map_page(
         )
     )
     await db.commit()
+    await run_in_threadpool(
+        set_map_page_decision,
+        job_id,
+        page,
+        _document_owner(user),
+        "attached",
+        scenario_id=str(scenario.id),
+        layer_id=layer_id,
+    )
     return success(
         {
             'scenarioId': scenario.id,
@@ -369,9 +404,72 @@ async def attach_document_map_page(
     )
 
 
+@router.post('/document/jobs/{job_id}/map-pages/{page}/decision')
+async def decide_document_map_page(
+    job_id: str,
+    page: int,
+    payload: DocumentMapDecisionRequest,
+    user: dict[str, Any] = Depends(require_roles('SUPER_ADMIN', 'COMMANDER')),
+):
+    try:
+        job = await run_in_threadpool(
+            set_map_page_decision,
+            job_id,
+            page,
+            _document_owner(user),
+            payload.decision,
+        )
+        return success(public_job(job))
+    except FileNotFoundError as exc:
+        raise HTTPException(404, str(exc)) from exc
+    except PermissionError as exc:
+        raise HTTPException(403, str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(422, str(exc)) from exc
+
+
+def _validate_final_document_coverage(payload: DocumentWorkbookRequest) -> None:
+    if not payload.finalized:
+        return
+    if len(payload.coverage) != payload.pageCount:
+        raise ValueError("گزارش پوشش باید برای تمام صفحه‌های سند تکمیل شود.")
+    pages = [entry.page for entry in payload.coverage]
+    if len(set(pages)) != payload.pageCount or set(pages) != set(range(1, payload.pageCount + 1)):
+        raise ValueError("شماره صفحه‌های گزارش پوشش کامل یا یکتا نیست.")
+    unresolved = [
+        entry.page
+        for entry in payload.coverage
+        if entry.status not in {"reviewed", "no_relevant_data"}
+        or entry.pendingCount
+        or entry.mapStatus == "needs_placement"
+    ]
+    if unresolved:
+        raise ValueError(
+            "پیش از ساخت اکسل نهایی، صفحه‌های تعیین‌تکلیف‌نشده را بررسی کنید: "
+            + "، ".join(map(str, unresolved[:30]))
+        )
+    if any(item.reviewStatus == "pending" for item in payload.items):
+        raise ValueError("همه پیشنهادها باید تأیید یا کنار گذاشته شوند.")
+    item_counts: dict[int, dict[str, int]] = {}
+    for item in payload.items:
+        counts = item_counts.setdefault(item.sourcePage, {"all": 0, "accepted": 0, "rejected": 0, "pending": 0})
+        counts["all"] += 1
+        counts[item.reviewStatus] += 1
+    for entry in payload.coverage:
+        counts = item_counts.get(entry.page, {"all": 0, "accepted": 0, "rejected": 0, "pending": 0})
+        if (
+            entry.itemCount != counts["all"]
+            or entry.acceptedCount != counts["accepted"]
+            or entry.rejectedCount != counts["rejected"]
+            or entry.pendingCount != counts["pending"]
+        ):
+            raise ValueError(f"شمارش پیشنهادهای صفحه {entry.page} با گزارش پوشش سازگار نیست.")
+
+
 @router.post('/document/workbook', dependencies=[Depends(require_roles('SUPER_ADMIN', 'COMMANDER'))])
 async def document_workbook(payload: DocumentWorkbookRequest):
     try:
+        _validate_final_document_coverage(payload)
         workbook = await run_in_threadpool(
             build_document_review_workbook,
             filename=payload.filename,
@@ -379,7 +477,19 @@ async def document_workbook(payload: DocumentWorkbookRequest):
             page_count=payload.pageCount,
             main_scenario_id=payload.mainScenarioId,
             items=[item.model_dump() for item in payload.items],
+            coverage=[entry.model_dump() for entry in payload.coverage],
+            finalized=payload.finalized,
         )
+        if payload.finalized:
+            _, validation_errors = await run_in_threadpool(parse_excel_workbook, workbook)
+            if validation_errors:
+                messages = list(dict.fromkeys(
+                    str(error.get("message") or "خطای ساختاری") for error in validation_errors
+                ))
+                raise ValueError(
+                    "اکسل هنوز از کنترل ورود استاندارد عبور نمی‌کند: "
+                    + " | ".join(messages[:10])
+                )
         output = io.BytesIO()
         await run_in_threadpool(workbook.save, output)
     except ValueError as exc:
@@ -388,7 +498,11 @@ async def document_workbook(payload: DocumentWorkbookRequest):
     return Response(
         content=output.getvalue(),
         media_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-        headers={'Content-Disposition': 'attachment; filename="document_review_draft.xlsx"'},
+        headers={
+            'Content-Disposition': 'attachment; filename="document_import_final.xlsx"'
+            if payload.finalized
+            else 'attachment; filename="document_review_draft.xlsx"'
+        },
     )
 
 
