@@ -179,14 +179,14 @@ export function serializeUnit(
 ): Unit {
   const { newId = false, includeSubUnits = true } = options;
   const nUnit = scnState.unitMap[unitId];
-  let equipment = nUnit.equipment?.map(({ id, count, onHand }) => {
+  let equipment = nUnit.equipment?.map(({ id, ...assignment }) => {
     const { name, resourceId } = scnState.equipmentMap[id];
-    return { name, count, onHand, resourceId };
+    return { name, ...assignment, resourceId };
   });
   if (equipment?.length === 0) equipment = undefined;
-  let personnel = nUnit.personnel?.map(({ id, count, onHand }) => {
+  let personnel = nUnit.personnel?.map(({ id, ...assignment }) => {
     const { name, resourceId } = scnState.personnelMap[id];
-    return { name, count, onHand, resourceId };
+    return { name, ...assignment, resourceId };
   });
   if (personnel?.length === 0) personnel = undefined;
 
@@ -223,24 +223,22 @@ export function serializeUnit(
 
           if (s.diff) {
             if (s.diff.equipment) {
-              diffEquipment = s.diff.equipment.map(({ id, count, onHand }) => {
+              diffEquipment = s.diff.equipment.map(({ id, ...assignment }) => {
                 const item = scnState.equipmentMap[id];
                 return {
                   name: item?.name ?? id,
-                  count,
-                  onHand,
+                  ...assignment,
                   resourceId: item?.resourceId,
                 };
               });
             }
 
             if (s.diff?.personnel) {
-              diffPersonnel = s.diff.personnel.map(({ id, count, onHand }) => {
+              diffPersonnel = s.diff.personnel.map(({ id, ...assignment }) => {
                 const item = scnState.personnelMap[id];
                 return {
                   name: item?.name ?? id,
-                  count,
-                  onHand,
+                  ...assignment,
                   resourceId: item?.resourceId,
                 };
               });
@@ -266,23 +264,21 @@ export function serializeUnit(
             let updateEquipment, updatePersonnel, updateSupplies;
 
             if (s.update.equipment) {
-              updateEquipment = s.update.equipment.map(({ id, count, onHand }) => {
+              updateEquipment = s.update.equipment.map(({ id, ...assignment }) => {
                 const item = scnState.equipmentMap[id];
                 return {
                   name: item?.name ?? id,
-                  count,
-                  onHand,
+                  ...assignment,
                   resourceId: item?.resourceId,
                 };
               });
             }
             if (s.update.personnel) {
-              updatePersonnel = s.update.personnel.map(({ id, count, onHand }) => {
+              updatePersonnel = s.update.personnel.map(({ id, ...assignment }) => {
                 const item = scnState.personnelMap[id];
                 return {
                   name: item?.name ?? id,
-                  count,
-                  onHand,
+                  ...assignment,
                   resourceId: item?.resourceId,
                 };
               });
@@ -340,13 +336,11 @@ function getEquipment(state: ScenarioState): EquipmentData[] {
 }
 
 function getPersonnel(state: ScenarioState): PersonnelData[] {
-  return Object.values(state.personnelMap).map(
-    ({ name, description, resourceId }) => ({
-      name,
-      description,
-      resourceId,
-    }),
-  );
+  return Object.values(state.personnelMap).map(({ name, description, resourceId }) => ({
+    name,
+    description,
+    resourceId,
+  }));
 }
 
 function getSupplyCategories(state: ScenarioState): SupplyCategory[] {
@@ -462,8 +456,7 @@ export function useScenarioIO(store: ShallowRef<NewScenarioStore>) {
     return JSON.parse(stringifyScenario());
   }
 
-  const emergencyDraftKey = (scenarioId: string) =>
-    `kalk-emergency-draft:${scenarioId}`;
+  const emergencyDraftKey = (scenarioId: string) => `kalk-emergency-draft:${scenarioId}`;
 
   function setServerComparisonKey(value: string | null | undefined) {
     serverComparisonKey.value = value || null;
@@ -598,8 +591,7 @@ export function useScenarioIO(store: ShallowRef<NewScenarioStore>) {
       }
 
       // ذخیره در IndexedDB محلی
-      const { putScenario, putScenarioDraft, deleteScenarioDraft } =
-        await useIndexedDb();
+      const { putScenario, putScenarioDraft, deleteScenarioDraft } = await useIndexedDb();
       await putScenario(scn);
       await putScenarioDraft(scn.id, scn, {
         updatedAt: snapshotStartedAt,
@@ -610,10 +602,7 @@ export function useScenarioIO(store: ShallowRef<NewScenarioStore>) {
       clearEmergencyDraft(scn.id);
 
       // ذخیره در API
-      const saved = await scenarioApiService.saveRecord(
-        scn,
-        serverComparisonKey.value,
-      );
+      const saved = await scenarioApiService.saveRecord(scn, serverComparisonKey.value);
       lastApiSavedAt.value = new Date();
       lastSavedChangeCounter.value = snapshotChangeCounter;
       setServerComparisonKey(saved.modified);

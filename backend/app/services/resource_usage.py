@@ -13,6 +13,9 @@ PARTICIPATION_STATUS_LABELS = {
     "completed": "پایان‌یافته",
     "cancelled": "لغوشده",
     "unavailable": "خارج از دسترس",
+    "wounded": "مجروح",
+    "killed": "شهید",
+    "transferred": "منتقل‌شده",
 }
 
 
@@ -93,6 +96,11 @@ def build_resource_usage_graph(
                             ),
                             "quantity": item.get("count"),
                             "onHand": item.get("onHand"),
+                            "operationalRole": item.get("operationalRole"),
+                            "startTime": item.get("participationStartTime"),
+                            "endTime": item.get("participationEndTime"),
+                            "notes": item.get("participationNotes"),
+                            "sourceReference": item.get("sourceReference"),
                         }
                     )
 

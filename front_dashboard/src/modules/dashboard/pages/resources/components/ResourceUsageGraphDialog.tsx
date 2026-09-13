@@ -72,6 +72,12 @@ const STATUS_LABELS: Record<string, string> = {
   completed: 'پایان‌یافته',
   archived: 'بایگانی‌شده',
   planned: 'برنامه‌ریزی‌شده',
+  deployed: 'اعزام‌شده',
+  unavailable: 'خارج از دسترس',
+  cancelled: 'لغوشده',
+  wounded: 'مجروح',
+  killed: 'شهید',
+  transferred: 'منتقل‌شده',
 };
 
 function formatStatus(value?: string | null) {
@@ -177,6 +183,10 @@ const ResourceUsageGraphDialog: React.FC<Props> = ({
           position: { x: 680, y: assignmentRow * 135 },
           data: {
             label: `${assignment.unitName}\nوضعیت: ${formatStatus(assignment.status)}${
+              assignment.operationalRole
+                ? `\nنقش: ${assignment.operationalRole}`
+                : ''
+            }${
               assignment.quantity !== undefined && assignment.quantity !== null
                 ? `\nتعداد: ${assignment.quantity}`
                 : ''
@@ -444,6 +454,14 @@ const ResourceUsageGraphDialog: React.FC<Props> = ({
                                     تعداد: {assignment.quantity}
                                   </Typography>
                                 )}
+                              {assignment.operationalRole && (
+                                <Chip
+                                  size="small"
+                                  color="secondary"
+                                  variant="outlined"
+                                  label={`نقش: ${assignment.operationalRole}`}
+                                />
+                              )}
                               {assignment.sideName && (
                                 <Typography
                                   variant="caption"
@@ -481,6 +499,24 @@ const ResourceUsageGraphDialog: React.FC<Props> = ({
                                 >
                                   بازه حضور: {formatDate(assignment.startTime)}{' '}
                                   تا {formatDate(assignment.endTime)}
+                                </Typography>
+                              )}
+                              {assignment.notes && (
+                                <Typography
+                                  variant="caption"
+                                  color="text.secondary"
+                                  sx={{ flexBasis: '100%' }}
+                                >
+                                  توضیحات: {assignment.notes}
+                                </Typography>
+                              )}
+                              {assignment.sourceReference && (
+                                <Typography
+                                  variant="caption"
+                                  color="text.secondary"
+                                  sx={{ flexBasis: '100%' }}
+                                >
+                                  منبع: {assignment.sourceReference}
                                 </Typography>
                               )}
                             </Box>

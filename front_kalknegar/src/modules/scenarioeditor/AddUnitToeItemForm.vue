@@ -2,7 +2,7 @@
 import InputGroup from "@/components/InputGroup.vue";
 import { useForm } from "@/composables/forms";
 import SimpleSelect from "@/components/SimpleSelect.vue";
-import { activeScenarioKey } from "@/components/injects";
+import { activeScenarioKey, timeModalKey } from "@/components/injects";
 import { injectStrict, sortBy } from "@/utils";
 import { computed, ref, watch } from "vue";
 import { klona } from "klona";
@@ -17,6 +17,9 @@ import FormFooter from "@/modules/scenarioeditor/FormFooter.vue";
 import { Button } from "@/components/ui/button";
 import ResourcePicker from "@/modules/scenarioeditor/ResourcePicker.vue";
 import type { ResourceSearchResultDto } from "@/services/api/resourceApiService";
+import DescriptionItem from "@/components/DescriptionItem.vue";
+import PlainButton from "@/components/PlainButton.vue";
+import { formatDateString } from "@/geo/utils";
 
 type Form = NUnitEquipment | NUnitPersonnel;
 
@@ -31,7 +34,8 @@ const props = withDefaults(
   },
 );
 
-const { store } = injectStrict(activeScenarioKey);
+const { store, time } = injectStrict(activeScenarioKey);
+const { getModalTimestamp } = injectStrict(timeModalKey);
 const modelValue = defineModel<Form>();
 const emit = defineEmits<{ cancel: [void]; submit: [form: Form] }>();
 
@@ -57,11 +61,25 @@ const { form, handleSubmit } = useForm<Form>(
     id: "",
     count: 1,
     participationStatus: "planned",
+    participationStartTime:
+      props.mode === "personnel" ? +time.scenarioTime.value : undefined,
   },
   modelValue,
 );
+const personnelForm = computed(() => form.value as NUnitPersonnel);
+const timeError = ref<string | null>(null);
 
 function onSubmit() {
+  if (
+    props.mode === "personnel" &&
+    personnelForm.value.participationStartTime !== undefined &&
+    personnelForm.value.participationEndTime !== undefined &&
+    personnelForm.value.participationEndTime < personnelForm.value.participationStartTime
+  ) {
+    timeError.value = "زمان پایان حضور نمی‌تواند پیش از زمان شروع باشد.";
+    return;
+  }
+  timeError.value = null;
   handleSubmit();
   emit("submit", klona(form.value));
 }
@@ -83,14 +101,33 @@ const pickerType = computed(() =>
   props.mode === "equipment" ? "equipment" : "personnel",
 );
 
-const participationStatuses = [
+const participationStatuses = computed(() => [
   { value: "planned", label: "برنامه‌ریزی‌شده" },
   { value: "deployed", label: "اعزام‌شده" },
   { value: "active", label: "فعال در عملیات" },
   { value: "completed", label: "پایان‌یافته" },
   { value: "cancelled", label: "لغوشده" },
   { value: "unavailable", label: "خارج از دسترس" },
-];
+  ...(props.mode === "personnel"
+    ? [
+        { value: "wounded", label: "مجروح" },
+        { value: "killed", label: "شهید" },
+        { value: "transferred", label: "منتقل‌شده" },
+      ]
+    : []),
+]);
+
+async function selectParticipationTime(
+  field: "participationStartTime" | "participationEndTime",
+) {
+  const current = personnelForm.value[field] ?? +time.scenarioTime.value;
+  const value = await getModalTimestamp(current, {
+    timeZone: time.timeZone.value,
+    title:
+      field === "participationStartTime" ? "شروع حضور در عملیات" : "پایان حضور در عملیات",
+  });
+  if (value !== undefined) personnelForm.value[field] = value;
+}
 
 function openPicker() {
   showPicker.value = true;
@@ -153,19 +190,76 @@ function onPickResource(r: ResourceSearchResultDto) {
       </div>
 
       <div class="flex items-center gap-2">
-        <Button
-          type="button"
-          size="sm"
-          variant="outline"
-          @click="openPicker"
-        >
-          {{ mode === "equipment"
-            ? "انتخاب از کاتالوگ تجهیزات"
-            : "انتخاب از کاتالوگ پرسنل" }}
+        <Button type="button" size="sm" variant="outline" @click="openPicker">
+          {{
+            mode === "equipment" ? "انتخاب از کاتالوگ تجهیزات" : "انتخاب از کاتالوگ پرسنل"
+          }}
         </Button>
         <p class="text-muted-foreground text-xs">
           از مدیریت منابع داشبورد یک ردیف را انتخاب کنید.
         </p>
+      </div>
+
+      <div
+        v-if="mode === 'personnel'"
+        class="space-y-4 rounded-xl border border-slate-200 bg-slate-50/70 p-4 dark:border-slate-700 dark:bg-slate-900/40"
+      >
+        <h4 class="font-medium text-slate-800 dark:text-slate-100">
+          سابقه حضور در این عملیات
+        </h4>
+        <InputGroup
+          label="نقش یا مسئولیت عملیاتی"
+          v-model="personnelForm.operationalRole"
+          placeholder="برای نمونه: فرمانده محور جنوبی"
+        />
+        <div class="grid gap-3 sm:grid-cols-2">
+          <DescriptionItem label="شروع حضور">
+            {{
+              formatDateString(personnelForm.participationStartTime, time.timeZone.value)
+            }}
+            <PlainButton
+              type="button"
+              class="mr-2"
+              @click="selectParticipationTime('participationStartTime')"
+            >
+              انتخاب
+            </PlainButton>
+          </DescriptionItem>
+          <DescriptionItem label="پایان حضور">
+            {{
+              formatDateString(personnelForm.participationEndTime, time.timeZone.value)
+            }}
+            <PlainButton
+              type="button"
+              class="mr-2"
+              @click="selectParticipationTime('participationEndTime')"
+            >
+              انتخاب
+            </PlainButton>
+            <PlainButton
+              v-if="personnelForm.participationEndTime !== undefined"
+              type="button"
+              @click="personnelForm.participationEndTime = undefined"
+            >
+              حذف
+            </PlainButton>
+          </DescriptionItem>
+        </div>
+        <label class="block space-y-2 text-sm">
+          <span class="font-medium">توضیح عملکرد یا نتیجه حضور</span>
+          <textarea
+            v-model="personnelForm.participationNotes"
+            rows="3"
+            class="border-input bg-background focus:ring-ring w-full rounded-xl border px-3 py-2 text-sm outline-none focus:ring-2"
+            placeholder="شرح کوتاهی از مسئولیت، تصمیم یا نتیجه حضور این شخص"
+          />
+        </label>
+        <InputGroup
+          label="منبع اطلاعات"
+          v-model="personnelForm.sourceReference"
+          placeholder="برای نمونه: گزارش روزانه، صفحه ۳۵"
+        />
+        <p v-if="timeError" class="text-xs text-red-600">{{ timeError }}</p>
       </div>
 
       <p v-if="!itemCategories.length" class="text-sm text-gray-500">
@@ -178,7 +272,9 @@ function onPickResource(r: ResourceSearchResultDto) {
     <ResourcePicker
       v-model:open="showPicker"
       :type="pickerType"
-      :title="mode === 'equipment' ? 'انتخاب تجهیز از کاتالوگ' : 'انتخاب پرسنل از کاتالوگ'"
+      :title="
+        mode === 'equipment' ? 'انتخاب تجهیز از کاتالوگ' : 'انتخاب پرسنل از کاتالوگ'
+      "
       @select="onPickResource"
     />
   </form>

@@ -16,10 +16,13 @@
         <TabList
           class="border-sidebar-border bg-sidebar sticky top-0 z-20 flex w-full flex-none items-center border-b rtl:flex-row-reverse"
         >
-          <div class="flex min-w-0 flex-1 items-center overflow-x-auto">
+          <div
+            ref="tabScroller"
+            class="flex min-w-0 flex-1 items-center overflow-x-auto scroll-smooth"
+          >
             <Tab
               as="template"
-              v-for="tab in [
+              v-for="(tab, index) in [
                 'آرایش نبرد',
                 'رویدادها',
                 'فازها',
@@ -33,6 +36,7 @@
               v-slot="{ selected }"
             >
               <button
+                :ref="(element) => setTabButton(element, index)"
                 :class="[
                   selected
                     ? 'text-foreground border-foreground'
@@ -89,7 +93,7 @@ import CloseButton from "@/components/CloseButton.vue";
 import ScenarioLayersTabPanel from "@/modules/scenarioeditor/ScenarioLayersTabPanel.vue";
 import { storeToRefs } from "pinia";
 import { useUiStore, useWidthStore } from "@/stores/uiStore";
-import { defineAsyncComponent } from "vue";
+import { defineAsyncComponent, nextTick, onMounted, ref, watch } from "vue";
 import { type ScenarioEvent } from "@/types/scenarioModels";
 import { useSelectedItems } from "@/stores/selectedStore";
 import PanelResizeHandle from "@/components/PanelResizeHandle.vue";
@@ -114,10 +118,26 @@ const { activeScenarioEventId } = useSelectedItems();
 const { activeTabIndex } = storeToRefs(useUiStore());
 const widthStore = useWidthStore();
 const { orbatPanelWidth } = storeToRefs(widthStore);
+const tabScroller = ref<HTMLElement>();
+const tabButtons = ref<(HTMLElement | undefined)[]>([]);
+
+function setTabButton(element: unknown, index: number) {
+  tabButtons.value[index] = element instanceof HTMLElement ? element : undefined;
+}
+
+async function revealActiveTab(index = activeTabIndex.value) {
+  await nextTick();
+  const button = tabButtons.value[index];
+  if (!button || !tabScroller.value) return;
+  button.scrollIntoView({ block: "nearest", inline: "center" });
+}
 
 function changeTab(index: number) {
   activeTabIndex.value = index;
 }
+
+onMounted(() => revealActiveTab());
+watch(activeTabIndex, (index) => revealActiveTab(index));
 
 function onEventClick(scenarioEvent: ScenarioEvent) {
   activeScenarioEventId.value = scenarioEvent.id;

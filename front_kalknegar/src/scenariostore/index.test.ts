@@ -51,12 +51,8 @@ describe("useScenario", () => {
   it("preserves resource catalog links on equipment and personnel after save and reload", () => {
     const { scenario } = useScenario();
     const input = createScenario("resource-links");
-    input.equipment = [
-      { name: "تانک تی-۷۲", resourceId: "equipment-resource-1" },
-    ];
-    input.personnel = [
-      { name: "گروه خدمه زرهی", resourceId: "personnel-resource-1" },
-    ];
+    input.equipment = [{ name: "تانک تی-۷۲", resourceId: "equipment-resource-1" }];
+    input.personnel = [{ name: "گروه خدمه زرهی", resourceId: "personnel-resource-1" }];
     input.sides = [
       {
         id: "side-1",
@@ -71,6 +67,8 @@ describe("useScenario", () => {
                 id: "unit-1",
                 name: "گردان زرهی",
                 sidc: "10031000000000000000",
+                linkedResourceId: "unit-resource-1",
+                linkedResourceLabel: "گردان زرهی مرجع",
                 equipment: [
                   {
                     name: "تانک تی-۷۲",
@@ -83,6 +81,12 @@ describe("useScenario", () => {
                     name: "گروه خدمه زرهی",
                     count: 36,
                     resourceId: "personnel-resource-1",
+                    participationStatus: "active",
+                    operationalRole: "فرمانده گردان",
+                    participationStartTime: 100,
+                    participationEndTime: 200,
+                    participationNotes: "هدایت عملیات در محور جنوبی",
+                    sourceReference: "گزارش روزانه، صفحه ۳۵",
                   },
                 ],
                 subUnits: [],
@@ -104,6 +108,15 @@ describe("useScenario", () => {
     expect(saved.sides[0].groups[0].subUnits[0].personnel[0].resourceId).toBe(
       "personnel-resource-1",
     );
+    expect(saved.sides[0].groups[0].subUnits[0].personnel[0]).toMatchObject({
+      participationStatus: "active",
+      operationalRole: "فرمانده گردان",
+      participationStartTime: 100,
+      participationEndTime: 200,
+      participationNotes: "هدایت عملیات در محور جنوبی",
+      sourceReference: "گزارش روزانه، صفحه ۳۵",
+    });
+    expect(saved.sides[0].groups[0].subUnits[0].linkedResourceId).toBe("unit-resource-1");
 
     scenario.value.io.loadFromObject(saved);
     const savedAgain = JSON.parse(scenario.value.io.stringifyScenario());
@@ -115,6 +128,57 @@ describe("useScenario", () => {
     );
     expect(savedAgain.sides[0].groups[0].subUnits[0].personnel[0].resourceId).toBe(
       "personnel-resource-1",
+    );
+    expect(savedAgain.sides[0].groups[0].subUnits[0].personnel[0]).toMatchObject({
+      operationalRole: "فرمانده گردان",
+      participationStartTime: 100,
+      participationEndTime: 200,
+      participationNotes: "هدایت عملیات در محور جنوبی",
+      sourceReference: "گزارش روزانه، صفحه ۳۵",
+    });
+    expect(savedAgain.sides[0].groups[0].subUnits[0].linkedResourceId).toBe(
+      "unit-resource-1",
+    );
+  });
+
+  it("preserves a positioned equipment resource link after save and reload", () => {
+    const { scenario } = useScenario();
+    const input = createScenario("positioned-equipment-link");
+    input.layers = [
+      {
+        id: "layer-1",
+        name: "تجهیزات مستقر",
+        features: [
+          {
+            type: "Feature",
+            id: "equipment-feature-1",
+            geometry: { type: "Point", coordinates: [51.4, 35.7] },
+            meta: { type: "Point", name: "تانک تی-۷۲" },
+            properties: {
+              resourceId: "equipment-resource-1",
+              quantity: 3,
+              participationStatus: "active",
+              unitId: "unit-1",
+            },
+            style: { militarySymbolSidc: "10031000001205000000" } as any,
+          },
+        ],
+      },
+    ];
+
+    scenario.value.io.loadFromObject(input);
+    const saved = JSON.parse(scenario.value.io.stringifyScenario());
+    expect(saved.layers[0].features[0].properties).toMatchObject({
+      resourceId: "equipment-resource-1",
+      quantity: 3,
+      participationStatus: "active",
+      unitId: "unit-1",
+    });
+
+    scenario.value.io.loadFromObject(saved);
+    const savedAgain = JSON.parse(scenario.value.io.stringifyScenario());
+    expect(savedAgain.layers[0].features[0].properties.resourceId).toBe(
+      "equipment-resource-1",
     );
   });
 });

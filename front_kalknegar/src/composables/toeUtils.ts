@@ -13,9 +13,38 @@ export function useToeEditableItems<T>() {
   return { editMode, editedId, showAddForm, rerender, selectedItems };
 }
 
-export function createToeTableColumns() {
+const participationStatusLabels: Record<string, string> = {
+  planned: "برنامه‌ریزی‌شده",
+  deployed: "اعزام‌شده",
+  active: "فعال",
+  completed: "پایان‌یافته",
+  cancelled: "لغوشده",
+  unavailable: "خارج از دسترس",
+  wounded: "مجروح",
+  killed: "شهید",
+  transferred: "منتقل‌شده",
+};
+
+export function createToeTableColumns(options: { personnel?: boolean } = {}) {
   const columns: ColumnDef<EUnitEquipment | EUnitPersonnel>[] = [
     { id: "name", header: "نام", accessorKey: "name", size: 120 },
+    ...(options.personnel
+      ? [
+          {
+            id: "operationalRole",
+            header: "نقش عملیاتی",
+            accessorKey: "operationalRole",
+            size: 130,
+          },
+          {
+            id: "participationStatus",
+            header: "وضعیت حضور",
+            accessorFn: (item: EUnitPersonnel) =>
+              participationStatusLabels[item.participationStatus ?? ""] ?? "—",
+            size: 110,
+          },
+        ]
+      : []),
     {
       id: "assigned",
       header: "تخصیص",

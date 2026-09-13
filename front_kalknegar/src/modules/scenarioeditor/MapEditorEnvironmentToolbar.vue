@@ -215,8 +215,19 @@ onUnmounted(cancelDraw);
 <template>
   <FloatingPanel
     dir="rtl"
-    class="pointer-events-auto flex max-w-[min(96vw,900px)] flex-col gap-2 rounded-xl p-2"
+    class="pointer-events-auto flex max-h-[min(68vh,36rem)] w-[min(94vw,48rem)] flex-col gap-2 overflow-y-auto rounded-xl p-2"
   >
+    <header class="flex items-center justify-between gap-3 px-1">
+      <div class="min-w-0">
+        <h3 class="text-sm font-semibold">ترسیم شرایط محیطی</h3>
+        <p class="text-muted-foreground text-[11px]">
+          وضعیت را انتخاب کنید، بازهٔ زمانی را تعیین کنید و سپس روی نقشه ترسیم کنید.
+        </p>
+      </div>
+      <MainToolbarButton class="shrink-0" title="بستن" @click="close">
+        <CloseIcon class="size-5" />
+      </MainToolbarButton>
+    </header>
     <div class="flex w-full rounded-lg bg-slate-200/70 p-0.5 dark:bg-slate-800">
       <button
         type="button"
@@ -264,16 +275,16 @@ onUnmounted(cancelDraw);
       </button>
     </div>
 
-    <div class="flex flex-wrap items-end gap-2 border-t pt-2">
+    <div class="grid grid-cols-1 gap-2 border-t pt-2 sm:grid-cols-2">
       <PersianDateTimeField v-model="startTime" label="شروع" required />
       <PersianDateTimeField v-model="endTime" label="پایان" required />
       <div
         v-if="activeDomain === 'metoc'"
-        class="rounded border border-sky-200 bg-sky-50 px-3 py-2 text-xs text-sky-800 dark:border-sky-900 dark:bg-sky-950 dark:text-sky-100"
+        class="rounded border border-sky-200 bg-sky-50 px-3 py-2 text-xs text-sky-800 sm:col-span-2 dark:border-sky-900 dark:bg-sky-950 dark:text-sky-100"
       >
         هندسه استاندارد نماد: {{ geometryLabel }}
       </div>
-      <div v-else class="flex rounded border p-0.5">
+      <div v-else class="flex flex-wrap rounded border p-0.5 sm:col-span-2">
         <button
           type="button"
           class="flex items-center gap-1 rounded px-2 py-1.5 text-xs"
@@ -322,22 +333,22 @@ onUnmounted(cancelDraw);
           <GlobeIcon class="size-4" /> سراسری
         </button>
       </div>
-      <button
-        type="button"
-        class="rounded bg-sky-600 px-3 py-2 text-xs font-medium text-white"
-        @click="apply"
-      >
-        {{
-          drawing
-            ? "ترسیم را روی نقشه کامل کنید…"
-            : scope === "area"
-              ? "رسم و ثبت"
-              : "ثبت سراسری"
-        }}
-      </button>
-      <MainToolbarButton title="بستن" @click="close"
-        ><CloseIcon class="size-5"
-      /></MainToolbarButton>
+      <div class="flex justify-end sm:col-span-2">
+        <button
+          type="button"
+          class="rounded bg-sky-600 px-4 py-2 text-xs font-medium text-white disabled:opacity-60"
+          :disabled="drawing"
+          @click="apply"
+        >
+          {{
+            drawing
+              ? "ترسیم را روی نقشه کامل کنید…"
+              : scope === "area"
+                ? "رسم و ثبت"
+                : "ثبت سراسری"
+          }}
+        </button>
+      </div>
     </div>
   </FloatingPanel>
 </template>

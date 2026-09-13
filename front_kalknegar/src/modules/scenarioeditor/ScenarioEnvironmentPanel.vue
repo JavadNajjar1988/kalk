@@ -295,7 +295,7 @@ onUnmounted(stopDrawing);
 </script>
 
 <template>
-  <section dir="rtl" class="space-y-3">
+  <section dir="rtl" class="environment-panel space-y-3">
     <header class="flex items-start justify-between gap-2">
       <div>
         <h3 class="font-semibold">شرایط محیطی</h3>
@@ -448,8 +448,8 @@ onUnmounted(stopDrawing);
           </button>
         </div>
       </div>
-      <div class="grid grid-cols-2 gap-2">
-        <label class="col-span-2 text-xs"
+      <div class="environment-form-grid grid gap-2">
+        <label class="environment-form-title text-xs"
           >عنوان<input
             v-model="form.name"
             class="mt-1 w-full rounded border bg-transparent p-2"
@@ -563,3 +563,27 @@ onUnmounted(stopDrawing);
     </form>
   </section>
 </template>
+
+<style scoped>
+.environment-panel {
+  container-type: inline-size;
+}
+
+.environment-form-grid {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.environment-form-title {
+  grid-column: 1;
+}
+
+@container (min-width: 22rem) {
+  .environment-form-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .environment-form-title {
+    grid-column: span 2;
+  }
+}
+</style>

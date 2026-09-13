@@ -1,6 +1,27 @@
 <template>
   <div class="space-y-0.5 pt-1 text-sm leading-5">
     <slot name="header" />
+    <div class="px-2 pb-2">
+      <Button
+        type="button"
+        variant="outline"
+        size="sm"
+        class="w-full justify-center gap-2"
+        :disabled="
+          resourceLoading || !activeParentId || unitActions.isUnitLocked(activeParentId)
+        "
+        @click="resourcePickerOpen = true"
+      >
+        <IconDatabase class="size-4" />
+        {{ resourceLoading ? "در حال دریافت یگان…" : "افزودن یگان از مدیریت منابع" }}
+      </Button>
+      <p v-if="resourceError" class="mt-1 text-xs text-red-600">
+        {{ resourceError }}
+      </p>
+      <p v-else-if="!activeParentId && sides.length" class="mt-1 text-xs text-slate-500">
+        ابتدا محل قرارگیری یگان را در آرایش نبرد انتخاب کنید.
+      </p>
+    </div>
     <OrbatSide
       v-for="side in sides"
       :key="side.id"
@@ -17,6 +38,12 @@
       @add="addSide()"
     />
   </div>
+  <ResourcePicker
+    v-model:open="resourcePickerOpen"
+    type="units"
+    title="انتخاب یگان از مدیریت منابع"
+    @select="onUnitResourceSelect"
+  />
   <div
     v-if="isDragging && isCopying"
     class="fixed top-4 right-1/2 z-50 rounded-xl border border-blue-300 bg-blue-100 bg-white p-3 text-center text-sm text-blue-800 shadow-lg dark:border-blue-600 dark:bg-blue-900/50 dark:bg-slate-800 dark:text-blue-200"
@@ -57,6 +84,16 @@ import { type EntityId } from "@/types/base";
 import { monitorForElements } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
 import { isSideDragItem, isSideGroupDragItem, isUnitDragItem } from "@/types/draggables";
 import { useRecordingStore } from "@/stores/recordingStore";
+import { Button } from "@/components/ui/button";
+import { PhDatabase as IconDatabase } from "@phosphor-icons/vue";
+import ResourcePicker from "./ResourcePicker.vue";
+import {
+  resourceApiService,
+  type ResourceSearchResultDto,
+} from "@/services/api/resourceApiService";
+import { createUnitFromResource } from "./unitResourceFactory";
+import { Sidc } from "@/symbology/sidc";
+import { getNextEchelonBelow } from "@/symbology/helpers";
 
 import {
   extractInstruction,
@@ -76,6 +113,9 @@ const isDragging = ref(false);
 const isDraggingUnit = ref(false);
 const isCopying = ref(false);
 const isCopyingState = ref(false);
+const resourcePickerOpen = ref(false);
+const resourceLoading = ref(false);
+const resourceError = ref<string | null>(null);
 
 const { state, groupUpdate } = store;
 const { changeUnitParent, addSide } = unitActions;
@@ -90,6 +130,54 @@ useEventListener(document, "copy", onCopy);
 const sides = computed(() => {
   return state.sides.map((id) => state.sideMap[id]);
 });
+
+function fallbackSidcForParent(parentId: EntityId): string {
+  const parentUnit = state.unitMap[parentId];
+  if (parentUnit) {
+    const sidc = new Sidc(parentUnit.sidc);
+    sidc.emt = getNextEchelonBelow(sidc.emt);
+    return sidc.toString();
+  }
+
+  const sideGroup = state.sideGroupMap[parentId];
+  const side = sideGroup ? state.sideMap[sideGroup._pid] : state.sideMap[parentId];
+  const sidc = new Sidc("10031000000000000000");
+  if (side?.standardIdentity) sidc.standardIdentity = side.standardIdentity;
+  return sidc.toString();
+}
+
+async function onUnitResourceSelect(resource: ResourceSearchResultDto) {
+  const parentId = activeParentId.value;
+  if (!parentId || unitActions.isUnitLocked(parentId)) return;
+  resourceLoading.value = true;
+  resourceError.value = null;
+  try {
+    const detail = await resourceApiService.getById(resource.id);
+    const existingUnit = Object.values(state.unitMap).find(
+      (unit) => unit?.linkedResourceId === detail.id,
+    );
+    if (existingUnit) {
+      selectedUnitIds.value = new Set([existingUnit.id]);
+      activeUnitId.value = existingUnit.id;
+      resourceError.value =
+        "این یگان پیش‌تر به سناریو افزوده شده است؛ همان یگان برای ویرایش انتخاب شد.";
+      return;
+    }
+    const unitId = unitActions.addUnit(
+      createUnitFromResource(detail, fallbackSidcForParent(parentId)),
+      parentId,
+    );
+    const parent =
+      state.unitMap[parentId] ?? state.sideGroupMap[parentId] ?? state.sideMap[parentId];
+    if (parent) parent._isOpen = true;
+    selectedUnitIds.value = new Set([unitId]);
+    activeUnitId.value = unitId;
+  } catch (error: any) {
+    resourceError.value = error?.message || "افزودن یگان از مدیریت منابع ناموفق بود.";
+  } finally {
+    resourceLoading.value = false;
+  }
+}
 
 const { onUnitAction } = useUnitActions();
 const { selectedUnitIds, activeUnitId } = useSelectedItems();

@@ -98,6 +98,26 @@
         </MainToolbarButton>
         <div class="h-7 border-r-2 border-slate-200 sm:mx-1 dark:border-slate-600" />
         <div class="mr-2 flex items-center">
+          <MainToolbarButton
+            title="استقرار تجهیز از مدیریت منابع"
+            class="toolbar-icon-button equipment-resource-button"
+            :disabled="equipmentLoading || !equipmentTargetLayerId"
+            @click="equipmentPickerOpen = true"
+          >
+            <IconToolbox class="size-6 transition-all duration-300" />
+          </MainToolbarButton>
+          <MainToolbarButton
+            title="افزودن یگان از مدیریت منابع"
+            class="toolbar-icon-button resource-unit-button"
+            :disabled="
+              resourceLoading ||
+              !activeParentId ||
+              unitActions.isUnitLocked(activeParentId)
+            "
+            @click="resourcePickerOpen = true"
+          >
+            <IconDatabase class="size-6 transition-all duration-300" />
+          </MainToolbarButton>
           <EchelonPickerPopover
             :symbol-options="symbolOptions"
             :select-echelon="selectEchelon"
@@ -348,12 +368,44 @@
       v-if="isGetLocationActive"
       class="bg-opacity-75 absolute bottom-14 overflow-visible p-2 px-4 text-sm sm:bottom-16 sm:left-1/2 sm:-translate-x-1/2"
     >
-      روی نقشه یا آرایش نبرد کلیک کنید تا واحد را قرار دهید.
+      <span v-if="pendingEquipmentPlacement">
+        محل استقرار «{{ pendingEquipmentPlacement.resource.name }}» را روی نقشه انتخاب
+        کنید.
+      </span>
+      <span v-else-if="pendingUnitResource">
+        محل قرارگیری «{{ pendingUnitResource.name }}» را روی نقشه انتخاب کنید.
+      </span>
+      <span v-else>روی نقشه یا آرایش نبرد کلیک کنید تا واحد را قرار دهید.</span>
       <Button type="button" variant="link" size="sm" @click="cancelGetLocation()">
         لغو
       </Button>
     </FloatingPanel>
+    <FloatingPanel
+      v-else-if="resourceError"
+      class="absolute bottom-14 p-2 px-4 text-sm text-red-700 sm:bottom-16 sm:left-1/2 sm:-translate-x-1/2"
+    >
+      {{ resourceError }}
+    </FloatingPanel>
   </div>
+  <ResourcePicker
+    v-model:open="resourcePickerOpen"
+    type="units"
+    title="انتخاب یگان از مدیریت منابع"
+    @select="onUnitResourceSelect"
+  />
+  <ResourcePicker
+    v-model:open="equipmentPickerOpen"
+    type="equipment"
+    title="انتخاب تجهیز از مدیریت منابع"
+    @select="onEquipmentResourceSelect"
+  />
+  <EquipmentPlacementDialog
+    v-model:open="equipmentDialogOpen"
+    :resource="selectedEquipmentResource"
+    :units="equipmentUnitOptions"
+    :default-unit-id="activeUnitId"
+    @confirm="startEquipmentPlacement"
+  />
   <SymbolSidebarModal v-model:open="symbolSidebarOpen" />
 </template>
 <script setup lang="ts">
@@ -384,16 +436,15 @@ import {
   PhGauge as SpeedControlIcon,
   PhRepeat as EventLoopIcon,
   PhCloudSun as WeatherIcon,
+  PhDatabase as IconDatabase,
+  PhToolbox as IconToolbox,
 } from "@phosphor-icons/vue";
 import { useRouter } from "vue-router";
 import { SIMPLE_TACTICAL_MAP_ROUTE } from "@/router/names";
 import MainToolbarButton from "@/components/MainToolbarButton.vue";
-import {
-  useMainToolbarStore,
-  type ToolbarType,
-} from "@/stores/mainToolbarStore";
+import { useMainToolbarStore, type ToolbarType } from "@/stores/mainToolbarStore";
 import { injectStrict } from "@/utils";
-import { activeMapKey, activeScenarioKey } from "@/components/injects";
+import { activeLayerKey, activeMapKey, activeScenarioKey } from "@/components/injects";
 import { storeToRefs } from "pinia";
 import { useUnitSettingsStore } from "@/stores/geoStore";
 import { useEventBus, useToggle } from "@vueuse/core";
@@ -428,6 +479,19 @@ import SymbolSidebarModal from "./SymbolSidebarModal.vue";
 import type { StoryboardShowMode } from "@/types/scenarioModels";
 import { useServicesStore } from "@/modules/tactical-symbol-map/stores/services.js";
 import { cancelTacticalErase } from "./tacticalToolLifecycle";
+import ResourcePicker from "./ResourcePicker.vue";
+import {
+  resourceApiService,
+  type ResourceDto,
+  type ResourceSearchResultDto,
+} from "@/services/api/resourceApiService";
+import { createUnitFromResource, resolveResourceUnitSidc } from "./unitResourceFactory";
+import EquipmentPlacementDialog from "./EquipmentPlacementDialog.vue";
+import {
+  createPositionedEquipmentFeature,
+  type EquipmentParticipationStatus,
+} from "./equipmentResourceFactory";
+import { useSelectedItems } from "@/stores/selectedStore";
 
 const props = withDefaults(
   defineProps<{
@@ -464,10 +528,11 @@ const {
   store: { undo, redo, canRedo, canUndo, groupUpdate, state },
   time: { setCurrentTime },
   unitActions,
-  geo: { addUnitPosition },
+  geo: { addUnitPosition, addFeature, layers: scenarioLayers },
   helpers: { getSideById },
 } = injectStrict(activeScenarioKey);
 const mapRef = injectStrict(activeMapKey);
+const activeLayerId = injectStrict(activeLayerKey);
 
 const store = useMainToolbarStore();
 const tacticalServicesStore = useServicesStore();
@@ -476,12 +541,37 @@ const { moveUnitEnabled } = storeToRefs(useUnitSettingsStore());
 const recordingStore = useRecordingStore();
 const playback = usePlaybackStore();
 const storyboardPopoverOpen = ref(false);
+const resourcePickerOpen = ref(false);
+const resourceLoading = ref(false);
+const resourceError = ref<string | null>(null);
+const pendingUnitResource = ref<ResourceDto | null>(null);
+const equipmentPickerOpen = ref(false);
+const equipmentDialogOpen = ref(false);
+const equipmentLoading = ref(false);
+const selectedEquipmentResource = ref<ResourceDto | null>(null);
+const pendingEquipmentPlacement = ref<{
+  resource: ResourceDto;
+  quantity: number;
+  participationStatus: EquipmentParticipationStatus;
+  unitId?: string;
+} | null>(null);
 const selectedStoryShowMode = ref<StoryboardShowMode>(props.storyShowMode);
 const selectStore = useMapSelectStore();
 const toggleAddMultiple = useToggle(addMultiple);
 const bus = useEventBus(orbatUnitClick);
 const { activeUnitId, resetActiveParent, activeParent, activeParentId } =
   useActiveUnitStore();
+const { activeFeatureId } = useSelectedItems();
+
+const equipmentTargetLayerId = computed(
+  () => activeLayerId.value ?? scenarioLayers.value[0]?.id,
+);
+const equipmentUnitOptions = computed(() =>
+  Object.values(state.unitMap)
+    .filter((unit): unit is NonNullable<typeof unit> => Boolean(unit))
+    .map((unit) => ({ id: unit.id, name: unit.name }))
+    .sort((a, b) => a.name.localeCompare(b.name, "fa")),
+);
 
 const { currentSid, currentEchelon, activeSidc } = useToolbarUnitSymbolData();
 
@@ -547,9 +637,98 @@ const {
 });
 
 function addUnit(sidc: string, closePopover?: (ref?: Ref | HTMLElement) => void) {
+  pendingUnitResource.value = null;
   activeSidc.value = sidc;
   closePopover && closePopover();
   startGetLocation();
+}
+
+async function onUnitResourceSelect(resource: ResourceSearchResultDto) {
+  if (!activeParentId.value || unitActions.isUnitLocked(activeParentId.value)) return;
+  resourceLoading.value = true;
+  resourceError.value = null;
+  try {
+    const detail = await resourceApiService.getById(resource.id);
+    const existingUnit = Object.values(state.unitMap).find(
+      (unit) => unit?.linkedResourceId === detail.id,
+    );
+    if (existingUnit) {
+      activeUnitId.value = existingUnit.id;
+      resourceError.value =
+        "این یگان پیش‌تر به سناریو افزوده شده است؛ همان یگان برای ویرایش انتخاب شد.";
+      return;
+    }
+    if (isGetLocationActive.value) cancelGetLocation();
+    pendingUnitResource.value = detail;
+    activeSidc.value = resolveResourceUnitSidc(detail, computedSidc.value);
+    startGetLocation();
+  } catch (error: any) {
+    resourceError.value =
+      error?.message || "دریافت اطلاعات یگان از مدیریت منابع ناموفق بود.";
+  } finally {
+    resourceLoading.value = false;
+  }
+}
+
+async function onEquipmentResourceSelect(resource: ResourceSearchResultDto) {
+  equipmentLoading.value = true;
+  resourceError.value = null;
+  try {
+    selectedEquipmentResource.value = await resourceApiService.getById(resource.id);
+    equipmentDialogOpen.value = true;
+  } catch (error: any) {
+    resourceError.value =
+      error?.message || "دریافت اطلاعات تجهیز از مدیریت منابع ناموفق بود.";
+  } finally {
+    equipmentLoading.value = false;
+  }
+}
+
+function startEquipmentPlacement(options: {
+  quantity: number;
+  participationStatus: EquipmentParticipationStatus;
+  unitId?: string;
+}) {
+  const resource = selectedEquipmentResource.value;
+  if (!resource || !equipmentTargetLayerId.value) return;
+  if (isGetLocationActive.value) cancelGetLocation();
+  pendingEquipmentPlacement.value = { resource, ...options };
+  startGetLocation();
+}
+
+function addPendingEquipment(location: number[]): string | number | undefined {
+  const pending = pendingEquipmentPlacement.value;
+  const layerId = equipmentTargetLayerId.value;
+  if (!pending || layerId === undefined || layerId === null) return;
+  const unit = pending.unitId ? state.unitMap[pending.unitId] : undefined;
+  const visibleFromT =
+    Number.isFinite(state.currentTime) && state.currentTime > Number.MIN_SAFE_INTEGER
+      ? state.currentTime
+      : undefined;
+  const featureId = addFeature(
+    createPositionedEquipmentFeature(pending.resource, location, {
+      quantity: pending.quantity,
+      participationStatus: pending.participationStatus,
+      unitId: unit?.id,
+      unitName: unit?.name,
+      visibleFromT,
+    }),
+    layerId,
+  );
+  pendingEquipmentPlacement.value = null;
+  if (featureId !== undefined) activeFeatureId.value = featureId;
+  return featureId;
+}
+
+function addPendingResourceUnit(parentId: string): string | undefined {
+  const resource = pendingUnitResource.value;
+  if (!resource) return;
+  const unitId = unitActions.addUnit(
+    createUnitFromResource(resource, activeSidc.value || computedSidc.value),
+    parentId,
+  );
+  pendingUnitResource.value = null;
+  return unitId;
 }
 
 onMounted(() => {
@@ -558,6 +737,8 @@ onMounted(() => {
 
 onCancel(() => {
   selectStore.hoverEnabled = true;
+  pendingUnitResource.value = null;
+  pendingEquipmentPlacement.value = null;
 });
 
 onStart(() => {
@@ -567,8 +748,18 @@ onStart(() => {
 
 onGetLocation((location) => {
   selectStore.hoverEnabled = true;
+  if (pendingEquipmentPlacement.value) {
+    groupUpdate(() => addPendingEquipment(location));
+    return;
+  }
+  const placingResourceUnit = Boolean(pendingUnitResource.value);
   groupUpdate(() => {
     if (!activeParentId.value || unitActions.isUnitLocked(activeParentId.value)) return;
+    if (pendingUnitResource.value) {
+      const unitId = addPendingResourceUnit(activeParentId.value);
+      unitId && addUnitPosition(unitId, location);
+      return;
+    }
     const name = `${(activeParent.value?.subUnits?.length ?? 0) + 1}`;
     const sidc = new Sidc(activeSidc.value!);
     sidc.emt = currentEchelon.value;
@@ -579,13 +770,18 @@ onGetLocation((location) => {
     });
     unitId && addUnitPosition(unitId, location);
   });
-  if (addMultiple.value && activeSidc.value) {
+  if (addMultiple.value && activeSidc.value && !placingResourceUnit) {
     addUnit(activeSidc.value);
   }
 });
 
 bus.on((unit) => {
   if (isGetLocationActive.value) {
+    if (pendingUnitResource.value) {
+      addPendingResourceUnit(unit.id);
+      cancelGetLocation();
+      return;
+    }
     if (!(addMultiple.value && activeSidc.value)) {
       cancelGetLocation();
     }

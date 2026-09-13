@@ -51,7 +51,7 @@ watch(selectedSidc, (sidc) => {
 </script>
 
 <template>
-  <div class="space-y-2">
+  <div class="metoc-symbol-picker space-y-2">
     <div class="flex max-w-full gap-1 overflow-x-auto pb-1">
       <button
         v-for="family in METOC_FAMILIES"
@@ -72,7 +72,7 @@ watch(selectedSidc, (sidc) => {
       </button>
     </div>
 
-    <div class="grid grid-cols-[minmax(0,1fr)_minmax(140px,0.45fr)] gap-2">
+    <div class="metoc-filter-grid grid gap-2">
       <label class="relative">
         <SearchIcon
           class="pointer-events-none absolute top-1/2 right-2 size-4 -translate-y-1/2 text-slate-400"
@@ -132,3 +132,19 @@ watch(selectedSidc, (sidc) => {
     </div>
   </div>
 </template>
+
+<style scoped>
+.metoc-symbol-picker {
+  container-type: inline-size;
+}
+
+.metoc-filter-grid {
+  grid-template-columns: minmax(0, 1fr) minmax(8.75rem, 0.45fr);
+}
+
+@container (max-width: 22rem) {
+  .metoc-filter-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+</style>

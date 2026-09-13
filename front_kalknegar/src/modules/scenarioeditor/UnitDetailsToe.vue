@@ -14,10 +14,7 @@ import { activeScenarioKey } from "@/components/injects";
 import { useSelectedItems } from "@/stores/selectedStore";
 import type { EntityId } from "@/types/base";
 import { useEquipmentEditStore, usePersonnelEditStore } from "@/stores/toeStore";
-import type {
-  ResourceParticipationStatus,
-  StateAdd,
-} from "@/types/scenarioModels";
+import type { ResourceParticipationStatus, StateAdd } from "@/types/scenarioModels";
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import ToeGridHeader from "@/modules/scenarioeditor/ToeGridHeader.vue";
@@ -82,7 +79,7 @@ const aggregatedPersonnelCount = computed(() =>
 );
 
 const equipmentColumns = createToeTableColumns();
-const personnelColumns = createToeTableColumns();
+const personnelColumns = createToeTableColumns({ personnel: true });
 
 onUndoRedo((param) => {
   // Update the current state of the selected units in case equipment or personnel have changed
@@ -123,6 +120,11 @@ watch(
         count: number;
         onHand: number;
         participationStatus?: ResourceParticipationStatus;
+        operationalRole?: string;
+        participationStartTime?: number;
+        participationEndTime?: number;
+        participationNotes?: string;
+        sourceReference?: string;
       }
     > = {};
     const allUnitIds = new Set<EntityId>();
@@ -161,6 +163,14 @@ watch(
           onHand,
           participationStatus:
             aggPersonnel[p.id]?.participationStatus ?? p.participationStatus,
+          operationalRole: aggPersonnel[p.id]?.operationalRole ?? p.operationalRole,
+          participationStartTime:
+            aggPersonnel[p.id]?.participationStartTime ?? p.participationStartTime,
+          participationEndTime:
+            aggPersonnel[p.id]?.participationEndTime ?? p.participationEndTime,
+          participationNotes:
+            aggPersonnel[p.id]?.participationNotes ?? p.participationNotes,
+          sourceReference: aggPersonnel[p.id]?.sourceReference ?? p.sourceReference,
         };
       });
     });
@@ -175,28 +185,24 @@ watch(
         participationStatus,
       }),
     );
-    aggregatedPersonnel.value = Object.entries(aggPersonnel).map(
-      ([id, { count, onHand, participationStatus }]) => ({
-        id,
-        name: personnelMap[id]?.name ?? id,
-        description: personnelMap[id]?.description ?? "",
-        count,
-        onHand,
-        participationStatus,
-      }),
-    );
+    aggregatedPersonnel.value = Object.entries(aggPersonnel).map(([id, assignment]) => ({
+      id,
+      name: personnelMap[id]?.name ?? id,
+      description: personnelMap[id]?.description ?? "",
+      ...assignment,
+    }));
   },
   { immediate: true, deep: true },
 );
 
 function onAddSubmit(toeMode: ToeMode, formData: NUnitEquipment | NUnitPersonnel) {
-  const { id, count, onHand, participationStatus } = formData;
+  const { id, ...assignment } = formData;
   groupUpdate(() => {
     selectedUnitIds.value.forEach((unitId) => {
       if (toeMode === "equipment") {
-        updateUnitEquipment(unitId, id, { count, onHand, participationStatus });
+        updateUnitEquipment(unitId, id, assignment);
       } else if (toeMode === "personnel") {
-        updateUnitPersonnel(unitId, id, { count, onHand, participationStatus });
+        updateUnitPersonnel(unitId, id, assignment);
       }
     });
   });
@@ -207,14 +213,14 @@ function onAddSubmit(toeMode: ToeMode, formData: NUnitEquipment | NUnitPersonnel
 
 function updateItemCount(
   toeMode: ToeMode,
-  { id: itemId, count, participationStatus }: NUnitEquipment | NUnitPersonnel,
+  { id: itemId, ...assignment }: NUnitEquipment | NUnitPersonnel,
 ) {
   groupUpdate(() => {
     selectedUnitIds.value.forEach((unitId) => {
       if (toeMode === "equipment") {
-        updateUnitEquipment(unitId, itemId, { count, participationStatus });
+        updateUnitEquipment(unitId, itemId, assignment);
       } else if (toeMode === "personnel") {
-        updateUnitPersonnel(unitId, itemId, { count, participationStatus });
+        updateUnitPersonnel(unitId, itemId, assignment);
       }
     });
   });
@@ -329,7 +335,9 @@ function handleNextEditedId(mode: ToeMode, itemId: string) {
 <template>
   <Tabs v-model="uiStore.toeTabIndex" class="w-full gap-0" :unmountOnHide="false">
     <div class="-mx-4">
-      <TabsList class="border-border h-12 w-full rounded-2xl overflow-hidden border px-4 py-1">
+      <TabsList
+        class="border-border h-12 w-full overflow-hidden rounded-2xl border px-4 py-1"
+      >
         <TabsTrigger
           v-for="(lbl, k) in ['تجهیزات', 'پرسنل', 'تدارکات']"
           :key="lbl"
@@ -370,6 +378,7 @@ function handleNextEditedId(mode: ToeMode, itemId: string) {
         <template #inline-form="{ row }">
           <InlineFormWrapper class="pr-6" details-panel>
             <ModifyUnitToeItemForm
+              mode="equipment"
               :itemData="row"
               :heading="row.name"
               :editStore="equipmentEditStore"
@@ -414,6 +423,7 @@ function handleNextEditedId(mode: ToeMode, itemId: string) {
         <template #inline-form="{ row }">
           <InlineFormWrapper class="pr-6" details-panel>
             <ModifyUnitToeItemForm
+              mode="personnel"
               :itemData="row"
               :heading="row.name"
               @cancel="isEditMode = false"
@@ -433,8 +443,7 @@ function handleNextEditedId(mode: ToeMode, itemId: string) {
 
   <div class="prose dark:prose-invert p-1">
     <p v-if="!aggregatedEquipment.length && !aggregatedPersonnel.length">
-      <span v-if="includeSubordinates"
-        >داده‌ای درباره تجهیزات یا پرسنل موجود نیست</span
+      <span v-if="includeSubordinates">داده‌ای درباره تجهیزات یا پرسنل موجود نیست</span
       ><span v-else>این واحد هیچ تجهیزات یا پرسنلی ندارد</span>.
     </p>
   </div>

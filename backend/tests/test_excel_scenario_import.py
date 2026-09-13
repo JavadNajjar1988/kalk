@@ -463,6 +463,64 @@ def test_usage_graph_reports_operations_assignments_and_statuses():
     assert usage["assignments"][0]["quantity"] == 12
 
 
+def test_usage_graph_reports_person_operational_participation_details():
+    person = Resource(
+        id="person-resource-1",
+        type="personnel",
+        name="علی صیاد شیرازی",
+        code="PER-0001",
+        status="active",
+    )
+    scenario = Scenario(
+        id="operation-person-1",
+        name="عملیات شخص نمونه",
+        created=datetime.now(timezone.utc),
+        modified=datetime.now(timezone.utc),
+        content={
+            "sides": [
+                {
+                    "name": "خودی",
+                    "groups": [
+                        {
+                            "subUnits": [
+                                {
+                                    "id": "u1",
+                                    "name": "قرارگاه عملیاتی",
+                                    "personnel": [
+                                        {
+                                            "name": "علی صیاد شیرازی",
+                                            "count": 1,
+                                            "resourceId": "person-resource-1",
+                                            "participationStatus": "active",
+                                            "operationalRole": "فرمانده عملیات",
+                                            "participationStartTime": 100,
+                                            "participationEndTime": 200,
+                                            "participationNotes": "هدایت محور جنوبی",
+                                            "sourceReference": "گزارش روزانه، صفحه ۳۵",
+                                        }
+                                    ],
+                                    "subUnits": [],
+                                }
+                            ]
+                        }
+                    ],
+                }
+            ],
+            "layers": [],
+        },
+    )
+
+    assignment = build_resource_usage_graph(person, [scenario])["operations"][0][
+        "assignments"
+    ][0]
+    assert assignment["operationalRole"] == "فرمانده عملیات"
+    assert assignment["status"] == "فعال در عملیات"
+    assert assignment["startTime"] == 100
+    assert assignment["endTime"] == 200
+    assert assignment["notes"] == "هدایت محور جنوبی"
+    assert assignment["sourceReference"] == "گزارش روزانه، صفحه ۳۵"
+
+
 def test_download_template_includes_new_columns_and_features_sheet():
     wb = build_template_workbook()
 

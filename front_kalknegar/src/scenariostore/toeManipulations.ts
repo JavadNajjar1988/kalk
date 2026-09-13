@@ -153,10 +153,20 @@ export function useToeManipulations(store: NewScenarioStore) {
       count,
       onHand,
       participationStatus,
+      operationalRole,
+      participationStartTime,
+      participationEndTime,
+      participationNotes,
+      sourceReference,
     }: {
       count: number;
       onHand?: number;
       participationStatus?: ResourceParticipationStatus;
+      operationalRole?: string;
+      participationStartTime?: number;
+      participationEndTime?: number;
+      participationNotes?: string;
+      sourceReference?: string;
     },
   ) {
     update((s) => {
@@ -174,9 +184,23 @@ export function useToeManipulations(store: NewScenarioStore) {
             count,
             onHand,
             participationStatus,
+            operationalRole,
+            participationStartTime,
+            participationEndTime,
+            participationNotes,
+            sourceReference,
           });
         } else {
-          Object.assign(personnel, { count, onHand, participationStatus });
+          Object.assign(personnel, {
+            count,
+            onHand,
+            participationStatus,
+            operationalRole,
+            participationStartTime,
+            participationEndTime,
+            participationNotes,
+            sourceReference,
+          });
         }
       }
     });

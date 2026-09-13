@@ -248,20 +248,22 @@ export function prepareScenario(newScenario: Scenario): ScenarioState {
     const supplies: NUnitSupply[] = [];
     const rangeRings: RangeRing[] = [];
 
-    unit.equipment?.forEach(({ name, count, onHand, resourceId }) => {
+    unit.equipment?.forEach(({ name, ...assignment }) => {
+      const { resourceId } = assignment;
       const id =
         (resourceId && tempEquipmentResourceIdMap[resourceId]) ||
         tempEquipmentIdMap[name] ||
         addEquipment({ name, resourceId });
-      equipment.push({ id, count, onHand, resourceId });
+      equipment.push({ id, ...assignment });
     });
 
-    unit.personnel?.forEach(({ name, count, onHand, resourceId }) => {
+    unit.personnel?.forEach(({ name, ...assignment }) => {
+      const { resourceId } = assignment;
       const id =
         (resourceId && tempPersonnelResourceIdMap[resourceId]) ||
         tempPersonnelIdMap[name] ||
         addPersonnel({ name, resourceId });
-      personnel.push({ id, count, onHand, resourceId });
+      personnel.push({ id, ...assignment });
     });
 
     unit.supplies?.forEach((s) => {

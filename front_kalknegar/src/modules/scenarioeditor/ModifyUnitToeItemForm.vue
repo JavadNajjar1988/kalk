@@ -1,26 +1,35 @@
 <script setup lang="ts">
 import InputGroup from "@/components/InputGroup.vue";
 import { useForm } from "@/composables/forms";
-import { activeScenarioKey } from "@/components/injects";
+import { activeScenarioKey, timeModalKey } from "@/components/injects";
 import { injectStrict } from "@/utils";
-import { computed, watch } from "vue";
+import { computed, ref, watch } from "vue";
 import { klona } from "klona";
 import type {
   EUnitEquipment,
+  EUnitPersonnel,
   EUnitSupply,
   NUnitEquipment,
   NUnitPersonnel,
+  ToeMode,
 } from "@/types/internalModels";
 import FormFooter from "@/modules/scenarioeditor/FormFooter.vue";
 import InputCheckbox from "@/components/InputCheckbox.vue";
 import { type ToeEditStore } from "@/stores/toeStore";
 import { useTimeFormatStore } from "@/stores/timeFormatStore";
 import SimpleSelect from "@/components/SimpleSelect.vue";
+import DescriptionItem from "@/components/DescriptionItem.vue";
+import PlainButton from "@/components/PlainButton.vue";
+import { formatDateString } from "@/geo/utils";
 
 type Form = NUnitEquipment | NUnitPersonnel;
 
 const props = withDefaults(
-  defineProps<{ itemData: EUnitEquipment | EUnitSupply; editStore: ToeEditStore }>(),
+  defineProps<{
+    itemData: EUnitEquipment | EUnitPersonnel | EUnitSupply;
+    editStore: ToeEditStore;
+    mode: ToeMode;
+  }>(),
   {},
 );
 
@@ -41,6 +50,7 @@ watch(
 );
 
 const { time } = injectStrict(activeScenarioKey);
+const { getModalTimestamp } = injectStrict(timeModalKey);
 
 const fmt = useTimeFormatStore();
 
@@ -55,15 +65,36 @@ const { form } = useForm<Form>(
   },
   modelValue,
 );
+const personnelForm = computed(() => form.value as NUnitPersonnel);
+const timeError = ref<string | null>(null);
 
-const participationStatuses = [
+const participationStatuses = computed(() => [
   { value: "planned", label: "برنامه‌ریزی‌شده" },
   { value: "deployed", label: "اعزام‌شده" },
   { value: "active", label: "فعال در عملیات" },
   { value: "completed", label: "پایان‌یافته" },
   { value: "cancelled", label: "لغوشده" },
   { value: "unavailable", label: "خارج از دسترس" },
-];
+  ...(props.mode === "personnel"
+    ? [
+        { value: "wounded", label: "مجروح" },
+        { value: "killed", label: "شهید" },
+        { value: "transferred", label: "منتقل‌شده" },
+      ]
+    : []),
+]);
+
+async function selectParticipationTime(
+  field: "participationStartTime" | "participationEndTime",
+) {
+  const current = personnelForm.value[field] ?? +time.scenarioTime.value;
+  const value = await getModalTimestamp(current, {
+    timeZone: time.timeZone.value,
+    title:
+      field === "participationStartTime" ? "شروع حضور در عملیات" : "پایان حضور در عملیات",
+  });
+  if (value !== undefined) personnelForm.value[field] = value;
+}
 
 function resetForm() {
   modelValue.value = klona(props.itemData);
@@ -90,10 +121,30 @@ function onSubmit(e: KeyboardEvent | Event) {
       });
     }
   } else {
+    if (
+      props.mode === "personnel" &&
+      personnelForm.value.participationStartTime !== undefined &&
+      personnelForm.value.participationEndTime !== undefined &&
+      personnelForm.value.participationEndTime <
+        personnelForm.value.participationStartTime
+    ) {
+      timeError.value = "زمان پایان حضور نمی‌تواند پیش از زمان شروع باشد.";
+      return;
+    }
+    timeError.value = null;
     emit("updateCount", {
       id: form.value.id,
       count: form.value.count,
       participationStatus: form.value.participationStatus,
+      ...(props.mode === "personnel"
+        ? {
+            operationalRole: personnelForm.value.operationalRole,
+            participationStartTime: personnelForm.value.participationStartTime,
+            participationEndTime: personnelForm.value.participationEndTime,
+            participationNotes: personnelForm.value.participationNotes,
+            sourceReference: personnelForm.value.sourceReference,
+          }
+        : {}),
     });
   }
 }
@@ -158,6 +209,57 @@ watch([() => props.editStore.isOnHandMode, () => props.editStore.isDiffMode], ()
           v-model="editStore.diffValue"
         />
       </template>
+    </section>
+
+    <section
+      v-if="mode === 'personnel' && !editStore.isOnHandMode"
+      class="mt-5 space-y-4 rounded-xl border border-slate-200 bg-slate-50/70 p-4 dark:border-slate-700 dark:bg-slate-900/40"
+    >
+      <InputGroup
+        label="نقش یا مسئولیت عملیاتی"
+        v-model="personnelForm.operationalRole"
+      />
+      <div class="grid gap-3 sm:grid-cols-2">
+        <DescriptionItem label="شروع حضور">
+          {{
+            formatDateString(personnelForm.participationStartTime, time.timeZone.value)
+          }}
+          <PlainButton
+            type="button"
+            class="mr-2"
+            @click="selectParticipationTime('participationStartTime')"
+          >
+            تغییر
+          </PlainButton>
+        </DescriptionItem>
+        <DescriptionItem label="پایان حضور">
+          {{ formatDateString(personnelForm.participationEndTime, time.timeZone.value) }}
+          <PlainButton
+            type="button"
+            class="mr-2"
+            @click="selectParticipationTime('participationEndTime')"
+          >
+            تغییر
+          </PlainButton>
+          <PlainButton
+            v-if="personnelForm.participationEndTime !== undefined"
+            type="button"
+            @click="personnelForm.participationEndTime = undefined"
+          >
+            حذف
+          </PlainButton>
+        </DescriptionItem>
+      </div>
+      <label class="block space-y-2 text-sm">
+        <span class="font-medium">توضیح عملکرد یا نتیجه حضور</span>
+        <textarea
+          v-model="personnelForm.participationNotes"
+          rows="3"
+          class="border-input bg-background focus:ring-ring w-full rounded-xl border px-3 py-2 text-sm outline-none focus:ring-2"
+        />
+      </label>
+      <InputGroup label="منبع اطلاعات" v-model="personnelForm.sourceReference" />
+      <p v-if="timeError" class="text-xs text-red-600">{{ timeError }}</p>
     </section>
 
     <FormFooter @cancel="emit('cancel')" showNextToggle />

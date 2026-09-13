@@ -1,4 +1,8 @@
-import { BaseApiClient, handleApiResponse, ApiClientError } from './baseApiClient';
+import {
+  BaseApiClient,
+  handleApiResponse,
+  ApiClientError,
+} from './baseApiClient';
 
 export type ResourceType =
   | 'personnel'
@@ -93,6 +97,9 @@ export interface ResourceUsageAssignment {
   location?: number[] | null;
   startTime?: string | number | null;
   endTime?: string | number | null;
+  operationalRole?: string | null;
+  notes?: string | null;
+  sourceReference?: string | null;
 }
 
 export interface ResourceUsageOperation {
@@ -128,7 +135,12 @@ export interface UnitReconciliationOccurrence {
 
 export interface UnitReconciliationData {
   occurrences: UnitReconciliationOccurrence[];
-  resources: Array<{ id: string; name: string; code?: string | null; sidc?: string | null }>;
+  resources: Array<{
+    id: string;
+    name: string;
+    code?: string | null;
+    sidc?: string | null;
+  }>;
   summary: { unlinkedOccurrences: number; canonicalUnits: number };
 }
 
@@ -175,7 +187,11 @@ class ResourceApiService extends BaseApiClient {
     return handleApiResponse(response);
   }
 
-  async search(q: string, type?: ResourceType, limit = 20): Promise<ResourceDto[]> {
+  async search(
+    q: string,
+    type?: ResourceType,
+    limit = 20
+  ): Promise<ResourceDto[]> {
     const qq = (q ?? '').trim();
     if (!qq) return [];
     const params: Record<string, string> = { q, limit: String(limit) };
@@ -185,45 +201,61 @@ class ResourceApiService extends BaseApiClient {
   }
 
   async getById(id: string): Promise<ResourceDto> {
-    const response = await this.get<ResourceDto>(`/resources/${encodeURIComponent(id)}`);
+    const response = await this.get<ResourceDto>(
+      `/resources/${encodeURIComponent(id)}`
+    );
     return handleApiResponse(response);
   }
 
   async getUsageGraph(id: string): Promise<ResourceUsageGraph> {
     const response = await this.get<ResourceUsageGraph>(
-      `/resources/${encodeURIComponent(id)}/usage-graph`,
+      `/resources/${encodeURIComponent(id)}/usage-graph`
     );
     return handleApiResponse(response);
   }
 
   async getUnitReconciliation(): Promise<UnitReconciliationData> {
-    const response = await this.get<UnitReconciliationData>('/resources/units/reconciliation');
-    return handleApiResponse(response);
-  }
-
-  async applyUnitReconciliation(
-    assignments: Array<{ scenario_id: string; unit_id: string; resource_id: string }>,
-  ): Promise<{ linked: number; skipped: Array<Record<string, string>> }> {
-    const response = await this.post<{ linked: number; skipped: Array<Record<string, string>> }>(
-      '/resources/units/reconciliation',
-      { assignments },
+    const response = await this.get<UnitReconciliationData>(
+      '/resources/units/reconciliation'
     );
     return handleApiResponse(response);
   }
 
+  async applyUnitReconciliation(
+    assignments: Array<{
+      scenario_id: string;
+      unit_id: string;
+      resource_id: string;
+    }>
+  ): Promise<{ linked: number; skipped: Array<Record<string, string>> }> {
+    const response = await this.post<{
+      linked: number;
+      skipped: Array<Record<string, string>>;
+    }>('/resources/units/reconciliation', { assignments });
+    return handleApiResponse(response);
+  }
+
   async getLegacyReconciliation(
-    type: 'equipment' | 'personnel',
+    type: 'equipment' | 'personnel'
   ): Promise<LegacyResourceReconciliationData> {
     const response = await this.get<LegacyResourceReconciliationData>(
-      `/resources/reconciliation/${type}`,
+      `/resources/reconciliation/${type}`
     );
     return handleApiResponse(response);
   }
 
   async applyLegacyReconciliation(
     type: 'equipment' | 'personnel',
-    assignments: Array<{ scenario_id: string; occurrence_key: string; resource_id: string }>,
-  ): Promise<{ linkedGroups: number; linkedReferences: number; skipped: Array<Record<string, string>> }> {
+    assignments: Array<{
+      scenario_id: string;
+      occurrence_key: string;
+      resource_id: string;
+    }>
+  ): Promise<{
+    linkedGroups: number;
+    linkedReferences: number;
+    skipped: Array<Record<string, string>>;
+  }> {
     const response = await this.post<{
       linkedGroups: number;
       linkedReferences: number;
@@ -237,10 +269,13 @@ class ResourceApiService extends BaseApiClient {
     return handleApiResponse(response);
   }
 
-  async update(id: string, payload: ResourceUpdatePayload): Promise<ResourceDto> {
+  async update(
+    id: string,
+    payload: ResourceUpdatePayload
+  ): Promise<ResourceDto> {
     const response = await this.put<ResourceDto>(
       `/resources/${encodeURIComponent(id)}`,
-      payload,
+      payload
     );
     return handleApiResponse(response);
   }
@@ -249,17 +284,24 @@ class ResourceApiService extends BaseApiClient {
     await this.delete(`/resources/${encodeURIComponent(id)}`);
   }
 
-  async bulkImport(items: ResourceBulkImportItem[]): Promise<ResourceBulkImportResponse> {
+  async bulkImport(
+    items: ResourceBulkImportItem[]
+  ): Promise<ResourceBulkImportResponse> {
     const response = await this.post<ResourceBulkImportResponse>(
       '/resources/bulk-import',
-      { items },
+      { items }
     );
     return handleApiResponse(response);
   }
 
   async uploadMedia(
     file: File,
-    options: { resourceId?: string; caption?: string; credits?: string; creditsUrl?: string } = {},
+    options: {
+      resourceId?: string;
+      caption?: string;
+      credits?: string;
+      creditsUrl?: string;
+    } = {}
   ): Promise<ResourceMediaDto> {
     const additional: Record<string, any> = {};
     if (options.resourceId) additional.resource_id = options.resourceId;
@@ -269,14 +311,14 @@ class ResourceApiService extends BaseApiClient {
     const response = await this.uploadFile<ResourceMediaDto>(
       '/resources/media/upload',
       file,
-      additional,
+      additional
     );
     return handleApiResponse(response);
   }
 
   async getMediaMeta(mediaId: string): Promise<ResourceMediaDto> {
     const response = await this.get<ResourceMediaDto>(
-      `/resources/media/${encodeURIComponent(mediaId)}`,
+      `/resources/media/${encodeURIComponent(mediaId)}`
     );
     return handleApiResponse(response);
   }

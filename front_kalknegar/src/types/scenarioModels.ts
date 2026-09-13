@@ -178,6 +178,15 @@ export interface UnitPersonnel {
   resourceId?: string;
   /** وضعیت همین منبع در این عملیات، مستقل از وضعیت کلی کاتالوگ. */
   participationStatus?: ResourceParticipationStatus;
+  /** نقش یا مسئولیت این شخص در همین عملیات. */
+  operationalRole?: string;
+  /** بازه حضور شخص در عملیات، برحسب زمان سناریو. */
+  participationStartTime?: number;
+  participationEndTime?: number;
+  /** جمع‌بندی عملکرد، نتیجه حضور یا توضیح تکمیلی. */
+  participationNotes?: string;
+  /** ارجاع به سند، گزارش یا صفحه‌ای که حضور شخص را اثبات می‌کند. */
+  sourceReference?: string;
 }
 
 export type ResourceParticipationStatus =
@@ -186,7 +195,10 @@ export type ResourceParticipationStatus =
   | "active"
   | "completed"
   | "cancelled"
-  | "unavailable";
+  | "unavailable"
+  | "wounded"
+  | "killed"
+  | "transferred";
 
 export interface UnitSupply {
   count: number;
