@@ -1468,12 +1468,12 @@ def parse_excel_workbook(wb) -> tuple[dict[str, Any], list[dict[str, Any]]]:
                 if value.strip() and value.strip() != full_name
             ]
             description_parts = [part for part in (rank, specialty) if part]
-            description = "، ".join(description_parts)
+            person_description = "، ".join(description_parts)
             personnel_by_name.setdefault(
                 full_name,
                 {
                     "name": full_name,
-                    "description": description,
+                    "description": person_description,
                     "sourceId": pid,
                     "aliases": list(dict.fromkeys(aliases)),
                 },
@@ -1481,7 +1481,7 @@ def parse_excel_workbook(wb) -> tuple[dict[str, Any], list[dict[str, Any]]]:
             unit_id = _cell(pr, ph, "unit_id", "id_یگان", "شناسه_یگان", "یگان")
             if unit_id and unit_id in unit_by_id:
                 unit_by_id[unit_id].setdefault("personnel", []).append(
-                    {"name": full_name, "count": 1, "description": description}
+                    {"name": full_name, "count": 1, "description": person_description}
                 )
 
     imported_features: list[dict[str, Any]] = []

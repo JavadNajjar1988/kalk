@@ -38,7 +38,7 @@ def _workbook() -> Workbook:
     scenario.append(
         ["name", "description", "start_time", "time_zone", "symbology_standard"]
     )
-    scenario.append(["آزمون", "", "2026-01-01T08:00:00+00:00", "Asia/Tehran", "app6"])
+    scenario.append(["آزمون", "شرح سناریو", "2026-01-01T08:00:00+00:00", "Asia/Tehran", "app6"])
 
     units = wb.create_sheet("یگان")
     units.append(["id", "name", "parent_id", "side", "unit_type", "time", "lon", "lat"])
@@ -100,6 +100,7 @@ def test_parser_builds_orbat_attachments_features_and_storyboard():
     content, errors = parse_excel_workbook(_workbook())
 
     assert errors == []
+    assert content["description"] == "شرح سناریو"
     assert content["sides"][0]["id"] == "excel-side-3"
     root = content["sides"][0]["groups"][0]["subUnits"][0]
     assert root["id"] == "u1"
