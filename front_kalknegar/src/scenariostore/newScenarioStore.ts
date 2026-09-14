@@ -153,6 +153,7 @@ export function prepareScenario(newScenario: Scenario): ScenarioState {
   const tempEquipmentResourceIdMap: Record<string, string> = {};
   const tempPersonnelResourceIdMap: Record<string, string> = {};
   const tempSuppliesIdMap: Record<string, string> = {};
+  const tempSupplyResourceIdMap: Record<string, string> = {};
   const tempRangeRingGroupIdMap: Record<string, string> = {};
   const tempUnitStatusIdMap: Record<string, string> = {};
   const tempSupplyClassIdMap: Record<string, string> = {};
@@ -267,9 +268,12 @@ export function prepareScenario(newScenario: Scenario): ScenarioState {
     });
 
     unit.supplies?.forEach((s) => {
-      const { count, onHand, name } = s;
-      const id = tempSuppliesIdMap[s.name] || addSupplyCategory(s);
-      supplies.push({ id, count, onHand });
+      const { count, onHand, name, resourceId } = s;
+      const id =
+        (resourceId && tempSupplyResourceIdMap[resourceId]) ||
+        tempSuppliesIdMap[name] ||
+        addSupplyCategory(s);
+      supplies.push({ id, count, onHand, resourceId });
     });
 
     unit.rangeRings?.forEach((rr) => {
@@ -323,7 +327,11 @@ export function prepareScenario(newScenario: Scenario): ScenarioState {
             }),
             supplies: update.supplies?.map((s) => {
               const { name, ...rest } = s;
-              return { id: tempSuppliesIdMap[name] ?? name, ...rest };
+              const id =
+                (s.resourceId && tempSupplyResourceIdMap[s.resourceId]) ||
+                tempSuppliesIdMap[name] ||
+                name;
+              return { id, ...rest };
             }),
           }
         : undefined;
@@ -347,7 +355,11 @@ export function prepareScenario(newScenario: Scenario): ScenarioState {
             }),
             supplies: diff.supplies?.map((s) => {
               const { name, ...rest } = s;
-              return { id: tempSuppliesIdMap[name] ?? name, ...rest };
+              const id =
+                (s.resourceId && tempSupplyResourceIdMap[s.resourceId]) ||
+                tempSuppliesIdMap[name] ||
+                name;
+              return { id, ...rest };
             }),
           }
         : undefined;
@@ -418,6 +430,7 @@ export function prepareScenario(newScenario: Scenario): ScenarioState {
     }
 
     tempSuppliesIdMap[s.name] = id;
+    if (s.resourceId) tempSupplyResourceIdMap[s.resourceId] = id;
     supplyCategoryMap[id] = { ...sc, id };
     return id;
   }

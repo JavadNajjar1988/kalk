@@ -521,6 +521,110 @@ def test_usage_graph_reports_person_operational_participation_details():
     assert assignment["sourceReference"] == "گزارش روزانه، صفحه ۳۵"
 
 
+def test_usage_graph_reports_linked_logistics_supply():
+    supply = Resource(
+        id="logistics-resource-1",
+        type="logistics",
+        name="سوخت دیزل",
+        code="LOG-0001",
+        status="active",
+    )
+    scenario = Scenario(
+        id="operation-supply-1",
+        name="عملیات تدارکاتی نمونه",
+        created=datetime.now(timezone.utc),
+        modified=datetime.now(timezone.utc),
+        content={
+            "sides": [
+                {
+                    "name": "خودی",
+                    "groups": [
+                        {
+                            "subUnits": [
+                                {
+                                    "id": "u1",
+                                    "name": "گردان پشتیبانی",
+                                    "supplies": [
+                                        {
+                                            "name": "سوخت دیزل",
+                                            "count": 5000,
+                                            "onHand": 4200,
+                                            "resourceId": "logistics-resource-1",
+                                        }
+                                    ],
+                                    "subUnits": [],
+                                }
+                            ]
+                        }
+                    ],
+                }
+            ],
+            "layers": [],
+        },
+    )
+
+    graph = build_resource_usage_graph(supply, [scenario])
+
+    assert graph["summary"] == {"operationsCount": 1, "assignmentsCount": 1}
+    assignment = graph["operations"][0]["assignments"][0]
+    assert assignment["kind"] == "supply"
+    assert assignment["unitName"] == "گردان پشتیبانی"
+    assert assignment["quantity"] == 5000
+    assert assignment["onHand"] == 4200
+
+
+def test_usage_graph_reports_unit_operational_participation_details():
+    unit_resource = Resource(
+        id="unit-resource-1",
+        type="units",
+        name="گردان یک",
+        code="UNIT-0001",
+        status="active",
+    )
+    scenario = Scenario(
+        id="operation-unit-1",
+        name="عملیات طریق‌القدس",
+        created=datetime.now(timezone.utc),
+        modified=datetime.now(timezone.utc),
+        content={
+            "sides": [
+                {
+                    "name": "خودی",
+                    "groups": [
+                        {
+                            "subUnits": [
+                                {
+                                    "id": "u1",
+                                    "name": "گردان یک",
+                                    "linkedResourceId": "unit-resource-1",
+                                    "participationStatus": "completed",
+                                    "operationalRole": "پدافند از محور شمالی",
+                                    "participationStartTime": 100,
+                                    "participationEndTime": 300,
+                                    "participationNotes": "مأموریت با حفظ موضع پایان یافت",
+                                    "sourceReference": "گزارش عملیات، صفحه ۱۲",
+                                    "subUnits": [],
+                                }
+                            ]
+                        }
+                    ],
+                }
+            ],
+            "layers": [],
+        },
+    )
+
+    assignment = build_resource_usage_graph(unit_resource, [scenario])["operations"][
+        0
+    ]["assignments"][0]
+    assert assignment["status"] == "پایان‌یافته"
+    assert assignment["operationalRole"] == "پدافند از محور شمالی"
+    assert assignment["startTime"] == 100
+    assert assignment["endTime"] == 300
+    assert assignment["notes"] == "مأموریت با حفظ موضع پایان یافت"
+    assert assignment["sourceReference"] == "گزارش عملیات، صفحه ۱۲"
+
+
 def test_download_template_includes_new_columns_and_features_sheet():
     wb = build_template_workbook()
 

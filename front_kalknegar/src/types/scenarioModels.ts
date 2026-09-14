@@ -104,6 +104,13 @@ export interface Unit {
   /** ارجاع پایدار به رکورد یگان در کاتالوگ مدیریت منابع. */
   linkedResourceId?: string;
   linkedResourceLabel?: string;
+  /** وضعیت و جزئیات حضور همین یگان در این عملیات. */
+  participationStatus?: ResourceParticipationStatus;
+  operationalRole?: string;
+  participationStartTime?: number;
+  participationEndTime?: number;
+  participationNotes?: string;
+  sourceReference?: string;
   sidc: string;
   shortName?: string;
   description?: string;
@@ -207,6 +214,8 @@ export interface UnitSupply {
   onHand?: number;
   supplyClass?: string;
   uom?: string;
+  /** ارجاع به قلم مهمات یا تدارکات در مدیریت منابع. */
+  resourceId?: string;
 }
 
 export interface SideData {
@@ -391,6 +400,8 @@ export interface SupplyCategory {
   description?: string;
   supplyClass?: string;
   uom?: string;
+  /** ارجاع پایدار به قلم مهمات یا تدارکات در مدیریت منابع. */
+  resourceId?: string;
 }
 
 export interface SupplyClass {

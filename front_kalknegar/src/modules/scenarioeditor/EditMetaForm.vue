@@ -1,14 +1,19 @@
 <script lang="ts" setup>
 import InputGroup from "@/components/InputGroup.vue";
 import { computed, defineAsyncComponent, ref, watch } from "vue";
+import SimpleSelect from "@/components/SimpleSelect.vue";
+import DescriptionItem from "@/components/DescriptionItem.vue";
+import PlainButton from "@/components/PlainButton.vue";
 import BaseButton from "@/components/BaseButton.vue";
 import { Button } from "@/components/ui/button";
 import { klona } from "klona";
 import type { NScenarioEvent, NScenarioFeature, NUnit } from "@/types/internalModels";
 import ResourcePicker from "./ResourcePicker.vue";
 import type { ResourceSearchResultDto } from "@/services/api/resourceApiService";
-import { activeScenarioKey } from "@/components/injects";
+import { activeScenarioKey, timeModalKey } from "@/components/injects";
 import { injectStrict } from "@/utils";
+import { formatDateString } from "@/geo/utils";
+import type { ResourceParticipationStatus } from "@/types/scenarioModels";
 
 const SimpleMarkdownInput = defineAsyncComponent(
   () => import("@/components/SimpleMarkdownInput.vue"),
@@ -28,6 +33,12 @@ type ItemMetaForm = {
   linkedResourceId?: string;
   linkedResourceLabel?: string;
   phaseId?: string;
+  participationStatus?: ResourceParticipationStatus;
+  operationalRole?: string;
+  participationStartTime?: number;
+  participationEndTime?: number;
+  participationNotes?: string;
+  sourceReference?: string;
 };
 
 const form = ref<Partial<ItemMetaForm>>({
@@ -40,9 +51,17 @@ const form = ref<Partial<ItemMetaForm>>({
   linkedResourceId: undefined,
   linkedResourceLabel: undefined,
   phaseId: undefined,
+  participationStatus: undefined,
+  operationalRole: undefined,
+  participationStartTime: undefined,
+  participationEndTime: undefined,
+  participationNotes: undefined,
+  sourceReference: undefined,
 });
 
-const { store } = injectStrict(activeScenarioKey);
+const { store, time } = injectStrict(activeScenarioKey);
+const { getModalTimestamp } = injectStrict(timeModalKey);
+const timeError = ref<string | null>(null);
 const scenarioPhases = computed(() =>
   [...store.state.phases].sort((a, b) => (a.order ?? 0) - (b.order ?? 0)),
 );
@@ -93,6 +112,12 @@ watch(
         externalUrl: item?.externalUrl ?? "",
         linkedResourceId: (item as any)?.linkedResourceId ?? undefined,
         linkedResourceLabel: (item as any)?.linkedResourceLabel ?? undefined,
+        participationStatus: item.participationStatus ?? "planned",
+        operationalRole: item.operationalRole ?? "",
+        participationStartTime: item.participationStartTime,
+        participationEndTime: item.participationEndTime,
+        participationNotes: item.participationNotes ?? "",
+        sourceReference: item.sourceReference ?? "",
       };
     } else if (isScenarioEventType(item)) {
       form.value = {
@@ -122,7 +147,37 @@ function clearLinkedResource() {
   form.value.linkedResourceLabel = undefined;
 }
 
+const participationStatuses = [
+  { value: "planned", label: "برنامه‌ریزی‌شده" },
+  { value: "deployed", label: "اعزام‌شده" },
+  { value: "active", label: "فعال در عملیات" },
+  { value: "completed", label: "پایان‌یافته" },
+  { value: "cancelled", label: "لغوشده" },
+  { value: "unavailable", label: "خارج از دسترس" },
+];
+
+async function selectParticipationTime(
+  field: "participationStartTime" | "participationEndTime",
+) {
+  const current = form.value[field] ?? +time.scenarioTime.value;
+  const value = await getModalTimestamp(current, {
+    timeZone: time.timeZone.value,
+    title: field === "participationStartTime" ? "شروع حضور یگان" : "پایان حضور یگان",
+  });
+  if (value !== undefined) form.value[field] = value;
+}
+
 const onFormSubmit = () => {
+  if (
+    isUnit.value &&
+    form.value.participationStartTime !== undefined &&
+    form.value.participationEndTime !== undefined &&
+    form.value.participationEndTime < form.value.participationStartTime
+  ) {
+    timeError.value = "زمان پایان حضور نمی‌تواند پیش از زمان شروع باشد.";
+    return;
+  }
+  timeError.value = null;
   emit("update", klona(form.value));
 };
 </script>
@@ -146,6 +201,74 @@ const onFormSubmit = () => {
       v-model="form.description"
       description="از نحو نوشتار markdown برای قالب‌بندی استفاده کنید"
     />
+
+    <section
+      v-if="isUnit && form.linkedResourceId"
+      class="space-y-4 rounded-xl border border-slate-200 bg-slate-50/70 p-4 dark:border-slate-700 dark:bg-slate-900/40"
+    >
+      <div>
+        <h4 class="font-medium text-slate-800 dark:text-slate-100">
+          سابقه حضور یگان در این عملیات
+        </h4>
+        <p class="text-muted-foreground mt-1 text-xs">
+          این اطلاعات فقط برای همین عملیات ثبت می‌شود و مشخصات اصلی یگان را تغییر نمی‌دهد.
+        </p>
+      </div>
+      <SimpleSelect
+        label="وضعیت حضور"
+        v-model="form.participationStatus"
+        :items="participationStatuses"
+      />
+      <InputGroup
+        label="مأموریت یا نقش عملیاتی"
+        v-model="form.operationalRole"
+        placeholder="برای نمونه: پدافند از محور شمالی"
+      />
+      <div class="grid gap-3 sm:grid-cols-2">
+        <DescriptionItem label="شروع حضور">
+          {{ formatDateString(form.participationStartTime, time.timeZone.value) }}
+          <PlainButton
+            type="button"
+            class="mr-2"
+            @click="selectParticipationTime('participationStartTime')"
+          >
+            انتخاب
+          </PlainButton>
+        </DescriptionItem>
+        <DescriptionItem label="پایان حضور">
+          {{ formatDateString(form.participationEndTime, time.timeZone.value) }}
+          <PlainButton
+            type="button"
+            class="mr-2"
+            @click="selectParticipationTime('participationEndTime')"
+          >
+            انتخاب
+          </PlainButton>
+          <PlainButton
+            v-if="form.participationEndTime !== undefined"
+            type="button"
+            @click="form.participationEndTime = undefined"
+          >
+            حذف
+          </PlainButton>
+        </DescriptionItem>
+      </div>
+      <label class="block space-y-2 text-sm">
+        <span class="font-medium">عملکرد یا نتیجه حضور</span>
+        <textarea
+          v-model="form.participationNotes"
+          rows="3"
+          class="border-input bg-background focus:ring-ring w-full rounded-xl border px-3 py-2 text-sm outline-none focus:ring-2"
+          placeholder="شرح مأموریت انجام‌شده، تغییر وضعیت یا نتیجه حضور یگان"
+        />
+      </label>
+      <InputGroup
+        label="منبع اطلاعات"
+        v-model="form.sourceReference"
+        placeholder="برای نمونه: گزارش عملیات، صفحه ۳۵"
+      />
+      <p v-if="timeError" class="text-xs text-red-600">{{ timeError }}</p>
+    </section>
 
     <label v-if="isScenarioEvent" class="block space-y-1 text-sm">
       <span>فاز سناریو</span>

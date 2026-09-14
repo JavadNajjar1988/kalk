@@ -86,7 +86,7 @@ export interface ResourceBulkImportResponse {
 }
 
 export interface ResourceUsageAssignment {
-  kind: 'equipment' | 'personnel' | 'unit' | 'positioned-equipment';
+  kind: 'equipment' | 'personnel' | 'unit' | 'supply' | 'positioned-equipment';
   unitId?: string | null;
   unitName: string;
   parentUnitName?: string | null;

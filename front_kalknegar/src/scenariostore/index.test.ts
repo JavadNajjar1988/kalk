@@ -48,11 +48,14 @@ describe("useScenario", () => {
     expect(saved.objectives).toEqual(["حفظ منطقه عملیاتی"]);
   });
 
-  it("preserves resource catalog links on equipment and personnel after save and reload", () => {
+  it("preserves resource catalog links on equipment, personnel, and supplies after save and reload", () => {
     const { scenario } = useScenario();
     const input = createScenario("resource-links");
     input.equipment = [{ name: "تانک تی-۷۲", resourceId: "equipment-resource-1" }];
     input.personnel = [{ name: "گروه خدمه زرهی", resourceId: "personnel-resource-1" }];
+    input.supplyCategories = [
+      { name: "سوخت دیزل", uom: "لیتر", resourceId: "logistics-resource-1" },
+    ];
     input.sides = [
       {
         id: "side-1",
@@ -69,6 +72,12 @@ describe("useScenario", () => {
                 sidc: "10031000000000000000",
                 linkedResourceId: "unit-resource-1",
                 linkedResourceLabel: "گردان زرهی مرجع",
+                participationStatus: "active",
+                operationalRole: "اجرای تک در محور جنوبی",
+                participationStartTime: 50,
+                participationEndTime: 250,
+                participationNotes: "هدف عملیاتی تصرف شد",
+                sourceReference: "گزارش عملیات، صفحه ۱۲",
                 equipment: [
                   {
                     name: "تانک تی-۷۲",
@@ -89,6 +98,14 @@ describe("useScenario", () => {
                     sourceReference: "گزارش روزانه، صفحه ۳۵",
                   },
                 ],
+                supplies: [
+                  {
+                    name: "سوخت دیزل",
+                    count: 5000,
+                    onHand: 4200,
+                    resourceId: "logistics-resource-1",
+                  },
+                ],
                 subUnits: [],
               },
             ],
@@ -102,12 +119,18 @@ describe("useScenario", () => {
 
     expect(saved.equipment[0].resourceId).toBe("equipment-resource-1");
     expect(saved.personnel[0].resourceId).toBe("personnel-resource-1");
+    expect(saved.supplyCategories[0].resourceId).toBe("logistics-resource-1");
     expect(saved.sides[0].groups[0].subUnits[0].equipment[0].resourceId).toBe(
       "equipment-resource-1",
     );
     expect(saved.sides[0].groups[0].subUnits[0].personnel[0].resourceId).toBe(
       "personnel-resource-1",
     );
+    expect(saved.sides[0].groups[0].subUnits[0].supplies[0]).toMatchObject({
+      resourceId: "logistics-resource-1",
+      count: 5000,
+      onHand: 4200,
+    });
     expect(saved.sides[0].groups[0].subUnits[0].personnel[0]).toMatchObject({
       participationStatus: "active",
       operationalRole: "فرمانده گردان",
@@ -117,18 +140,30 @@ describe("useScenario", () => {
       sourceReference: "گزارش روزانه، صفحه ۳۵",
     });
     expect(saved.sides[0].groups[0].subUnits[0].linkedResourceId).toBe("unit-resource-1");
+    expect(saved.sides[0].groups[0].subUnits[0]).toMatchObject({
+      participationStatus: "active",
+      operationalRole: "اجرای تک در محور جنوبی",
+      participationStartTime: 50,
+      participationEndTime: 250,
+      participationNotes: "هدف عملیاتی تصرف شد",
+      sourceReference: "گزارش عملیات، صفحه ۱۲",
+    });
 
     scenario.value.io.loadFromObject(saved);
     const savedAgain = JSON.parse(scenario.value.io.stringifyScenario());
 
     expect(savedAgain.equipment[0].resourceId).toBe("equipment-resource-1");
     expect(savedAgain.personnel[0].resourceId).toBe("personnel-resource-1");
+    expect(savedAgain.supplyCategories[0].resourceId).toBe("logistics-resource-1");
     expect(savedAgain.sides[0].groups[0].subUnits[0].equipment[0].resourceId).toBe(
       "equipment-resource-1",
     );
     expect(savedAgain.sides[0].groups[0].subUnits[0].personnel[0].resourceId).toBe(
       "personnel-resource-1",
     );
+    expect(
+      savedAgain.sides[0].groups[0].subUnits[0].supplies[0].resourceId,
+    ).toBe("logistics-resource-1");
     expect(savedAgain.sides[0].groups[0].subUnits[0].personnel[0]).toMatchObject({
       operationalRole: "فرمانده گردان",
       participationStartTime: 100,
@@ -139,6 +174,14 @@ describe("useScenario", () => {
     expect(savedAgain.sides[0].groups[0].subUnits[0].linkedResourceId).toBe(
       "unit-resource-1",
     );
+    expect(savedAgain.sides[0].groups[0].subUnits[0]).toMatchObject({
+      participationStatus: "active",
+      operationalRole: "اجرای تک در محور جنوبی",
+      participationStartTime: 50,
+      participationEndTime: 250,
+      participationNotes: "هدف عملیاتی تصرف شد",
+      sourceReference: "گزارش عملیات، صفحه ۱۲",
+    });
   });
 
   it("preserves a positioned equipment resource link after save and reload", () => {

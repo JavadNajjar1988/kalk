@@ -8,7 +8,7 @@ const enabled = defineModel({ default: true });
 const id = useId();
 </script>
 <template>
-  <div class="flex items-center space-x-2">
+  <div class="flex items-center gap-2.5">
     <Switch v-model="enabled" :id="id" :disabled />
     <Label v-if="$slots.default" :for="id" :disabled>
       <slot />

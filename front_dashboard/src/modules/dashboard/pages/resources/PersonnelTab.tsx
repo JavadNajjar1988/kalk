@@ -65,6 +65,10 @@ import { toLocalDateInput } from '@/utils/dateUtils';
 import PersonnelDeleteConfirmModal from './PersonnelDeleteConfirmModal';
 import ResourceUsageGraphDialog from './components/ResourceUsageGraphDialog';
 import LegacyResourceReconciliationDialog from './components/LegacyResourceReconciliationDialog';
+import {
+  buildUnitReferenceLabels,
+  resolveUnitReferenceLabel,
+} from './resourceReferenceLabels';
 
 const PersonnelTab: React.FC = () => {
   const theme = useTheme();
@@ -86,7 +90,9 @@ const PersonnelTab: React.FC = () => {
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedPersonnel, setSelectedPersonnel] =
     useState<PersonnelItem | null>(null);
-  const [usagePersonnel, setUsagePersonnel] = useState<PersonnelItem | null>(null);
+  const [usagePersonnel, setUsagePersonnel] = useState<PersonnelItem | null>(
+    null
+  );
   const [reconcileOpen, setReconcileOpen] = useState(false);
   const [personnelForm, setPersonnelForm] = useState({
     personalCode: '',
@@ -110,11 +116,31 @@ const PersonnelTab: React.FC = () => {
   );
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [clearExisting, setClearExisting] = useState<boolean>(false);
+  const [unitReferenceLabels, setUnitReferenceLabels] = useState(
+    buildUnitReferenceLabels([])
+  );
 
   // Load data on mount
   useEffect(() => {
     dispatch(fetchTabItems({ tabType: 'personnel', filters }));
   }, [dispatch, filters]);
+
+  useEffect(() => {
+    let active = true;
+    resourceApiService
+      .list({ type: 'units', limit: 500 })
+      .then(result => {
+        if (active) {
+          setUnitReferenceLabels(buildUnitReferenceLabels(result.items));
+        }
+      })
+      .catch(() => {
+        // در داده‌های قدیمی یا حالت آفلاین، مقدار خام همچنان نمایش داده می‌شود.
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
 
   // Update filters when search or status changes
   useEffect(() => {
@@ -300,6 +326,9 @@ const PersonnelTab: React.FC = () => {
       person.personalCode.toLowerCase().includes(searchTerm.toLowerCase()) ||
       person.nationalId.includes(searchTerm) ||
       person.unit.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      resolveUnitReferenceLabel(person.unit, unitReferenceLabels)
+        .toLowerCase()
+        .includes(searchTerm.toLowerCase()) ||
       person.rank.toLowerCase().includes(searchTerm.toLowerCase()) ||
       (person.position &&
         person.position.toLowerCase().includes(searchTerm.toLowerCase())) ||
@@ -334,7 +363,11 @@ const PersonnelTab: React.FC = () => {
           </Typography>
         </Box>
         <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-          <Button variant="outlined" startIcon={<LinkIcon />} onClick={() => setReconcileOpen(true)}>
+          <Button
+            variant="outlined"
+            startIcon={<LinkIcon />}
+            onClick={() => setReconcileOpen(true)}
+          >
             تطبیق پرسنل قدیمی
           </Button>
           <Button
@@ -523,8 +556,18 @@ const PersonnelTab: React.FC = () => {
                       />
                     </TableCell>
                     <TableCell>
-                      <Typography variant="body2" noWrap title={person.unit}>
-                        {person.unit}
+                      <Typography
+                        variant="body2"
+                        noWrap
+                        title={resolveUnitReferenceLabel(
+                          person.unit,
+                          unitReferenceLabels
+                        )}
+                      >
+                        {resolveUnitReferenceLabel(
+                          person.unit,
+                          unitReferenceLabels
+                        )}
                       </Typography>
                     </TableCell>
                     <TableCell>
@@ -555,7 +598,10 @@ const PersonnelTab: React.FC = () => {
                     <TableCell align="center">
                       <IconButton
                         size="small"
-                        onClick={(event) => { event.stopPropagation(); handleOpenModal(person); }}
+                        onClick={event => {
+                          event.stopPropagation();
+                          handleOpenModal(person);
+                        }}
                         color="primary"
                         title="ویرایش"
                       >
@@ -563,7 +609,10 @@ const PersonnelTab: React.FC = () => {
                       </IconButton>
                       <IconButton
                         size="small"
-                        onClick={(event) => { event.stopPropagation(); handleDelete(person.id); }}
+                        onClick={event => {
+                          event.stopPropagation();
+                          handleDelete(person.id);
+                        }}
                         color="error"
                         title="حذف"
                       >
@@ -571,7 +620,10 @@ const PersonnelTab: React.FC = () => {
                       </IconButton>
                       <IconButton
                         size="small"
-                        onClick={(event) => { event.stopPropagation(); setUsagePersonnel(person); }}
+                        onClick={event => {
+                          event.stopPropagation();
+                          setUsagePersonnel(person);
+                        }}
                         color="secondary"
                         title="سابقه عملیات"
                       >
@@ -781,14 +833,20 @@ const PersonnelTab: React.FC = () => {
       <ResourceUsageGraphDialog
         open={Boolean(usagePersonnel)}
         resourceId={usagePersonnel?.id || null}
-        resourceName={usagePersonnel ? `${usagePersonnel.firstName} ${usagePersonnel.lastName}` : undefined}
+        resourceName={
+          usagePersonnel
+            ? `${usagePersonnel.firstName} ${usagePersonnel.lastName}`
+            : undefined
+        }
         onClose={() => setUsagePersonnel(null)}
       />
       <LegacyResourceReconciliationDialog
         open={reconcileOpen}
         type="personnel"
         onClose={() => setReconcileOpen(false)}
-        onApplied={() => dispatch(fetchTabItems({ tabType: 'personnel', filters }))}
+        onApplied={() =>
+          dispatch(fetchTabItems({ tabType: 'personnel', filters }))
+        }
       />
     </Box>
   );

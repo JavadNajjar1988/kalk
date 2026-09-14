@@ -25,6 +25,7 @@ export function resolveResourceUnitSidc(
 export function createUnitFromResource(
   resource: ResourceDto,
   fallbackSidc: string,
+  participationStartTime?: number,
 ): NUnitAdd {
   const metadata = resource.metadata ?? {};
   return {
@@ -35,6 +36,8 @@ export function createUnitFromResource(
     sidc: resolveResourceUnitSidc(resource, fallbackSidc),
     linkedResourceId: resource.id,
     linkedResourceLabel: resource.name,
+    participationStatus: "planned",
+    participationStartTime,
     subUnits: [],
     state: [],
   };

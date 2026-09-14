@@ -164,7 +164,11 @@ async function onUnitResourceSelect(resource: ResourceSearchResultDto) {
       return;
     }
     const unitId = unitActions.addUnit(
-      createUnitFromResource(detail, fallbackSidcForParent(parentId)),
+      createUnitFromResource(
+        detail,
+        fallbackSidcForParent(parentId),
+        +time.scenarioTime.value,
+      ),
       parentId,
     );
     const parent =

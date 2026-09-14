@@ -30,7 +30,10 @@ import {
   Link as LinkIcon,
 } from '@mui/icons-material';
 import resourceApiService from '@/services/api/resourceApiService';
-import { applyPrimaryImageChanges, PrimaryImageChanges } from '@/modules/dashboard/pages/resources/components/primaryImageHelpers';
+import {
+  applyPrimaryImageChanges,
+  PrimaryImageChanges,
+} from '@/modules/dashboard/pages/resources/components/primaryImageHelpers';
 import { useTranslation } from '@/hooks/useTranslation';
 import { useAppDispatch, useAppSelector } from '@/store';
 import {
@@ -51,6 +54,10 @@ import EquipmentModal from '@/modules/dashboard/pages/resources/modals/Equipment
 import EquipmentDeleteConfirmModal from '@/modules/dashboard/pages/resources/EquipmentDeleteConfirmModal';
 import ResourceUsageGraphDialog from '@/modules/dashboard/pages/resources/components/ResourceUsageGraphDialog';
 import LegacyResourceReconciliationDialog from './components/LegacyResourceReconciliationDialog';
+import {
+  buildUnitReferenceLabels,
+  resolveUnitReferenceLabel,
+} from './resourceReferenceLabels';
 
 // Import equipment data
 import equipmentData from '@/data/resources/equipment.json';
@@ -58,28 +65,59 @@ import equipmentData from '@/data/resources/equipment.json';
 const EquipmentTab: React.FC = () => {
   const { t } = useTranslation();
   const dispatch = useAppDispatch();
-  
+
   // Redux state
-  const equipment = useAppSelector(state => selectTabItems(state, 'equipment')) as EquipmentItem[];
+  const equipment = useAppSelector(state =>
+    selectTabItems(state, 'equipment')
+  ) as EquipmentItem[];
   const loading = useAppSelector(state => selectTabLoading(state, 'equipment'));
   const error = useAppSelector(state => selectTabError(state, 'equipment'));
   const filters = useAppSelector(state => selectTabFilters(state, 'equipment'));
-  const pagination = useAppSelector(state => selectTabPagination(state, 'equipment'));
-  
+  const pagination = useAppSelector(state =>
+    selectTabPagination(state, 'equipment')
+  );
+
   // Local state
   const [modalOpen, setModalOpen] = useState(false);
-  const [selectedEquipment, setSelectedEquipment] = useState<EquipmentItem | null>(null);
-  const [usageEquipment, setUsageEquipment] = useState<EquipmentItem | null>(null);
+  const [selectedEquipment, setSelectedEquipment] =
+    useState<EquipmentItem | null>(null);
+  const [usageEquipment, setUsageEquipment] = useState<EquipmentItem | null>(
+    null
+  );
   const [reconcileOpen, setReconcileOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState(filters.search || '');
-  const [statusFilter, setStatusFilter] = useState<string>(filters.status || 'all');
-  const [typeFilter, setTypeFilter] = useState<string>((filters as any).type || 'all');
-  
+  const [statusFilter, setStatusFilter] = useState<string>(
+    filters.status || 'all'
+  );
+  const [typeFilter, setTypeFilter] = useState<string>(
+    (filters as any).type || 'all'
+  );
+  const [unitReferenceLabels, setUnitReferenceLabels] = useState(
+    buildUnitReferenceLabels([])
+  );
+
   // Load data on mount
   useEffect(() => {
     dispatch(fetchTabItems({ tabType: 'equipment', filters }));
   }, [dispatch, filters]);
-  
+
+  useEffect(() => {
+    let active = true;
+    resourceApiService
+      .list({ type: 'units', limit: 500 })
+      .then(result => {
+        if (active) {
+          setUnitReferenceLabels(buildUnitReferenceLabels(result.items));
+        }
+      })
+      .catch(() => {
+        // در داده‌های قدیمی یا حالت آفلاین، مقدار خام همچنان نمایش داده می‌شود.
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
+
   // Update filters when search or status changes
   useEffect(() => {
     const newFilters = {
@@ -102,7 +140,7 @@ const EquipmentTab: React.FC = () => {
 
   const handleSave = async (
     itemData: Omit<EquipmentItem, 'id' | 'createdAt' | 'updatedAt'>,
-    imageChanges?: PrimaryImageChanges,
+    imageChanges?: PrimaryImageChanges
   ) => {
     try {
       if (selectedEquipment) {
@@ -111,16 +149,20 @@ const EquipmentTab: React.FC = () => {
           currentPrimaryMediaId: selectedEquipment.primaryMediaId,
           changes: imageChanges,
         });
-        await dispatch(updateTabItem({
-          tabType: 'equipment',
-          itemId: selectedEquipment.id,
-          itemData: { ...itemData, primaryMediaId: newPrimaryMediaId },
-        })).unwrap();
+        await dispatch(
+          updateTabItem({
+            tabType: 'equipment',
+            itemId: selectedEquipment.id,
+            itemData: { ...itemData, primaryMediaId: newPrimaryMediaId },
+          })
+        ).unwrap();
       } else {
-        const result = await dispatch(createTabItem({
-          tabType: 'equipment',
-          itemData,
-        })).unwrap();
+        const result = await dispatch(
+          createTabItem({
+            tabType: 'equipment',
+            itemData,
+          })
+        ).unwrap();
         const created = result.item as EquipmentItem;
         if (imageChanges?.selectedFile) {
           const newPrimaryMediaId = await applyPrimaryImageChanges({
@@ -129,11 +171,13 @@ const EquipmentTab: React.FC = () => {
             changes: imageChanges,
           });
           if (newPrimaryMediaId) {
-            await dispatch(updateTabItem({
-              tabType: 'equipment',
-              itemId: created.id,
-              itemData: { ...itemData, primaryMediaId: newPrimaryMediaId },
-            })).unwrap();
+            await dispatch(
+              updateTabItem({
+                tabType: 'equipment',
+                itemId: created.id,
+                itemData: { ...itemData, primaryMediaId: newPrimaryMediaId },
+              })
+            ).unwrap();
           }
         }
       }
@@ -144,7 +188,8 @@ const EquipmentTab: React.FC = () => {
   };
 
   const [deleteOpen, setDeleteOpen] = useState(false);
-  const [pendingDeleteEquipment, setPendingDeleteEquipment] = useState<EquipmentItem | null>(null);
+  const [pendingDeleteEquipment, setPendingDeleteEquipment] =
+    useState<EquipmentItem | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
   const handleDelete = (id: string) => {
@@ -156,7 +201,9 @@ const EquipmentTab: React.FC = () => {
   const confirmDelete = async (id: string) => {
     try {
       setIsDeleting(true);
-      await dispatch(deleteTabItem({ tabType: 'equipment', itemId: id })).unwrap();
+      await dispatch(
+        deleteTabItem({ tabType: 'equipment', itemId: id })
+      ).unwrap();
       setDeleteOpen(false);
       setPendingDeleteEquipment(null);
     } catch (error) {
@@ -165,86 +212,130 @@ const EquipmentTab: React.FC = () => {
       setIsDeleting(false);
     }
   };
-  
+
   const handlePageChange = (event: unknown, newPage: number) => {
-    dispatch(setTabPagination({ tabType: 'equipment', pagination: { page: newPage } }));
+    dispatch(
+      setTabPagination({ tabType: 'equipment', pagination: { page: newPage } })
+    );
   };
-  
-  const handleRowsPerPageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+
+  const handleRowsPerPageChange = (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
     const newRowsPerPage = parseInt(event.target.value, 10);
-    dispatch(setTabPagination({ 
-      tabType: 'equipment', 
-      pagination: { pageSize: newRowsPerPage, page: 0 } 
-    }));
+    dispatch(
+      setTabPagination({
+        tabType: 'equipment',
+        pagination: { pageSize: newRowsPerPage, page: 0 },
+      })
+    );
   };
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'available': return 'primary';
-      case 'assigned': return 'info';
-      case 'maintenance': return 'warning';
-      case 'retired': return 'default';
-      default: return 'default';
+      case 'available':
+        return 'primary';
+      case 'assigned':
+        return 'info';
+      case 'maintenance':
+        return 'warning';
+      case 'retired':
+        return 'default';
+      default:
+        return 'default';
     }
   };
 
   const getStatusLabel = (status: string) => {
     switch (status) {
-      case 'available': return 'موجود';
-      case 'assigned': return 'تخصیص‌یافته';
-      case 'maintenance': return 'در تعمیر';
-      case 'retired': return 'مستهلک';
-      default: return status;
+      case 'available':
+        return 'موجود';
+      case 'assigned':
+        return 'تخصیص‌یافته';
+      case 'maintenance':
+        return 'در تعمیر';
+      case 'retired':
+        return 'مستهلک';
+      default:
+        return status;
     }
   };
 
   const getConditionColor = (condition: string) => {
     switch (condition) {
-      case 'excellent': return 'primary';
-      case 'good': return 'info';
-      case 'fair': return 'warning';
-      case 'poor': return 'error';
-      case 'damaged': return 'error';
-      default: return 'default';
+      case 'excellent':
+        return 'primary';
+      case 'good':
+        return 'info';
+      case 'fair':
+        return 'warning';
+      case 'poor':
+        return 'error';
+      case 'damaged':
+        return 'error';
+      default:
+        return 'default';
     }
   };
 
   const getConditionLabel = (condition: string) => {
     switch (condition) {
-      case 'excellent': return 'عالی';
-      case 'good': return 'خوب';
-      case 'fair': return 'قابل قبول';
-      case 'poor': return 'ضعیف';
-      case 'damaged': return 'آسیب‌دیده';
-      default: return condition;
+      case 'excellent':
+        return 'عالی';
+      case 'good':
+        return 'خوب';
+      case 'fair':
+        return 'قابل قبول';
+      case 'poor':
+        return 'ضعیف';
+      case 'damaged':
+        return 'آسیب‌دیده';
+      default:
+        return condition;
     }
   };
 
   const filteredEquipment = equipment.filter(item => {
-    const matchesSearch = !searchTerm || 
+    const matchesSearch =
+      !searchTerm ||
       item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       item.equipmentCode.toLowerCase().includes(searchTerm.toLowerCase()) ||
       item.type.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (item.manufacturer && item.manufacturer.toLowerCase().includes(searchTerm.toLowerCase()));
-    
-    const matchesStatus = statusFilter === 'all' || item.status === statusFilter;
+      (item.manufacturer &&
+        item.manufacturer.toLowerCase().includes(searchTerm.toLowerCase()));
+
+    const matchesStatus =
+      statusFilter === 'all' || item.status === statusFilter;
     const matchesType = typeFilter === 'all' || item.type === typeFilter;
-    
+
     return matchesSearch && matchesStatus && matchesType;
   });
 
   return (
-    <Box sx={{ p: 3, height: '100%', display: 'flex', flexDirection: 'column' }}>      
+    <Box
+      sx={{ p: 3, height: '100%', display: 'flex', flexDirection: 'column' }}
+    >
       {/* Header */}
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>          
+      <Box
+        sx={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          mb: 3,
+        }}
+      >
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
           <EquipmentIcon sx={{ fontSize: 32, color: 'primary.main' }} />
           <Typography variant="h5" fontWeight="bold">
             مدیریت تجهیزات و سامانه‌ها
           </Typography>
         </Box>
         <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-          <Button variant="outlined" startIcon={<LinkIcon />} onClick={() => setReconcileOpen(true)}>
+          <Button
+            variant="outlined"
+            startIcon={<LinkIcon />}
+            onClick={() => setReconcileOpen(true)}
+          >
             تطبیق تجهیزات قدیمی
           </Button>
           <Button
@@ -258,9 +349,9 @@ const EquipmentTab: React.FC = () => {
               boxShadow: 2,
               '&:hover': {
                 boxShadow: 4,
-                transform: 'translateY(-1px)'
+                transform: 'translateY(-1px)',
               },
-              transition: 'all 0.2s ease'
+              transition: 'all 0.2s ease',
             }}
           >
             افزودن تجهیز جدید
@@ -276,7 +367,7 @@ const EquipmentTab: React.FC = () => {
               fullWidth
               placeholder="جستجو در تجهیزات..."
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              onChange={e => setSearchTerm(e.target.value)}
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">
@@ -293,7 +384,7 @@ const EquipmentTab: React.FC = () => {
               fullWidth
               label="فیلتر وضعیت"
               value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
+              onChange={e => setStatusFilter(e.target.value)}
             >
               <MenuItem value="all">همه</MenuItem>
               <MenuItem value="available">موجود</MenuItem>
@@ -308,7 +399,7 @@ const EquipmentTab: React.FC = () => {
               fullWidth
               label="فیلتر نوع"
               value={typeFilter}
-              onChange={(e) => setTypeFilter(e.target.value)}
+              onChange={e => setTypeFilter(e.target.value)}
             >
               <MenuItem value="all">همه</MenuItem>
               <MenuItem value="سلاح">سلاح</MenuItem>
@@ -327,7 +418,14 @@ const EquipmentTab: React.FC = () => {
       </Paper>
 
       {/* Equipment Table */}
-      <Paper sx={{ flex: 1, display: 'flex', flexDirection: 'column', borderRadius: 2 }}>
+      <Paper
+        sx={{
+          flex: 1,
+          display: 'flex',
+          flexDirection: 'column',
+          borderRadius: 2,
+        }}
+      >
         <TableContainer sx={{ flex: 1 }}>
           <Table stickyHeader>
             <TableHead>
@@ -340,88 +438,112 @@ const EquipmentTab: React.FC = () => {
                 <TableCell>مودل</TableCell>
                 <TableCell>وضعیت</TableCell>
                 <TableCell>شرایط</TableCell>
-                <TableCell>مکان</TableCell>
+                <TableCell>مکان یا یگان</TableCell>
                 <TableCell align="center">عملیات</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
               {filteredEquipment
-                .slice(pagination.page * pagination.pageSize, pagination.page * pagination.pageSize + pagination.pageSize)
-                .map((item) => (
-                <TableRow
-                  key={item.id}
-                  hover
-                  onClick={() => setUsageEquipment(item)}
-                  sx={{ cursor: 'pointer' }}
-                >
-                  <TableCell>
-                    {item.primaryMediaId ? (
-                      <Avatar
-                        variant="rounded"
-                        src={resourceApiService.getMediaUrl(item.primaryMediaId)}
-                        sx={{ width: 40, height: 40 }}
+                .slice(
+                  pagination.page * pagination.pageSize,
+                  pagination.page * pagination.pageSize + pagination.pageSize
+                )
+                .map(item => (
+                  <TableRow
+                    key={item.id}
+                    hover
+                    onClick={() => setUsageEquipment(item)}
+                    sx={{ cursor: 'pointer' }}
+                  >
+                    <TableCell>
+                      {item.primaryMediaId ? (
+                        <Avatar
+                          variant="rounded"
+                          src={resourceApiService.getMediaUrl(
+                            item.primaryMediaId
+                          )}
+                          sx={{ width: 40, height: 40 }}
+                        />
+                      ) : (
+                        <Avatar
+                          variant="rounded"
+                          sx={{
+                            width: 40,
+                            height: 40,
+                            bgcolor: 'background.default',
+                            color: 'text.disabled',
+                          }}
+                        >
+                          <NoImageIcon fontSize="small" />
+                        </Avatar>
+                      )}
+                    </TableCell>
+                    <TableCell>{item.equipmentCode}</TableCell>
+                    <TableCell>{item.name}</TableCell>
+                    <TableCell>{item.type}</TableCell>
+                    <TableCell>{item.quantity ?? 1}</TableCell>
+                    <TableCell>{item.model || '-'}</TableCell>
+                    <TableCell>
+                      <Chip
+                        label={getStatusLabel(item.status)}
+                        color={getStatusColor(item.status) as any}
+                        size="small"
                       />
-                    ) : (
-                      <Avatar
-                        variant="rounded"
-                        sx={{ width: 40, height: 40, bgcolor: 'background.default', color: 'text.disabled' }}
+                    </TableCell>
+                    <TableCell>
+                      <Chip
+                        label={getConditionLabel(item.condition)}
+                        color={getConditionColor(item.condition) as any}
+                        size="small"
+                      />
+                    </TableCell>
+                    <TableCell>
+                      {resolveUnitReferenceLabel(
+                        item.location || item.assignedTo,
+                        unitReferenceLabels
+                      )}
+                    </TableCell>
+                    <TableCell align="center">
+                      <IconButton
+                        size="small"
+                        onClick={event => {
+                          event.stopPropagation();
+                          handleOpenModal(item);
+                        }}
+                        color="primary"
+                        title="ویرایش"
                       >
-                        <NoImageIcon fontSize="small" />
-                      </Avatar>
-                    )}
-                  </TableCell>
-                  <TableCell>{item.equipmentCode}</TableCell>
-                  <TableCell>{item.name}</TableCell>
-                  <TableCell>{item.type}</TableCell>
-                  <TableCell>{item.quantity ?? 1}</TableCell>
-                  <TableCell>{item.model || '-'}</TableCell>
-                  <TableCell>
-                    <Chip
-                      label={getStatusLabel(item.status)}
-                      color={getStatusColor(item.status) as any}
-                      size="small"
-                    />
-                  </TableCell>
-                  <TableCell>
-                    <Chip
-                      label={getConditionLabel(item.condition)}
-                      color={getConditionColor(item.condition) as any}
-                      size="small"
-                    />
-                  </TableCell>
-                  <TableCell>{item.location}</TableCell>
-                  <TableCell align="center">
-                    <IconButton
-                      size="small"
-                      onClick={(event) => { event.stopPropagation(); handleOpenModal(item); }}
-                      color="primary"
-                      title="ویرایش"
-                    >
-                      <EditIcon />
-                    </IconButton>
-                    <IconButton
-                      size="small"
-                      onClick={(event) => { event.stopPropagation(); handleDelete(item.id); }}
-                      color="error"
-                      title="حذف"
-                    >
-                      <DeleteIcon />
-                    </IconButton>
-                    <IconButton
-                      size="small"
-                      onClick={(event) => { event.stopPropagation(); setUsageEquipment(item); }}
-                      color="secondary"
-                      title="سابقه عملیات"
-                    >
-                      <HistoryIcon />
-                    </IconButton>
-                  </TableCell>
-                </TableRow>
-              ))}
+                        <EditIcon />
+                      </IconButton>
+                      <IconButton
+                        size="small"
+                        onClick={event => {
+                          event.stopPropagation();
+                          handleDelete(item.id);
+                        }}
+                        color="error"
+                        title="حذف"
+                      >
+                        <DeleteIcon />
+                      </IconButton>
+                      <IconButton
+                        size="small"
+                        onClick={event => {
+                          event.stopPropagation();
+                          setUsageEquipment(item);
+                        }}
+                        color="secondary"
+                        title="سابقه عملیات"
+                      >
+                        <HistoryIcon />
+                      </IconButton>
+                    </TableCell>
+                  </TableRow>
+                ))}
             </TableBody>
           </Table>
         </TableContainer>
-        
+
         <TablePagination
           rowsPerPageOptions={[5, 10, 25, 50]}
           component="div"
@@ -446,7 +568,10 @@ const EquipmentTab: React.FC = () => {
       <EquipmentDeleteConfirmModal
         open={deleteOpen}
         item={pendingDeleteEquipment}
-        onClose={() => { setDeleteOpen(false); setPendingDeleteEquipment(null); }}
+        onClose={() => {
+          setDeleteOpen(false);
+          setPendingDeleteEquipment(null);
+        }}
         onConfirm={confirmDelete}
         isDeleting={isDeleting}
       />
@@ -461,7 +586,9 @@ const EquipmentTab: React.FC = () => {
         open={reconcileOpen}
         type="equipment"
         onClose={() => setReconcileOpen(false)}
-        onApplied={() => dispatch(fetchTabItems({ tabType: 'equipment', filters }))}
+        onApplied={() =>
+          dispatch(fetchTabItems({ tabType: 'equipment', filters }))
+        }
       />
     </Box>
   );

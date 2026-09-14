@@ -2,7 +2,12 @@
 import ToggleField from "@/components/ToggleField.vue";
 import { useUiStore } from "@/stores/uiStore";
 withDefaults(
-  defineProps<{ showNextToggle?: boolean; submitLabel?: string; cancelLabel?: string }>(),
+  defineProps<{
+    showNextToggle?: boolean;
+    submitLabel?: string;
+    cancelLabel?: string;
+    submitDisabled?: boolean;
+  }>(),
   {
     submitLabel: "ذخیره",
     cancelLabel: "لغو",
@@ -29,7 +34,8 @@ const uiStore = useUiStore();
       </button>
       <button
         type="submit"
-        class="rounded-md bg-blue-300/60 dark:bg-blue-400/30 backdrop-blur px-3 py-2 text-sm font-semibold text-blue-900 dark:text-blue-50 shadow-2xs hover:bg-blue-300/70 dark:hover:bg-blue-400/40 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-300"
+        :disabled="submitDisabled"
+        class="rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500 disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-400 disabled:shadow-none dark:bg-blue-500 dark:hover:bg-blue-400 dark:disabled:bg-slate-700 dark:disabled:text-slate-400"
       >
         {{ submitLabel }}
       </button>

@@ -25,7 +25,7 @@ function unitResource(overrides: Partial<ResourceDto> = {}): ResourceDto {
 
 describe("createUnitFromResource", () => {
   it("keeps the catalog identity and copies the basic unit fields", () => {
-    const unit = createUnitFromResource(unitResource(), fallbackSidc);
+    const unit = createUnitFromResource(unitResource(), fallbackSidc, 1234);
 
     expect(unit).toMatchObject({
       name: "تیپ ۵۵ هوابرد",
@@ -34,6 +34,8 @@ describe("createUnitFromResource", () => {
       sidc: "10031000161211000000",
       linkedResourceId: "resource-unit-1",
       linkedResourceLabel: "تیپ ۵۵ هوابرد",
+      participationStatus: "planned",
+      participationStartTime: 1234,
       subUnits: [],
       state: [],
     });

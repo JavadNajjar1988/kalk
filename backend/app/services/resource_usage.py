@@ -72,9 +72,17 @@ def build_resource_usage_graph(
                         "unitName": unit_name,
                         "parentUnitName": parent_name,
                         "sideName": side_name,
-                        "status": _status_label(unit_status, "تخصیص‌یافته"),
+                        "status": _status_label(
+                            unit.get("participationStatus") or unit_status,
+                            "تخصیص‌یافته",
+                        ),
                         "quantity": 1,
                         "onHand": 1,
+                        "operationalRole": unit.get("operationalRole"),
+                        "startTime": unit.get("participationStartTime"),
+                        "endTime": unit.get("participationEndTime"),
+                        "notes": unit.get("participationNotes"),
+                        "sourceReference": unit.get("sourceReference"),
                     }
                 )
 
@@ -101,6 +109,23 @@ def build_resource_usage_graph(
                             "endTime": item.get("participationEndTime"),
                             "notes": item.get("participationNotes"),
                             "sourceReference": item.get("sourceReference"),
+                        }
+                    )
+
+            if resource.type in {"logistics", "ammunition"}:
+                for item in unit.get("supplies") or []:
+                    if item.get("resourceId") != resource.id:
+                        continue
+                    assignments.append(
+                        {
+                            "kind": "supply",
+                            "unitId": unit_id,
+                            "unitName": unit_name,
+                            "parentUnitName": parent_name,
+                            "sideName": side_name,
+                            "status": _status_label(unit_status, "تخصیص‌یافته"),
+                            "quantity": item.get("count"),
+                            "onHand": item.get("onHand"),
                         }
                     )
 

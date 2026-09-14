@@ -191,8 +191,8 @@ export function serializeUnit(
   if (personnel?.length === 0) personnel = undefined;
 
   let supplies = nUnit.supplies?.map(({ id, count, onHand }) => {
-    const { name } = scnState.supplyCategoryMap[id];
-    return { name, count, onHand };
+    const { name, resourceId } = scnState.supplyCategoryMap[id];
+    return { name, count, onHand, resourceId };
   });
   if (supplies?.length === 0) supplies = undefined;
 
@@ -246,10 +246,12 @@ export function serializeUnit(
 
             if (s.diff?.supplies) {
               diffSupplies = s.diff.supplies.map(({ id, count, onHand }) => {
+                const item = scnState.supplyCategoryMap[id];
                 return {
-                  name: scnState.supplyCategoryMap[id]?.name ?? id,
+                  name: item?.name ?? id,
                   count,
                   onHand,
+                  resourceId: item?.resourceId,
                 };
               });
             }
@@ -286,10 +288,12 @@ export function serializeUnit(
 
             if (s.update.supplies) {
               updateSupplies = s.update.supplies.map(({ id, count, onHand }) => {
+                const item = scnState.supplyCategoryMap[id];
                 return {
-                  name: scnState.supplyCategoryMap[id]?.name ?? id,
+                  name: item?.name ?? id,
                   count,
                   onHand,
+                  resourceId: item?.resourceId,
                 };
               });
             }

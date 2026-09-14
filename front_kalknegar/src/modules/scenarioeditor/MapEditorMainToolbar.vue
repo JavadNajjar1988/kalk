@@ -526,7 +526,7 @@ const router = useRouter();
 
 const {
   store: { undo, redo, canRedo, canUndo, groupUpdate, state },
-  time: { setCurrentTime },
+  time: { setCurrentTime, scenarioTime },
   unitActions,
   geo: { addUnitPosition, addFeature, layers: scenarioLayers },
   helpers: { getSideById },
@@ -724,7 +724,11 @@ function addPendingResourceUnit(parentId: string): string | undefined {
   const resource = pendingUnitResource.value;
   if (!resource) return;
   const unitId = unitActions.addUnit(
-    createUnitFromResource(resource, activeSidc.value || computedSidc.value),
+    createUnitFromResource(
+      resource,
+      activeSidc.value || computedSidc.value,
+      +scenarioTime.value,
+    ),
     parentId,
   );
   pendingUnitResource.value = null;

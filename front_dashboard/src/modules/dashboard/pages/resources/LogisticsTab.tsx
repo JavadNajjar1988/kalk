@@ -215,7 +215,7 @@ const LogisticsTab: React.FC = () => {
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>          
           <LogisticsIcon sx={{ fontSize: 32, color: 'primary.main' }} />
           <Typography variant="h5" fontWeight="bold">
-            مدیریت لجستیک
+            مدیریت تدارکات و پشتیبانی
           </Typography>
         </Box>
         <Button
@@ -234,7 +234,7 @@ const LogisticsTab: React.FC = () => {
           <Grid item xs={12} md={4}>
             <TextField
               fullWidth
-              placeholder="جستجو در آیتم‌های لجستیک..."
+              placeholder="جست‌وجو در اقلام تدارکات و پشتیبانی..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               InputProps={{

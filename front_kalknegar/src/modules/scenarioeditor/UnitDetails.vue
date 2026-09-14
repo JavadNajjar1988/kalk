@@ -143,6 +143,33 @@
               <div class="prose prose-sm dark:prose-invert" v-html="hDescription"></div>
             </DescriptionItem>
 
+            <div
+              v-if="unit.linkedResourceId"
+              class="space-y-3 rounded-xl border border-slate-200 bg-slate-50/70 p-4 dark:border-slate-700 dark:bg-slate-900/40"
+            >
+              <h3 class="text-sm font-semibold">سابقه حضور در این عملیات</h3>
+              <DescriptionItem label="منبع یگان">
+                {{ unit.linkedResourceLabel || unit.linkedResourceId }}
+              </DescriptionItem>
+              <DescriptionItem label="وضعیت حضور">
+                {{ participationStatusLabel(unit.participationStatus) }}
+              </DescriptionItem>
+              <DescriptionItem v-if="unit.operationalRole" label="مأموریت یا نقش">
+                {{ unit.operationalRole }}
+              </DescriptionItem>
+              <DescriptionItem label="بازه حضور">
+                {{ formatDateString(unit.participationStartTime, time.timeZone.value) }}
+                تا
+                {{ formatDateString(unit.participationEndTime, time.timeZone.value) }}
+              </DescriptionItem>
+              <DescriptionItem v-if="unit.participationNotes" label="عملکرد یا نتیجه">
+                {{ unit.participationNotes }}
+              </DescriptionItem>
+              <DescriptionItem v-if="unit.sourceReference" label="منبع اطلاعات">
+                {{ unit.sourceReference }}
+              </DescriptionItem>
+            </div>
+
             <DescriptionItem v-if="unit.location" label="موقعیت اولیه">
               <div class="flex items-center justify-between">
                 <p>{{ formatPosition(unit.location) }}</p>
@@ -221,7 +248,8 @@ import { type EntityId } from "@/types/base";
 import { injectStrict } from "@/utils";
 import { activeScenarioKey, searchActionsKey, sidcModalKey } from "@/components/injects";
 import type { MediaUpdate, UnitUpdate } from "@/types/internalModels";
-import { formatPosition } from "@/geo/utils";
+import { formatDateString, formatPosition } from "@/geo/utils";
+import type { ResourceParticipationStatus } from "@/types/scenarioModels";
 import IconButton from "@/components/IconButton.vue";
 import { useGetMapLocation } from "@/composables/geoMapLocation";
 import OLMap from "ol/Map";
@@ -254,6 +282,7 @@ const props = defineProps<{ unitId: EntityId }>();
 const activeScenario = injectStrict(activeScenarioKey);
 const {
   store,
+  time,
   helpers: { getUnitById },
   geo: { addUnitPosition },
   unitActions: {
@@ -264,6 +293,22 @@ const {
     updateUnitLocked,
   },
 } = activeScenario;
+
+const participationStatusLabels: Record<ResourceParticipationStatus, string> = {
+  planned: "برنامه‌ریزی‌شده",
+  deployed: "اعزام‌شده",
+  active: "فعال در عملیات",
+  completed: "پایان‌یافته",
+  cancelled: "لغوشده",
+  unavailable: "خارج از دسترس",
+  wounded: "مجروح",
+  killed: "شهید",
+  transferred: "منتقل‌شده",
+};
+
+function participationStatusLabel(status?: ResourceParticipationStatus) {
+  return status ? participationStatusLabels[status] : "ثبت نشده";
+}
 
 const { onUnitSelectHook } = injectStrict(searchActionsKey);
 
@@ -282,7 +327,7 @@ const tabList = computed(() =>
         "جزئیات",
         "نماد نقشه",
         "وضعیت واحد",
-        { label: "TO&E/S", title: "جدول سازمان، تجهیزات و تدارکات" },
+        { label: "منابع یگان", title: "تجهیزات، پرسنل و تدارکات یگان" },
         "نمایش نقشه",
         "ویژگی‌ها",
         "تبدیل",
@@ -292,7 +337,7 @@ const tabList = computed(() =>
         "جزئیات",
         "نماد نقشه",
         "وضعیت واحد",
-        { label: "TO&E/S", title: "جدول سازمان، تجهیزات و تدارکات" },
+        { label: "منابع یگان", title: "تجهیزات، پرسنل و تدارکات یگان" },
         "نمایش نقشه",
         "ویژگی‌ها",
         "تبدیل",

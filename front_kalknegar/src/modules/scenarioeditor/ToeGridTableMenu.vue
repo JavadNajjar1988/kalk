@@ -22,10 +22,10 @@ const cols = computed(() => props.table.getAllLeafColumns());
 <template>
   <DropdownMenu>
     <DropdownMenuTrigger as-child>
-      <div class="z-10">
+      <div class="relative z-10">
         <button
           type="button"
-          class="rounded-full p-2 text-gray-500 hover:text-gray-900 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-gray-100 focus:outline-hidden dark:hover:text-gray-400"
+          class="text-muted-foreground hover:bg-muted hover:text-foreground focus:ring-ring focus:ring-offset-background rounded-full p-2 focus:ring-2 focus:ring-offset-2 focus:outline-hidden"
         >
           <span class="sr-only">باز کردن گزینه‌ها</span>
           <EllipsisVerticalIcon class="size-5" aria-hidden="true" />

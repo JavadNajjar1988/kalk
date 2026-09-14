@@ -4,7 +4,7 @@ import { useForm } from "@/composables/forms";
 import SimpleSelect from "@/components/SimpleSelect.vue";
 import { activeScenarioKey, timeModalKey } from "@/components/injects";
 import { injectStrict, sortBy } from "@/utils";
-import { computed, ref, watch } from "vue";
+import { computed, nextTick, onMounted, ref, useTemplateRef, watch } from "vue";
 import { klona } from "klona";
 import type {
   EUnitEquipment,
@@ -67,9 +67,40 @@ const { form, handleSubmit } = useForm<Form>(
   modelValue,
 );
 const personnelForm = computed(() => form.value as NUnitPersonnel);
+const formElement = useTemplateRef<HTMLFormElement>("formElement");
 const timeError = ref<string | null>(null);
+const formError = ref<string | null>(null);
+const pendingResource = ref<ResourceSearchResultDto | null>(null);
+const selectedCatalogItem = computed(() => {
+  const map =
+    props.mode === "equipment" ? store.state.equipmentMap : store.state.personnelMap;
+  if (pendingResource.value?.id === form.value.id) return pendingResource.value;
+  const item = map[form.value.id];
+  return item?.resourceId ? item : undefined;
+});
+const canSubmit = computed(() => {
+  const count = Number(form.value.count);
+  const map =
+    props.mode === "equipment" ? store.state.equipmentMap : store.state.personnelMap;
+  const hasItem = Boolean(
+    form.value.id &&
+      (map[form.value.id] || pendingResource.value?.id === form.value.id),
+  );
+  return hasItem && Number.isInteger(count) && count >= 1;
+});
+
+onMounted(async () => {
+  await nextTick();
+  formElement.value?.scrollIntoView({ block: "nearest" });
+});
 
 function onSubmit() {
+  if (!canSubmit.value) {
+    formError.value = "یک مورد معتبر انتخاب کنید و مقدار اولیه را دست‌کم یک قرار دهید.";
+    return;
+  }
+  form.value.count = Number(form.value.count);
+  formError.value = null;
   if (
     props.mode === "personnel" &&
     personnelForm.value.participationStartTime !== undefined &&
@@ -80,6 +111,29 @@ function onSubmit() {
     return;
   }
   timeError.value = null;
+  const selectedResource = pendingResource.value;
+  if (selectedResource) {
+    if (props.mode === "equipment") {
+      store.update((s) => {
+        s.equipmentMap[selectedResource.id] = {
+          id: selectedResource.id,
+          name: selectedResource.name,
+          description: selectedResource.description ?? undefined,
+          resourceId: selectedResource.id,
+        };
+      });
+    } else {
+      store.update((s) => {
+        s.personnelMap[selectedResource.id] = {
+          id: selectedResource.id,
+          name: selectedResource.name,
+          description: selectedResource.description ?? undefined,
+          resourceId: selectedResource.id,
+        };
+      });
+    }
+    pendingResource.value = null;
+  }
   handleSubmit();
   emit("submit", klona(form.value));
 }
@@ -92,6 +146,16 @@ watch(
     }
   },
   { immediate: true },
+);
+
+watch(
+  () => form.value.id,
+  (id) => {
+    if (pendingResource.value && pendingResource.value.id !== id) {
+      pendingResource.value = null;
+    }
+    formError.value = null;
+  },
 );
 
 // ---- اتصال به کاتالوگ مدیریت منابع -------------------------------------------
@@ -140,48 +204,34 @@ function onPickResource(r: ResourceSearchResultDto) {
     props.mode === "equipment" ? store.state.equipmentMap : store.state.personnelMap;
   const linkedItem = Object.values(map).find((item) => item.resourceId === r.id);
   if (linkedItem) {
+    pendingResource.value = null;
     form.value.id = linkedItem.id;
     return;
   }
 
-  if (!map[r.id]) {
-    if (props.mode === "equipment") {
-      store.update((s) => {
-        s.equipmentMap[r.id] = {
-          id: r.id,
-          name: r.name,
-          description: r.description ?? undefined,
-          resourceId: r.id,
-        };
-      });
-    } else {
-      store.update((s) => {
-        s.personnelMap[r.id] = {
-          id: r.id,
-          name: r.name,
-          description: r.description ?? undefined,
-          resourceId: r.id,
-        };
-      });
-    }
-  }
+  pendingResource.value = r;
   form.value.id = r.id;
 }
 </script>
 
 <template>
-  <form @submit.prevent="onSubmit" class="" @keyup.esc.stop="emit('cancel')">
+  <form
+    ref="formElement"
+    @submit.prevent="onSubmit"
+    class=""
+    @keyup.esc.stop="emit('cancel')"
+  >
     <h3 class="text-sm font-semibold">{{ heading }}</h3>
 
     <section class="mt-4 space-y-3">
       <div class="grid grid-cols-2 gap-6">
         <SimpleSelect
           v-if="itemCategories.length"
-          label="دسته‌بندی تدارکات"
+          :label="mode === 'equipment' ? 'تجهیز' : 'پرسنل'"
           v-model="form.id"
           :items="itemCategories"
         />
-        <InputGroup label="مقدار اولیه" type="number" v-model="form.count" />
+        <InputGroup label="مقدار اولیه" type="number" min="1" v-model="form.count" />
         <SimpleSelect
           label="وضعیت در این عملیات"
           v-model="form.participationStatus"
@@ -201,10 +251,18 @@ function onPickResource(r: ResourceSearchResultDto) {
       </div>
 
       <div
-        v-if="mode === 'personnel'"
-        class="space-y-4 rounded-xl border border-slate-200 bg-slate-50/70 p-4 dark:border-slate-700 dark:bg-slate-900/40"
+        v-if="selectedCatalogItem"
+        class="border-primary/30 bg-primary/10 text-foreground rounded-xl border px-4 py-3 text-sm"
       >
-        <h4 class="font-medium text-slate-800 dark:text-slate-100">
+        <span class="font-semibold">{{ selectedCatalogItem.name }}</span>
+        انتخاب شده است. برای ایجاد پیوند و ثبت سابقه در یگان، دکمه «ثبت در یگان» را بزنید.
+      </div>
+
+      <div
+        v-if="mode === 'personnel'"
+        class="border-border bg-muted/40 space-y-4 rounded-xl border p-4"
+      >
+        <h4 class="text-foreground font-medium">
           سابقه حضور در این عملیات
         </h4>
         <InputGroup
@@ -265,9 +323,14 @@ function onPickResource(r: ResourceSearchResultDto) {
       <p v-if="!itemCategories.length" class="text-sm text-gray-500">
         آیتمی برای افزودن وجود ندارد. می‌توانید از کاتالوگ منابع انتخاب کنید.
       </p>
+      <p v-if="formError" class="text-xs text-red-600">{{ formError }}</p>
     </section>
 
-    <FormFooter @cancel="emit('cancel')" submitLabel="افزودن" />
+    <FormFooter
+      @cancel="emit('cancel')"
+      submitLabel="ثبت در یگان"
+      :submitDisabled="!canSubmit"
+    />
 
     <ResourcePicker
       v-model:open="showPicker"

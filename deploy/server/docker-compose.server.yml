@@ -1,0 +1,109 @@
+services:
+  db:
+    image: postgis/postgis:16-3.4
+    restart: unless-stopped
+    env_file: ${KALK_ENV_FILE:-.env}
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:?Set POSTGRES_USER in .env}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+      POSTGRES_DB: ${POSTGRES_DB:?Set POSTGRES_DB in .env}
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    networks:
+      - kalknet
+
+  migrate:
+    image: kalk-api:${KALK_RELEASE:?Set KALK_RELEASE in .env}
+    restart: "no"
+    env_file: ${KALK_ENV_FILE:-.env}
+    command: ["sh", "-lc", "alembic -c alembic.ini upgrade head"]
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - kalknet
+
+  api:
+    image: kalk-api:${KALK_RELEASE:?Set KALK_RELEASE in .env}
+    restart: unless-stopped
+    env_file: ${KALK_ENV_FILE:-.env}
+    ports:
+      - "${API_HOST_PORT:-8002}:8000"
+    volumes:
+      - maps-data:/app/backend/static/maps
+      - scenarios-data:/app/backend/static/scenarios
+      - document-imports:/app/backend/static/document-imports
+    depends_on:
+      db:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:8000/api/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
+    networks:
+      - kalknet
+
+  tileserver:
+    image: maptiler/tileserver-gl:latest
+    restart: unless-stopped
+    working_dir: /data
+    user: "0:0"
+    volumes:
+      - maps-data:/data
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:8080/').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+    networks:
+      - kalknet
+
+  web:
+    image: kalk-web:${KALK_RELEASE:?Set KALK_RELEASE in .env}
+    restart: unless-stopped
+    ports:
+      - "${WEB_HOST_PORT:-3000}:3000"
+    depends_on:
+      api:
+        condition: service_healthy
+      tileserver:
+        condition: service_healthy
+    networks:
+      - kalknet
+
+  ollama:
+    image: ollama/ollama:latest
+    restart: unless-stopped
+    profiles:
+      - ai
+    volumes:
+      - ollama-models:/root/.ollama
+      - ${LOCAL_MODELS_PATH:-/opt/kalk/models}:/models:ro
+    networks:
+      - kalknet
+
+volumes:
+  db-data:
+    name: kalk-db-data
+  maps-data:
+    name: kalk-maps-data
+  scenarios-data:
+    name: kalk-scenarios-data
+  document-imports:
+    name: kalk-document-imports
+  ollama-models:
+    name: kalk-ollama-models
+
+networks:
+  kalknet:
+    name: kalk-network

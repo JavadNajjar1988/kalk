@@ -1,11 +1,11 @@
 <template>
   <div
-    class="pointer-events-auto absolute z-20 max-h-[82vh]"
-    :class="side === 'left' ? 'top-24 left-2' : 'top-24 right-2'"
+    class="pointer-events-auto absolute top-24 bottom-52 z-[60]"
+    :class="side === 'left' ? 'left-2' : 'right-2'"
     dir="rtl"
   >
     <aside
-      class="bg-sidebar border-sidebar-border relative flex max-h-[70vh] flex-col overflow-clip rounded-md border text-right"
+      class="bg-sidebar border-sidebar-border relative flex max-h-full min-h-0 flex-col overflow-hidden rounded-md border text-right"
       :style="{
         width: widthStore.detailsWidth + 'px',
         minWidth: '300px',
@@ -13,7 +13,7 @@
       }"
     >
       <CloseButton compact class="absolute top-1 right-1 z-[99]" @click="emit('close')" />
-      <div class="text-foreground flex-auto overflow-auto p-3 text-sm leading-5">
+      <div class="text-foreground min-h-0 flex-1 overflow-auto p-3 text-sm leading-5">
         <slot />
       </div>
       <PanelResizeHandle

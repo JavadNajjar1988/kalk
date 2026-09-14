@@ -12,6 +12,7 @@ import { PhDatabase, PhMagnifyingGlass, PhPackage, PhX } from "@phosphor-icons/v
 interface Props {
   open: boolean;
   type?: ResourceType;
+  types?: ResourceType[];
   title?: string;
 }
 
@@ -31,16 +32,28 @@ const loading = ref(false);
 const error = ref<string | null>(null);
 
 const filteredItems = computed(() => items.value);
+const activeTypes = computed<ResourceType[]>(() =>
+  props.types?.length ? [...new Set(props.types)] : props.type ? [props.type] : [],
+);
 
 async function runSearch(q: string) {
   loading.value = true;
   error.value = null;
   try {
     const normalized = q.trim();
-    if (normalized) {
-      items.value = await resourceApiService.search(normalized, props.type, 50);
+    if (activeTypes.value.length > 1) {
+      const results = await Promise.all(
+        activeTypes.value.map((type) =>
+          normalized
+            ? resourceApiService.search(normalized, type, 50)
+            : resourceApiService.list({ type, limit: 50 }).then((result) => result.items),
+        ),
+      );
+      items.value = [...new Map(results.flat().map((item) => [item.id, item])).values()];
+    } else if (normalized) {
+      items.value = await resourceApiService.search(normalized, activeTypes.value[0], 50);
     } else {
-      const result = await resourceApiService.list({ type: props.type, limit: 50 });
+      const result = await resourceApiService.list({ type: activeTypes.value[0], limit: 50 });
       items.value = result.items;
     }
   } catch (e: any) {
@@ -88,7 +101,7 @@ function resourceTypeLabel(type?: ResourceType) {
     case "ammunition":
       return "مهمات";
     case "logistics":
-      return "پشتیبانی";
+      return "تدارکات و پشتیبانی";
     case "ranks":
       return "درجات";
     case "maps":
@@ -98,7 +111,11 @@ function resourceTypeLabel(type?: ResourceType) {
   }
 }
 
-const typeLabel = computed(() => resourceTypeLabel(props.type));
+const typeLabel = computed(() =>
+  activeTypes.value.length
+    ? activeTypes.value.map(resourceTypeLabel).join(" و ")
+    : resourceTypeLabel(),
+);
 </script>
 
 <template>

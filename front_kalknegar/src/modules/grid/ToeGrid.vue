@@ -204,10 +204,10 @@ watch(
     <div class="-mx-4 max-h-96 overflow-x-auto whitespace-nowrap">
       <div class="inline-block min-w-full align-middle">
         <table
-          class="w-full border-separate border-spacing-0 text-right text-sm/6 text-slate-950 dark:text-white rounded-xl overflow-hidden"
+          class="text-foreground w-full overflow-hidden rounded-xl border-separate border-spacing-0 text-right text-sm/6"
           tabindex="0"
         >
-          <thead class="cursor-pointer text-slate-900 dark:text-slate-400">
+          <thead class="text-muted-foreground cursor-pointer">
             <tr
               v-for="headerGroup in table.getHeaderGroups()"
               :key="headerGroup.id"
@@ -217,7 +217,7 @@ watch(
                 v-for="header in headerGroup.headers"
                 :key="header.id"
                 role="columnheader"
-                class="bg-mpanel sticky top-0 z-10 max-w-0 min-w-0 truncate border-b border-b-slate-950/10 px-4 py-2 font-medium first:border-l-0 first:pl-(--gutter,--spacing(4)) last:pr-(--gutter,--spacing(4)) dark:border-b-white/10"
+                class="bg-mpanel border-border sticky top-0 z-10 max-w-0 min-w-0 truncate border-b px-4 py-2 font-medium first:border-l-0 first:pl-(--gutter,--spacing(4)) last:pr-(--gutter,--spacing(4))"
                 @click="header.column.getToggleSortingHandler()?.($event)"
                 :style="{
                   width: `${header.getSize()}px`,
@@ -239,7 +239,7 @@ watch(
                     /></span>
                     <span
                       v-if="header.column.getCanSort() && header.column.getIsSorted()"
-                      class="flex-none px-1 text-gray-700 group-hover:bg-gray-300 dark:text-gray-400"
+                      class="text-muted-foreground group-hover:bg-muted flex-none px-1"
                     >
                       {{ header.column.getIsSorted() === "asc" ? "&darr;" : "&uarr;" }}
                     </span>
@@ -251,13 +251,13 @@ watch(
                     @touchstart="header.getResizeHandler()($event)"
                     @click.stop
                     role="separator"
-                    class="absolute top-0 right-0 z-5 h-full w-2 cursor-col-resize border-r-2 border-r-slate-950/5 select-none hover:bg-red-100 dark:border-r-white/10"
-                    :class="header.column.getIsResizing() ? 'bg-red-100' : ''"
+                    class="border-border hover:bg-primary/10 absolute top-0 right-0 z-5 h-full w-2 cursor-col-resize border-r-2 select-none"
+                    :class="header.column.getIsResizing() ? 'bg-primary/10' : ''"
                   />
                 </template>
               </th>
               <th
-                class="bg-mpanel sticky top-0 right-0 z-10 truncate border-b border-b-slate-950/10 px-4 py-2 text-right font-medium first:border-l-0 first:pl-(--gutter,--spacing(4)) last:pr-(--gutter,--spacing(4)) dark:border-b-white/10"
+                class="bg-mpanel border-border sticky top-0 right-0 z-10 truncate border-b px-4 py-2 text-right font-medium first:border-l-0 first:pl-(--gutter,--spacing(4)) last:pr-(--gutter,--spacing(4))"
               >
                 <ToeGridTableMenu :table="table" />
               </th>
@@ -268,7 +268,7 @@ watch(
               v-for="row in rows"
               :key="row.id"
               :data-index="row.index"
-              class="even:bg-zinc-950/[2.5%] dark:even:bg-white/[2.5%]"
+              class="even:bg-muted/35 hover:bg-primary/5 transition-colors"
               @dblclick="onDblClick(row, $event)"
             >
               <template v-if="row.original.id === editedId">
